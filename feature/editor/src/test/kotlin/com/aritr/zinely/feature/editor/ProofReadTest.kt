@@ -102,14 +102,15 @@ class ProofReadTest {
     }
 
     /**
-     * **Tapping the right edge turns one leaf, and says so** — ADR-101 P5's whole gesture change.
+     * **Tapping the right edge changes one leaf immediately, and says so** — ADR-101 P5's whole gesture
+     * change plus the frozen stakeholder P3 amendment.
      *
      * The retired assertion here drove a `HorizontalPager` with a 60%-width drag, tuned between a flick
      * that carried two pages and a nudge that sprang back. That tuning was itself the tell: a page turn
      * should not have a threshold to calibrate. The frozen `.tapz` is a button.
      */
     @Test
-    fun `tapping the forward edge turns one leaf and announces where you are`() {
+    fun `tapping the forward edge changes one leaf immediately and announces where you are`() {
         setProof()
 
         composeRule.onNodeWithTag(ProofReadNextTestTag).performClick()
@@ -215,17 +216,9 @@ class ProofReadTest {
     }
 
     /**
-     * **A restored reader shows the leaf you were on, and shows it without a performance.**
-     *
-     * The turn is driven by comparing `index` (saved) with `shown` (which was not). Restored, they
-     * disagreed — `index = 3`, `shown = 0` — so the effect that exists to animate a *turn* played a full
-     * swing on first composition: the **cover** on screen for 180ms and an animation nobody asked for,
-     * before landing back where the user already was. `rememberPagerState` did not have that hole; the
-     * rewrite reintroduced it, and a review found it by reading the state rather than by using the app.
-     *
-     * Asserted immediately after restoration and before `waitForIdle` settles anything, because the defect
-     * *is* the intermediate frame — a device screencap cannot reliably catch 180ms, and the end state was
-     * correct even while it was broken.
+     * **A restored reader shows the leaf you were on, without a transition or intermediate cover.**
+     * The stakeholder P3 amendment removed page animation entirely; retaining this immediate assertion
+     * protects both restoration and that no-performance rule.
      */
     @Test
     fun `a restored reader is already on the leaf it was on, with no turn to play`() {

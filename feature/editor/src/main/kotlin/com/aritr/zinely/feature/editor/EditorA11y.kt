@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.editor
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.FramingMath
+import com.aritr.zinely.core.editor.FlipAxis
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.ReorderOp
 import com.aritr.zinely.core.model.DecorElement
@@ -100,6 +101,8 @@ public object EditorA11y {
          * `null` (the default) withholds the action entirely.
          */
         onReplaceSupply: ((String) -> Unit)? = null,
+        /** False while the editor owns a multi-selection; group reflection is outside ADR-113. */
+        flipActionsEnabled: Boolean = true,
     ): List<CustomAccessibilityAction> {
         val id = element.id
         fun selectThen(action: () -> Unit): Boolean { dispatch(Intent.Select(id)); action(); return true }
@@ -135,6 +138,34 @@ public object EditorA11y {
                 if (onReplaceSupply != null) {
                     add(CustomAccessibilityAction(Copy.A11y.REPLACE_SUPPLY) { selectThen { onReplaceSupply(id) } })
                 }
+            }
+            if (flipActionsEnabled && element is ImageElement) {
+                add(
+                    CustomAccessibilityAction(
+                        if (element.flippedHorizontally) Copy.A11y.REMOVE_LEFT_RIGHT_FLIP
+                        else Copy.A11y.FLIP_LEFT_RIGHT,
+                    ) { selectThen { dispatch(Intent.ToggleFlip(id, FlipAxis.HORIZONTAL)) } },
+                )
+                add(
+                    CustomAccessibilityAction(
+                        if (element.flippedVertically) Copy.A11y.REMOVE_TOP_BOTTOM_FLIP
+                        else Copy.A11y.FLIP_TOP_BOTTOM,
+                    ) { selectThen { dispatch(Intent.ToggleFlip(id, FlipAxis.VERTICAL)) } },
+                )
+            }
+            if (flipActionsEnabled && element is DecorElement) {
+                add(
+                    CustomAccessibilityAction(
+                        if (element.mirrored) Copy.A11y.REMOVE_LEFT_RIGHT_FLIP
+                        else Copy.A11y.FLIP_LEFT_RIGHT,
+                    ) { selectThen { dispatch(Intent.ToggleFlip(id, FlipAxis.HORIZONTAL)) } },
+                )
+                add(
+                    CustomAccessibilityAction(
+                        if (element.flippedVertically) Copy.A11y.REMOVE_TOP_BOTTOM_FLIP
+                        else Copy.A11y.FLIP_TOP_BOTTOM,
+                    ) { selectThen { dispatch(Intent.ToggleFlip(id, FlipAxis.VERTICAL)) } },
+                )
             }
             add(CustomAccessibilityAction(Copy.A11y.MOVE_LEFT) { selectThen { dispatch(Intent.Nudge(PtPoint(-NUDGE_STEP_PT, 0.0))) } })
             add(CustomAccessibilityAction(Copy.A11y.MOVE_RIGHT) { selectThen { dispatch(Intent.Nudge(PtPoint(NUDGE_STEP_PT, 0.0))) } })

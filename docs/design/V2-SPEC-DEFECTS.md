@@ -149,7 +149,7 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | ~~[**D-043**](#d-043)~~ | ✅ **RESOLVED 2026-08-03** — [owner ruling](#d-043-ruling), OD-16, option **(b)** | ruled: **−96 is a maximum, not an unconditional literal.** `edit()` lifts by `min(96, slack + clearance)`; the frozen Bench was amended first and its prototype renders unchanged, because on its own geometry the two terms still sum past 96. Device evidence closed it: `SM-A176B` has **4.2dp of slack against a 96dp demand**, confirming the premise — but (a)'s predicted symptom never appeared, because the un-clipped canvas was *masking* it. That mask is [D-045](#d-045), created by the same ruling and landed in the same package. Two costs priced and recorded, not fixed: 43dp of a page-bottom box stays behind the row (the typed line clears by 23dp), and the page top still leaves the canvas when clearance demands the ceiling — clipped now, not painted over the chrome |
 | ~~[**D-047**](#d-047)~~ | ✅ **RESOLVED 2026-08-04 — [owner ruling](#d-047-ruling), OD-21, Option A; the frozen Bench is AMENDED for the fifth time** | the frozen `.bar` drew **three** slots while [OD-9](#d-031-ruling) keeps redo, [OD-11](#d-034-ruling)/[OD-14](#d-039-ruling) keep **both** shipped add verbs, and `.add`'s handler opens a chooser whose region OD-2 re-seated beyond Phase C. Ruled: the bar becomes **`Undo · Redo · Add · Done`**; `Add` opens the frozen chooser with **only its Text and Photo rows released into C4**, Art staying fenced behind C8 — *“a fence reassignment, not a capability reassignment”*; the chooser uses the shipped `ZSheet`; **Text reuses `addTextAndEdit`** so C3's in-place model is untouched; `EditorSupplyTray` is retired. One line of frozen markup added (`#redoBtn`, `:466`), **no CSS changed**. The accepted price, recorded: both add verbs sit one tap deeper than they do today |
 | ~~[**D-048**](#d-048)~~ | ✅ **RESOLVED 2026-08-04 by rulings already in hand — a recorded deviation, not an owner question, recorded exactly as [D-042](#d-042) was. No OD number, because none was needed** | `Done` follows the frozen two-state behaviour (`:653`): while a session is open C3's `#doneEdit` owns *finish* and the bar's `Done` is **withheld at the frozen `.icon-btn:disabled` `.35`** (`:269`) — [OD-14](#d-039-ruling)'s own method, as C2b applied it, using a presentation the file already draws; with no session the bar's `Done` owns *clear selection*, which is deselect's **first drawn control**, since [OD-13](#d-037-ruling) gave it only a gesture and a gesture has no presentation for OD-14 to count. **`Preview ›` does not move** — OD-9's *reuse, don't invent* is satisfied by leaving it exactly where it ships |
-| [**D-065**](#d-065) | 🔭 **CARRIED 2026-08-06 — [owner ruling](#d-065-ruling), OD-28: a UX observation only, no implementation change, no amendment; deferred to future design work.** Raised by C9's Pass 2 and kept open by C9's independent review after the implementer tried to close it as already-ruled | the page grid draws **eight blank sheets with numbers** while the filmstrip **12dp below, in the same frame**, draws the same pages **with their content**. A screen whose only question is *which page?* gives nothing to choose by. `v2-bench.html:114-116`/`:138` rule the **grid**, not the **juxtaposition** — which did not exist until [OD-22](#d-053-ruling) made the strip's interior the real page. The precedent is decisive: [OD-23](#d-059-ruling) exists **only** because OD-22 missed a consequence of its own amendment (*"This is the second half of OD-22 and was missed by it"*). Options: give the grid miniatures (a **ninth** amendment), drop the grid's sheets, or accept and document the inconsistency |
+| [**D-065**](#d-065) | ✅ **RESOLVED 2026-08-26 — [A18 owner ruling](#d-065-a18-ruling): the larger chooser renders the same live page miniatures as the filmstrip.** The 2026-08-06 OD-28 carry-forward was honoured until stakeholder feedback supplied the missing product evidence | the page grid drew **eight blank sheets with numbers** while the filmstrip beneath it drew those pages **with their content**. The stakeholder's requested model was explicit: keep the strip small and let a summoned view make the pages larger. A18 preserves both surfaces and their navigation semantics, but makes the larger surface useful for recognition |
 | [**D-064**](#d-064) | 🔭 **CARRIED 2026-08-06 — [owner ruling](#d-064-ruling), OD-27: observation only; the contrast policy is NOT expanded during Phase C, no implementation change, no amendment.** Raised by C9's independent review; the badge is legible on hardware | the grid's page number measures **3.396:1 light / 3.449:1 dark on the device** and **2.969:1 / 2.525:1 as a worst-case single pixel over the screen grain** (`SCREEN_GRAIN_ALPHA` 0.175, laid over the whole screen by `benchStudioGround()`). Two undecided questions: does [IA §C.4](V2-BENCH-IA-INTERACTION.md)'s ≥3:1 **control** floor bind a page *number*, when [V2-TOKENS.md](V2-TOKENS.md) marks `inkFaint` decorative with no floor — the half of [D-061](#d-061) that was never wrong and until now had no correctly-grounded failing instance; and is per-pixel worst case the right **instrument** over a noise tile, when row 9.5 uses it for body ink and the reader of grain sees the mean. C9 asserts the flat pair, states why in the test, and changes no pixel |
 | ~~[**D-063**](#d-063)~~ | ✅ **WITHDRAWN 2026-08-06 as a DUPLICATE of [D-051](#d-051)** — C4's Pass 2 filed the same defect on 2026-08-04. C9's Pass 2 did not recognise it because [OD-21](#d-047-ruling)'s amendment had moved every address below it, so the two entries cite `:721` and `:808` for one row. **Address drift defeats duplicate-detection.** Its three new observations were merged into D-051; the owner's ruling on the substance is [**OD-26**](#d-051-ruling), recorded there | *(see [D-051](#d-051))* |
 | ~~[**D-062**](#d-062)~~ | ✅ **WITHDRAWN 2026-08-06 before it was ever presented — raised and closed inside the same Device Pass 1. Not a defect; no owner decision owed** | it claimed the dark grid cell loses the page's paper and takes its page number to **1.014:1**. That figure came from one guessed coordinate that missed the 9px glyph and compared the ground with itself. Re-measured over the badge's whole box: **3.396:1 light**, **3.449:1 dark** — both clear the ≥3:1 floor, and the dark figure is the flat `inkFaint`-on-`paper` token pair to three decimals. The dark cell is ruled, not broken: [OD-23](#d-059-ruling)'s own text at **`v2-bench.html:138`** reads *"THE PAGE GRID IS STILL NOT AMENDED. `.pgcell` draws no page content, so it has no artifact to dim"* — the owner considered this surface and withheld the island deliberately, because [OD-12](#d-035-ruling)'s principle is about the artifact and the cell holds none |
@@ -170,10 +170,10 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | [**D-045**](#d-045) | ✅ **FIXED in C3, 2026-08-03 — a parity defect, no ruling and no amendment** | the frozen `.canvasArea{overflow:hidden}` (`v2-bench.html:171`) was never implemented in Compose. Free while the pan was zero; on device once C3 made it real the panned sheet painted over the top bar in **every** editing session, leaving `Preview ›` invisible and — read off the platform tree — still `clickable=true` at full bounds. **A control you cannot see and can press is the defect; the paper over the chrome is how you notice it.** Fixed with `clipToBounds()` alongside the OD-16 clamp, because either alone makes the other worse |
 | ~~**D-043 (original entry)**~~ | *superseded — kept for the record* | the frozen `edit()` lifts the page a literal `translateY(-96px)`. The prototype can afford it: a 324px page inside a 744px phone has slack above it. The **shipped page is *contained* in the canvas** and typically height-bound, so its slack is ≈ 0 — and an element in the top **96dp of screen** is lifted clean out of view by the gesture meant to reveal it. **96dp is the wrong unit to judge the severity in:** it is `96 / scale` points of *page*, so it is the top **≈ 73 %** of the page on the 300×400dp test host where it was reproduced, against ≈ 22 % on the measured `SM-A176B` canvas — worst on the smallest canvases, and the 73 % is the figure that actually has evidence. Reproduced deterministically, not inferred. [ADR-093](../DECISIONS.md#adr-093) row 3.1 specifies the literal and row 3.1a forbids correcting it unilaterally, so it **ships as specified** and the remedy is the owner's |
 | [**D-042**](#d-042) | ✅ **RESOLVED by rulings already in hand — a recorded deviation, not an owner question** | [ADR-089](../DECISIONS.md#adr-089) rows 3.5–3.7 name `TypeBar.kt` as the control to **re-skin** into the frozen `.styletb`, which would delete size, align, bold, italic and five inks. [OD-11](#d-034-ruling) already says *"no existing editor capability is removed"* and [OD-14](#d-039-ruling) restates it, so that reading is dead by ruling. `.styletb` ships as the **editing state's** row — a state the product has no style control in — and `TypeBar.kt` is untouched. **The escalation was the error**; the review caught it |
-| [**D-041**](#d-041) | 🟦 **OPEN — pre-existing, not C2b's, found while proving D-040 reachable** | leaving a page while a text session is open **orphans an empty text box**: `Intent.GoToPage → leavePage` clears selection and interaction without running `endTextSession`, so the blank-box cleanup that every other exit performs never happens. The box is autosaved, invisible on the page, and exports as nothing. Found on hardware; **no fix attempted — it is reducer behaviour, outside C2b's fence** |
+| [**D-041**](#d-041) | ✅ **FIXED 2026-08-26 — all page-leave paths close text through `endTextSession`; focused reducer regressions pass** | leaving a page while a text session is open **orphans an empty text box**: `Intent.GoToPage → leavePage` cleared selection and interaction without running `endTextSession`, so the blank-box cleanup that every other exit performs never happened. The shared leave seam now coalesces a fresh blank placement before navigation or a structural page change, while preserving real text |
 | [**D-040**](#d-040) | ✅ **FIXED in C2b, no ruling needed — and reachable, which took two goes to establish** | the frozen bar offered **Size** and **Ink** on a *still-blank* text box, which the reducer refuses to style — and the tap was a **dead end that swallowed the toolbar**: it hid the frozen bar and raised nothing in its place, with no state that brought either back. Found by review, not by a test. Fixed under the ruling that already covers it ([OD-9](#d-031-ruling)): the two verbs ship inert there, exactly as `Font` does. **The implementer then claimed on device Pass 1 that the state was unreachable, and that claim was false** — see the correction below; the blank box is two taps away, and the guard was afterwards watched working on hardware |
 | [**D-039**](#d-039) | ✅ **RESOLVED 2026-08-02 by owner ruling — [OD-14](#d-039-ruling)** | since C2b the Bench offers the same verb twice — **`Delete` in both bars, and `Reframe` in both a bar and an on-canvas chip**. C2b's device Pass 2 **did not pass** on this, and [ADR-092](../DECISIONS.md#adr-092) was held at `Proposed` until [OD-14](#d-039-ruling) resolved it; it is now `Accepted`. one per bar, both announcing the same word to TalkBack. Not an accident and not a bug: it is the priced cost of [OD-11](#d-034-ruling)'s *additive*. Both delete the selection, so the duplication is redundant rather than ambiguous, and any real disambiguation is a **third** mechanism neither bar specifies. Deferred to device Pass 1, where the sweep can be heard rather than reasoned about |
-| [**D-038**](#d-038) | 🟦 **OPEN — an owner ruling, and it fences nothing** | the frozen photo bar offers **Replace**, and the product cannot honour it. `Intent.ReplaceImage(id, assetId)` exists in the reducer and is **dispatched from nowhere**; the only picker (`RequestAddImage` → `PickAndDecodeImage` → `CommitAddImage`) **creates** an element rather than re-pointing one, so reaching Replace is a flow change, not a wiring. C2b ships it **drawn and disabled** under [OD-9](#d-031-ruling)'s class — *a control the freeze draws stays drawn and invents nothing* — exactly as `Font` does. The question is whether the capability should exist |
+| ~~[**D-038**](#d-038)~~ | ✅ **CLOSED + VERIFIED 2026-08-31** | The frozen photo bar's **Replace** verb dispatches `RequestReplaceImage(id)`. The reducer verifies the selected current-page `ImageElement` and emits the existing picker effect carrying that id; the existing pipeline dispatches `ReplaceImage(id, decodedAssetId)` on success. Add remains `CommitAddImage`; cancellation/failure leave document, selection and history unchanged. The existing reducer command swaps only `assetId`, preserving every other image property with one undoable autosave-backed edit; same-asset replacement is a no-op. Focused and broad suites, pinned CI/goldens, two Samsung readers, and a repaired platform-label rerun are recorded in [the device verification](../reviews/2026-08-31-replace-photo-device-verification.md). |
 | [**D-036**](#d-036) | 🟦 **OPEN — documentation only, fences nothing** | the frozen Bench draws **four** resize handles; the editor has **eight**, and the extra four carry axis-constrained resize. C2a kept all eight under [OD-11](#d-034-ruling) (*the frozen vocabulary is additive; no existing capability is removed*), which the review confirmed is the right reading. What is owed is the **canonical file catching up** with that ruling — recommendation **(a)**, draw eight |
 | ~~[**D-035**](#d-035)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-035-ruling), OD-12 | the dark theme dimmed the sheet while the document's content ink stayed black — correctly, because it prints — leaving the user's own words at **1.60:1**. Ruled: **the artifact does not dim; the room around it may.** The frozen `.page` becomes a light-theme island of eight restated light tokens; `.phone` still dims |
 | ~~[**D-034**](#d-034)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-034-ruling), OD-11 | the frozen `.ctx` is a **verb** bar and the shipped `EditorContextBar` is the **WCAG 2.5.7** single-pointer twin of the drag gestures — **and they are not mutually exclusive.** The frozen bar is **additive**; the transform controls stay, because a parity phase does not remove an accessibility path. C2 splits into **C2a** (unblocked) and **C2b** (`.ctx*`) |
@@ -3297,6 +3297,24 @@ nothing here, and the entry stays in the register as **deferred design work** ra
 page?* gives nothing to choose by while the row 12dp beneath it does. What the ruling settles is that this is
 not Phase C's to fix. It is carried, not dismissed.
 
+<a id="d-065-a18-ruling"></a>
+#### ✓ OWNER RULING — 2026-08-26 · **A18**: the larger chooser shows the real pages
+
+The carry-forward period is over. Stakeholder review supplied the product evidence OD-28 deliberately did
+not invent: *leave the page strip small; when the maker asks for the larger view, let the pages get big.*
+The existing blank numbered cards fail that model because enlarging them removes the only identity the
+smaller strip already provides.
+
+**DESIGN FROZEN.** Each grid card replays its [Page] through the same `SceneRenderer` / `PagePreview` path
+as the filmstrip. It does not invent a thumbnail renderer, decode a second document, or change the page. The
+page number remains as a small on-paper badge so pages are still addressable; the current page uses the
+filmstrip's existing berry outer ring rather than tinting the maker's work. Tap still selects that page and
+dismisses the sheet. There is no reorder gesture, no permanent panel, no new state, and no page-format or
+rendering semantic change.
+
+This supersedes only OD-28's *defer implementation* disposition. Its recorded observation and Phase C
+history remain true.
+
 ---
 
 ### D-064 — the page number clears its floor as drawn and fails it as modelled, and nothing says which reading governs {#d-064}
@@ -3779,8 +3797,9 @@ separate question, and C5 will not answer it by inference.
 ### D-052 — `Add › Text` drops the new box on top of what is already on the page {#d-052}
 
 **Raised 2026-08-04 by C4's Device Verification Pass 2** (Samsung SM-A176B, Android 16, debug build).
-🟦 Open. **Not a merge blocker** — it is the shipped placement rule meeting a new one-tap route to it, not a
-regression C4 introduced.
+✅ **CLOSED 2026-08-24** — ruled in frozen Bench amendment A12 and implemented as a pure, bounded
+per-page cascade. It was not a C4 regression; it was the shipped placement rule meeting a new one-tap
+route to it.
 
 **What happened, before I knew why.** The page held one text box reading *"Hello"*. I tapped `Add`, then
 `Text`. A new box arrived already in its editing session — correct, and pleasant — but its outline was drawn
@@ -3798,6 +3817,25 @@ collision is now met on a page that already has content, which the empty-state r
 
 **What a fix would decide, if ruled:** whether a placement offsets from, or avoids, the occupied region —
 a placement-policy decision that belongs to whoever owns adding, not to the package that rebuilt the bar.
+
+#### Ruling — 2026-08-24: preserve the centre, then show that this is another object
+
+The first text addition to an empty page keeps the established centred `70% x 16%` box. Later additions
+use the current page's total element count as a cascade ordinal: the same base box moves **12pt down and
+right per ordinal**, capped independently on each axis so the whole unrotated box remains inside the page.
+Every element kind counts; a photo or supply already at the default origin is still occupied space from
+the new words' point of view. At the page edge, the bounded edge position is the deterministic fallback.
+
+This is an **offset rule**, not collision search. It reuses the already-shipped multi-photo cascade's
+physical language and does not invent rotated-rectangle intersection, random jitter or a placement
+dialogue. `PlaceTextAndEdit` remains the one reducer-owned act and therefore still mints, selects, opens,
+undoes and autosaves the new text atomically. Ordinary Photo and Art placements remain centred. The pure
+geometry is shared with the existing share-in batch path. [D-081 Q10](#d-081) was subsequently closed by
+A13, which changes that path from its per-batch seed to a per-page image seed without widening this text rule.
+
+**Device verification — 2026-08-24.** Two passes on Samsung SM-A176B confirmed the cascade at normal and
+1.8x font scale, including repeated text additions, a page already containing a photo, undo/redo, process
+restart persistence, Proof rendering, and Android Back returning from text editing to the Bench.
 
 ---
 
@@ -4051,6 +4089,10 @@ precedent rather than stopping the package for it.
 
 ### D-041 — leaving a page mid-session orphans an empty text box {#d-041}
 
+| | |
+|---|---|
+| **Status** | ✅ **FIXED 2026-08-26** — page navigation, page addition and page deletion now share the established text-session cleanup seam |
+
 **Found 2026-08-02 on `SM-A176B` / Android 16, while trying to prove [D-040](#d-040)'s state reachable.** It is not a
 C2b defect and nothing in C2b touches it; it is filed because it was seen, it persists to disk, and the next package to
 own the editing surface should decide about it rather than rediscover it.
@@ -4069,6 +4111,13 @@ never knowingly created, it sits in the tap order, and it is what made [D-040](#
 reproducible. The two obvious readings — *leavePage should clean up like every other exit*, or *the blank box is
 legitimate scaffolding and the deliberate exits are the odd ones out* — point at different fixes, which is why this is
 filed rather than patched.
+
+**Resolution.** `leavePage` now closes an active text session with `endTextSession(..., after = null)` before
+clearing per-page state. A fresh blank placement is removed from the document and coalesced out of undo history;
+an existing non-blank element is preserved unchanged. Plain navigation carries the cleanup autosave, while Add/Delete
+page use the cleaned model and emit only their final structural autosave. Focused reducer tests protect blank cleanup,
+history, real-text preservation, the single-autosave structural path, and Delete-page undo so it cannot resurrect the
+removed blank box.
 
 ### D-040 — Size and Ink on a blank text box: a dead end that took the toolbar with it {#d-040}
 
@@ -4213,7 +4262,20 @@ being settled by whoever is holding the phone.
 
 **Recommendation, revised after Pass 2, and since superseded by [OD-14](#d-039-ruling) above: (b) is no longer sufficient.** The device decided, which was the whole point of running two passes — and it decided against the cheap fix. What is needed is a rule for *which* bar owns a verb the two share, so that each verb appears once: the frozen bar is the one the freeze specifies and the one a sighted beginner will reach for, and `EditorContextBar`'s value under [ADR-029](../DECISIONS.md#adr-029) §6 is the **transform** verbs (move, resize, rotate, order) that no gesture-free path otherwise offers — not `Delete`, which the frozen bar now carries. Dropping the shared verbs from the transform bar would remove no capability from any input method, but it touches a fenced component and rests on an accessibility argument, so it is put rather than taken. The on-canvas `Reframe` chip is the third copy and the easiest to retire.
 
-### D-038 — the frozen photo bar offers Replace, and nothing can reach it {#d-038}
+### D-038 — Replace Photo reaches the existing image pipeline {#d-038}
+
+**Implemented 2026-08-30; verified and closed 2026-08-31.** The deferred vertical slice carries a selected current-page photo id through
+`RequestReplaceImage` → `PickAndDecodeImage(replacingId)` and dispatches `ReplaceImage(id, assetId)` after
+the existing picker/decode/AssetStore pipeline succeeds. Add remains the null-target path. Cancel and failure
+produce no replacement intent; the existing `EditImageCommand` changes only `assetId`, with one autosave and
+undo/redo entry for a real replacement and no entry for the same asset.
+
+Two independent Samsung readers verified success, cancel, one-step undo/redo, persistence, first/middle/final
+page navigation, Decor's distinct Art-cabinet route, and the horizontally scrollable 1.8× action strip. Pass 2
+initially rejected the generic platform name `Replace`; the repaired build exposes `Replace photo` and
+`Replace supply` as distinct enabled, clickable buttons without changing the visible frozen captions. The
+complete evidence and the restored device baselines are in
+[2026-08-31-replace-photo-device-verification.md](../reviews/2026-08-31-replace-photo-device-verification.md).
 
 **Raised 2026-08-02 by C2b's pre-implementation blocker check. It does not fence C2b**, which ships the verb under an
 existing ruling; it is filed because the ruling it ships under decides *appearance*, and this entry is about *capability*.
@@ -4225,9 +4287,9 @@ map onto intents the editor already dispatches. Replace does not.
 
 | | |
 |---|---|
-| `Intent.ReplaceImage(id, assetId)` | **exists in the reducer** ([`EditorReducer.kt:97`](../../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/EditorReducer.kt#L97)) and is **dispatched from nowhere** in any `src/main` |
-| the only image picker | `Intent.RequestAddImage` → `Effect.PickAndDecodeImage` → `Intent.CommitAddImage` — which **adds a new element** |
-| what Replace would need | that same pick, carried back to an **existing element's id** — a new parameter on the effect, i.e. a change to the effect protocol |
+| `Intent.ReplaceImage(id, assetId)` | existing reducer command; dispatched by the effect runner only after a targeted picker success |
+| image picker effect | `Intent.RequestAddImage` → `Effect.PickAndDecodeImage()` → `Intent.CommitAddImage`; `Intent.RequestReplaceImage(id)` → `Effect.PickAndDecodeImage(id)` → `Intent.ReplaceImage(id, assetId)` |
+| replacement safety | reducer validates the target is a current-page `ImageElement`; it preserves every non-asset property and no-ops for an identical asset |
 
 **Why this is not another D-037.** [D-037](#d-037) looked identical from the outside — an intent sitting in the reducer with
 nothing dispatching it — and its fix was one line, because `SelectAt`'s miss branch already produced the state. Here the
@@ -4235,10 +4297,8 @@ missing piece is a **flow**: a picker that knows which element it is replacing. 
 existing capability, not a new feature"*, and that scoping is exactly what does **not** transfer, so it is asked rather than
 assumed.
 
-**What C2b did in the meantime.** Shipped `Replace` **drawn and disabled**, under [OD-9](#d-031-ruling)'s class — *the freeze
-specifies the editing surface, not the whole application flow*, so a control it draws stays drawn and invents nothing. It is
-announced as disabled to the platform, not merely inert to touch ([ADR-092](../DECISIONS.md#adr-092) row 2.13a). The bar is
-faithful; the capability is the owner's call.
+**Historical interim.** C2b shipped `Replace` drawn and disabled under [OD-9](#d-031-ruling). That interim is superseded:
+the frozen verb is now enabled for photos; Art's identically labelled Replace continues to open the Art cabinet.
 
 **Options for the owner**
 
@@ -4248,10 +4308,8 @@ faithful; the capability is the owner's call.
 | **(b)** | **Leave it drawn and disabled**, as C2b shipped it, and record it as specified-but-unreachable beside `Font`. |
 | **(c)** | Amend the frozen Bench to drop `Replace` from the photo set, so spec and product agree. |
 
-**Recommendation: (a), scheduled — not now.** A user who sees *Replace* on a photo has been told the app can replace it, and
-`Font` is a weaker case only because [ADR-055](../DECISIONS.md#adr-055) genuinely excludes font choice by design, while
-nothing excludes this. **(b)** is the honest interim, which is why C2b shipped it; **(c)** removes something the product
-plausibly wants. The cost of (a) is one effect parameter and one reducer path that is already written and already tested.
+**Outcome: (a) implemented.** The effect parameter and request intent make the picker target explicit without a second
+picker, storage path, document field or schema change.
 
 ### D-037 — the dim shipped without either of the two ways the freeze gives the user out of it {#d-037}
 
@@ -4716,7 +4774,7 @@ rather than by implementation**, and the first entry since Phase A to reach the 
 | **Artifacts** | [`v21-bench.html`](mockups/v21-bench.html) (DESIGN-FROZEN, ADR-099) · [`EditorContextBar.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorContextBar.kt) `:160-195` · the [**D-034** ruling (OD-11)](#d-034) |
 | **Found** | 2026-08-15, during **device Pass 2** on SM-A176B (Android 16, density 420) — [BETA-UX-REVIEW.md F-2](../BETA-UX-REVIEW.md) |
 | **Severity** | **One control is unreachable to sight and one is an 8dp touch target.** Does not block: the row is scrollable, so no function is lost to a screen reader |
-| **Status** | 🟨 **OPEN — awaiting owner ruling** |
+| **Status** | ✅ **RESOLVED — A14 ratifies the shipped wrapping transform bar** (2026-08-24) |
 
 **This is a consequence of OD-11, not a new disagreement.** [D-034](#d-034) established that the frozen
 `.ctx` is a **verb** bar (`Edit · Font · Size · Ink · Delete`) while the shipped `EditorContextBar` is a
@@ -4756,6 +4814,19 @@ specification, not repair, and this register is the queue that feeds that choice
 Option (a) is recommended because it is the only one that changes no control's availability — the defect is
 that the row *lies about its own extent*, not that it holds too much.
 
+**Ruling — A14 (2026-08-24, delegated owner authority): choose (c), informed by the real-device result.**
+The transform bar keeps the complete OD-11 control set at full 48dp targets and flows onto the minimum
+number of centred rows required by the available width. It remains one row wherever the set fits. It does
+not scroll, clip, move reorder into overflow, or reduce the action set. The platform tree must expose every
+rendered control as named, clickable and enabled.
+
+The earlier recommendation for (a) was tested before this ruling and rejected on the affected Samsung:
+the visible 8dp fragment contained no glyph, so an edge fade annotated an empty sliver rather than making
+the hidden action discoverable. `EditorContextBar` already implements the accepted `FlowRow` layout and
+restores the `OnClick` action after `clearAndSetSemantics`; narrow-host and platform-tree tests fence the
+original failure. A14 records that evidence-led choice in the frozen Bench rather than leaving shipped
+behavior ahead of its governing artifact.
+
 ---
 
 ### D-079 — the frozen corpus states the privacy promise four times, and the rule says once {#d-079}
@@ -4765,7 +4836,7 @@ that the row *lies about its own extent*, not that it holds too much.
 | **Artifacts** | [`v21-bench.html`](mockups/v21-bench.html) `:824`, `:873` · [`v21-library.html`](mockups/v21-library.html) `:306-307`, `:466` · [`v21-proof.html`](mockups/v21-proof.html) `:593`, `:1019` · [`EditorEmptyState.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorEmptyState.kt) `:170-186` · [`Copy.kt`](../../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt) `:364` |
 | **Found** | 2026-08-16, reconciling [BETA-UX-REVIEW.md F-11](../BETA-UX-REVIEW.md) against the frozen files |
 | **Severity** | No function is lost. It is a **voice** defect, and the rule it breaks is one the owner adopted six days ago |
-| **Status** | 🟨 **OPEN — awaiting owner ruling** |
+| **Status** | ✅ **CLOSED + IMPLEMENTED 2026-08-24 — owner chose option (b); Colophon DESIGN FROZEN** |
 
 **The rule is not in dispute and must not be re-litigated.** [R12](DESIGN-RULES.md) — *"Privacy is
 reassurance, never a wall. Surface it as a gift, **once**, warmly"* — is restated in
@@ -4812,12 +4883,56 @@ outlived it.
 Related: [D-050](#d-050) owns the same composable's *supply cue* wording and is also open. [D-072](#d-072)
 is a different thing — a dead `.privacyline` CSS rule in `v2-proof.html`.
 
+#### Ruling — option (b), the promise survives once in the Shelf-owned Colophon
+
+**Owner-facing copy amended 2026-08-29:** the internal surface remains the Colophon; its Shelf action is
+`About` and its destination is `About Zinely`. The four-part scope and sole-privacy-sentence ruling below do
+not change.
+
+The owner directed the thorough resolution on 2026-08-24. [ZINE-DIRECTION §2.3](ZINE-DIRECTION.md) already
+settled the product object; this ruling supplies the missing interaction and copy:
+
+- **Home:** a second quiet Shelf-dock action, `About`, beside `Backups`, opening `About Zinely`. It is not
+  reachable from the Bench or Proof and is not a generic Settings/Privacy destination.
+- **Contents:** default paper (`A4` / `US Letter`, future-creation preselection only); the bundled typefaces
+  (`Averia Sans Libre`, `Fraunces`, `Inter`) with locally readable OFL notices; one honest offline/privacy
+  sentence; and the real app version.
+- **The survivor:** `Zinely works offline. Your zines stay on this device unless you choose to share or
+  back them up.` It appears once, in the Colophon. This wording names the user-controlled exits rather than
+  making the false absolute claim that content can never leave the device.
+- **Struck:** the Library empty-state slogan; the Bench Photo/add-sheet/caption/Done repetitions; the Proof
+  ready-row suffix; and the Backup sheet's no-send slogan. Operational error/recovery messages remain where
+  they explain the current failure rather than advertise privacy.
+- **Accessibility and navigation:** About Zinely scrolls at maximum font scale, paper is one radio group,
+  each typeface row drills into a locally readable licence, Back unwinds licence → About Zinely → Shelf, and
+  focus returns to the invoking control.
+
+The canonical interactive spec is [`v21-colophon.html`](mockups/v21-colophon.html); the complete state, copy,
+large-text, theme and semantic contract is [COLOPHON-FREEZE.md](COLOPHON-FREEZE.md). Compose, local licence
+reading, preferred-paper persistence, process-restart behavior, and the Shelf integration are implemented.
+Four inspected Roborazzi baselines cover light/dark at normal/maximum font scale; both physical Samsung passes
+completed with the device returned to its original display settings.
+
+⚠ The owner's separate direction that the app palette closely derive from `37596.jpg` is governed by
+[`THEME-37596-FREEZE.md`](THEME-37596-FREEZE.md). No palette token is changed as part of D-079.
+
 
 ---
 
 ### D-080 · The frozen `Art` sheet gives its own entry no glyph, filters nothing, and specifies no empty state {#d-080}
 
-**Status: 🟦 OPEN — owner amendment required. ⚠ SCOPE EXTENDED 2026-08-18 — see §4 below.**
+**Status: ✅ RESOLVED 2026-08-26 — owner approved A16's combined Art + Ink surface as DESIGN FROZEN.**
+**Implementation update, 2026-08-26:** the Art half of A16 is implemented in Compose with all 32 authored
+supplies, deterministic local search, reversible family filters, Recent/Favourites retrieval rails, and
+the frozen empty states. Focused interaction, platform-accessibility, placement, parity and forced
+Roborazzi verification cover the surface. The adjacent Ink half remains a separate implementation package.
+
+**Device verification, 2026-08-26 — PASS on both readings.** Samsung SM-A176B / Android 16, final release
+APK for this package. Pass 1 exercised the 32-piece cabinet, tag search (`manicule` → Pointing hand), the
+10-piece Stamps & marks filter, favourite checked state in the platform tree, placement, and Back dismissal.
+Pass 2 found the invitation, search, family shelves, count, empty Favourites material and named cards
+understandable without implementation knowledge. The device's temporary verification display overrides
+were then removed (`font_scale=1.0`, physical density restored to 450).
 Raised 2026-08-16 while scoping
 [F-3](../BETA-UX-REVIEW.md) of the beta UX review. Nothing here blocks today's work: the sheet itself is
 fenced by [OD-2](#d-029) and sequenced behind [ADR-105](../DECISIONS.md#adr-105) D-4. It is filed **now**
@@ -4888,9 +5003,24 @@ R1 spends) and its *"no tags, no filters, no sort"* bullet (which states no prem
 reversal, not an expiry). Per [V2-CONSTITUTION §VI](V2-CONSTITUTION.md) `v21-bench.html` is amended in the
 same act.
 
-⚠ **This entry now gates R1 as well as R5.** ADR-107's sequencing gate says the ~51 marks may be authored
-and tested but may not enter the shipped sheet before this ruling — because a sixty-mark drawer with no
-filter is the failure ADR-104 names as *"a large library without excellent search is worse than none"*.
+✅ **Owner ruling, 2026-08-25.** [ADR-107's owner amendment](../DECISIONS.md#adr-107) is authoritative:
+the first expansion stops at **32**, the remaining candidates stay a curated backlog, the four family
+filters and local name/tag search ship with growth, Recent and Favourites remain retrieval shortcuts, and
+catalogue order, outline geometry, placement and composition are not randomised. A15 iteration 2 in
+[`v21-bench.html`](mockups/v21-bench.html) draws that ruled density and the required empty/recovery state.
+
+⚠ **Rendered review rejected A15's presentation, 2026-08-25.** The scope above still stands, but the owner
+found the 2×2 filter block, anonymous four-column glyph wall, overlaid favourite stars and long undifferentiated
+scroll visually weak. The adjacent Ink tray was brought into the same review; [D-107](#d-107) owns that
+companion finding rather than making this Art entry a second source of truth.
+
+**Visual resolution, owner-approved 2026-08-26.** A16 applies the Art evidence in
+[RESEARCH R14](../RESEARCH.md#r14-art-cabinet-and-ink-tray-hierarchy--verified--recommendation): named
+three-column material cards, compact horizontal family filters, deterministic family papers, unobstructed
+favourite controls and Recent/Favourites rails. The owner accepted the rendered combined Art + Ink surface;
+A16's layout, interaction, copy and states are the production source of truth. Compose implementation is now
+authorised through the existing `SupplyCatalog` / `Copy.Supplies` / shared-render pipeline. This ruling does
+not randomise catalogue content, outlines, placement or composition and does not alter document semantics.
 
 ---
 
@@ -5088,13 +5218,15 @@ comment, which is where they were first written.*
   durable**. This is silence, not loss. The a11y half is a pre-existing condition already on this record, so
   the change does not regress it — it fails to fix it in one state. Hoisting both collectors to the nav
   host's root closes both halves in about four lines.
-- **Q10 — the cascade is per-batch, not per-page.** ⏳ **OPEN.** Two consecutive single-photo shares each
-  start from the centred default, so the second lands exactly on the first — Q2's *"it lost my photo"*
+- **Q10 — the cascade is per-batch, not per-page.** ✅ **CLOSED 2026-08-24 — A13 continues the photo
+  cascade from the actual current page.** Before A13, two consecutive single-photo shares each
+  started from the centred default, so the second landed exactly on the first — Q2's *"it lost my photo"*
   misreading, one level up. Still a strict improvement on the status quo, which stacked within a batch too,
-  and reaching it needs two separate shares rather than one ordinary five-photo one. The fix (seed the index
-  from the images already on the page) is small, but it is a **placement policy**, which
-  [SUPPLIES-SPEC §5.1](SUPPLIES-SPEC.md) reserves to design — so deferring it is consistent with how Q2 was
-  ruled rather than an exception to it.
+  and reaching it needs two separate shares rather than one ordinary five-photo one. A13 now freezes the
+  small fix: seed from `ImageElement`s already on the actual current page, continue the existing 12pt bounded
+  cascade through the incoming batch, and ignore text/decor for this photo-specific rule. The ordinary picker
+  remains centred. This is the narrow placement policy [SUPPLIES-SPEC §5.1](SUPPLIES-SPEC.md) required design
+  to settle; it adds no surface, collision search, persistence change or new undo grouping.
 
 **Deferred.**
 
@@ -5278,7 +5410,7 @@ rather than by implementation**, and the first entry since Phase A to reach the 
 | **Artifacts** | `core/copy/.../Copy.kt` (`BenchInk.INK`, `BenchVerbs.INK`) · `feature/editor/.../BenchInkPopover.kt` (`ZinelyMakerInkId.Ink`, `ZinelyNeutralId.Ink`) · [SUPPLIES-SPEC §8](SUPPLIES-SPEC.md) |
 | **Found** | 2026-08-16, implementing S6 (the sixteen supply names) — found by *looking for* a collision the spec predicted, and finding it one layer above where it was predicted |
 | **Severity** | **Shipped accessibility defect, not a supplies defect.** Not blocking S6; blocks nothing currently in flight |
-| **Status** | ⏳ **OPEN** — needs a frozen-popover label change, which is an amendment |
+| **Status** | ✅ **CLOSED 2026-08-22** — ruled and frozen in Bench amendment **A9** |
 
 **The defect.** A single constant, `Copy.BenchInk.INK` (`"Ink"`), is the drawn and spoken label for **two
 different swatches** — `ZinelyMakerInkId.Ink`, a maker ink, and `ZinelyNeutralId.Ink`, a neutral — and the
@@ -5297,6 +5429,16 @@ the terminology pass (§0 O-A), not to a naming package that happened to walk pa
 of the nineteen swatch names or any bench verb, with `Ink` named explicitly in its own assertion. That cannot
 fix the existing collision, but it makes it **impossible to make worse**, and a future rename that reaches for
 `Ink` re-breaks the build. This is the honest half of the fix and is recorded as such rather than as a close.
+
+#### ✓ ACCESSIBILITY RULING — 2026-08-22: keep the printed pigment; qualify the spoken controls
+
+*Ruled by the implementer under explicit owner delegation and frozen in `v21-bench.html` amendment A9.*
+
+Both swatches still draw **Ink**. Their accessible names are now **Spot ink** in the Inks band and
+**Neutral ink** in the Neutrals band; the context-bar verb remains **Ink**. The distinction belongs to the
+channel that lacked context. Renaming the pigment on screen would make every maker learn two visible names
+for the same colour merely to repair a non-visual traversal, while leaving the two controls with one spoken
+name would leave the actual defect intact.
 
 #### ✓ RULING — 2026-08-16: the five naming departures stand {#d-083-ruling}
 
@@ -5435,7 +5577,7 @@ an expiry condition written in prose has no expiry mechanism.** There was no tes
 | **Artifacts** | `feature/editor/.../BenchArtSheet.kt` · [SUPPLIES-SPEC §9](SUPPLIES-SPEC.md) · [D-084](#d-084) (the A5 Art-sheet ruling) |
 | **Found** | 2026-08-16, by the Review Agent on package **P-G**, as a **Pass 2 risk raised before any Pass 2 ran** |
 | **Severity** | Open design question on an unreleased surface. Not a blocker — the sheet has no production call site yet |
-| **Status** | ✅ **CLOSED 2026-08-20** — ruled with [D-093](#d-093-ruling), as they were bundled. See [the ruling](#d-086-ruling) |
+| **Status** | ✅ **CLOSED 2026-08-20** — ruled with [D-093](#d-093-ruling), as they were bundled. See [the ruling](#d-086-ruling). ⚠ **Read with [D-104](#d-104)**: this entry closed the over-promise at the *tile*, and D-104 records that doing so moved it up to the *family heading*. D-086 stays closed — the question it asked was answered — but a reader taking it as "the drawer no longer over-promises" would be taking it too far |
 
 **The situation.** Only four of the sixteen supplies have authored outlines (the `shape.*` family); twelve
 are owed to a designer. P-G draws **all sixteen** — the freeze specifies sixteen under four headings, and
@@ -5514,7 +5656,7 @@ reader was always told, and the tile no longer shows them a mark they cannot hav
 | **Artifacts** | `core/ui`'s `ZSheetSurface` / `ZSheet` scrim · `feature/editor/.../BenchArtSheet.kt` (patched locally) |
 | **Found** | 2026-08-16, package **S7-placement** — and only because the Art sheet finally got a production call site |
 | **Severity** | **Live interaction defect**, pre-existing and general. Symptom fixed on the Art sheet's inert tiles; the cause is untouched |
-| **Status** | ⏳ **OPEN** — needs a root-cause fix in `ZSheetSurface` |
+| **Status** | ✅ **FIXED 2026-08-26** — `ZSheetSurface` is now the shared non-consuming pointer boundary; focused root-component regression passes |
 
 **The defect.** A composable with no pointer-input node is not in the hit path, so a touch on it falls
 through to the sheet's full-screen scrim **sibling**, whose `clickable` is `onDismiss`. On the Art sheet
@@ -5536,16 +5678,22 @@ blindness hides.
 **Deferred rather than fixed here** because the root cause interacts with a decision nobody has made: how a
 scrim should behave under a future **scrolling** sheet body. Fixing it blind would prejudge that.
 
+**Resolution.** The surface itself now participates in pointer hit testing across its complete painted bounds.
+Its observer deliberately consumes nothing, so nested buttons and scrolling bodies retain their gesture streams;
+the lower scrim sibling simply never becomes the hit target for a touch that began inside the sheet. The shared
+component regression taps the inert title first (no dismiss), then the real scrim (dismiss), protecting both sides
+of the contract without adding caller patches.
+
 ---
 
-### D-088 — the Art row ships Photo's glyph, verbatim and on purpose {#d-088}
+### D-088 — the Art row ships Photo's glyph, verbatim and on purpose {#d-088} — ✅ **SUPERSEDED**
 
 | | |
 |---|---|
 | **Artifacts** | `feature/editor/.../BenchAddChooser.kt` · `docs/design/mockups/v21-bench.html:840-841` · [D-080](#d-080) · D-051 / OD-26 |
 | **Found** | 2026-08-16, package **S7-placement**, while adding the Add chooser's Art row |
 | **Severity** | Cosmetic, inherited from the frozen file. Two chooser rows now carry the same icon |
-| **Status** | ✅ **Ruled — carried forward, no implementation change** (consistent with D-051 / OD-26) |
+| **Status** | ✅ **SUPERSEDED 2026-08-29 by [D-094's owner-approved A15/A16 collage ruling](#d-094-ruling)** |
 
 The frozen mockup gives the **Art** row at `:829` the **byte-identical** SVG it gives **Photo** at `:828`.
 S7 first drew a star instead, reasoning that the duplicate was obviously an authoring slip.
@@ -5556,8 +5704,9 @@ carried forward, no implementation change — which the **Photo row above it alr
 star would have obeyed the ruling on one row and overruled it on the row directly beneath. *Consistency
 with a known-imperfect spec beats a local improvement that makes the spec's own record incoherent.*
 
-⚠ **[D-080](#d-080) should be read with this entry**: a reader of D-080 could reasonably assume Compose had
-diverged. It has not. The duplicate ships.
+This was the correct implementation ruling while the frozen file still duplicated the mark. It is retained as
+history, not current direction: A15 later amended the HTML, A16 froze the accepted design, and
+[D-094](#d-094-ruling) now requires Compose to give Art the distinct collage glyph.
 
 ### D-090 — the decor verb row has never had a golden, so its pixels are unobserved {#d-090}
 
@@ -5681,8 +5830,8 @@ visibility resolves against") stated the *cause* of the bug as its justification
 |---|---|
 | **Artifacts** | `feature/editor/.../BenchSnack.kt:60` · `feature/editor/.../BenchContextBar.kt:469` · `EditorScreen.kt:1408,1552` |
 | **Found** | 2026-08-17, package **S7-placement**, **Pass 1 device verification** on SM-A176B / Android 16 |
-| **Severity** | **Visible defect on the happy path.** The message reads `Placed on the pa` — the sentence is cut mid-word by the Replace/Ink/Delete pill |
-| **Status** | 🔶 **Open — needs an owner ruling, not an implementer fix** (see below) |
+| **Severity** | **Visible defect on the happy path.** As first found, the message read `Placed on the pa` — cut mid-word by the Replace/Ink/Delete pill. ⚠ **The 2026-08-20 re-observation saw the reverse** (the snack whole, `Replace` drawn under it), and the frozen z-order says the reverse is what *should* happen — see [the re-observation](#d-089) before treating either symptom as the settled one |
+| **Status** | ✅ **Closed 2026-08-22 — owner ruling frozen as Bench amendment A8; stacked and regression-tested** |
 
 `BenchSnackInsetBottom` and `BenchContextBarInsetDp` are **both `12.dp`**, and both surfaces are placed with
 `Modifier.align(Alignment.BottomCenter)` in the same `Box` ([EditorScreen.kt:1408](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt#L1408) and
@@ -5702,22 +5851,52 @@ exists, stack the snack above the bar, or suppress the context bar until the sna
 decision belongs in `v21-bench.html` **first**. An implementer picking one silently would be redesigning a
 frozen surface. Evidence: `scratchpad/dev/09-placed.png`.
 
-#### Re-observed 2026-08-20, package **P4**, same device — and **which surface loses is not stable**
+#### Re-observed 2026-08-20, package **P4**, same device — and the entry's **titular symptom is the anomaly**
 
 Seen again on SM-A176B / Android 16 while device-verifying P4 (placing `fix.corner`). ⚠ **The symptom
 this entry is titled after did not reproduce, and the opposite one did.** The snack read
-`Placed on the page` **in full**, and it was the **context bar** that lost — `Replace` was drawn under the
+`Placed on the page` **in full**, and it was the **context bar** that lost — `Replace` drawn under the
 snack's own surface, legible only as `…eplace`, with all three actions dimmed behind it.
 
-That matters for the ruling rather than for the fix. The entry's title — *"the pill eats the message"* —
-records one of **two** outcomes of the same overlap, and a ruling written to protect the message would
-still leave a half-drawn `Replace` on the other draw order. Both surfaces are `BottomCenter` in one `Box`
-with no z-order stated between them, so which one covers the other is **whatever the composition order
-happens to be that frame**, not a property either surface declares. The three options above are unchanged
-and still the owner's; this note only widens what any of them has to be true of.
+⚠⚠ **My first write-up of this explained it as non-determinism, and that was wrong. The stacking order
+is specified, deliberate, and stable — independent review caught it and the code says so out loud.** What
+I wrote was that both surfaces are `BottomCenter` in one `Box` *"with no z-order stated between them, so
+which one covers the other is whatever the composition order happens to be that frame."* Every clause of
+that is false:
+
+- **The freeze states the order.** [EditorScreen.kt:1622-1627](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt#L1622) records it from the frozen bench:
+  *"`.ctx` is `z-index:30` (`:357`), `.snack` is `38` (`:444`) … Raising the popover rather than
+  reordering the composition **keeps the snack above the verb bar, which is the other half of the frozen
+  order**."*
+- **The composition realises it deterministically.** `BenchContextBar` is composed before `BenchSnack`,
+  both unconditionally (visibility is a *parameter*, not a conditional call — `BenchSnack.kt:174-175`), so
+  at equal `zIndex` the later child draws on top. **The snack always wins.** Not sometimes.
+
+**So the 2026-08-20 observation is the *expected* behaviour, and this entry's original symptom — the snack
+truncated to `Placed on the pa` by the pill — is the one that now has no explanation.** That inverts what
+is owed: it is no longer only *"decide which surface should win"* (the freeze already decided: the snack),
+but also **"why did the losing surface ever win on 2026-08-17?"** A ruling that picks a winner without
+answering that would be built on the same misreading this note was.
+
+The three options above are unchanged and still the owner's. What this note actually contributes is
+narrower and more useful than the scope-widening it originally claimed: **the frozen z-order is evidence
+for option (b), stacking**, since the freeze has already ruled that the snack sits above the verb bar.
 
 Not caused by P4 — P4 touches neither `BenchSnack` nor `BenchContextBar`, and this entry predates it by
 three days. Recorded here rather than filed as a new defect because it is the same overlap.
+
+#### Ruling — 2026-08-22 (owner) {#d-089-ruling}
+
+**Keep both surfaces and stack the snack above the context bar with 12dp clear between their painted
+bounds.** Placement is both an undoable act and the beginning of refinement: suppressing the snack hides
+the fastest escape from a mistake, while suppressing the context bar makes the newly selected Art less
+immediately editable. The existing z-order already says the snack is the upper surface, so stacking
+extends rather than reverses that rule.
+
+Bench amendment A8 measures the context bar's live top edge, including large-text growth. Compose reserves
+the bar's complete measured contract (`BenchContextBarReservedHeightDp`) plus 2dp for the snack's -0.6°
+rotation; the snack's own 12dp inset is therefore the clear gap. `BenchArtPlacementTest` now exercises the
+previously missing coexistence state and compares the two transformed bounds before invoking Undo.
 
 ---
 
@@ -5890,14 +6069,14 @@ and four lose their glyph. The `*_compare.png` was read before the re-record, an
 
 ---
 
-### D-094 — `Photo` and `Art` carry byte-identical glyphs, in the frozen file {#d-094}
+### D-094 — `Photo` and `Art` carry byte-identical glyphs, in the frozen file {#d-094} — ✅ **RULED & FIXED**
 
 | | |
 |---|---|
 | **Artifacts** | [`v21-bench.html` §`openSupply()`, `:828-829`](mockups/v21-bench.html) · `feature/editor/.../BenchAddChooser.kt` |
 | **Found** | 2026-08-18, **Pass 2 on SM-A176B** — the first thing seen on opening the chooser, before anything was placed |
 | **Severity** | Open design question. Two of the three ways into the page are visually indistinguishable |
-| **Status** | ⏳ **OPEN — owner act.** The duplication is in the frozen file, so the fix is an amendment, not a code change |
+| **Status** | ✅ **CLOSED 2026-08-29 — A15/A16's owner-approved collage glyph is implemented in Compose** |
 
 **The observation.** The `Add to your page` sheet offers three rows — `Text`, `Photo`, `Art`. `Photo` and
 `Art` are drawn with **the same icon**: a framed picture with a mountain-and-sun path. Not similar —
@@ -5935,6 +6114,14 @@ holding, and *"which of these two identical things do I want?"* is a question th
 **Related.** [D-093](#d-093) is the same species one level down — there, the tile's picture mispredicts the
 mark; here, the row's picture fails to distinguish the *category*. Both are the drawer's iconography
 promising something other than what it delivers, and both are owner acts because both live in the freeze.
+
+#### Ruling and implementation, 2026-08-29 {#d-094-ruling}
+
+The owner confirmed that `Photo` and `Art` should be different. A15 had already supplied the exact answer,
+and A16 froze its accepted information architecture: `Photo` keeps the frame-and-horizon picture mark;
+`Art` uses **two overlapping paper scraps and one printed dot**. Compose now transcribes that collage path
+for the Art row. Titles, subtitles, 48dp-or-larger row targets, traversal order, contrast, and the existing
+single-node TalkBack descriptions are unchanged; the distinct glyph is an additional non-colour cue.
 
 ---
 
@@ -6673,31 +6860,86 @@ whatever HEAD happens to be.
 |---|---|
 | **Artifacts** | `feature/editor/.../BenchArtSheet.kt` (`BenchArtNotYetSize`, the `Copy.BenchVerbs.NOT_YET` branch) |
 | **Found** | 2026-08-20, package **P4**, **Pass 2 device verification** on SM-A176B / Android 16, `font_scale 1.8` |
-| **Severity** | **Cosmetic, on a surface a first-time maker meets.** Legible throughout; nothing clips and nothing is lost |
-| **Status** | 🔶 **Open — an owner ruling, because every fix is a change to a frozen surface** |
+| **Severity** | **Cosmetic, on a surface a first-time maker meets.** Legible at the scale measured; nothing was lost |
+| **Status** | ✅ **CLOSED 2026-08-22** — owner copy split frozen in Bench amendment **A9** |
 
 At the system font scale of `1.8`, `NOT AVAILABLE YET` wraps to three lines inside its tile and breaks
 **mid-word**: `NOT` / `AVAILABL` / `E YET`. `AVAILABLE` is wider than the tile at that scale, so Compose
 breaks the word rather than overflowing it.
 
-⚠ **This entry exists as much to correct a prediction as to record a defect.** Closing P4's Pass 2 I wrote
-that at large font scale the label *"can clip"*, and carried it forward as an open note. **It does not
-clip.** Measured on the device at `1.8`, every glyph is drawn, inside the tile, at full opacity — the tile
-grows with the text and the sheet scrolls. The real behaviour is uglier in a completely different way and
-strictly less harmful than the one I guessed at. I had not run the scale when I wrote the note, and the
-note read as though I had.
+⚠ **This entry exists as much to correct a prediction as to record a defect.** The prediction is in the
+code, at [BenchArtSheet.kt](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/BenchArtSheet.kt), in the comment above the label's `textAlign`: *"At a
+large system font scale the word **can still outgrow the tile** — the tile is `clip`ped … Flagged for Pass 2
+rather than solved."* Closing P4 I restated that as *"the label can clip"* and carried it forward.
 
-**Why no implementer fix is proposed.** The three candidates each change a frozen surface, and
-[DESIGN FREEZE](../../CLAUDE.md#design-freeze) puts that in `v21-bench.html` first:
+**Measured at `1.8`, it does not clip:** every glyph is drawn, inside the tile. The real behaviour is
+uglier in a different way and strictly less harmful than the one predicted. I had not run the scale when I
+wrote the note, and the note read as though I had.
+
+⚠ **Two corrections to my own correction, both from independent review, and both worth keeping because
+they are the same species of error as the original:**
+
+1. *"The tile grows with the text and the sheet scrolls"* — **false, and it was the explanation, not the
+   observation.** The tiles are `Row` children at `Modifier.weight(1f)` across `BenchArtGridColumns = 4`
+   with `.aspectRatio(1f)`: tile size derives from column width and is **independent of font scale**. The
+   tile does not grow. The word fits because three lines of it fit, not because anything expanded.
+2. *"At full opacity"* — **false.** `BenchArtNotYetAlpha = 0.55f`, by design and by the freeze
+   (`.tile.na .naw{opacity:.55}`). The label is drawn at 55%.
+3. **"It does not clip" is measured at one scale.** `1.8` is what was run; the comment being corrected said
+   the word *"can"* outgrow the tile, and a single measurement does not refute a possibility claim across
+   the whole range. The honest statement is *at 1.8 it does not clip*, not *it cannot*.
+
+*Three explanations offered around one observation, and all three were wrong while the observation held.
+That is the pattern this entry is really about.*
+
+#### What kind of defect this is — corrected
+
+The first filing said every fix changes a frozen surface, so it must be an owner ruling. **Review found a
+fourth candidate I had not listed, and it needs no owner:**
+
+- **Constrain Compose's line-breaking to word boundaries.** The frozen rule is
+  `.tile.na .naw{font-size:.56rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;…}`
+  (`v21-bench.html:478`) — **no `word-break`, no `overflow-wrap`, no `hyphens`**, so CSS default
+  `overflow-wrap: normal` applies and the frozen surface **does not break inside a word**. Compose doing so
+  is a **divergence from the freeze**, and [DESIGN FREEZE](../../CLAUDE.md#design-freeze) expressly permits
+  *"implementation parity fixes"* after freeze. That makes this an implementer's defect, not the owner's.
+
+⚠ **But the parity fix has a consequence review did not state, and it is the reason this entry stays open
+rather than being closed by a one-line change.** CSS `overflow-wrap: normal` does not make a too-wide word
+*fit* — it makes it **overflow**, and the tile is `clip`ped. So exact parity converts a mid-word break into
+the clipped word the original code comment feared. **Choosing parity here means choosing clipping**, and
+between "breaks mid-word, fully legible" and "matches the freeze, clipped" the second is worse for the
+maker at `1.8` — which is an accessibility judgement, and those do not get made by appeal to parity alone.
+
+**A further reading, which is why the freeze cannot settle it either.** `AVAILABLE` fits the mockup's tile
+at the mockup's own size, so the frozen file **never exercises overflow at all**. Absence of a `word-break`
+declaration in a surface that never overflows is not a specification of overflow behaviour — it is silence.
+Reading it as a spec would be inferring a decision the designer never made.
+
+**Where that leaves it.** Not "every fix needs the owner" (wrong — a parity fix exists), and not "an
+implementer should just apply parity" (wrong — that ships a clipped accessibility label). Per the
+[release-category table](../../CLAUDE.md#release-categories--never-conflate) this is **Technical Debt with
+an accessibility question attached**: the mechanical fix is an implementer's, the choice of *whether legibility
+or parity wins at large scale* is one line from the owner. The other two candidates are unchanged:
 
 - **Shorten the string** — `Copy.BenchVerbs.NOT_YET` is also what `stateDescription` speaks to TalkBack, so
   this is a copy change on two surfaces at once, not a layout tweak.
-- **Shrink the text at large scales** — capping the scale factor of an accessibility setting to make a
-  label fit is the kind of fix that trades a real need for a cosmetic one, and it should be ruled on
-  deliberately rather than chosen by an implementer.
-- **Accept it.** Defensible: the word is fully legible, and a maker at `1.8` is reading it, not admiring it.
+- **Shrink the text at large scales** — **correctly rejected**: capping the scale factor of an accessibility
+  setting to make a label fit is an accessibility *regression*, not the "accessibility improvement" the
+  freeze permits.
 
-Recorded here so the next reader gets the measurement rather than my guess.
+Recorded here so the next reader gets the measurement rather than my guess — and gets the three wrong
+mechanisms too, since they are the part that needed a reviewer to catch.
+
+#### ✓ RULING — 2026-08-22: shorten what the tile draws, keep what TalkBack explains
+
+*Ruled by the implementer under explicit owner delegation and frozen in `v21-bench.html` amendment A9.*
+
+The tile now draws **Not / yet** on two intentional lines. Its disabled `stateDescription` continues to say **Not available yet**.
+This is not a font-scale cap and not a clipping workaround: the visual label becomes two short lines that
+remain whole at the measured accessibility scale, while the non-visual state retains the fuller explanation.
+A7's claim that the two channels must be verbatim is explicitly overturned; its load-bearing rule — no
+invented mark for an unauthored supply, and an honest disabled explanation — remains intact.
 
 ---
 
@@ -6708,17 +6950,20 @@ Recorded here so the next reader gets the measurement rather than my guess.
 | **Artifacts** | `core/copy/.../Copy.kt` (`Supplies.TAPE_AND_FIXINGS`, `Supplies.CUT_PAPER`) · the Art sheet's family headings |
 | **Found** | 2026-08-20, package **P4**, **Pass 2 device verification** on SM-A176B / Android 16 |
 | **Severity** | **A promise the screen makes and does not keep.** No incorrect behaviour |
-| **Status** | 🔶 **Open — an owner ruling; it is a wording/scope question, not a bug** |
+| **Status** | ✅ **CLOSED 2026-08-22** — A11 completed the frozen sixteen without changing their names, order or families. `TAPE & FIXINGS` now shows Torn tape and Paper clip; `CUT PAPER` now shows Torn strip and Marker underline. The headings keep the promise they already made, so no copy change is required. That closure did not itself widen the library; ADR-107's later 2026-08-25 ruling does. |
 
 P4 replaced the four unauthored tiles' invented glyphs with the words `NOT AVAILABLE YET`
 ([D-086 ruling](#d-086-ruling)). That was the right trade and it is not in question here. But it moved the
 over-promise **up one level**, from the tile to the heading above it, and that is visible on the device in
 a way it was not in review:
 
-- **`TAPE & FIXINGS` contains no tape.** The family's four are `tape.torn` · `fix.corner` · `fix.staple` ·
-  `fix.clip`, and `tape.torn` is one of the unauthored four. The heading's **first and most prominent
-  noun** is precisely the one thing under it a maker cannot have. Previously a tape-shaped glyph was drawn
-  there, so the heading was corroborated by a picture — falsely, which is why it went, but corroborated.
+- **`TAPE & FIXINGS` contains no tape — and is missing half its family.** The four are `tape.torn` ·
+  `fix.corner` · `fix.staple` · `fix.clip`, and **two of them are unauthored**: `tape.torn` and `fix.clip`.
+  So the heading's **first and most prominent noun** is precisely the one thing under it a maker cannot
+  have, and only half the row answers at all. Previously a tape-shaped glyph was drawn there, so the
+  heading was corroborated by a picture — falsely, which is why it went, but corroborated.
+  *(⚠ This entry originally named only `tape.torn`; independent review found it was under-claiming its own
+  case. Worth recording as the rarer direction of error in this file.)*
 - **`CUT PAPER` shows a window frame and a speech tag.** Its unauthored two are `paper.strip` and
   `paper.underline`; what survives reads more like *frames and labels* than *cut paper*.
 
@@ -6734,3 +6979,268 @@ mistaken for closed when [D-086](#d-086) is read as done.
 what they currently hold; or accept it as a temporary state that ADR-107 retires. The first is the only
 one that does not spend a copy change on a condition meant to be temporary — which is an argument, not a
 ruling, and the ruling is the owner's.
+
+⚠ **Later status, 2026-08-25:** the paragraph above records the alternatives as they stood when D-104 was
+open. ADR-107 is now accepted with a staged 16→32 expansion; [D-080](#d-080) owns that later surface's
+remaining visual-freeze gate. This does not reopen D-104, whose frozen-sixteen heading defect was already
+closed by A11.
+
+---
+
+### D-105 — `git reset --hard` destroyed three files the session was explicitly told never to touch {#d-105}
+
+| | |
+|---|---|
+| **Artifacts** | `README.md` · `docs/RESEARCH.md` · `gradle.properties` — uncommitted working-tree changes, unrecoverable |
+| **Found** | 2026-08-20, immediately, by the agent that caused it |
+| **Severity** | **Data loss.** Owner's uncommitted work, gone; no defect in the product |
+| **Status** | ⛔ **Not fixable — recorded so the cause does not recur.** No ruling owed |
+
+A standing constraint on this session named five items to **never touch**: `README.md`,
+`docs/RESEARCH.md`, `gradle.properties`, `37596.jpg`, `acdec/`. All five carried changes the agent did not
+make. For the whole session they were correctly excluded from every commit — every `git add` named its
+paths explicitly, and `git show --stat` on each commit confirms none of the five appears.
+
+Then, to move the working tree onto the freshly-merged `origin/main` before applying review fixes, the
+agent ran `git checkout main && git reset --hard origin/main`. **`reset --hard` discards uncommitted
+working-tree changes**, and the three tracked files among the five were discarded with it.
+
+**Unrecoverable, and why each avenue failed:** the changes were never staged, so no blob object exists and
+`git fsck --dangling` has nothing to offer; VS Code local history holds one `README.md` snapshot from
+2026-06-20, an old pre-implementation revision, not the lost edit; `Win32_ShadowCopy` returned no usable
+snapshots. The three files now hold their committed `origin/main` content. **The contents of the lost
+diffs are unknown** — the constraint meant they were never read, so they cannot be reconstructed or even
+described.
+
+⚠ **The failure is not "used a dangerous command". It is that the command served the agent's convenience
+and nothing else.** Nothing about applying review fixes to three documents required moving the branch at
+all; the edits were textual and would have applied identically. The reset was tidiness. **A destructive
+operation run for tidiness has no upside to weigh against its downside** — which is the whole of the
+lesson, and is why this is filed rather than apologised for.
+
+🟨 **The rule this yields, stated so it is checkable:** *a "never touch" list is a list of files that must
+survive every command, not merely a list of files to keep out of commits.* The session honoured the
+narrow reading for hours and then broke the broad one in a single command. Before any command that can
+discard working-tree state — `reset --hard`, `checkout -- .`, `clean -fd`, `stash` without `-u` — check
+`git status --porcelain` for entries that must survive, and if any exist, either don't run it or copy
+them aside first. **`git stash push -- <those paths>` would have preserved them at zero cost.**
+
+---
+
+### D-106 — context verbs clip their captions at accessibility text scale {#d-106}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../BenchContextBar.kt` (`BenchContextBarButtonHeightDp`) · `docs/design/mockups/v21-bench.html` (`.ctx button`) |
+| **Found** | 2026-08-22, D-089 device follow-up on SM-A176B / Android 16 at `font_scale 1.8` |
+| **Severity** | **Accessibility defect.** Actions remain present but their printed names are partly clipped |
+| **Status** | ✅ **CLOSED 2026-08-22** — parity ruling frozen in Bench amendment **A10** |
+
+The HTML gives each verb 8px vertical padding and a 50px **minimum width**, but no height. Compose had
+converted the default-scale intrinsic stack into a fixed 50dp height. At `font_scale 1.8`, Replace, Ink
+and Delete grew while their box did not, so the captions were visibly cut.
+
+#### ✓ RULING — 2026-08-22: grow the control; do not shrink the maker's text
+
+The 50dp resting size is now a minimum height. A verb may grow vertically with accessibility text while
+keeping its label, order, bottom inset and horizontal geometry. D-089/A8 still applies: placement feedback
+uses the bar's measured live height, so the required 12dp painted clearance survives that growth. Capping
+font scale, ellipsizing or shortening action names were rejected because each would repair layout by taking
+information away.
+
+---
+
+### D-107 — the Ink tray hides its active choice, wraps one orphan swatch, and overpromises its palette action {#d-107}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (`openInk`, A16) · `feature/editor/.../BenchInkPopover.kt` (`BenchInkPreset.applied`) · [OD-24](#d-028-ruling) |
+| **Found** | 2026-08-25, owner rendered review alongside D-080/A15 |
+| **Severity** | **Visible UX and trust defect.** The controls work, but the tray is hard to scan and its prototype caption describes an action the product does not perform |
+| **Status** | ✅ **RESOLVED + IMPLEMENTED 2026-08-26 — A16 is frozen and the Compose tray now matches it** |
+
+The 411dp device geometry already recorded under D-090 makes the ten-ink band wrap **9 + 1**, leaving `Ink`
+alone on a second row. The painted pots carry no visible names, the current ink is only a dashed ring among
+the pots, and the three recipe pills compress their dots and labels into the remaining width. Each fact is
+survivable alone; together they make a tool the maker must remember rather than read.
+
+The stronger problem is semantic. The frozen caption says the ready-made pairs are *"a whole zine in one
+tap"*. [OD-24](#d-028-ruling) and `BenchInkPreset.applied` are explicit that a recipe applies
+`dots.first()` — its **primary ink** — to the selected element. The other dots are a suggested combination,
+not a document-wide operation. Preserving the caption would make a prettier panel continue to promise a
+feature that does not exist.
+
+**A16 resolution, owner-approved 2026-08-26:** show a paper-backed current-ink summary;
+place ten spot inks on a stable 5×2 grid; keep each painted pot at 30px inside a ≥48px named target; omit paper
+tints for text exactly as OD-24 requires; and present the three recipes as `Starting palettes`, each stating
+`Apply Ink`, `Apply Brick`, or `Apply Forest`. The recipe still shows the whole combination, but its action is
+now honest. [RESEARCH R14](../RESEARCH.md#r14-art-cabinet-and-ink-tray-hierarchy--verified--recommendation)
+holds the external evidence. The visual/interaction contract is frozen; it does not change ink values,
+document semantics, renderer behavior or print output.
+
+**Implementation:** `BenchInkPopover` now renders the document-backed current-ink card, deterministic
+five-column named choices and three equal starting-palette actions. The outer named choice owns the
+radio semantics and ≥48dp target while the inner pot remains 30dp. `BenchC6Test` fences the 5×2 geometry,
+current-ink update, text tint omission and honest visible actions; `BenchInkPresetPlatformA11yTest`
+continues to inspect the Android accessibility tree.
+
+---
+
+### D-108 — the typing row depicts three tools but only Done works {#d-108}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (`.styletb`) · `feature/editor/.../BenchStyleRow.kt` · [stakeholder feedback review](../reviews/2026-08-26-stakeholder-feedback.md) |
+| **Found** | 2026-08-26, stakeholder release-candidate pass; independently matches the earlier F-1 first-time-user reading |
+| **Severity** | **P1 discoverability and trust defect.** The row paints controls that read as broken at the exact moment the maker is trying to type |
+| **Status** | ✅ **CLOSED 2026-08-26 — DESIGN FROZEN, implemented, focused tests/goldens pass, two Samsung device passes complete** |
+
+**Repository correction.** `BenchStyleRow` currently says all three style chips are frozen-and-inert, but
+the frozen HTML binds `#editColour.onclick` and opens the Ink tray. Compose therefore has two separate
+problems: it diverges from the prototype for Ink, and it preserves `Font` / `Size` as non-working button
+shapes. TalkBack state descriptions explain the absence, but the stakeholder's screenshot establishes that
+the visual first reading is still *disabled or broken*.
+
+**Ruling (OD-52).** The typing row contains only:
+
+1. a live `Ink` button with the edited element's current swatch;
+2. the quiet, non-interactive cue `More styles after Done`; and
+3. the existing primary `Done` action.
+
+`Font` and `Size` are removed from the typing row, not from the product. `Done` still returns the element to
+Selected, where the existing Type surface owns size, alignment, bold, italic and text ink. Opening Ink ends
+the typing session cleanly before presenting the tray, so no hidden edit draft competes with a second tool
+surface. This is contextual guidance, not a tutorial or a new editor architecture.
+
+The ruling follows the stakeholder evidence directly and agrees with the established-editor baseline:
+[Canva's current text-editing guidance](https://www.canva.com/help/add-and-edit-text/) places formatting on
+an editor toolbar while text is selected, and [Android accessibility guidance](https://developer.android.com/guide/topics/ui/accessibility/principles)
+requires controls and actions to expose their actual purpose. Zinely need not imitate Canva's density; the
+useful baseline is simply that a control-shaped object should perform the action it names.
+
+**Rejected:** making `Font` live (the capability does not exist); duplicating the complete
+Type bar above the IME (crowded, higher implementation risk, and redundant); leaving dim controls in place
+with better explanations (already tried, and the visual failure was reproduced); or silently deleting Ink
+(would preserve the Compose bug by amending the source of truth around it).
+
+**Device verification.** Pass 1 on `SM-A176B` / Android 16 at the device's normal `1.0` font scale typed a
+new draft, opened Ink from the live row, observed the IME and edit session stand down, applied Strawberry,
+and returned to the selected-text tools with the draft preserved. Pass 2 at `2.0` font scale caught Done
+being pushed off-screen by the new hint. The HTML was amended first so the hint owns the flexible middle
+space; Compose then matched it with a two-line, ellipsising weighted label. The pass was rerun on the rebuilt
+release APK: Ink, the cue and Done are all visible and actionable, and Ink still opens the tray. The device
+was restored to its original `font_scale=1.0` and physical density `450` after verification.
+
+---
+
+### D-109 — editor capability is discovered by accident instead of by the surface {#d-109}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (A17) · `EditorMoveResizeHint.kt` · [stakeholder feedback review](../reviews/2026-08-26-stakeholder-feedback.md) |
+| **Found** | 2026-08-26, stakeholder release-candidate pass |
+| **Severity** | **P1 first-use discoverability.** Resize, rotation, alignment and photo cropping work, but were initially reported as missing |
+| **Status** | ✅ **FIXED 2026-08-26 — implemented in `8e44686`; focused tests/goldens and Samsung verification pass** |
+
+The feedback screenshots establish a coherent mismatch rather than four missing features. The stakeholder asked
+for centre alignment while the text editor showed an inert-looking typing row, later found resize and rotation
+after experimenting, and interpreted the eight resize handles as Canva-style crop handles despite the labelled
+`Reframe` verb below the photo. Replacing Zinely's transform semantics with crop semantics would break the shared
+element model and make text, Art and photos manipulate differently.
+
+**Ruling (OD-53 / Bench A17).** Keep every existing capability and make the current one-time guidance concrete:
+
+1. the typing hand-off says `Align, size & more after Done`, explicitly naming the two tools the stakeholder sought;
+2. the first selected element says `Drag to move. Pull a handle to resize. Turn it with the arrows below.`; and
+3. when that first selection is a photo, the last sentence becomes `Turn it below; Reframe crops inside.`
+
+The hint retains its existing persisted one-time gate, non-modal support-scrap treatment and `Got it` dismissal.
+There is no tutorial, new onboarding state, gesture change, crop-handle mode or document/rendering change. The
+photo sentence is contextual because `Reframe` is nonsensical for text and Art; the existing labelled Reframe verb
+and accessibility action remain the durable route after the coach is gone.
+
+**Rejected:** changing handles to crop (breaks cross-element transform consistency); adding a permanent legend
+(noise on the creative surface); adding separate persisted hints for every capability (onboarding state growth for
+one observed misunderstanding); and leaving `More styles` vague (it does not name alignment, the requested action).
+
+**Verification.** Focused editor interaction, copy, persistence-gate and light/dark golden coverage passed. On the
+Samsung `SM-A176B`, the normal-font pass confirmed the contextual text/photo guidance and the maximum-font pass
+kept the typing hand-off, Ink and Done visible together; the device was restored to `font_scale=1.0` afterwards.
+
+---
+
+### D-110 — newly added text starts left-aligned despite a centred creative starting point {#d-110}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (A20) · `EditorReducer.kt` · `TextEditSessionTest.kt` |
+| **Found** | 2026-08-26, stakeholder desktop-brief adaptation |
+| **Severity** | **P2 creative-flow default.** The capability already exists, but every new box begins one style adjustment away from the requested starting point |
+| **Status** | ✅ **CLOSED 2026-08-27 — frozen contract, focused coverage and two-pass Samsung acceptance complete** |
+
+The desktop brief asks for centred text by default. Zinely adopts the useful creative default without adopting
+the desktop properties-panel architecture: `Add › Text` still places the bounded D-052 frame and opens its
+in-place editing session, but the newly minted element begins with `TextAlign.CENTER`. The existing Type surface
+continues to offer Left, Centre and Right after Done.
+
+**Ruling (Bench A20 — 🔒 DESIGN FREEZE, owner-approved 2026-08-26).** Centre is assigned only by the
+reducer-owned `PlaceTextAndEdit` placement act. `TextStyle.align` keeps its `START` model default, persisted text
+is not migrated or rewritten, and the renderer receives no fallback override. Therefore a legacy document whose
+text is left-aligned remains byte- and behavior-compatible when opened; only a genuinely new box receives the
+new starting style.
+
+**Verification contract.** Focused reducer coverage must prove that the minted element is centred, a pre-existing
+start-aligned element is untouched, the style survives text commit plus undo/redo, and cancel still coalesces an
+untouched empty placement. Device acceptance must additionally confirm that the first typed words render centred
+and that Left/Centre/Right remain directly reachable through the established Type surface.
+
+**Device acceptance — 2026-08-27.** The release-signed `0.9.0-beta.2` build was installed in place on the
+Samsung `SM-A176B` without clearing its existing library. Pass 1 created a fresh zine through the production
+`Add › Text` route: `hello zine` rendered centred while editing, and the platform accessibility tree exposed
+Left, Center and Right as enabled radio buttons with Center selected. Switching Left → Right → Center updated
+the checked state each time. After force-stop and relaunch, the saved text remained present and visually centred.
+At `font_scale=1.8`, all three choices remained enabled and reachable; `Right` wrapped onto two lines, recorded as
+pre-existing large-text polish rather than a D-110 regression. The device was restored to `font_scale=1.0`.
+Pass 2 found the starting point understandable and the editing hand-off itself explains where alignment lives:
+`Align, size & more after Done`. No additional navigation or modal instruction was required.
+
+---
+
+### D-111 — an indexed zine can look healthy even when its authoritative document is unavailable {#d-111}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-library.html` (D-111 amendment) · the Library action sheet · the authoritative document revalidation seam |
+| **Found** | 2026-08-28, release-gap audit |
+| **Severity** | **Trust and recovery defect.** The files are authoritative and Room is rebuildable, so an indexed card may survive a corrupt or newer-than-supported `document.json`; opening it later reads as Zinely losing a zine. |
+| **Status** | ✅ **RULED — owner-approved 2026-08-28.** The action sheet gains an unavailable-project state; the shelf itself does not. |
+
+**Frozen amendment.** A project whose authoritative document is unavailable remains in its existing shelf position,
+with its existing cover, title, date and overflow door. It receives **no badge, warning mark, card replacement or
+shelf-wide error state**: the shelf still answers *“Which zine is mine?”*, and the index remains useful for the
+actions that do not need the document body.
+
+Tapping that unavailable card's ordinary open target routes to this same action sheet instead of attempting a failed
+bench open. The shelf adds no second affordance; it only chooses the honest reachable door when the document body is
+known unreadable.
+
+Opening that project's existing action sheet preserves its five rows, title, format/date disclosure, order and
+geometry. The rows have this exact availability:
+
+| Row | State | Reason |
+|---|---|---|
+| Open on the bench | disabled | Opening requires a readable authoritative document. |
+| Share & export | disabled | Export requires the same document. |
+| Rename | enabled | Title metadata remains independently editable. |
+| Duplicate | disabled | Duplication must not copy an unreadable or newer document. |
+| Delete | enabled | The maker retains a local recovery/cleanup choice. |
+
+Disabled rows remain visible in place, use real disabled semantics, and keep their labels; they are not removed,
+reordered, or converted into a new dialog. Their reason comes from the detected health condition through the
+implementation's copy/accessibility seam, not from a second hard-coded explanation in the frozen sheet. This
+amendment deliberately does not decide persistence, index reconciliation cadence, repair, backup recovery, or
+the wording for each failure family; those belong to the derived project-health implementation and its tests.
+
+**Rejected.** A shelf badge or a second “broken zine” card would make a maker diagnose storage before they can
+recognise their work. Hiding the card would make recovery and deletion harder. Removing disabled rows would make
+the action sheet's stable order depend on a failure that the maker did not cause.

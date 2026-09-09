@@ -119,7 +119,10 @@ public const val ProofShareTestTag: String = "proof-share"
 /** The band's `.done` completion block, raised in place of `.commit` once a PDF is in Downloads. */
 public const val ProofDoneTestTag: String = "proof-done"
 
-/** `.done`'s one action — the ADR-041 hand-off into the fold guide. */
+/** `.done`'s explicit, user-controlled route to the durable PDF in Downloads. */
+public const val ProofOpenPdfTestTag: String = "proof-open-pdf"
+
+/** `.done`'s ADR-041 hand-off into the fold guide. */
 public const val ProofFoldItUpTestTag: String = "proof-fold-it-up"
 public const val ProofPaperChangedTestTag: String = "proof-paper-changed"
 
@@ -141,6 +144,7 @@ public enum class ProofDrawer { None, Details, Fold }
 // mirrors the frozen SVGs rather than re-drawing them.
 private const val ICON_BACK = "M15 5l-7 7 7 7"
 private const val ICON_FOLD = "M4 6h16v6l-8 6-8-6z"
+private const val ICON_OPEN_PDF = "M6 3h9l3 3v15H6zM14 3v4h4M9 12h6M9 16h6"
 private const val ICON_CHECK = "M5 12l5 5 9-11"
 private const val ICON_CHEVRON = "M9 6l6 6-6 6"
 
@@ -253,6 +257,8 @@ private const val SheetChrome = 110f
  *   name (e.g. `zine.pdf`) the exporter wrote to Downloads. Each raises the band's `.done` block, whose
  *   copy NAMES that file and its destination — the check that makes [ADR-054]'s *we kept a copy*
  *   verifiable. Share emits nothing: there is no durable copy to point at.
+ * @param onOpenSavedPdf opens the exact durable item represented by the current completion. Null keeps
+ *   previews and hosts without an Android document edge from drawing a control they cannot honour.
  * @param modifier sizing/placement for the whole surface.
  */
 @Composable
@@ -266,6 +272,7 @@ public fun ProofScreen(
     failedTarget: ProofExportTarget? = null,
     onRetryExport: () -> Unit = {},
     savedSignals: Flow<String> = emptyFlow(),
+    onOpenSavedPdf: (() -> Unit)? = null,
     pages: List<Page> = emptyList(),
     pageSizePt: PtSize = PtSize(0.0, 0.0),
     defaults: DocumentDefaults = DocumentDefaults(),
@@ -413,7 +420,6 @@ public fun ProofScreen(
                     pages = pages,
                     pageSizePt = pageSizePt,
                     defaults = defaults,
-                    reduceMotion = reduceMotion,
                     imageBytes = imageBytes,
                     onLeafChange = { leafPage = it },
                     modifier = Modifier
@@ -431,6 +437,7 @@ public fun ProofScreen(
                     onOpenDetails = { open(ProofDrawer.Details) },
                     onSavePdf = { onExportPdf(ProofExportTarget.SAVE) },
                     onShare = { onExportPdf(ProofExportTarget.SEND) },
+                    onOpenSavedPdf = onOpenSavedPdf,
                     // Back to step 1. `.done` appears when a *new* PDF lands in Downloads, so its
                     // hand-off means "now fold this sheet", not "resume the sheet you were folding".
                     onFoldItUp = { foldStep = 0; open(ProofDrawer.Fold) },
@@ -718,7 +725,7 @@ private fun ProofIconButton(
                 // top bar sits flatter than a control you press.
                 .zinelyV21HardShadow(2.dp, colors.inkLine, pill)
                 .clip(pill)
-                .background(colors.paper)
+                .background(colors.surface)
                 .border(1.5.dp, colors.ink, pill),
             contentAlignment = Alignment.Center,
         ) {
@@ -825,10 +832,10 @@ private val TicketDash = 3.dp
  * pass, priority 1–2 over 5, and it is the Proof's own question — *"how do I print it correctly?"* — that
  * decides it.
  *
- * **`.done` has one action, not two.** The frozen row is *"Fold it up"* beside *"Back to shelf"*, whose
- * flash text admits the shelf does not exist yet (*"the finished book lives in Read"*). Zinely is
- * single-project today, so that control could only be the top bar's own back wearing a name for a place
- * there is no route to. One exit, in the one place it has always been.
+ * **`.done` does not invent a second exit.** The original frozen row put *"Fold it up"* beside *"Back to
+ * shelf"*, whose flash text admitted that route did not exist yet. The shelf action stays retired. The
+ * stakeholder amendment adds *"Open PDF"* instead: an explicit inspection action for the exact durable
+ * file, while saving itself remains in Proof for the physical fold hand-off.
  *
  * @param pageCount how many pages the PDF will carry — the first phrase of `.ready`'s summary.
  * @param savedName the display name of the PDF in Downloads, or null before there is one. Non-null swaps
@@ -850,6 +857,7 @@ private fun ProofBand(
     onOpenDetails: () -> Unit,
     onSavePdf: () -> Unit,
     onShare: () -> Unit,
+    onOpenSavedPdf: (() -> Unit)?,
     onFoldItUp: () -> Unit,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -881,7 +889,7 @@ private fun ProofBand(
                     }
                 }
                 .clip(card)
-                .background(colors.paper)
+                .background(colors.surface)
                 .border(1.5.dp, colors.ink, card)
                 .padding(
                     start = ZinelyV21Dimens.gapMd,
@@ -901,7 +909,12 @@ private fun ProofBand(
             if (staleFrom != null) ProofPaperChangedNote(from = staleFrom, to = paper.displayName)
             ProofCommitRow(busyTarget = busyTarget, onSavePdf = onSavePdf, onShare = onShare)
         } else {
-            ProofDoneBlock(savedName = savedName, folded = folded, onFoldItUp = onFoldItUp)
+            ProofDoneBlock(
+                savedName = savedName,
+                folded = folded,
+                onOpenSavedPdf = onOpenSavedPdf,
+                onFoldItUp = onFoldItUp,
+            )
         }
         }
 
@@ -1205,7 +1218,7 @@ private fun ProofBandButton(
             .zinelyV21HardShadow(if (pressed) press.pressed else press.rest, colors.inkLine, pill)
             .zinelyFocusRing(interactionSource, ZinelyV21Dimens.radiusPill)
             .clip(pill)
-            .background(if (hero) colors.leaf else colors.paper)
+            .background(if (hero) colors.leaf else colors.surface)
             .border(1.5.dp, colors.ink, pill)
             .clickable(
                 interactionSource = interactionSource,
@@ -1247,7 +1260,12 @@ private fun ProofBandButton(
  * announcement rather than a live region.
  */
 @Composable
-private fun ProofDoneBlock(savedName: String, folded: Boolean, onFoldItUp: () -> Unit) {
+private fun ProofDoneBlock(
+    savedName: String,
+    folded: Boolean,
+    onOpenSavedPdf: (() -> Unit)?,
+    onFoldItUp: () -> Unit,
+) {
     val colors = ZinelyTheme.v21Colors
     val typography = ZinelyTheme.typography
     val haptics = ZinelyTheme.haptics
@@ -1301,44 +1319,55 @@ private fun ProofDoneBlock(savedName: String, folded: Boolean, onFoldItUp: () ->
                 ),
             )
         }
-        // Folded: the same destination, demoted to the print panel's quiet-link shape. Forgetting step 8
-        // five seconds after declaring it done is ordinary, so the guide stays one tap away — but it is no
-        // longer the loudest thing on a screen talking to someone who has already folded it.
-        if (folded) {
-            BasicText(
-                text = Copy.Proof.HOW_TO_FOLD,
-                modifier = Modifier
-                    .heightIn(min = 48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable(role = Role.Button) {
-                        haptics.perform(ZinelyHaptic.Tick)
-                        onFoldItUp()
-                    }
-                    .padding(horizontal = 16.dp, vertical = 14.dp)
-                    .testTag(ProofFoldItUpTestTag),
-                style = TextStyle(
-                    // `.foldagain{color:var(--leaf-text);text-decoration:underline}` — the action colour
-                    // as text, which is the token measured AA on paper.
-                    color = colors.leafText,
-                    fontFamily = typography.shell,
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    textDecoration = TextDecoration.Underline,
-                ),
-            )
-        } else {
-            ProofBandButton(
-                text = Copy.Proof.FOLD_IT_UP,
-                onClick = { haptics.perform(ZinelyHaptic.Tick); onFoldItUp() },
-                // `.foldit{background:var(--leaf)}` — "Fold it up" is the next move, so it takes the one
-                // action colour. It carries no `--frame` ring: only `.btn-save` does.
-                hero = true,
-                enabled = true,
-                // `.foldit{box-shadow:3px 3px 0}` — a raised control, not the band's hero.
-                press = ZinelyV21Press.Raised,
-                modifier = Modifier.testTag(ProofFoldItUpTestTag),
-                icon = { tint -> ProofVectorIcon(ICON_FOLD, tint) },
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+        ) {
+            if (onOpenSavedPdf != null) {
+                ProofBandButton(
+                    text = Copy.Proof.OPEN_PDF,
+                    onClick = { haptics.perform(ZinelyHaptic.Tick); onOpenSavedPdf() },
+                    hero = false,
+                    enabled = true,
+                    press = ZinelyV21Press.Raised,
+                    modifier = Modifier.weight(1f).testTag(ProofOpenPdfTestTag),
+                    icon = { tint -> ProofVectorIcon(ICON_OPEN_PDF, tint) },
+                )
+            }
+            // Folded: the same destination, demoted to the print panel's quiet-link shape. Forgetting
+            // step 8 five seconds after declaring it done is ordinary, so the guide stays one tap away.
+            if (folded) {
+                BasicText(
+                    text = Copy.Proof.HOW_TO_FOLD,
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(role = Role.Button) {
+                            haptics.perform(ZinelyHaptic.Tick)
+                            onFoldItUp()
+                        }
+                        .padding(horizontal = 16.dp, vertical = 14.dp)
+                        .testTag(ProofFoldItUpTestTag),
+                    style = TextStyle(
+                        color = colors.leafText,
+                        fontFamily = typography.shell,
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        textDecoration = TextDecoration.Underline,
+                    ),
+                )
+            } else {
+                ProofBandButton(
+                    text = Copy.Proof.FOLD_IT_UP,
+                    onClick = { haptics.perform(ZinelyHaptic.Tick); onFoldItUp() },
+                    hero = true,
+                    enabled = true,
+                    press = ZinelyV21Press.Raised,
+                    modifier = Modifier.weight(1f).testTag(ProofFoldItUpTestTag),
+                    icon = { tint -> ProofVectorIcon(ICON_FOLD, tint) },
+                )
+            }
         }
     }
 }

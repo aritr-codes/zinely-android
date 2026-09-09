@@ -2,7 +2,65 @@
 
 > **The single source of truth for phasing.** *Every roadmap change is reflected here.* Scope detail per phase lives in [PRD.md](PRD.md); the "how" in [ARCHITECTURE.md](ARCHITECTURE.md); rationale in [DECISIONS.md](DECISIONS.md). No dates are committed yet — phases are ordered, not scheduled.
 
-- **Status:** Draft v0.1 · 2026-06-19
+- **Current priorities reviewed:** 2026-09-09. Earlier phase plans below are historical context, not a list of
+  promised or still-missing features. Use this current section for next-work decisions.
+
+<a id="current-priorities"></a>
+## Current priorities
+
+**Planned** means an accepted intention to deliver. **Exploring** means a proposal or investigation, not a
+commitment. **Completed** work belongs in [CHANGELOG.md](../CHANGELOG.md), with public APK changes kept separate
+from repository-only changes and website updates. No new app feature is committed for the next release yet.
+
+### Planned
+
+- **Reframe loading investigation and regression test #57:** owner-approved next engineering slice.
+  Measure cold/warm entry, restore deterministic unavailable-photo accessibility coverage, then decide
+  whether a local decode change is justified. This commits to investigation and test restoration, not a speedup.
+- **Google Play publication**, after owner account verification, mandatory testing and store review. Account
+  verification remains blocked; the signed GitHub beta and public policy already exist. This is a distribution
+  task, not a reason to rebuild or overwrite beta.4-r3. [Release authority](RELEASING.md#3-beta-distribution-side-load).
+
+### Exploring — recommended next decisions, in order
+
+1. **Reframe decode approach:** the investigation is planned above; moving or sizing the preview remains
+   uncommitted pending measurements. Imports already cap masters at 4096 px. Preserve true dimensions,
+   crop/Flip math, cancellation, unavailable-photo gating, one undo step, and preview/PDF parity. No cache assumed.
+2. **Unavailable Font control:** prototype removing the disabled selected-text `Font` verb until font choice
+   exists. Current code intentionally draws it with `Not yet`; this is a real no-op control, not a missing font
+   implementation to rush. HTML freeze amendment and user reading precede Compose. No change to the already-fixed
+   typing-row Ink/Done behavior is implied.
+3. **Fold clarity:** observe first-time makers using the existing app guide and the ten-step website guide with
+   paper. Record cut mistakes, hesitation and completion without coaching. Change diagrams or add motion only
+   if evidence identifies an improvement. The website guide is shipped; native replay is not.
+
+### Engineering follow-ups — not extra public feature promises
+
+- Restore the ignored unusable-photo accessibility regression test
+  ([#57](https://github.com/aritr-codes/zinely-android/issues/57)) through a deterministic decode/readability seam;
+  protect this before changing Reframe loading. Existing commit-side protection remains active.
+- Verify backup/restore on a second Android/API environment and realistic interrupted/low-storage providers.
+  Treat this as coverage expansion, not a claim that the accepted Samsung recovery path is broken. Do not fill,
+  wipe or uninstall the owner's device to manufacture a test condition.
+- Reconcile issue/PR and owner-checklist drift using the
+  [current evidence review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-09-current-state-review).
+  Issue #53 was closed as implemented; #55 was narrowed to full photo-overlay golden coverage.
+- Main integration is owner-authorized. Require independent review and latest-head CI before merging PR #63;
+  use main-only Pages and main engineering links. Preserve old branches/worktrees and frozen release artifacts.
+
+The owner-published Google feedback form is linked from the website; the 90-day policy and email fallback
+are in [PRIVACY-POLICY.md](PRIVACY-POLICY.md#feedback-and-email). Completed website work belongs in the
+changelog, not in the feature backlog. No app feedback screen or SDK is planned.
+
+**Parked, not next:** Art cold-entry precomposition (latest trace did not justify a safe local change), image
+garbage collection (import/undo/recovery safety prerequisites), shelf search/sort (owner previously removed them;
+needs real-library evidence), extra fonts/formats, new menus and catalogue expansion. These can be reconsidered
+when a concrete user problem warrants it; the app is not declared final.
+
+## Historical phase context
+
+The older sequencing, dated launch runway and conformance statuses below are preserved for provenance. They do
+not override the current priorities or establish release readiness. Many capabilities in them have since shipped.
 
 ## Phase overview
 
@@ -26,6 +84,39 @@ timeline
 ## Guiding sequence
 
 The build order inside every phase follows risk: **prove the riskiest, most isolatable thing first.** That is why the **imposition engine** (pure Kotlin, fully testable) is the first vertical spike — see [spikes/imposition-engine.md](spikes/imposition-engine.md) and [ADR-007](DECISIONS.md#adr-007).
+
+### Public launch runway — 2026-09-11
+
+The owner set **11 September 2026** as the public-launch date on 2026-08-26. The remaining runway is a
+stabilisation programme, not permission to widen scope. Repository evidence, release-candidate device behavior
+and print output outrank feature count.
+
+| Window | Gate | Required outcome |
+|---|---|---|
+| **26–29 Aug** | Scope and defect closure | Freeze the accepted Art + Ink surface; classify the stakeholder pass; reproduce current-release gaps; keep persistence, export, backup/restore and print parity green |
+| **30 Aug–3 Sep** | Focused implementation | Implement A16 through existing supply/render seams; resolve the inert typing-row ruling; add only contextual discoverability improvements proven by feedback; no new architecture |
+| **4 Sep** | **Feature freeze** | No new capability enters after this date without a P0 launch-blocker finding |
+| **5–7 Sep** | Release-candidate verification | Full JVM/Android/lint/debug/release gates; explicit golden reruns; two physical-device passes; backup/restore, edit/autosave, Proof, PDF and physical fold smoke |
+| **8 Sep** | RC handoff | Signed candidate, release notes, privacy/known-limitations text and stakeholder smoke package |
+| **9 Sep** | Stakeholder acceptance | Only evidenced P0/P1 corrections; no visual or feature expansion |
+| **10 Sep** | Release lock | Version/signing/install/upgrade checks; final diff and clean-tree audit |
+| **11 Sep** | Public launch | Publish the accepted signed artifact and support/reporting instructions |
+
+**Launch Musts:** crash/data-loss safety; additive `.zine` backup/restore; autosave/session ownership; editor
+create/edit/undo/redo; accurate shared preview/PDF rendering; correct imposition and fold guidance; usable
+first-run/shelf navigation; accessible primary flows; **deterministic offline emoji printing**; and the accepted
+**one-photo-across-the-fold** action. Both are implemented: emoji passed [ADR-112](DECISIONS.md#adr-112)'s
+real-device raster/PDF gate, and spreads passed [ADR-109](DECISIONS.md#adr-109)'s reducer, export-seam and first
+physical-device interaction checks. The release-candidate physical print/fold smoke remains part of the 5–7 Sep
+gate rather than being waived by implementation evidence.
+
+**Launch candidates, only while the Musts stay green:** the already-approved A16 Art + Ink implementation;
+small contextual guidance for alignment/resize/rotate/Reframe; a user-controlled post-save PDF-open affordance.
+
+**Deferred beyond launch:** broad onboarding/tutorial systems, cloud/accounts/social features, new formats,
+and direct printing without fixed-scale proof. The
+[stakeholder feedback review](reviews/2026-08-26-stakeholder-feedback.md) records why these are not all the same
+kind of gap.
 
 ```mermaid
 flowchart LR
@@ -131,8 +222,9 @@ flowchart LR
 - **Supplies — the decorative third primitive** (`DecorElement`; [ADR-105](DECISIONS.md#adr-105),
   [ADR-104](DECISIONS.md#adr-104), [SUPPLIES-SPEC](design/SUPPLIES-SPEC.md)). Phased **P1 ink reaches
   paper · P2 the drawer · P3 the Art sheet**; §10.1 of the spec owns the per-phase detail, this row owns
-  the phasing's place in the plan. ⚠ **The set beyond the frozen sixteen is gated on
-  [ADR-107](DECISIONS.md#adr-107), which is `Proposed`.**
+  the phasing's place in the plan. **[ADR-107](DECISIONS.md#adr-107) now accepts a staged 16→32 first
+  expansion; [D-080](design/V2-SPEC-DEFECTS.md#d-080) and [D-107](design/V2-SPEC-DEFECTS.md#d-107) closed
+  when the owner accepted A16's combined Art + Ink DESIGN FREEZE on 2026-08-26.**
 - **The V2.1 re-skin** — Library, Bench and Proof re-drawn against `V21-SPEC.md`
   ([ADR-100](DECISIONS.md#adr-100) · [ADR-101](DECISIONS.md#adr-101) · [ADR-102](DECISIONS.md#adr-102), all
   Accepted). ⚠ **Partly landed.** The eight Library composables are on `main`; `ZineV21Cover` and
@@ -148,12 +240,9 @@ flowchart LR
 - Drawing / stickers / freehand layer.
 - **Custom font import** (`.ttf`).
 - **Print-shop export groundwork**: bleed, trim/crop marks, margins — still RGB ([ADR-002](DECISIONS.md#adr-002)).
-- **`X9` — multi-page spreads** (one photo across two facing pages). ⚠ `Proposed`, gated on
-  [ADR-109](DECISIONS.md#adr-109). Two ordinary images, no schema bump and **no imposition change** — the
-  ADR refutes the *"per-edge safe area is the one engine change"* note that
-  [`ZINE-DIRECTION.md:732`](design/ZINE-DIRECTION.md) still carries. The owner-owed part is the **control**,
-  not the engineering. The id is `X9` from `ZINE-DIRECTION.md`'s table, which is the authoritative one
-  ([D-099](design/V2-SPEC-DEFECTS.md#d-099) — `BETA-DIRECTION.md` numbers the same item `X11`).
+- ~~**`X9` — multi-page spreads**~~ moved into the 2026-09-11 Launch Musts by the owner's 2026-08-26 scope
+  ruling and accepted [ADR-109](DECISIONS.md#adr-109). It remains two ordinary images with no schema or
+  imposition change; V2 does not carry a second implementation of it.
 - Batch export; grid/layers panel.
 - Optional, explicit, user-initiated community sharing (network strictly opt-in).
 
@@ -200,6 +289,9 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-09-09 | Reconciled current priorities against code, issues, releases and website: one conditional publication plan, four explicit explorations, scoped engineering follow-ups; historical phases retained but no longer presented as today's promises. | [Current-state review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-09-current-state-review) |
+| 2026-08-26 | **September emoji printing and X9 spreads implemented.** X9 follows the frozen A19 ruling as two ordinary image elements with complementary crops. Emoji uses bundled Emoji2 with forced replacement through `SharedTextLayout`; the Samsung raster/PDF corpus passed at 10/24/48 pt, with a measured 9.42-MiB release-APK cost accepted for offline determinism. | [ADR-109](DECISIONS.md#adr-109) · [ADR-112](DECISIONS.md#adr-112) |
+| 2026-08-26 | **Public launch set for 2026-09-11.** The remaining runway is explicitly stabilisation-first: feature freeze on 2026-09-04, release-candidate verification before stakeholder acceptance, and no broad feature expansion. The stakeholder pass is classified against current source so discoverability reports are not misimplemented as missing editor capabilities. | [Stakeholder feedback review](reviews/2026-08-26-stakeholder-feedback.md) · [D-080](design/V2-SPEC-DEFECTS.md#d-080) · [D-107](design/V2-SPEC-DEFECTS.md#d-107) |
 | 2026-08-18 | ⚠ **Phasing that had shipped without a roadmap row is recorded**: the V2.1 re-skin (V1) and the supplies programme P1–P3 (V1), plus spreads as **`X9`** under V2. A merge-readiness review found this document silent on ~74k lines already on `feat/supplies-p3-art-sheet` — `SUPPLIES-SPEC §10.1` had been carrying the phasing, and [CLAUDE.md](../CLAUDE.md#documentation-rule-mandatory) gives phasing to this file. 🟨 Recording it here does **not** accept [ADR-107](DECISIONS.md#adr-107) or [ADR-109](DECISIONS.md#adr-109), both still `Proposed` | [ADR-105](DECISIONS.md#adr-105), [ADR-107](DECISIONS.md#adr-107), [ADR-109](DECISIONS.md#adr-109), [D-099](design/V2-SPEC-DEFECTS.md#d-099) |
 | 2026-06-19 | Initial roadmap established | [PRD §7](PRD.md#7-scope--mvp) |
 | 2026-06-19 | S1 imposition engine spike implemented (pure Kotlin, 95 tests, Codex-reviewed) | [ADR-007](DECISIONS.md#adr-007) |

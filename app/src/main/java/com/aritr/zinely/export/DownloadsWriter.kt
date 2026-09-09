@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.annotation.RequiresApi
+import androidx.core.content.FileProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileOutputStream
@@ -34,20 +35,27 @@ import javax.inject.Inject
  * B1 note: this capability is not yet reached from any UI/host path (that is B2). The pure/near-pure
  * helpers below are unit-tested; the API 29+ MediaStore round-trip is device/instrumented-only.
  */
-internal class DownloadsWriter @Inject constructor(
+internal class DownloadsWriter(
     @param:ApplicationContext private val context: Context,
+    private val legacyUriFactory: (Context, File) -> Uri,
 ) {
+    @Inject
+    constructor(@ApplicationContext context: Context) : this(
+        context,
+        { owner, file ->
+            FileProvider.getUriForFile(owner, "${owner.packageName}.fileprovider", file)
+        },
+    )
 
     /**
      * Writes [body]'s bytes to Downloads as a copy named from [title] with extension [ext] and type
-     * [mime]. Returns the final display name actually written — **both** paths resolve collisions and
-     * both now report the resolved name: the legacy path appends its own `" (N)"` suffix, and the API 29+
-     * path reads back the `DISPLAY_NAME` MediaStore chose. Throws on IO/MediaStore failure; the API 29+
-     * path removes its pending
-     * row first, so Downloads is never left holding a partial file.
+     * [mime]. Returns the exact durable item and its final display name — **both** paths resolve collisions:
+     * the legacy path appends its own `" (N)"` suffix, and the API 29+ path reads back the `DISPLAY_NAME`
+     * MediaStore chose. Throws on IO/MediaStore failure; the API 29+ path removes its pending row first, so
+     * Downloads is never left holding a partial file.
      */
     @SuppressLint("NewApi") // requiresLegacyWrite(SDK_INT) is the version guard around the API 29+ branch.
-    fun write(title: String, ext: String, mime: String, body: (OutputStream) -> Unit): String =
+    fun write(title: String, ext: String, mime: String, body: (OutputStream) -> Unit): DownloadedFile =
         if (requiresLegacyWrite(Build.VERSION.SDK_INT)) {
             writeLegacyFile(title, ext, mime, body)
         } else {
@@ -57,7 +65,7 @@ internal class DownloadsWriter @Inject constructor(
     // ---- API 29+ (MediaStore.Downloads) ----
 
     @RequiresApi(Build.VERSION_CODES.Q)
-    private fun writeMediaStore(displayName: String, mime: String, body: (OutputStream) -> Unit): String {
+    private fun writeMediaStore(displayName: String, mime: String, body: (OutputStream) -> Unit): DownloadedFile {
         val resolver = context.contentResolver
         val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, pendingValues(displayName, mime))
             ?: throw IOException("MediaStore rejected the Downloads insert for \"$displayName\".")
@@ -72,7 +80,7 @@ internal class DownloadsWriter @Inject constructor(
             // promise is checkable; the KDoc even claimed this behaviour ("the final display name
             // actually written") for a branch that could not deliver it. Found by pulling Downloads
             // after a device save, not by any test.
-            return actualDisplayName(resolver, uri) ?: displayName
+            return DownloadedFile(actualDisplayName(resolver, uri) ?: displayName, uri)
         } catch (t: Throwable) {
             // Remove the half-written pending row so a partial file never appears in Downloads. This
             // cleanup is best-effort: a delete failure must not mask the original cause, so swallow it
@@ -85,16 +93,27 @@ internal class DownloadsWriter @Inject constructor(
     // ---- API 24–28 (public Downloads File + media scan) ----
 
     @Suppress("DEPRECATION") // getExternalStoragePublicDirectory is the only pre-29 public-Downloads write.
-    private fun writeLegacyFile(title: String, ext: String, mime: String, body: (OutputStream) -> Unit): String {
+    private fun writeLegacyFile(
+        title: String,
+        ext: String,
+        mime: String,
+        body: (OutputStream) -> Unit,
+    ): DownloadedFile {
         val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             .apply { mkdirs() }
         val name = ExportNaming.nextAvailableName(title, ext) { File(dir, it).exists() }
         val file = File(dir, name)
         FileOutputStream(file).use(body)
         MediaScannerConnection.scanFile(context, arrayOf(file.absolutePath), arrayOf(mime), null)
-        return name
+        return DownloadedFile(
+            displayName = name,
+            uri = legacyUriFactory(context, file),
+        )
     }
 }
+
+/** The exact durable Downloads item produced by one save. */
+internal data class DownloadedFile(val displayName: String, val uri: Uri)
 
 /**
  * The `DISPLAY_NAME` MediaStore actually stored for [uri], or `null` if it cannot be read.

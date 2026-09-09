@@ -14,6 +14,15 @@ public interface ProjectRepository {
     /** The project list, newest-first by convention, emitted again on every change. */
     public fun observeProjects(): Flow<List<ProjectSummary>>
 
+    /**
+     * The Library shelf's list, newest-first by convention, emitted again on every change.
+     *
+     * This is a wider projection than [observeProjects]: it keeps locally-present projects visible even
+     * when their authoritative `document.json` is corrupt or from a newer schema, so the shelf can still
+     * offer the safe actions without pretending the zine opens normally.
+     */
+    public fun observeShelfProjects(): Flow<List<ProjectShelfEntry>>
+
     /** Metadata for one project, or [DataError.NotFound]. */
     public suspend fun getProject(id: String): DataResult<ProjectSummary>
 

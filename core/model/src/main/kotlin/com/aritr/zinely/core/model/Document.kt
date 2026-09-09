@@ -8,6 +8,12 @@ import kotlinx.serialization.Serializable
  * migration framework (`:core:data`) chains `vN → vN+1` migrators up to this value on open
  * (S2 spike §6, [docs/DECISIONS.md ADR-020]).
  *
+ * **v3 (2026-08-27) — Photo/Art flip state.** Photo gains independent horizontal/vertical flags;
+ * Art keeps its historical [DecorElement.mirrored] horizontal wire field and gains a vertical flag.
+ * The v2→v3 migration is structurally empty, but the bump is the anti-downgrade gate: a v2 build must
+ * refuse a flipped document rather than ignore the additive keys and later save the zine unflipped
+ * ([ADR-113](../../../../../../../docs/DECISIONS.md#adr-113)).
+ *
  * **v2 (2026-08-16) — `DecorElement`.** Bumped deliberately, *against* SUPPLIES-SPEC §2.1, on the
  * authority of [D-029's 2026-08-16 ruling](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-029-ruling-2026-08-16)
  * Q5. The spec is right that no **migrator** is needed (nothing structural changes for existing
@@ -19,7 +25,7 @@ import kotlinx.serialization.Serializable
  * Zinely" and "this zine is broken". The v1→v2 step is therefore an **identity** migrator
  * (`DocumentMigrations` requires a contiguous chain; see `JsonDocumentSerializer.MIGRATORS`).
  */
-public const val CURRENT_SCHEMA_VERSION: Int = 2
+public const val CURRENT_SCHEMA_VERSION: Int = 3
 
 /**
  * The root of a zine document — a `@Serializable` tree persisted as JSON (S2 spike §3,
@@ -99,6 +105,10 @@ public data class ImageElement(
      * document reads unfiltered and no schema bump or migrator is needed.
      */
     val copier: Boolean = false,
+    /** Reflect photo content across the element's own vertical centre line, without moving its box. */
+    val flippedHorizontally: Boolean = false,
+    /** Reflect photo content across the element's own horizontal centre line, without moving its box. */
+    val flippedVertically: Boolean = false,
 ) : Element
 
 /** A run of text with a style. */
@@ -154,6 +164,8 @@ public data class DecorElement(
      * errors on non-positive width/height, so negative-scale is doubly unavailable.
      */
     val mirrored: Boolean = false,
+    /** Reflects the authored outline across its own horizontal centre line. */
+    val flippedVertically: Boolean = false,
 ) : Element
 
 /**

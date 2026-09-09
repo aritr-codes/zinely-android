@@ -1,22 +1,33 @@
 package com.aritr.zinely.home
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
+import com.aritr.zinely.core.data.repository.ProjectShelfEntry
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
+import com.aritr.zinely.core.data.repository.ProjectUnavailableReason
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.data.android.prefs.PreferredPaperStore
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.core.model.newZineCoverRecipe
+import com.aritr.zinely.data.android.LibrarySafTransport
 import com.aritr.zinely.feature.editor.HomeShelfEvent
 import com.aritr.zinely.feature.editor.HomeZineCard
+import com.aritr.zinely.feature.library.LibraryBackupRestoreFailureKind
+import com.aritr.zinely.feature.library.LibraryBackupRestoreMode
+import com.aritr.zinely.feature.library.LibraryBackupRestoreUiState
 import com.aritr.zinely.feature.library.LibraryZine
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +42,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
@@ -46,12 +59,11 @@ internal sealed interface HomeUiState {
     data object Empty : HomeUiState
     data object Error : HomeUiState
     /**
-     * The same visible projects, projected twice — V1's [HomeZineCard]s and the V2 Library's
-     * [LibraryZine]s — from one pass over one list, at one `now`. Two projections rather than one shared
-     * card because they disclose different things: V1's card carries `"8-page mini · A4"` on the shelf,
-     * and V2's shelf carries **no** metadata at all, holding `"A4 · Edited 2 days ago"` back for the
-     * action sheet (ADR-086 rows 6–8). Collapsing them would mean one of the two screens showing a line
-     * its frozen design says it must not.
+     * Two shelf projections from one pass over one repository answer, at one `now`.
+     *
+     * [cards] stays the healthy V1/V1.5 metadata view used by the still-shared actions that need a
+     * readable authoritative document. [zines] is the wider V2 Library view, which can keep an
+     * unavailable project visible for Rename/Delete without pretending it still opens normally.
      */
     data class Content(
         val cards: List<HomeZineCard>,
@@ -64,16 +76,17 @@ internal sealed interface HomeUiState {
 
 /**
  * The Home · "My zines" shelf (read shelf: ADR-043; actions: ADR-044; MVVM — ADR-005 scoped MVI to
- * the editor). Maps the [ProjectRepository]'s newest-first [ProjectSummary] stream to warm
- * [HomeZineCard]s — **order passed through untouched** (the ADR-042 §7 repository contract, never
- * re-derived here). Recency labels are computed at emission and go stale until the next one —
- * accepted for a shelf you just navigated to (fresh subscription = fresh labels via
- * WhileSubscribed); a ticking clock is not this slice's problem.
+ * the editor). Maps the [ProjectRepository]'s newest-first shelf stream to the V2 Library, while the
+ * narrower healthy [ProjectSummary] projection continues to feed the older card-shaped seams. Order is
+ * passed through untouched; recency labels are computed at emission and go stale until the next one —
+ * accepted for a shelf you just navigated to (fresh subscription = fresh labels via WhileSubscribed); a
+ * ticking clock is not this slice's problem.
  *
  * S6.3 actions (ADR-044): create with warm defaults; rename/duplicate delegating to the store
- * (which enforces the open-editor exclusion and answers [DataError.Busy]); delete as a deferred
- * commit — the card hides immediately, a queued [HomeShelfEvent.DeletePrompt] drives one undo
- * snackbar, and only its dismissal calls [ProjectRepository.deleteProject]. A failed commit
+ * (which enforces the open-editor exclusion and answers [DataError.Busy]); delete as a durable deferred
+ * commit — [PendingDeleteStore] records the intent before the card hides, a queued
+ * [HomeShelfEvent.DeletePrompt] drives one undo snackbar, and its dismissal calls
+ * [ProjectRepository.deleteProject]. A process restart finishes any recorded intent. A failed commit
  * unhides the card: the shelf never lies about what was deleted. [HomeUiState.Empty] means the
  * STORE is empty; a shelf filtered to zero by pending deletes stays a zero-card
  * [HomeUiState.Content] (the invitation would be dishonest while a delete is still reversible).
@@ -81,9 +94,12 @@ internal sealed interface HomeUiState {
 @HiltViewModel
 internal class HomeViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
+    private val librarySafTransport: LibrarySafTransport,
+    private val preferredPaperStore: PreferredPaperStore,
+    private val pendingDeleteStore: PendingDeleteStore,
 ) : ViewModel() {
 
-    /** Ids hidden from the shelf while their undo window is open (ADR-044 §3). */
+    /** Ids hidden from the shelf while their undo window is open or a durable interrupted delete resumes. */
     private val pendingDeletes = MutableStateFlow<Set<String>>(emptySet())
 
     /** This session's display-only covers for zines the store could not assign one to. */
@@ -115,6 +131,19 @@ internal class HomeViewModel @Inject constructor(
 
     /** The in-flight create (ADR-046 §5 single-flight): taps during it are no-ops. */
     private var createJob: Job? = null
+    private var backupRestoreJob: Job? = null
+    private var backupRestorePickerPending: Boolean = false
+    private var backupRestoreCancellationRequested: Boolean = false
+
+    init {
+        val interruptedDeletes = pendingDeleteStore.pendingIds()
+        if (interruptedDeletes.isNotEmpty()) {
+            pendingDeletes.value = interruptedDeletes
+            viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                withContext(NonCancellable) { commitPendingDeletesNow() }
+            }
+        }
+    }
 
     /**
      * Bumped by [retry]. `flatMapLatest` below turns each bump into a **fresh** subscription to
@@ -122,6 +151,27 @@ internal class HomeViewModel @Inject constructor(
      * honest retry is a new collection of a new flow.
      */
     private val retries = MutableStateFlow(0)
+
+    private val pickerRequests = Channel<LibraryBackupRestorePickerRequest>(Channel.BUFFERED)
+    val backupRestorePickerRequests: Flow<LibraryBackupRestorePickerRequest> = pickerRequests.receiveAsFlow()
+
+    private val _backupRestoreState = MutableStateFlow<LibraryBackupRestoreUiState?>(null)
+    val backupRestoreState: StateFlow<LibraryBackupRestoreUiState?> = _backupRestoreState
+
+    val preferredPaper: StateFlow<PaperSize> = preferredPaperStore.preferredPaperSize
+        .stateIn(viewModelScope, SharingStarted.Eagerly, PaperSize.A4)
+
+    fun setPreferredPaper(paperSize: PaperSize) {
+        viewModelScope.launch {
+            try {
+                preferredPaperStore.setPreferredPaperSize(paperSize)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                eventQueue.send(HomeShelfEvent.Message(Copy.Colophon.PAPER_SAVE_FAILED))
+            }
+        }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<HomeUiState> = retries.flatMapLatest { shelfStateFlow() }
@@ -149,7 +199,7 @@ internal class HomeViewModel @Inject constructor(
      */
     private fun shelfStateFlow(): Flow<HomeUiState> =
         combine(
-            projectRepository.observeProjects(),
+            projectRepository.observeShelfProjects(),
             pendingDeletes,
         ) { projects, pending ->
             if (projects.isEmpty()) {
@@ -166,7 +216,9 @@ internal class HomeViewModel @Inject constructor(
                 }
                 val visible = projects.filterNot { it.id in pending }
                 HomeUiState.Content(
-                    cards = visible.map { it.toCard(now) },
+                    cards = visible
+                        .mapNotNull { (it as? ProjectShelfEntry.Available)?.summary }
+                        .map { it.toCard(now) },
                     zines = visible.map { it.toLibraryZine(now, fallbackCovers::get) },
                 )
             }
@@ -179,6 +231,76 @@ internal class HomeViewModel @Inject constructor(
      */
     fun retry() {
         retries.update { it + 1 }
+    }
+
+    fun startBackup() {
+        val hasVisibleZines = (state.value as? HomeUiState.Content)?.cards?.isNotEmpty() == true
+        if (!hasVisibleZines) return
+        requestBackupRestorePicker(LibraryBackupRestorePickerRequest.Backup(suggestedBackupName()))
+    }
+
+    fun startRestore() {
+        requestBackupRestorePicker(LibraryBackupRestorePickerRequest.Restore)
+    }
+
+    fun backupPicked(uri: Uri?) {
+        backupRestorePickerPending = false
+        if (uri == null) return
+        launchBackupRestore(LibraryBackupRestoreMode.Backup) {
+            when (val result = librarySafTransport.backupTo(uri)) {
+                is DataResult.Success -> LibraryBackupRestoreUiState.BackupSaved(
+                    projectCount = result.value.projectCount,
+                    assetCount = result.value.assetCount,
+                )
+                is DataResult.Failure -> LibraryBackupRestoreUiState.Failed(
+                    mode = LibraryBackupRestoreMode.Backup,
+                    kind = classifyBackupRestoreFailure(LibraryBackupRestoreMode.Backup, result.error),
+                )
+            }
+        }
+    }
+
+    fun restorePicked(uri: Uri?) {
+        backupRestorePickerPending = false
+        if (uri == null) return
+        launchBackupRestore(LibraryBackupRestoreMode.Restore) {
+            when (val result = librarySafTransport.restoreFrom(uri)) {
+                is DataResult.Success -> LibraryBackupRestoreUiState.RestoreAdded(
+                    restoredProjectCount = result.value.projects.size,
+                )
+                is DataResult.Failure -> LibraryBackupRestoreUiState.Failed(
+                    mode = LibraryBackupRestoreMode.Restore,
+                    kind = classifyBackupRestoreFailure(LibraryBackupRestoreMode.Restore, result.error),
+                )
+            }
+        }
+    }
+
+    fun backupRestorePickerFailed(mode: LibraryBackupRestoreMode) {
+        backupRestorePickerPending = false
+        _backupRestoreState.value = LibraryBackupRestoreUiState.Failed(
+            mode = mode,
+            kind = mode.ioFailureKind(),
+        )
+    }
+
+    fun cancelBackupRestore() {
+        if (backupRestoreJob?.isActive == true) {
+            backupRestoreCancellationRequested = true
+            backupRestoreJob?.cancel()
+        }
+    }
+
+    fun dismissBackupRestoreSurface() {
+        _backupRestoreState.value = null
+    }
+
+    fun retryBackupRestore() {
+        when ((backupRestoreState.value as? LibraryBackupRestoreUiState.Failed)?.mode) {
+            LibraryBackupRestoreMode.Backup -> startBackup()
+            LibraryBackupRestoreMode.Restore -> startRestore()
+            null -> Unit
+        }
     }
 
     /**
@@ -225,18 +347,27 @@ internal class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Hide the card and prompt for undo — the store is untouched until [commitDelete]. Ignored when
-     * [id] is not a visible card (double-tap, or already pending).
+     * Durably record the delete intent, then hide the card and prompt for undo. The project store is
+     * untouched until [commitDelete], while the tiny marker lets a new process finish the request. Ignored
+     * when [id] is not a visible card (double-tap, or already pending).
      */
     fun delete(id: String) {
-        val cards = (state.value as? HomeUiState.Content)?.cards ?: return
-        val title = cards.firstOrNull { it.id == id }?.title ?: return
+        val zines = (state.value as? HomeUiState.Content)?.zines ?: return
+        val title = zines.firstOrNull { it.id == id }?.title ?: return
+        if (!pendingDeleteStore.add(id)) {
+            eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
+            return
+        }
         pendingDeletes.update { it + id }
         eventQueue.trySend(HomeShelfEvent.DeletePrompt(id, title))
     }
 
-    /** Undo within the window: unhide; the store was never called. */
+    /** Undo within the window: clear the durable intent, then unhide; the project store was never called. */
     fun undoDelete(id: String) {
+        if (!pendingDeleteStore.remove(id)) {
+            eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
+            return
+        }
         pendingDeletes.update { it - id }
     }
 
@@ -251,16 +382,37 @@ internal class HomeViewModel @Inject constructor(
         viewModelScope.launch { performCommit(id) }
     }
 
-    /** The one commit path [commitDelete] and [commitPendingDeletesNow] share. */
-    private suspend fun performCommit(id: String) {
-        when (val result = projectRepository.deleteProject(id)) {
-            is DataResult.Success -> Unit // stay hidden; the store flow removes the card
-            is DataResult.Failure -> {
-                pendingDeletes.update { it - id } // the card is still real — show it again
-                eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
-            }
+    /**
+     * Commit any pending delete as Home leaves the foreground.
+     *
+     * The undo window is still in-memory and reversible while the shelf stays visible. Once the
+     * destination stops, though, a process kill can drop that in-memory state before the snackbar's
+     * timeout path runs, which makes the zine reappear on a cold boot. Flushing here keeps the
+     * user-visible "delete means delete" contract without changing the on-screen undo behaviour.
+     */
+    fun flushPendingDeletes() {
+        if (pendingDeletes.value.isEmpty()) return
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            withContext(NonCancellable) { commitPendingDeletesNow() }
         }
     }
+
+    /** The one commit path [commitDelete] and [commitPendingDeletesNow] share. */
+    private suspend fun performCommit(id: String): Boolean =
+        when (val result = projectRepository.deleteProject(id)) {
+            is DataResult.Success -> {
+                // If clearing the marker fails, retrying this idempotent delete on the next start is safe.
+                pendingDeleteStore.remove(id)
+                true // stay hidden; the store flow removes the card
+            }
+            is DataResult.Failure -> {
+                // Only show the real card again after clearing the durable retry intent. Otherwise the next
+                // process would legitimately finish a delete the current UI appeared to cancel.
+                if (pendingDeleteStore.remove(id)) pendingDeletes.update { it - id }
+                eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
+                false
+            }
+        }
 
     /**
      * Commit every pending delete before leaving the shelf (ADR-046 §4): navigating away cancels the
@@ -268,13 +420,81 @@ internal class HomeViewModel @Inject constructor(
      * dismissal would have made. A failed commit rolls back visibly through [performCommit] (unhide +
      * warm message, seen on return) and **never blocks** the requested open/create.
      */
-    private suspend fun commitPendingDeletesNow() {
-        pendingDeletes.value.forEach { performCommit(it) }
+    private suspend fun commitPendingDeletesNow(): Boolean =
+        pendingDeletes.value.map { performCommit(it) }.all { it }
+
+    private fun requestBackupRestorePicker(request: LibraryBackupRestorePickerRequest) {
+        if (backupRestoreJob?.isActive == true || backupRestorePickerPending) return
+        dismissBackupRestoreSurface()
+        backupRestorePickerPending = true
+        viewModelScope.launch {
+            if (!commitPendingDeletesNow()) {
+                backupRestorePickerPending = false
+                return@launch
+            }
+            pickerRequests.send(request)
+        }
     }
+
+    private fun launchBackupRestore(
+        mode: LibraryBackupRestoreMode,
+        run: suspend () -> LibraryBackupRestoreUiState,
+    ) {
+        if (backupRestoreJob?.isActive == true) return
+        backupRestoreJob = viewModelScope.launch {
+            _backupRestoreState.value = LibraryBackupRestoreUiState.Running(mode)
+            try {
+                _backupRestoreState.value = run()
+            } catch (cancelled: CancellationException) {
+                _backupRestoreState.value = null
+                if (backupRestoreCancellationRequested) {
+                    eventQueue.trySend(
+                        HomeShelfEvent.Message(
+                            if (mode == LibraryBackupRestoreMode.Backup) {
+                                Copy.LibraryBackup.BACKUP_CANCELLED
+                            } else {
+                                Copy.LibraryBackup.RESTORE_CANCELLED
+                            },
+                        ),
+                    )
+                }
+                throw cancelled
+            } finally {
+                backupRestoreCancellationRequested = false
+                backupRestoreJob = null
+            }
+        }
+    }
+
+    private fun classifyBackupRestoreFailure(
+        mode: LibraryBackupRestoreMode,
+        error: DataError,
+    ): LibraryBackupRestoreFailureKind = when (error) {
+        is DataError.Corrupt, is DataError.Invalid -> LibraryBackupRestoreFailureKind.Damaged
+        is DataError.SchemaTooNew -> LibraryBackupRestoreFailureKind.NewerAppNeeded
+        is DataError.OutOfSpace -> LibraryBackupRestoreFailureKind.NotEnoughSpace
+        is DataError.Busy -> LibraryBackupRestoreFailureKind.Busy
+        is DataError.Io, is DataError.NotFound -> mode.ioFailureKind()
+        is DataError.Unknown -> LibraryBackupRestoreFailureKind.Generic
+    }
+
+    private fun LibraryBackupRestoreMode.ioFailureKind(): LibraryBackupRestoreFailureKind =
+        if (this == LibraryBackupRestoreMode.Backup) {
+            LibraryBackupRestoreFailureKind.SaveFailed
+        } else {
+            LibraryBackupRestoreFailureKind.ReadFailed
+        }
+
+    private fun suggestedBackupName(): String = "${Copy.LibraryBackup.PICKER_BACKUP_NAME_PREFIX}-${LocalDate.now()}.zine"
 
     private suspend fun DataResult<*>.sendMessageOnFailure() {
         if (this is DataResult.Failure) eventQueue.send(HomeShelfEvent.Message(error.warmMessage()))
     }
+}
+
+internal sealed interface LibraryBackupRestorePickerRequest {
+    data class Backup(val suggestedName: String) : LibraryBackupRestorePickerRequest
+    data object Restore : LibraryBackupRestorePickerRequest
 }
 
 /**
@@ -363,6 +583,31 @@ internal fun ProjectSummary.toLibraryZine(
     // makes the fallback stable for as long as this session lasts; see [HomeViewModel.fallbackCover].
     cover = cover ?: fallbackCover(id),
 )
+
+internal fun ProjectShelfEntry.toLibraryZine(
+    nowEpochMs: Long,
+    fallbackCover: (String) -> ZineCoverRecipe = { newZineCoverRecipe() },
+): LibraryZine = when (this) {
+    is ProjectShelfEntry.Available -> summary.toLibraryZine(nowEpochMs, fallbackCover)
+    is ProjectShelfEntry.Unavailable -> LibraryZine(
+        id = id,
+        title = title,
+        subtitle = buildString {
+            paperSize?.let {
+                append(it.shelfLabel())
+                append(" · ")
+            }
+            append(editedLabel(updatedAtEpochMs, nowEpochMs))
+        },
+        cover = cover ?: fallbackCover(id),
+        unavailableReason = reason.shelfUnavailableReason(),
+    )
+}
+
+private fun ProjectUnavailableReason.shelfUnavailableReason(): String = when (this) {
+    ProjectUnavailableReason.CORRUPT -> Copy.Shelf.UNAVAILABLE_DAMAGED
+    ProjectUnavailableReason.NEWER_APP_REQUIRED -> Copy.Shelf.UNAVAILABLE_NEWER_APP
+}
 
 /** Warm, jargon-free format name (never the enum's SCREAMING_SNAKE identity). */
 private fun ZineFormat.shelfLabel(): String = when (this) {

@@ -462,6 +462,8 @@ class BenchC5GoldenTest {
             BenchPageGridSurface(
                 pages = pages(),
                 currentPageIndex = 2,
+                pageSizePt = pageSizePt,
+                defaults = DocumentDefaults(),
                 onSelectPage = {},
                 onDismiss = {},
             )
@@ -479,10 +481,9 @@ class BenchC5GoldenTest {
             "the panel did not paint its --paper ground ($name)",
             grid.pixelCountOf(v21PaperArgb) > 5000,
         )
-        assertTrue(
-            "the panel is painting a --desk ground ($name) — V2's overlay, not V2.1's sheet",
-            grid.pixelCountOf(v21DeskArgb) == 0,
-        )
+        // `onLeaf` intentionally equals the dark desk ink, so a whole-panel zero-count assertion became
+        // invalid once the current page number moved to accessible dark-on-bright ink. The positive
+        // surface count above and the bounded lit-card checks below pin the actual grounds.
 
         // **OD-47, in pixels, and this is the assertion the whole amendment comes down to.** The card
         // paints the LIGHT `--paper` in *both* themes (`.pgc`'s six restatements, `:456-457`). The
@@ -490,7 +491,6 @@ class BenchC5GoldenTest {
         // in the dark frame the two differ and a card that followed the room fails here — which is what
         // "one screen rendering the same eight pages two ways" meant.
         val litPaper = zinelyV21LightColors().paper.toArgb()
-        val litTint = zinelyV21LightColors().leafTint.toArgb()
         val ordinaryCell = crop(benchPageCellTag(2), full)
         assertTrue(
             "the card is not lit ($name): ${ordinaryCell.pixelCountOf(litPaper)}px of the light --paper " +
@@ -498,24 +498,27 @@ class BenchC5GoldenTest {
             ordinaryCell.pixelCountOf(litPaper) > ordinaryCell.width * ordinaryCell.height / 2,
         )
 
-        // Row 5.13, **inverted by P5** — the current card is a `--leaf-tint` FILL, not a bordered one.
-        // V2 marked it with a 2px `--matcha` border against every other cell's 1px; `.pgc.on` (`:461`)
-        // declares `background:var(--leaf-tint); color:var(--leaf-text)` and no border rule at all, so
-        // every card wears the same uniform ink edge. Kept rather than deleted because a conversion that
-        // added the tint *and* left the border would say the same thing twice and pass a fill-only check.
+        // A18: the current page uses the same berry OUTER ring as the strip. It must not tint the page:
+        // selection chrome belongs outside the artifact, where it cannot alter the maker's work.
         val currentCell = crop(benchPageCellTag(3), full)
+        val currentBounds = composeRule.onNodeWithTag(benchPageCellTag(3)).fetchSemanticsNode().boundsInRoot
+        val currentWithRing = cropToBounds(full, currentBounds.inflate(8f))
         assertTrue(
-            "the current card is not filled with the lit --leaf-tint ($name): " +
-                "${currentCell.pixelCountOf(litTint)}px",
-            currentCell.pixelCountOf(litTint) > currentCell.width * currentCell.height / 2,
+            "the current card has no berry outer ring ($name)",
+            currentWithRing.pixelCountOf(v21BerryArgb) > 60,
         )
         assertTrue(
             "the current card still wears a --matcha border ($name)",
             currentCell.leftBorderThickness(matchaArgb) == 0,
         )
+
+        // D-065's root regression: the larger chooser must preserve page identity. Page 2 contains text
+        // and page 3 is empty, so their miniature rasters must differ even after excluding the badges.
+        val contentPage = crop(benchPageGridPageTag(2), full)
+        val emptyPage = crop(benchPageGridPageTag(3), full)
         assertTrue(
-            "a card that is not current drew the --leaf-tint fill ($name)",
-            ordinaryCell.pixelCountOf(litTint) == 0,
+            "the grid replaced both live pages with the same blank stand-in ($name)",
+            differingPixels(contentPage, emptyPage) > 100,
         )
 
         // Row 5.15 — the header's title is set in the voice (`.sheet h3`, `v21-bench.html:386`), while the

@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.editor
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.key.KeyEvent
@@ -45,7 +46,10 @@ import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.ui.a11y.platformNode
+import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.zinelyV21DarkColors
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -156,6 +160,10 @@ class TypeBarTest {
 
     private fun hasRole(role: Role) =
         SemanticsMatcher.expectValue(SemanticsProperties.Role, role)
+
+    private fun channelDistance(a: Int, b: Int) = listOf(0, 8, 16).sumOf { shift ->
+        kotlin.math.abs(((a shr shift) and 0xFF) - ((b shr shift) and 0xFF))
+    }
 
     /**
      * Press one key with a modifier held, and report whether the editor **consumed** it — the Compose
@@ -373,6 +381,7 @@ class TypeBarTest {
         assertEquals(TextInk.Teal.rgba, textOf(s).style.color)
         composeRule.onNodeWithContentDescription("Teal").assertIsSelected()
         composeRule.onNodeWithContentDescription("Coral").assertIsNotSelected()
+        composeRule.onNodeWithTag(selectionCueTag("$TypeBarTestTag-ink-Teal"), useUnmergedTree = true).assertExists()
         assertTrue("Colour Teal" in announced)
     }
 
@@ -684,8 +693,10 @@ class TypeBarTest {
         fun leftOf(label: String) =
             composeRule.onNodeWithContentDescription(label).fetchSemanticsNode().boundsInRoot.left
 
-        // The last control of each row, top to bottom: Size · Align · Style · Colour.
-        val rightEdges = listOf(rightOf("Larger"), rightOf("Right"), rightOf("Italic"), rightOf("Ochre"))
+        // The last control of the first three rows, then the Colour row's full five-tile line. Its caption
+        // is stacked above, so the fixed ink cluster no longer has to share horizontal space with text.
+        val colourRowRight = composeRule.onNodeWithTag(TypeBarInkRowTestTag).fetchSemanticsNode().boundsInRoot.right
+        val rightEdges = listOf(rightOf("Larger"), rightOf("Right"), rightOf("Italic"), colourRowRight)
         val labelLefts = listOf(leftOf("Size"), leftOf("Align"), leftOf("Style"), leftOf("Colour"))
 
         assertTrue(
@@ -708,8 +719,7 @@ class TypeBarTest {
         openTypeBar()
 
         val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInRoot
-        // The widest row is Colour (five 30dp pots + four 18dp `SwatchGap`s = 222dp) plus the label column
-        // and the card's 16dp side padding — comfortably inside the 430dp device the golden tier pins.
+        // The widest row is Colour: 5x48dp tiles + 4x4dp gaps, with the caption stacked above.
         with(composeRule.density) {
             assertTrue(
                 "the Type bar filled its parent (${card.width.toDp()}) instead of hugging its widest row",
@@ -729,13 +739,9 @@ class TypeBarTest {
         // i.e. edge-to-edge on this device, over the frozen `max-width:calc(100% - 24px)` (= 336dp), and
         // clipping below 360dp. The frozen cluster was 192dp, which put the card at 280dp.
         //
-        // ⚠ The expected width moved to 318.5dp with the 2026-08-15 touch-target fix, and it is the SAME
-        // invariant, not a relaxed one: `SwatchGap` went 8dp -> 18dp so the swatch pitch reaches the
-        // platform's 48dp minimum (see `every_type_bar_control_reports_a_full_48dp_target_to_the_platform`),
-        // which widens the Colour cluster by 40dp to 222dp. The cap it is measured against — the frozen
-        // `max-width:calc(100% - 24px)` = 336dp — has not moved, and the card is still under it with 17.5dp
-        // to spare. What this second assertion pins is that the width is EXPLAINED: 32 (card padding) +
-        // 64.5 (label + gap) + 222 (5x30 + 4x18). Anything wider means a control is inflated again.
+        // The Samsung follow-up keeps one five-wide line of visible 48dp tiles but stacks the Colour
+        // caption above it. The cap remains 336dp. The measured width is explained by 32dp card padding
+        // plus 256dp of controls (5x48 + 4x4); anything wider means a control or gap inflated again.
         //
         // The sibling test above could not see this: it is pinned to the 430dp bench viewport and only
         // asserts `< 430dp`, which a 360dp card passes. This one pins the smallest phone we support and
@@ -750,15 +756,41 @@ class TypeBarTest {
                 card.width.toDp() <= 336.dp,
             )
             // …and it got there by matching the spec's paint, not by being squeezed.
-            assertTrue(
-                "the Type bar is ${card.width.toDp()}, not the spec's max-content 318.5dp",
-                card.width.toDp() <= 319.dp,
+            assertEquals(
+                "the Type bar is not the hardware-refined spec's measured 288dp width",
+                288f,
+                card.width.toDp().value,
+                0.5f,
             )
         }
         // The cap must not have been bought with the touch target. Asserted on the PLATFORM tree, not on
         // `touchBoundsInRoot` — see [every_type_bar_control_reports_a_full_48dp_target_to_the_platform]
         // for why the latter cannot fail.
         assertPlatformTargetAtLeast48("Teal")
+    }
+
+    @Test
+    @Config(qualifiers = "+night")
+    fun the_card_uses_the_room_palette_at_night_and_not_the_paper_island() {
+        // The standalone TypeBar golden cannot catch a provider-boundary regression in EditorScreen.
+        // The canvas intentionally islands paper ink to the light palette, while this floating editor
+        // card must restore the surrounding room palette. On Samsung hardware the missed restoration
+        // paired light-theme dark ink with the dark room surface and made every inactive label muddy.
+        render(storeWithText())
+        openTypeBar()
+
+        val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInWindow
+        val bitmap = composeRule.activity.window.decorView.rasterizeToBitmap()
+        // Centre of the straight top edge, one physical pixel inside the 1.5dp border: no rounded corner,
+        // shadow, text, or grain can contribute here.
+        val edge = bitmap.getPixel(card.center.x.toInt(), card.top.toInt() + 1)
+        val toRoom = channelDistance(edge, zinelyV21DarkColors().ink.toArgb())
+        val toIsland = channelDistance(edge, zinelyV21LightColors().ink.toArgb())
+        assertTrue(
+            "the Type bar edge is #%06X — %d from room ink and %d from paper-island ink"
+                .format(edge and 0xFFFFFF, toRoom, toIsland),
+            toRoom < toIsland,
+        )
     }
 
     /**
@@ -809,8 +841,8 @@ class TypeBarTest {
      *     Ochre                       48.0 x 48.0 dp   <- no right-hand neighbour to collide with
      *     Bold / Italic               48.0 x 46.1 dp   <- the Colour row's 9dp reach across an 8dp row gap
      *
-     * Both are fixed by pitch, not by paint: `SwatchGap` 8dp -> 18dp (30 + 18 = 48) and the card's row gap
-     * `gapSm` -> `gapMd` (12 > the pot's 9dp reach). Neither control's painted size moved.
+     * The old collision is now removed more directly: the colour controls expose their 48dp tiles openly,
+     * and the rows stay separated enough that the colour row no longer prunes the style row above it.
      *
      * Rendered through the whole [EditorScreen], deliberately: pruning is a property of the SURFACE, and a
      * standalone `TypeBar` would answer a question about a screen that does not exist. Robolectric runs the
@@ -822,8 +854,7 @@ class TypeBarTest {
         render(storeWithText())
         openTypeBar()
 
-        // The colour row, where the horizontal collision was. Ochre is included even though it never
-        // failed: it is the control that proves the cause was the neighbour and not the pot.
+        // The colour row now exposes the 48dp tile directly instead of borrowing it from hidden overlap.
         listOf("Ink", "Coral", "Teal", "Blue", "Ochre").forEach { assertPlatformTargetAtLeast48(it) }
         // The style row, where the vertical collision was — cut by the Colour row BELOW it.
         listOf("Bold", "Italic").forEach { assertPlatformTargetAtLeast48(it) }
@@ -845,9 +876,7 @@ class TypeBarTest {
             val w = bounds.width().toDp()
             val h = bounds.height().toDp()
             assertTrue(
-                "$label reports ${w.value} x ${h.value} dp to the platform tree — under the 48dp minimum. " +
-                    "The paint is fine; the PITCH is not (neighbouring 48dp expansions overlap and the " +
-                    "overlap is pruned before setBoundsInScreen).",
+                "$label reports ${w.value} x ${h.value} dp to the platform tree — under the 48dp minimum.",
                 w >= 47.9.dp && h >= 47.9.dp,
             )
         }

@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -69,6 +70,7 @@ import com.aritr.zinely.MainActivity
 import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
@@ -86,7 +88,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import com.aritr.zinely.export.ExportViewModel
 import com.aritr.zinely.home.HomeUiState
 import com.aritr.zinely.home.HomeViewModel
+import com.aritr.zinely.home.LibraryBackupRestorePickerRequest
 import com.aritr.zinely.feature.library.LibraryShelfState
+import com.aritr.zinely.feature.library.LibraryBackupRestoreMode
 import com.aritr.zinely.feature.library.ZineLibraryScreen
 import androidx.compose.runtime.DisposableEffect
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -146,7 +150,7 @@ internal fun ZinelyNavHost(
             // triad into one 3-act screen. Same shared-VM seam the triad used — fetch the editor's live
             // back-stack entry (it stays on the stack under the Proof) and resolve the SAME
             // EditorViewModel against it, never a second instance (ADR-026 single-writer).
-            val editorEntry = remember(route.projectId) {
+            val editorEntry = remember(entry) {
                 navController.getBackStackEntry(EditorRoute(route.projectId))
             }
             ProofDestination(
@@ -171,15 +175,50 @@ private fun HomeDestination(
     onShareExport: (String) -> Unit,
 ) {
     val viewModel: HomeViewModel = hiltViewModel()
+    val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val backupRestoreState by viewModel.backupRestoreState.collectAsStateWithLifecycle()
+    val preferredPaper by viewModel.preferredPaper.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val appVersion = remember(context) {
+        @Suppress("DEPRECATION")
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
+    }
+
+    val backupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream"),
+    ) { uri ->
+        viewModel.backupPicked(uri)
+    }
+    val restoreLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        viewModel.restorePicked(uri)
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.openEvents.collect { id -> onOpenZine(id) }
+    }
+    LaunchedEffect(viewModel, backupLauncher, restoreLauncher) {
+        viewModel.backupRestorePickerRequests.collect { request ->
+            launchBackupRestorePicker(
+                request = request,
+                launchBackup = backupLauncher::launch,
+                launchRestore = restoreLauncher::launch,
+                onFailure = viewModel::backupRestorePickerFailed,
+            )
+        }
+    }
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) viewModel.flushPendingDeletes()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     ZineLibraryScreen(
         state = state.toLibraryShelfState(),
         events = viewModel.events,
+        backupRestoreState = backupRestoreState,
         onOpenZine = viewModel::openZine,
         onShareExport = onShareExport,
         onStartZine = viewModel::startZine,
@@ -189,8 +228,38 @@ private fun HomeDestination(
         onDeleteUndo = viewModel::undoDelete,
         onDeleteCommit = viewModel::commitDelete,
         onRetry = viewModel::retry,
+        onStartBackup = viewModel::startBackup,
+        onStartRestore = viewModel::startRestore,
+        onDismissBackupRestore = viewModel::dismissBackupRestoreSurface,
+        onCancelBackupRestore = viewModel::cancelBackupRestore,
+        onRetryBackupRestore = viewModel::retryBackupRestore,
+        preferredPaper = preferredPaper,
+        appVersion = appVersion,
+        onPreferredPaperChange = viewModel::setPreferredPaper,
         modifier = Modifier.fillMaxSize(),
     )
+}
+
+internal fun launchBackupRestorePicker(
+    request: LibraryBackupRestorePickerRequest,
+    launchBackup: (String) -> Unit,
+    launchRestore: (Array<String>) -> Unit,
+    onFailure: (LibraryBackupRestoreMode) -> Unit,
+) {
+    try {
+        when (request) {
+            is LibraryBackupRestorePickerRequest.Backup -> launchBackup(request.suggestedName)
+            LibraryBackupRestorePickerRequest.Restore -> launchRestore(arrayOf("*/*"))
+        }
+    } catch (_: RuntimeException) {
+        onFailure(
+            if (request is LibraryBackupRestorePickerRequest.Backup) {
+                LibraryBackupRestoreMode.Backup
+            } else {
+                LibraryBackupRestoreMode.Restore
+            },
+        )
+    }
 }
 
 /**
@@ -248,6 +317,8 @@ private fun ProofDestination(
     // keeps the completion without re-announcing it, and it cannot resurrect a completion the screen
     // cleared. (ADR-101 P2 retired the five-second snackbar this used to raise.)
     val saved = remember { MutableSharedFlow<String>(extraBufferCapacity = 1) }
+    var savedUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var savedMime by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Route each finished export purely by its ExportOutcome subtype (ADR-054) — no remembered target.
     // Collect only while STARTED so an export finishing while backgrounded doesn't launch at a stopped
@@ -290,10 +361,14 @@ private fun ProofDestination(
                     } catch (e: ActivityNotFoundException) {
                         Toast.makeText(context, Copy.Nav.NO_APP_TO_OPEN, Toast.LENGTH_SHORT).show()
                     }
-                    // Save PDF → a durable copy is already in Downloads (ADR-054): raise the band's
-                    // completion and its fold hand-off (ADR-041), naming the file actually written. No
-                    // Intent, so no ActivityNotFound path here.
-                    is ExportSaved -> saved.tryEmit(outcome.displayName)
+                    // Save PDF → a durable copy is already in Downloads (ADR-054). Remember its exact
+                    // scoped URI for the completion's explicit Open PDF action, then raise the band. Save
+                    // itself never launches another app: the maker keeps the fold hand-off in view.
+                    is ExportSaved -> {
+                        savedUri = outcome.uri
+                        savedMime = outcome.mime
+                        saved.tryEmit(outcome.displayName)
+                    }
                 }
             }
         }
@@ -345,6 +420,15 @@ private fun ProofDestination(
                 // The post-export hand-off (ADR-041): one signal per successful Save-PDF, which raises
                 // the band's `.done` block and its "Fold it up".
                 savedSignals = saved,
+                onOpenSavedPdf = savedUri?.let { uri ->
+                    {
+                        try {
+                            context.startActivity(openDocumentIntent(uri, savedMime ?: "application/pdf"))
+                        } catch (e: ActivityNotFoundException) {
+                            Toast.makeText(context, Copy.Nav.NO_APP_TO_OPEN, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
                 // The Read act (ADR-058) — the finished zine, page by page. Everything it needs was
                 // already resolved here for the export path (the ADR-051 shared-VM seam), so this is
                 // three existing values threaded one level down, not a new seam: the SAME document,
@@ -376,6 +460,13 @@ private fun shareIntent(uri: Uri, mime: String): Intent =
     Intent(Intent.ACTION_SEND).apply {
         type = mime
         putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+/** Opens one exact saved export without searching Downloads by its display name. */
+internal fun openDocumentIntent(uri: Uri, mime: String): Intent =
+    Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, mime)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
@@ -530,7 +621,7 @@ internal fun BootLoading() {
  * .fail{inset:0;flex-direction:column;align-items:center;justify-content:center;text-align:center;
  *       padding:var(--gap-2xl);gap:var(--gap-md)}
  * .fail h2{font-family:var(--voice);font-size:1.6rem;font-weight:700;margin:var(--gap-sm) 0 0}
- * .retry{background:var(--paper);color:var(--ink);border:1.5px solid var(--ink);
+ * .retry{background:var(--surface);color:var(--ink);border:1.5px solid var(--ink);
  *        border-radius:var(--br-pill);padding:var(--gap-md) var(--gap-xl);
  *        box-shadow:3px 3px 0 var(--ink-line)}
  * ```
@@ -605,7 +696,7 @@ internal fun BootFailure(message: String, actionLabel: String, onAction: () -> U
  * `.fail .mk` — a 60dp rotated disc with a `!` in it, `jam` outline and `jam` shadow on `paper`.
  *
  * ```css
- * .fail .mk{width:60px;height:60px;border-radius:var(--br-pill);background:var(--paper);
+ * .fail .mk{width:60px;height:60px;border-radius:var(--br-pill);background:var(--surface);
  *   border:2px solid var(--jam);color:var(--jam);font-family:var(--voice);font-size:1.8rem;
  *   font-weight:700;transform:rotate(-4deg);box-shadow:3px 3px 0 var(--jam)}
  * ```
@@ -633,7 +724,7 @@ private fun BootFailureMark() {
             .graphicsLayer { rotationZ = FailMarkRotation }
             .zinelyV21HardShadow(FailMarkShadow, colors.jam, FailMarkShape)
             .clip(FailMarkShape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(FailMarkBorder, colors.jam, FailMarkShape)
             .clearAndSetSemantics {},
         contentAlignment = Alignment.Center,
@@ -688,7 +779,7 @@ private fun BootFailureAction(label: String, onAction: () -> Unit) {
             .zinelyV21Pressable(pressed, ZinelyV21Press.Raised, colors.inkLine, RetryShape)
             .zinelyFocusRing(focused, ZinelyV21Dimens.radiusPill, ZinelyV21FocusOffsetLibrary)
             .clip(RetryShape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(RetryBorderWidth, colors.ink, RetryShape)
             .zinelyV2Control(
                 label = label,

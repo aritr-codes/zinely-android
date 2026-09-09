@@ -11,6 +11,10 @@
 > trilogy is superseded as a design source and as a pixel-parity target. Compose is an implementation of these
 > three files.
 >
+> **Theme amendment (2026-08-24):** [THEME-37596-FREEZE.md](THEME-37596-FREEZE.md) and its interactive
+> [light/dark comparison](mockups/theme-37596.html) supersede this corpus's colour values only. The V2.1
+> component, interaction, typography, spacing, material, and paper-honesty rules remain frozen.
+>
 > **Under freeze** ([CLAUDE.md](../../CLAUDE.md)): bug fixes · accessibility improvements · performance work ·
 > implementation parity fixes · theme compatibility are allowed. **Visual redesign, interaction redesign and
 > feature additions are not.** Any UX change after this point updates the HTML first, then Compose — never the

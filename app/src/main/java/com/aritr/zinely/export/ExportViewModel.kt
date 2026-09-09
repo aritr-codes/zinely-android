@@ -41,11 +41,16 @@ internal sealed interface ExportUiState {
  *  - [ExportReady] — a scoped, read-granted `content://` [uri] + [mime] for Intent delivery (Share via
  *    `ACTION_SEND`). Semantics unchanged from ADR-039 §4 / ADR-040.
  *  - [ExportSaved] — a durable copy already written to the device (in [location], e.g. "Downloads") under
- *    [displayName]; there is no Intent and no URI, so the host only raises the post-save hand-off.
+ *    [displayName], with the exact scoped [uri] needed by an explicit post-save Open action.
  */
 internal sealed interface ExportOutcome
 internal data class ExportReady(val uri: Uri, val mime: String) : ExportOutcome
-internal data class ExportSaved(val displayName: String, val location: String) : ExportOutcome
+internal data class ExportSaved(
+    val uri: Uri,
+    val mime: String,
+    val displayName: String,
+    val location: String,
+) : ExportOutcome
 
 /**
  * Drives one export (ADR-039 §5, ADR-054). Reads no document of its own — the host passes the *live shared

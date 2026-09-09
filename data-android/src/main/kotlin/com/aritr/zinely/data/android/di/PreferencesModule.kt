@@ -6,7 +6,9 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.aritr.zinely.data.android.prefs.DataStoreEditorOnboardingStore
+import com.aritr.zinely.data.android.prefs.DataStorePreferredPaperStore
 import com.aritr.zinely.data.android.prefs.EditorOnboardingStore
+import com.aritr.zinely.data.android.prefs.PreferredPaperStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,8 +20,8 @@ import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
 /**
- * The local preferences store wiring (ADR-032). Provides the single Preferences [DataStore] for the
- * editor's onboarding flags and binds the [EditorOnboardingStore] seam over it.
+ * The local preferences store wiring (ADR-032). Provides the single install-scoped Preferences
+ * [DataStore] used by editor onboarding and lightweight settings, then binds their narrow seams over it.
  *
  * **Single instance.** DataStore throws if a second instance is created for the same file in one process,
  * so the store is `@Singleton`; Hilt enforces the one-per-process invariant for us.
@@ -33,7 +35,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 internal object PreferencesModule {
 
-    /** The file name for the editor onboarding preferences (DataStore appends `.preferences_pb`). */
+    /** Stable legacy file name for install preferences (DataStore appends `.preferences_pb`). */
     private const val EDITOR_ONBOARDING_STORE = "editor_onboarding"
 
     @Provides
@@ -52,4 +54,10 @@ internal object PreferencesModule {
     fun provideEditorOnboardingStore(
         dataStore: DataStore<Preferences>,
     ): EditorOnboardingStore = DataStoreEditorOnboardingStore(dataStore)
+
+    @Provides
+    @Singleton
+    fun providePreferredPaperStore(
+        dataStore: DataStore<Preferences>,
+    ): PreferredPaperStore = DataStorePreferredPaperStore(dataStore)
 }

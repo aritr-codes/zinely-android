@@ -56,8 +56,12 @@ public enum class Script(public val displayName: String) {
  */
 public object SupportedScripts {
 
-    /** The scripts v1 promises to render on all four surfaces. */
-    public val BUNDLED_SCRIPTS: Set<Script> = setOf(Script.LATIN, Script.CYRILLIC, Script.GREEK)
+    /**
+     * The scripts Zinely promises to render on all four surfaces. Emoji are owned by the separate,
+     * bundled Emoji2 renderer (ADR-112), not by the Inter cmap guarded in `:render-android`.
+     */
+    public val BUNDLED_SCRIPTS: Set<Script> =
+        setOf(Script.LATIN, Script.CYRILLIC, Script.GREEK, Script.EMOJI)
 
     /**
      * Characters that carry no script of their own — spaces, digits, punctuation, symbols, and control
@@ -128,19 +132,16 @@ public object SupportedScripts {
         else -> Script.OTHER
     }
 
-    /** Whether v1 promises to render [codePoint]. */
+    /** Whether Zinely promises to render [codePoint] through its bundled text/emoji renderers. */
     public fun isSupported(codePoint: Int): Boolean = scriptOf(codePoint) in BUNDLED_SCRIPTS
 
-    /**
-     * Emoji are called out separately from [Script.OTHER] because they fail for a *different reason* and
-     * deserve a different explanation: colour emoji (CBDT/COLR) cannot be embedded in a PDF at all
-     * ([ADR-001](../../../../../../../../docs/DECISIONS.md#adr-001)), so this is a limit of print, not a
-     * missing font.
-     */
+    /** Emoji are called out separately because ADR-112 routes them through a dedicated bundled font. */
     private fun isEmoji(codePoint: Int): Boolean =
         codePoint in 0x1F300..0x1FAFF ||
             codePoint in 0x1F000..0x1F2FF ||
             codePoint in 0x2600..0x27BF ||
             codePoint == 0x203C || codePoint == 0x2049 ||
-            codePoint in 0xFE00..0xFE0F // variation selectors (the emoji-presentation marker)
+            codePoint == 0x20E3 || // combining enclosing keycap
+            codePoint in 0xFE00..0xFE0F || // variation selectors (the emoji-presentation marker)
+            codePoint in 0xE0020..0xE007F // emoji tag sequences (subdivision flags)
 }

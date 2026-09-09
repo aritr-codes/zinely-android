@@ -11,25 +11,33 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material.icons.filled.Flip
 import androidx.compose.material.icons.filled.Grain
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.ViewWeek
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +49,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -50,6 +61,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
@@ -65,6 +77,7 @@ import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 
 /** Test tag on the frozen verb bar; absent from the tree when it is not showing. */
 internal const val BenchContextBarTestTag: String = "bench-context-bar"
+internal fun benchVerbStateCueTag(label: String): String = "$BenchContextBarTestTag-$label-cue"
 
 /**
  * What the selected element is, for the purpose of choosing verbs. The freeze's `toolsFor()` branches
@@ -76,8 +89,9 @@ internal const val BenchContextBarTestTag: String = "bench-context-bar"
 internal enum class BenchVerbKind { TEXT, PHOTO, DECOR }
 
 /**
- * One verb of the frozen contextual bar. [label] is both the drawn caption and the spoken name — the
- * icon above it is decorative, exactly as in the freeze, where the `<span>` carries the word.
+ * One verb of the frozen contextual bar. [label] is the drawn caption. [spokenLabel] normally matches
+ * it, but may name the selected object when two element kinds expose the same visible word; the icon
+ * above it remains decorative, exactly as in the freeze, where the `<span>` carries the word.
  *
  * [enabled] is `false` only for **Font**, which the freeze draws and the product cannot honour:
  * [OD-9](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling) ruled that the frozen
@@ -88,6 +102,7 @@ internal enum class BenchVerbKind { TEXT, PHOTO, DECOR }
 internal data class BenchVerb(
     val label: String,
     val icon: ImageVector,
+    val spokenLabel: String = label,
     val danger: Boolean = false,
     val enabled: Boolean = true,
     /**
@@ -146,25 +161,32 @@ internal fun benchContextVerbs(
             Copy.BenchVerbs.INK, Icons.Filled.Palette, enabled = styleable,
             unavailableBecause = Copy.BenchVerbs.TYPE_FIRST.takeUnless { styleable },
         ),
+        BenchVerb(
+            Copy.BenchVerbs.DUPLICATE, Icons.Filled.ContentCopy, enabled = styleable,
+            unavailableBecause = Copy.BenchVerbs.TYPE_FIRST.takeUnless { styleable },
+        ),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )
     BenchVerbKind.PHOTO -> listOf(
         BenchVerb(Copy.BenchVerbs.REFRAME, Icons.Filled.Crop),
+        BenchVerb(Copy.BenchVerbs.FLIP, Icons.Filled.Flip),
+        // ADR-109 / frozen Bench A19: this is an edit to a selected photo, not another thing in Add.
+        // The confirmation and crop transaction are owned by the host/reducer; the bar names only entry.
+        BenchVerb(Copy.BenchVerbs.ACROSS_FOLD, Icons.Filled.ViewWeek),
         // The one verb this bar gained after its freeze, and the freeze was amended first
         // (`v21-bench.html:690`) exactly as CLAUDE.md's HTML-first rule requires — never the reverse.
         // (Was cited as :674, which is the *text* list; corrected by review after counting the lines.)
-        // It is live, not drawn-and-inert like Font and Replace: the whole feature is one boolean on
-        // the selected photo, so there is nothing left to invent ([ADR-106]).
+        // It is live: the whole feature is one boolean on the selected photo, so there is nothing left
+        // to invent ([ADR-106]). Font is the remaining drawn-and-inert verb.
         BenchVerb(Copy.BenchVerbs.COPIER, Icons.Filled.Grain, checked = copierOn),
-        // Disabled for the same reason as Font, discovered the same way: `Intent.ReplaceImage` exists in
-        // the reducer and is dispatched from nowhere, and reaching it needs a picker bound to an existing
-        // element — a new effect parameterisation, i.e. a flow, not a re-skin. OD-9's class ("a control the
-        // freeze draws is kept drawn and invents nothing") applies; the capability question is
-        // [D-038](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-038), for the owner.
+        // D-038 is now complete: the existing picker effect carries this photo's id to the existing
+        // reducer-owned ReplaceImage command, so framing and every other property remain untouched.
         BenchVerb(
-            Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz, enabled = false,
-            unavailableBecause = Copy.BenchVerbs.NOT_YET,
+            Copy.BenchVerbs.REPLACE,
+            Icons.Filled.SwapHoriz,
+            spokenLabel = Copy.A11y.REPLACE_PHOTO,
         ),
+        BenchVerb(Copy.BenchVerbs.DUPLICATE, Icons.Filled.ContentCopy),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )
     // Reachable as of ADR-105 / package P1. The `error(...)` that stood here cited OD-2 as live; OD-2
@@ -173,8 +195,7 @@ internal fun benchContextVerbs(
     // assigns the supplies programme as the phase that takes it. The fence expired; this is the record.
     //
     // The frozen verb set is Replace / Ink / Delete (`v21-bench.html:71`), and it is transcribed whole.
-    // Two of the three are drawn-and-inert under exactly the OD-9 class Font and Replace-photo already
-    // sit in — "a control the freeze draws is kept drawn and invents nothing":
+    // All three are live; each existing reducer path preserves the element identity and document rules:
     //  - `Replace` is **live as of the replace-supply package**: it re-summons the Art sheet carrying the
     //    selected supply's id, and the tapped tile becomes that element's new outline
     //    ([Intent.ReplaceSupply]). The incoming family's §5.2 scale is applied at the outgoing element's
@@ -186,8 +207,14 @@ internal fun benchContextVerbs(
     //    counterpart to `styleable`.
     // Delete is live because it is a shared verb that already works on any element id.
     BenchVerbKind.DECOR -> listOf(
-        BenchVerb(Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz),
+        BenchVerb(
+            Copy.BenchVerbs.REPLACE,
+            Icons.Filled.SwapHoriz,
+            spokenLabel = Copy.A11y.REPLACE_SUPPLY,
+        ),
         BenchVerb(Copy.BenchVerbs.INK, Icons.Filled.Palette),
+        BenchVerb(Copy.BenchVerbs.FLIP, Icons.Filled.Flip),
+        BenchVerb(Copy.BenchVerbs.DUPLICATE, Icons.Filled.ContentCopy),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )
 }
@@ -319,6 +346,8 @@ internal fun BenchContextBar(
     verbs: List<BenchVerb>,
     onVerb: (BenchVerb) -> Unit,
     modifier: Modifier = Modifier,
+    onHeightChanged: (Dp) -> Unit = {},
+    focusRequesterForLabel: (String) -> FocusRequester? = { null },
 ) {
     val colors = ZinelyTheme.v21Colors
     val motion = if (ZinelyTheme.motion.reduceMotion) 0 else BenchContextBarEnterMillis
@@ -326,21 +355,26 @@ internal fun BenchContextBar(
     // The freeze rises the bar by a FIXED 8px, not by its own height, so the slide offset is a
     // converted Dp rather than a fraction of `fullHeight`.
     val enterPx = with(LocalDensity.current) { BenchContextBarEnterOffsetDp.roundToPx() }
+    val density = LocalDensity.current
     AnimatedVisibility(
         visible = visible,
-        modifier = modifier,
+        modifier = modifier.onSizeChanged { size ->
+            if (visible && size.height > 0) onHeightChanged(with(density) { size.height.toDp() })
+        },
         enter = slideInVertically(tween(motion, easing = BenchContextBarEnterEasing)) { enterPx } + fadeIn(spec),
         exit = slideOutVertically(tween(motion, easing = BenchContextBarEnterEasing)) { enterPx } + fadeOut(spec),
     ) {
         // `left:50%;transform:translateX(-50%)` — the card is content-width and centred, where V2's was a
         // full-width strip inset 12dp on both sides. The host hands this composable a `fillMaxWidth`
         // modifier it cannot change, so the centring happens here.
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = BenchContextBarInsetDp),
             contentAlignment = Alignment.BottomCenter,
         ) {
+            val scrollState = rememberScrollState()
+            val maxBarWidth = maxWidth
             Row(
                 modifier = Modifier
                     // The tag is the card itself, so the node's bounds are the pill — its ground, its ink
@@ -359,15 +393,28 @@ internal fun BenchContextBar(
                     // `border-radius` and stops — the freeze's own banner at `v21-bench.html:220-222` says
                     // why. Nothing that clips needs to sit right of anything here, because there is nothing
                     // painting outside the node to protect.
+                    // At enlarged text, the six-verb Text and Photo sets can be wider than a phone.
+                    // Keep the frozen single-row pill and full labels, but constrain its viewport to the
+                    // available canvas width and let the verbs scroll. The
+                    // four-verb Art set and every default-scale bar remain content-width; only genuine
+                    // overflow gains a horizontal axis. This was found on the SM-A176B at font scale 1.8,
+                    // where unconstrained measurement produced a card wider than the screen and clipped
+                    // Duplicate/Delete entirely.
+                    .widthIn(max = maxBarWidth)
                     .clip(BenchContextBarShape)
-                    .background(colors.paper)
+                    .background(colors.surface)
                     .border(BenchChromeBorder, colors.ink, BenchContextBarShape)
+                    .horizontalScroll(scrollState)
                     .padding(BenchContextBarPaddingDp),
                 horizontalArrangement = Arrangement.spacedBy(BenchContextBarGapDp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 for (verb in verbs) {
-                    BenchVerbButton(verb = verb, onClick = { onVerb(verb) })
+                    BenchVerbButton(
+                        verb = verb,
+                        onClick = { onVerb(verb) },
+                        focusRequester = focusRequesterForLabel(verb.label),
+                    )
                 }
             }
         }
@@ -392,8 +439,14 @@ internal fun BenchContextBar(
  * and it is not removed, because removing it would take away feedback the shipped control already had.
  */
 @Composable
-private fun BenchVerbButton(verb: BenchVerb, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun BenchVerbButton(
+    verb: BenchVerb,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    focusRequester: FocusRequester? = null,
+) {
     val colors = ZinelyTheme.v21Colors
+    val fontScale = LocalDensity.current.fontScale
     // `.ctx button.on{background:var(--leaf);color:var(--on-leaf)}` — the freeze's A4 amendment, made in
     // the HTML first. A toggle with no on appearance was measured on device (SM-A176B / Android 16) as
     // pixel-identical before and after its tap; the halftone on the canvas is not feedback when the photo
@@ -412,9 +465,13 @@ private fun BenchVerbButton(verb: BenchVerb, onClick: () -> Unit, modifier: Modi
     // Delete is the one verb that cannot be taken back by pressing it again — Boundary says so in the
     // hand before the snackbar says it in words. Every other verb is an ordinary action.
     val fire = benchTap(if (verb.danger) ZinelyHaptic.Boundary else ZinelyHaptic.Tick, onClick)
-    Column(
+    Box(
         modifier = modifier
-            .height(BenchContextBarButtonHeightDp)
+            .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
+            .then(
+                if (fontScale <= 1f) Modifier.height(BenchContextBarButtonHeightDp)
+                else Modifier.heightIn(min = BenchContextBarButtonHeightDp),
+            )
             .defaultMinSize(minWidth = BenchContextBarButtonMinWidthDp)
             // `.icon-btn:disabled{opacity:.35}` (`v21-bench.html:345`). `.ctx button` has no disabled rule
             // of its own — the freeze never disables one — so this borrows the corpus's single existing
@@ -429,7 +486,10 @@ private fun BenchVerbButton(verb: BenchVerb, onClick: () -> Unit, modifier: Modi
             .then(if (verb.enabled) Modifier.clickable(onClick = fire) else Modifier)
             .testTag("$BenchContextBarTestTag-${verb.label}")
             .clearAndSetSemantics {
-                contentDescription = verb.label
+                // Photo and decor both draw the frozen word `Replace`, but a platform service reaches
+                // this node without a reliable announcement of the selected-object container. Name the
+                // target in the spoken label so the two distinct picker routes cannot sound identical.
+                contentDescription = verb.spokenLabel
                 role = Role.Button
                 // `clearAndSetSemantics` wipes everything the button published, INCLUDING the disabled
                 // state - so without this line Font is announced as an ordinary button that simply does
@@ -468,26 +528,41 @@ private fun BenchVerbButton(verb: BenchVerb, onClick: () -> Unit, modifier: Modi
                     verb.unavailableBecause?.let { stateDescription = it }
                 }
             }
-            .padding(BenchContextBarButtonPaddingDp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(BenchContextBarLabelGapDp, Alignment.CenterVertically),
+            .padding(
+                horizontal = BenchContextBarButtonHorizontalPaddingDp,
+                vertical = BenchContextBarButtonPaddingDp,
+            ),
     ) {
-        Icon(
-            imageVector = verb.icon,
-            contentDescription = null,
-            // No second alpha: the layer above already carries the frozen `.35` for the whole control.
-            tint = tint,
-            modifier = Modifier.size(BenchContextBarIconDp),
-        )
-        Text(
-            text = verb.label,
-            color = tint,
-            fontSize = BenchContextBarLabelSp,
-            // `.ctx button{font-weight:600}` — V2 asked for 500.
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = ZinelyV21Fonts.Work,
-            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-        )
+        Column(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(BenchContextBarLabelGapDp, Alignment.CenterVertically),
+        ) {
+            Icon(
+                imageVector = verb.icon,
+                contentDescription = null,
+                // No second alpha: the layer above already carries the frozen `.35` for the whole control.
+                tint = tint,
+                modifier = Modifier.size(BenchContextBarIconDp),
+            )
+            Text(
+                text = verb.label,
+                color = tint,
+                fontSize = BenchContextBarLabelSp,
+                // `.ctx button{font-weight:600}` — V2 asked for 500.
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = ZinelyV21Fonts.Work,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+            )
+        }
+        if (checkedOn) {
+            EditorSelectionCue(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 2.dp, end = 2.dp)
+                    .testTag(benchVerbStateCueTag(verb.label)),
+            )
+        }
     }
 }
 
@@ -511,21 +586,19 @@ internal val BenchContextBarShape: RoundedCornerShape = RoundedCornerShape(perce
 /** Frozen `.ctx{padding:var(--gap-xs)}` (`v21-bench.html:225`) — 4, where V2 padded 8. */
 internal val BenchContextBarPaddingDp = ZinelyV21Dimens.gapXs
 
-/** Frozen `.ctx{gap:var(--gap-hair)}` (`v21-bench.html:224`) — 2, where V2 gapped 6. */
-internal val BenchContextBarGapDp = ZinelyV21Dimens.gapHair
+/** A21's compact six-action gap — 1dp keeps every 50dp floor visible on a 360dp phone. */
+internal val BenchContextBarGapDp = 1.dp
 
 /**
  * ⚠ **V2.1's `.ctx button` declares no height** (`v21-bench.html:228-230`), where V2 pinned 40dp. Its
  * intrinsic stack is `8 + 17 + 2 + ~15.4 + 8`, which lands within half a dp of **50** — the same number the
  * freeze independently gives it as `min-width`, so the verb is a 50dp square at rest.
  *
- * ### Why this is pinned where [BenchBottomBar]'s `.bar` was left intrinsic
+ * ### Why this is a minimum where [BenchBottomBar]'s `.bar` was left intrinsic
  *
- * Because [BenchContextBarReservedHeightDp] is a **compile-time band** that `EditorScreen` subtracts from
- * the canvas *before* the bar is measured, and an intrinsic height cannot be reserved ahead of layout.
- * Left intrinsic, the reserve would be a number that merely happens to be close, which is exactly what
- * `EditorScreenGoldenTest."the sheet is fitted above the context bar"` exists to fail. Recorded as a
- * deviation from the freeze's silence rather than presented as a frozen value.
+ * [BenchContextBarReservedHeightDp] is the **resting band** that `EditorScreen` subtracts before the bar
+ * is measured. A10 / D-106 keeps 50dp as that default-scale floor but permits the intrinsic stack to grow
+ * at accessibility text scales. The live measured height then keeps transient feedback above the grown bar.
  */
 internal val BenchContextBarButtonHeightDp = 50.dp
 
@@ -545,6 +618,9 @@ internal val BenchContextBarButtonShape: RoundedCornerShape = RoundedCornerShape
 
 /** Frozen `.ctx button{padding:var(--gap-sm) var(--gap-sm)}` (`v21-bench.html:229`) — 8 on every side. */
 internal val BenchContextBarButtonPaddingDp = ZinelyV21Dimens.gapSm
+
+/** A21 changes only horizontal padding to 2dp; vertical padding remains the frozen 8dp. */
+internal val BenchContextBarButtonHorizontalPaddingDp = 2.dp
 
 /** Frozen `.ctx button{gap:var(--gap-hair)}` (`v21-bench.html:230`) — glyph over caption. */
 internal val BenchContextBarLabelGapDp = ZinelyV21Dimens.gapHair
@@ -595,7 +671,7 @@ internal val BenchContextBarEnterOffsetDp = 8.dp
  * interactive floor rather than V2's frozen 40. That correction would have over-reserved by 8dp instead —
  * `minimumInteractiveComponentSize` extends the *target* past the layout box without growing it. V2.1
  * retires the question by drawing a 50dp control, but the history is kept because it is why
- * [BenchContextBarButtonHeightDp] is pinned rather than left intrinsic.
+ * [BenchContextBarButtonHeightDp] remains the resting minimum rather than a fixed ceiling.
  *
  * Neither was settled by argument. `EditorScreenGoldenTest` composes the bar and measures
  * `canvas.bottom - bar.top` and asserts this constant against that measurement — so the next person to

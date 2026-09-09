@@ -1,19 +1,33 @@
 package com.aritr.zinely.home
 
+import android.net.Uri
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
+import com.aritr.zinely.core.data.repository.ProjectShelfEntry
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
+import com.aritr.zinely.core.data.repository.ProjectUnavailableReason
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.data.android.LibraryBackupReceipt
+import com.aritr.zinely.data.android.LibraryRestoreReceipt
+import com.aritr.zinely.data.android.LibrarySafTransport
+import com.aritr.zinely.data.android.prefs.PreferredPaperStore
+import com.aritr.zinely.data.android.RestoredProject
 import com.aritr.zinely.feature.editor.HomeShelfEvent
+import com.aritr.zinely.feature.library.LibraryBackupRestoreFailureKind
+import com.aritr.zinely.feature.library.LibraryBackupRestoreMode
+import com.aritr.zinely.feature.library.LibraryBackupRestoreUiState
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -24,6 +38,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 /**
  * Unit tests for the S6.2 read-only Home shelf ViewModel (ADR-043). Given-When-Then; a hand fake
@@ -32,6 +48,7 @@ import org.junit.Test
  * SharedFlow, not a StateFlow), so the Loading-first assertion is real, not incidental (Codex).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class HomeViewModelTest {
 
     /**
@@ -64,12 +81,19 @@ class HomeViewModelTest {
         var observeFailure: Throwable? = null
 
         override fun observeProjects(): Flow<List<ProjectSummary>> = flow {
+            emitAll(projects)
+        }
+
+        var shelfProjection: (List<ProjectSummary>) -> List<ProjectShelfEntry> =
+            { items -> items.map(ProjectShelfEntry::Available) }
+
+        override fun observeShelfProjects(): Flow<List<ProjectShelfEntry>> = flow {
             observeCollections++
             observeFailure?.let { failure ->
                 observeFailure = null // one scripted failure: a retry must be able to succeed
                 throw failure
             }
-            emitAll(projects)
+            emitAll(projects.map(shelfProjection))
         }
 
         override suspend fun getProject(id: String): DataResult<ProjectSummary> =
@@ -101,16 +125,77 @@ class HomeViewModelTest {
         }
     }
 
+    private class FakeLibrarySafTransport : LibrarySafTransport {
+        val backupDestinations = mutableListOf<Uri>()
+        val restoreSources = mutableListOf<Uri>()
+
+        var backupGate: CompletableDeferred<Unit>? = null
+        var restoreGate: CompletableDeferred<Unit>? = null
+        var backupResult: DataResult<LibraryBackupReceipt> = DataResult.Success(
+            LibraryBackupReceipt(projectCount = 2, assetCount = 3, archiveByteCount = 1024L),
+        )
+        var restoreResult: DataResult<LibraryRestoreReceipt> = DataResult.Success(
+            LibraryRestoreReceipt(projects = emptyList()),
+        )
+
+        override suspend fun backupTo(destination: Uri): DataResult<LibraryBackupReceipt> {
+            backupDestinations += destination
+            backupGate?.await()
+            return backupResult
+        }
+
+        override suspend fun restoreFrom(source: Uri): DataResult<LibraryRestoreReceipt> {
+            restoreSources += source
+            restoreGate?.await()
+            return restoreResult
+        }
+    }
+
+    private class FakePreferredPaperStore : PreferredPaperStore {
+        private val paper = MutableStateFlow(PaperSize.A4)
+        override val preferredPaperSize: Flow<PaperSize> = paper
+        override suspend fun setPreferredPaperSize(paperSize: PaperSize) {
+            paper.value = paperSize
+        }
+    }
+
+    private class FakePendingDeleteStore(
+        initialIds: Set<String> = emptySet(),
+    ) : PendingDeleteStore {
+        val ids = initialIds.toMutableSet()
+        var writesSucceed = true
+
+        override fun pendingIds(): Set<String> = ids.toSet()
+
+        override fun add(id: String): Boolean {
+            if (!writesSucceed) return false
+            ids += id
+            return true
+        }
+
+        override fun remove(id: String): Boolean {
+            if (!writesSucceed) return false
+            ids -= id
+            return true
+        }
+    }
+
     private val dispatcher = UnconfinedTestDispatcher()
     private lateinit var repository: FakeProjectRepository
+    private lateinit var transport: FakeLibrarySafTransport
+    private lateinit var preferredPaperStore: FakePreferredPaperStore
+    private lateinit var pendingDeleteStore: FakePendingDeleteStore
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         repository = FakeProjectRepository()
+        transport = FakeLibrarySafTransport()
+        preferredPaperStore = FakePreferredPaperStore()
+        pendingDeleteStore = FakePendingDeleteStore()
     }
 
-    private fun viewModel() = HomeViewModel(repository)
+    private fun viewModel() = HomeViewModel(repository, transport, preferredPaperStore, pendingDeleteStore)
 
     @After
     fun tearDown() {
@@ -131,6 +216,17 @@ class HomeViewModelTest {
         updatedAtEpochMs = updatedAtEpochMs,
         documentSchemaVersion = 1,
     )
+
+    @Test
+    fun `preferred paper is exposed and persisted without creating a zine`() = runTest {
+        val viewModel = viewModel()
+
+        assertEquals(PaperSize.A4, viewModel.preferredPaper.value)
+        viewModel.setPreferredPaper(PaperSize.LETTER)
+
+        assertEquals(PaperSize.LETTER, viewModel.preferredPaper.value)
+        assertTrue(repository.created.isEmpty())
+    }
 
     @Test
     fun `the shelf is Loading until the store first answers`() = runTest {
@@ -257,6 +353,39 @@ class HomeViewModelTest {
 
         val cards = (viewModel.state.value as HomeUiState.Content).cards
         assertEquals(listOf("z2", "z1"), cards.map { it.id })
+        job.cancel()
+    }
+
+    @Test
+    fun `an unavailable zine stays visible while the healthy card path excludes it`() = runTest {
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        repository.shelfProjection = { items ->
+            listOf(
+                ProjectShelfEntry.Available(items.first()),
+                ProjectShelfEntry.Unavailable(
+                    id = "z2",
+                    title = "Broken one",
+                    paperSize = PaperSize.A4,
+                    updatedAtEpochMs = now,
+                    cover = null,
+                    reason = ProjectUnavailableReason.CORRUPT,
+                ),
+            )
+        }
+
+        val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(
+            listOf(
+                summary("z1", "Healthy one", now),
+                summary("z2", "Broken one", now, paperSize = PaperSize.A4),
+            ),
+        )
+
+        val content = viewModel.state.value as HomeUiState.Content
+        assertEquals(listOf("z1"), content.cards.map { it.id })
+        assertEquals(listOf("z1", "z2"), content.zines.map { it.id })
+        assertEquals(Copy.Shelf.UNAVAILABLE_DAMAGED, content.zines.last().unavailableReason)
         job.cancel()
     }
 
@@ -400,6 +529,7 @@ class HomeViewModelTest {
         // Then — card hidden, one prompt with the title, nothing deleted in the store
         assertEquals(listOf("z2"), (viewModel.state.value as HomeUiState.Content).cards.map { it.id })
         assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.DeletePrompt("z1", "Zine one")), events)
+        assertEquals(setOf("z1"), pendingDeleteStore.ids)
         assertTrue(repository.deleted.isEmpty())
         stateJob.cancel()
         eventsJob.cancel()
@@ -439,6 +569,7 @@ class HomeViewModelTest {
 
         // Then
         assertEquals(listOf("z1"), (viewModel.state.value as HomeUiState.Content).cards.map { it.id })
+        assertTrue(pendingDeleteStore.ids.isEmpty())
         assertTrue(repository.deleted.isEmpty())
         stateJob.cancel()
     }
@@ -457,6 +588,51 @@ class HomeViewModelTest {
 
         // Then
         assertEquals(listOf("z1"), repository.deleted)
+        assertTrue(pendingDeleteStore.ids.isEmpty())
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a process restart finishes a delete whose undo marker was already durable`() = runTest {
+        pendingDeleteStore = FakePendingDeleteStore(setOf("z1"))
+
+        viewModel()
+
+        assertEquals(listOf("z1"), repository.deleted)
+        assertTrue(pendingDeleteStore.ids.isEmpty())
+    }
+
+    @Test
+    fun `delete stays visible when its durable marker cannot be written`() = runTest {
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+        pendingDeleteStore.writesSucceed = false
+
+        viewModel.delete("z1")
+
+        assertEquals(listOf("z1"), (viewModel.state.value as HomeUiState.Content).cards.map { it.id })
+        assertEquals(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE), events.single())
+        assertTrue(repository.deleted.isEmpty())
+        stateJob.cancel()
+        eventsJob.cancel()
+    }
+
+    @Test
+    fun `flush pending deletes commits each hidden zine`() = runTest {
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+        viewModel.delete("z1")
+        viewModel.delete("z2")
+
+        viewModel.flushPendingDeletes()
+
+        assertEquals(listOf("z1", "z2"), repository.deleted)
         stateJob.cancel()
     }
 
@@ -726,6 +902,281 @@ class HomeViewModelTest {
         // Then the upstream was re-collected: the store is re-read and labels re-derived
         assertEquals(2, repository.observeCollections)
         secondVisit.cancel()
+    }
+
+    // --- library backup / restore orchestration ---
+
+    @Test
+    fun `backup asks for a user-owned destination only when the visible shelf has a zine`() = runTest {
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val requests = mutableListOf<LibraryBackupRestorePickerRequest>()
+        val requestJob = launch(Dispatchers.Main) {
+            viewModel.backupRestorePickerRequests.collect { requests += it }
+        }
+
+        repository.projects.emit(emptyList())
+        viewModel.startBackup()
+        assertTrue(requests.isEmpty())
+
+        repository.projects.emit(listOf(summary("z1", "One", System.currentTimeMillis())))
+        viewModel.startBackup()
+
+        val request = requests.single() as LibraryBackupRestorePickerRequest.Backup
+        assertTrue(request.suggestedName.startsWith("zinely-backup-"))
+        assertTrue(request.suggestedName.endsWith(".zine"))
+        assertEquals(null, viewModel.backupRestoreState.value)
+        stateJob.cancel()
+        requestJob.cancel()
+    }
+
+    @Test
+    fun `restore can begin from an empty shelf and picker cancellation is silent`() = runTest {
+        val viewModel = viewModel()
+        val requests = mutableListOf<LibraryBackupRestorePickerRequest>()
+        val requestJob = launch(Dispatchers.Main) {
+            viewModel.backupRestorePickerRequests.collect { requests += it }
+        }
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+
+        viewModel.startRestore()
+        assertEquals(listOf(LibraryBackupRestorePickerRequest.Restore), requests)
+
+        viewModel.restorePicked(null)
+        assertEquals(null, viewModel.backupRestoreState.value)
+        assertTrue(transport.restoreSources.isEmpty())
+        assertTrue(events.isEmpty())
+
+        // Null clears the pending-picker guard; a later intentional tap still opens the picker.
+        viewModel.startRestore()
+        assertEquals(2, requests.size)
+        requestJob.cancel()
+        eventJob.cancel()
+    }
+
+    @Test
+    fun `picker request is single-flight until its callback clears the pending gate`() = runTest {
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", System.currentTimeMillis())))
+        val requests = mutableListOf<LibraryBackupRestorePickerRequest>()
+        val requestJob = launch(Dispatchers.Main) {
+            viewModel.backupRestorePickerRequests.collect { requests += it }
+        }
+
+        // The first request owns the system picker. Rapid same-mode and cross-mode taps cannot open
+        // competing pickers before Android returns a result.
+        viewModel.startRestore()
+        viewModel.startRestore()
+        viewModel.startBackup()
+        assertEquals(listOf(LibraryBackupRestorePickerRequest.Restore), requests)
+
+        // A cancelled picker is still a callback and releases the guard for the next intentional tap.
+        viewModel.restorePicked(null)
+        viewModel.startBackup()
+        assertEquals(2, requests.size)
+        assertTrue(requests.last() is LibraryBackupRestorePickerRequest.Backup)
+        stateJob.cancel()
+        requestJob.cancel()
+    }
+
+    @Test
+    fun `picker launch failure clears the gate and offers a useful retry state`() = runTest {
+        val viewModel = viewModel()
+        val requests = mutableListOf<LibraryBackupRestorePickerRequest>()
+        val requestJob = launch(Dispatchers.Main) {
+            viewModel.backupRestorePickerRequests.collect { requests += it }
+        }
+
+        viewModel.startRestore()
+        assertEquals(listOf(LibraryBackupRestorePickerRequest.Restore), requests)
+
+        viewModel.backupRestorePickerFailed(LibraryBackupRestoreMode.Restore)
+        assertEquals(
+            LibraryBackupRestoreUiState.Failed(
+                mode = LibraryBackupRestoreMode.Restore,
+                kind = LibraryBackupRestoreFailureKind.ReadFailed,
+            ),
+            viewModel.backupRestoreState.value,
+        )
+
+        viewModel.retryBackupRestore()
+        assertEquals(2, requests.size)
+        requestJob.cancel()
+    }
+
+    @Test
+    fun `successful backup reports what was saved`() = runTest {
+        val viewModel = viewModel()
+        val uri = Uri.parse("content://zinely-tests/backup")
+        transport.backupResult = DataResult.Success(
+            LibraryBackupReceipt(projectCount = 4, assetCount = 7, archiveByteCount = 4096L),
+        )
+
+        viewModel.backupPicked(uri)
+
+        assertEquals(listOf(uri), transport.backupDestinations)
+        assertEquals(
+            LibraryBackupRestoreUiState.BackupSaved(projectCount = 4, assetCount = 7),
+            viewModel.backupRestoreState.value,
+        )
+    }
+
+    @Test
+    fun `successful additive restore reports the restored project count`() = runTest {
+        val viewModel = viewModel()
+        val uri = Uri.parse("content://zinely-tests/restore")
+        val restored = summary("restored", "Returned zine", 0L)
+        transport.restoreResult = DataResult.Success(
+            LibraryRestoreReceipt(
+                projects = listOf(RestoredProject(sourceProjectId = "source-id", project = restored)),
+            ),
+        )
+
+        viewModel.restorePicked(uri)
+
+        assertEquals(listOf(uri), transport.restoreSources)
+        assertEquals(
+            LibraryBackupRestoreUiState.RestoreAdded(restoredProjectCount = 1),
+            viewModel.backupRestoreState.value,
+        )
+    }
+
+    @Test
+    fun `restore failures map repository detail to stable product error families`() = runTest {
+        val cases = listOf(
+            DataError.Corrupt("tampered") to LibraryBackupRestoreFailureKind.Damaged,
+            DataError.SchemaTooNew(documentVersion = 3, supportedVersion = 2) to
+                LibraryBackupRestoreFailureKind.NewerAppNeeded,
+            DataError.OutOfSpace("full") to LibraryBackupRestoreFailureKind.NotEnoughSpace,
+            DataError.Busy("writer active") to LibraryBackupRestoreFailureKind.Busy,
+            DataError.Io("provider failed") to LibraryBackupRestoreFailureKind.ReadFailed,
+            DataError.Unknown("unexpected") to LibraryBackupRestoreFailureKind.Generic,
+        )
+        val viewModel = viewModel()
+
+        cases.forEachIndexed { index, (error, expectedKind) ->
+            transport.restoreResult = DataResult.Failure(error)
+            viewModel.restorePicked(Uri.parse("content://zinely-tests/failure-$index"))
+            assertEquals(
+                LibraryBackupRestoreUiState.Failed(
+                    mode = LibraryBackupRestoreMode.Restore,
+                    kind = expectedKind,
+                ),
+                viewModel.backupRestoreState.value,
+            )
+            viewModel.dismissBackupRestoreSurface()
+        }
+    }
+
+    @Test
+    fun `backup IO failure is described as save failure`() = runTest {
+        val viewModel = viewModel()
+        transport.backupResult = DataResult.Failure(DataError.Io("provider failed"))
+
+        viewModel.backupPicked(Uri.parse("content://zinely-tests/unwritable"))
+
+        assertEquals(
+            LibraryBackupRestoreUiState.Failed(
+                mode = LibraryBackupRestoreMode.Backup,
+                kind = LibraryBackupRestoreFailureKind.SaveFailed,
+            ),
+            viewModel.backupRestoreState.value,
+        )
+    }
+
+    @Test
+    fun `a running transfer is single-flight and explicit cancellation clears it`() = runTest {
+        val viewModel = viewModel()
+        val gate = CompletableDeferred<Unit>()
+        transport.backupGate = gate
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+
+        viewModel.backupPicked(Uri.parse("content://zinely-tests/slow-backup"))
+        assertEquals(
+            LibraryBackupRestoreUiState.Running(LibraryBackupRestoreMode.Backup),
+            viewModel.backupRestoreState.value,
+        )
+
+        viewModel.backupPicked(Uri.parse("content://zinely-tests/second-backup"))
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/restore-during-backup"))
+        assertEquals(1, transport.backupDestinations.size)
+        assertTrue(transport.restoreSources.isEmpty())
+
+        viewModel.cancelBackupRestore()
+        assertEquals(null, viewModel.backupRestoreState.value)
+        assertEquals(
+            listOf<HomeShelfEvent>(HomeShelfEvent.Message("Backup cancelled.")),
+            events,
+        )
+        eventJob.cancel()
+    }
+
+    @Test
+    fun `retry after a restore failure asks for the file again and can succeed`() = runTest {
+        val viewModel = viewModel()
+        val requests = mutableListOf<LibraryBackupRestorePickerRequest>()
+        val requestJob = launch(Dispatchers.Main) {
+            viewModel.backupRestorePickerRequests.collect { requests += it }
+        }
+        transport.restoreResult = DataResult.Failure(DataError.Corrupt("damaged"))
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/damaged"))
+        assertTrue(viewModel.backupRestoreState.value is LibraryBackupRestoreUiState.Failed)
+
+        viewModel.retryBackupRestore()
+        assertEquals(listOf(LibraryBackupRestorePickerRequest.Restore), requests)
+
+        transport.restoreResult = DataResult.Success(LibraryRestoreReceipt(emptyList()))
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/good"))
+        assertEquals(
+            LibraryBackupRestoreUiState.RestoreAdded(restoredProjectCount = 0),
+            viewModel.backupRestoreState.value,
+        )
+        requestJob.cancel()
+    }
+
+    @Test
+    fun `restore commits pending deletes before opening the picker`() = runTest {
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+        viewModel.delete("z1")
+        val deletesAtPicker = mutableListOf<List<String>>()
+        val requestJob = launch(Dispatchers.Main) {
+            viewModel.backupRestorePickerRequests.collect {
+                deletesAtPicker += repository.deleted.toList()
+            }
+        }
+
+        viewModel.startRestore()
+
+        assertEquals(listOf(listOf("z1")), deletesAtPicker)
+        stateJob.cancel()
+        requestJob.cancel()
+    }
+
+    @Test
+    fun `a failed pending delete prevents restore picker from seeing a dishonest shelf`() = runTest {
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+        repository.deleteResult = { DataResult.Failure(DataError.Io("delete failed")) }
+        viewModel.delete("z1")
+        val requests = mutableListOf<LibraryBackupRestorePickerRequest>()
+        val requestJob = launch(Dispatchers.Main) {
+            viewModel.backupRestorePickerRequests.collect { requests += it }
+        }
+
+        viewModel.startRestore()
+
+        assertTrue(requests.isEmpty())
+        assertEquals(listOf("z1"), (viewModel.state.value as HomeUiState.Content).cards.map { it.id })
+        stateJob.cancel()
+        requestJob.cancel()
     }
 
     // --- the recency label, a pure function ---

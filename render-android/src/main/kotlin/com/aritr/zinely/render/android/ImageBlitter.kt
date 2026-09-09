@@ -22,13 +22,41 @@ import kotlin.math.roundToInt
  * ([`:core:render`][com.aritr.zinely.core.render.computeImageBlit]) is the sole source of
  * `(srcFraction, destRect)`; the blitter only turns that into pixels.
  *
- * Per draw: bounds-decode the canonical master ([AssetBytesSource], open #1) for the intrinsic px →
- * [computeImageBlit] → **crop-aware, resolution-aware** decode of the visible region (open #2) →
- * `drawBitmap` into the point-space `destRect`. A missing asset or a failed decode (TOCTOU — render
- * cannot detect absence) paints a defined [placeholder][drawPlaceholder], never crashing or drawing
- * nothing (§5.4). Both opens use a **fresh stream** and are closed; the bitmap is `recycle()`d at once.
+ * Without a cache (the default): bounds-decode the canonical master ([AssetBytesSource], open #1) for
+ * the intrinsic px → [computeImageBlit] → **crop-aware, resolution-aware** decode of the visible region
+ * (open #2) → `drawBitmap` into the point-space `destRect`. A missing asset or failed decode paints a
+ * defined [placeholder][drawPlaceholder], never crashing or drawing nothing (§5.4). Both opens use a
+ * fresh stream and are closed; the bitmap is recycled at once.
+ *
+ * An interactive preview may supply [maxCacheBytes]. Successful intrinsics and non-copier region decodes
+ * are then retained in a bounded LRU until [close]; failed reads are never cached. Export leaves the
+ * budget at zero, preserving its one-draw ownership and memory behaviour.
  */
-public class ImageBlitter(private val assetBytes: AssetBytesSource) {
+public class ImageBlitter(
+    private val assetBytes: AssetBytesSource,
+    private val maxCacheBytes: Long = 0L,
+) : AutoCloseable {
+
+    init {
+        require(maxCacheBytes >= 0L) { "maxCacheBytes must be non-negative" }
+    }
+
+    private data class BitmapCacheKey(
+        val assetId: String,
+        val left: Int,
+        val top: Int,
+        val right: Int,
+        val bottom: Int,
+        val sampleSize: Int,
+    )
+
+    private data class DecodedBitmap(val bitmap: Bitmap, val cached: Boolean)
+
+    private val intrinsicsCache = LinkedHashMap<String, Pair<Int, Int>>(INTRINSICS_CACHE_CAPACITY, 0.75f, true)
+    private val bitmapCache = LinkedHashMap<BitmapCacheKey, Bitmap>(8, 0.75f, true)
+    private var cachedBitmapBytes = 0L
+
+    internal val cachedBitmapCount: Int get() = bitmapCache.size
 
     /** Pinned image paint (§4.1): bilinear filter on, no dither; anti-aliased edges. */
     private val imagePaint = Paint().apply {
@@ -73,11 +101,20 @@ public class ImageBlitter(private val assetBytes: AssetBytesSource) {
         // the master and the page alone, so both surfaces dither byte-identical input. It also stops the
         // export path decoding at 300dpi only to throw most of it away.
         val decodeDensity = if (command.copier) COPIER_DOTS_PER_POINT else decodePxPerPt
-        val bitmap = decodeVisibleRegion(command.assetId, intrinsicW, intrinsicH, blit, decodeDensity, localScale)
-        if (bitmap == null) {
+        val decoded = decodeVisibleRegion(
+            assetId = command.assetId,
+            intrinsicW = intrinsicW,
+            intrinsicH = intrinsicH,
+            blit = blit,
+            decodePxPerPt = decodeDensity,
+            localScale = localScale,
+            allowCache = !command.copier,
+        )
+        if (decoded == null) {
             drawPlaceholder(canvas, command.box)
             return
         }
+        val bitmap = decoded.bitmap
         val drawn = if (command.copier) photocopied(bitmap, blit, localScale) else bitmap
         try {
             // Filtering off is right when the dot grid is being MAGNIFIED and wrong when it is being
@@ -88,7 +125,7 @@ public class ImageBlitter(private val assetBytes: AssetBytesSource) {
             val hardDots = command.copier && drawn.width <= destPx
             canvas.drawBitmap(drawn, null, blit.destRect.toRectF(), if (hardDots) copierPaint else imagePaint)
         } finally {
-            drawn.recycle()
+            if (drawn !== bitmap || !decoded.cached) drawn.recycle()
             if (drawn !== bitmap) bitmap.recycle()
         }
     }
@@ -129,8 +166,20 @@ public class ImageBlitter(private val assetBytes: AssetBytesSource) {
      * (ADR-056), which the editor's Reframe overlay also calls, so no surface can resolve framing against
      * a different intrinsic than the one drawn here.
      */
-    private fun decodeBounds(assetId: String): Pair<Int, Int>? =
-        readImageIntrinsics(assetBytes, assetId)?.let { it.widthPx to it.heightPx }
+    private fun decodeBounds(assetId: String): Pair<Int, Int>? {
+        if (maxCacheBytes > 0L) intrinsicsCache[assetId]?.let { return it }
+        val decoded = readImageIntrinsics(assetBytes, assetId)?.let { it.widthPx to it.heightPx } ?: return null
+        if (maxCacheBytes > 0L) {
+            intrinsicsCache[assetId] = decoded
+            while (intrinsicsCache.size > INTRINSICS_CACHE_CAPACITY) {
+                intrinsicsCache.entries.iterator().run {
+                    next()
+                    remove()
+                }
+            }
+        }
+        return decoded
+    }
 
     /**
      * Open #2: decode the visible source region `srcFraction × intrinsic` to roughly the device px the
@@ -146,13 +195,25 @@ public class ImageBlitter(private val assetBytes: AssetBytesSource) {
         blit: ImageBlit,
         decodePxPerPt: Double,
         localScale: Double,
-    ): Bitmap? {
+        allowCache: Boolean,
+    ): DecodedBitmap? {
         val region = blit.srcFraction.toMasterRegion(intrinsicW, intrinsicH)
         val regionWidthPx = region.width()
 
         // Device px the destination occupies → the region (which fills the dest) must carry that many.
         val destPxW = blit.destRect.width * decodePxPerPt * localScale
         val regionSample = inSampleSizeFor(regionWidthPx, destPxW)
+        val cacheKey = BitmapCacheKey(
+            assetId = assetId,
+            left = region.left,
+            top = region.top,
+            right = region.right,
+            bottom = region.bottom,
+            sampleSize = regionSample,
+        )
+        if (allowCache && maxCacheBytes > 0L) {
+            bitmapCache[cacheKey]?.takeUnless(Bitmap::isRecycled)?.let { return DecodedBitmap(it, cached = true) }
+        }
 
         // Open #2 — region decode. A `null` stream is MISSING (no fallback, per the AssetBytesSource
         // contract); only a decoder *failure* on a VALID stream falls through to the whole-image path
@@ -170,13 +231,50 @@ public class ImageBlitter(private val assetBytes: AssetBytesSource) {
                 }
             }.getOrNull()
         }
-        if (regionBitmap != null) return regionBitmap
+        if (regionBitmap != null) {
+            return DecodedBitmap(regionBitmap, cacheIfEligible(cacheKey, regionBitmap, allowCache))
+        }
 
         // Region decoder unsupported/failed on a valid stream → whole-image fallback (open #3), sized so
         // the REGION still yields destPxW px (inflate by 1/srcFraction).
         val srcFractionW = blit.srcFraction.width.coerceAtLeast(MIN_FRACTION)
         val fullSample = inSampleSizeFor(intrinsicW, destPxW / srcFractionW)
-        return decodeWholeThenCrop(assetId, region, fullSample)
+        return decodeWholeThenCrop(assetId, region, fullSample)?.let { bitmap ->
+            // The fallback may need a different whole-image sample to preserve the requested region
+            // resolution, but its returned pixels still represent this exact region request.
+            DecodedBitmap(bitmap, cacheIfEligible(cacheKey, bitmap, allowCache))
+        }
+    }
+
+    private fun cacheIfEligible(key: BitmapCacheKey, bitmap: Bitmap, allowCache: Boolean): Boolean {
+        if (!allowCache || maxCacheBytes == 0L) return false
+        val bytes = bitmap.allocationByteCount.toLong()
+        if (bytes > maxCacheBytes) return false
+
+        bitmapCache.remove(key)?.let { previous ->
+            cachedBitmapBytes -= previous.allocationByteCount.toLong()
+            if (previous !== bitmap && !previous.isRecycled) previous.recycle()
+        }
+        bitmapCache[key] = bitmap
+        cachedBitmapBytes += bytes
+        while (cachedBitmapBytes > maxCacheBytes && bitmapCache.isNotEmpty()) {
+            val eldest = bitmapCache.entries.iterator().run {
+                val entry = next()
+                remove()
+                entry.value
+            }
+            cachedBitmapBytes -= eldest.allocationByteCount.toLong()
+            if (!eldest.isRecycled) eldest.recycle()
+        }
+        return true
+    }
+
+    /** Releases preview-owned decoded pixels. Export callers use the default zero-byte cache. */
+    override fun close() {
+        bitmapCache.values.forEach { if (!it.isRecycled) it.recycle() }
+        bitmapCache.clear()
+        cachedBitmapBytes = 0L
+        intrinsicsCache.clear()
     }
 
     private fun decodeWholeThenCrop(assetId: String, region: Rect, sampleSize: Int): Bitmap? {
@@ -240,6 +338,8 @@ public class ImageBlitter(private val assetBytes: AssetBytesSource) {
     private companion object {
         /** Guards a divide-by-zero on a degenerate crop fraction. */
         const val MIN_FRACTION = 1e-6
+
+        const val INTRINSICS_CACHE_CAPACITY = 128
 
         const val PLACEHOLDER_FILL_ARGB = 0xFFE0E0E0.toInt()
         const val PLACEHOLDER_STROKE_ARGB = 0xFF9E9E9E.toInt()

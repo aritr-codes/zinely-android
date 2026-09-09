@@ -84,6 +84,11 @@ dependencies {
     // The ONLY production edge: the pure render tape + computeImageBlit (transitively :core:model).
     api(project(":core:render"))
 
+    // ADR-112: one bundled, offline emoji font for preview, PNG and PDF. `emoji2-bundled` disables
+    // the downloadable/system initializer; Zinely initializes it explicitly with replaceAll=true.
+    implementation(libs.androidx.emoji2)
+    implementation(libs.androidx.emoji2.bundled)
+
     // Desugar runtime for isCoreLibraryDesugaringEnabled above (ADR-024). Convention parity with
     // :data-android; no java.* library backport is required by the current G1 scaffold.
     coreLibraryDesugaring(libs.android.desugar.jdk.libs.nio)

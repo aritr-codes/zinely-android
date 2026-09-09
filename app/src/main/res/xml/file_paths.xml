@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FileProvider roots (ADR-039). Only the app-private export cache subdir is shared. -->
+<!-- FileProvider roots (ADR-039). Access is still granted per intent, never broadly. -->
 <paths>
     <cache-path
         name="exports"
         path="exports/" />
+    <!-- API 24–28 writes durable exports directly to public Downloads. This narrow root lets the
+         post-save Open PDF action grant a viewer access to the exact file that was just written. -->
+    <external-path
+        name="downloaded_exports"
+        path="Download/" />
 </paths>

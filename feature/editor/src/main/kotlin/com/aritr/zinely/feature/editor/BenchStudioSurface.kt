@@ -175,7 +175,7 @@ internal object BenchStudio {
      * measured **3.51:1** through the sheet's grain, and both clear the floor) being the one mark on the
      * surface that clears WCAG 1.4.11's 3:1 floor. OD-48 deletes the decorative mark rather than the accessible one, so the boundary no
      * longer draws anything below the floor at all. The sub-3:1 marks left on this surface are the
-     * `butter` snap guide (**1.60:1**) and nothing else.
+     * `butter` snap guide (**1.20:1** at its frozen .85 alpha) and nothing else.
      *
      * Keeping a warning at all remains a departure — **the freeze had none** — ruled by the owner on
      * 2026-08-13 ([ADR-102 §12.9](../../../../../../../../../docs/DECISIONS.md#adr-102-p2-marks)) under
@@ -261,8 +261,8 @@ internal object BenchStudio {
      * ### `inkLine` is the ninth token, and it is excluded
      *
      * The V2.1 page's shadow is `box-shadow:var(--hard) var(--hard) 0 var(--ink-line)` — a hard offset
-     * shadow that falls on the **bench**, not on the paper. `inkLine` is `#33261C` light and `#120E0A`
-     * dark; lighting it here would put a `#33261C` shadow on a `#211B15` worktop — **D-010**, *a glow
+     * shadow that falls on the **bench**, not on the paper. `inkLine` is `#27270F` light and `#120E0A`
+     * dark; lighting it here would put a `#27270F` shadow on a `#242312` worktop — **D-010**, *a glow
      * where a contact shadow belongs*, for the third time in this file's history and inside the fix for
      * D-035 for the second.
      *
@@ -289,8 +289,6 @@ internal object BenchStudio {
             // the CSS changed. `berryTint` stays: the `.photo` stand-in still fills with it
             // (`v21-bench.html:210-211`) — a review corrected this comment, which said `.el`, a selector
             // that carries no background at all.
-            berryTint = light.berryTint,
-            butter = light.butter,
             jam = light.jam,
             leaf = light.leaf,
         )
@@ -595,8 +593,8 @@ internal fun BenchSheetIsland(
  * **The shadow's ink comes from the room, and it must.** `inkLine` is deliberately *not* in
  * [BenchStudio.sheetIslandV21], so reading it here — inside the island — still yields the room's value
  * by construction. That is not a happy accident of the `copy`; it is the reason the island is a `copy`.
- * A wholesale light palette would light `#120E0A` to `#33261C` and put a glow under the sheet on a
- * `#211B15` worktop: **D-010**, in the package whose purpose is not to re-break D-035.
+ * A wholesale light palette would light `#120E0A` to `#27270F` and put a glow under the sheet on a
+ * `#242312` worktop: **D-010**, in the package whose purpose is not to re-break D-035.
  *
  * Sized by the caller. Draws no content of its own; the render tape, the chrome and the furniture all
  * stack over it, so this is the *material* and nothing else.
@@ -672,11 +670,14 @@ internal fun Modifier.benchPageSurface(): Modifier {
  *   area rather than a transcribed pixel count — see [BenchStudio]. **Kept over the freeze's flat
  *   `inset:14px`**: the prototype has one page size and the product has several, so a transcribed
  *   pixel count would draw a boundary that is not the printer's.
+ * @param suppressedEdge the physical join of an ADR-109 image pair. That edge is intentionally crossed,
+ *   so drawing the warning there would instruct the maker to create a white stripe by hand.
  */
 @Composable
 internal fun BenchKeepClear(
     warn: Boolean,
     panelWidthPt: Double,
+    suppressedEdge: SpreadInnerEdge? = null,
     modifier: Modifier = Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -724,16 +725,32 @@ internal fun BenchKeepClear(
                 val edge = inset + stroke / 2f
                 val dash = with(density) { BenchStudio.KeepClearDash.toPx() }
                 val radius = with(density) { BenchStudio.KeepClearRadius.toPx() }
-                drawRoundRect(
-                    color = color.copy(alpha = alpha),
-                    topLeft = Offset(edge, edge),
-                    size = Size(size.width - 2 * edge, size.height - 2 * edge),
-                    cornerRadius = CornerRadius(radius, radius),
-                    style = Stroke(
-                        width = stroke,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash)),
-                    ),
-                )
+                val lineColor = color.copy(alpha = alpha)
+                val lineStyle = Stroke(width = stroke, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash)))
+                if (suppressedEdge == null) {
+                    drawRoundRect(
+                        color = lineColor,
+                        topLeft = Offset(edge, edge),
+                        size = Size(size.width - 2 * edge, size.height - 2 * edge),
+                        cornerRadius = CornerRadius(radius, radius),
+                        style = lineStyle,
+                    )
+                } else {
+                    // The other three sides remain honest. Only the shared fold edge disappears.
+                    drawLine(
+                        lineColor, Offset(edge, edge), Offset(size.width - edge, edge),
+                        strokeWidth = stroke, pathEffect = lineStyle.pathEffect,
+                    )
+                    drawLine(
+                        lineColor, Offset(edge, size.height - edge), Offset(size.width - edge, size.height - edge),
+                        strokeWidth = stroke, pathEffect = lineStyle.pathEffect,
+                    )
+                    val x = if (suppressedEdge == SpreadInnerEdge.LEFT) size.width - edge else edge
+                    drawLine(
+                        lineColor, Offset(x, edge), Offset(x, size.height - edge),
+                        strokeWidth = stroke, pathEffect = lineStyle.pathEffect,
+                    )
+                }
             },
     )
 }

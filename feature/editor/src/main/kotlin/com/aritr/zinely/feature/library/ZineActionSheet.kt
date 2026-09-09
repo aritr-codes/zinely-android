@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -50,6 +51,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -64,6 +66,7 @@ import com.aritr.zinely.ui.components.zinelyV2Shadow
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import com.aritr.zinely.ui.theme.ZinelyV21Scrim
 import com.aritr.zinely.ui.theme.ZinelyV2ShadowLayer
 import kotlin.math.roundToInt
 
@@ -74,14 +77,12 @@ import kotlin.math.roundToInt
  * at the draw site: a row's icon is not a decoration chosen by the renderer, it is part of what the
  * design says that row *is*. All five survive the re-freeze unchanged, glyphs included.
  *
- * ### ⚠️ Delete is now separated **only** by colour
+ * ### Delete has a non-colour safety boundary
  *
  * V2's `.act.danger` traded the 1px hairline every other row carried for `border-top:8px solid
  * var(--desk)` — a band of the desk showing through the sheet, so the destructive row sat visibly
- * apart. V2.1's `.act` writes `border:none` and the danger row differs by ink alone (`jam-text`, and a
- * `berry-tint` icon chip instead of `butter-tint`). Transcribed as frozen, and **recorded**: separation
- * by position is a stronger guard against a mis-tap than separation by hue, and colour alone is the
- * weaker signal for anyone who cannot distinguish the two tints.
+ * apart. V2.1 originally removed that band and left consequence colour as the only distinction.
+ * Accessibility amendment A24 restores the 8px desk band, retaining the consequence ink and icon tint.
  *
  * @property label the row's spoken and printed text, verbatim from the frozen markup.
  * @property glyph the frozen `.ic` character. Three of these six codepoints (counting the shelf's `⋯`)
@@ -114,6 +115,7 @@ internal enum class ZineAction(
 internal data class ZineActionTarget(
     val title: String,
     val subtitle: String,
+    val unavailableReason: String? = null,
 )
 
 /** The scrim behind an open sheet — `.scrim`. */
@@ -127,6 +129,9 @@ internal fun zineActionTestTag(action: ZineAction): String = "zine-action-${acti
 
 /** `.sh-head{border-bottom:1.5px dashed var(--hair)}` — the sheet's one divider. */
 internal const val ZineActionHeadDividerTestTag: String = "zine-action-head-divider"
+
+/** A24: the non-colour safety boundary immediately before the destructive action. */
+internal const val ZineActionDangerDividerTestTag: String = "zine-action-danger-divider"
 
 /** `.grab` — the handle. */
 internal const val ZineActionGrabTestTag: String = "zine-action-grab"
@@ -142,7 +147,7 @@ internal const val ZineActionSheetPaneTitle: String = "Zine actions"
  * The frozen Library's action sheet — `docs/design/mockups/v21-library.html`.
  *
  * ```css
- * .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--paper);
+ * .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);
  *   border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);
  *   transform:translateY(103%);transition:transform .26s cubic-bezier(.05,.7,.1,1);
  *   padding:0 0 var(--gap-xl);box-shadow:0 -16px 40px -18px var(--soft-shadow)}
@@ -254,12 +259,8 @@ internal fun ZineActionSheet(
  *
  * ### ⚠️ The fill is a literal, and V2.1 has no scrim token
  *
- * `rgba(38,26,16,.42)` is written outside `:root`, exactly as V2's `rgba(30,25,18,.36)` was — so the
- * `prefers-color-scheme` block cannot reach it and the dark sheet dims exactly as much as the light one,
- * over a desk that is already near that colour. For V2 the owner ruled the corpus token authoritative
- * ([D-022](docs/design/V2-SPEC-DEFECTS.md)); V2.1's palette **has no scrim token to rule onto** — it was
- * not among the 25 the gate measured. So the literal is transcribed, and this is recorded as the same
- * defect recurring rather than as a value that was chosen.
+ * The 37596 amendment gives every modal surface one shared, theme-invariant ink wash. Keeping the
+ * Library on its earlier local literal made identical sheets dim the same room differently.
  */
 @Composable
 internal fun ZineActionScrim(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
@@ -267,7 +268,7 @@ internal fun ZineActionScrim(onDismiss: () -> Unit, modifier: Modifier = Modifie
         modifier
             .testTag(ZineActionScrimTestTag)
             .fillMaxSize()
-            .background(ScrimFill)
+            .background(ZinelyV21Scrim)
             // `scrim.onclick = close`.
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -316,7 +317,7 @@ internal fun ZineActionSheetSurface(
                 SheetShape,
             )
             .clip(SheetShape)
-            .background(colors.paper)
+            .background(colors.surface)
             // `border-top:2px solid var(--ink)` — only the top edge, so a `border` would be wrong: it
             // would ring all four sides, three of which are off screen but two of which are on screen for
             // the sheet's whole height.
@@ -418,7 +419,21 @@ internal fun ZineActionSheetSurface(
         )
 
         ZineAction.entries.forEach { action ->
-            ActionRow(action = action, onAction = onAction)
+            if (action.danger) {
+                Box(
+                    Modifier
+                        .testTag(ZineActionDangerDividerTestTag)
+                        .fillMaxWidth()
+                        .height(DangerDivider)
+                        .background(colors.desk),
+                )
+            }
+            ActionRow(
+                action = action,
+                enabled = target.isEnabled(action),
+                disabledReason = target.unavailableReason,
+                onAction = onAction,
+            )
         }
     }
 }
@@ -467,23 +482,35 @@ private fun ZineActionGrab() {
  * state a touch device actually has. The wash is therefore visible on every device rather than on none.
  */
 @Composable
-private fun ActionRow(action: ZineAction, onAction: (ZineAction) -> Unit) {
+private fun ActionRow(
+    action: ZineAction,
+    enabled: Boolean,
+    disabledReason: String?,
+    onAction: (ZineAction) -> Unit,
+) {
     val colors = ZinelyTheme.v21Colors
 
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val ink = if (action.danger) colors.jamText else colors.ink
+    val ink = if (pressed) colors.onLeaf else if (action.danger) colors.jamText else colors.ink
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(zineActionTestTag(action))
+            .semantics {
+                if (!enabled && disabledReason != null) {
+                    stateDescription = disabledReason
+                }
+            }
             .zinelyV2Control(
                 label = action.label,
+                enabled = enabled,
                 interactionSource = interaction,
                 onClick = { onAction(action) },
             )
             .background(if (pressed) colors.leafTint else Color.Transparent)
+            .alpha(if (enabled) 1f else ZinelyV21Dimens.disabledAlpha)
             .padding(
                 horizontal = ZinelyV21Dimens.gapXl,
                 vertical = ZinelyV21Dimens.gapLg,
@@ -495,7 +522,7 @@ private fun ActionRow(action: ZineAction, onAction: (ZineAction) -> Unit) {
             Modifier
                 .size(IconChip)
                 .clip(RoundedCornerShape(ZinelyV21Dimens.radiusSm))
-                .background(if (action.danger) colors.berryTint else colors.butterTint),
+                .background(if (action.danger) colors.berryTint else colors.butter),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -506,7 +533,7 @@ private fun ActionRow(action: ZineAction, onAction: (ZineAction) -> Unit) {
                     fontSize = IconSize,
                     // `.act .ic` declares no `line-height` — inherited, as everywhere else.
                     lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                    color = if (action.danger) colors.jamText else colors.inkSoft,
+                    color = colors.onLeaf,
                 ),
             )
         }
@@ -539,12 +566,6 @@ private val SheetShape: Shape = RoundedCornerShape(
 /** `border-top:2px solid var(--ink)`. */
 private val SheetTopRule = 2.dp
 
-/**
- * `.scrim{background:rgba(38,26,16,.42)}` — a literal, and V2.1 publishes no scrim token to prefer over
- * it. See [ZineActionScrim] for why that is recorded rather than quietly tokenised.
- */
-private val ScrimFill = Color(0x6B261A10)
-
 /** `transform:translateY(103%)` of the sheet's own height. */
 private const val SheetSlide = 1.03f
 
@@ -571,6 +592,9 @@ private val HeadPadding = PaddingValues(
 private val HeadDivider = 1.5.dp
 private val HeadDividerDash = 3.dp
 
+/** A24: the destructive row is separated by position as well as consequence colour. */
+private val DangerDivider = 8.dp
+
 /** `.sh-ttl{font-size:1.22rem;line-height:1.15}` — 19.52px, unrounded. */
 private val TitleSize = 19.52.sp
 private val TitleLineHeight = 22.448.sp
@@ -585,3 +609,8 @@ private val RowTextSize = 16.sp
 /** `.act .ic{width:30px;height:30px;font-size:.95rem}` = 15.2px. */
 private val IconChip = 30.dp
 private val IconSize = 15.2.sp
+
+private fun ZineActionTarget.isEnabled(action: ZineAction): Boolean = when (action) {
+    ZineAction.Open, ZineAction.ShareExport, ZineAction.Duplicate -> unavailableReason == null
+    ZineAction.Rename, ZineAction.Delete -> true
+}

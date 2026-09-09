@@ -21,6 +21,7 @@ import com.aritr.zinely.core.model.ZineFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -60,11 +61,20 @@ class EditorContextBarTest {
         return store
     }
 
-    private fun setBar(store: EditorStore) {
+    private fun setBar(
+        store: EditorStore,
+        onStyle: (() -> Unit)? = null,
+        styleOpen: Boolean = false,
+    ) {
         composeRule.setContent {
             ZinelyTheme {
                 val state by store.uiState.collectAsState()
-                EditorContextBar(selection = state.selection, dispatch = store::dispatch)
+                EditorContextBar(
+                    selection = state.selection,
+                    dispatch = store::dispatch,
+                    onStyle = onStyle,
+                    styleOpen = styleOpen,
+                )
             }
         }
     }
@@ -104,8 +114,7 @@ class EditorContextBarTest {
         val store = storeWithSelectedText()
         setBar(store)
 
-        // Single selection ⇒ the id-scoped reorder + delete controls are all present. The bar scrolls,
-        // so assert tree presence (assertExists), not on-screen visibility, of these trailing controls.
+        // Single selection ⇒ the id-scoped reorder + delete controls are all present.
         composeRule.onNodeWithContentDescription("Bring forward").assertExists()
         composeRule.onNodeWithContentDescription("Send backward").assertExists()
         composeRule.onNodeWithContentDescription("Delete").assertExists()
@@ -179,6 +188,33 @@ class EditorContextBarTest {
             // wrapping is chosen precisely so no target has to give up its 48dp.
             val bounds = node.fetchSemanticsNode().touchBoundsInRoot
             assertEquals("$label must keep a full 48dp target — got $bounds", minTarget, bounds.width, 1.5f)
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w360dp-h740dp")
+    fun maximum_text_state_keeps_all_twelve_controls_on_screen_at_full_target_size() {
+        val store = storeWithSelectedText()
+        setBar(store, onStyle = {}, styleOpen = true)
+
+        val host = composeRule.onNodeWithTag(EditorContextBarTestTag)
+            .fetchSemanticsNode().boundsInRoot
+        val minTarget = 48f * composeRule.density.density
+        listOf(
+            "Move left", "Move right", "Move up", "Move down",
+            "Make larger", "Make smaller", "Rotate clockwise", "Rotate counterclockwise",
+            "Bring forward", "Send backward", "Text style", "Delete",
+        ).forEach { label ->
+            val node = composeRule.onNodeWithContentDescription(label)
+            val bounds = node.fetchSemanticsNode().touchBoundsInRoot
+            assertTrue(
+                "$label must remain inside the transform bar — host=$host, target=$bounds",
+                bounds.left >= host.left && bounds.top >= host.top &&
+                    bounds.right <= host.right && bounds.bottom <= host.bottom,
+            )
+            assertTrue("$label must keep at least 48dp width — got $bounds", bounds.width >= minTarget - 1.5f)
+            assertTrue("$label must keep at least 48dp height — got $bounds", bounds.height >= minTarget - 1.5f)
+            node.assertIsDisplayed()
         }
     }
 

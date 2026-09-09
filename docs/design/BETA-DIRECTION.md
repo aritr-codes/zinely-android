@@ -412,7 +412,9 @@ undo/redo ✓ · persistence ✓ · error recovery ✓ · empty states ✓ · lo
 >
 > **DECISION: draw the sixteen supplies ourselves.** At sixteen primitives the licensing question mostly evaporates, and an authored kit by one hand is the entire point (§1.3). External sources are a *fallback*, not a plan.
 >
-> **DECISION: no emoji as text, ever.** Android emoji flatten to 64px/em rasters in PDF and differ by OEM — *the same zine exported on two phones would contain different artwork*. For a product promising a reproducible printed object that is a correctness bug. If emoji ever ship, they ship as bundled vectors. **Beta: not at all.**
+> **SUPERSEDED IN SCOPE BY [ADR-112](../DECISIONS.md#adr-112), 2026-08-26.** The reproducibility finding
+> still stands: Android system emoji may not define output. The owner now requires emoji printing for the
+> September launch, gated on a measured bundled/offline renderer with screen/PNG/PDF parity.
 
 ## 3.10 Multi-page image continuity — partly ships
 

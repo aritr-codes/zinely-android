@@ -75,6 +75,7 @@ class ZineLibraryInsetTest {
                 ZineLibraryScreen(
                     state = LibraryShelfState.Loading,
                     events = emptyFlow(),
+                    backupRestoreState = null,
                     onOpenZine = {},
                     onShareExport = {},
                     onStartZine = {},
@@ -84,6 +85,11 @@ class ZineLibraryInsetTest {
                     onDeleteUndo = {},
                     onDeleteCommit = {},
                     onRetry = {},
+                    onStartBackup = {},
+                    onStartRestore = {},
+                    onDismissBackupRestore = {},
+                    onCancelBackupRestore = {},
+                    onRetryBackupRestore = {},
                     modifier = Modifier.fillMaxSize(),
                 )
             }

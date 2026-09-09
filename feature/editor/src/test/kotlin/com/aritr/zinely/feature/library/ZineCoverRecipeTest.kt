@@ -6,7 +6,6 @@ import com.aritr.zinely.core.model.ZineCoverSurface
 import com.aritr.zinely.ui.theme.zinelyV21DarkColors
 import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -42,12 +41,12 @@ class ZineCoverRecipeTest {
     @Test
     fun `each surface prints on its own frozen stock`() {
         // `v21-library.html:182-187`, verbatim, resolved through the light palette.
-        assertEquals("MatchaInk is .ink-leaf", light.leaf, ZineCoverSurface.MatchaInk.v21Fill(light))
-        assertEquals("StrawberryInk is .ink-berry", light.berry, ZineCoverSurface.StrawberryInk.v21Fill(light))
-        assertEquals("OchreInk is .ink-butter", light.butter, ZineCoverSurface.OchreInk.v21Fill(light))
-        assertEquals("TealInk is .ink-jam", light.jam, ZineCoverSurface.TealInk.v21Fill(light))
+        assertEquals(Color(0xFF4E7A3C), ZineCoverSurface.MatchaInk.v21Fill(light))
+        assertEquals(Color(0xFFE4879F), ZineCoverSurface.StrawberryInk.v21Fill(light))
+        assertEquals(Color(0xFFF6B22C), ZineCoverSurface.OchreInk.v21Fill(light))
+        assertEquals(Color(0xFFCF4A28), ZineCoverSurface.TealInk.v21Fill(light))
         assertEquals("PaperStrawberryBand is .paper-s", light.paper, ZineCoverSurface.PaperStrawberryBand.v21Fill(light))
-        assertEquals("PaperMatchaBand is .paper-c", light.butterTint, ZineCoverSurface.PaperMatchaBand.v21Fill(light))
+        assertEquals(Color(0xFFFDEBC4), ZineCoverSurface.PaperMatchaBand.v21Fill(light))
     }
 
     @Test
@@ -61,12 +60,12 @@ class ZineCoverRecipeTest {
         for (surface in PaperStocks) {
             assertEquals(
                 "$surface's pinned mark must be the light theme's inkSoft",
-                light.inkSoft,
+                Color(0xFF6E5947),
                 surface.v21MarkInk(light),
             )
             assertEquals(
                 "$surface's pinned border must be the light theme's ink",
-                light.ink,
+                Color(0xFF33261C),
                 surface.v21BorderInk(light),
             )
         }
@@ -97,7 +96,7 @@ class ZineCoverRecipeTest {
                 surface.v21MarkInk(dark),
             )
             assertEquals(
-                "$surface's border must be invariant too — the themed --ink is #F6EAD6 in dark, which " +
+                "$surface's border must be invariant too — the old themed --ink was #F6EAD6 in dark, which " +
                     "is the cream the stock now is, and an outline at 1.01:1 (cream) / 1.11:1 (paper) " +
                     "is no outline",
                 surface.v21BorderInk(light),
@@ -107,13 +106,10 @@ class ZineCoverRecipeTest {
     }
 
     @Test
-    fun `the ink stocks do theme, so a shelf at night is not a wall of light`() {
-        // The other half of the ruling, and the half that keeps it a *rule* rather than an exception:
-        // if these were pinned too, the amendment would just be "covers never theme" — which is a
-        // different, larger claim that the dark rasters do not support.
+    fun `the ink stocks keep their printed identity when the studio theme changes`() {
         for (surface in InkStocks) {
-            assertNotEquals(
-                "$surface must take the dark palette's own cut",
+            assertEquals(
+                "$surface is maker content, not app chrome",
                 surface.v21Fill(light),
                 surface.v21Fill(dark),
             )

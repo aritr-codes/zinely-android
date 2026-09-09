@@ -254,6 +254,7 @@ public fun EditorPagePreview(
     } + benchDeleteCovers(deleting, renderedPage, screenPxPerPt, pageOffset)
 
     Box(modifier = modifier) {
+        val imageCacheBytes = remember { editorImageCacheBudgetBytes(Runtime.getRuntime().maxMemory()) }
         PagePreview(
             tape = tape,
             sheet = pageSizePt,
@@ -261,6 +262,7 @@ public fun EditorPagePreview(
             pageOffset = pageOffset,
             modifier = Modifier.fillMaxSize(),
             imageBytes = imageBytes,
+            imageCacheBytes = imageCacheBytes,
         )
         BenchFocusScrim(
             // The island `--paper` (ADR-090), so `0.5·element + 0.5·paper` is the sheet's own paper in
@@ -291,6 +293,9 @@ public fun EditorPagePreview(
         )
     }
 }
+
+internal fun editorImageCacheBudgetBytes(maxMemoryBytes: Long): Long =
+    (maxMemoryBytes / 16L).coerceIn(8L * 1024L * 1024L, 24L * 1024L * 1024L)
 
 /**
  * The soft-deleting element, shrunk about its own centre through the `applyOverride` seam.

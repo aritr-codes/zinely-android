@@ -78,7 +78,7 @@ class ZineShelfTest {
 
     private companion object {
         const val SHELF = "shelf"
-        const val HEADING = "Your shelf"
+        const val HEADING = "My Shelf"
 
         /**
          * `.shelf{padding:var(--gap-xl) var(--gap-lg) 132px}` and `gap:var(--gap-xl) var(--gap-lg)` —
@@ -88,7 +88,7 @@ class ZineShelfTest {
          */
         const val PAD_TOP = 24
         const val PAD_SIDE = 16
-        const val PAD_BOTTOM = 132
+        const val PAD_BOTTOM = 188
         const val ROW_GAP = 24
         const val COLUMN_GAP = 16
         const val COLUMNS = 2
@@ -268,7 +268,7 @@ class ZineShelfTest {
 
     @Test
     fun `the shelf keeps the dock's room clear below the last cover`() {
-        // `padding-bottom:152px` clears the `.dock` that B4 will place there. Asserted at the end of a
+        // The original 132dp plus the quiet backup companion clears the dock. Asserted at the end of a
         // shelf long enough to overflow: an eighth cover puts the content ~1430px into a 960px viewport,
         // so scrolling to the last item clamps at the true end of the scroll.
         val many = zines(8)

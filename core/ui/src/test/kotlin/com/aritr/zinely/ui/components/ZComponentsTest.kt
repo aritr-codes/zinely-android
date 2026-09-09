@@ -14,6 +14,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -220,18 +222,29 @@ class ZComponentsTest {
     // ----- sheet ------------------------------------------------------------------------------
 
     @Test
-    fun `sheet shows title and content and scrim tap dismisses`() {
+    fun `sheet contains inert taps while scrim tap dismisses`() {
         var dismissed = false
+        var contentClicked = false
         composeRule.setContent {
             ZinelyTheme {
                 ZSheet(visible = true, onDismiss = { dismissed = true }, title = "Paper size", sub = "Match your printer.") {
-                    ZMenuItem("A4", onClick = {}, selected = true, selectedStyle = ZSelectedStyle.Coral)
+                    ZMenuItem(
+                        "A4",
+                        onClick = { contentClicked = true },
+                        selected = true,
+                        selectedStyle = ZSelectedStyle.Coral,
+                    )
                 }
             }
         }
         composeRule.onNodeWithText("Paper size").assertExists()
         composeRule.onNodeWithText("Match your printer.").assertExists()
         composeRule.onNodeWithText("A4").assertExists()
+        composeRule.onNodeWithText("Paper size").performTouchInput { click() }
+        assertFalse("an inert title tap must stay inside the sheet", dismissed)
+        composeRule.onNodeWithText("A4").performClick()
+        assertTrue("sheet controls must remain interactive", contentClicked)
+        assertFalse("a control tap must not dismiss the sheet", dismissed)
         composeRule.onNodeWithTag(ZSheetScrimTestTag).performClick()
         assertTrue(dismissed)
     }

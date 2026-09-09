@@ -46,9 +46,9 @@ public const val SnapGuidesTestTag: String = "snap-guides"
  * changes: `matcha` → `butter`, solid → **dashed**, and 1dp → 1.5dp. The end-inset and the page-derived
  * geometry above are unchanged.
  *
- * ⚠ **`butter` composites to 1.60:1 on the sheet's paper, and that is a ruled, measured acceptance** —
- * not an oversight and not a value to "fix" by darkening. `ZinelyV21ContrastTest` pins `butter/paper` at
- * 1.73:1 precisely to keep butter below the text floor, and V2.1's own spec says butter carries *"no
+ * ⚠ **37596 `butter` at .85 alpha composites to 1.20:1 on the sheet's paper, and that is a ruled,
+ * measured acceptance** — not an oversight and not a value to "fix" by darkening. The direct
+ * `butter/paper` pairing is 1.24:1, and V2.1's own spec says butter carries *"no
  * action, no text, and no state alone"*. A snap guide is arguably a state, which made this a
  * freeze-versus-spec conflict ([§12.6 row 4](../../../../../../../../docs/DECISIONS.md#adr-102-p1-corrections)).
  * The owner ruled on 2026-08-13 that the guide is **decorative** in 1.4.11's sense: it reports an

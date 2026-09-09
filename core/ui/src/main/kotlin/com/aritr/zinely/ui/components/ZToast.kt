@@ -84,8 +84,8 @@ public fun ZToast(
             modifier = Modifier
                 .graphicsLayer { rotationZ = Tilt }
                 .clip(ToastShape)
-                .background(colors.ink)
-                .border(ToastBorder, colors.inkLine, ToastShape)
+                .background(colors.surfaceSoft)
+                .border(ToastBorder, colors.ink, ToastShape)
                 // padding:var(--gap-sm) var(--gap-lg)
                 .padding(
                     horizontal = ZinelyV21Dimens.gapLg,
@@ -93,7 +93,7 @@ public fun ZToast(
                 )
                 .semantics { liveRegion = LiveRegionMode.Polite },
             style = TextStyle(
-                color = colors.paper,
+                color = colors.ink,
                 fontFamily = ZinelyV21Fonts.Work,
                 fontSize = MessageSize,
                 fontWeight = FontWeight.Medium,

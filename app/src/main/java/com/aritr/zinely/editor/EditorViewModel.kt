@@ -12,9 +12,10 @@ import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.data.storage.DocumentSnapshotProvider
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Intent as EditorIntent
+import com.aritr.zinely.core.editor.cascadedPlacement
 import com.aritr.zinely.core.imposition.Imposer
+import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.PtSize
-import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.data.android.EditorAutosaveBinder
 import com.aritr.zinely.data.android.SaveFailureSink
 import com.aritr.zinely.data.android.di.EditorAutosaveBinderFactory
@@ -89,40 +90,6 @@ internal const val KEY_PAGE_INDEX: String = "c9.pageIndex"
  */
 internal fun restoredPageIndex(saved: Int?, pageCount: Int): Int =
     (saved ?: 0).coerceIn(0, (pageCount - 1).coerceAtLeast(0))
-
-/**
- * **The share-in cascade** (D-081 ruling #2) — the [index]-th photo of a [count]-photo share is offset
- * down-right from the centred [base] placement, so a five-photo share reads as five photos.
- *
- * Before this, every import used the one centred [defaultImagePlacement], so a multi-photo share arrived as
- * one photo with the rest exactly underneath it. The honest first reading of that screen is *"it lost four
- * of my photos"* — a data-loss report about a feature that lost nothing.
- *
- * **Deliberately not in [defaultImagePlacement].** The picker places one photo at a time, where a cascade
- * would be an unexplained off-centre drop; only the batch path has a stacking problem, so only the batch
- * path pays for it.
- *
- * The step is [CASCADE_STEP_PT], **capped at `room / (count - 1)`** so the last photo of the share is still
- * fully on the page — which is also what makes every origin distinct: the centred base leaves
- * `room == base.xPt` (≥ 20 % of the page edge, since a default placement is ≤ 60 % of it), so the cap is
- * always positive and no two photos can land on the same point.
- *
- * ⚠ **Provisional.** Placement policy is reserved to design by SUPPLIES-SPEC §5.1 and design has not ruled;
- * this is a tie broken toward the option that cannot be misread as data loss, not a chosen aesthetic.
- */
-internal fun cascadedPlacement(base: Transform, index: Int, count: Int, pageSizePt: PtSize): Transform {
-    if (index <= 0) return base
-    val spans = (count - 1).coerceAtLeast(1)
-    val roomX = (pageSizePt.width - base.widthPt - base.xPt).coerceAtLeast(0.0)
-    val roomY = (pageSizePt.height - base.heightPt - base.yPt).coerceAtLeast(0.0)
-    return base.copy(
-        xPt = base.xPt + minOf(CASCADE_STEP_PT, roomX / spans) * index,
-        yPt = base.yPt + minOf(CASCADE_STEP_PT, roomY / spans) * index,
-    )
-}
-
-/** ~4 mm at 72 dpi: visibly a second sheet, not a misalignment. Provisional — see [cascadedPlacement]. */
-private const val CASCADE_STEP_PT = 12.0
 
 /**
  * Owns the editor's MVI [EditorStore], its effect runner, and the app-side autosave [binder] for the
@@ -470,11 +437,27 @@ internal class EditorViewModel @Inject constructor(
     ) {
         var added = 0
         var failed = 0
-        for ((index, uri) in batch.withIndex()) {
+        for ((batchIndex, uri) in batch.withIndex()) {
             when (val result = pipeline.decodeAndStore(uri)) {
                 is ImagePickResult.Success -> {
+                    // A13 / D-081 Q10: continue the share-in cascade from photos already on the page
+                    // that will receive this commit. Read after the suspending decode so a page switch
+                    // during import is honoured; there is no suspension between this snapshot and dispatch.
+                    // Text and decor deliberately do not count — this closes the repeated-photo stack,
+                    // not general occupied-space placement. `remainingInBatch` keeps one multi-photo share
+                    // on the same bounded sequence while allowing failed decodes to leave no fake ordinal.
+                    val state = store.uiState.value
+                    val existingImageCount = state.document.pages[state.currentPageIndex].elements
+                        .filterIsInstance<ImageElement>()
+                        .size
+                    val remainingInBatch = batch.size - batchIndex
                     val placed = result.element.copy(
-                        transform = cascadedPlacement(result.element.transform, index, batch.size, pageSizePt),
+                        transform = cascadedPlacement(
+                            base = result.element.transform,
+                            index = existingImageCount,
+                            count = existingImageCount + remainingInBatch,
+                            pageSizePt = pageSizePt,
+                        ),
                     )
                     store.dispatch(EditorIntent.CommitAddImage(placed))
                     added++

@@ -104,9 +104,9 @@ public fun EditorCoverageNotice(
                 .testTag(EditorCoverageNoticeTestTag)
                 .graphicsLayer { rotationZ = NoticeRotation }
                 .clip(NoticeShape)
-                .background(colors.ink)
-                // `inkLine`, not `ink` — this box's own ground is `ink`; see [NoticeBorder].
-                .border(NoticeBorder, colors.inkLine, NoticeShape)
+                .background(colors.surfaceSoft)
+                // A warm support scrap uses the room's ordinary ink for its visible outline.
+                .border(NoticeBorder, colors.ink, NoticeShape)
                 // With no trailing button, `.snack`'s asymmetric 8dp end padding would leave the sentence
                 // hard against the pill's curve. The start value is used on both ends, which is the same
                 // box the freeze draws — its right side is short only to make room for a control.
@@ -119,7 +119,7 @@ public fun EditorCoverageNotice(
                     fontFamily = ZinelyV21Fonts.Work,
                     fontSize = NoticeTextSize,
                     lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                    color = colors.paper,
+                    color = colors.ink,
                 ),
                 // Preventive, not a loss that already happened → Polite (never barges over speech). The
                 // text is stable while the same scripts are present, so this does not re-announce per key.

@@ -103,6 +103,35 @@ public data class EditImageCommand(
 }
 
 /**
+ * One photo across two booklet pages (ADR-109): replace the selected image with its full-page half and
+ * append the partner half on another page. This is one command and therefore one undo step. The memento
+ * remains field-level — one prior image plus one newly minted image — rather than snapshotting either
+ * page or the whole document.
+ */
+public data class MakeImageSpreadCommand(
+    val sourcePageIndex: Int,
+    val sourceId: String,
+    val beforeSource: ImageElement,
+    val afterSource: ImageElement,
+    val partnerPageIndex: Int,
+    val partner: ImageElement,
+) : Command {
+    override fun applyTo(doc: ZineDocument): ZineDocument =
+        doc.mapPage(sourcePageIndex) { page ->
+            page.copy(elements = page.elements.map { if (it.id == sourceId) afterSource else it })
+        }.mapPage(partnerPageIndex) { page ->
+            page.copy(elements = page.elements + partner)
+        }
+
+    override fun invertOn(doc: ZineDocument): ZineDocument =
+        doc.mapPage(sourcePageIndex) { page ->
+            page.copy(elements = page.elements.map { if (it.id == sourceId) beforeSource else it })
+        }.mapPage(partnerPageIndex) { page ->
+            page.copy(elements = page.elements.filterNot { it.id == partner.id })
+        }
+}
+
+/**
  * Recolour a single [DecorElement] (SUPPLIES-SPEC §8's *Change ink*): field memento = the before/after
  * element, so undo restores the previous ink exactly.
  *

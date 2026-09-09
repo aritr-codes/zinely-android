@@ -61,7 +61,7 @@ class EditorSaveFailureGoldenTest {
                 // Caught by review, not by the suite: the only non-image assertion here counted the host
                 // background, which the wrong desk satisfies exactly as well as the right one.
                 deskArgb = ZinelyTheme.v21Colors.desk.toArgb()
-                inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
+                inkArgb = ZinelyTheme.v21Colors.jam.toArgb()
                 Box(
                     Modifier
                         .testTag(HOST_TAG)
@@ -95,9 +95,7 @@ class EditorSaveFailureGoldenTest {
         // background whatever the component did. So the two properties that actually distinguish the V2.1
         // banner from its V2 ancestor are read off the pixels, in both themes:
         //
-        //  1. `.snack{background:var(--ink)}` — the banner's ground is the corpus's INK, on both themes.
-        //     V2's notice was a `paper`/`desk` card, so this is the byte that flips with the re-skin, and
-        //     it is the one a re-record would silently accept.
+        //  1. The failure banner uses the consequence (`--jam`) surface in both themes.
         //  2. `.snack{transform:rotate(-.6deg)}` — the settled lean, read as the **rise across the
         //     banner's own width**: the ink ground starts lower on one side than the other, and it cannot
         //     for an untilted pill. A corner-pixel probe was written first and thrown away — the banner is
@@ -106,7 +104,7 @@ class EditorSaveFailureGoldenTest {
         //     a flat banner: the same "cannot fail for the right reason" defect this batch was fixing.
         val inkPixels = bmp.pixelCountOf(inkArgb)
         assertTrue(
-            "the banner's ground is `--ink` — $inkPixels px found ($name)",
+            "the banner's ground is `--jam` — $inkPixels px found ($name)",
             inkPixels > 500,
         )
         val rise = bmp.topRowRiseOf(inkArgb)

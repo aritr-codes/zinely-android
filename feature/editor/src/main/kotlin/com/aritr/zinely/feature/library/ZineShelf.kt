@@ -130,7 +130,7 @@ internal const val ZineShelfHeadTestTag: String = "shelf-head"
  * ### The heading scrolls away, because it is a cell in the grid
  *
  * `.shelf-head` is a `grid-column:1 / -1` **item inside the scrolling `.shelf`**, not a bar above it.
- * So "Your shelf" travels up with the covers and leaves the viewport. That is a one-character difference
+ * So "My Shelf" travels up with the covers and leaves the viewport. That is the kind of tiny copy change
  * to write and an invisible one to review — a pinned header composes perfectly, looks deliberate, and
  * is a different screen — so it is asserted (`the heading scrolls away with the covers`).
  *
@@ -265,7 +265,7 @@ internal fun ZineShelf(
 }
 
 /**
- * `.shelf-head` — *"Your shelf"*, its hand-drawn swipe, and the count.
+ * `.shelf-head` — *"My Shelf"*, its hand-drawn swipe, and the count.
  *
  * ```css
  * .shelf-head{grid-column:1/-1;display:flex;align-items:flex-end;justify-content:space-between;
@@ -509,8 +509,11 @@ private fun ShelfPlaceholder() {
 /** `grid-template-columns:1fr 1fr` — still no breakpoint anywhere in the corpus. See D-020. */
 private const val ShelfColumns = 2
 
-/** `.shelf{padding-bottom:132px}` — the dock's height, grown by its safe area; see [zineDockClearance]. */
-private val ShelfDockClearance = 132.dp
+/**
+ * The original 132dp dock clearance plus the frozen Backup companion's 56dp quiet action row.
+ * Loading temporarily keeps the same clearance so the grid does not jump when content arrives.
+ */
+private val ShelfDockClearance = 188.dp
 
 /**
  * `.shelf{gap:var(--gap-xl) var(--gap-lg)}` — CSS `gap` is **row-gap first**, then column-gap.
@@ -523,7 +526,7 @@ private val ShelfRowGap = ZinelyV21Dimens.gapXl
 private val ShelfColumnGap = ZinelyV21Dimens.gapLg
 
 /** `.shelf-head h1{margin:0}` — the heading's own text. */
-private const val ShelfHeadingText = "Your shelf"
+private const val ShelfHeadingText = "My Shelf"
 
 /** `font-size:2rem` against the browser's 16px root, and `line-height:1.05` of that. */
 private val ShelfHeadingSize = 32.sp

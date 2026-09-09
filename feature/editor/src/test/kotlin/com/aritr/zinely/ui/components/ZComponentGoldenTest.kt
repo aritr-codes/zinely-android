@@ -57,8 +57,8 @@ class ZComponentGoldenTest {
         const val GALLERY_TAG = "zComponentGallery"
 
         /** `--leaf`, the V2.1 action colour, per theme (`ZinelyV21Colors.kt:167`, `:203`). */
-        val LEAF_LIGHT = Color(0xFF4E7A3C).toArgb()
-        val LEAF_DARK = Color(0xFF8FAE6B).toArgb()
+        val LEAF_LIGHT = Color(0xFF8E9546).toArgb()
+        val LEAF_DARK = Color(0xFFBBCA6F).toArgb()
 
         /** `--coral-strong` and `--stamp`: V2's two fills, and V2.1 has neither. */
         val RETIRED_FILLS = mapOf(
@@ -72,7 +72,7 @@ class ZComponentGoldenTest {
 
     @Composable
     private fun Gallery() {
-        val desk = ZinelyTheme.colors.desk
+        val desk = ZinelyTheme.v21Colors.desk
         Column(
             modifier = Modifier
                 .testTag(GALLERY_TAG)
@@ -184,7 +184,7 @@ class ZComponentGoldenTest {
         // (`ZinelyV21Colors.kt:167` vs `:203`), so the dark gallery is what proves the swap happened.
         assertTrue(
             "dark desk did not paint in the dark gallery",
-            bmp.countColour(Color(0xFF201F1E).toArgb()) > 1000,
+            bmp.countColour(Color(0xFF242312).toArgb()) > 1000,
         )
         assertTrue(
             "leaf did not paint in the dark gallery",

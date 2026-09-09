@@ -35,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -274,6 +275,16 @@ class BenchC4Test {
     }
 
     @Test
+    fun photo_and_art_use_their_distinct_frozen_marks() {
+        // D-094 / A15 / A16: this mapping, not merely the catalogue, is the regression boundary. The
+        // visible titles and subtitles remain the primary accessible names; the glyphs add a non-colour
+        // cue for sighted scanning.
+        assertEquals("Art", BenchAddPhotoGlyph.name)
+        assertEquals("Collage", BenchAddArtGlyph.name)
+        assertNotEquals(BenchAddPhotoGlyph, BenchAddArtGlyph)
+    }
+
+    @Test
     fun choosing_text_places_a_box_and_opens_the_session_in_one_tap() {
         // Row 4.4c. OD-21 requires `addTextAndEdit` **by name**, so what this asserts is C3's model
         // surviving unchanged: the box arrives AND the in-place session opens on it. Mutation: drop the
@@ -305,7 +316,7 @@ class BenchC4Test {
 
         assertTrue(
             "Photo must reach the shipped picker effect: $effects",
-            effects.contains(Effect.PickAndDecodeImage),
+            effects.contains(Effect.PickAndDecodeImage()),
         )
     }
 
@@ -374,6 +385,38 @@ class BenchC4Test {
         )
     }
 
+    @Test
+    fun done_confirms_saved_even_when_the_current_page_has_no_selection() {
+        // The frozen handler is `deselect(); toast('Saved', false)`. A fresh/resting page makes the
+        // deselect half a no-op, so the confirmation is the only visible evidence that the live checkmark
+        // accepted the press.
+        composeRule.mainClock.autoAdvance = false
+        setScreen(store())
+
+        composeRule.onNodeWithTag(BenchBarDoneTag).performClick()
+        // Let the status chip's frozen fade move past zero alpha; the Done callback itself is already
+        // synchronous, but a zero-alpha graphics layer is correctly not considered displayed.
+        composeRule.mainClock.advanceTimeBy(100L)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun done_confirms_saved_on_a_newly_created_page() {
+        composeRule.mainClock.autoAdvance = false
+        val store = store()
+        store.dispatch(Intent.AddPage)
+        assertEquals(1, store.uiState.value.currentPageIndex)
+        setScreen(store)
+
+        composeRule.onNodeWithTag(BenchBarDoneTag).performClick()
+        composeRule.mainClock.advanceTimeBy(100L)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
+    }
+
     // --- Rows 4.9 / 4.10: the status strip ----------------------------------------------------------
 
     @Test
@@ -418,13 +461,11 @@ class BenchC4Test {
         // that named them are gone with them and this asserts their *absence* rather than deleting the
         // claim. D-021 keeps the literal characters a frozen file draws — and this frozen file draws none.
         //
-        // The reassurance is not lost, only relocated: the live region still speaks the whole sentence.
-        assertEquals("Saved on this device", BenchSavedSpokenLabel)
+        // D-079 gives the product-level privacy promise one stable home in the Colophon. The status
+        // chip now reports only the operation it can truthfully confirm.
+        assertEquals("Saved", BenchSavedSpokenLabel)
         assertEquals("Saved", BenchSavedWord)
-        assertTrue(
-            "the spoken line must still carry the privacy qualifier the chip stopped drawing",
-            BenchSavedSpokenLabel.contains("on this device"),
-        )
+        assertFalse("the status must not repeat the Colophon's privacy promise", BenchSavedSpokenLabel.contains("device"))
         assertFalse("the flower must not come back to the chip", BenchSavedWord.contains("✿"))
     }
 
@@ -634,7 +675,13 @@ class BenchC4Test {
         // it. Mutation: show the button.
         composeRule.setContent {
             ZinelyTheme {
-                BenchSnack(visible = true, message = "Ink · Blush", actionLabel = null, onAction = {})
+                BenchSnack(
+                    visible = true,
+                    message = "Ink · Blush",
+                    actionLabel = null,
+                    onAction = {},
+                    colors = ZinelyTheme.v21Colors,
+                )
             }
         }
         composeRule.waitForIdle()

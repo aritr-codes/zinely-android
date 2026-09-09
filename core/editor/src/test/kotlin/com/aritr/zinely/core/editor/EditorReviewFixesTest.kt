@@ -66,6 +66,74 @@ class EditorReviewFixesTest {
     }
 
     @Test
+    fun `GoToPage removes a freshly placed blank text box before leaving`() {
+        val start = model(listOf(pageOf(0), pageOf(1)))
+        val editing = EditorReducer.reduce(
+            start,
+            Intent.PlaceTextAndEdit(Transform(10.0, 10.0, 80.0, 30.0)),
+        ).model
+        assertTrue(editing.interaction is Interaction.EditingText)
+        assertEquals(1, editing.document.pages[0].elements.size)
+
+        val r = EditorReducer.reduce(editing, Intent.GoToPage(1))
+
+        assertEquals(1, r.model.currentPageIndex)
+        assertTrue(r.model.document.pages[0].elements.isEmpty(), "the blank box must not become authoritative")
+        assertTrue(r.model.history.undo.isEmpty(), "its fresh placement must be coalesced out of history")
+        assertTrue(r.model.interaction is Interaction.Idle)
+        assertEquals(1, r.effects.count { it is Effect.Autosave })
+    }
+
+    @Test
+    fun `GoToPage preserves existing text while closing its edit session`() {
+        val start = model(listOf(pageOf(0, txt("a", text = "Keep me")), pageOf(1)), selection = setOf("a"))
+        val editing = EditorReducer.reduce(start, Intent.BeginEditText("a")).model
+
+        val r = EditorReducer.reduce(editing, Intent.GoToPage(1))
+
+        assertEquals(start.document, r.model.document)
+        assertTrue(r.model.interaction is Interaction.Idle)
+        assertTrue(r.effects.none { it is Effect.Autosave })
+    }
+
+    @Test
+    fun `AddPage cleans a fresh blank and emits only its final structural autosave`() {
+        val start = model(listOf(pageOf(0), pageOf(1)))
+        val editing = EditorReducer.reduce(
+            start,
+            Intent.PlaceTextAndEdit(Transform(10.0, 10.0, 80.0, 30.0)),
+        ).model
+
+        val r = EditorReducer.reduce(editing, Intent.AddPage)
+
+        assertEquals(3, r.model.document.pages.size)
+        assertEquals(2, r.model.currentPageIndex)
+        assertTrue(r.model.document.pages[0].elements.isEmpty())
+        assertEquals(1, r.model.history.undo.size, "only Add page should remain undoable")
+        assertEquals(1, r.effects.count { it is Effect.Autosave })
+    }
+
+    @Test
+    fun `DeletePage and undo never resurrect a fresh blank text box`() {
+        val start = model(listOf(pageOf(0), pageOf(1)))
+        val editing = EditorReducer.reduce(
+            start,
+            Intent.PlaceTextAndEdit(Transform(10.0, 10.0, 80.0, 30.0)),
+        ).model
+
+        val deleted = EditorReducer.reduce(editing, Intent.DeletePage(0))
+        assertEquals(1, deleted.model.document.pages.size)
+        assertTrue(deleted.model.document.pages.single().elements.isEmpty())
+        assertEquals(1, deleted.model.history.undo.size, "only Delete page should remain undoable")
+        assertEquals(1, deleted.effects.count { it is Effect.Autosave })
+
+        val restored = EditorReducer.reduce(deleted.model, Intent.Undo).model
+        assertEquals(2, restored.document.pages.size)
+        assertTrue(restored.document.pages.all { it.elements.isEmpty() })
+        assertTrue(restored.selection.isEmpty())
+    }
+
+    @Test
     fun `CommitTransform ignores ids absent from the begin snapshot so undo fully restores`() {
         val start = model(listOf(pageOf(0, txt("a"), txt("b", x = 50.0))), selection = setOf("a"))
         val begun = EditorReducer.reduce(start, Intent.BeginTransform(setOf("a"))).model

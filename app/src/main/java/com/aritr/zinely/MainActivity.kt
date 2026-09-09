@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -38,6 +39,9 @@ class MainActivity : ComponentActivity() {
     lateinit var shareInbox: ShareInbox
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // ADR-111: install before super so Android owns the one launch transition. No keep condition or
+        // custom exit animation — the mark appears only for as long as the Activity genuinely needs.
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         // Only on a genuine cold/warm start, never on a configuration change: `savedInstanceState != null`

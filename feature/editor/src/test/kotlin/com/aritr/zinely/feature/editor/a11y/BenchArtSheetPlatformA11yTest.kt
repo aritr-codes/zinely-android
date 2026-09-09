@@ -1,16 +1,32 @@
 package com.aritr.zinely.feature.editor.a11y
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertContentDescriptionEquals
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.render.SupplyCatalog
+import com.aritr.zinely.feature.editor.BenchArtSearchTestTag
 import com.aritr.zinely.feature.editor.BenchArtSheetBody
+import com.aritr.zinely.feature.editor.BenchArtSheetTestTag
+import com.aritr.zinely.feature.editor.benchArtFavouriteTestTag
+import com.aritr.zinely.feature.editor.benchArtFavouriteTileTestTag
+import com.aritr.zinely.feature.editor.benchArtFamilyFilterTestTag
 import com.aritr.zinely.feature.editor.benchArtTileTestTag
 import com.aritr.zinely.ui.a11y.platformNode
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -21,7 +37,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * The Art sheet's sixteen tiles on the **platform** accessibility tree — the tier CI-26's `platformNode`
+ * The Art sheet's thirty-two tiles on the **platform** accessibility tree — the tier CI-26's `platformNode`
  * exists for.
  *
  * Two defects this file is aimed at, both already shipped once in this repository:
@@ -33,7 +49,7 @@ import org.robolectric.annotation.GraphicsMode
  * - **A control that tells Compose it is disabled and the platform it is not.** `ReframeControls.ZoomButton`
  *   passed `assertIsNotEnabled` against the merged tree while reporting `enabled` to
  *   `AccessibilityNodeInfo` (ADR-058). A merged-tree assertion cannot catch that by construction, so the
- *   twelve unauthored tiles are checked on the real node — `isEnabled = false` **and** `isClickable = false`,
+ *   all thirty-two authored tiles are checked on the real node — `isEnabled = true` and `isClickable = true`,
  *   because `disabled()` alone still leaves a node a service may offer to activate.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -50,61 +66,96 @@ class BenchArtSheetPlatformA11yTest {
      */
     private fun render() {
         composeRule.setContent {
-            ZinelyTheme { BenchArtSheetBody(onPick = {}) }
+            var favourites by remember { mutableStateOf(emptySet<String>()) }
+            ZinelyTheme {
+                BenchArtSheetBody(
+                    onPick = {},
+                    favourites = favourites,
+                    onFavouriteChange = { id, on ->
+                        favourites = if (on) favourites + id else favourites - id
+                    },
+                )
+            }
         }
         composeRule.waitForIdle()
     }
 
-    private fun tile(supplyId: String) =
-        composeRule.onNodeWithTag(benchArtTileTestTag(supplyId)).platformNode(composeRule.activity)
-
-    @Test
-    fun every_tile_carries_its_own_spoken_name_to_the_platform() {
-        render()
-        for ((id, name) in Copy.Supplies.NAMES) {
-            assertEquals("$id must be announced by its name, never by its id", name, tile(id).contentDescription?.toString())
-            assertEquals("$id must reach the platform as a button", "android.widget.Button", tile(id).className)
-        }
+    private fun reveal(tag: String) {
+        composeRule.onNodeWithTag(BenchArtSheetTestTag).performScrollToNode(hasTestTag(tag))
+        composeRule.waitForIdle()
     }
 
+    private fun tile(supplyId: String) =
+        benchArtTileTestTag(supplyId).also(::reveal).let { tag ->
+            composeRule.onNodeWithTag(tag).platformNode(composeRule.activity)
+        }
+
     @Test
-    fun the_authored_four_are_enabled_and_activatable_by_a_service() {
+    fun every_tile_carries_its_name_and_live_action_state_to_the_platform() {
         render()
-        for (id in Copy.Supplies.NAMES.keys.filter { SupplyCatalog.outlineOf(it) != null }) {
+        for ((id, name) in Copy.Supplies.NAMES) {
             val node = tile(id)
+            assertEquals("$id must be announced by its name, never by its id", name, node.contentDescription?.toString())
+            assertEquals("$id must reach the platform as a button", "android.widget.Button", node.className)
             assertTrue("$id has an authored outline and must be enabled to the platform", node.isEnabled)
             assertTrue("$id must be activatable by an accessibility service, not only by touch", node.isClickable)
             // A live control has no reason to report state, and a stale one here would read as an
             // explanation of an absence that does not exist.
             assertNull("$id is live and must not claim to be unavailable", node.stateDescription)
         }
+        assertEquals(32, SupplyCatalog.OUTLINES.size)
     }
 
     @Test
-    fun the_unauthored_tiles_report_disabled_unclickable_and_say_why() {
+    fun search_and_favourite_controls_expose_their_label_and_state_to_the_platform() {
         render()
-        val unauthored = Copy.Supplies.NAMES.keys.filter { SupplyCatalog.outlineOf(it) == null }
-        // Non-vacuity: if S5 ever authors all sixteen this loop empties, and an empty loop passes
-        // silently. Asserted as a *number* rather than as a set, deliberately — this test is about the
-        // platform contract of a dim tile, not about which supplies are dim, and `SupplyCatalogTest`
-        // already owns the membership. Twelve became four on 2026-08-18 and only this line needed a hand.
-        assertEquals("SUPPLIES-SPEC §10.1 records S5 at 12 of 16", 4, unauthored.size)
-        for (id in unauthored) {
-            val node = tile(id)
-            assertFalse("$id has no authored outline and must report DISABLED to the platform", node.isEnabled)
-            assertFalse("$id must not be offered as clickable — picking it would place an invisible element", node.isClickable)
-            assertEquals(
-                "$id must tell the platform why it is dim",
-                Copy.BenchVerbs.NOT_YET,
-                node.stateDescription?.toString(),
-            )
-            // …and the reason must arrive as STATE, never folded into the name: the tile is still called
-            // *Torn tape*, and a name that carries an apology is a name the vocabulary no longer contains.
-            assertEquals(
-                "the reason must not migrate into the name",
-                Copy.Supplies.NAMES.getValue(id),
-                node.contentDescription?.toString(),
-            )
-        }
+        val search = composeRule.onNodeWithTag(BenchArtSearchTestTag).platformNode(composeRule.activity)
+        assertEquals("android.widget.EditText", search.className)
+        assertTrue(search.isEnabled)
+        composeRule.onNodeWithTag(BenchArtSearchTestTag)
+            .assertContentDescriptionEquals(Copy.BenchArt.FIND_A_PIECE)
+
+        reveal(benchArtTileTestTag("tape.torn"))
+        val favourite = composeRule.onNodeWithTag(benchArtFavouriteTestTag("tape.torn"))
+        val unchecked = favourite.platformNode(composeRule.activity)
+        assertEquals("android.widget.CheckBox", unchecked.className)
+        assertTrue(unchecked.isCheckable)
+        assertTrue(!unchecked.isChecked)
+        favourite.performClick()
+        composeRule.waitForIdle()
+        val checkedCopies = composeRule.onAllNodesWithTag(benchArtFavouriteTestTag("tape.torn"))
+        assertEquals(2, checkedCopies.fetchSemanticsNodes().size)
+        assertTrue(
+            checkedCopies
+                .onFirst()
+                .platformNode(composeRule.activity)
+                .isChecked,
+        )
     }
+
+    @Test
+    fun family_filter_exposes_name_selection_and_a_full_touch_target_to_the_platform() {
+        render()
+        val family = Copy.Supplies.CUT_SHAPES
+        val control = composeRule.onNodeWithTag(benchArtFamilyFilterTestTag(family)).performScrollTo()
+        val unselected = control.platformNode(composeRule.activity)
+        val targetFloor = with(composeRule.density) { 48.dp.toPx() }
+
+        assertEquals(family, unselected.contentDescription?.toString())
+        assertTrue(unselected.isEnabled && unselected.isClickable)
+        assertTrue(!unselected.isSelected)
+        assertEquals("Not selected", unselected.stateDescription?.toString())
+        assertTrue(unselected.boundsInScreen.height() >= targetFloor - 1f)
+
+        control.performClick()
+        composeRule.waitForIdle()
+        assertEquals(
+            "Selected",
+            composeRule.onNodeWithTag(benchArtFamilyFilterTestTag(family))
+                .platformNode(composeRule.activity)
+                .stateDescription
+                ?.toString(),
+        )
+    }
+
 }

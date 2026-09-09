@@ -37,6 +37,12 @@ class ExportViewModelTest {
     private val doc = ZineDocument(format = ZineFormat.SINGLE_SHEET_8, paperSize = PaperSize.A4)
     private val size = PtSize(100.0, 100.0)
     private val bytes = AssetBytesSource { null }
+    private fun saved(): ExportSaved = ExportSaved(
+        uri = Uri.parse("content://zinely/downloads/1"),
+        mime = "application/pdf",
+        displayName = "zine.pdf",
+        location = "Downloads",
+    )
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
@@ -84,7 +90,7 @@ class ExportViewModelTest {
 
     @Test
     fun downloadsEmitsExportSaved() = runTest {
-        val saved = ExportSaved("zine.pdf", "Downloads")
+        val saved = saved()
         val fake = FakeExporter(saved)
         val vm = ExportViewModel(fake)
 
@@ -96,7 +102,7 @@ class ExportViewModelTest {
 
     @Test
     fun singleFlightIgnoresTapsWhileWorking() = runTest {
-        val fake = FakeExporter(ExportSaved("zine.pdf", "Downloads")).apply { gate = CompletableDeferred() }
+        val fake = FakeExporter(saved()).apply { gate = CompletableDeferred() }
         val vm = ExportViewModel(fake)
 
         vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.DOWNLOADS) // enters Working, suspends
@@ -117,7 +123,7 @@ class ExportViewModelTest {
      */
     @Test
     fun retryReusesTheFailedSaveDestination() = runTest {
-        val fake = FakeExporter(ExportSaved("zine.pdf", "Downloads"), failFirst = 1)
+        val fake = FakeExporter(saved(), failFirst = 1)
         val vm = ExportViewModel(fake)
 
         vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.DOWNLOADS)
@@ -133,7 +139,7 @@ class ExportViewModelTest {
     @Test
     fun retryReusesTheFailedShareDestination() = runTest {
         // A Share retries a Share — the destination is the ACTUAL failed one, never a hardcoded default.
-        val fake = FakeExporter(ExportSaved("zine.pdf", "Downloads"), failFirst = 1)
+        val fake = FakeExporter(saved(), failFirst = 1)
         val vm = ExportViewModel(fake)
 
         vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.TRANSPORT)
@@ -147,7 +153,7 @@ class ExportViewModelTest {
     /** With nothing failed, there is nothing to try again — and no stale field to try it with. */
     @Test
     fun retryWithoutAFailureDoesNothing() = runTest {
-        val fake = FakeExporter(ExportSaved("zine.pdf", "Downloads"))
+        val fake = FakeExporter(saved())
         val vm = ExportViewModel(fake)
 
         vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.DOWNLOADS)
@@ -161,7 +167,7 @@ class ExportViewModelTest {
     /** The state names the running action, which is what lets the two commit buttons stop sharing one. */
     @Test
     fun workingStateNamesItsDestination() = runTest {
-        val fake = FakeExporter(ExportSaved("zine.pdf", "Downloads")).apply { gate = CompletableDeferred() }
+        val fake = FakeExporter(saved()).apply { gate = CompletableDeferred() }
         val vm = ExportViewModel(fake)
 
         vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.TRANSPORT)

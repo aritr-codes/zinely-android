@@ -69,6 +69,10 @@ public data class PlatformA11yNode(
     val isClickable: Boolean,
     /** `AccessibilityNodeInfo.isEnabled()` — the bit that lied in `f4faaa4`; the reason this harness exists. */
     val isEnabled: Boolean,
+    /** `AccessibilityNodeInfo.isCheckable()` — whether a service is told this control owns checked state. */
+    val isCheckable: Boolean,
+    /** `AccessibilityNodeInfo.isChecked()` — the current checked bit exposed to a service. */
+    val isChecked: Boolean,
     /** `AccessibilityNodeInfo.getBoundsInScreen(...)` — the on-screen hit-rect the service reports. */
     val boundsInScreen: Rect,
     /** `AccessibilityNodeInfo.getContentDescription()` — the spoken label, for cross-checking identity. */
@@ -148,27 +152,37 @@ public fun SemanticsNodeInteraction.platformNode(activity: Activity): PlatformA1
                 "(the control's merged semantics node). It is not present in the platform tree.",
         )
 
-    val bounds = Rect().also { info.getBoundsInScreen(it) }
-    val longClick = info.actionList.firstOrNull { it.id == AccessibilityNodeInfo.ACTION_LONG_CLICK }
-    return PlatformA11yNode(
-        className = info.className?.toString(),
-        isClickable = info.isClickable,
-        isEnabled = info.isEnabled,
-        boundsInScreen = bounds,
-        contentDescription = info.contentDescription?.toString(),
-        isLongClickable = info.isLongClickable,
-        longClickLabel = longClick?.label?.toString(),
-        // API 30+. Robolectric runs each suite at ITS OWN configured SDK, and several suites that use this
-        // harness sit below 30 — calling it unconditionally threw `NoSuchMethodError` in four of them, from a
-        // reader they had no interest in. Below 30 the platform has no state description to report, so `null`
-        // is the honest answer rather than a degraded one.
-        stateDescription = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            info.stateDescription?.toString()
-        } else {
-            null
-        },
-        isSelected = info.isSelected,
-    )
+    return try {
+        val bounds = Rect().also { info.getBoundsInScreen(it) }
+        val longClick = info.actionList.firstOrNull { it.id == AccessibilityNodeInfo.ACTION_LONG_CLICK }
+        PlatformA11yNode(
+            className = info.className?.toString(),
+            isClickable = info.isClickable,
+            isEnabled = info.isEnabled,
+            isCheckable = info.isCheckable,
+            isChecked = info.isChecked,
+            boundsInScreen = bounds,
+            contentDescription = info.contentDescription?.toString(),
+            isLongClickable = info.isLongClickable,
+            longClickLabel = longClick?.label?.toString(),
+            // API 30+. Robolectric runs each suite at ITS OWN configured SDK, and several suites that use this
+            // harness sit below 30 — calling it unconditionally threw `NoSuchMethodError` in four of them, from a
+            // reader they had no interest in. Below 30 the platform has no state description to report, so `null`
+            // is the honest answer rather than a degraded one.
+            stateDescription = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                info.stateDescription?.toString()
+            } else {
+                null
+            },
+            isSelected = info.isSelected,
+        )
+    } finally {
+        // Robolectric retains each framework object until it is explicitly recycled. Lazy-list platform
+        // coverage can request dozens of nodes in one test, so leaving these live grows the native shadow
+        // graph until a later assertion fails with OOM even though the immutable snapshot above is tiny.
+        @Suppress("DEPRECATION")
+        info.recycle()
+    }
 }
 
 /**
@@ -280,18 +294,25 @@ public fun platformTraversalStops(activity: Activity): List<PlatformA11yStop> {
     // AccessibilityNodeInfo packs a source id as (virtualDescendantId shl 32) or accessibilityViewId.
     // A child the provider refuses to build is an error, never a silent omission: swallowing it would
     // shorten the traversal sequence and a caller would read the gap as "that stop is not there".
-    fun childrenOf(node: AccessibilityNodeInfo): List<AccessibilityNodeInfo> =
-        (0 until node.childCount).map { index ->
+    fun visitChildren(node: AccessibilityNodeInfo, visit: (AccessibilityNodeInfo) -> Unit) {
+        for (index in 0 until node.childCount) {
             val packed = getChildId.invoke(node, index) as Long
             val virtualViewId = (packed shr 32).toInt()
-            provider.createAccessibilityNodeInfo(virtualViewId)
+            val child = provider.createAccessibilityNodeInfo(virtualViewId)
                 ?: error(
                     "AccessibilityNodeProvider produced no AccessibilityNodeInfo for child $index of " +
                         "${node.className} (virtualViewId=$virtualViewId), though the parent reports " +
                         "${node.childCount} children. Dropping it would silently shorten the traversal " +
                         "sequence.",
                 )
+            try {
+                visit(child)
+            } finally {
+                @Suppress("DEPRECATION")
+                child.recycle()
+            }
         }
+    }
 
     /**
      * Names inside [node]'s own subtree, in tree order, stopping only at a nested **focusable** child.
@@ -305,7 +326,7 @@ public fun platformTraversalStops(activity: Activity): List<PlatformA11yStop> {
     fun namesUnder(node: AccessibilityNodeInfo, into: MutableList<Pair<String?, String?>>) {
         into += node.contentDescription?.toString()?.takeIf { it.isNotBlank() } to
             node.text?.toString()?.takeIf { it.isNotBlank() }
-        childrenOf(node).forEach { if (!it.isScreenReaderFocusable) namesUnder(it, into) }
+        visitChildren(node) { if (!it.isScreenReaderFocusable) namesUnder(it, into) }
     }
 
     fun labelOf(node: AccessibilityNodeInfo): String {
@@ -324,10 +345,15 @@ public fun platformTraversalStops(activity: Activity): List<PlatformA11yStop> {
                 boundsInScreen = Rect().also { node.getBoundsInScreen(it) },
             )
         }
-        childrenOf(node).forEach { walk(it, insideStop || isStop) }
+        visitChildren(node) { walk(it, insideStop || isStop) }
     }
-    walk(root, insideStop = false)
-    return stops
+    return try {
+        walk(root, insideStop = false)
+        stops
+    } finally {
+        @Suppress("DEPRECATION")
+        root.recycle()
+    }
 }
 
 /**

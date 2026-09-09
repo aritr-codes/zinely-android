@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -18,6 +19,7 @@ import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
+import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
@@ -268,6 +270,71 @@ class BenchC9Test {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(BenchPageGridTestTag).assertDoesNotExist()
         assertEquals("after the scrim", BenchState.Rest, modelState(store))
+    }
+
+    /**
+     * A page switch is a text-session boundary, not a cancellation. The draft is feature-local until the
+     * field commits, whereas GoToPage deliberately invalidates the reducer session. Exercise the real
+     * filmstrip callback so a mutation that dispatches GoToPage before clearing focus loses this exact
+     * draft again.
+     */
+    @Test
+    fun filmstrip_page_change_commits_an_open_text_draft_before_navigating() {
+        val store = store(pageCount = 2)
+        val id = placedText(store)
+        setScreen(store)
+        store.dispatch(Intent.BeginEditText(id))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("kept on page one")
+
+        composeRule.onNodeWithTag(benchThumbTag(2)).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(1, store.uiState.value.currentPageIndex)
+        val committed = store.uiState.value.document.pages[0].elements.single { it.id == id } as TextElement
+        assertEquals("kept on page one", committed.text)
+        // One finished edit remains one undo step even though navigation followed it.
+        store.dispatch(Intent.Undo)
+        val restored = store.uiState.value.document.pages[0].elements.single { it.id == id } as TextElement
+        assertEquals("hi", restored.text)
+    }
+
+    /** The all-pages sheet shares the same safe navigation seam and dismisses as soon as a page is chosen. */
+    @Test
+    fun page_grid_change_commits_an_open_text_draft_and_dismisses() {
+        val store = store(pageCount = 2)
+        val id = placedText(store)
+        setScreen(store)
+        store.dispatch(Intent.BeginEditText(id))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("kept from all pages")
+
+        composeRule.onNodeWithTag(BenchGridButtonTestTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(benchPageGridPageTag(2), useUnmergedTree = true).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(1, store.uiState.value.currentPageIndex)
+        composeRule.onNodeWithTag(BenchPageGridTestTag).assertDoesNotExist()
+        val committed = store.uiState.value.document.pages[0].elements.single { it.id == id } as TextElement
+        assertEquals("kept from all pages", committed.text)
+    }
+
+    /** A fresh blank box still uses the ordinary commit path, coalesces away, and never blocks navigation. */
+    @Test
+    fun page_change_coalesces_a_fresh_blank_text_session_before_navigating() {
+        val store = store(pageCount = 2)
+        setScreen(store)
+        store.dispatch(Intent.PlaceText(Transform(20.0, 60.0, 60.0, 18.0), ""))
+        val id = store.uiState.value.selection.single()
+        store.dispatch(Intent.BeginEditText(id))
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(benchThumbTag(2)).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(1, store.uiState.value.currentPageIndex)
+        assertTrue(store.uiState.value.document.pages[0].elements.isEmpty())
     }
 
     // =================================================================================================
@@ -557,16 +624,15 @@ class BenchC9Test {
             // ⚠ **AMENDED AGAIN by ADR-102 P5 — the card is LIT, and the two themes are now one number.**
             // Everything above this line is the V2 card's history and is kept because it is the record of
             // three wrong models and one device measurement. What it describes no longer exists: the
-            // V2.1 `.pgc` restates six on-paper tokens (`v21-bench.html:456-457`,
-            // [benchGridCardIsland]), so *whatever room the app is in* the number is `#6E5947` on
-            // `#FFF6E8` — **6.78:1** — and the frozen size is 11.52sp bold rather than 9sp. Two defects
+            // V2.1 `.pgc` restates its on-paper tokens (`v21-bench.html`, [benchGridCardIsland]), so
+            // *whatever room the app is in* the number is the amended lit `inkSoft` (`#6A452F`) on
+            // `#FFF6E8` — safely above AA — and the frozen size is 11.52sp bold rather than 9sp. Two defects
             // closed from opposite ends: the token by the 2026-08-12 AA fix, the ground and the size by
             // the freeze.
             //
-            // The room's own `inkSoft`/`paper` pairing is still asserted, unchanged, because the page
-            // itself and every other chrome badge still draw it. The card's pairing is asserted *beside*
-            // it, from the island, so a regression that un-lit the card fails here rather than passing on
-            // the room's arithmetic.
+            // The card pairing is asserted from the physical island, separately from themed chrome. That
+            // separation matters: a regression that un-lit the card must fail here rather than passing on
+            // the room's surface arithmetic.
             val ratio = contrastRatio(c.inkSoft, c.paper)
             assertTrue(
                 "$theme cell badge on the cell's paper: ${"%.3f".format(ratio)}:1 " +
@@ -596,6 +662,8 @@ class BenchC9Test {
                 "the lit card's number $where measures ${"%.3f".format(lit)}:1, below 1.4.3 AA's 4.5:1",
                 lit >= 4.5f,
             )
+            // A18 keeps the same badge pairing on the current page. Current state is the berry ring
+            // outside the artifact, never a recolouring of the maker's page or its address badge.
         }
 
         // …and the pairing itself, because everything above is arithmetic over tokens and would go on
@@ -611,11 +679,15 @@ class BenchC9Test {
         assertTrue(
             "BenchPageGrid no longer fills its card from the lit island — the ratios above are now " +
                 "measuring a pairing the grid does not draw, exactly as D-061 did",
-            grid.contains("if (current) card.leafTint else card.paper"),
+            grid.contains(".background(card.paper)"),
         )
         assertTrue(
-            "BenchPageGrid no longer writes its page number in `card.inkSoft` — same failure, other side",
-            grid.contains("if (current) card.leafText else card.inkSoft"),
+            "BenchPageGrid no longer routes every page-number badge through its actual lit ground",
+            grid.contains("color = card.inkSoft"),
+        )
+        assertTrue(
+            "BenchPageGrid no longer marks the current page outside the artifact",
+            grid.contains("zinelyV21OuterRing(BenchThumbCurrentRing, room.berry, shape)"),
         )
     }
 

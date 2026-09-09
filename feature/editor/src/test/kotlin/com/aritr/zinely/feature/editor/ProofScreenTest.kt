@@ -183,6 +183,7 @@ class ProofScreenTest {
         busyTarget: ProofExportTarget? = null,
         saved: MutableSharedFlow<String> = MutableSharedFlow(extraBufferCapacity = 1),
         startDrawer: ProofDrawer = ProofDrawer.None,
+        onOpenSavedPdf: (() -> Unit)? = null,
     ) {
         composeRule.setContent {
             var paper by remember { mutableStateOf(PaperSize.A4) }
@@ -194,6 +195,7 @@ class ProofScreenTest {
                     onExportPdf = { lastExport = it },
                     busyTarget = busyTarget,
                     savedSignals = saved,
+                    onOpenSavedPdf = onOpenSavedPdf,
                     pages = pages(),
                     startDrawer = startDrawer,
                 )
@@ -367,6 +369,27 @@ class ProofScreenTest {
 
         composeRule.onNodeWithTag(ProofFoldItUpTestTag).performClick()
         composeRule.onNodeWithTag(ProofFoldGuideTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun `saved completion opens the exact pdf only when the host supplies that edge`() {
+        val saved = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        var opens = 0
+        setProofBand(saved = saved, onOpenSavedPdf = { opens++ })
+
+        saved.tryEmit("zine.pdf")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ProofOpenPdfTestTag).assertIsDisplayed().performClick()
+        assertEquals(1, opens)
+    }
+
+    @Test
+    fun `saved completion does not promise opening when the host has no document edge`() {
+        val saved = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        setProofBand(saved = saved)
+        saved.tryEmit("zine.pdf")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ProofOpenPdfTestTag).assertDoesNotExist()
     }
 
     /**

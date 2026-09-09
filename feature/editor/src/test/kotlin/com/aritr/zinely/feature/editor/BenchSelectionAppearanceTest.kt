@@ -234,7 +234,7 @@ class BenchSelectionAppearanceTest {
         // Near-match, not equality: a 1.6dp arc lands on fractional coordinates and anti-aliases against
         // both of its neighbours, so a diagonal sample may never be a fully-covered ink pixel. The rest of
         // the suite moved to ±24 for exactly this reason; the discriminator survives it, because the two
-        // candidates here are nowhere near 24 apart. V2.1 light `ink` is `#33261C`; the halo composites to
+        // candidates here are nowhere near 24 apart. V2.1 light `ink` is `#27270F`; the halo composites to
         // near-white, and the backdrop `#102030` sits 35 away on its worst channel.
         val ink = zinelyV21LightColors().ink.toArgb()
         val inkDelta = (0..2).maxOf { i ->

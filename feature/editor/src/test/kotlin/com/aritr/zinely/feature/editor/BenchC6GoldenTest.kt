@@ -69,16 +69,14 @@ class BenchC6GoldenTest {
 
     private val inks = zinelyContentInks()
 
-    private var paperArgb = 0
+    private var surfaceArgb = 0
     private var inkArgb = 0
-    private var inkSoftArgb = 0
 
-    private fun host(darkTheme: Boolean, selected: Color?, inkCount: Int = 2) {
+    private fun host(darkTheme: Boolean, selected: Color?) {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
-                paperArgb = ZinelyTheme.v21Colors.paper.toArgb()
+                surfaceArgb = ZinelyTheme.v21Colors.surface.toArgb()
                 inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
-                inkSoftArgb = ZinelyTheme.v21Colors.inkSoft.toArgb()
                 Box(
                     Modifier
                         .testTag(HOST_TAG)
@@ -90,7 +88,6 @@ class BenchC6GoldenTest {
                         bands = benchInkBands(inks, BenchVerbKind.TEXT),
                         presets = benchInkPresets(inks),
                         selected = selected,
-                        inkCount = inkCount,
                         onPick = {},
                         onPreset = {},
                         onDone = {},
@@ -129,18 +126,18 @@ class BenchC6GoldenTest {
     /**
      * Rows 6.1b/6.1c — the card's ground and its border, plus the recorded light frame.
      *
-     * V2.1 moved the ground from `--sheet` to `--paper` and the outline from a 1dp `--chrome-line` to a
+     * The 37596 amendment moves the chrome ground to `--surface`; the outline remains a
      * 1.5dp real `--ink` (`v21-bench.html:237-238`). The border is counted as a **run length** rather than
      * as a pixel total: a count cannot tell 1.5px from 3px without knowing the density.
      */
     @Test
-    fun the_popover_stands_on_the_frozen_paper_behind_an_ink_border() {
+    fun the_popover_stands_on_the_frozen_surface_behind_an_ink_border() {
         host(darkTheme = false, selected = null)
         composeRule.onNodeWithTag(BenchInkPopoverTestTag, useUnmergedTree = true).assertExists()
         val card = crop(BenchInkPopoverTestTag, full())
         assertTrue(
-            "the popover did not paint its --paper ground",
-            card.pixelCountOf(paperArgb) > 5_000,
+            "the popover did not paint its --surface ground",
+            card.pixelCountOf(surfaceArgb) > 5_000,
         )
         assertEquals(
             // In PIXELS, so the expectation is the frozen 1.5dp scaled by this raster's density — at xhdpi
@@ -154,11 +151,11 @@ class BenchC6GoldenTest {
         // square card and OUTSIDE a 22dp-rounded one.
         assertTrue(
             "the top-left corner is filled, so the card is drawing no 22dp radius",
-            card.getPixel(3, 3) != paperArgb,
+            card.getPixel(3, 3) != surfaceArgb,
         )
         assertEquals(
             "…and the same card IS paper well inside the radius",
-            paperArgb,
+            surfaceArgb,
             card.getPixel(px(20f).toInt(), px(20f).toInt()),
         )
 
@@ -176,9 +173,15 @@ class BenchC6GoldenTest {
     fun the_popover_dims_with_the_room_because_it_is_chrome() {
         host(darkTheme = true, selected = null)
         val card = crop(BenchInkPopoverTestTag, full())
+        val cardBounds = composeRule.onNodeWithTag(BenchInkPopoverTestTag).fetchSemanticsNode().boundsInRoot
+        val currentBounds = composeRule.onNodeWithTag(BenchInkCurrentTestTag).fetchSemanticsNode().boundsInRoot
         assertTrue(
-            "the dark popover did not paint the ROOM's --paper",
-            card.pixelCountOf(paperArgb) > 5_000,
+            "the current-ink paper must span the tray in dark theme (${currentBounds.width}/${cardBounds.width})",
+            currentBounds.width > cardBounds.width * 0.8f,
+        )
+        assertTrue(
+            "the dark popover did not paint the ROOM's --surface",
+            card.pixelCountOf(surfaceArgb) > 5_000,
         )
         composeRule.onNodeWithTag(HOST_TAG)
             .captureRoboImage("$GOLDEN_DIR/bench_ink_popover_dark.png", roborazziOptions = aa())
@@ -204,7 +207,7 @@ class BenchC6GoldenTest {
         val outside = bmp.getPixel((r.left - 2f).toInt(), y)
         assertEquals(
             "a ring is being drawn outside the pot; V2.1 gives it a border and nothing else",
-            paperArgb,
+            surfaceArgb,
             outside,
         )
     }
@@ -239,7 +242,6 @@ class BenchC6GoldenTest {
                         bands = benchInkBands(inks, BenchVerbKind.TEXT),
                         presets = benchInkPresets(inks),
                         selected = selected.value,
-                        inkCount = 2,
                         onPick = {},
                         onPreset = {},
                         onDone = {},
@@ -248,14 +250,16 @@ class BenchC6GoldenTest {
             }
         }
         composeRule.waitForIdle()
-        val unringed = full().pixelCountOf(inkArgb)
+        val baseline = full()
+        val unringedForest = cropToBounds(baseline, swatchRect(1)).pixelCountOf(inkArgb)
+        val unringedInk = cropToBounds(baseline, swatchRect(9)).pixelCountOf(inkArgb)
 
         selected.value = Color(0xFF3E5E3A)
         composeRule.waitForIdle()
-        val ringed = full().pixelCountOf(inkArgb)
+        val ringed = cropToBounds(full(), swatchRect(1)).pixelCountOf(inkArgb)
         assertTrue(
-            "no ink ring appeared when the element's ink matched a pot ($unringed -> $ringed)",
-            ringed > unringed,
+            "no ink ring appeared when the element's ink matched a pot ($unringedForest -> $ringed)",
+            ringed > unringedForest,
         )
 
         // The ring is 1.6dp on a circle of radius 15 + 5 + .8dp — at most `2*PI*20.8*1.6` px² of ink, and
@@ -264,9 +268,9 @@ class BenchC6GoldenTest {
         // all fourteen pots, which would be an order of magnitude more.
         val one = 2 * PI * px(20.8f) * px(1.6f)
         assertTrue(
-            "the ring measures ${ringed - unringed}px, which is not one ring of at most " +
+            "the ring measures ${ringed - unringedForest}px, which is not one ring of at most " +
                 "${one.toInt()}px — fourteen would be ${(one * 14).toInt()}",
-            (ringed - unringed).toDouble() < one * 3,
+            (ringed - unringedForest).toDouble() < one * 3,
         )
 
         // The colour that appears in TWO bands. `Ink #2A251E` is both a riso ink and a neutral
@@ -275,7 +279,7 @@ class BenchC6GoldenTest {
         // measures the same ink again with the same instrument and a bound that only one ring fits.
         selected.value = Color(0xFF2A251E)
         composeRule.waitForIdle()
-        val duplicated = full().pixelCountOf(inkArgb) - unringed
+        val duplicated = cropToBounds(full(), swatchRect(9)).pixelCountOf(inkArgb) - unringedInk
         assertTrue(
             "the duplicated ink drew ${duplicated}px of ring; one is at most ${one.toInt()}px " +
                 "and two would be ${(one * 2).toInt()}",
@@ -309,32 +313,6 @@ class BenchC6GoldenTest {
     }
 
     /**
-     * Row 6.12c — `.inkuse svg{stroke-width:1.7}` on a 13px viewBox. A weight, not a size: [BenchC6Test]
-     * can measure the 13dp box and could not tell a hairline shield from a fat one.
-     */
-    @Test
-    fun the_ink_note_shield_is_drawn_at_the_frozen_stroke_weight() {
-        host(darkTheme = false, selected = null)
-        val note = crop(BenchInkUseNoteTestTag, full())
-        // The GLYPH's own box, not the note's. Measured across the whole note this assertion was
-        // vacuous — the sentence beside the shield is drawn in the same `--ink-faint`, and its pixels
-        // swamped the outline's, so a stroke at a quarter of the frozen weight passed (battery M26,
-        // GREEN). Cropping to the leading 13dp leaves only the shield in frame.
-        val glyphBox = Bitmap.createBitmap(note, 0, 0, px(13f).roundToInt(), note.height)
-        val ink = glyphBox.pixelCountOf(inkSoftArgb)
-        // The shield's outline is about 46 units of path on a 24-unit box scaled to 13dp, stroked at
-        // 1.7dp. Computed from the frozen numbers rather than from the production constants, so a change
-        // to either is visible here. Only fully-opaque core pixels match exactly, so the floor sits well
-        // under the ideal area; what it refuses is a stroke at a fraction of the frozen weight.
-        val glyph = 46f * (px(13f) / 24f) * px(1.7f)
-        assertTrue(
-            "the shield paints ${ink}px of --ink-soft inside its own 13dp box; at the frozen 1.7dp " +
-                "stroke its outline covers about ${glyph.toInt()}px",
-            ink > glyph * 0.25f,
-        )
-    }
-
-    /**
      * Row 6.10d — `.preset i b{margin-left:-5px}` (`v21-bench.html:260`). The overlap is what makes three
      * circles read as one recipe, and it is measured in the raster rather than computed: three 13dp dots
      * at a −5dp margin span **29dp**, and three at no margin would span 39. V2 drew 12dp dots at −4.
@@ -360,10 +338,10 @@ class BenchC6GoldenTest {
             if (p == cream && x > last) last = x
         }
         assertTrue("neither end of the recipe was painted (first=$first last=$last)", last > first)
-        // 29dp end to end, less the 1.5dp ink border each dot carries on its outer edge.
+        // 38dp end to end, less the 1.5dp ink border each dot carries on its outer edge.
         assertEquals(
-            "three 13dp dots at a -5dp margin span 29dp; at no margin they would span 39",
-            px(29f) - px(3f),
+            "three 16dp dots at a -5dp margin span 38dp; at no margin they would span 48",
+            px(38f) - px(3f),
             (last - first).toFloat(),
             px(2.5f),
         )

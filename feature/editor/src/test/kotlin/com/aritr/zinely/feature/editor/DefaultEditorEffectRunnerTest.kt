@@ -73,7 +73,7 @@ class DefaultEditorEffectRunnerTest {
     fun pickSuccess_dispatchesCommitAddImage() = runTest(dispatcher) {
         val dispatched = mutableListOf<Intent>()
         val r = runner(this, pipeline = { ImagePickResult.Success(image()) })
-        r.run(Effect.PickAndDecodeImage) { dispatched += it }
+        r.run(Effect.PickAndDecodeImage()) { dispatched += it }
         advanceUntilIdle()
         assertEquals(1, dispatched.size)
         assertTrue(dispatched.single() is Intent.CommitAddImage)
@@ -84,7 +84,7 @@ class DefaultEditorEffectRunnerTest {
         val dispatched = mutableListOf<Intent>()
         val said = mutableListOf<String>()
         val r = runner(this, pipeline = { ImagePickResult.Failure("decode failed") }, announcer = { said += it })
-        r.run(Effect.PickAndDecodeImage) { dispatched += it }
+        r.run(Effect.PickAndDecodeImage()) { dispatched += it }
         advanceUntilIdle()
         assertTrue(dispatched.isEmpty())
         assertEquals(listOf("decode failed"), said)
@@ -95,7 +95,7 @@ class DefaultEditorEffectRunnerTest {
         val dispatched = mutableListOf<Intent>()
         val said = mutableListOf<String>()
         val r = runner(this, pipeline = { ImagePickResult.Cancelled }, announcer = { said += it })
-        r.run(Effect.PickAndDecodeImage) { dispatched += it }
+        r.run(Effect.PickAndDecodeImage()) { dispatched += it }
         advanceUntilIdle()
         assertTrue(dispatched.isEmpty())
         assertTrue(said.isEmpty())
@@ -104,6 +104,33 @@ class DefaultEditorEffectRunnerTest {
     @Test
     fun unavailablePlaceholder_reportsFailure() = runTest(dispatcher) {
         assertTrue(UnavailableImagePipeline.pickAndDecode() is ImagePickResult.Failure)
+    }
+
+    @Test
+    fun targetedPickSuccess_dispatchesReplaceImage_withOnlyTheNewAsset() = runTest(dispatcher) {
+        val dispatched = mutableListOf<Intent>()
+        val decoded = image().copy(id = "ignored", transform = Transform(99.0, 99.0, 1.0, 1.0))
+        val r = runner(this, pipeline = { ImagePickResult.Success(decoded) })
+
+        r.run(Effect.PickAndDecodeImage(replacingId = "photo-1")) { dispatched += it }
+        advanceUntilIdle()
+
+        assertEquals(listOf(Intent.ReplaceImage("photo-1", "sha-abc")), dispatched)
+    }
+
+    @Test
+    fun targetedPickCancelOrFailure_dispatchesNoReplacement() = runTest(dispatcher) {
+        val cancelled = mutableListOf<Intent>()
+        runner(this, pipeline = { ImagePickResult.Cancelled })
+            .run(Effect.PickAndDecodeImage(replacingId = "photo-1")) { cancelled += it }
+        advanceUntilIdle()
+        assertTrue(cancelled.isEmpty())
+
+        val failed = mutableListOf<Intent>()
+        runner(this, pipeline = { ImagePickResult.Failure("decode failed") })
+            .run(Effect.PickAndDecodeImage(replacingId = "photo-1")) { failed += it }
+        advanceUntilIdle()
+        assertTrue(failed.isEmpty())
     }
 
     private fun stubDoc() = com.aritr.zinely.core.model.ZineDocument(

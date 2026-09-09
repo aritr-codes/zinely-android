@@ -89,6 +89,33 @@ class ImageBlitterConformanceTest {
         return canvas
     }
 
+    private fun drawImage(
+        blitter: ImageBlitter,
+        canvas: RecordingCanvas,
+        assetId: String = "asset-1",
+        crop: Crop = Crop.FULL,
+        decodePxPerPt: Double = exportDecodePxPerPt,
+        copier: Boolean = false,
+    ) {
+        blitter.draw(
+            canvas = canvas,
+            command = DrawImage(
+                assetId = assetId,
+                crop = crop,
+                fit = Fit.FILL,
+                box = box,
+                localToPage = AffineTransform2D.identity(),
+                localClip = box,
+                copier = copier,
+            ),
+            decodePxPerPt = decodePxPerPt,
+            localScale = 1.0,
+        )
+    }
+
+    private fun recordingCanvas(): RecordingCanvas =
+        RecordingCanvas(Bitmap.createBitmap(50, 50, Bitmap.Config.ARGB_8888))
+
     @Test
     fun routesDestRectThroughComputeImageBlit() {
         val png = pngBytes(100, 60)
@@ -145,5 +172,113 @@ class ImageBlitterConformanceTest {
         assertTrue("placeholder painted", canvas.drawRectCalls >= 1)
         // Stopped at the null second open — never fell through to a third (the AssetBytesSource contract).
         assertEquals(2, opens)
+    }
+
+    @Test
+    fun previewCacheReusesTheSameDecodedRegionAndReleasesItOnClose() {
+        val png = pngBytes(128, 96)
+        var opens = 0
+        val blitter = ImageBlitter(
+            assetBytes = AssetBytesSource { opens++; ByteArrayInputStream(png) },
+            maxCacheBytes = 1024L * 1024L,
+        )
+        val canvas = recordingCanvas()
+
+        drawImage(blitter, canvas)
+        drawImage(blitter, canvas)
+
+        assertEquals("one bounds read and one region decode", 2, opens)
+        assertEquals(1, blitter.cachedBitmapCount)
+        assertEquals(2, canvas.drawBitmapCalls)
+
+        blitter.close()
+        assertEquals(0, blitter.cachedBitmapCount)
+    }
+
+    @Test
+    fun previewCacheSeparatesCropSampleAndAssetRequests() {
+        val png = pngBytes(256, 192)
+        var opens = 0
+        val blitter = ImageBlitter(
+            assetBytes = AssetBytesSource { opens++; ByteArrayInputStream(png) },
+            maxCacheBytes = 4L * 1024L * 1024L,
+        )
+        val canvas = recordingCanvas()
+
+        drawImage(blitter, canvas, assetId = "one", decodePxPerPt = 1.0)
+        drawImage(blitter, canvas, assetId = "one", crop = Crop(0.0, 0.0, 0.5, 1.0), decodePxPerPt = 1.0)
+        drawImage(blitter, canvas, assetId = "one", decodePxPerPt = exportDecodePxPerPt)
+        drawImage(blitter, canvas, assetId = "two", decodePxPerPt = 1.0)
+
+        assertEquals("two bounds reads plus four distinct pixel requests", 6, opens)
+        assertEquals(4, blitter.cachedBitmapCount)
+        blitter.close()
+    }
+
+    @Test
+    fun previewCacheDoesNotRememberFailuresOrOversizedBitmaps() {
+        val png = pngBytes(128, 96)
+        var failureOpens = 0
+        val retrying = ImageBlitter(
+            assetBytes = AssetBytesSource {
+                failureOpens++
+                if (failureOpens == 2) null else ByteArrayInputStream(png)
+            },
+            maxCacheBytes = 1024L * 1024L,
+        )
+        val retryCanvas = recordingCanvas()
+
+        drawImage(retrying, retryCanvas)
+        drawImage(retrying, retryCanvas)
+
+        assertEquals(3, failureOpens)
+        assertEquals("the second draw retries and succeeds", 1, retryCanvas.drawBitmapCalls)
+        assertEquals(1, retrying.cachedBitmapCount)
+        retrying.close()
+
+        var oversizedOpens = 0
+        val oversized = ImageBlitter(
+            assetBytes = AssetBytesSource { oversizedOpens++; ByteArrayInputStream(png) },
+            maxCacheBytes = 1L,
+        )
+        val oversizedCanvas = recordingCanvas()
+        drawImage(oversized, oversizedCanvas)
+        drawImage(oversized, oversizedCanvas)
+
+        assertEquals("bounds are cached but oversized pixels are decoded again", 3, oversizedOpens)
+        assertEquals(0, oversized.cachedBitmapCount)
+        oversized.close()
+    }
+
+    @Test
+    fun previewCacheIsLruBoundedAndCopierPixelsStayUncached() {
+        val png = pngBytes(64, 64)
+        var opens = 0
+        val blitter = ImageBlitter(
+            assetBytes = AssetBytesSource { opens++; ByteArrayInputStream(png) },
+            maxCacheBytes = 20_000L,
+        )
+        val canvas = recordingCanvas()
+
+        drawImage(blitter, canvas, assetId = "one")
+        drawImage(blitter, canvas, assetId = "two")
+        drawImage(blitter, canvas, assetId = "one")
+
+        assertEquals("evicted asset reopens pixels but keeps its intrinsic", 5, opens)
+        assertEquals(1, blitter.cachedBitmapCount)
+        blitter.close()
+
+        var copierOpens = 0
+        val copierBlitter = ImageBlitter(
+            assetBytes = AssetBytesSource { copierOpens++; ByteArrayInputStream(png) },
+            maxCacheBytes = 1024L * 1024L,
+        )
+        val copierCanvas = recordingCanvas()
+        drawImage(copierBlitter, copierCanvas, copier = true)
+        drawImage(copierBlitter, copierCanvas, copier = true)
+
+        assertEquals("only successful intrinsics are shared for copier draws", 3, copierOpens)
+        assertEquals(0, copierBlitter.cachedBitmapCount)
+        copierBlitter.close()
     }
 }

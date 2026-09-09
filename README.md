@@ -3,9 +3,18 @@
 **A privacy-first, offline-first Android app for creating printable zines.**
 Turn photos and words into a physical, foldable zine in minutes — entirely on your device. No account. No cloud. No internet required. Your photos never leave your phone.
 
+[Website](https://aritr-codes.github.io/zinely-android/) ·
+[Privacy policy](https://aritr-codes.github.io/zinely-android/privacy/) ·
+[Changelog](https://aritr-codes.github.io/zinely-android/changelog/) ·
+[Roadmap](https://aritr-codes.github.io/zinely-android/roadmap/) ·
+[Share feedback](https://forms.gle/7ejUVJBdUaYoDytu6) ·
+[Download the latest beta](https://github.com/aritr-codes/zinely-android/releases/tag/v0.9.0-beta.4-r3)
+
 > *Physical media instead of social media.*
 
-[![status](https://img.shields.io/badge/status-in--development-green)](docs/ROADMAP.md)
+An independent project by **Aastra, a two-person team**.
+
+[![status](https://img.shields.io/badge/status-public--beta-green)](docs/ROADMAP.md)
 [![platform](https://img.shields.io/badge/platform-Android-green)]()
 [![stack](https://img.shields.io/badge/Kotlin-Compose-7F52FF)]()
 
@@ -35,9 +44,16 @@ No existing product is **offline-first + account-free + native Android + a real 
 
 ## Status
 
-In development — the app boots onto the **Home / "My zines" shelf** and mounts a working per-project **editor**. Shipped so far: **S1** imposition engine (`core:model` + `core:imposition`, milestone `v0.1.0-imposition-engine`); **S2** persistence core (`core:data` contracts + pure-JVM `core:data-storage` durability/asset store) plus the Android `data-android` adapters; **S3** render (pure `core:render` + `render-android` PDF/raster backends); **S4** the editor (`core:editor` MVI core + `feature:editor` interaction surface, wired into `:app` with interactive image import and autosave); **S5** the export/share flow (Preview → Export · Print & fold, vector PDF + 300 DPI PNG → Completion · fold-steps); and **S6** the multi-project layer (Room-backed `ProjectRepository` index over files-as-truth, plus the Home shelf — create/rename/duplicate/undoable-delete, page-1 thumbnails, wired as the navigation root).
+Public beta — the app boots onto the **My Shelf** library and mounts a working per-project **editor**. Shipped so far: **S1** imposition engine (`core:model` + `core:imposition`, milestone `v0.1.0-imposition-engine`); **S2** persistence core (`core:data` contracts + pure-JVM `core:data-storage` durability/asset store) plus the Android `data-android` adapters; **S3** render (pure `core:render` + `render-android` PDF/raster backends); **S4** the editor (`core:editor` MVI core + `feature:editor` interaction surface, wired into `:app` with interactive image import and autosave); **S5** the unified Proof experience (read the finished zine, save or share a print-ready vector PDF or 300 DPI PNG, then follow the accessible eight-step fold guide); and **S6** the multi-project layer (Room-backed `ProjectRepository` index over files-as-truth, plus the generated-cover shelf — create, rename, duplicate, and undoable delete — wired as the navigation root). Local `.zine` backup and recovery are also shipped.
 
 Persistence is **files-as-truth**: `DocumentRepository` writes `projects/<id>/document.json` atomically, with the Room `projects` table as a rebuildable index ([ADR-042](docs/DECISIONS.md#adr-042)). Still deferred: the Settings screen and the asset GC/sweeper. See the [roadmap](docs/ROADMAP.md).
+
+The public website uses sanitized, light-mode renders from the canonical HTML prototypes rather than private
+device photos. It includes a concise About section, public changelog and non-committal roadmap, plus a complete
+illustrated folding desk with Previous/Next, deliberate pauseable direction demonstrations, and a complete
+static fallback. Feedback goes to an optional linked Google Form or email, under the public retention policy.
+The existing in-app fold guide remains unchanged;
+native animation still depends on evidence that it improves understanding.
 
 ---
 
@@ -68,7 +84,7 @@ Start here, then follow links. Each document is the **single source of truth** f
 | [docs/releases/](docs/releases/) | Per-release tester packages — what ships alongside an APK (install, warnings, limitations, how to report) |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Cited evidence base (verified / recommendation / assumption / future) |
 | [docs/DEVICE-VERIFICATION.md](docs/DEVICE-VERIFICATION.md) | The on-device verification **recipe** — reference device, the `uiautomator` accessibility-tree dump, TalkBack, reading app-private files, and the environment traps. The *policy* (two passes, acceptance) stays in [CLAUDE.md](CLAUDE.md#device-verification-mandatory) |
-| [docs/COMPOSE-V2-HANDOVER.md](docs/COMPOSE-V2-HANDOVER.md) | **Start here for V2 implementation.** Paste-in brief for a session with no prior context — the product, the philosophy, the frozen artefacts, the method, and §0: where the work actually is today (**Phase A closed 2026-07-30**, gate passed — [D-016](docs/design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface) ruled; Phase B not started) |
+| [docs/COMPOSE-V2-HANDOVER.md](docs/COMPOSE-V2-HANDOVER.md) | Historical Compose V2 handover: product context, frozen artefacts, implementation method, and package records. Use the live checkout and later ADRs for current status. |
 | [docs/design/V2-CONSTITUTION.md](docs/design/V2-CONSTITUTION.md) | The V2 **highest authority** — outranks every other document, including the code |
 | [docs/COMPOSE-IMPLEMENTATION-GUIDE.md](docs/COMPOSE-IMPLEMENTATION-GUIDE.md) | *How* V2 is implemented — how decisions are made, how the frozen HTML is treated, parity/a11y/animation/testing expectations |
 | [docs/COMPOSE-IMPLEMENTATION-RULES.md](docs/COMPOSE-IMPLEMENTATION-RULES.md) | The one-page checklist re-read each session |

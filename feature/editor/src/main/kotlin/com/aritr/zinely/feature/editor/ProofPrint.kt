@@ -328,7 +328,7 @@ private fun PaperSegments(paper: PaperSize, onPaperSelected: (PaperSize) -> Unit
                     .weight(1f)
                     .heightIn(min = 48.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(if (selected) colors.leaf else colors.paper)
+                    .background(if (selected) colors.leaf else colors.surface)
                     .border(
                         width = 1.5.dp,
                         // Selected takes the fill's own edge; unselected takes the hairline. `ink` on an
@@ -373,7 +373,7 @@ private fun TestSheetCard() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(colors.paper)
+            .background(colors.surface)
             .border(1.5.dp, colors.hair, RoundedCornerShape(12.dp))
             .padding(12.dp)
             .testTag(ProofTestSheetTestTag)
@@ -417,7 +417,7 @@ private fun RecipeRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(colors.paper)
+            .background(colors.surface)
             .border(1.dp, colors.hair, RoundedCornerShape(14.dp))
             .padding(horizontal = 15.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,

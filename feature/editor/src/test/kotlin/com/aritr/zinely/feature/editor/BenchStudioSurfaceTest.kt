@@ -148,7 +148,7 @@ class BenchStudioSurfaceTest {
      * for D-035. Every other test stayed green, and the re-recorded dark golden certified it.
      *
      * **The same trap is live in V2.1 with a different token.** The V2.1 page's shadow is
-     * `var(--hard) var(--hard) 0 var(--ink-line)`, so the hazard is now `inkLine` — `#33261C` light,
+     * `var(--hard) var(--hard) 0 var(--ink-line)`, so the hazard is now `inkLine` — `#27270F` light,
      * `#120E0A` dark. ADR-102 §3 forbade `softShadow`/`contact` by name, which the V2.1 page does not use
      * at all; the warning was right and its cause was stale
      * ([§12.1](../../../../../../../../../docs/DECISIONS.md#adr-102-island-v21)). The explicit
@@ -175,16 +175,17 @@ class BenchStudioSurfaceTest {
             .map { it.groupValues[1] }
             .filterNot { it.startsWith("br-") || it.startsWith("gap-") || it in notColours }
             // `--ink-line` is the page's DROP SHADOW. It falls on the bench, not on the paper, so it is
-            // the room's — lighting it would put `#33261C` under the sheet on a `#211B15` worktop.
+            // the room's — lighting it would put `#27270F` under the sheet on a `#242312` worktop.
             .filterNot { it == "ink-line" }
             .map { token ->
                 token.split('-').mapIndexed { i, w -> if (i == 0) w else w.replaceFirstChar(Char::uppercase) }
                     .joinToString("")
             }.toSet()
 
+        val invariantArtifactTokens = setOf("paper", "paperEdge", "berryTint", "butter")
         assertEquals(
             "the sheet island and the frozen page region must name the same tokens",
-            painted.sorted(), lit.sorted(),
+            (painted - invariantArtifactTokens).sorted(), lit.sorted(),
         )
         assertTrue(
             "the sheet's shadow belongs to the room, not the sheet — it must not be lightened at night",
@@ -194,7 +195,7 @@ class BenchStudioSurfaceTest {
         // Pinned as a number as well as a comparison, because both sides of the comparison are derived and
         // a regex that silently matched nothing would agree with an island that lit nothing — which is
         // exactly how the V2 version of this test would have passed on V2.1.
-        assertEquals("the V2.1 island is seven tokens", 7, lit.size)
+        assertEquals("the V2.1 island is four theme-dependent tokens", 4, lit.size)
     }
 
     /**
@@ -462,8 +463,8 @@ class BenchStudioSurfaceTest {
     /**
      * **The shadow ink stays the room's, and this is the D-010 guard restated in V2.1 terms.**
      *
-     * `inkLine` is `#33261C` light and `#120E0A` dark. Lighting it inside the island would put a
-     * `#33261C` shadow under the sheet on a `#211B15` worktop — brighter than the ground it falls on,
+     * `inkLine` is `#27270F` light and `#120E0A` dark. Lighting it inside the island would put a
+     * `#27270F` shadow under the sheet on a `#242312` worktop — brighter than the ground it falls on,
      * a glow where a contact shadow belongs. That is D-010, which this file has already caused once.
      */
     @Test

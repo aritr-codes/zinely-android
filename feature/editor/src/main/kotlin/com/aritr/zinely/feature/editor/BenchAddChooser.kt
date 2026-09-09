@@ -100,6 +100,10 @@ internal val BenchOptIcoRadius = ZinelyV21Dimens.radiusSm
 internal val BenchOptGlyphSize = 20.dp
 internal const val BenchOptStroke: Float = 1.8f
 
+/** A15/A16's distinct chooser marks, named here so a mapping regression is testable without pixels. */
+internal val BenchAddPhotoGlyph = ZinelyV2Icons.Art
+internal val BenchAddArtGlyph = ZinelyV2Icons.Collage
+
 /** Frozen `.opt .tx{gap:var(--gap-hair)}` (`v21-bench.html:379`) — between the title and its subtitle. */
 internal val BenchOptTextGap = ZinelyV21Dimens.gapHair
 
@@ -155,21 +159,12 @@ internal val BenchOptSubtitleSize = 11.68.sp
  * impression. [BenchArtSheet] already flags that for Pass 2, and adding this row is what finally puts a
  * first-time maker in front of it. If Pass 2 rejects the sheet, this row is the fence to re-raise.
  *
- * ⚠ **The row wears `Photo`'s glyph, because the freeze does — and that is a known defect, not a design.**
- * `v21-bench.html:841` draws `Art` with the *identical* `<rect>`-plus-horizon picture mark it gives `Photo`
- * one line above (`:828`) — byte-for-byte the same SVG children. Two adjacent rows wearing one icon is a
- * transcription of a copy-paste.
+ * ### Photo and Art scan as different materials
  *
- * An earlier draft of this package drew the frozen file's own `DECOR.star` (`:641`) instead and called it
- * an accessibility-class defect fix. **Independent review rejected that, correctly.** `D-080` files this
- * defect and says in terms that *an implementer cannot invent the missing glyph: it is drawn material in a
- * frozen file*; `D-051` is the identical defect one row up and was ruled **OD-26** — *carried forward, no
- * implementation change, no frozen-spec amendment* — which is exactly what the `Photo` row above honours.
- * Drawing a star here would have made one `Column` obey the ruling on one row and overrule it on the next.
- * CLAUDE.md settles the general case anyway: a UX change after freeze updates the HTML **first**.
- *
- * So the duplicate ships, visibly, until the amendment lands. The star is the better design answer and it
- * is the owner's to grant.
+ * A15/A16 amended the frozen chooser before this implementation: `Photo` keeps the frame-and-horizon mark,
+ * while `Art` gets a collage of two overlapping paper scraps and one printed dot. D-094 records the owner
+ * ruling. Both rows keep their full visible labels and single-node accessibility descriptions, so the icon
+ * is a non-colour scanning cue rather than the only way to tell the actions apart.
  *
  * ### Why the sheet is [ZSheet] and not a new surface
  *
@@ -201,51 +196,66 @@ internal fun BenchAddChooser(
     onAddArt: () -> Unit,
 ) {
     ZSheet(visible = visible, onDismiss = onDismiss, title = BenchAddChooserTitle) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(BenchAddChooserTestTag),
-            verticalArrangement = Arrangement.spacedBy(BenchOptGap),
-        ) {
-            BenchAddOption(
-                icon = ZinelyV2Icons.Font.toImageVector(
-                    BenchOptGlyphSize,
-                    ZinelyV2IconPaint.Stroke(BenchOptStroke),
-                ),
-                title = BenchAddTextTitle,
-                subtitle = BenchAddTextSubtitle,
-                testTag = BenchAddChooserTextTag,
-                onClick = { onDismiss(); onAddText() },
-            )
-            // `ICON_PICTURE` — the frame-plus-horizon mark, per the 2026-08-14 amendment at
-            // `v21-bench.html:798`. It was `Replace` (two arrows round a circle) until a device pass read
-            // that as *refresh/sync* on a chooser that only ever adds; `ZinelyV2Icons.Art` **is** that
-            // picture glyph under its older name (`Rect` + horizon path), so nothing new is drawn here.
-            BenchAddOption(
-                icon = ZinelyV2Icons.Art.toImageVector(
-                    BenchOptGlyphSize,
-                    ZinelyV2IconPaint.Stroke(BenchOptStroke),
-                ),
-                title = BenchAddPhotoTitle,
-                subtitle = BenchAddPhotoSubtitle,
-                testTag = BenchAddChooserPhotoTag,
-                onClick = { onDismiss(); onAddPhoto() },
-            )
-            // ⚠ The SAME picture mark the `Photo` row wears, transcribed from `v21-bench.html:841`
-            // verbatim. See the KDoc: this is a known freeze defect (D-080), and D-051/OD-26 ruled the
-            // identical defect one row up as *carried forward, no implementation change*. The star this
-            // row wants is an amendment's to grant, not an implementer's to draw.
-            BenchAddOption(
-                icon = ZinelyV2Icons.Art.toImageVector(
-                    BenchOptGlyphSize,
-                    ZinelyV2IconPaint.Stroke(BenchOptStroke),
-                ),
-                title = BenchAddArtTitle,
-                subtitle = BenchAddArtSubtitle,
-                testTag = BenchAddChooserArtTag,
-                onClick = { onDismiss(); onAddArt() },
-            )
-        }
+        BenchAddChooserBody(
+            onAddText = { onDismiss(); onAddText() },
+            onAddPhoto = { onDismiss(); onAddPhoto() },
+            onAddArt = { onDismiss(); onAddArt() },
+        )
+    }
+}
+
+/**
+ * The chooser rows without their window host. Production's Add → Art path reuses one [ZSheet] and swaps
+ * this body for [BenchArtSheetBody], matching the frozen `#sheet.innerHTML` transition and avoiding a
+ * second platform-window cold start. The standalone [BenchAddChooser] remains the focused component seam.
+ */
+@Composable
+internal fun BenchAddChooserBody(
+    onAddText: () -> Unit,
+    onAddPhoto: () -> Unit,
+    onAddArt: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(BenchAddChooserTestTag),
+        verticalArrangement = Arrangement.spacedBy(BenchOptGap),
+    ) {
+        BenchAddOption(
+            icon = ZinelyV2Icons.Font.toImageVector(
+                BenchOptGlyphSize,
+                ZinelyV2IconPaint.Stroke(BenchOptStroke),
+            ),
+            title = BenchAddTextTitle,
+            subtitle = BenchAddTextSubtitle,
+            testTag = BenchAddChooserTextTag,
+            onClick = onAddText,
+        )
+        // `ICON_PICTURE` — the frame-plus-horizon mark. Its catalogue name predates the A15/A16
+        // distinction; in this chooser it is the frozen Photo mark.
+        BenchAddOption(
+            icon = BenchAddPhotoGlyph.toImageVector(
+                BenchOptGlyphSize,
+                ZinelyV2IconPaint.Stroke(BenchOptStroke),
+            ),
+            title = BenchAddPhotoTitle,
+            subtitle = BenchAddPhotoSubtitle,
+            testTag = BenchAddChooserPhotoTag,
+            onClick = onAddPhoto,
+        )
+        // A15/A16's owner-approved collage: two paper scraps plus one printed dot, visibly distinct
+        // from Photo without changing the row's label, target, focus order, or semantics.
+        BenchAddOption(
+            icon = BenchAddArtGlyph.toImageVector(
+                BenchOptGlyphSize,
+                ZinelyV2IconPaint.Stroke(BenchOptStroke),
+            ),
+            title = BenchAddArtTitle,
+            subtitle = BenchAddArtSubtitle,
+            testTag = BenchAddChooserArtTag,
+            onClick = onAddArt,
+        )
     }
 }
 
@@ -291,7 +301,7 @@ private fun BenchAddOption(
             // purpose. The sheet's own bottom padding is what gives the shadow room to land.
             .zinelyV21Pressable(pressed, ZinelyV21Press.Raised, colors.inkLine, BenchOptShape)
             .clip(BenchOptShape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchOptBorder, colors.ink, BenchOptShape)
             .clickable(interactionSource = interaction, indication = null, onClick = choose)
             .testTag(testTag)

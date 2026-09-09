@@ -49,6 +49,13 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class EditorPagePreviewTest {
 
+    @Test
+    fun editorPreviewCacheBudgetIsBoundedForSmallAndLargeHeaps() {
+        assertEquals(8L * 1024L * 1024L, editorImageCacheBudgetBytes(64L * 1024L * 1024L))
+        assertEquals(16L * 1024L * 1024L, editorImageCacheBudgetBytes(256L * 1024L * 1024L))
+        assertEquals(24L * 1024L * 1024L, editorImageCacheBudgetBytes(1024L * 1024L * 1024L))
+    }
+
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 

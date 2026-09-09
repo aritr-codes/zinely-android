@@ -17,6 +17,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -64,6 +66,12 @@ class ZineActionSheetTest {
         const val TITLE = "Sunday market"
         const val SUBTITLE = "A4 · 2 days ago"
         val TARGET = ZineActionTarget(TITLE, SUBTITLE)
+        const val UNAVAILABLE_REASON = "This zine needs a newer version of Zinely."
+        val UNAVAILABLE_TARGET = ZineActionTarget(
+            title = TITLE,
+            subtitle = SUBTITLE,
+            unavailableReason = UNAVAILABLE_REASON,
+        )
 
         /**
          * `.sheet{left:0;right:0;bottom:0}` — **the card stopped floating**.
@@ -96,6 +104,7 @@ class ZineActionSheetTest {
         /** `border-top:1px solid var(--hair)` · `.danger{border-top:8px solid var(--desk)}` */
         /** `.sh-head{border-bottom:1.5px dashed var(--hair)}` — the sheet's one divider. */
         const val HEAD_DIVIDER = 1.5f
+        const val DANGER_DIVIDER = 8f
 
         /** `.sh-ttl{font-family:var(--voice);font-size:1.22rem;font-weight:700}` — 19.52px in Averia. */
         val TITLE_SIZE = 19.52.sp
@@ -284,7 +293,7 @@ class ZineActionSheetTest {
     }
 
     @Test
-    fun `the head is the sheet's only divider, and Delete is set apart by colour alone`() {
+    fun `Delete has an eight pixel non-colour safety boundary`() {
         surface()
         // `.sh-head{border-bottom:1.5px dashed var(--hair)}` — one divider, under the header.
         val divider = composeRule.onNodeWithTag(ZineActionHeadDividerTestTag)
@@ -298,24 +307,27 @@ class ZineActionSheetTest {
         val title = composeRule.onNodeWithTag(ZineActionTitleTestTag).fetchSemanticsNode().boundsInRoot
         assertTrue("and it sits below the header, not above it", divider.top > title.bottom)
 
-        // **And nothing separates the rows.** V2's `.act` carried `border-top:1px solid var(--hair)`
-        // and Delete carried `border-top:8px solid var(--desk)` — a band of the desk showing through
-        // the sheet, so the destructive row sat visibly apart. V2.1 writes `.act{border:none}`.
-        //
-        // Asserted as an *absence*, and asserted by geometry rather than by the missing tag: the five
-        // rows stack with no gap at all, so any separator would show up as a gap between them. A test
-        // that only checked the tag was gone would pass against a separator drawn some other way.
+        val dangerDivider = composeRule.onNodeWithTag(ZineActionDangerDividerTestTag)
+            .fetchSemanticsNode().boundsInRoot
+        assertEquals(
+            "the destructive boundary is ${DANGER_DIVIDER}px",
+            DANGER_DIVIDER,
+            dangerDivider.height,
+            HALF_PIXEL,
+        )
         val rows = ZineAction.entries.map {
             composeRule.onNodeWithTag(zineActionTestTag(it)).fetchSemanticsNode().boundsInRoot
         }
-        rows.zipWithNext().forEach { (above, below) ->
+        rows.zipWithNext().dropLast(1).forEach { (above, below) ->
             assertEquals(
-                "the rows touch — no border, no band, no gap",
+                "reversible rows remain grouped",
                 above.bottom,
                 below.top,
                 HALF_PIXEL,
             )
         }
+        assertEquals(rows[3].bottom, dangerDivider.top, HALF_PIXEL)
+        assertEquals(dangerDivider.bottom, rows[4].top, HALF_PIXEL)
     }
 
     @Test
@@ -412,6 +424,24 @@ class ZineActionSheetTest {
         surface()
         composeRule.onNodeWithText(TITLE).assertExists()
         composeRule.onNodeWithText(SUBTITLE).assertExists()
+    }
+
+    @Test
+    fun `an unavailable zine disables open share and duplicate but keeps rename and delete live`() {
+        surface(UNAVAILABLE_TARGET)
+
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Open))
+            .assertIsNotEnabled()
+            .assert(
+                SemanticsMatcher.expectValue(
+                    SemanticsProperties.StateDescription,
+                    UNAVAILABLE_REASON,
+                ),
+            )
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.ShareExport)).assertIsNotEnabled()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Duplicate)).assertIsNotEnabled()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Rename)).assertIsEnabled()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Delete)).assertIsEnabled()
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -539,9 +569,8 @@ class ZineActionSheetTest {
         // **This assertion is the inverse of the one it replaces, for the second time, and that is the
         // finding rather than an embarrassment.** B3 first pinned the two themes as *equal*; the D-022
         // ruling made the corpus's theme-aware `--scrim` authoritative and the test was rewritten to
-        // assert they *differ*. V2.1 writes `.scrim{background:rgba(38,26,16,.42)}` in the shared block
-        // with no dark override anywhere in the file, so the re-freeze answers the same question a third
-        // time — back to one wash, at a new value.
+        // assert they *differ*. The 37596 amendment writes one shared ink wash with no dark override, so
+        // the current freeze answers the same question a third time — back to one wash, at a new value.
         //
         // Re-baselining the two expected colours would have kept the `assertNotEquals` and gone on
         // requiring a difference the frozen file does not state. See [FROZEN_SCRIM] for why this is
@@ -550,7 +579,7 @@ class ZineActionSheetTest {
         val expected = FROZEN_SCRIM.compositeOverWhite()
 
         assertTrue(
-            "light must be the frozen rgba(38,26,16,.42) over white — expected $expected, found $light",
+            "light must be the frozen rgba(39,39,15,.44) over white — expected $expected, found $light",
             light.closeTo(expected),
         )
         assertTrue(
@@ -590,11 +619,11 @@ class ZineActionSheetTest {
     }
 
     /** The sheet's body in a plain host — for geometry and pixels the decor raster must be able to see. */
-    private fun surface() {
+    private fun surface(target: ZineActionTarget = TARGET) {
         composeRule.setContent {
             Host(dark = false) {
                 Box(Modifier.align(Alignment.BottomCenter)) {
-                    ZineActionSheetSurface(target = TARGET, onAction = { chosen += it })
+                    ZineActionSheetSurface(target = target, onAction = { chosen += it })
                 }
             }
         }
@@ -616,7 +645,7 @@ class ZineActionSheetTest {
                 Column(
                     Modifier
                         .align(Alignment.TopStart)
-                        .background(ZinelyTheme.v2Colors.paper),
+                        .background(ZinelyTheme.v21Colors.surface),
                 ) {
                     Reference(REF_FROZEN, FontWeight.Bold, TITLE_SIZE, TITLE)
                     Reference(REF_LIGHTER, FontWeight.Medium, TITLE_SIZE, TITLE)
@@ -625,7 +654,7 @@ class ZineActionSheetTest {
                 Column(
                     Modifier
                         .align(Alignment.TopEnd)
-                        .background(ZinelyTheme.v2Colors.paper),
+                        .background(ZinelyTheme.v21Colors.surface),
                 ) {
                     (ZineAction.entries.map { it.glyph } + listOf("⋯", TOFU_A, TOFU_B)).forEach { glyph ->
                         GlyphCell(glyph)
@@ -679,8 +708,8 @@ class ZineActionSheetTest {
             capturedInkSoft = ZinelyTheme.v21Colors.inkSoft
             capturedConsequence = ZinelyTheme.v21Colors.jamText
             capturedDesk = ZinelyTheme.v21Colors.desk
-            capturedPaper = ZinelyTheme.v21Colors.paper
-            capturedChip = ZinelyTheme.v21Colors.butterTint
+            capturedPaper = ZinelyTheme.v21Colors.surface
+            capturedChip = ZinelyTheme.v21Colors.butter
             Box(Modifier.fillMaxSize().background(PROBE_GROUND)) { content() }
         }
     }
@@ -805,7 +834,7 @@ class ZineActionSheetTest {
 }
 
 /**
- * The V2.1 scrim — `.scrim{background:rgba(38,26,16,.42)}`, **one value for both themes**.
+ * The V2.1 scrim — `.scrim{background:rgba(39,39,15,.44)}`, **one value for both themes**.
  *
  * **This is where D-022 landed, and it did not land on the ruling.** That defect was raised because V2's
  * Library wrote its scrim as a hard literal outside `:root`, so the frozen dark block could never reach it
@@ -818,7 +847,7 @@ class ZineActionSheetTest {
  * Written out here rather than read from `ZinelyV21Colors` on purpose: a test that took the token would
  * agree with whatever the token said, including a wrong value. These are the bytes the frozen file names.
  */
-private val FROZEN_SCRIM = Color(0xFF261A10).copy(alpha = 0.42f)
+private val FROZEN_SCRIM = Color(0xFF27270F).copy(alpha = 0.44f)
 
 /** What the ruling rejected — pinned so a revert to it is a failure rather than a silence. */
 private val STALE_LIBRARY_SCRIM = Color(0xFF1E1912).copy(alpha = 0.36f)

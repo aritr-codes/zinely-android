@@ -1,5 +1,10 @@
 # V2-TOKENS.md — the locked V2 colour palette
 
+> **Colour-value supersession (2026-08-24):** the owner has frozen the exact `37596.jpg` swatches as the
+> product identity palette in [THEME-37596-FREEZE.md](THEME-37596-FREEZE.md). This file remains historical
+> authority for the semantic rules and V2 implementation it documents; its colour values are not the target
+> for the next theme implementation.
+>
 > **Status:** The **owner-approved** V2 colour identity (locked 2026-07-27), derived from the
 > matcha/strawberry/cream reference per [V2-DIRECTION.md](V2-DIRECTION.md) Q-A (full re-derive) and the
 > discipline in [V2-RESEARCH.md §3](V2-RESEARCH.md). This is the single source the HTML prototypes and the

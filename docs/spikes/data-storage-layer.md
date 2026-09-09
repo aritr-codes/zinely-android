@@ -267,7 +267,7 @@ flowchart TD
 | **Document JSON** | ordered chain of pure `DocumentMigrator` functions `vN→vN+1`, applied on open, then re-saved atomically at current version | project open when `documentSchemaVersion < current` | migrators are **pure & unit-tested** (golden old→new fixtures), mirroring the imposition test style |
 | **`.zine` package** | `manifest.json` with `packageVersion` + embedded `documentSchemaVersion` | import/restore | designed now; SAF wiring is V1 |
 
-**`.zine` package format (designed now, wired in V1):** a zip containing `manifest.json` (package version, app version, project metadata), `document.json`, `assets/`, `thumbnail.png`. Self-contained and portable; restore re-imports assets through the dedupe path (§5).
+**`.zine` package formats:** the original v1 contract is a single-project zip containing `manifest.json`, `document.json`, `assets/`, and `thumbnail.png`. [ADR-110](../DECISIONS.md#adr-110) adds — rather than relabels — a v2 whole-library contract: one root manifest, canonical `projects/<safe-id>/document.json` entries, and one deduplicated `assets/<sha256>` table. The pure v2 manifest and staged-archive validator are implemented; byte verification, transactional restore, SAF, and UI remain subsequent packages. Restore must still re-import assets through the dedupe path (§5).
 
 **Rules**
 - **Never mutate a persisted field's meaning** — add a new field + bump `schemaVersion` + write a migrator. Same discipline as "never edit an Accepted ADR in place."

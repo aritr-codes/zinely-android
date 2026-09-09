@@ -28,10 +28,12 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Colors
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 
@@ -114,6 +116,12 @@ internal val BenchSnackEnterOffset = 8.dp
  */
 internal const val BenchSnackRotationDeg: Float = -0.6f
 
+/**
+ * A8's 2dp allowance for the rotated pill's painted corner. Without it, a nominal 12dp layout gap is
+ * only about 10.5dp between transformed bounds on a phone-width canvas (the D-089 regression fixture).
+ */
+internal val BenchSnackStackRotationAllowance = 2.dp
+
 /** Frozen `.snack{transition:opacity .18s,transform .18s}` (`v21-bench.html:494`). V2 asked for 220ms. */
 internal const val BenchSnackMillis: Int = 180
 
@@ -169,6 +177,13 @@ public const val BenchSnackInkMillis: Long = 1600L
  * @param message the line. `Text deleted.` in the delete case; `Ink · <name>` in C6's.
  * @param actionLabel `null` gives the **buttonless** variant (row 4.15). The freeze hides the button by
  *   setting `display:none` on it and restores it on timeout; a null label is the same thing said once.
+ * @param colors the Bench room palette captured outside [BenchSheetIsland]. This is required rather than
+ *   read from the ambient theme because the snack is room chrome positioned inside the sheet island's
+ *   layout host. In dark mode the island deliberately replaces `ink` with light-theme on-paper ink while
+ *   inheriting dark `surfaceSoft`; reading that mixed palette produced 1.31:1 contrast.
+ * @param bottomClearance extra space reserved below the snack when another bottom-anchored surface is
+ *   present. D-089 uses the context bar's complete footprint, leaving this component's own 12dp inset as
+ *   the frozen gap between their painted bounds.
  */
 @Composable
 internal fun BenchSnack(
@@ -176,9 +191,10 @@ internal fun BenchSnack(
     message: String,
     actionLabel: String?,
     onAction: () -> Unit,
+    colors: ZinelyV21Colors,
     modifier: Modifier = Modifier,
+    bottomClearance: Dp = 0.dp,
 ) {
-    val colors = ZinelyTheme.v21Colors
     val progress by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
         // Still routed through the V2 motion object: V2.1 changed the duration, not the arrival, and this
@@ -193,7 +209,7 @@ internal fun BenchSnack(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = BenchSnackInsetH)
-            .padding(bottom = BenchSnackInsetBottom)
+            .padding(bottom = BenchSnackInsetBottom + bottomClearance)
             .graphicsLayer {
                 alpha = progress
                 translationY = rise
@@ -203,17 +219,16 @@ internal fun BenchSnack(
             }
             .testTag(BenchSnackTestTag)
             .clip(BenchSnackShape)
-            .background(colors.ink)
-            // ⚠ `inkLine`, not `ink` — the one border in the corpus drawn in the shadow ink, because its
-            // own ground IS ink. See the class note; do not "correct" this to `colors.ink`.
-            .border(BenchSnackBorder, colors.inkLine, BenchSnackShape)
+            .background(colors.surfaceSoft)
+            // A transient confirmation is a warm support scrap: ordinary ink and border on surfaceSoft.
+            .border(BenchSnackBorder, colors.ink, BenchSnackShape)
             .padding(BenchSnackPadding),
         horizontalArrangement = Arrangement.spacedBy(BenchSnackGap, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = message,
-            color = colors.paper,
+            color = colors.ink,
             fontSize = BenchSnackTextSize,
             fontFamily = ZinelyV21Fonts.Work,
             lineHeight = ZinelyV21Fonts.InheritedLineHeight,
@@ -233,7 +248,7 @@ internal fun BenchSnack(
             Text(
                 text = actionLabel,
                 // `paper`, underlined — see the class note. `butter` here is the retired exception.
-                color = colors.paper,
+                color = colors.ink,
                 fontSize = BenchSnackActionTextSize,
                 fontWeight = FontWeight.Bold,
                 fontFamily = ZinelyV21Fonts.Work,
@@ -290,4 +305,3 @@ internal fun benchDeleteLabel(pages: List<com.aritr.zinely.core.model.Page>, id:
  * freeze's, and it is kept: the line is a sentence about something that happened, not a label.
  */
 internal fun benchDeletedMessage(label: String): String = Copy.Snack.deleted(label)
-

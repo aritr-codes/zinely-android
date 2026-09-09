@@ -114,8 +114,17 @@ class ZinelyV2IconsTest {
     @Test
     fun `every icon is byte-identical to the frozen source, geometry and paint together`() {
         assertTrue("expected to run with :core:ui as the working directory", mockups.isDirectory)
-        val frozen = files.flatMap { icons(it) }.map { frozenShapes(it.second) }.toSet()
-        assertEquals("37 distinct marks across the trilogy", 37, frozen.size)
+        val trilogy = files.flatMap { icons(it) }.map { frozenShapes(it.second) }.toSet()
+        // A15 installs the collage through `icon.innerHTML=svg('...')`, rather than a literal `<svg>`;
+        // scrape that amendment seam explicitly so the test still compares Kotlin to the frozen bytes.
+        val v21Amendments = Regex("""icon\.innerHTML=svg\('([^']+)'\)""")
+            .findAll(html("v21-bench.html"))
+            .map { frozenShapes(it.groupValues[1]) }
+            .filter { it == kotlinShapes(ZinelyV2Icons.Collage) }
+            .toSet()
+        assertEquals("37 distinct marks across the trilogy", 37, trilogy.size)
+        assertEquals("A15/A16 contributes the frozen collage mark once", 1, v21Amendments.size)
+        val frozen = trilogy + v21Amendments
 
         ZinelyV2Icons.All.forEach { icon ->
             assertTrue(
@@ -131,9 +140,9 @@ class ZinelyV2IconsTest {
     }
 
     @Test
-    fun `the set is 37 marks over 43 placements, so four are reused`() {
-        assertEquals(37, ZinelyV2Icons.All.size)
-        assertEquals(37, ZinelyV2Icons.All.map { it.name }.toSet().size)
+    fun `the set is 37 trilogy marks plus the V21 collage amendment`() {
+        assertEquals(38, ZinelyV2Icons.All.size)
+        assertEquals(38, ZinelyV2Icons.All.map { it.name }.toSet().size)
         assertEquals("43 placements in the frozen trilogy", 43, files.sumOf { icons(it).size })
         // Tick x4, ChevronLeft x2, Close x2, and Play x2 — the second being stopAnim() restoring it.
         val byGeometry = files.flatMap { icons(it) }.groupBy { frozenShapes(it.second) }
@@ -165,7 +174,7 @@ class ZinelyV2IconsTest {
             ZinelyV2Icons.All.filter { it.frozenPaint != null && it.frozenPaint !is ZinelyV2IconPaint.Stroke }
                 .map { it.name }.toSet(),
         )
-        assertEquals("the remaining 27 take their paint from the call site", 27,
+        assertEquals("the remaining 28 take their paint from the call site", 28,
             ZinelyV2Icons.All.count { it.frozenPaint == null })
     }
 

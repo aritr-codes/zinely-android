@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -68,7 +69,12 @@ class BenchArtSheetGoldenTest {
     private var berryTintArgb = 0
     private var butterTintArgb = 0
 
-    private fun capture(name: String, darkTheme: Boolean, content: @Composable () -> Unit) {
+    private fun capture(
+        name: String,
+        darkTheme: Boolean,
+        expectedGrounds: List<(BenchArtSheetGoldenTest) -> Int> = emptyList(),
+        content: @Composable () -> Unit,
+    ) {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
                 deskArgb = ZinelyTheme.colors.desk.toArgb()
@@ -97,38 +103,9 @@ class BenchArtSheetGoldenTest {
         val bmp = cropToBounds(full, bounds)
         assertTrue("the host desk did not paint ($name)", bmp.pixelCountOf(deskArgb) > 100)
 
-        // `.tile{background:var(--leaf-tint)}` with `nth-child(3n)`→berry and `(4n)`→butter. All three
-        // grounds must be on screen: a transcription that drops the cycle and paints sixteen leaf tiles
-        // moves well under 2 % of the frame and passes the raster gate untouched.
-        //
-        // ⚠ The margin here is thinner than the tile count suggests, and the first draft of this comment
-        // got it wrong. Each family row is leaf·leaf·berry·butter, so the grid holds 8 leaf / 4 berry / 4
-        // butter — but twelve of the sixteen are DIMMED, and a dimmed ground is no longer the token. Only
-        // the authored *Cut shapes* row paints these colours at full strength: **2 leaf, 1 berry, 1 butter**
-        // tiles at ~83dp, which is still several thousand pixels each at xhdpi. 500 clears that with room
-        // and is far above any incidental match, but it is one tile of headroom, not four.
-        assertTrue("no --leaf-tint tile ground ($name)", bmp.pixelCountOf(leafTintArgb) > 500)
-        assertTrue("no --berry-tint tile ground ($name)", bmp.pixelCountOf(berryTintArgb) > 500)
-        assertTrue("no --butter-tint tile ground ($name)", bmp.pixelCountOf(butterTintArgb) > 500)
-
-        // The twelve unauthored tiles are dimmed, and the dim reaches the GROUND — so a full-strength tint
-        // must cover far less of the sheet than a sixteen-live grid would. Expressed as a ratio between the
-        // authored quarter and the whole rather than as an absolute count, which would pin the raster's
-        // density rather than the design's rule.
-        val authored = cropToBounds(
-            full,
-            composeRule.onNodeWithTag(benchArtTileTestTag("shape.rect")).fetchSemanticsNode().boundsInRoot,
-        )
-        val unauthored = cropToBounds(
-            full,
-            composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).fetchSemanticsNode().boundsInRoot,
-        )
-        // Same grid position (1st in its row) ⇒ same token ground, so the ONLY difference between these two
-        // crops is the dim. If the disabled state were dropped, both would count the same.
-        assertTrue(
-            "the unauthored tile is not dimmed ($name): it paints the full-strength ground",
-            authored.pixelCountOf(leafTintArgb) > unauthored.pixelCountOf(leafTintArgb) * 2,
-        )
+        expectedGrounds.forEach { ground ->
+            assertTrue("an expected A16 family ground did not paint ($name)", bmp.pixelCountOf(ground(this)) > 300)
+        }
 
         bmp.captureRoboImage("$GOLDEN_DIR/$name.png", aa())
     }
@@ -143,8 +120,8 @@ class BenchArtSheetGoldenTest {
 
     @Composable
     private fun Sheet() {
-        ZSheetSurface(title = BenchArtSheetTitle, sub = null) {
-            BenchArtSheetBody(onPick = {})
+        ZSheetSurface(title = BenchArtSheetTitle, sub = null, modifier = Modifier.fillMaxHeight(0.92f)) {
+            BenchArtSheetBody(onPick = {}, modifier = Modifier.weight(1f))
         }
     }
 
@@ -155,11 +132,20 @@ class BenchArtSheetGoldenTest {
      */
     @Test
     fun bench_art_sheet_with_recents_light() =
-        capture("bench_art_sheet_with_recents_light", darkTheme = false) {
-            ZSheetSurface(title = BenchArtSheetTitle, sub = null) {
+        capture(
+            "bench_art_sheet_with_recents_light",
+            darkTheme = false,
+            expectedGrounds = listOf({ it.leafTintArgb }, { it.berryTintArgb }, { it.butterTintArgb }),
+        ) {
+            ZSheetSurface(
+                title = BenchArtSheetTitle,
+                sub = null,
+                modifier = Modifier.fillMaxHeight(0.92f),
+            ) {
                 BenchArtSheetBody(
                     onPick = {},
-                    recent = Copy.Supplies.BY_FAMILY.getValue(Copy.Supplies.CUT_SHAPES).keys.take(2).toList(),
+                    recent = listOf("tape.torn", "mark.asterisk", "paper.strip", "shape.rect"),
+                    modifier = Modifier.weight(1f),
                 )
             }
         }

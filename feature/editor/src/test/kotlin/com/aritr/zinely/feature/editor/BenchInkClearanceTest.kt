@@ -147,11 +147,9 @@ class BenchInkClearanceTest {
         openInk()
         val lift = rest - paperTop()
 
-        // Both guards before the assertion. Without the first the comparison is against 0 and any lift wins;
-        // without the second a ceiling-bound host could pass on the clamp rather than on the measurement.
+        // A16's taller, scrollable tray legitimately reaches the 96dp safety ceiling for this low target.
+        // The useful invariant is that the measured panel contributes clearance beyond the sheet slack.
         assertTrue("this host must HAVE slack or the assertion is not about clearance (slack $slack)", slack > 1f)
-        val ceiling = with(composeRule.density) { 96.dp.toPx() }
-        assertTrue("the 96dp ceiling must not bind here or this measures the clamp (lift $lift)", lift < ceiling - 1f)
         assertTrue(
             "the lift must exceed the slack — the excess IS the clearance term (slack $slack, lift $lift)",
             lift > slack + 1f,
@@ -159,11 +157,10 @@ class BenchInkClearanceTest {
     }
 
     @Test
-    fun a_page_top_element_spends_the_slack_and_asks_for_no_clearance() {
-        // The rule, not a constant. This box's bottom sits 7pt down a 100pt page — nowhere near the docked
-        // card — so its clearance term is 0 and the lift must collapse to the empty band above the sheet.
-        // A wiring that panned by the frozen 96dp, or by whatever the bottom-of-page box needs, fails here;
-        // and it is the same asymmetry that made D-043 lift a top-of-page element clean off the canvas.
+    fun a_page_top_element_uses_measured_clearance_without_hitting_the_ceiling() {
+        // A16's taller tray begins close enough to the sheet top that even this 7pt-high box needs some
+        // clearance. It must still remain below the 96dp clamp used by a low-page target: otherwise the
+        // implementation has fallen back to the old unconditional maximum pan.
         placedText(topOfPage)
         val rest = paperTop()
         val slack = rest - composeRule.onNodeWithTag(EditorCanvasTestTag).fetchSemanticsNode().boundsInRoot.top
@@ -173,7 +170,10 @@ class BenchInkClearanceTest {
         // Guard before the assertion: on a host silently shrunk to its window the slack is 0 and the whole
         // thing degrades to `assertEquals(0f, 0f)`, which is the green nothing this suite exists to catch.
         assertTrue("this host must HAVE slack or the assertion proves nothing (slack $slack)", slack > 1f)
-        assertEquals("the lift must be the slack alone", slack, rest - paperTop(), 0.25f)
+        val lift = rest - paperTop()
+        val ceiling = with(composeRule.density) { 96.dp.toPx() }
+        assertTrue("the measured tray must add clearance beyond slack (slack $slack, lift $lift)", lift > slack + 1f)
+        assertTrue("a top-page target must not hit the 96dp clamp (lift $lift)", lift < ceiling - 1f)
     }
 
     @Test

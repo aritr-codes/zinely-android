@@ -59,7 +59,7 @@ import com.aritr.zinely.core.model.Transform
 internal data class BenchSupplyDefault(val widthFraction: Double, val aspect: Double)
 
 /**
- * The three **fixings** — the half of *Tape & fixings* that is not tape.
+ * The six **fixings** — the half of *Tape & fixings* that is not tape.
  *
  * ⚠ **Enumerated, never prefix-matched.** `supplyId.startsWith("fix.")` would have been shorter and is the
  * same mistake this file's [benchSupplyFamily] already warns about from the other direction: a prefix is
@@ -67,7 +67,14 @@ internal data class BenchSupplyDefault(val widthFraction: Double, val aspect: Do
  * `fix.*` id names something long, which washi tape on a fixing id would be — the habit decides the size
  * and nobody is asked. Adding a member here is a sizing decision someone makes, which is the point.
  */
-internal val BenchFixings: Set<String> = setOf("fix.corner", "fix.staple", "fix.clip")
+internal val BenchFixings: Set<String> = setOf(
+    "fix.corner",
+    "fix.staple",
+    "fix.clip",
+    "fix.stitch",
+    "fix.grommet",
+    "fix.pushpin",
+)
 
 /**
  * The key [BenchSupplyDefaults] files the fixings' constant under.
@@ -144,8 +151,8 @@ private const val BenchSupplyMaxHeightFraction: Double = 0.6
  * The family [supplyId] belongs to, or `null` if the copy layer does not know it.
  *
  * ⚠ Read from [Copy.Supplies.BY_FAMILY], **never** from `supplyId.substringBefore('.')`. Five prefixes
- * (`tape`, `fix`, `mark`, `paper`, `shape`) carry four families, because *Tape & fixings* is one tape plus
- * three fixings — so the prefix is right for eleven of the sixteen and silently wrong for three. Deriving
+ * (`tape`, `fix`, `mark`, `paper`, `shape`) carry four families, because *Tape & fixings* mixes two tapes
+ * with six fixings. Deriving
  * a family from an id is how TalkBack shipped saying *"Rect shape"*.
  */
 internal fun benchSupplyFamily(supplyId: String): String? =
@@ -154,7 +161,7 @@ internal fun benchSupplyFamily(supplyId: String): String? =
 /**
  * A [Transform] for a newly placed supply: centred on the page, at 0°, sized by its family (§5, §5.1, §5.2).
  *
- * @throws IllegalArgumentException if [supplyId] is not one of the sixteen. That is a programming error,
+ * @throws IllegalArgumentException if [supplyId] is not one of the thirty-two. That is a programming error,
  *   not a runtime condition — the only caller is the Art sheet, which iterates the same map this reads —
  *   and a silent fallback size would be the app inventing craft knowledge it does not have.
  */
@@ -217,7 +224,7 @@ internal fun benchSupplyReplacement(
  * the two cannot disagree about what a family's default is — the whole point of the replace ruling is that
  * a replaced supply gets *the same* size a freshly-placed one would.
  *
- * @throws IllegalArgumentException if [supplyId] is not one of the sixteen. That is a programming error,
+ * @throws IllegalArgumentException if [supplyId] is not one of the thirty-two. That is a programming error,
  *   not a runtime condition — the callers iterate the same map this reads — and a silent fallback size
  *   would be the app inventing craft knowledge it does not have.
  */
@@ -225,7 +232,7 @@ private fun benchSupplySizePt(supplyId: String, pageSizePt: PtSize): Pair<Double
     val family = requireNotNull(benchSupplyFamily(supplyId)) {
         "$supplyId is in no family in Copy.Supplies.BY_FAMILY — a supply has no default size without one"
     }
-    // The sizing key is the family, EXCEPT for the three fixings — one aspect cannot serve both halves of a
+    // The sizing key is the family, EXCEPT for the compact fixings — one aspect cannot serve both halves of a
     // family whose name contains the word "and", and *Tape & fixings* is the only one of the four that is
     // not physically homogeneous ([D-092]). Read before the per-supply override so `shape.rule` still wins.
     val sizingKey = if (supplyId in BenchFixings) BenchFixingsSizingKey else family

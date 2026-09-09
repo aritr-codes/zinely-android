@@ -5,13 +5,17 @@ import android.graphics.Color
 import android.util.Log
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.aritr.zinely.core.model.AffineTransform2D
 import com.aritr.zinely.core.model.ColorRgba
+import com.aritr.zinely.core.model.Crop
+import com.aritr.zinely.core.model.Fit
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtRect
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.TextStyle
 import com.aritr.zinely.core.render.DrawCommand
+import com.aritr.zinely.core.render.DrawImage
 import com.aritr.zinely.core.render.DrawShape
 import com.aritr.zinely.core.render.DrawTextBox
 import com.aritr.zinely.core.render.FillRect
@@ -186,6 +190,101 @@ class PdfSurfaceParityInstrumentedTest {
     }
 
     private fun bg() = FillRect(PtRect(0.0, 0.0, sheet.width, sheet.height), WHITE)
+
+    /**
+     * A real asymmetric PNG proves the reflection matrices survive both Android replay surfaces.
+     * Absolute quadrant probes catch a shared wrong-axis/wrong-order bug; the fraction catches a
+     * raster/PDF disagreement. This is device-only because both real region decode and PdfDocument are.
+     */
+    @Test
+    fun flippedImage_horizontalVerticalAndCombined_matchRasterAndPdf() {
+        val master = "flip-parity-master"
+        val source = AssetBytesSource { id ->
+            if (id == master) {
+                InstrumentationRegistry.getInstrumentation().context.assets
+                    .open("fixtures/image_master_1024.png")
+            } else {
+                null
+            }
+        }
+        val imageReplayer = CanvasReplayer(imageBlitter = ImageBlitter(source))
+        val imageRaster = RasterPageRenderer(imageReplayer)
+        val imagePdf = PdfPageRenderer(imageReplayer)
+        val box = PtRect(0.0, 0.0, sheet.width, sheet.height)
+
+        fun surfaces(localToPage: AffineTransform2D): Pair<Bitmap, Bitmap> {
+            val tape = listOf(
+                bg(),
+                DrawImage(master, Crop.FULL, Fit.FILL, box, localToPage, localClip = box),
+            )
+            val rasterBmp = imageRaster.render(tape, sheet)
+            val pdfBmp = rasterizer.rasterize(imagePdf.render(tape, sheet), cacheDir = cacheDir)
+            assertEquals(rasterBmp.width, pdfBmp.width)
+            assertEquals(rasterBmp.height, pdfBmp.height)
+            return rasterBmp to pdfBmp
+        }
+
+        fun assertColour(label: String, expected: Int, actual: Int) {
+            val delta = maxOf(
+                Math.abs(Color.red(expected) - Color.red(actual)),
+                Math.abs(Color.green(expected) - Color.green(actual)),
+                Math.abs(Color.blue(expected) - Color.blue(actual)),
+            )
+            assertTrue("$label expected $expected but was $actual (channel delta $delta)", delta <= 12)
+        }
+
+        fun quadrantColours(bitmap: Bitmap): List<Int> {
+            val x = listOf(bitmap.width / 4, bitmap.width * 3 / 4)
+            val y = listOf(bitmap.height / 4, bitmap.height * 3 / 4)
+            return listOf(
+                bitmap.getPixel(x[0], y[0]),
+                bitmap.getPixel(x[1], y[0]),
+                bitmap.getPixel(x[0], y[1]),
+                bitmap.getPixel(x[1], y[1]),
+            )
+        }
+
+        fun assertQuadrants(label: String, bitmap: Bitmap, colours: List<Int>) {
+            quadrantColours(bitmap).zip(colours).forEachIndexed { index, (actual, expected) ->
+                assertColour("$label quadrant $index", expected, actual)
+            }
+        }
+
+        val (identityRaster, identityPdf) = surfaces(AffineTransform2D.identity())
+        val sourceColours = quadrantColours(identityRaster)
+        assertEquals("fixture must keep four asymmetric quadrants", 4, sourceColours.distinct().size)
+        assertQuadrants("identity PDF", identityPdf, sourceColours)
+
+        val cases = listOf(
+            "horizontal" to (
+                AffineTransform2D.translate(sheet.width, 0.0)
+                    .times(AffineTransform2D.scale(-1.0, 1.0)) to
+                    listOf(sourceColours[1], sourceColours[0], sourceColours[3], sourceColours[2])
+                ),
+            "vertical" to (
+                AffineTransform2D.translate(0.0, sheet.height)
+                    .times(AffineTransform2D.scale(1.0, -1.0)) to
+                    listOf(sourceColours[2], sourceColours[3], sourceColours[0], sourceColours[1])
+                ),
+            "combined" to (
+                AffineTransform2D.translate(sheet.width, sheet.height)
+                    .times(AffineTransform2D.scale(-1.0, -1.0)) to
+                    listOf(sourceColours[3], sourceColours[2], sourceColours[1], sourceColours[0])
+                ),
+        )
+
+        cases.forEach { (label, case) ->
+            val (matrix, colours) = case
+            val (rasterBmp, pdfBmp) = surfaces(matrix)
+            assertQuadrants("$label raster", rasterBmp, colours)
+            assertQuadrants("$label PDF", pdfBmp, colours)
+            val fraction = differingFraction(rasterBmp, pdfBmp)
+            assertTrue(
+                "$label PDF and raster differ over ${"%.4f".format(fraction)} of the page",
+                fraction <= EDGE_TOLERANCE,
+            )
+        }
+    }
 
     /**
      * **The hole test on the print surface** (SUPPLIES-SPEC §3.2, §3.5) — the PDF twin of

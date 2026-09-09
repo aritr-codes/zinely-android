@@ -409,6 +409,44 @@ class AutosaveCoordinatorFactoryTest {
         factory.create("proj1") { doc(2) } // accepted → the id had left the registry
     }
 
+    // --- Library-wide writer exclusion ---------------------------------------------------------
+
+    @Test
+    fun `library writer lease is refused while any editor session is active`() = runTest {
+        val f = Fixture(testScheduler)
+        val factory = f.factory()
+        factory.create("proj1") { doc(1) }
+
+        assertNull(factory.tryAcquireLibraryWrite())
+    }
+
+    @Test
+    fun `library writer lease blocks every new editor until release`() = runTest {
+        val f = Fixture(testScheduler)
+        val factory = f.factory()
+        val lease = factory.tryAcquireLibraryWrite()!!
+
+        assertThrows(IllegalStateException::class.java) {
+            factory.create("proj1") { doc(1) }
+        }
+
+        lease.close()
+        factory.create("proj1") { doc(1) }
+    }
+
+    @Test
+    fun `only one library writer lease can be active and close is idempotent`() = runTest {
+        val f = Fixture(testScheduler)
+        val factory = f.factory()
+        val first = factory.tryAcquireLibraryWrite()!!
+
+        assertNull(factory.tryAcquireLibraryWrite())
+        first.close()
+        first.close()
+
+        assertTrue(factory.tryAcquireLibraryWrite() != null)
+    }
+
     // --- AutosaveSessionGate: the timed ProjectSessionGate over the registry (ADR-044 §1) ---
 
     @Test

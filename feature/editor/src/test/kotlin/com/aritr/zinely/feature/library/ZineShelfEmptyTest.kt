@@ -118,7 +118,8 @@ class ZineShelfEmptyTest {
 
         /**
           * `.tf{gap:var(--gap-lg)}`, `.tf .col{gap:var(--gap-sm)}`,
-          * `.empty{gap:var(--gap-md);padding:var(--gap-2xl) var(--gap-2xl) 150px}` — 16 / 8 / 12 / 36,
+          * `.empty{gap:var(--gap-md);padding:var(--gap-2xl) var(--gap-2xl) 206px}` — the frozen
+          * 150dp dock clearance plus the quiet backup companion.
           * where V2 wrote 14 / 9 / 16 / 40. The caption's own margin is now the **column's** gap rather
           * than a margin on the label, which is why that name changed with its value.
           */
@@ -131,14 +132,14 @@ class ZineShelfEmptyTest {
         const val NARROW_HOST = 200
 
         /**
-         * `--leaf` — `#4E7A3C` light, `#8FAE6B` dark.
+         * `--leaf` — `#8E9546` light, `#BBCA6F` dark.
          *
          * V2's book was a **content** ink (`ZinelyMakerInkId.Matcha`, `#7C8A3F`) and did not flip; V2.1's
          * is a chrome token and does. Both values are pinned so the change is visible in the diff and so
          * a token that moves fails here rather than turning the fill assertions quietly inert.
          */
-        val LIGHT_LEAF = Color(0xFF4E7A3C)
-        val DARK_LEAF = Color(0xFF8FAE6B)
+        val LIGHT_LEAF = Color(0xFF8E9546)
+        val DARK_LEAF = Color(0xFFBBCA6F)
 
         /**
          * `--paper` in light, which is the stock the sheet's rules are read against.
@@ -187,8 +188,8 @@ class ZineShelfEmptyTest {
         /** The square the arrow is drawn into, since Pass 1 made it a `Canvas` rather than a glyph. */
         const val ARROW_BOX = 24
 
-        /** `.empty{padding:… 150px}` — clearance for the dock, not padding. */
-        const val EMPTY_PADDING_BOTTOM = 150
+        /** Dock clearance including the quiet backup companion, not content padding. */
+        const val EMPTY_PADDING_BOTTOM = 206
 
         /** 29ch at `.pv`'s own type, which is a different number from 29ch at the paragraph's. */
         const val REF_MEASURE_PV = "ref-29ch-pv"
@@ -206,12 +207,12 @@ class ZineShelfEmptyTest {
     fun `the empty state teaches the transformation rather than the app`() {
         empty()
         // The frozen file's own comment: *"empty state — teaches the concept by showing the
-        // transformation"*. There is no carousel, no sample zine and no tour, and the three lines are the
+        // transformation"*. There is no carousel, no sample zine and no tour, and the two lines are the
         // whole of the copy. Asserted by text so a re-worded line is a failure rather than a silent
         // product change.
         composeRule.onNodeWithText(HEADLINE).assertIsDisplayed()
         composeRule.onNodeWithText(BODY).assertIsDisplayed()
-        composeRule.onNodeWithText(PRIVACY).assertIsDisplayed()
+        composeRule.onNodeWithText(PRIVACY).assertDoesNotExist()
         composeRule.onNodeWithTag(ZineArrowTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(ZineSheetIllustrationTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(ZineBookIllustrationTestTag).assertIsDisplayed()
@@ -318,70 +319,6 @@ class ZineShelfEmptyTest {
         assertTrue(
             "the paragraph must be wide enough for the measure to bind (${paragraph.width})",
             paragraph.width > zeros * 0.8f,
-        )
-    }
-
-    @Test
-    fun `the privacy line is measured in its own characters, not the paragraph's`() {
-        emptyWithMeasure()
-        val privacy = productionPrivacyBounds()
-        val ownMeasure = bounds(REF_MEASURE_PV, byTag = true).width
-        val paragraphMeasure = bounds(REF_MEASURE, byTag = true).width
-
-        // `.pv` is a `<p>` inside `.empty`, so `max-width:28ch` applies to it too — and `ch` is relative to
-        // the element's **own** font size, so 28 advances at 12.16sp SemiBold is far narrower than 28 at
-        // 15.2sp Regular. Both halves of that were missed on the first pass, and neither was visible in a
-        // bound: the line simply ran to the column's edge and looked deliberate. The raster is what showed
-        // it, which is the one thing a raster is better at than a number.
-        //
-        // Measured against **its own** yardstick, not against the paragraph's. A first draft compared the
-        // two paragraphs' rendered widths and expected the ratio of their font sizes; it failed at 0.889
-        // against 0.8, for two reasons that are both real — a rendered width is where the lines happened to
-        // break rather than the constraint, and SemiBold's zero is wider than Regular's, so `ch` does not
-        // scale with size alone. The rendered width was never the right instrument.
-        assertTrue(
-            "the privacy line must not exceed its own ${MEASURE_CHARACTERS}ch ($privacy.width against $ownMeasure)",
-            privacy.width <= ownMeasure + HALF_PIXEL,
-        )
-        assertTrue(
-            "and the measure must actually bind it (${privacy.width} against $ownMeasure)",
-            privacy.width > ownMeasure * 0.8f,
-        )
-        // The discrimination this rests on: the two measures are genuinely different numbers. If they were
-        // not, applying the paragraph's measure to this line would pass the assertions above.
-        assertTrue(
-            "${MEASURE_CHARACTERS}ch at $PRIVACY_SIZE SemiBold ($ownMeasure) must differ from " +
-                "${MEASURE_CHARACTERS}ch at $BODY_SIZE ($paragraphMeasure), " +
-                "or this test cannot see the line being measured in the wrong type",
-            ownMeasure < paragraphMeasure * 0.95f,
-        )
-    }
-
-    @Test
-    fun `the privacy line is leaded at 1_55, which it inherits rather than declares`() {
-        emptyWithMeasure()
-        val privacy = productionPrivacyBounds()
-        val leaded = bounds(REF_PV_LEADED, byTag = true)
-        val unleaded = bounds(REF_PV_UNLEADED, byTag = true)
-
-        // `.empty p{line-height:1.55}` reaches `.pv` too — `.pv` overrides size, colour, weight and margin
-        // and nothing else. Found by mutation: dropping the leading survived the entire suite, because
-        // every other assertion about this line is about its *width*. That is the "which frozen properties
-        // have no test at all" question answering itself.
-        //
-        // The discrimination is asserted first: if this host renders the two references at the same height,
-        // nothing below can see the defect.
-        assertNotEquals(
-            "leaded and unleaded must differ on this host, or this test guards nothing " +
-                "(${leaded.height} vs ${unleaded.height})",
-            leaded.height,
-            unleaded.height,
-        )
-        assertEquals(
-            "the privacy line must carry the inherited 1.55 leading",
-            leaded.height,
-            privacy.height,
-            HALF_PIXEL,
         )
     }
 
@@ -542,7 +479,7 @@ class ZineShelfEmptyTest {
         empty(dark = false)
         val fill = bookFillPixel()
         assertTrue("the book must print in --leaf ($capturedLeaf, found $fill)", fill.closeTo(capturedLeaf))
-        assertEquals("and --leaf in light is the frozen #4E7A3C", LIGHT_LEAF, capturedLeaf)
+        assertEquals("and --leaf in light is the frozen #8E9546", LIGHT_LEAF, capturedLeaf)
     }
 
     @Test
@@ -551,7 +488,7 @@ class ZineShelfEmptyTest {
         // `ZinelyMakerInkId.Matcha` — a **content** ink, theme-invariant on the argument that a printed
         // object does not re-tint at night — and this test existed to hold that. V2.1 writes
         // `.book-ill{background:var(--leaf)}`, a chrome token with a dark value, so the illustration
-        // *does* flip: #4E7A3C by day, #8FAE6B by night.
+        // *does* flip: #8E9546 by day, #BBCA6F by night.
         //
         // That is a real change of reading and worth saying rather than swapping a constant over: the
         // book in the empty state is not a zine the user made, it is a diagram of what one becomes, so
@@ -560,7 +497,7 @@ class ZineShelfEmptyTest {
         empty(dark = true)
         val fill = bookFillPixel()
         assertTrue("the book must print in dark --leaf ($capturedLeaf, found $fill)", fill.closeTo(capturedLeaf))
-        assertEquals("and --leaf in dark is the frozen #8FAE6B", DARK_LEAF, capturedLeaf)
+        assertEquals("and --leaf in dark is the frozen #BBCA6F", DARK_LEAF, capturedLeaf)
         assertNotEquals("which is not the light value, or nothing here flipped", LIGHT_LEAF, capturedLeaf)
     }
 
@@ -643,11 +580,9 @@ class ZineShelfEmptyTest {
     }
 
     @Test
-    fun `the sheet is paper, and paper inverts with the theme`() {
-        // `.sheet-ill{background:var(--paper)}` — a chrome token, unlike the book's content ink beside it,
-        // and the pair is the point: the same illustration row holds one thing that must follow the theme
-        // and one that must not. Nothing rendered the sheet in dark at all, so a hard-coded `#F7F2E7` in
-        // `SheetIllustration` passed the whole suite while the book's theme-invariance was pinned twice.
+    fun `the sheet keeps its physical paper stock across themes`() {
+        // `.sheet-ill{background:var(--paper)}` is a physical stock. The 37596 palette amendment keeps
+        // maker-facing paper lit and theme-invariant while the surrounding room changes with the theme.
         empty(dark = true)
         val sheet = bounds(ZineSheetIllustrationTestTag, byTag = true)
         val raster = decorRaster()
@@ -657,11 +592,11 @@ class ZineShelfEmptyTest {
         )
 
         assertTrue(
-            "the sheet must be --paper in dark ($capturedPaper), not the light stock (found $stock)",
+            "the sheet must be --paper in dark ($capturedPaper), found $stock",
             stock.closeTo(capturedPaper),
         )
-        assertFalse(
-            "and the two must differ, or this asserts nothing",
+        assertTrue(
+            "physical paper must remain the light stock in dark theme",
             capturedPaper.closeTo(LIGHT_PAPER),
         )
     }
@@ -675,17 +610,17 @@ class ZineShelfEmptyTest {
         empty()
         val host = bounds(ZineShelfEmptyTestTag, byTag = true)
         val top = bounds(ZineSheetIllustrationTestTag, byTag = true)
-        val bottom = bounds(PRIVACY)
+        val bottom = bounds(BODY)
         val contentCentre = (top.top + bottom.bottom) / 2f
 
-        // `padding:var(--gap-2xl) var(--gap-2xl) 150px` against `justify-content:center` centres the
-        // content in the space *above* the dock. Trim the 150 and the copy sits under the button; the
+        // The asymmetric bottom clearance against `justify-content:center` centres the content in the
+        // space *above* the dock. Trim it and the copy sits under the buttons; the
         // frozen number is four times the others precisely because it is not padding, it is clearance.
         assertTrue(
             "the content must sit above the host's own centre ($contentCentre against ${host.center.y})",
             contentCentre < host.center.y,
         )
-        // Specifically, by half the difference between the top and bottom paddings: (150 − 36) / 2 = 57.
+        // Specifically, by half the difference between the top and bottom clearances.
         assertEquals(
             "the content must be lifted by half the padding difference",
             (EMPTY_PADDING_BOTTOM - EMPTY_PADDING_SIDE) / 2f,
@@ -740,7 +675,7 @@ class ZineShelfEmptyTest {
 
     @Test
     fun `the side padding binds the paragraph when the screen is narrower than its measure`() {
-        // `.empty{padding:var(--gap-2xl) var(--gap-2xl) 150px}` — the sides are unobservable at any width the
+        // The side padding is unobservable at any width the
         // 29ch measure fits
         // in, and the vertical pair is unobservable *at all* under `justify-content:center`, which centres
         // in the box the two of them leave: only their difference reaches the layout, and the existing

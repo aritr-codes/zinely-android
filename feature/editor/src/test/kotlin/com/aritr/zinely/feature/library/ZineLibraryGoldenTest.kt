@@ -83,6 +83,7 @@ class ZineLibraryGoldenTest {
             ZineLibraryScreen(
                 state = state,
                 events = emptyFlow(),
+                backupRestoreState = null,
                 onOpenZine = {},
                 onShareExport = {},
                 onStartZine = {},
@@ -92,6 +93,11 @@ class ZineLibraryGoldenTest {
                 onDeleteUndo = {},
                 onDeleteCommit = {},
                 onRetry = {},
+                onStartBackup = {},
+                onStartRestore = {},
+                onDismissBackupRestore = {},
+                onCancelBackupRestore = {},
+                onRetryBackupRestore = {},
                 modifier = Modifier.fillMaxSize().testTag(VIEWPORT),
             )
         }

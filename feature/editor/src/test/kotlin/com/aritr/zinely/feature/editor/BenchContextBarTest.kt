@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -23,7 +25,10 @@ import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.ColorRgba
@@ -71,30 +76,33 @@ class BenchContextBarTest {
         val BACKDROP = Color(0xFF102030)
     }
 
-    private var paperArgb: Int = 0
+    private var surfaceArgb: Int = 0
     private var inkArgb: Int = 0
     private var jamTextArgb: Int = 0
     private var inkSoftArgb: Int = 0
     private var leafArgb: Int = 0
 
-    private fun host(verbs: List<BenchVerb>, visible: Boolean = true) {
+    private fun host(verbs: List<BenchVerb>, visible: Boolean = true, fontScale: Float = 1f) {
         composeRule.setContent {
             ZinelyTheme {
-                paperArgb = ZinelyTheme.v21Colors.paper.toArgb()
-                inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
-                jamTextArgb = ZinelyTheme.v21Colors.jamText.toArgb()
-                inkSoftArgb = ZinelyTheme.v21Colors.inkSoft.toArgb()
-                leafArgb = ZinelyTheme.v21Colors.leaf.toArgb()
-                Box(
-                    Modifier.size(360.dp, 200.dp).testTag(HOST).background(BACKDROP),
-                    contentAlignment = Alignment.BottomCenter,
-                ) {
-                    BenchContextBar(
-                        visible = visible,
-                        verbs = verbs,
-                        onVerb = {},
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                val base = LocalDensity.current
+                CompositionLocalProvider(LocalDensity provides Density(base.density, fontScale)) {
+                    surfaceArgb = ZinelyTheme.v21Colors.surface.toArgb()
+                    inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
+                    jamTextArgb = ZinelyTheme.v21Colors.jamText.toArgb()
+                    inkSoftArgb = ZinelyTheme.v21Colors.inkSoft.toArgb()
+                    leafArgb = ZinelyTheme.v21Colors.leaf.toArgb()
+                    Box(
+                        Modifier.size(360.dp, 200.dp).testTag(HOST).background(BACKDROP),
+                        contentAlignment = Alignment.BottomCenter,
+                    ) {
+                        BenchContextBar(
+                            visible = visible,
+                            verbs = verbs,
+                            onVerb = {},
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
                 }
             }
         }
@@ -111,13 +119,14 @@ class BenchContextBarTest {
     // ── Row 2.13 — the frozen verb sets ─────────────────────────────────────────────────────────────
 
     @Test
-    fun `the text verbs are the frozen five, in the frozen order`() {
+    fun `the text verbs include the frozen duplicate action before Delete`() {
         assertEquals(
             listOf(
                 Copy.BenchVerbs.EDIT,
                 Copy.BenchVerbs.FONT,
                 Copy.BenchVerbs.SIZE,
                 Copy.BenchVerbs.INK,
+                Copy.BenchVerbs.DUPLICATE,
                 Copy.BenchVerbs.DELETE,
             ),
             benchContextVerbs(BenchVerbKind.TEXT).map { it.label },
@@ -125,22 +134,38 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `the photo verbs are the frozen four, in the frozen order`() {
+    fun `the photo verbs include Flip and the frozen spread action in order`() {
         // `Copier` is the amendment ADR-106 made to this freeze, in `v21-bench.html:690` before it was
         // made here. Order is asserted, not just membership: a permutation is the wrong bar.
         assertEquals(
-            listOf(Copy.BenchVerbs.REFRAME, Copy.BenchVerbs.COPIER, Copy.BenchVerbs.REPLACE, Copy.BenchVerbs.DELETE),
+            listOf(
+                Copy.BenchVerbs.REFRAME,
+                Copy.BenchVerbs.FLIP,
+                Copy.BenchVerbs.ACROSS_FOLD,
+                Copy.BenchVerbs.COPIER,
+                Copy.BenchVerbs.REPLACE,
+                Copy.BenchVerbs.DUPLICATE,
+                Copy.BenchVerbs.DELETE,
+            ),
             benchContextVerbs(BenchVerbKind.PHOTO).map { it.label },
         )
     }
 
     @Test
-    fun `Copier is live, unlike the two verbs the bar draws without a behaviour`() {
+    fun `Copier and photo Replace are live and semantically operable`() {
         val copier = benchContextVerbs(BenchVerbKind.PHOTO).single { it.label == Copy.BenchVerbs.COPIER }
+        val replace = benchContextVerbs(BenchVerbKind.PHOTO).single { it.label == Copy.BenchVerbs.REPLACE }
         assertEquals(true, copier.enabled)
         assertEquals(false, copier.danger)
+        assertEquals(Copy.A11y.REPLACE_PHOTO, replace.spokenLabel)
         host(benchContextVerbs(BenchVerbKind.PHOTO))
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.COPIER}").assertIsEnabled()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.REPLACE}")
+            .assertIsEnabled()
+            .assertHasClickAction()
+        composeRule.onNodeWithContentDescription(Copy.A11y.REPLACE_PHOTO)
+            .assertIsEnabled()
+            .assertHasClickAction()
     }
 
     @Test
@@ -152,12 +177,16 @@ class BenchContextBarTest {
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, Copy.BenchVerbs.COPIER_ON))
         // The live ordinary verbs must NOT gain one — a state on a control that has none is noise.
         //
-        // `Replace` is deliberately absent from this list, and the omission is the interesting part: it
-        // ships disabled and therefore DOES carry a state, its `unavailableBecause` reason. Both features
-        // ride `stateDescription` and they cannot collide (a disabled verb has no setting; a toggle is
-        // live by construction) — but a blanket "only Copier has a state" would have been false, and the
-        // first draft of this test asserted exactly that.
-        for (label in listOf(Copy.BenchVerbs.REFRAME, Copy.BenchVerbs.DELETE)) {
+        // Replace now belongs with these ordinary actions: its target is carried by the picker effect, not
+        // exposed as a state on the button.
+        for (label in listOf(
+            Copy.BenchVerbs.REFRAME,
+            Copy.BenchVerbs.FLIP,
+            Copy.BenchVerbs.ACROSS_FOLD,
+            Copy.BenchVerbs.REPLACE,
+            Copy.BenchVerbs.DUPLICATE,
+            Copy.BenchVerbs.DELETE,
+        )) {
             composeRule.onNodeWithTag("$BenchContextBarTestTag-$label")
                 .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.StateDescription).not())
         }
@@ -186,11 +215,11 @@ class BenchContextBarTest {
         val on = groundOf(bmp, Copy.BenchVerbs.COPIER)
         assertTrue(
             "a Copier that is on sits on leaf, not on the card's paper",
-            dist(on, leafArgb) < dist(on, paperArgb),
+            dist(on, leafArgb) < dist(on, surfaceArgb),
         )
         // The neighbours must not gain the ground with it — a bar that fills every verb says nothing.
         val reframe = groundOf(bmp, Copy.BenchVerbs.REFRAME)
-        assertTrue("Reframe is not a toggle and keeps paper", dist(reframe, paperArgb) < dist(reframe, leafArgb))
+        assertTrue("Reframe is not a toggle and keeps the tool surface", dist(reframe, surfaceArgb) < dist(reframe, leafArgb))
     }
 
     /** The other half of the pair — [host] may set content only once, so the off state is its own test. */
@@ -200,22 +229,40 @@ class BenchContextBarTest {
         val off = groundOf(hostBitmap(), Copy.BenchVerbs.COPIER)
         assertTrue(
             "an off Copier draws no ground of its own",
-            dist(off, paperArgb) < dist(off, leafArgb),
+            dist(off, surfaceArgb) < dist(off, leafArgb),
         )
     }
 
     @Test
-    fun `the two reachable sets are disjoint apart from Delete`() {
+    fun `Copier adds a visible state cue only while on`() {
+        host(benchContextVerbs(BenchVerbKind.PHOTO, copierOn = true))
+        composeRule.onNodeWithTag(
+            benchVerbStateCueTag(Copy.BenchVerbs.COPIER),
+            useUnmergedTree = true,
+        ).assertExists()
+    }
+
+    @Test
+    fun `Copier off removes the visible state cue`() {
+        host(benchContextVerbs(BenchVerbKind.PHOTO, copierOn = false))
+        composeRule.onNodeWithTag(
+            benchVerbStateCueTag(Copy.BenchVerbs.COPIER),
+            useUnmergedTree = true,
+        ).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the universal Duplicate and Delete are the only verbs shared by text and photo`() {
         val text = benchContextVerbs(BenchVerbKind.TEXT).map { it.label }.toSet()
         val photo = benchContextVerbs(BenchVerbKind.PHOTO).map { it.label }.toSet()
         // The premise of OD-11's "keep both bars": these vocabularies barely overlap, and the one verb
         // they share with the transform bar is the same one they share with each other.
-        assertEquals(setOf(Copy.BenchVerbs.DELETE), text intersect photo)
+        assertEquals(setOf(Copy.BenchVerbs.DUPLICATE, Copy.BenchVerbs.DELETE), text intersect photo)
     }
 
     /**
-     * Given a `DecorElement`, when its verb set is asked for, then it is the frozen Replace / Ink /
-     * Delete — in that order.
+     * Given a `DecorElement`, when its verb set is asked for, A22 places Flip after Replace / Ink,
+     * followed by universal Duplicate and destructive Delete.
      *
      * Replaces `the decor set fails loudly instead of defaulting to empty`, which asserted the
      * `error(... OD-2)` that used to sit here. That fence expired by its own terms — OD-2 re-seated
@@ -225,11 +272,22 @@ class BenchContextBarTest {
      * reachable one, and the thing it was really guarding — "a bar with no verbs" — is asserted below.
      */
     @Test
-    fun `the decor set is the frozen Replace, Ink, Delete in order`() {
-        val decor = benchContextVerbs(BenchVerbKind.DECOR).map { it.label }
+    fun `the decor set includes Flip and Duplicate immediately before Delete`() {
+        val verbs = benchContextVerbs(BenchVerbKind.DECOR)
+        val decor = verbs.map { it.label }
         assertEquals(
-            listOf(Copy.BenchVerbs.REPLACE, Copy.BenchVerbs.INK, Copy.BenchVerbs.DELETE),
+            listOf(
+                Copy.BenchVerbs.REPLACE,
+                Copy.BenchVerbs.INK,
+                Copy.BenchVerbs.FLIP,
+                Copy.BenchVerbs.DUPLICATE,
+                Copy.BenchVerbs.DELETE,
+            ),
             decor,
+        )
+        assertEquals(
+            Copy.A11y.REPLACE_SUPPLY,
+            verbs.single { it.label == Copy.BenchVerbs.REPLACE }.spokenLabel,
         )
     }
 
@@ -250,6 +308,8 @@ class BenchContextBarTest {
         // class, which this row wore for two packages, no longer applies to any of its three controls.
         val byLabel = benchContextVerbs(BenchVerbKind.DECOR).associateBy { it.label }
         assertTrue(byLabel.getValue(Copy.BenchVerbs.REPLACE).enabled)
+        assertTrue(byLabel.getValue(Copy.BenchVerbs.FLIP).enabled)
+        assertTrue(byLabel.getValue(Copy.BenchVerbs.DUPLICATE).enabled)
         assertTrue(byLabel.getValue(Copy.BenchVerbs.INK).enabled)
         assertTrue(byLabel.getValue(Copy.BenchVerbs.DELETE).enabled)
         // No enabled verb may still be claiming a reason for being unavailable — that text is spoken.
@@ -258,6 +318,8 @@ class BenchContextBarTest {
         assertTrue(byLabel.getValue(Copy.BenchVerbs.DELETE).danger)
         assertFalse(byLabel.getValue(Copy.BenchVerbs.INK).danger)
         assertFalse(byLabel.getValue(Copy.BenchVerbs.REPLACE).danger)
+        assertFalse(byLabel.getValue(Copy.BenchVerbs.FLIP).danger)
+        assertFalse(byLabel.getValue(Copy.BenchVerbs.DUPLICATE).danger)
     }
 
     /**
@@ -277,12 +339,12 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `only Font and Replace are drawn without a behaviour`() {
+    fun `only Font remains drawn without a behaviour`() {
         val inert = (benchContextVerbs(BenchVerbKind.TEXT) + benchContextVerbs(BenchVerbKind.PHOTO))
             .filterNot { it.enabled }
             .map { it.label }
             .toSet()
-        assertEquals(setOf(Copy.BenchVerbs.FONT, Copy.BenchVerbs.REPLACE), inert)
+        assertEquals(setOf(Copy.BenchVerbs.FONT), inert)
     }
 
     // ── Row 2.13a — drawn, and not operable ─────────────────────────────────────────────────────────
@@ -298,8 +360,8 @@ class BenchContextBarTest {
     /**
      * **F-1 — a control that is drawn and disabled says why.**
      *
-     * [OD-9](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling) keeps `Font` and `Replace`
-     * drawn and forbids inventing a capability for them. It does not make them mute, and a first-time
+     * [OD-9](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling) keeps `Font` drawn and
+     * forbids inventing a capability for it. It does not make the control mute, and a first-time
      * device pass found that silence is what reads as breakage rather than as "not built yet"
      * (`docs/BETA-UX-REVIEW.md` F-1). Explaining an absence invents nothing.
      *
@@ -324,6 +386,7 @@ class BenchContextBarTest {
         assertEquals(Copy.BenchVerbs.NOT_YET, state(Copy.BenchVerbs.FONT))
         assertEquals(Copy.BenchVerbs.TYPE_FIRST, state(Copy.BenchVerbs.SIZE))
         assertEquals(Copy.BenchVerbs.TYPE_FIRST, state(Copy.BenchVerbs.INK))
+        assertEquals(Copy.BenchVerbs.TYPE_FIRST, state(Copy.BenchVerbs.DUPLICATE))
         assertEquals("an enabled verb must not carry a reason", null, state(Copy.BenchVerbs.EDIT))
 
         // The name is untouched — this is the assertion that fails if the reason ever migrates into it.
@@ -337,7 +400,7 @@ class BenchContextBarTest {
 
     /**
      * **Inverted by ADR-102 P4.** V2's `.ctx button` carried `flex:1` inside a bar pinned
-     * `left:12px;right:12px`, so the five verbs shared the canvas's whole width between them. V2.1 drops
+     * `left:12px;right:12px`, so the verbs shared the canvas's whole width between them. V2.1 drops
      * both: the verbs are sized by `min-width:50px` (`v21-bench.html:230`) plus their own content, and the
      * bar is a content-width pill centred on the canvas (`:223`). So the assertion is turned around — the
      * card must be **narrower than the space it is offered**, and no verb may fall under the frozen floor.
@@ -358,14 +421,14 @@ class BenchContextBarTest {
         }
         val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
         val hostB = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
-        // The card is its five verbs plus four 2dp gaps plus 4dp of padding a side — measurably less than
+        // The card is its six verbs plus five A21 1dp gaps plus 4dp of padding a side — still less than
         // the 360dp host. Under V2's `flex:1` strip it would be the host less 24dp.
         val sum = widths.values.sum() +
-            with(composeRule.density) { (BenchContextBarGapDp * 4 + BenchContextBarPaddingDp * 2).toPx() }
+            with(composeRule.density) { (BenchContextBarGapDp * 5 + BenchContextBarPaddingDp * 2).toPx() }
         assertEquals("the card is exactly its content", sum.toDouble(), bar.width.toDouble(), 1.5)
         assertTrue(
             "the card measures ${bar.width}px against a ${hostB.width}px host — it is still a strip",
-            bar.width < hostB.width - with(composeRule.density) { 48.dp.toPx() },
+            bar.width < hostB.width,
         )
     }
 
@@ -383,6 +446,52 @@ class BenchContextBarTest {
         val drawn = with(composeRule.density) { BenchContextBarButtonHeightDp.toPx() }
         assertEquals(drawn.toDouble(), h.toDouble(), 1.0)
         assertTrue("the drawn height clears the target floor by itself", drawn >= floor)
+    }
+
+    @Test
+    fun `the decor labels can grow at font scale 1_8 without spilling outside their buttons or bar`() {
+        host(benchContextVerbs(BenchVerbKind.DECOR), fontScale = 1.8f)
+
+        val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
+        val minButtonHeight = with(composeRule.density) { BenchContextBarButtonHeightDp.toPx() }
+        listOf(
+            Copy.BenchVerbs.REPLACE,
+            Copy.BenchVerbs.INK,
+            Copy.BenchVerbs.FLIP,
+            Copy.BenchVerbs.DUPLICATE,
+            Copy.BenchVerbs.DELETE,
+        ).forEach { label ->
+            val button = composeRule.onNodeWithTag("$BenchContextBarTestTag-$label")
+                .fetchSemanticsNode().boundsInWindow
+            assertTrue(
+                "$label should grow beyond the 50dp resting minimum at fontScale 1.8; got $button",
+                button.height > minButtonHeight + 1.5f,
+            )
+            assertTrue(
+                "$label must stay inside the bar at fontScale 1.8; button=$button bar=$bar",
+                button.top >= bar.top - 1f && button.bottom <= bar.bottom + 1f,
+            )
+        }
+    }
+
+    @Test
+    fun `the seven photo verbs stay in a phone-width scrollable pill at font scale 1_8`() {
+        host(benchContextVerbs(BenchVerbKind.PHOTO), fontScale = 1.8f)
+
+        val hostBounds = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
+        val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
+        assertEquals(hostBounds.left.toDouble(), bar.left.toDouble(), 1.0)
+        assertEquals(hostBounds.right.toDouble(), bar.right.toDouble(), 1.0)
+
+        val duplicate = composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DUPLICATE}")
+        val delete = composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}")
+        duplicate.performScrollTo().assertHasClickAction()
+        delete.performScrollTo().assertHasClickAction()
+        val deleteBounds = delete.fetchSemanticsNode().boundsInWindow
+        assertTrue(
+            "Delete must be reachable inside the scrolled pill at fontScale 1.8; button=$deleteBounds bar=$bar",
+            deleteBounds.left >= bar.left - 1f && deleteBounds.right <= bar.right + 1f,
+        )
     }
 
     // ── Row 2.10 — the bar's own geometry ───────────────────────────────────────────────────────────
@@ -411,8 +520,8 @@ class BenchContextBarTest {
         val rightGap = hostBounds.right - barBounds.right
         assertEquals("the card is centred, so its two side gaps are equal", leftGap.toDouble(), rightGap.toDouble(), 1.0)
         assertTrue(
-            "…and it is content-width, not a strip inset 12dp: leftGap=$leftGap",
-            leftGap > inset * 2,
+            "…and A21's six-action card remains content-width rather than becoming a full strip: leftGap=$leftGap",
+            leftGap > 0f,
         )
 
         // **Inverted:** V2's `0 12px 30px -12px` shadow tinted the pixels around the bar, and this probe
@@ -439,8 +548,8 @@ class BenchContextBarTest {
         // while sitting comfortably inside the smaller arc V2 drew. Written as a fraction of the measured
         // radius rather than as a pixel count, so it does not encode this raster's density.
         val a = (r * 0.22f).toInt()
-        assertNotEquals("the corner is cut by the pill radius", paperArgb, bmp.getPixel(left + a, top + a))
-        assertEquals("past the arc, the top edge is the bar's fill", paperArgb, bmp.getPixel(left + r + 6, top + 5))
+        assertNotEquals("the corner is cut by the pill radius", surfaceArgb, bmp.getPixel(left + a, top + a))
+        assertEquals("past the arc, the top edge is the bar's fill", surfaceArgb, bmp.getPixel(left + r + 6, top + 5))
     }
 
     @Test
@@ -524,7 +633,7 @@ class BenchContextBarTest {
     fun `every enabled verb publishes a click action, and the inert ones publish none`() {
         // The review finding this file exists to not repeat. `clearAndSetSemantics` wipes `OnClick` by the
         // same rule it wipes the disabled state, and the first version of this file re-published only the
-        // latter — so all five verbs announced themselves as buttons exposing no way to activate them. A
+        // latter — so every verb announced itself as a button exposing no way to activate it. A
         // pointer tap still worked (it never consults semantics), which is precisely why nothing caught
         // it. `uiautomator dump` on device would have read `clickable="false"` on every verb.
         host(benchContextVerbs(BenchVerbKind.TEXT))
@@ -547,10 +656,10 @@ class BenchContextBarTest {
         assertNotEquals("Font is dimmed; Edit is not", edit, font)
         // .35 alpha over `paper` lands between the two, and much nearer paper than full inkSoft.
         assertTrue("the dimmed glyph is lighter than the live one", luma(font) > luma(edit))
-        assertTrue("…and still darker than the paper it sits on", luma(font) < luma(paperArgb))
+        assertTrue("…and still darker than the surface it sits on", luma(font) < luma(surfaceArgb))
         assertTrue(
             "the dim is the frozen .35, not an arbitrary fade",
-            dist(font, inkSoftArgb) > dist(font, paperArgb),
+            dist(font, inkSoftArgb) > dist(font, surfaceArgb),
         )
     }
 
@@ -567,7 +676,7 @@ class BenchContextBarTest {
         val y = ((barB.top + barB.bottom) / 2f - hostB.top).toInt()
         assertTrue(
             "the bar's edge is ink, not its own paper fill",
-            dist(bmp.getPixel(x, y), inkArgb) < dist(bmp.getPixel(x, y), paperArgb),
+            dist(bmp.getPixel(x, y), inkArgb) < dist(bmp.getPixel(x, y), surfaceArgb),
         )
     }
 

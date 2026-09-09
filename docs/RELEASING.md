@@ -12,8 +12,8 @@ Zinely is distributed as a side-loaded APK. Android decides whether a build may 
 an existing one by comparing signing keys — so the key is the app's identity, not a formality.
 
 **If the key is lost, no future build can update an installed Zinely.** Every tester would have to
-uninstall, and uninstalling deletes their zines, because backup/restore does not exist yet
-([zinely-v1.md §7](zinely-v1.md) blocker 2). Treat the keystore as irreplaceable.
+uninstall, which deletes the app-private library. A library backup created beforehand can be restored
+after reinstalling, but anybody without one loses their work. Treat the keystore as irreplaceable.
 
 ### One-time setup
 
@@ -86,9 +86,9 @@ backed-up password agree. If it asks again or errors, the backup is not a backup
 **Why it is irreversible.** Android identifies an app by its signing key, not by its name. Lose the
 key and no build you ever make again can install as an update over the Zinely on a tester's phone —
 the only route is a new key, which means every tester uninstalls, and **uninstalling deletes their
-zines**, because backup/restore does not exist. There is no recovery process, no appeal, and no
-support channel that can reissue it: the key is not registered with anyone. It is a file you either
-have or do not.
+app-private library**. A valid library backup can restore that work; without one, there is no recovery
+process, appeal, or support channel that can reissue the signing key. It is a file you either have or
+do not.
 
 All four values are required together. Supplying only some of them is a configuration error and
 fails the build naming the missing ones — half-configured signing used to fail deep inside AGP with
@@ -154,8 +154,9 @@ filename with a clean log. A human reading build output is not a gate; a failing
 ## 3. Beta distribution (side-load)
 
 Testers install an APK directly, which Android treats as an unknown source. The tester note must say,
-in plain words: what to tap to allow the install, that the app never touches the network, and — until
-backup exists — **that uninstalling deletes their zines, so export anything they care about first**.
+in plain words: what to tap to allow the install, that the app never touches the network, and that they
+should create a fresh library backup before beta changes. Updating a release-signed beta preserves the
+private library; uninstalling deletes it, so the backup is the recovery path.
 
 ### The one-time break at 0.9.0-beta.1
 
@@ -180,6 +181,23 @@ old tags (`git show v0.8.0:…/ProofScreen.kt`) rather than remembering.
 
 Play Store distribution is not in use yet. It would additionally need an upload key, a Play Console
 listing, a privacy policy, a content rating and a data-safety declaration.
+
+### Public GitHub distribution and website
+
+GitHub is the current public beta channel while Play account verification remains unavailable. Release
+APKs live on the repository's GitHub Releases page; the public website and privacy policy live at
+<https://aritr-codes.github.io/zinely-android/>.
+
+The website source is `website/`, and `.github/workflows/pages.yml` generates the public policy from the
+canonical [privacy-policy document](PRIVACY-POLICY.md). Enabling a new Pages site is a one-time repository
+administration step: set **Settings → Pages → Build and deployment → Source** to **GitHub Actions** (or use
+the equivalent GitHub Pages API setting) before the first workflow run. After this feature branch reaches
+`main`, remove `feat/zine-backup-v2` from the workflow's push branches so only `main` can update production.
+
+Website product previews may be rendered from the canonical V2.1 HTML mockups. Play listing screenshots
+remain captures of the real release build: load a purpose-built demo zine made only from first-party or
+clearly licensed assets, then capture Shelf, Editor, Read, and Print/Fold in light mode. Never publish content
+from a developer's personal device library, even when it appears harmless.
 
 ---
 
@@ -228,7 +246,7 @@ cohort received.
 | 4 | **App icon** | 512×512 PNG, 32-bit, no alpha |
 | 5 | **Feature graphic** | **1024×500** PNG or JPEG — mandatory, and the one asset with no source in this repo |
 | 6 | **Phone screenshots** | 2–8, min 320px, max 3840px, 16:9 or 9:16. Shelf · Editor · Read · Print & fold is the honest four |
-| 7 | **Privacy policy URL** | [docs/PRIVACY-POLICY.md](PRIVACY-POLICY.md), hosted anywhere public (GitHub Pages, a gist, any static host) |
+| 7 | **Privacy policy URL** | <https://aritr-codes.github.io/zinely-android/privacy/> — generated from [docs/PRIVACY-POLICY.md](PRIVACY-POLICY.md) |
 | 8 | **Data safety form** | See §4.5 — every answer is "no" |
 | 9 | **Content rating questionnaire** | No user-generated content *sharing*, no ads, no data collection |
 | 10 | **Target audience** | 13+ is the safe answer; the app has no child-directed content |
@@ -318,4 +336,5 @@ mechanism and does not change any answer above.
 
 - **The feature graphic (1024×500)** — the only listing asset with no source in this repository.
 - **Screenshots** from a real device on a release build.
-- **A public URL for the privacy policy.**
+- ~~**A public URL for the privacy policy.**~~ Completed 9 September 2026 through GitHub Pages; the
+  canonical source remains [docs/PRIVACY-POLICY.md](PRIVACY-POLICY.md).

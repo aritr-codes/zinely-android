@@ -46,6 +46,14 @@ class CanvasReplayerConformanceTest {
     private val pageClip = PtRect(0.0, 0.0, 100.0, 100.0)
     private val replayer = CanvasReplayer()
 
+    @Test
+    fun reflectedTransformsKeepPositiveDecodeScale() {
+        val horizontal = AffineTransform2D(-1.0, 0.0, 0.0, 1.0, 40.0, 0.0)
+        val both = AffineTransform2D(-1.0, 0.0, 0.0, -1.0, 40.0, 25.0)
+        assertEquals(1.0, horizontal.uniformScale(), 0.0)
+        assertEquals(1.0, both.uniformScale(), 0.0)
+    }
+
     /** A [Canvas] that records the replay op sequence and every concatenated [Matrix]. */
     private class RecordingCanvas(bitmap: Bitmap) : Canvas(bitmap) {
         val ops = mutableListOf<String>()

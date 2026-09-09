@@ -292,9 +292,9 @@ class ZinelyV2CatalogParityTest {
                 "$identical",
             identical.isEmpty(),
         )
-        // 37 since C4: `Redo` is the mark the frozen file gained when OD-21 amended the Bench
-        // (`v2-bench.html:466`) — the amendment is the source of the count, not the catalogue.
-        assertEquals("the frozen set is 37 marks", 37, ZinelyV2Icons.All.size)
+        // 38 since A15/A16: the frozen V2.1 Add chooser gained the distinct `Collage` mark so Photo and
+        // Art no longer repeat one icon. The HTML amendment is the source of the count, not the catalogue.
+        assertEquals("the frozen set is 38 marks", 38, ZinelyV2Icons.All.size)
     }
 
     // ----- material parity ----------------------------------------------------------------------

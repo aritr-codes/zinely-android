@@ -58,11 +58,20 @@ class AutosaveGraphSmokeTest {
     @Test
     fun repositoryRoundTripsThroughTheGraph() = runBlocking {
         val repo = graph.documentRepository()
-        val projectId = "smoke-project"
+        val projectId = "smoke-project-${System.nanoTime()}"
         val document = ZineDocument(
             format = ZineFormat.SINGLE_SHEET_8,
             paperSize = PaperSize.LETTER,
-            pages = listOf(Page(index = 0, role = PageRole.INTERIOR)),
+            pages = (0 until ZineFormat.SINGLE_SHEET_8.pageCount).map { index ->
+                Page(
+                    index = index,
+                    role = when (index) {
+                        0 -> PageRole.FRONT_COVER
+                        ZineFormat.SINGLE_SHEET_8.pageCount - 1 -> PageRole.BACK_COVER
+                        else -> PageRole.INTERIOR
+                    },
+                )
+            },
         )
 
         val saved = repo.save(projectId, document)

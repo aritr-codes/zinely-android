@@ -5,6 +5,7 @@ import com.aritr.zinely.core.model.AffineTransform2D
 import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.PtPoint
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -13,11 +14,11 @@ import org.junit.jupiter.api.Test
 /**
  * The catalogue and the authoring invariant (SUPPLIES-SPEC §4.1).
  *
- * Two of the four §4.1 rules are mechanically checkable and are checked here for **every** entry, so
- * they hold for the four outlines still owed to a designer as well as for the twelve authored now:
- * the unit square, and the closed-ring/fill-only structure. Even-odd correctness and the absence of
- * winding-dependent self-intersection are authoring rules no assertion can see — which is the reason
- * §4.1 requires reviewed Kotlin source rather than a data file.
+ * Three of the four §4.1 rules are mechanically checkable and are checked here for **every** entry, so
+ * they hold for every outline in the frozen sixteen:
+ * the unit square, the closed-ring/fill-only structure, and strict crossings between straight edges.
+ * Curved even-odd correctness remains an authoring rule — which is the reason §4.1 still requires
+ * reviewed Kotlin source rather than a data file.
  *
  * The cross-check against `Copy.Supplies` is the one that would catch the expensive mistake: a
  * catalogue key that is not a shipped supply id draws a shape no picker can ever offer, and a typo
@@ -75,8 +76,16 @@ class SupplyCatalogTest {
             val spanX = pts.maxOf { it.x } - pts.minOf { it.x }
             val spanY = pts.maxOf { it.y } - pts.minOf { it.y }
             assertTrue(spanX > 0.0 && spanY > 0.0, "$id is degenerate on an axis (${spanX}x$spanY)")
+            // A16 deliberately freezes two inset marks: Push pin starts below the tile edge (2..24),
+            // and Folded corner is an inset scrap (2..22). Their visible margin is content, not an
+            // accidentally undersized authoring box; source-level parity pins the exact frozen bounds.
+            val expectedSpan = when (id) {
+                "fix.pushpin" -> 22.0 / 24.0
+                "paper.dogear" -> 20.0 / 24.0
+                else -> 1.0
+            }
             assertEquals(
-                1.0,
+                expectedSpan,
                 maxOf(spanX, spanY),
                 1e-9,
                 "$id fills neither axis of its square — it would render smaller than its own box",
@@ -140,17 +149,13 @@ class SupplyCatalogTest {
     }
 
     @Test
-    fun `given the four unauthored supplies, when an outline is asked for, then it is null`() {
-        // The incompleteness is explicit: an unauthored supply draws nothing and never guesses.
-        val unauthored = Copy.Supplies.NAMES.keys - SupplyCatalog.OUTLINES.keys
+    fun `given the frozen expanded cabinet, when catalogue keys are read, then all thirty two are authored`() {
         assertEquals(
-            setOf("tape.torn", "paper.strip", "paper.underline", "fix.clip"),
-            unauthored,
-            "16 supplies ship; 12 are authored. The four named here each need a designer's hand, and " +
-                "SupplyCatalog records why each resists derivation — three need an authored tear, and " +
-                "a paper clip is a wire object in a fill-only renderer",
+            Copy.Supplies.NAMES.keys,
+            SupplyCatalog.OUTLINES.keys,
+            "the frozen expanded vocabulary and the authored catalogue must be the same cabinet",
         )
-        for (id in unauthored) assertNull(SupplyCatalog.outlineOf(id), "$id must not resolve to a guess")
+        for (id in Copy.Supplies.NAMES.keys) assertNotNull(SupplyCatalog.outlineOf(id), "$id has no mark")
     }
 
     @Test
@@ -197,6 +202,47 @@ class SupplyCatalogTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun `given a straight edged outline, when each contour is checked, then no edge crosses another`() {
+        for ((id, outline) in SupplyCatalog.OUTLINES) {
+            for ((subpathIndex, subpath) in outline.subpaths.withIndex()) {
+                if (subpath.segments.any { it !is Segment.LineTo }) continue
+                val vertices = listOf(subpath.start) + subpath.segments.map { it.to }
+                val edges = vertices.indices.map { i -> vertices[i] to vertices[(i + 1) % vertices.size] }
+
+                for (first in edges.indices) {
+                    for (second in first + 1 until edges.size) {
+                        val adjacent = second == first + 1 || (first == 0 && second == edges.lastIndex)
+                        if (adjacent) continue
+                        assertTrue(
+                            !edges[first].intersects(edges[second]),
+                            "$id subpath $subpathIndex crosses or overlaps itself at edges $first and $second",
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun Pair<PtPoint, PtPoint>.intersects(other: Pair<PtPoint, PtPoint>): Boolean {
+        fun side(a: PtPoint, b: PtPoint, point: PtPoint): Double =
+            (b.x - a.x) * (point.y - a.y) - (b.y - a.y) * (point.x - a.x)
+
+        fun onSegment(a: PtPoint, b: PtPoint, point: PtPoint): Boolean =
+            point.x >= minOf(a.x, b.x) - 1e-12 && point.x <= maxOf(a.x, b.x) + 1e-12 &&
+                point.y >= minOf(a.y, b.y) - 1e-12 && point.y <= maxOf(a.y, b.y) + 1e-12
+
+        val a = side(first, second, other.first)
+        val b = side(first, second, other.second)
+        val c = side(other.first, other.second, first)
+        val d = side(other.first, other.second, second)
+        if (a * b < -1e-12 && c * d < -1e-12) return true
+        return (kotlin.math.abs(a) <= 1e-12 && onSegment(first, second, other.first)) ||
+            (kotlin.math.abs(b) <= 1e-12 && onSegment(first, second, other.second)) ||
+            (kotlin.math.abs(c) <= 1e-12 && onSegment(other.first, other.second, first)) ||
+            (kotlin.math.abs(d) <= 1e-12 && onSegment(other.first, other.second, second))
     }
 
     @Test

@@ -128,12 +128,10 @@ internal fun ProofImposedSheetBlock(modifier: Modifier = Modifier) {
 /**
  * The physical imposed sheet: paper ground, 8 engine-ordered cells, creases, the one cut, dead-band.
  *
- * **Lit in both themes** ([ProofLitPaper]), and that is a **departure from the freeze**, recorded as one.
- * `v21-proof.html` freezes `.minisheet{background:var(--paper)}`, which themes with the room. Device
- * verification of P6 found what that produces: this sheet dark, sitting directly above two cover cards that
- * were lit, so one drawer showed the same piece of paper two ways — and the darker of the two was the one
- * the user is about to feed into a printer. Taken under DESIGN FREEZE's theme-compatibility allowance, the
- * same ground [BookLeaf] states for the reader's leaf, and recorded in [ADR-101 §6.11](../../../../../../../docs/DECISIONS.md#adr-101-p6-device).
+ * **Lit in both themes** ([ProofLitPaper]). The current `v21-proof.html` freezes
+ * `.minisheet{background:var(--paper)}` as a physical island whose palette remains lit while the room
+ * changes. The same ground [BookLeaf] states for the reader's leaf, so the imposed sheet and cover cards
+ * show one consistent piece of paper.
  *
  * The palette is provided to the whole subtree rather than to the ground alone: swapping only the ground is
  * how the creases and numerals would have gone invisible instead.
@@ -240,7 +238,7 @@ private fun SheetCell(panel: DecorativePanel, modifier: Modifier) {
 @Composable
 private fun CreasesAndCut() {
     val colors = ZinelyTheme.v21Colors
-    val crease = colors.inkFaint.copy(alpha = 0.5f)
+    val crease = colors.inkSoft
     val cut = colors.jam
     Canvas(Modifier.fillMaxSize()) {
         val w = size.width
@@ -289,7 +287,7 @@ private fun HonestyLegend() {
         LegendItem(Copy.ProofSheet.LEGEND_FOLD_LINES) {
             Canvas(Modifier.size(16.dp, 8.dp)) {
                 drawLine(
-                    colors.inkFaint,
+                    colors.inkSoft,
                     Offset(0f, size.height / 2f), Offset(size.width, size.height / 2f), 1.dp.toPx(),
                     pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())),
                 )

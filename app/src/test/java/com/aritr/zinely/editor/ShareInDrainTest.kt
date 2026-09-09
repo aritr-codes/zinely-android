@@ -10,7 +10,9 @@ import com.aritr.zinely.core.data.asset.ContentHash
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.DocumentRepository
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.editor.Intent as EditorIntent
 import com.aritr.zinely.core.model.ImageElement
+import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.data.android.AutosaveCoordinatorFactory
@@ -116,7 +118,46 @@ class ShareInDrainTest {
 
         inbox.offer(listOf(first))
 
-        assertEquals(2, ready.imagesOnCurrentPage())
+        val placed = ready.imageTransforms()
+        assertEquals(2, placed.size)
+        assertOneCascadeStep(placed[0], placed[1])
+    }
+
+    /** D-081 Q10: separate share events continue the page's photo cascade instead of restarting it. */
+    @Test
+    fun `two consecutive single-photo shares continue one page cascade`() {
+        val inbox = ShareInbox()
+        val ready = viewModel(inbox).bootState.value as EditorBootState.Ready
+
+        inbox.offer(listOf(registerPng()))
+        val first = ready.imageTransforms().single()
+        inbox.offer(listOf(registerPng()))
+
+        val placed = ready.imageTransforms()
+        assertEquals(2, placed.size)
+        assertEquals(first, placed[0])
+        assertOneCascadeStep(placed[0], placed[1])
+        assertWhollyOnPage(placed, ready.pageSizePt)
+    }
+
+    /** A13 is photo-specific: existing text must not push the first shared photo off its centred default. */
+    @Test
+    fun `non-image elements do not seed the shared-photo cascade`() {
+        val inbox = ShareInbox()
+        val ready = viewModel(inbox).bootState.value as EditorBootState.Ready
+        ready.store.dispatch(
+            EditorIntent.PlaceText(
+                transform = Transform(xPt = 20.0, yPt = 20.0, widthPt = 120.0, heightPt = 40.0),
+                text = "Already here",
+            ),
+        )
+
+        inbox.offer(listOf(registerPng()))
+
+        assertEquals(
+            defaultImagePlacement(masterWidthPx = 48, masterHeightPx = 32, pageSizePt = ready.pageSizePt),
+            ready.imageTransforms().single(),
+        )
     }
 
     /** Given a Uri nothing can read, when it is shared, then the zine is unchanged and nothing crashes. */
@@ -150,6 +191,15 @@ class ShareInDrainTest {
 
         assertEquals(5, placed.size)
         assertEquals("five photos must land on five distinct origins", 5, placed.map { it.xPt to it.yPt }.toSet().size)
+        assertWhollyOnPage(placed, page)
+    }
+
+    private fun assertOneCascadeStep(first: Transform, second: Transform) {
+        assertEquals(first.xPt + 12.0, second.xPt, EPSILON_PT)
+        assertEquals(first.yPt + 12.0, second.yPt, EPSILON_PT)
+    }
+
+    private fun assertWhollyOnPage(placed: List<Transform>, page: PtSize) {
         placed.forEach { t ->
             assertTrue(
                 "photo at (${t.xPt}, ${t.yPt}) size ${t.widthPt}x${t.heightPt} escapes the ${page.width}x${page.height} page",

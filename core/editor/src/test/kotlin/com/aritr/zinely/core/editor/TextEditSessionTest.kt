@@ -5,6 +5,7 @@ import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.PtPoint
+import com.aritr.zinely.core.model.TextAlign
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
@@ -136,6 +137,66 @@ class TextEditSessionTest {
         assertEquals(start.document, r.model.document)
         assertTrue(r.model.history.undo.isEmpty(), "no PlaceCommand left to undo")
         assertTrue(r.effects.any { it is Effect.Autosave })
+    }
+
+    @Test
+    fun `PlaceTextAndEdit targets its newly minted box even when another text was selected`() {
+        val start = model(txt("old", text = "keep me"), selection = setOf("old"))
+
+        val placed = EditorReducer.reduce(
+            start,
+            Intent.PlaceTextAndEdit(Transform(20.0, 30.0, 40.0, 20.0)),
+        )
+
+        val session = placed.model.interaction as Interaction.EditingText
+        val added = els(placed.model).filterIsInstance<TextElement>().single { it.id != "old" }
+        assertEquals(added.id, session.id)
+        assertEquals(setOf(added.id), placed.model.selection)
+        assertEquals("keep me", (els(placed.model).single { it.id == "old" } as TextElement).text)
+        assertTrue(placed.effects.any { it is Effect.Autosave })
+
+        val cancelled = EditorReducer.reduce(placed.model, Intent.CancelText(added.id, session.token))
+        assertEquals(listOf(txt("old", text = "keep me")), els(cancelled.model))
+        assertTrue(cancelled.model.history.undo.isEmpty())
+    }
+
+    @Test
+    fun `PlaceTextAndEdit centres only the new box and preserves that style through edit undo redo`() {
+        val start = model(txt("old", text = "keep me"), selection = setOf("old"))
+
+        val placed = EditorReducer.reduce(
+            start,
+            Intent.PlaceTextAndEdit(Transform(20.0, 30.0, 40.0, 20.0)),
+        ).model
+        val session = placed.interaction as Interaction.EditingText
+        val added = els(placed).filterIsInstance<TextElement>().single { it.id != "old" }
+
+        assertEquals(TextAlign.CENTER, added.style.align)
+        assertEquals(
+            TextAlign.START,
+            (els(placed).single { it.id == "old" } as TextElement).style.align,
+            "an existing document's historical alignment fallback must not be rewritten",
+        )
+
+        val committed = EditorReducer.reduce(
+            placed,
+            Intent.CommitText(added.id, added.copy(text = "new words"), session.token),
+        ).model
+        assertEquals(
+            TextAlign.CENTER,
+            (els(committed).single { it.id == added.id } as TextElement).style.align,
+        )
+
+        val undoneEdit = EditorReducer.reduce(committed, Intent.Undo).model
+        assertEquals(
+            TextAlign.CENTER,
+            (els(undoneEdit).single { it.id == added.id } as TextElement).style.align,
+        )
+        val redoneEdit = EditorReducer.reduce(undoneEdit, Intent.Redo).model
+        val restored = els(redoneEdit).single { it.id == added.id } as TextElement
+        assertEquals("new words", restored.text)
+        assertEquals(TextAlign.CENTER, restored.style.align)
+        assertEquals(TextAlign.START, (els(redoneEdit).single { it.id == "old" } as TextElement).style.align)
     }
 
     @Test

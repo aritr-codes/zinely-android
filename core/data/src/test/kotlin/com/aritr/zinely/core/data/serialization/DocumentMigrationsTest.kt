@@ -14,8 +14,8 @@ import org.junit.jupiter.api.assertThrows
 /**
  * The migration framework chains pure `vN → vN+1` JSON transforms up to a target version (S2 spike
  * §6, [ADR-020]). Migrators see structure only; the registry owns the `schemaVersion` bookkeeping
- * and the chain-integrity guarantees. With `CURRENT_SCHEMA_VERSION == 1` the app ships zero real
- * migrators, so these tests drive the framework with synthetic ones.
+ * and the chain-integrity guarantees. Identity production steps still use the same mechanism; these
+ * tests drive structural behaviour with synthetic migrators.
  */
 class DocumentMigrationsTest {
 
@@ -99,6 +99,14 @@ class DocumentMigrationsTest {
         val migrations = DocumentMigrations(listOf(stamping(1)), targetVersion = 2)
         val ex = assertThrows<NewerSchemaVersionException> { migrations.migrate(doc(5)) }
         assertEquals(5, ex.documentVersion)
+        assertEquals(2, ex.supportedVersion)
+    }
+
+    @Test
+    fun `a v2 target refuses a v3 flip document before tolerant decode`() {
+        val migrations = DocumentMigrations(listOf(stamping(1)), targetVersion = 2)
+        val ex = assertThrows<NewerSchemaVersionException> { migrations.migrate(doc(3)) }
+        assertEquals(3, ex.documentVersion)
         assertEquals(2, ex.supportedVersion)
     }
 }

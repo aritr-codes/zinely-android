@@ -160,7 +160,7 @@ internal fun ZineShelfFail(onRetry: () -> Unit, modifier: Modifier = Modifier) {
  * `.fail .mk` — a 60px rotated disc with a `!` in it.
  *
  * ```css
- * .fail .mk{width:60px;height:60px;border-radius:var(--br-pill);background:var(--paper);
+ * .fail .mk{width:60px;height:60px;border-radius:var(--br-pill);background:var(--surface);
  *   border:2px solid var(--jam);color:var(--jam);font-family:var(--voice);font-size:1.8rem;
  *   font-weight:700;transform:rotate(-4deg);box-shadow:3px 3px 0 var(--jam)}
  * ```
@@ -181,7 +181,7 @@ private fun FailMark() {
             .graphicsLayer { rotationZ = MarkRotation }
             .zinelyV21HardShadow(MarkShadow, colors.jam, MarkShape)
             .clip(MarkShape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(MarkBorder, colors.jam, MarkShape)
             .clearAndSetSemantics {},
         contentAlignment = Alignment.Center,
@@ -253,7 +253,7 @@ private fun RetryButton(onRetry: () -> Unit, modifier: Modifier = Modifier) {
             // `transform`.
             .zinelyFocusRing(focused, ZinelyV21Dimens.radiusPill, ZinelyV21FocusOffsetLibrary)
             .clip(RetryShape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(RetryBorderWidth, colors.ink, RetryShape)
             .zinelyV2Control(
                 label = RetryLabelText,

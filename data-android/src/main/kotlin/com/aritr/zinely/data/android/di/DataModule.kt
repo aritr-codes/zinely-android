@@ -11,6 +11,11 @@ import com.aritr.zinely.data.android.AutosaveCoordinatorFactory
 import com.aritr.zinely.data.android.AutosaveSessionGate
 import com.aritr.zinely.data.android.DocumentRepositoryImpl
 import com.aritr.zinely.data.android.InMemorySaveFailureSink
+import com.aritr.zinely.data.android.AutosaveLibraryWriterGate
+import com.aritr.zinely.data.android.ContentResolverLibrarySafTransport
+import com.aritr.zinely.data.android.LibraryBackupRepository
+import com.aritr.zinely.data.android.LibraryRestoreRepository
+import com.aritr.zinely.data.android.LibrarySafTransport
 import com.aritr.zinely.data.android.RoomProjectRepository
 import com.aritr.zinely.data.android.SaveFailureSink
 import com.aritr.zinely.data.android.room.MIGRATION_1_2
@@ -75,14 +80,15 @@ internal object DataModule {
      */
     @Provides
     @Singleton
-    fun provideProjectRepository(
+    fun provideRoomProjectRepository(
         @ApplicationContext context: Context,
         database: ZinelyDatabase,
         documents: DocumentRepository,
         store: AtomicFileStore,
+        fs: FileSystemOps,
         autosaveFactory: AutosaveCoordinatorFactory,
         @IoDispatcher io: CoroutineDispatcher,
-    ): ProjectRepository = RoomProjectRepository(
+    ): RoomProjectRepository = RoomProjectRepository(
         rootDir = context.filesDir.toPath(),
         dao = database.projectDao(),
         documents = documents,
@@ -90,6 +96,32 @@ internal object DataModule {
         // ADR-044 §1: mutations are refused (DataError.Busy) while the target id has a live
         // editor autosave session in the single-writer registry.
         sessionGate = AutosaveSessionGate(autosaveFactory),
+        libraryWriterGate = AutosaveLibraryWriterGate(autosaveFactory),
+        fs = fs,
+        io = io,
+        appVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "unknown",
+    )
+
+    @Provides
+    fun provideProjectRepository(repository: RoomProjectRepository): ProjectRepository = repository
+
+    @Provides
+    fun provideLibraryRestoreRepository(repository: RoomProjectRepository): LibraryRestoreRepository = repository
+
+    @Provides
+    fun provideLibraryBackupRepository(repository: RoomProjectRepository): LibraryBackupRepository = repository
+
+    @Provides
+    @Singleton
+    fun provideLibrarySafTransport(
+        @ApplicationContext context: Context,
+        restoreRepository: LibraryRestoreRepository,
+        backupRepository: LibraryBackupRepository,
+        @IoDispatcher io: CoroutineDispatcher,
+    ): LibrarySafTransport = ContentResolverLibrarySafTransport(
+        context = context,
+        restoreRepository = restoreRepository,
+        backupRepository = backupRepository,
         io = io,
     )
 

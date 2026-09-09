@@ -3,6 +3,8 @@ package com.aritr.zinely.data.android
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.aritr.zinely.core.data.repository.DataError
+import com.aritr.zinely.core.data.repository.ProjectShelfEntry
+import com.aritr.zinely.core.data.repository.ProjectUnavailableReason
 import com.aritr.zinely.core.data.repository.errorOrNull
 import com.aritr.zinely.core.data.repository.getOrNull
 import com.aritr.zinely.core.data.storage.AtomicFileStore
@@ -212,6 +214,37 @@ class RoomProjectRepositoryTest {
         // Then — same skip as corruption (ADR-042 §4): invisible, bytes left for a future repair path
         assertTrue(projects.isEmpty())
         assertTrue(payload.contentEquals(Files.readAllBytes(dir.resolve("document.json"))))
+    }
+
+    @Test
+    fun `a stale indexed project whose document becomes corrupt stays on the shelf as unavailable`() = runTest {
+        val repo = repo()
+        val created = repo.createProject("Keep me visible", ZineFormat.SINGLE_SHEET_8, PaperSize.A4).getOrNull()!!
+        Files.write(documentFile(created.id), "{ not a document".toByteArray())
+
+        val shelf = repo.observeShelfProjects().first().single() as ProjectShelfEntry.Unavailable
+
+        assertEquals(created.id, shelf.id)
+        assertEquals("Keep me visible", shelf.title)
+        assertEquals(PaperSize.A4, shelf.paperSize)
+        assertEquals(ProjectUnavailableReason.CORRUPT, shelf.reason)
+        assertEquals(listOf(created.id), repo.observeProjects().first().map { it.id })
+    }
+
+    @Test
+    fun `an unindexed newer-schema document appears on the shelf as unavailable with its paper size`() = runTest {
+        val dir = root.resolve("projects/toonew")
+        Files.createDirectories(dir)
+        val payload = """{"schemaVersion":${CURRENT_SCHEMA_VERSION + 1},"paperSize":"A4"}""".toByteArray()
+        Files.write(dir.resolve("document.json"), payload)
+
+        val shelf = repo().observeShelfProjects().first().single() as ProjectShelfEntry.Unavailable
+
+        assertEquals("toonew", shelf.id)
+        assertEquals("My zine", shelf.title)
+        assertEquals(PaperSize.A4, shelf.paperSize)
+        assertEquals(ProjectUnavailableReason.NEWER_APP_REQUIRED, shelf.reason)
+        assertTrue(repo().observeProjects().first().isEmpty())
     }
 
     @Test

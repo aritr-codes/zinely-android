@@ -10,12 +10,15 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
@@ -26,6 +29,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,10 +46,13 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -56,6 +64,7 @@ import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
+import com.aritr.zinely.ui.components.zinelyV21Pressable
 import com.aritr.zinely.ui.theme.ZinelyContentInks
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyMakerInkId
@@ -64,6 +73,7 @@ import com.aritr.zinely.ui.theme.ZinelyPaperTintId
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import com.aritr.zinely.ui.theme.ZinelyV21Press
 import com.aritr.zinely.ui.theme.ZinelyV2Standard
 import kotlin.math.roundToInt
 
@@ -73,6 +83,10 @@ internal const val BenchInkPresetTestTag: String = "bench-ink-preset"
 internal const val BenchInkBandLabelTestTag: String = "bench-ink-band-label"
 internal const val BenchInkUseNoteTestTag: String = "bench-ink-use-note"
 internal const val BenchInkDoneTestTag: String = "bench-ink-done"
+internal const val BenchInkCurrentTestTag: String = "bench-ink-current"
+internal const val BenchInkPresetActionTestTag: String = "bench-ink-preset-action"
+internal const val BenchInkTitleTestTag: String = "bench-ink-title"
+internal const val BenchInkPotTestTag: String = "bench-ink-pot"
 
 /**
  * One swatch of the maker palette: the colour and the name the maker hears and reads.
@@ -80,7 +94,11 @@ internal const val BenchInkDoneTestTag: String = "bench-ink-done"
  * The pair is modelled here rather than passed as a bare [Color] because a swatch with no name is a
  * control a screen reader cannot announce, and the frozen arrays carry both (`['Matcha','#7C8A3F']`).
  */
-internal data class BenchInkSwatch(val name: String, val value: Color)
+internal data class BenchInkSwatch(
+    val name: String,
+    val value: Color,
+    val spokenName: String = name,
+)
 
 /** One labelled band of the popover — an `.inklbl` over a `.pots` row (`v21-bench.html:705-713`). */
 internal data class BenchInkBand(val label: String, val swatches: List<BenchInkSwatch>)
@@ -108,7 +126,7 @@ internal data class BenchInkPreset(val name: String, val dots: List<BenchInkSwat
  * The bands offered for one ink target — the pure half of the popover, and the whole of
  * [OD-24](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-028-ruling)'s fence.
  *
- * **A text element is offered `Inks` + `Neutrals` and no paper tints.** The tints are *paper* — by the
+ * **A text element is offered `Spot inks` + `Neutrals` and no paper tints.** The tints are *paper* — by the
  * band's own frozen label (`Paper tints`), by the popover's own caption (*"riso spot-inks"*), and by the
  * presets' third slot, which in two of three recipes is a tint by value. Applying one as a text element's
  * single ink is what let `Cream #F1E9D6` reach a title at 1.21:1 against the paper `Background.None`
@@ -133,7 +151,14 @@ internal data class BenchInkPreset(val name: String, val dots: List<BenchInkSwat
 internal fun benchInkBands(inks: ZinelyContentInks, kind: BenchVerbKind): List<BenchInkBand> {
     val band1 = BenchInkBand(
         Copy.BenchInk.INKS,
-        inks.makerInks.map { BenchInkSwatch(benchInkName(it.id), it.value) },
+        inks.makerInks.map {
+            val name = benchInkName(it.id)
+            BenchInkSwatch(
+                name = name,
+                value = it.value,
+                spokenName = if (it.id == ZinelyMakerInkId.Ink) Copy.BenchInk.SPOT_INK_SPOKEN else name,
+            )
+        },
     )
     val tints = BenchInkBand(
         Copy.BenchInk.PAPER_TINTS,
@@ -141,7 +166,14 @@ internal fun benchInkBands(inks: ZinelyContentInks, kind: BenchVerbKind): List<B
     )
     val band3 = BenchInkBand(
         Copy.BenchInk.NEUTRALS,
-        inks.neutrals.map { BenchInkSwatch(benchInkName(it.id), it.value) },
+        inks.neutrals.map {
+            val name = benchInkName(it.id)
+            BenchInkSwatch(
+                name = name,
+                value = it.value,
+                spokenName = if (it.id == ZinelyNeutralId.Ink) Copy.BenchInk.NEUTRAL_INK_SPOKEN else name,
+            )
+        },
     )
     return when (kind) {
         BenchVerbKind.TEXT -> listOf(band1, band3)
@@ -239,19 +271,12 @@ internal fun benchInkName(id: ZinelyNeutralId): String = when (id) {
  *
  * `Done` became a `leaf` pill and the band labels moved from `--ink-faint` to `--ink-soft`.
  *
- * ### Deviation: the ink-economy note is kept, and V2.1 does not draw it
+ * ### A16: a readable tool tray
  *
- * `openInk()` emits four bands and stops (`v21-bench.html:709-716`); the `.inkuse` shield-and-count line V2
- * closed the card with is **absent from the freeze**. It is retained here rather than deleted, because it
- * is the only place the product tells a maker what a second ink costs to print and removing it is a
- * *product* decision rather than a re-skin. Its geometry is therefore no longer frozen anywhere — the
- * numbers below are V2's, carried forward, and flagged as such. Owner call.
- *
- * ### Two more places the freeze and the shipped copy disagree
- *
- * The frozen labels read *"Spot inks"* and *"Ready-made pairs"* where `Copy.BenchInk` ships *"Inks"* and
- * *"Ready-made palettes"*. `:core:copy` is outside P4's blast radius, so the strings are left alone and the
- * divergence is recorded here rather than silently resolved in either direction.
+ * D-107's owner-approved A16 amendment adds a paper-backed current-ink summary, puts the ten spot inks in
+ * a stable five-by-two grid, names every 30dp painted pot inside a 56dp choice, and replaces the ambiguous
+ * recipe wording with `Starting palettes` plus the exact `Apply …` action. The old ink-economy note is not
+ * part of the frozen A16 tray. None of these changes alters ink values or document/render semantics.
  *
  * A card at the canvas's bottom edge, inset 12dp on three sides, exactly where [BenchContextBar] sits —
  * and it **replaces** that bar rather than stacking on it, which is the freeze's own behaviour
@@ -270,34 +295,26 @@ internal fun benchInkName(id: ZinelyNeutralId): String = when (id) {
  *
  * ### Touch targets
  *
- * `.pot` is 30dp on a 38dp pitch, in a row that **wraps** — so this is
- * [D-009](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)'s
- * overlap case in *two* dimensions, where C5's filmstrip met it in one. D-009 rules *extend the target,
- * keep the paint*, and Compose's own pointer-input minimum does exactly that: a `selectable` node under
- * 48dp still reports 48dp of `touchBoundsInRoot`. No `minimumInteractiveComponentSize()` — it grows the
- * *layout* slot and would move the frozen 8dp gaps. Where expanded targets meet, the nearer centre wins;
- * that is inherent to a 30dp control on a 38dp pitch and is the honest reading of D-009 here.
+ * A16 makes the distinction explicit: each named radio choice is at least 56dp high while the painted pot
+ * remains 30dp. Five equal columns prevent the former 9+1 orphan wrap without overlapping hit targets.
  *
  * @param visible drives the frozen enter: a 10dp rise and a fade over `.18s` (`v21-bench.html:240`).
  *   Collapses to 0ms under reduced motion ([ADR-075](../../../../../../../../docs/DECISIONS.md#adr-075)).
  * @param bands the frozen bands for this ink target — [benchInkBands].
  * @param presets the three recipes — [benchInkPresets].
  * @param selected the element's current ink, or `null` when it matches no swatch in any offered band.
- * @param inkCount distinct inks in the whole zine, for the `.inkuse` note. Live, never a constant.
  * @param onDockedTopChanged the card's settled top edge in window coordinates, for the same clearance term
  *   the editing row feeds ([benchEditPanMagnitudeDp], D-043 / OD-16). F-5: a maker was being asked to pick
  *   ink for type this card was covering. ⚠ Nothing is reported while hidden — `AnimatedVisibility` composes
  *   no layout at all in that state — so the last value goes **stale** the moment the card leaves. The
  *   consumer must therefore gate on its own open flag rather than trust this edge, and does.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun BenchInkPopover(
     visible: Boolean,
     bands: List<BenchInkBand>,
     presets: List<BenchInkPreset>,
     selected: Color?,
-    inkCount: Int,
     onPick: (BenchInkSwatch) -> Unit,
     onPreset: (BenchInkPreset) -> Unit,
     onDone: () -> Unit,
@@ -334,8 +351,12 @@ internal fun BenchInkPopover(
                 // ⚠ nothing that clips may sit to its LEFT: it paints 4dp outside the card's own bounds.
                 // No press tier: `.inkpop` declares no `:active` because a surface is not a control.
                 .zinelyV21HardShadow(BenchInkPopoverShadowDp, colors.inkLine, shape)
-                .background(colors.paper, shape)
+                .background(colors.surface, shape)
                 .border(BenchInkPopoverBorderDp, colors.ink, shape)
+                // A16's `max-height:calc(100% - 24px);overflow:auto`: decor carries one extra band and
+                // must still expose Starting palettes on a phone-height Bench. The whole tray scrolls,
+                // matching the frozen HTML rather than silently clipping its final action row.
+                .verticalScroll(rememberScrollState())
                 .padding(BenchInkPopoverPadding),
         ) {
             // `.inkpop h4{margin:0 0 var(--gap-hair);display:flex;justify-content:space-between;
@@ -362,19 +383,30 @@ internal fun BenchInkPopover(
                     fontSize = BenchInkTitleSp,
                     lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                     color = colors.ink,
+                    modifier = Modifier.testTag(BenchInkTitleTestTag),
                 )
                 BenchInkDoneChip(onDone)
             }
 
+            val currentSwatch = selected?.let { value ->
+                bands.asSequence()
+                    .flatMap { it.swatches.asSequence() }
+                    .firstOrNull { it.value == value }
+            }
+            BenchInkCurrent(
+                colour = selected ?: colors.ink,
+                name = currentSwatch?.name ?: Copy.BenchInk.CUSTOM_INK,
+            )
+
             // The ring belongs to ONE swatch, and colour alone cannot identify one: `Ink #2A251E` is a
-            // member of both the Inks band and the Neutrals band (`ZinelyContentInks.kt:219`, `:231` —
+            // member of both the Spot inks band and the Neutrals band (`ZinelyContentInks.kt:219`, `:231` —
             // the freeze repeats it verbatim in both `INKS` and `NEUT`), and for a text target both bands
             // are drawn. Ringing by `selected == swatch.value` therefore ringed the element's ink TWICE
             // and published `Selected` on two RadioButton nodes in one group. The freeze rings exactly
             // one (`v21-bench.html:722` clears every `.on` before setting one), and the OD-24
             // amendment log lists that exclusivity under NOTHING ELSE CHANGES.
             //
-            // Resolved to the FIRST occurrence in band order, which is the Inks band: `Ink` is a riso
+            // Resolved to the FIRST occurrence in band order, which is the Spot inks band: `Ink` is a riso
             // ink that the Neutrals band repeats, not the other way round.
             val ringed: Pair<Int, Int>? = selected?.let { value ->
                 bands.withIndex().firstNotNullOfOrNull { (bandIndex, band) ->
@@ -389,18 +421,11 @@ internal fun BenchInkPopover(
                 // band gap as well would double every space between a row of pots and the next label.
                 Column {
                     BenchInkBandLabel(band.label)
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(BenchInkSwatchGapDp),
-                        verticalArrangement = Arrangement.spacedBy(BenchInkSwatchGapDp),
-                    ) {
-                        for ((swatchIndex, swatch) in band.swatches.withIndex()) {
-                            BenchInkSwatchDot(
-                                swatch = swatch,
-                                selected = ringed == bandIndex to swatchIndex,
-                                onClick = { onPick(swatch) },
-                            )
-                        }
-                    }
+                    BenchInkSwatchGrid(
+                        swatches = band.swatches,
+                        selectedIndex = ringed?.takeIf { it.first == bandIndex }?.second,
+                        onPick = onPick,
+                    )
                 }
             }
 
@@ -408,41 +433,129 @@ internal fun BenchInkPopover(
             // like the others — ADR-089 row 6.3 said "three bands" and the freeze emits four (ADR-096 §2).
             Column {
                 BenchInkBandLabel(Copy.BenchInk.PRESETS)
-                FlowRow(
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(BenchInkPresetGapDp),
-                    verticalArrangement = Arrangement.spacedBy(BenchInkPresetGapDp),
                 ) {
                     for (preset in presets) {
-                        BenchInkPresetPill(preset = preset, onClick = { onPreset(preset) })
+                        BenchInkPresetPill(
+                            preset = preset,
+                            onClick = { onPreset(preset) },
+                            modifier = Modifier.weight(1f),
+                        )
                     }
                 }
             }
+        }
+    }
+}
 
-            // `.inkuse` — the ink-economy note, with a live count.
-            //
-            // ⚠ **Not in the V2.1 freeze.** `openInk()` stops after the fourth band; this line is V2's,
-            // kept because it is the only place the product prices a second ink, and its numbers below are
-            // V2's carried forward rather than transcribed. See the class KDoc.
-            Row(
+@Composable
+private fun BenchInkCurrent(colour: Color, name: String) {
+    val colors = ZinelyTheme.v21Colors
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = BenchInkCurrentMinHeightDp)
+            .background(colors.paper, RoundedCornerShape(BenchInkCurrentRadiusDp))
+            .border(BenchInkPopoverBorderDp, colors.ink, RoundedCornerShape(BenchInkCurrentRadiusDp))
+            .padding(horizontal = ZinelyV21Dimens.gapMd, vertical = ZinelyV21Dimens.gapSm)
+            .testTag(BenchInkCurrentTestTag)
+            .semantics {
+                contentDescription = Copy.BenchInk.currentInk(name)
+                liveRegion = LiveRegionMode.Polite
+            },
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
                 modifier = Modifier
-                    .padding(top = BenchInkUseTopGapDp)
-                    .testTag(BenchInkUseNoteTestTag)
-                    // One node, one sentence: the shield is decorative and a reader that announced it
-                    // separately would say "image" before the only words that matter.
-                    .clearAndSetSemantics { contentDescription = Copy.BenchInk.useNote(inkCount) },
-                horizontalArrangement = Arrangement.spacedBy(BenchInkUseGapDp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                BenchInkShield(tint = colors.inkSoft)
+                    .size(BenchInkSwatchSizeDp)
+                    .background(colour, CircleShape)
+                    .border(BenchInkSwatchBorderDp, BenchInkPaperInk, CircleShape),
+            )
+            Column {
                 Text(
-                    text = Copy.BenchInk.useNote(inkCount),
+                    text = Copy.BenchInk.CURRENT_INK.uppercase(),
                     fontFamily = ZinelyV21Fonts.Work,
-                    fontSize = BenchInkUseSp,
-                    lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                    color = colors.inkSoft,
+                    fontSize = BenchInkCurrentLabelSp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = BenchInkCurrentLabelTracking,
+                    color = BenchInkPaperSoft,
+                )
+                Text(
+                    text = name,
+                    fontFamily = ZinelyV21Fonts.Voice,
+                    fontSize = BenchInkCurrentNameSp,
+                    fontWeight = FontWeight.Bold,
+                    color = BenchInkPaperInk,
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun BenchInkSwatchGrid(
+    swatches: List<BenchInkSwatch>,
+    selectedIndex: Int?,
+    onPick: (BenchInkSwatch) -> Unit,
+) {
+    Column {
+        swatches.chunked(BenchInkGridColumns).forEachIndexed { rowIndex, row ->
+            Row(modifier = Modifier.fillMaxWidth()) {
+                row.forEachIndexed { columnIndex, swatch ->
+                    val index = rowIndex * BenchInkGridColumns + columnIndex
+                    BenchInkSwatchChoice(
+                        swatch = swatch,
+                        selected = index == selectedIndex,
+                        onClick = { onPick(swatch) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                repeat(BenchInkGridColumns - row.size) {
+                    Box(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BenchInkSwatchChoice(
+    swatch: BenchInkSwatch,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = ZinelyTheme.v21Colors
+    val pick = benchTap(ZinelyHaptic.Snap, onClick)
+    Column(
+        modifier = modifier
+            .defaultMinSize(minHeight = BenchInkChoiceMinHeightDp)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = pick)
+            .testTag(BenchInkSwatchTestTag)
+            .clearAndSetSemantics {
+                contentDescription = Copy.BenchInk.swatchLabel(swatch.spokenName)
+                role = Role.RadioButton
+                this.selected = selected
+                onClick { pick(); true }
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        BenchInkSwatchDot(swatch = swatch, selected = selected)
+        Text(
+            text = swatch.name,
+            maxLines = 1,
+            fontFamily = ZinelyV21Fonts.Work,
+            fontSize = BenchInkChoiceNameSp,
+            fontWeight = FontWeight.SemiBold,
+            color = colors.inkSoft,
+        )
     }
 }
 
@@ -468,6 +581,7 @@ private fun BenchInkDoneChip(onDone: () -> Unit) {
             .border(BenchInkPopoverBorderDp, colors.ink, BenchInkDoneShape)
             .testTag(BenchInkDoneTestTag)
             .clickable(role = Role.Button, onClick = done)
+            .defaultMinSize(minWidth = BenchInkDoneMinWidthDp, minHeight = BenchInkDoneMinHeightDp)
             .padding(horizontal = BenchInkDonePaddingH, vertical = BenchInkDonePaddingV),
         contentAlignment = Alignment.Center,
     ) {
@@ -515,10 +629,8 @@ private fun BenchInkBandLabel(label: String) {
  * growing the box to hold a ring at `inset:-5px` would move the frozen 8dp gaps.
  */
 @Composable
-private fun BenchInkSwatchDot(swatch: BenchInkSwatch, selected: Boolean, onClick: () -> Unit) {
+private fun BenchInkSwatchDot(swatch: BenchInkSwatch, selected: Boolean) {
     val colors = ZinelyTheme.v21Colors
-    // Snap — a pot is a selection, and it is the same choice the preset pill makes.
-    val pick = benchTap(ZinelyHaptic.Snap, onClick)
     Box(
         modifier = Modifier
             .size(BenchInkSwatchSizeDp)
@@ -544,17 +656,7 @@ private fun BenchInkSwatchDot(swatch: BenchInkSwatch, selected: Boolean, onClick
             // `.pot{border:1.5px solid var(--ink)}` — real ink now, where V2 drew translucent white. It is
             // what separates the pot from the card's `paper` ground whatever the fill becomes.
             .border(BenchInkSwatchBorderDp, colors.ink, CircleShape)
-            .selectable(
-                selected = selected,
-                // A single-choice group of circles IS a radio group, and that is what the platform has
-                // a state for. C5 learned that Compose routes `Selected` to `isChecked` for every role
-                // but `Role.Tab`; a radio button is the one role for which "selected / not selected" is
-                // Android's own wording rather than a wrong one borrowed from a checkbox.
-                role = Role.RadioButton,
-                onClick = pick,
-            )
-            .testTag(BenchInkSwatchTestTag)
-            .semantics { contentDescription = Copy.BenchInk.swatchLabel(swatch.name) },
+            .testTag(BenchInkPotTestTag),
     )
 }
 
@@ -568,18 +670,25 @@ private fun BenchInkSwatchDot(swatch: BenchInkSwatch, selected: Boolean, onClick
  * shadow rests and does not shorten — transcribed, not amended.
  */
 @Composable
-private fun BenchInkPresetPill(preset: BenchInkPreset, onClick: () -> Unit) {
+private fun BenchInkPresetPill(
+    preset: BenchInkPreset,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
     // Snap — a recipe is chosen, not fired.
     val pick = benchTap(ZinelyHaptic.Snap, onClick)
-    Row(
-        modifier = Modifier
-            // ⚠ Resting shadow, 2dp outside the node — nothing that clips may sit to its left.
-            .zinelyV21HardShadow(BenchInkPresetShadowDp, colors.inkLine, BenchInkPresetShape)
+    Column(
+        modifier = modifier
+            // A16 `.preset:active`: translate(1px,1px), with the 2dp rest shadow reduced to 1dp.
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Inline, colors.inkLine, BenchInkPresetShape)
             .clip(BenchInkPresetShape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchInkPopoverBorderDp, colors.ink, BenchInkPresetShape)
-            .clickable(role = Role.Button, onClick = pick)
+            .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = pick)
+            .defaultMinSize(minHeight = BenchInkPresetMinHeightDp)
             .padding(BenchInkPresetPadding)
             .testTag(BenchInkPresetTestTag)
             .clearAndSetSemantics {
@@ -595,8 +704,8 @@ private fun BenchInkPresetPill(preset: BenchInkPreset, onClick: () -> Unit) {
                 // the pill was broken without it. (The two siblings in this file declare none.)
                 onClick { pick(); true }
             },
-        horizontalArrangement = Arrangement.spacedBy(BenchInkPresetGlyphGapDp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(BenchInkPresetContentGapDp),
+        horizontalAlignment = Alignment.Start,
     ) {
         // `.preset i b{width:13px;height:13px;margin-left:-5px;border:1.5px solid var(--ink)}` — the dots
         // overlap leftward now, and their separating ring is ink rather than the card's own ground.
@@ -610,16 +719,27 @@ private fun BenchInkPresetPill(preset: BenchInkPreset, onClick: () -> Unit) {
                 )
             }
         }
-        Text(
-            text = preset.name,
-            fontFamily = ZinelyV21Fonts.Work,
-            fontSize = BenchInkPresetSp,
-            // `.preset{font-weight:600;color:var(--ink-soft)}`.
-            fontWeight = FontWeight.SemiBold,
-            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-            color = colors.inkSoft,
-            textAlign = TextAlign.Start,
-        )
+        Column {
+            Text(
+                text = preset.name,
+                maxLines = 1,
+                fontFamily = ZinelyV21Fonts.Work,
+                fontSize = BenchInkPresetSp,
+                fontWeight = FontWeight.Bold,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+                color = colors.ink,
+                textAlign = TextAlign.Start,
+            )
+            Text(
+                text = Copy.BenchInk.apply(preset.applied.name),
+                maxLines = 1,
+                fontFamily = ZinelyV21Fonts.Work,
+                fontSize = BenchInkPresetActionSp,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+                color = colors.inkSoft,
+                modifier = Modifier.testTag(BenchInkPresetActionTestTag),
+            )
+        }
     }
 }
 
@@ -675,7 +795,7 @@ internal val BenchInkPopoverPadding = PaddingValues(
     start = ZinelyV21Dimens.gapMd,
     top = ZinelyV21Dimens.gapMd,
     end = ZinelyV21Dimens.gapMd,
-    bottom = ZinelyV21Dimens.gapLg,
+    bottom = ZinelyV21Dimens.gapMd,
 )
 
 /**
@@ -691,7 +811,7 @@ internal const val BenchInkPopoverEnterMillis: Int = 180
 internal val BenchInkPopoverEnterOffsetDp = 10.dp
 
 /** `.inkpop h4{margin:0 0 var(--gap-hair)}` (`:242`) — 2, where V2 gapped 8. */
-internal val BenchInkHeaderGapDp = ZinelyV21Dimens.gapHair
+internal val BenchInkHeaderGapDp = ZinelyV21Dimens.gapSm
 
 /** `.inkpop h4{font-size:1.02rem}` (`:242`) — 16.32sp in `--voice` at weight 700, where V2 drew 15/500. */
 internal val BenchInkTitleSp = 16.32.sp
@@ -705,6 +825,8 @@ internal val BenchInkDoneShape: RoundedCornerShape = RoundedCornerShape(percent 
 /** `.inkpop h4 button{padding:var(--gap-xs) var(--gap-md)}` (`:246`). */
 internal val BenchInkDonePaddingH = ZinelyV21Dimens.gapMd
 internal val BenchInkDonePaddingV = ZinelyV21Dimens.gapXs
+internal val BenchInkDoneMinWidthDp = 64.dp
+internal val BenchInkDoneMinHeightDp = 48.dp
 
 /** `.inkpop h4 button{box-shadow:2px 2px 0 var(--ink-line)}` (`:246`) — a rest with no `:active`; see [BenchInkDoneChip]. */
 internal val BenchInkDoneShadowDp = 2.dp
@@ -721,8 +843,20 @@ internal val BenchInkBandLabelTracking = 0.13.em
  * The label owns the whole rhythm in V2.1. V2 split it between a `.band{margin-bottom:9px}` and a 5dp label
  * gap; the band's margin is gone, so carrying one here would double every space in the card.
  */
-internal val BenchInkBandLabelTopGapDp = ZinelyV21Dimens.gapMd
-internal val BenchInkBandLabelGapDp = ZinelyV21Dimens.gapXs
+internal val BenchInkBandLabelTopGapDp = ZinelyV21Dimens.gapSm
+internal val BenchInkBandLabelGapDp = ZinelyV21Dimens.gapHair
+
+internal const val BenchInkGridColumns: Int = 5
+internal val BenchInkChoiceMinHeightDp = 56.dp
+internal val BenchInkChoiceNameSp = 8.96.sp
+
+internal val BenchInkCurrentMinHeightDp = 52.dp
+internal val BenchInkCurrentRadiusDp = ZinelyV21Dimens.radiusMd
+internal val BenchInkCurrentLabelSp = 9.76.sp
+internal val BenchInkCurrentLabelTracking = 0.1.em
+internal val BenchInkCurrentNameSp = 14.08.sp
+internal val BenchInkPaperInk = Color(0xFF27270F)
+internal val BenchInkPaperSoft = Color(0xFF6A452F)
 
 /** `.pots{gap:var(--gap-sm)}` (`:249`) — 8, where V2 gapped 7. */
 internal val BenchInkSwatchGapDp = ZinelyV21Dimens.gapSm
@@ -752,17 +886,19 @@ internal val BenchInkSelDashDp = 3.dp
 internal val BenchInkPresetGapDp = ZinelyV21Dimens.gapSm
 
 /** `.preset{border-radius:var(--br-pill)}` (`:256`), where V2 drew a 20dp radius. */
-internal val BenchInkPresetShape: RoundedCornerShape = RoundedCornerShape(percent = 50)
+internal val BenchInkPresetShape: RoundedCornerShape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
+internal val BenchInkPresetMinHeightDp = 58.dp
+internal val BenchInkPresetContentGapDp = 3.dp
 
 /**
  * `.preset{padding:var(--gap-xs) var(--gap-md) var(--gap-xs) var(--gap-xs)}` (`:256`) — top 4, right 12,
  * bottom 4, left 4. The left is tight because the dots start there; the right holds the name off the edge.
  */
 internal val BenchInkPresetPadding = PaddingValues(
-    start = ZinelyV21Dimens.gapXs,
-    top = ZinelyV21Dimens.gapXs,
-    end = ZinelyV21Dimens.gapMd,
-    bottom = ZinelyV21Dimens.gapXs,
+    start = ZinelyV21Dimens.gapSm,
+    top = ZinelyV21Dimens.gapSm,
+    end = ZinelyV21Dimens.gapSm,
+    bottom = ZinelyV21Dimens.gapSm,
 )
 
 /** `.preset{gap:var(--gap-sm)}` (`:255`) — 8 between the dots and the name, where V2 gapped 6. */
@@ -770,12 +906,13 @@ internal val BenchInkPresetGlyphGapDp = ZinelyV21Dimens.gapSm
 
 /** `.preset{font-size:.72rem}` (`:256`) — 11.52sp at weight 600 in `--ink-soft`. V2 drew 11.5sp in `--ink`. */
 internal val BenchInkPresetSp = 11.52.sp
+internal val BenchInkPresetActionSp = 9.12.sp
 
 /** `.preset{box-shadow:2px 2px 0 var(--ink-line)}` (`:257`) — a rest with no `:active`; see [BenchInkPresetPill]. */
 internal val BenchInkPresetShadowDp = 2.dp
 
 /** `.preset i b{width:13px;height:13px}` (`:259`). V2 drew 12. */
-internal val BenchInkPresetDotDp = 13.dp
+internal val BenchInkPresetDotDp = 16.dp
 
 /** `.preset i b{margin-left:-5px}` (`:260`) — the dots overlap **leftward** now; V2 overlapped right by 4. */
 internal val BenchInkPresetDotOverlapDp = 5.dp

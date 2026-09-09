@@ -21,6 +21,7 @@ import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.feature.editor.BenchContextBarTestTag
 import com.aritr.zinely.feature.editor.BenchInkPresetTestTag
+import com.aritr.zinely.feature.editor.BenchInkSwatchTestTag
 import com.aritr.zinely.feature.editor.BenchVerbKind
 import com.aritr.zinely.feature.editor.benchContextVerbs
 import com.aritr.zinely.feature.editor.EditorEffectRunner
@@ -154,6 +155,48 @@ class BenchInkPresetPlatformA11yTest {
                 "preset $i must be activatable by an accessibility service, not only by touch",
                 node.isClickable,
             )
+        }
+    }
+
+    /**
+     * D-083's three identical *Ink* announcements are a platform-tree defect, not a model-name defect.
+     * The drawn swatches keep the authored colour name; the service-facing names identify which of the
+     * two bands the otherwise identical colour belongs to. Asserted on [AccessibilityNodeInfo] because a
+     * merged Compose-tree assertion was never evidence of what TalkBack actually receives (ADR-058).
+     */
+    @Test
+    fun the_ink_verb_and_the_two_ink_swatches_have_three_distinct_platform_names() {
+        selectText()
+        val inkVerb = composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.INK}")
+        val verbName = inkVerb.platformNode(composeRule.activity).contentDescription?.toString()
+        inkVerb.performClick()
+        composeRule.waitForIdle()
+
+        val swatches = composeRule.onAllNodesWithTag(BenchInkSwatchTestTag)
+        assertEquals("ten spot inks plus four neutrals", 14, swatches.fetchSemanticsNodes().size)
+
+        // Frozen order: the spot Ink closes the ten-ink band; neutral Ink opens the four-neutral band.
+        val spotInk = swatches[9].platformNode(composeRule.activity)
+        val neutralInk = swatches[10].platformNode(composeRule.activity)
+        val spotName = spotInk.contentDescription?.toString()
+        val neutralName = neutralInk.contentDescription?.toString()
+
+        assertEquals("the opener remains the verb, not a swatch", Copy.BenchVerbs.INK, verbName)
+        assertEquals(Copy.BenchInk.SPOT_INK_SPOKEN, spotName)
+        assertEquals(Copy.BenchInk.NEUTRAL_INK_SPOKEN, neutralName)
+        assertEquals(
+            "Ink the verb, Spot ink and Neutral ink must be distinguishable by ear",
+            3,
+            setOf(verbName, spotName, neutralName).size,
+        )
+        for ((label, node) in listOf("spot" to spotInk, "neutral" to neutralInk)) {
+            assertEquals(
+                "$label Ink must reach the platform as a radio button",
+                "android.widget.RadioButton",
+                node.className,
+            )
+            assertTrue("$label Ink must remain enabled", node.isEnabled)
+            assertTrue("$label Ink must remain activatable by an accessibility service", node.isClickable)
         }
     }
 }

@@ -43,6 +43,7 @@ import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import java.util.Locale
 
 /** The test handle on the empty state as a whole. */
@@ -151,36 +152,6 @@ internal fun ZineShelfEmpty(modifier: Modifier = Modifier) {
             modifier = Modifier.widthIn(max = measureCharacters(BodyMaxCharacters, bodyStyle)),
         )
 
-        // `.empty .pv` — the privacy line, which is the one product promise this screen makes.
-        //
-        // V2 set it as coloured text. V2.1 sets it as a **leaf-tint pill**, which is the same move the
-        // shelf's count makes: information the screen wants read, given an object to sit in rather than
-        // a colour to be noticed by. `leafText` on `leafTint` is the pairing the contrast gate measured.
-        //
-        // **It is still a `<p>`, so `.empty p` still applies** — `max-width:29ch` and `line-height:1.55`
-        // are inherited and `.pv` overrides only size, colour, weight, margin and the pill. `ch` is
-        // relative to the element's *own* font size, so the same 29 characters bind this line much
-        // narrower: 29 advances at 12sp, not at 15.04sp.
-        val privacyStyle = TextStyle(
-            fontFamily = ZinelyV21Fonts.Work,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = PrivacySize,
-            lineHeight = BodyLineHeight,
-            color = colors.leafText,
-        )
-        Text(
-            text = PrivacyText,
-            style = privacyStyle,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .padding(top = PrivacyMarginTop)
-                .widthIn(max = measureCharacters(BodyMaxCharacters, privacyStyle))
-                .background(colors.leafTint, RoundedCornerShape(ZinelyV21Dimens.radiusPill))
-                .padding(
-                    horizontal = ZinelyV21Dimens.gapMd,
-                    vertical = ZinelyV21Dimens.gapXs,
-                ),
-        )
     }
 }
 
@@ -323,16 +294,17 @@ private fun TransformColumn(label: String, illustration: @Composable () -> Unit)
 @Composable
 private fun SheetIllustration() {
     val colors = ZinelyTheme.v21Colors
+    val printed = remember { zinelyV21LightColors() }
 
     Canvas(
         modifier = Modifier
             .testTag(ZineSheetIllustrationTestTag)
             .size(width = SheetWidth, height = SheetHeight)
             .graphicsLayer { rotationZ = SheetRotation }
-            .zinelyV21HardShadow(IllustrationShadow, colors.inkLine, SheetShape)
+            .zinelyV21HardShadow(IllustrationShadow, printed.inkLine, SheetShape)
             .clip(SheetShape)
-            .background(colors.paper)
-            .border(IllustrationBorder, colors.ink, SheetShape),
+            .background(printed.paper)
+            .border(IllustrationBorder, printed.ink, SheetShape),
     ) {
         // Everything below is positioned in the **padding box**, not the border box: the frozen rules are
         // absolutely-positioned children of a bordered element, and CSS resolves both their offsets and
@@ -349,7 +321,7 @@ private fun SheetIllustration() {
         // `.v1{left:33%}` and `.v3{left:67%}` — fractions of the sheet's padding box, not of anything else.
         for (fraction in listOf(FirstFoldFraction, ThirdFoldFraction)) {
             drawRect(
-                color = colors.hair,
+                color = printed.hair,
                 topLeft = Offset(border + fraction * boxWidth, inset),
                 size = Size(thickness, ruleHeight),
             )
@@ -364,7 +336,7 @@ private fun SheetIllustration() {
         var y = inset
         while (y < inset + ruleHeight) {
             drawRect(
-                color = colors.inkFaint,
+                color = printed.inkFaint,
                 topLeft = Offset(x, y),
                 size = Size(thickness, minOf(dash, inset + ruleHeight - y)),
                 alpha = DashAlpha,
@@ -375,7 +347,7 @@ private fun SheetIllustration() {
         // `.h{left:7px;right:7px;height:1px;top:50%}` — 7px in from the padding box on both sides, and
         // its top edge at half that box's height.
         drawRect(
-            color = colors.hair,
+            color = printed.hair,
             topLeft = Offset(inset, border + HalfwayFraction * boxHeight),
             size = Size(boxWidth - 2 * RuleInset.toPx(), thickness),
         )
@@ -422,10 +394,10 @@ private fun BookIllustration() {
             .testTag(ZineBookIllustrationTestTag)
             .size(width = BookWidth, height = BookHeight)
             .graphicsLayer { rotationZ = BookRotation }
-            .zinelyV21HardShadow(IllustrationShadow, colors.inkLine, BookShape)
+            .zinelyV21HardShadow(IllustrationShadow, colors.onLeaf, BookShape)
             .clip(BookShape)
             .background(colors.leaf)
-            .border(IllustrationBorder, colors.ink, BookShape),
+            .border(IllustrationBorder, colors.onLeaf, BookShape),
     ) {
         // `::before{left:6px;top:6px;bottom:6px}` — the crease, a highlight rather than a drawn line.
         // Padding box again: 6px in from the border, not from the node's edge. See [SheetIllustration].
@@ -461,10 +433,10 @@ private fun measureCharacters(count: Int, style: TextStyle): Dp {
 // illustrations' own geometry is not, because it is a drawing rather than a layout.
 // ---------------------------------------------------------------------------------------------
 
-/** `.empty{padding:var(--gap-2xl) var(--gap-2xl) 150px;gap:var(--gap-md)}` — the 150 clears the dock. */
+/** The original 150dp dock clearance plus the frozen 56dp `Restore a backup` action row. */
 private val EmptyPaddingTop = ZinelyV21Dimens.gap2Xl
 private val EmptyPaddingHorizontal = ZinelyV21Dimens.gap2Xl
-private val EmptyPaddingBottom = 150.dp
+private val EmptyPaddingBottom = 206.dp
 private val EmptyGap = ZinelyV21Dimens.gapMd
 
 /** `.tf{gap:var(--gap-lg);margin-bottom:var(--gap-xs)}`. */
@@ -522,10 +494,6 @@ private const val BodyMaxCharacters = 29
  * *"Everything stays on your phone"*. Transcribed as frozen — the shorter line is the one the design
  * shows, and a promise is a thing to quote rather than to improve.
  */
-private const val PrivacyText =
-    "Everything stays on your phone — no account, nothing uploaded."
-private val PrivacySize = 12.sp
-private val PrivacyMarginTop = ZinelyV21Dimens.gapXs
 
 /** `box-shadow:3px 3px 0 var(--ink-line)` and `border:1.5px solid var(--ink)` on both illustrations. */
 private val IllustrationShadow = 3.dp

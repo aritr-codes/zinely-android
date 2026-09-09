@@ -477,10 +477,9 @@ verbatim**; the first draft's redraft is withdrawn (§0 O-C).
 > **This table is the vocabulary, not the labels.** Two of the sixteen are written here as slash-pairs and
 > a screen reader cannot say a slash, so the *spoken and drawn* name of each supply lives in one place —
 > `Copy.Supplies.BY_FAMILY` — which departs from this prose in five places and documents why at each one
-> ([D-083](V2-SPEC-DEFECTS.md#d-083-ruling)). ⚠ Two strings escaped that rule and are owed a move into
-> `Copy.Supplies`: the Art sheet's own **"Art"** title and **"Recent · ⭐ favourites"** heading, which P-G
-> had to define inside `feature:editor`. A copy object that holds fifteen of a surface's seventeen strings
-> is not yet the single source of truth it claims to be. Where the two disagree, **the copy wins**; the
+> ([D-083](V2-SPEC-DEFECTS.md#d-083-ruling)). The sheet-level title, search, retrieval and empty-state copy
+> now lives in `Copy.BenchArt`; supply names and family headings remain in `Copy.Supplies`. Where HTML and
+> Kotlin disagree, **the copy wins**; the
 > Art sheet's `aria-label`s were reconciled to it on 2026-08-16 (amendment **A5**).
 
 | Family | The four | The distinction it holds |
@@ -553,20 +552,20 @@ never be anything else.
 
 ### 4.3 The worked curation list — [ADR-107 R1](../DECISIONS.md#adr-107)'s first deliverable {#curation-list}
 
-R1 sets a target of ~60 and **refuses to assert a per-family number**, because a count asserted up front
-hides the risk that matters: [R2's art-fatigue mechanism operating *inside* a family](../DECISIONS.md#adr-107).
-Fifteen near-duplicate fasteners are as legible a repetition as any shuffle. This section is the count
-worked rather than asserted.
+R1 originally worked a target of ~60 and **refused to assert a per-family number**, because a count asserted
+up front hides the risk that matters: [R2's art-fatigue mechanism operating *inside* a family](../DECISIONS.md#adr-107).
+The worked list produced 51; the 2026-08-25 owner amendment deliberately stages only sixteen of those
+candidates first. Fifteen near-duplicate fasteners are as legible a repetition as any shuffle.
 
-**The answer is ~51, not 60, and one family is why.**
+**The worked ceiling remains ~51; the accepted first expansion stops at 32.**
 
-| Family | Ships | Proposed | Total | Ceiling reached? |
-|---|---|---|---|---|
-| **Tape & fixings** — things that *attach* | 4 | 10 | **14** | No — the physical world has many fasteners |
-| **Stamps & marks** — things that *point*, plus the *process* | 4 | 11 | **15** | No — process marks are a deep seam |
-| **Cut paper** — hand-torn edges, things cut *out* | 4 | 9 | **13** | No |
-| **Cut shapes** — scissor-clean geometry | 4 | 5 | **9** | ⚠ **Yes** — see §4.3.5 |
-| | **16** | **35** | **51** | |
+| Family | Ships now | Accepted first wave | Backlog | Worked total | Ceiling reached? |
+|---|---:|---:|---:|---:|---|
+| **Tape & fixings** — things that *attach* | 4 | 4 | 6 | **14** | No — the physical world has many fasteners |
+| **Stamps & marks** — things that *point*, plus the *process* | 4 | 6 | 5 | **15** | No — process marks are a deep seam |
+| **Cut paper** — hand-torn edges, things cut *out* | 4 | 5 | 4 | **13** | No |
+| **Cut shapes** — scissor-clean geometry | 4 | 1 | 4 | **9** | ⚠ **Yes** — see §4.3.5 |
+| | **16** | **16** | **19** | **51** | |
 
 #### 4.3.1 The filter that did the work
 
@@ -886,29 +885,17 @@ There is no `EDIT` action for decor because there is nothing inside a supply to 
 
 ## 9. What Supplies is not
 
-- ⚠ **Amendment PROPOSED 2026-08-18 by [ADR-107 R5](../DECISIONS.md#adr-107) — `Proposed`, pending
-  [D-080](V2-SPEC-DEFECTS.md#d-080). Nothing below is amended yet; read the ADR before acting.** In short:
-  the **search-field** bullet's own premise is *the sixteen*, and ADR-107 R1 spends it — so at ~60 both the
-  family **chips** and a **text field** are proposed to ship, on ADR-104's own finding that *"a large
-  library without excellent search is worse than none"*. The **tags/filters/sort** bullet states no premise
-  and is therefore a straight reversal, recorded as one. ⚠ A first draft of R5 deferred the text field and
-  claimed amendment **A5** had removed the chips *"for the identical sixteen-item reason"*; independent
-  review showed A5's own comment (`v21-bench.html:451-456`) gives different grounds — filtering ruled out,
-  and families already heading their own sections. The second is the real one, and it expires on **scroll
-  depth**, not on the sixteen.
-- **No search field.** Sixteen items fit on one screen; a search box over sixteen advertises an absence.
-  This is the frozen file's own reasoning (`v21-bench.html:447-450`) and what ADR-104 physically removed.
-  Amendment **A5** applied the same reasoning to the four family *chips*, which filtered the same sixteen:
-  a chip row is that box with four buttons instead of a caret, so it was removed, not re-tasked.
-- **No categories beyond the four.** No tags, no filters, no sort.
-- **Favourites and recents are ⚠ DEFERRED, not banned.** The first draft banned them and argued for it.
-  That was wrong on authority and on product. `v21-bench.html:70` — written under ADR-104 — says *"The
-  favourites star stays specified (deferred in sequencing, **not removed from the spec**)"*; the sheet
-  draws `☆` on every tile (`:846`) and captions it *"Recent and ⭐ cut long-session friction"* (`:864`);
-  `ZINE-DIRECTION.md:655` says *"Not struck, just not first."* Banning them would remove controls the
-  frozen file draws — a new amendment I have no authority to make. And the product argument was weak: *"the
-  drawer is the same every time you open it"* describes a cabinet nobody uses. A real cabinet is exactly
-  where the thing you reach for forty times ends up in front.
+- ✅ **Amended 2026-08-25 by the accepted [ADR-107](../DECISIONS.md#adr-107) owner ruling.** The first
+  catalogue expansion stops at 32 rather than jumping directly to the worked ~51 list. With that growth,
+  local name/tag search and visible reversible family filters ship together; [D-080](V2-SPEC-DEFECTS.md#d-080)
+  keeps production admission blocked only until the rendered A15 visual freeze.
+- **Search serves growth, not a sixteen-item cabinet.** It matches the maker-facing name and curated local
+  tags. No query, project data or usage signal leaves the device.
+- **No categories beyond the four and no sort.** The four physical families remain the only visible
+  taxonomy. Family buttons filter; tags are discovery metadata, not another shelf the maker must learn.
+- **Favourites and Recent are retrieval shortcuts, not catalogue order.** They may reflect the maker's own
+  use while the family-shelved master catalogue remains stable. Neither authorises shuffled results,
+  surprise placement, generated outlines or app-authored compositions.
 - **No packs UI in beta.** Curated packs are post-beta (ADR-104). Shipping the shelf before any pack exists
   is dead UI, which Amendment 3 exists to prevent.
 - **No emoji, no imported SVG, no custom shape drawing.** Each re-opens provenance — the question
@@ -960,9 +947,9 @@ page, diffing PDF operators, settles it.
 | **S2 / S2′** | ✅ Shipped as one change (P1). Schema **v1 → v2 with an identity migrator** — the migrator is required because `DocumentMigrations` enforces a contiguous chain and throws on a gap. |
 | **S3** | ✅ Shipped (P2). `DrawShape` · `SupplyOutline` · `SupplyCatalog`. |
 | **S4** | ✅ **Shipped (P3).** `CanvasReplayer:132` sets `shapePaint.color` and calls `canvas.drawPath(command.outline.toPath(), shapePaint)` — its **own** paint, AA on, deliberately not the pinned `fillPaint` (§3.5). ⚠ This row read *"stubbed, not done"* until 2026-08-17, when **the device contradicted the document**: a placed `shape.rect` drew as a filled square on SM-A176B. The row was stale from the commit that closed it. *A status table is a claim like any other.* |
-| **S5** | ⏳ **12 of 16.** *Cut shapes* shipped first as derivable geometry — and then the same reading was applied to the rest, which is where the earlier status was wrong twice over. ⚠ **The twelve were recorded as "gated on O-B/O-C", and they never were**: [§0](#0-the-four-escalated-calls--decided) closes all four escalated calls in as many words (*"Nothing here is left open"*). What actually held them was a designer's hand, which is a resource, not a ruling — and the second package proved eight of them did not need one. ⚠ **Derivability does not run along family lines.** The eight added (`mark.registration` · `mark.halftone` · `mark.asterisk` · `mark.arrow` · `paper.window` · `paper.tag` · `fix.staple` · `fix.corner`) come from three families; *Cut shapes* was simply the family authored first. **Four remain**, each for a reason recorded in `SupplyCatalog`: `tape.torn` · `paper.strip` · `paper.underline` need an authored *tear* (§5 bans generating one), and `fix.clip` is a **wire object in a fill-only renderer** — the one row of [§4.3](#curation-list)'s "derivable" column that did not survive contact with `DrawShape`. `outlineOf()` returns `null` for each. |
+| **S5** | ✅ **16 of 16, completed 2026-08-22 under A11.** The last four are authored as the one coherent tear family (`tape.torn` · `paper.strip` · `paper.underline`) and a closed-ribbon paper clip (`fix.clip`) that works in the existing fill-only renderer. The exact paths were frozen in `v21-bench.html` before Kotlin, then parity-checked against `SupplyCatalog`; no family, name, order, renderer rule or document semantics changed. All sixteen tiles are now live. This closes [D-104](V2-SPEC-DEFECTS.md#d-104). That package did not itself widen the catalogue; the later accepted [ADR-107](../DECISIONS.md#adr-107) stages 16→32 behind D-080's visual freeze. |
 | **S6** | ✅ Shipped. Sixteen names in `core:copy`, five documented departures from §4's prose. |
-| **S7 / S7′** | 🟡 **Partly landed (P-G).** The **Art sheet** exists — sixteen tiles, four headings, four inert (twelve when it landed) ([ADR-105 amendment](../DECISIONS.md#adr-105), [D-086](V2-SPEC-DEFECTS.md#d-086)) — and the `INK` **routing** defect is fixed: `EditorScreen` now derives `inkPopoverVisible = inkPopoverOpen && inkTarget != null`, with all five consumers reading the derived value, so the stranded empty-popover state is **unconstructible** rather than guarded at one entry. The verb stays disabled. ⚠ The *trigger* is still unexercisable for decor precisely because that verb is disabled — the fix is pinned by construction and by the live text path, not by a decor tap. **S7-placement then closed the loop:** `Intent.PlaceSupply`, the [§5.2 scale ruling](#s-5-2-ruling), the Add chooser's **Art row released**, and the sheet wired so an authored tile places and an inert tile stays a no-op. **Still owed:** S7′'s silent seams — two of which S7-placement found by mutation and fixed (`benchDeleteLabel` said *"Photo deleted."* for a supply; `benchInkCount` under-counted the print cost).
+| **S7 / S7′** | ✅ **Shipped; A16 expansion implemented 2026-08-26.** The Art sheet now exposes all 32 authored supplies through the frozen 3-column material-card layout, stable family filters, deterministic local name/tag search, Recent and Favourites retrieval rails, a resettable no-results state, and the shared render-command pipeline. Selection still dispatches the existing `Intent.PlaceSupply`; no document or rendering semantics changed. Recent and Favourites are session-scoped in this package. The earlier INK routing and silent-seam work remains closed as recorded below. |
 
 ✅ **S7′ surveyed 2026-08-17 and it is CLOSED: zero broken silent seams.** 24 type-branching sites in `feature:editor` were read — **20 SAFE, 4 correct-by-accident, 0 broken**. **This step's premise was stale in three separate ways**, and the pattern is worth keeping: `benchVerbKindOf`'s dangerous `else -> null` no longer exists (it is an exhaustive three-arm `when`); `LivePreview.kt:78` is in `core:editor`, not `feature:editor`, and its `if (element !is TextElement) return@map element` is correct; and the row's "expensive half" framing was wrong — P1–P3 landing exhaustive `when`s over the sealed type had *already* closed the seams as a side effect. Hit-test, drag, resize and z-order turn out to be type-blind by construction (`HitTest` reads transform and z only), so a supply inherited them for free.
 
@@ -979,22 +966,22 @@ page, diffing PDF operators, settles it.
 | **S8** | ✅ Shipped with S2. |
 | **S9** | 🟡 **Pass 1 run 2026-08-18 (SM-A176B, Android 16); Pass 2 begun.** The blocker in this row's own text is gone — S4 ships, and twelve supplies now draw. **Pass 1: five of six questions passed** — all eight new marks render; `mark.halftone` stays a legible lattice at its 0.16 landing (the prediction most expected to fail); `mark.registration`'s arm/ring join reads joined; `paper.tag` reads as speech; and the **platform** `AccessibilityNodeInfo` tree agrees with the semantics tree on all sixteen tiles — exactly the four unauthored report `enabled=false clickable=false`. **One Pass 1 defect: [D-092](V2-SPEC-DEFECTS.md#d-092)** — a photo corner lands as a 4.5:1 sliver because *Tape & fixings* carries tape's aspect. ⚠ **Pass 2 raised [D-093](V2-SPEC-DEFECTS.md#d-093)**: every tile is drawn hollow and every supply lands solid. **Acceptance requires both passes**, so S9 stays open until D-086, D-092 and D-093 are ruled.
 
-✅ **All three ruled and implemented 2026-08-20** ([ADR-108 accepted](../DECISIONS.md#adr-108-shipped)): the tile now renders the authored outline itself, `BenchArtGlyphs` is deleted, `v21-bench.html`'s glyphs are generated from `SupplyCatalog` (amendment **A7**), the four unauthored tiles carry `Not available yet` and draw no mark, and the fixings get their own sizing constant. ⚠ **S9 still stays open**, and for the reason it was always going to: the three rulings were *implemented* on the strength of a golden diff and a spec reading, and **neither pass has been re-run on a device against the built result**. A Pass 2 finding closed by an implementer who then declares his own fix understood is the disqualification [Pass 2](../../CLAUDE.md#pass-2--first-time-user-verification) names, word for word.
+✅ **All three ruled and implemented 2026-08-20** ([ADR-108 accepted](../DECISIONS.md#adr-108-shipped)): the tile now renders the authored outline itself, `BenchArtGlyphs` is deleted, `v21-bench.html`'s glyphs are generated from `SupplyCatalog` (amendment **A7**), the four unauthored tiles carry `Not available yet` and draw no mark, and the fixings get their own sizing constant. ⚠ **S9 stayed open** at that point, and for the reason it was always going to: the three rulings were *implemented* on the strength of a golden diff and a spec reading, and **neither pass had yet been re-run on a device against the built result**. *(Superseded by the 2026-08-20 record below — rewritten to the past tense on 2026-08-20, because two paragraphs of one table cell were asserting opposite things in the present tense.)* A Pass 2 finding closed by an implementer who then declares his own fix understood is the disqualification [Pass 2](../../CLAUDE.md#pass-2--first-time-user-verification) names, word for word.
 
-✅ **Both passes re-run on the device 2026-08-20** against the installed `zinely-0.9.0-beta.2-debug.apk` built from this branch (SM-A176B / Android 16 / 1080×2340).
+✅ **Both passes re-run on the device 2026-08-20** against `zinely-0.9.0-beta.2-debug.apk`, built from **commit `1204db9`** — the branch tip at build time, with `git status --porcelain` showing no tracked modifications outside the five files this repo never commits. SM-A176B / Android 16 / 1080×2340. *(The commit sha was added 2026-08-20 after review: the record first said only "built from this branch", which does not identify a tree — regressing from the standard the `S7 · Replace supply` row below sets two rows down, and set deliberately.)*
 
-**Pass 1 — PASS, on all four questions it was opened to ask.**
+**Pass 1 — PASS, on all four questions this re-run was opened to ask.** ⚠ The 2026-08-18 run above asked **six** and passed five; this one asks **four**, and the difference is a re-scope, not a silent drop. This run existed to test *what the three rulings changed* — the marks, the platform tree, the fixings' size, and whether even-odd survives to the page. The 2026-08-18 questions not repeated here were about marks whose geometry P4 did not touch and which that run already passed. Saying "PASS on all four" without this sentence read stronger than the evidence supports; added after review.
 
 1. **The marks are the marks.** All twelve authored tiles draw their `SupplyCatalog` outline filled. The three with real holes read as holes at tile size — `paper.window` a square ring, `mark.registration` a ring with four arms, `fix.corner` an open triangle. **`mark.halftone` draws sixteen dots in a 4×4 lattice**, which is the specific disagreement [ADR-108's R4](../DECISIONS.md#adr-108-shipped) was recommended to paper over and this ruling made unrepresentable instead.
 2. **The platform tree agrees with the screen.** `uiautomator dump` reports the twelve authored as `clickable=true enabled=true focusable=true` and exactly `Torn tape` · `Paper clip` · `Torn strip` · `Marker underline` as `clickable=false enabled=false focusable=false`. This is the `AccessibilityNodeInfo` tree, not the merged semantics tree — the distinction [CLAUDE.md](../../CLAUDE.md#pass-1--developer-verification) draws, and the one that caught `ReframeControls.ZoomButton`.
-3. **[D-092](V2-SPEC-DEFECTS.md#d-092) is fixed where it was found.** A placed `fix.corner` selects at **165×165 px — 1:1** — roughly a fifth of the page's width, against the 4.5:1 half-page sliver Pass 1 found on 2026-08-18.
-4. **Even-odd survives to the page, not just the tile.** The placed corner is drawn hollow on the page: the photo beneath shows through its interior. The tile and the page are one replayer, and the device says so.
+3. **[D-092](V2-SPEC-DEFECTS.md#d-092) is fixed where it was found.** A placed `fix.corner` selects at **165×165 px — 1:1**, against the 4.5:1 half-page sliver Pass 1 found on 2026-08-18. The **1:1 is the measurement**, and it is corroborated by the code: `SupplyPlacement.kt` routes all three fixings to `BenchFixingsSizingKey` at `widthFraction = 0.20, aspect = 1.0`. ⚠ The *"roughly a fifth of the page's width"* half was written without recording the page's own pixel width, so it could not be checked from this record; 165 px implies a page of ~825 px, which is consistent with `0.20` on a 1080-wide device but is inference, not measurement.
+4. **Even-odd survives to the page, not just the tile.** The placed corner is drawn hollow on the page: the photo beneath shows through its interior. ⚠ **The mechanism first written here — *"the tile and the page are one replayer"* — is wrong, and the code says so in as many words:** `SupplyPainter.kt:31` states *"It is deliberately **not** `CanvasReplayer.replay`."* There are two draw sites. What is shared is narrower and is the thing that actually carries this result: **one `SupplyOutline.toPath()`** (`CanvasReplayer.kt:186-187`, where `EVEN_ODD` is set) and **one `newShapePaint()`**. The observation stands; "one seam, five surfaces" is the true claim, and P4's own commit message said *seam* before this row upgraded it to *replayer*.
 
-**Undo restored the page byte-identically** (the pre-placement and post-undo crops compare equal pixel-for-pixel — loaded and sampled, not lazily opened; that is [D-102](V2-SPEC-DEFECTS.md#d-102)'s lesson applied), so the maker's document was left as found.
+**Undo restored the page pixel-for-pixel** — the pre-placement and post-undo screenshot crops compare equal, loaded and sampled rather than lazily opened, which is [D-102](V2-SPEC-DEFECTS.md#d-102)'s lesson applied. *(This first read "restored the page **byte-identically**"; two screenshots can show the rendered page is identical and can say nothing about the document's bytes. Corrected 2026-08-20 after review — a smaller claim, and the one the evidence supports.)*
 
-**Pass 2 — run, two findings, and ⚠ my reading of the central question does not count.** [D-103](V2-SPEC-DEFECTS.md#d-103) (the word breaks mid-word at font scale 1.8 — and **does not clip**, correcting my own carried-forward note) and [D-104](V2-SPEC-DEFECTS.md#d-104) (`TAPE & FIXINGS` now contains no tape: closing the tile-level over-promise moved it up to the heading). Both are cosmetic and neither is a regression.
+**Pass 2 — run, two findings, and ⚠ my reading of the central question does not count.** [D-103](V2-SPEC-DEFECTS.md#d-103) (the word breaks mid-word at font scale 1.8; the entry also corrects a prediction of mine and three explanations I gave for it) and [D-104](V2-SPEC-DEFECTS.md#d-104) (`TAPE & FIXINGS` now contains no tape: closing the tile-level over-promise moved it up to the heading). Both are cosmetic and neither is a regression.
 
-⚠ **The question S9 exists to ask — "does the drawer read honestly?" — is still owed, and by the owner.** I wrote the fix; knowing why a screen behaves as it does disqualifies me from judging whether it explains itself. What I can report is that the two findings above are what I noticed *while* being unable to un-know the implementation, which is the weaker half of the evidence Pass 2 wants. **S9 is accepted on Pass 1 and held open on Pass 2 for the owner's own reading.** |
+⚠ **The question S9 exists to ask — "does the drawer read honestly?" — is still owed, and by the owner.** I wrote the fix; knowing why a screen behaves as it does disqualifies me from judging whether it explains itself. What I can report is that the two findings above are what I noticed *while* being unable to un-know the implementation, which is the weaker half of the evidence Pass 2 wants. **S9 remains OPEN.** Pass 1 passed; Pass 2 is **not accepted**, and the owner's own reading is the evidence that closes it. *(This first read "accepted on Pass 1 and held open on Pass 2". [CLAUDE.md](../../CLAUDE.md#acceptance) says a feature is accepted only when **both** passes succeed, so a per-pass "accepted" is a state the process does not have — and "accepted" beside "S9" is exactly what a future reader greps for. Reworded after review.)* Note that CLAUDE.md's *"if the two passes disagree, the disagreement is the finding"* clause does **not** apply: the passes do not disagree, Pass 2 simply has no qualified reader yet. |
 | **S7 · Replace supply** | ✅ **Shipped**, closing decor's verb set. `Intent.ReplaceSupply` → the same `EditDecorCommand` (id, ink, mirror and z survive a swap; only `supplyId` and `transform` change, enforced by the `copy` naming exactly those two). The Art sheet is re-summoned as a **picker**: `artSheetFor: BenchArtPurpose?` replaces the old `Boolean`, so the sheet cannot be open in replace mode with nothing to replace, nor in place mode holding a stale id — the [D-091](V2-SPEC-DEFECTS.md#d-091) lesson applied *before* the defect rather than after it. **Owner ruling, 2026-08-17: a replacement takes the incoming family's §5.2 scale, at the outgoing element's centre and rotation.** The two rejected readings and why are recorded at `benchSupplyReplacement`. No snack: unlike a placement, a delete or an ink, a swap redraws the selected mark in place under the maker's own eyes.
 
 **Pass 1 device verification — PASS**, SM-A176B / Android 16, 2026-08-17, and **re-run 2026-08-18 against the committed build `126d84e`** — the first time this evidence is attached to a named commit rather than to a working tree. Both runs agree. On the platform `AccessibilityNodeInfo` tree **all three decor verbs read `clickable=true enabled=true`** — `Replace` flipped from `false` where TalkBack reads it. Tapping it re-opened the cabinet as a picker; tapping *Circle* swapped the outline **in place**, node bounds byte-identical (`[430,736][650,956]` before and after) because both are *Cut shapes* and share a family default.

@@ -20,9 +20,13 @@ class SuppliesCopyTest {
         /** §4's `supplyId` list, verbatim, in frozen order. */
         val SPEC_IDS = listOf(
             "tape.torn", "fix.corner", "fix.staple", "fix.clip",
+            "tape.masking", "fix.stitch", "fix.grommet", "fix.pushpin",
             "mark.asterisk", "mark.arrow", "mark.halftone", "mark.registration",
+            "mark.hand", "mark.crop", "mark.bar", "mark.scan", "mark.perf", "mark.burst",
             "paper.strip", "paper.window", "paper.tag", "paper.underline",
+            "paper.stub", "paper.stamp", "paper.deckle", "paper.hole", "paper.dogear",
             "shape.rect", "shape.circle", "shape.triangle", "shape.rule",
+            "shape.ring",
         )
 
         /**
@@ -52,9 +56,9 @@ class SuppliesCopyTest {
     }
 
     @Test
-    fun `the sixteen supplies are present, named, and mutually distinct`() {
+    fun `the first expanded cabinet is present, named, and mutually distinct`() {
         val names = Copy.Supplies.NAMES.values.toList()
-        assertEquals(16, Copy.Supplies.NAMES.size, "SUPPLIES-SPEC §4 names sixteen supplies")
+        assertEquals(32, Copy.Supplies.NAMES.size, "ADR-107 admits sixteen additions to the original sixteen")
         names.forEach { assertTrue(it.isNotBlank(), "A supply with no name cannot be spoken or drawn") }
         assertEquals(
             names.size, names.toSet().size,
@@ -91,7 +95,7 @@ class SuppliesCopyTest {
     }
 
     @Test
-    fun `the four families are the spec's four, with four supplies each`() {
+    fun `the four families stay stable while their curated counts grow`() {
         assertEquals(
             listOf(
                 Copy.Supplies.TAPE_AND_FIXINGS,
@@ -102,8 +106,22 @@ class SuppliesCopyTest {
             Copy.Supplies.BY_FAMILY.keys.toList(),
             "SUPPLIES-SPEC §4 freezes four families (v21-bench.html:831)",
         )
-        Copy.Supplies.BY_FAMILY.forEach { (family, supplies) ->
-            assertEquals(4, supplies.size, "§4's table gives $family exactly four supplies")
-        }
+        assertEquals(listOf(8, 10, 9, 5), Copy.Supplies.BY_FAMILY.values.map { it.size })
+    }
+
+    @Test
+    fun `search is local deterministic and matches names plus curated tags`() {
+        assertEquals(listOf("mark.asterisk", "mark.burst"), Copy.Supplies.matchingIds("star"))
+        assertEquals(listOf("mark.hand"), Copy.Supplies.matchingIds("manicule"))
+        assertEquals(
+            listOf("tape.torn", "tape.masking"),
+            Copy.Supplies.matchingIds("tape", Copy.Supplies.TAPE_AND_FIXINGS),
+        )
+        assertTrue(Copy.Supplies.matchingIds("not in this cabinet").isEmpty())
+    }
+
+    @Test
+    fun `every supply has searchable tags`() {
+        assertEquals(Copy.Supplies.NAMES.keys, Copy.Supplies.TAGS.keys)
     }
 }

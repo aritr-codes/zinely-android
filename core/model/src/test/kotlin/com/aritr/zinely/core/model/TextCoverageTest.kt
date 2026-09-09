@@ -81,20 +81,16 @@ class TextCoverageTest {
     }
 
     @Test
-    fun `emoji are reported separately because they fail for a different reason`() {
-        // Colour emoji cannot be embedded in a PDF at all (ADR-001) — a limit of print, not a missing
-        // font, so the explanation a user needs is different.
-        val result = analyzeTextCoverage("party 🎉")
-        assertFalse(result.isFullyCovered)
-        assertEquals(listOf(Script.EMOJI), result.unsupportedScripts)
+    fun `launch emoji corpus is covered by the bundled emoji renderer`() {
+        assertTrue(analyzeTextCoverage("🙂 👍🏽 👩🏽‍🎨 👨‍👩‍👧‍👦 🇮🇳 1️⃣ ❤️ 🐦‍🔥").isFullyCovered)
     }
 
     @Test
-    fun `an astral character counts once, not twice`() {
-        // 🎉 is a surrogate pair: iterating chars rather than code points would double-count it and
-        // report a nonsense "2 characters" to the user.
-        assertEquals(1, analyzeTextCoverage("🎉").unsupportedCount)
-        assertEquals(listOf("🎉"), analyzeTextCoverage("🎉").sampleCharacters)
+    fun `an unsupported astral character counts once, not twice`() {
+        // U+20000 is outside the bundled scripts and is a surrogate pair. Iterating chars would count it twice.
+        val result = analyzeTextCoverage("𠀀")
+        assertEquals(1, result.unsupportedCount)
+        assertEquals(listOf("𠀀"), result.sampleCharacters)
     }
 
     @Test
@@ -144,7 +140,7 @@ class TextCoverageTest {
 
     @Test
     fun `script classification matches the ratified set exactly`() {
-        assertEquals(setOf(Script.LATIN, Script.CYRILLIC, Script.GREEK), SupportedScripts.BUNDLED_SCRIPTS)
+        assertEquals(setOf(Script.LATIN, Script.CYRILLIC, Script.GREEK, Script.EMOJI), SupportedScripts.BUNDLED_SCRIPTS)
         assertTrue(SupportedScripts.isSupported('A'.code))
         assertTrue(SupportedScripts.isSupported('Ж'.code))
         assertTrue(SupportedScripts.isSupported('Ω'.code))

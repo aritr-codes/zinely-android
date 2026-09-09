@@ -18,6 +18,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -229,7 +230,7 @@ public fun EditorSaveFailure(
                 .testTag(EditorSaveFailureTestTag)
                 .graphicsLayer { rotationZ = NoticeRotation }
                 .clip(NoticeShape)
-                .background(colors.ink)
+                .background(colors.jam)
                 .border(NoticeBorder, colors.inkLine, NoticeShape)
                 .padding(
                     start = NoticePaddingStart,
@@ -247,7 +248,7 @@ public fun EditorSaveFailure(
                     fontSize = NoticeTextSize,
                     // `.snack` declares no line-height, so it inherits — as everywhere else in the corpus.
                     lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                    color = colors.paper,
+                    color = colors.onJam,
                 ),
                 modifier = Modifier
                     // `.snack span{flex:1}` — the line takes the residual width, the actions their own.
@@ -257,8 +258,8 @@ public fun EditorSaveFailure(
                     // stays an independent, focusable, clickable control.
                     .semantics { liveRegion = LiveRegionMode.Assertive },
             )
-            NoticeAction(SaveFailureRetryLabel, SaveFailureRetryTag, onRetry)
-            NoticeAction(SaveFailureDismissLabel, SaveFailureDismissTag, onDismiss)
+            NoticeAction(SaveFailureRetryLabel, SaveFailureRetryTag, colors.onJam, onRetry)
+            NoticeAction(SaveFailureDismissLabel, SaveFailureDismissTag, colors.onJam, onDismiss)
         }
     }
 }
@@ -272,8 +273,7 @@ public fun EditorSaveFailure(
  * `background:none;border:0` asks for.
  */
 @Composable
-internal fun NoticeAction(label: String, tag: String, onClick: () -> Unit) {
-    val colors = ZinelyTheme.v21Colors
+internal fun NoticeAction(label: String, tag: String, contentColor: Color, onClick: () -> Unit) {
     // A notice's one action — Retry, Dismiss — answers the hand like every other Bench control.
     val act = benchTap(action = onClick)
     TextButton(
@@ -290,7 +290,7 @@ internal fun NoticeAction(label: String, tag: String, onClick: () -> Unit) {
                 fontSize = NoticeActionTextSize,
                 lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                 textDecoration = TextDecoration.Underline,
-                color = colors.paper,
+                color = contentColor,
             ),
         )
     }

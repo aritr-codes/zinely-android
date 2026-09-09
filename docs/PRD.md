@@ -127,9 +127,9 @@ section, so its absence here was the defect, not the work.
   [§5's non-negotiables](#5-product-principles-non-negotiable) and §7.2's first clause are untouched.
 - **Where the phasing lives.** [ROADMAP.md](ROADMAP.md) (V1), P1–P3; the per-phase detail is
   [SUPPLIES-SPEC §10.1](design/SUPPLIES-SPEC.md).
-- ⚠ **Not settled by this row.** The set **beyond** the frozen sixteen — roughly 35 further marks, their
-  names, order and the search control — is [ADR-107](DECISIONS.md#adr-107), still `Proposed`. This section
-  records the primitive that ships; it does not widen the catalogue.
+- **Settled but not yet shipped.** [ADR-107](DECISIONS.md#adr-107) accepts a staged first expansion from
+  16 to 32 with local search, family filters, Recent and Favourites; the remaining candidates stay backlog.
+  [D-080](design/V2-SPEC-DEFECTS.md#d-080) still gates production admission on rendered DESIGN FREEZE.
 
 *This row is a **record of scope that changed**, not a decision. The decisions are the ADRs it links.*
 
@@ -263,7 +263,7 @@ stateDiagram-v2
 | NFR-4 | **Durability:** no edit older than the autosave debounce is lost on crash; a crash never corrupts the last good save ([R4.3](RESEARCH.md#r43-crash-safety--verified)) |
 | NFR-5 | **Fidelity:** preview matches export within tolerance (Roborazzi diff) ([ADR-006](DECISIONS.md#adr-006)) |
 | NFR-6 | **Print accuracy:** at 100% scale, fold/cut geometry lands within tolerance on consumer printers ([ADR-012](DECISIONS.md#adr-012)) |
-| NFR-7 | **Accessibility:** M3 touch targets, content descriptions, dynamic type (full pass in V1) |
+| NFR-7 | **Accessibility:** every shipped UI surface meets **WCAG 2 AA** as an implementation requirement, including AA text/non-text contrast, non-colour state cues, ≥48dp touch targets, scalable text without loss of content or action, concise semantic labels and state, and logical focus/traversal. Accessibility is verified while the surface is built; it is not deferred to a later review pass. |
 | NFR-8 | **Min SDK 24** (Android 7.0), ratified [ADR-024](DECISIONS.md#adr-024); target latest (`targetSdk 36`) |
 
 ## 12. Success criteria (MVP)

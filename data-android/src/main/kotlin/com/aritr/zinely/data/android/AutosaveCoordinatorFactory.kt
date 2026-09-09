@@ -47,6 +47,13 @@ public class AutosaveCoordinatorFactory(
     private val active = HashMap<String, ProjectAutosaveHandle>()
 
     /**
+     * True while a library-wide writer owns the same registry used by editor autosave sessions.
+     * Guarded by [lock]. A restore can therefore exclude every current editor and prevent a new
+     * editor from entering until its files-plus-index transaction has finished.
+     */
+    private var libraryWriterActive = false
+
+    /**
      * Start autosaving [projectId], pulling the document via [snapshotProvider] at each save. Fails
      * fast with [IllegalStateException] if [autosaveScope] is already cancelled or if [projectId] is
      * already active — the caller (the lifecycle binder) must [ProjectAutosaveHandle.close] or
@@ -63,6 +70,7 @@ public class AutosaveCoordinatorFactory(
         snapshotProvider: DocumentSnapshotProvider,
     ): ProjectAutosaveHandle = synchronized(lock) {
         check(parentJob.isActive) { "autosave scope is no longer active" }
+        check(!libraryWriterActive) { "a library-wide write is active" }
         check(projectId !in active) { "autosave already active for project '$projectId'" }
         RegisteredHandle(projectId, snapshotProvider).also { handle ->
             active[projectId] = handle
@@ -83,6 +91,31 @@ public class AutosaveCoordinatorFactory(
         while (true) {
             val handle = synchronized(lock) { active[projectId] } ?: return
             handle.awaitReleased()
+        }
+    }
+
+    /**
+     * Atomically reserve the library for a multi-project write. The reservation succeeds only when
+     * no editor owns a project, and it blocks every subsequent [create] until the returned lease is
+     * closed. Returning `null` is an honest busy result; callers must not wait while holding their
+     * repository mutex.
+     */
+    internal fun tryAcquireLibraryWrite(): LibraryWriterLease? = synchronized(lock) {
+        if (libraryWriterActive || active.isNotEmpty() || !parentJob.isActive) return null
+        libraryWriterActive = true
+        FactoryLibraryWriterLease()
+    }
+
+    private inner class FactoryLibraryWriterLease : LibraryWriterLease {
+        private var closed = false
+
+        override fun close() {
+            synchronized(lock) {
+                if (closed) return
+                closed = true
+                check(libraryWriterActive) { "library writer lease was released without an owner" }
+                libraryWriterActive = false
+            }
         }
     }
 

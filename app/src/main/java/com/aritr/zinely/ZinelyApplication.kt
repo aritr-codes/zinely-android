@@ -1,6 +1,7 @@
 package com.aritr.zinely
 
 import android.app.Application
+import com.aritr.zinely.render.android.EmojiRendering
 import dagger.hilt.android.HiltAndroidApp
 
 /**
@@ -8,4 +9,9 @@ import dagger.hilt.android.HiltAndroidApp
  * autosave stack contributed by `:data-android` (`di/`). No behavior beyond hosting the graph.
  */
 @HiltAndroidApp
-class ZinelyApplication : Application()
+class ZinelyApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        EmojiRendering.initialize(this)
+    }
+}

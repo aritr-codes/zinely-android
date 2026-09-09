@@ -76,14 +76,20 @@ The café was doing two jobs — supplying the *feeling* and supplying the *plac
 | **A material** | **Stock you place and cannot un-invent.** Photos, words, tape, stamps, cut paper | Materials are finite, named, and authored. Five inks, three voices, sixteen supplies. Never a picker over infinity |
 | **Importing** | **Bringing stock to the bench** — from the drawer (gallery), from the camera, from another app | Import is not "upload". It never leaves the phone, so it is a *reach*, not a *transfer* |
 | **Exporting** | **The press run.** Ink meets paper; a sheet exists that did not before | The primary output is a foldable sheet. Page images are offcuts you may also keep |
-| **Settings** | **The colophon** — the printer's note at the back of a book saying how it was made | See §2.3. This is the single best fit in the whole metaphor and it solves a legal obligation |
+| **Settings** | **The colophon**, presented as **About Zinely** — the printer's note at the back of a book saying how it was made | See §2.3. The concept fits the metaphor and solves a legal obligation; the maker-facing name stays plain |
 | **A future feature** | **A new supply, a new mark, or a shorter path to the press run** | If it is none of those three, it belongs to a different product |
 
-## 2.3 Settings is a colophon
+## 2.3 Settings is a colophon, presented as About Zinely
 
 ✅ **VERIFIED: no settings surface exists anywhere in `src/main`.** No route, no screen, no file. For a complete product that is a gap — but "Settings" is a generic-Android answer, and the press already has the right object.
 
 A **colophon** is the note at the back of a printed book stating how it was made: the press, the typefaces, the paper, the edition. It is not a preferences panel that apologises for itself; it is *a statement of craft*, and it is the one place a confident product is allowed to talk about itself.
+
+**Naming amendment · 2026-08-29:** `Colophon` remains the architectural name for that small-press concept,
+not required vocabulary for the maker. The Shelf action says **`About`** and the destination, pane title, and
+licence Back label say **`About Zinely`**. Its approved warm opening is **“Some things deserve pages.”** followed
+by **“Zinely began with a simple wish: to make something for someone. We hope it helps you make something
+worth keeping.”** This changes the invitation, not the four contents or D-079's privacy invariant.
 
 **It carries exactly four things, and each earns its place:**
 
@@ -94,7 +100,11 @@ A **colophon** is the note at the back of a printed book stating how it was made
 | **How Zinely works** — the offline statement, **stated once, here** | §13's subtraction moves four scattered privacy reassurances into one confident sentence in the one place it is not defensive |
 | **Version, and nothing else** | No account, no sync, no analytics toggle, no notification settings. There is nothing to configure because there is nothing running |
 
-**Reached from the Shelf**, not the Bench — you read a colophon when you are not working. **BUILD.**
+**Reached from the Shelf**, not the Bench — you read this statement of craft when you are not working.
+**D-079 owner ruling, 2026-08-24; copy amended 2026-08-29:** `About` is the second quiet dock action beside
+`Backups`; its complete navigation, copy,
+large-text, licence and semantic contract is DESIGN FROZEN in
+[`COLOPHON-FREEZE.md`](COLOPHON-FREEZE.md). **BUILD.**
 
 ## 2.4 Constitution: an amendment is required
 
@@ -248,7 +258,7 @@ The complete creative loop, audited stage by stage. Verdicts are decisions, not 
 | Text: create, edit, size, bold/italic, align, ink | ✅ ships | **Already complete** |
 | Text: **font choice** | ✅ drawn, permanently disabled (`BenchContextBar.kt:99`) | **Needs completing → BUILD** as three named voices |
 | Image: import, reframe, resize, rotate, position, delete | ✅ ships | **Already complete** |
-| Image: **replace** | ✅ drawn, disabled; `Intent.ReplaceImage` exists and is dispatched from nowhere | **Needs completing → BUILD.** Closes D-038 |
+| Image: **replace** | ✅ verified; targeted picker success dispatches the existing `Intent.ReplaceImage` | **Complete.** D-038 closed 2026-08-31 after automated, independent-review, and two-reader Samsung verification |
 | **Decor / graphics** | ✅ half-built: `DecorElement` prior art (OD-2), decor verb set in the freeze at `v21-bench.html` §`toolsFor()` (`:679`), `BenchInkPopover.kt:140` handles `DECOR`, and `BenchContextBar.kt:125` **throws** | **Missing but structurally required → BUILD.** §9 |
 | **Duplicate element** | ✅ verified absent from `Intent` | **Missing but important → BUILD.** Repeated marks are the medium |
 | Layering | ✅ implemented 3× (`ZOrder.kt:37`, `EditorContextBar.kt:177`, `EditorA11y.kt:70`) but **both buttons clipped** | **Needs fixing.** Layout defect, not missing capability |
@@ -320,7 +330,7 @@ Also genuinely working: the Shelf's tilted taped cover with the `US LETTER` stam
 
 ## What is incomplete
 
-Font choice (drawn, dead) · Replace (drawn, dead) · Decor (half-built) · page reorder (in the freeze, not in the code) · page grid draws no content · the fold act buried in a drawer · no colophon · gallery-only import · no duplicate.
+Font choice (drawn, dead) · Decor (half-built) · page reorder (in the freeze, not in the code) · page grid draws no content · the fold act buried in a drawer · no colophon · gallery-only import · no duplicate.
 
 ## What should be removed
 
@@ -341,7 +351,7 @@ Step 14 of the walkthrough is *export/share*. **But the loop does not end there 
 | World metaphor = small press | **BUILD** (ADR-103 + Amendment 2) | Only candidate explaining the vocabulary law, the FINISHING north star, ADR-090, one focal zone, and "what is a Type bar?" |
 | Colophon (settings/licences/paper default) | **BUILD** | Verified absent; discharges the OFL obligation; the metaphor's best fit |
 | Font as three named voices | **FINISH** | ⚠ needs 8 static TTFs sourced — *not* "asset cost already paid". Decision holds because a dead control is a launch blocker |
-| Replace image | **FINISH** | Reducer intent exists; closes D-038 |
+| Replace image | **COMPLETE** | Targeted picker reuses the existing reducer command; D-038 verified and closed 2026-08-31 |
 | Decor / DecorElement | **BUILD** | §9. Half-built, freeze-anticipated, and the product contradicts itself without it |
 | Duplicate element | **BUILD** | Verified absent; `PlaceCommand` generalises to it |
 | Page reorder | **FINISH** | Already in the frozen spec — parity work |
@@ -365,7 +375,7 @@ Step 14 of the walkthrough is *export/share*. **But the loop does not end there 
 | Free colour picker / font picker | **DO NOT BUILD** | Materials are finite and named — the whole strategy |
 | Opacity & blend sliders | **DO NOT BUILD** | Translucency is a material property, not a control |
 | Pattern fill / auto-tiling | **DO NOT BUILD** | Names no physical cause a person could produce |
-| Emoji in text | **DO NOT BUILD** | Per-OEM rasters make the same zine export differently on two phones |
+| Emoji in text | **SEPTEMBER REQUIREMENT — ADR-112 GATED** | Per-OEM fallback remains forbidden; a bundled deterministic renderer must prove screen/PNG/PDF parity first |
 | Page background colour | **DO NOT BUILD** | Home printers cannot bleed — prints as a panel in a white margin |
 | Templates gallery | **DO NOT BUILD** | *"Blank is a peer"* |
 | Onboarding tour | **DO NOT BUILD** | Empty states already teach |
@@ -725,7 +735,7 @@ The line alphabet · the tilt law · the stamped-label rule · the four motion c
 | X3 | **Take a photo** | — | ✅ `FileProvider` already declared |
 | X3b | **Photocopier filter** ↑ *promoted from X13* — 1-bit Floyd–Steinberg over a downscaled bitmap. ⚠ **BUILT 2026-08-16, not accepted** — [ADR-106](../DECISIONS.md#adr-106) is `Proposed`, the dot size and the control's place are unspecified ([D-082](V2-SPEC-DEFECTS.md#d-082)), and **neither device pass has run** | X3 | ✅ as costed: pure Kotlin in `core:render`, one flag on `ImageElement`, one `if` in the single replayer. The cost the estimate missed is not code — it is that no frozen file draws the control, so the Bench's photo bar was amended to gain one |
 | X4 | **Duplicate element** — one verb over `PlaceCommand` | A3 | ✅ |
-| X5 | **Replace image** — closes D-038 | — | ✅ intent exists |
+| X5 | **Replace image** — implemented 2026-08-30, verified 2026-08-31 | — | ✅ targeted picker and reducer flow complete; two-reader Samsung pass recorded |
 | X6 | **Font as three named voices** | A4 | ✅ **Source and place 8 static TTFs — no subsetting.** Averia carries RFNs `'Averia'`/`'Averia Libre'`; subsetting makes a Modified Version and clause 5 voids the licence on breach, so unmodified statics are both safer and less work (§16.5). ~840KB. No schema change (`TextStyle.fontFamily` exists) |
 | X7 | **Page grid draws content**; current page `leaf` → `berry` | A5 | ✅ breaks 2 tests — budgeted |
 | X8 | **Page reorder** (+ non-drag a11y actions) **and page duplicate** | X7, A6 | ✅ reorder is parity |

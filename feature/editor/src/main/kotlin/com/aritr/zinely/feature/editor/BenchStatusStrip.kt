@@ -238,15 +238,15 @@ internal fun BenchStatusStrip(
                         ZinelyV2IconPaint.Stroke(BenchSavedStroke),
                     ),
                     contentDescription = null,
-                    // `stroke:currentColor` — the chip's own `--leaf-text`.
-                    tint = colors.leafText,
+                    // `stroke:currentColor` — the chip's own ground-aware `--on-leaf`.
+                    tint = colors.onLeaf,
                     modifier = Modifier.size(BenchSavedGlyphSize),
                 )
                 Text(
                     // `text-transform:uppercase`. "Saved" carries no dotted `i`, so the default-locale
                     // fold is the ROOT fold and needs no `Locale` argument to be correct.
                     text = BenchSavedWord.uppercase(),
-                    color = colors.leafText,
+                    color = colors.onLeaf,
                     fontSize = BenchSavedTextSize,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = BenchSavedTracking,

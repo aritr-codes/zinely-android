@@ -1,7 +1,7 @@
 package com.aritr.zinely.core.model
 
 /**
- * What a piece of text contains that v1 cannot print.
+ * What a piece of text contains that Zinely's bundled text and emoji renderers cannot print.
  *
  * @param unsupportedScripts the out-of-scope scripts present, in first-appearance order — so a message
  *   can *name* them ("Arabic isn't supported yet") rather than gesture vaguely at "some characters".

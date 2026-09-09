@@ -46,8 +46,9 @@ public object SharedTextLayout {
             color = style.color.toArgb()
         }
         val widthLayoutUnits = (boxWidthPt * LAYOUT_SCALE).roundToInt()
+        val printableText = EmojiRendering.process(text)
         return StaticLayout.Builder
-            .obtain(text, 0, text.length, paint, widthLayoutUnits)
+            .obtain(printableText, 0, printableText.length, paint, widthLayoutUnits)
             .setAlignment(style.align.toLayoutAlignment())
             .setIncludePad(false)
             .setLineSpacing(0f, 1f)

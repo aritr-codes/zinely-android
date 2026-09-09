@@ -308,3 +308,288 @@ outlives that review; [ADR-058](DECISIONS.md#adr-058) cites it.
 - 🟦 **A verb about the *frame* ("Reframe") reads as safer than one about the *image* ("Crop")** — the
   reassurance Figma has to write is the cost of the other choice. Zinely's *Fill / Whole photo* labels are
   a good plain-English rendering of the same distinction; keep them.
+
+## R12. Public-beta baseline — focused creative tools, not feature breadth — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+### R12.1 Comparable-product baseline — ✅ VERIFIED
+
+- Canva groups its editor around layouts, elements, images, text, page settings, guides, layers, and navigation;
+  these establish the manipulation and discoverability expectations of a general-purpose creator. Adobe Express
+  similarly allows mobile creation from scratch or personal media and exposes page/canvas sizing. Desygner treats
+  camera import, mobile editing, download/share, PDFs, and print as one continuous making flow. Book Creator makes
+  simple creation and PDF output central rather than requiring professional layout knowledge.
+  **Sources:** [Canva editor help](https://www.canva.com/help/editing-designing/) ·
+  [Adobe Express mobile FAQ](https://helpx.adobe.com/express/mobile/get-started/faq.html) ·
+  [Adobe Express mobile page sizing](https://helpx.adobe.com/uk/express/mobile/arrange-pages-and-elements/crop-pages.html) ·
+  [Desygner mobile app](https://desygner.com/design-app) ·
+  [Book Creator](https://bookcreator.com/)
+- Print trust is baseline behavior for print-oriented products. Canva's print guidance calls out bleed/safety zones,
+  proofing, crop marks, color shifts, and resolution; Desygner describes high-resolution PDF output; Book Creator
+  treats PDF print/export as a core publishing path.
+  **Sources:** [Canva print troubleshooting](https://www.canva.com/help/fix-canva-print-order/) ·
+  [Desygner print](https://desygner.com/print/) ·
+  [Book Creator publishing](https://bookcreator.com/features/publishing/)
+- Accessibility is also a public product expectation. Book Creator documents WCAG 2.2 AA alignment, assistive-
+  technology testing, keyboard operability, clear labels, visible focus, and logical reading order.
+  **Source:** [Book Creator accessibility](https://bookcreator.com/accessibility/)
+
+### R12.2 Zinely's public-beta bar — 🟦 RECOMMENDATION
+
+Zinely should not chase Canva's breadth. Its credible public-beta baseline is the smaller promise that a person can
+open the app, make a zine, trust the printed result, and safely keep their work:
+
+1. **Trustworthy project lifecycle:** create, open, edit, autosave, close, reopen, recover, back up, and restore
+   without corruption or unexplained loss.
+2. **Reliable creative loop:** text, local photos, and curated art; predictable select/move/resize/rotate; dependable
+   undo/redo; inviting shelf and page entry points.
+3. **Print/output confidence:** honest proof/PDF parity, correct imposition and fold order, readable margins, and
+   image-quality handling appropriate to the physical output.
+4. **Accessible device behavior:** usable large-font layouts, meaningful TalkBack labels and state announcements,
+   predictable Back behavior, and understandable error/cancellation states.
+5. **Interaction responsiveness:** no obvious lag in dragging, transforming, page switching, opening Art, proofing,
+   or export; optimize image decoding only where measurement confirms a real cost.
+
+Cloud accounts, social publishing, collaboration, AI generation, template marketplaces, large online asset feeds,
+and desktop-publishing controls are **not** prerequisites. They conflict with the current focused, private,
+offline-first product promise or add breadth before the core is sufficiently trustworthy.
+
+### R12.3 Launch-readiness decision rule — 🟦 RECOMMENDATION
+
+Audit each baseline area as **green** (credible for public beta), **yellow** (functional but insufficiently reliable or
+clear), or **red** (blocker). Public beta requires no unresolved red item in persistence, editor ownership,
+rendering/export, backup/restore, navigation, or accessibility, and no obvious interaction-critical performance
+failure on a representative physical device.
+
+## R13. Android launcher identity and launch transition — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+### R13.1 Adaptive icon contract — ✅ VERIFIED
+
+Android adaptive icons separate foreground, background, and optional monochrome layers, then let each launcher apply
+its own mask and visual treatment. The foreground must keep its recognition-critical content inside the platform safe
+zone; themed icons use the monochrome layer rather than a developer-chosen colour.
+**Source:** [Android adaptive icon guidance](https://developer.android.com/develop/ui/compose/system/icon_design_adaptive).
+
+### R13.2 Splash contract — ✅ VERIFIED
+
+Android 12 and newer always provide a system splash. AndroidX `core-splashscreen` carries the same theme-driven
+contract back to earlier supported versions: a starting theme supplies background and icon, `installSplashScreen()`
+runs before `super.onCreate()`, and `postSplashScreenTheme` returns the Activity to its normal theme. The current
+stable artifact is `androidx.core:core-splashscreen:1.2.0`.
+**Sources:** [SplashScreen overview](https://developer.android.com/develop/ui/views/launch/splash-screen) ·
+[migration guidance](https://developer.android.com/develop/ui/views/launch/splash-screen/migrate) ·
+[AndroidX Core releases](https://developer.android.com/jetpack/androidx/releases/core).
+
+### R13.3 Zinely application — 🟦 RECOMMENDATION
+
+Use the supplied `APP_LOGO.png` unchanged for launcher identity, an edge-matched pink background for adaptive crops,
+and a simplified Z-only monochrome layer. Use only the system splash transition, with no custom Activity, branding
+panel, copy, animation, or keep condition. This preserves Zinely's fast-entry rule: identity appears at the threshold,
+then gets out of the maker's way. Frozen in [APP-ENTRY-FREEZE.md](design/APP-ENTRY-FREEZE.md).
+
+## R14. Art cabinet and Ink tray hierarchy — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+### R14.1 Creative libraries combine search, grouping and readable identity — ✅ VERIFIED
+
+Figma's Assets panel combines a search field with library filters and grouped assets, and its component descriptions
+are visible in the Assets panel and participate in search. Adobe Express similarly places shape discovery inside the
+focused `Elements → Shapes` hierarchy rather than presenting an undifferentiated stock wall.
+
+**Sources:** [Figma — Explore the navigation bar and left sidebar](https://help.figma.com/hc/en-us/articles/360039831974-Explore-the-navigation-bar-and-left-sidebar) ·
+[Figma — Add descriptions to styles, components, and variables](https://help.figma.com/hc/en-us/articles/7938814091287-Add-descriptions-to-styles-components-and-variables) ·
+[Adobe Express — Add and customize shapes](https://helpx.adobe.com/express/web/add-images-and-visuals/charts-tables-shapes/add-and-customize-shapes.html).
+
+### R14.2 Colour tools expose the active colour and reusable combinations — ✅ VERIFIED
+
+Procreate Pocket keeps the active primary and secondary colours visible in its colour interface; tapping a swatch sets
+the current colour, and a default palette remains available for reuse. Adobe Express recommends small colour themes of
+two to five frequently paired colours and makes multiple common themes directly reachable.
+
+**Sources:** [Procreate Pocket — Colors interface](https://help.procreate.com/pocket/handbook/colors/colors-interface) ·
+[Procreate Pocket — Palettes](https://help.procreate.com/pocket/handbook/4.0/colors/colors-palettes) ·
+[Adobe Express — Apply color themes](https://helpx.adobe.com/express/web/add-images-and-visuals/images-and-backgrounds/apply-color-themes.html).
+
+### R14.3 Touch size need not become visual bulk — ✅ VERIFIED
+
+Android recommends at least 48dp interactive targets and explicitly permits a smaller painted icon inside that larger
+touch area. Controls can therefore remain visually light while preserving reliable touch and accessibility behavior.
+
+**Source:** [Android Accessibility Help — Touch target size](https://support.google.com/accessibility/android/answer/7101858?hl=en).
+
+### R14.4 Zinely application — 🟦 RECOMMENDATION
+
+For Art, retain one local catalogue with search and the four authored families, but replace the anonymous four-column
+glyph wall with named material cards, compact horizontally scrolling family filters, and Recent/Favourites rails.
+Family styling must be deterministic; catalogue order and placement remain unrandomised. The favourite action belongs
+in the card's label band rather than over the material silhouette.
+
+For Ink, show the current ink by both colour and name, place smaller painted pots inside 48dp choices, and use a stable
+five-column grid so ten spot inks never create an orphan row. Palette recipes should remain directly reachable, but
+their copy must describe the implemented action: under OD-24 a recipe applies its primary ink, not a complete zine-wide
+theme. The interactive specification is Bench amendment A16, owner-approved and DESIGN FROZEN on 2026-08-26
+through D-080 and D-107.
+## R15. Deterministic emoji output — launch renderer gate (2026-08-26)
+
+**Verified:** Android's Emoji2 documentation distinguishes a bundled font from the default downloadable-font
+configuration. The bundled artifact keeps availability offline and consistent, but Google's own guidance records a
+material app-size cost. Emoji2 1.6.0 is the current stable line and advertises Emoji 16.0 support. `EmojiCompat`
+materialises emoji through spans; Android's `ReplacementSpan` contract draws replacements directly into the target
+`Canvas`, so the PDF backend must be measured rather than assumed to preserve vector glyphs.
+
+**Verified:** Google's Noto Emoji repository licenses the fonts under OFL and its SVG artwork under Apache 2.0.
+Noto's usage guidance distinguishes the monochrome Noto Emoji font from the colour font and describes the former as
+the print-oriented/vector option, while warning that its encoded coverage is only a subset of the complete emoji
+set. Coverage of ZWJ sequences therefore cannot be inferred from the project name.
+
+**Measured outcome:** bundled Emoji2 1.6.0 was selected and forced with `replaceAll=true`; system/OEM and
+downloadable fallback stay out of document rendering. On the Samsung `SM-A176B`, the fixed launch corpus produced
+bundled spans and real raster/PDF ink at 10/24/48 pt. Warm 24-pt raster measured 0.817 ms with emoji versus
+0.727 ms plain; font startup measured 301.80 ms off the UI thread and 9,886 KiB PSS; the signed release APK grew
+9.42 MiB. See [ADR-112](DECISIONS.md#adr-112) for the accepted bounds and implementation seam.
+
+Sources: [Android Emoji2 guide](https://developer.android.com/develop/ui/views/text-and-emoji/emoji2) ·
+[AndroidX Emoji2 releases](https://developer.android.com/jetpack/androidx/releases/emoji2) ·
+[ReplacementSpan API](https://developer.android.com/reference/android/text/style/ReplacementSpan) ·
+[Noto Emoji repository](https://github.com/googlefonts/noto-emoji) ·
+[Noto usage guidance](https://github.com/notofonts/noto-docs/blob/main/docs/website/use.md)
+
+## R16. Public product site and optional fold motion — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+### R16.1 Show the small product directly — ✅ VERIFIED
+
+W3C's carousel guidance requires complete keyboard operation, announced changes, focus care, and a way to pause
+automatic movement, while noting that carousel usability is disputed. Google Play requires promotional images to
+represent the app accurately. Responsive-image guidance recommends intrinsic dimensions and deferring images below
+the initial viewport. A visible, non-rotating gallery of three truthful app stages is therefore a better fit for
+Zinely than a carousel or a private-device photo shoot.
+
+**Sources:** [W3C carousel tutorial](https://www.w3.org/WAI/tutorials/carousels/) ·
+[Google Play preview-asset guidance](https://support.google.com/googleplay/android-developer/answer/15191715) ·
+[web.dev responsive images](https://web.dev/learn/design/responsive-images).
+
+### R16.2 Motion must remain optional and redundant — ✅ VERIFIED
+
+WCAG 2.1 requires keyboard access, reflow, sufficient contrast, and user control of moving content. Its animation
+guidance requires motion triggered by interaction to be disableable unless essential. A fold replay may supplement
+an instruction, but may not become the only explanation. It should start only from a native control, preserve the
+written step and final diagram, announce the result without moving focus, and collapse to a static result when the
+user requests reduced motion.
+
+**Sources:** [WCAG 2.1](https://www.w3.org/TR/WCAG21/) ·
+[W3C animation from interactions](https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions.html).
+
+### R16.3 Public information should be curated, short, and qualified — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+W3C recommends that an accessibility statement identify the commitment or standard, contact path, and known
+limitations in simple language, placed somewhere easy to find; it does not require primary navigation. Keep a
+Changelog recommends curated, chronological, user-facing entries rather than raw commit logs. GOV.UK interface
+writing recommends starting with less, leading with important words, and removing duplication. For Zinely, embed a
+concise accessibility statement in About, give growing Changelog and Roadmap material their own pages, and separate
+roadmap items into Planned, Exploring, and Not committed without dates or guarantees.
+
+**Sources:** [W3C accessibility statements](https://www.w3.org/WAI/planning/statements/) ·
+[Keep a Changelog](https://keepachangelog.com/) ·
+[GOV.UK writing for user interfaces](https://www.gov.uk/service-manual/design/writing-for-user-interfaces).
+
+### R16.4 Visual references should inform materiality, not branding — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+NIC Ice Creams and The Belgian Waffle Co. use confident display type, crafted section transitions, playful
+category framing, and tactile product presentation. Zinely should borrow that energy without copying food imagery,
+logos, commercial density, or repeated promotional content. Its own translation is a professional zine workbench:
+paper layers, tape, ink marks, imperfect alignment, and direct interactions around truthful product views.
+
+**Sources:** [NIC Ice Creams](https://www.nicicecreams.com/) ·
+[The Belgian Waffle Co.](https://thebelgianwaffle.co/).
+
+### R16.5 Complete folding instructions before optional motion
+
+The website follow-up presents every physical step in a static ordered guide. Photoworks' single-sheet instructions
+confirm the critical operation: cut from the folded side, then reopen and refold into the booklet. The diagram and
+wording must identify both the folded edge and the stopping point; an animated cue must not suggest a different cut.
+W3C technique C39 supports suppressing non-essential interaction animation with `prefers-reduced-motion`.
+Zinely hides optional tracing controls in that mode while retaining all diagrams and written steps.
+
+**Sources:** [Photoworks single-sheet zine](https://photoworks.org.uk/learn/how-to/single-sheet-zine/) ·
+[W3C reduced-motion technique C39](https://www.w3.org/WAI/WCAG21/Techniques/css/C39.html).
+
+<a id="r17-feedback-and-quality-of-life-review"></a>
+## R17. Feedback and quality-of-life review
+
+**Reviewed 2026-09-09.** Provider capabilities are current documentation claims, not an audit of a configured
+Zinely form. Product recommendations remain uncommitted in [ROADMAP.md](ROADMAP.md#current-priorities).
+
+### Evidence
+
+- **Verified:** GitHub Pages serves a static site. A real submission box therefore needs an external receiver;
+  drawing a form alone does not deliver messages. [GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages).
+- **Verified:** W3C recommends short forms asking only for necessary information, visible labels, clear
+  instructions and usable feedback. [W3C forms tutorial](https://www.w3.org/WAI/tutorials/forms/).
+  **Recommendation:** require only the message in Zinely's initial suggestion form.
+- **Verified provider claims:** Tally offers a free tier subject to fair-use conditions and free owner email
+  notifications. It documents keyboard/screen-reader support, but explicitly does not guarantee full accessibility
+  for every form. Automatic response retention is a Business feature; a free setup needs an owner-operated deletion
+  practice. A provider's GDPR statement does not make Zinely's particular workflow compliant automatically.
+  [FAQ](https://tally.so/help/faq), [notifications](https://tally.so/help/self-email-notifications),
+  [accessibility](https://tally.so/help/accessibility), [settings](https://tally.so/help/form-settings),
+  [data responsibility](https://tally.so/help/gdpr).
+- **Verified:** Google Forms supports anyone-with-link responder access; limiting to one response requires Google
+  sign-in. Shared response summaries can expose full written responses. A feedback form should not enable either
+  setting. [Google Forms sharing/settings](https://support.google.com/docs/answer/2839588).
+- **Verified:** GitHub issue forms support structured reports, but create repository issues rather than a private
+  support inbox. They fit technical contributors; do not make public issue creation the only feedback path for
+  an app built around personal photos. [GitHub issue templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository).
+- **Verified:** Android warns that UI-thread bitmap loading can hurt responsiveness. This supports investigating
+  the observed synchronous Reframe master decode, not claiming a measured stall. Zinely already samples normal
+  imports; any preview change must retain source geometry and export quality.
+  [Android bitmap guidance](https://developer.android.com/develop/ui/views/graphics).
+- **Verified:** Moderated usability tasks can reveal where an existing service or prototype causes difficulty.
+  **Recommendation:** run a short create/edit/export/fold session before adding more onboarding, menus or search.
+  [GOV.UK usability testing](https://www.gov.uk/service-manual/user-research/using-moderated-usability-testing).
+
+### Initial recommendation — superseded by owner selection below
+
+Use a normal link to a short Tally form after owner/provider/privacy approval; keep visible email fallback.
+Linking avoids adding a third-party embed to every page visit and keeps the website's existing lightweight
+structure. Google Forms is acceptable if the owner prefers its existing account workflow. Neither needs a custom
+backend, app network permission, analytics SDK, voting board or chat service. Do not call submissions anonymous:
+the message may contain personal information and the provider may process technical metadata.
+
+Only the message is required; category and reply email are optional. Avoid uploads and collecting unfinished
+answers. Test the exact form's keyboard/zoom/screen-reader error and success states plus delivery/deletion before
+publishing. Privacy text must distinguish voluntary website feedback from the offline Android app. No provider
+account, terms acceptance, form endpoint or submission has been created in this review.
+
+### Owner decision and public feedback route — 9 September
+
+The owner selected Google Forms, created/published the three-question form, and approved 90-day deletion
+of identifiable feedback. Only message is required; category and reply email are optional. Screenshots and
+recordings go by email, not form upload. The public responder page was fetched without authentication;
+no response was submitted during this check. This is not an audit of private response-summary settings.
+The website links rather than embeds the form, without campaign query parameters. Google Forms uploads
+require sign-in; optional email does not imply anonymous processing by Google.
+[Google question types](https://support.google.com/docs/answer/7322334),
+[Google privacy](https://policies.google.com/privacy),
+[Zinely policy](PRIVACY-POLICY.md#feedback-and-email).
+
+## R18. Deliberate folding instructions — 9 September
+
+- **Verified:** [Origami Guide](https://origami.guide/origami-boxes/easy-origami-basket/) pairs numbered
+  actions with pictures and explicit next/previous navigation. [iFixit EDU](https://edu.ifixit.com/editing-project/edit-edit-edit)
+  recommends sufficient procedural detail rather than vague directions. **Recommendation:** one action card
+  at a time, persistent instructions, and a complete all-steps view; never hide cut safety to fit a line count.
+- **Verified:** [Photoworks](https://photoworks.org.uk/learn/how-to/single-sheet-zine/) identifies cutting
+  from the folded edge toward the midpoint. **Recommendation:** retain folded-edge and stop-dot cues, and
+  animate the cut only to its prescribed endpoint. The diagram remains authoritative without animation.
+- **Verified:** [Origami Simulator](https://amandaghassaei.com/projects/origami_simulator) solves creases
+  simultaneously using WebGL, not a sequential human tutorial. **Rejected for Zinely:** a physics engine,
+  draggable camera, or general origami renderer would add dependencies and cognitive load for one booklet.
+- **Verified:** [WCAG 2.2.2](https://www.w3.org/WAI/WCAG21/Understanding/pause-stop-hide.html) addresses
+  qualifying automatic motion (Level A); [2.3.3](https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions.html)
+  supports disabling interaction motion (Level AAA, beyond the AA baseline). **Recommendation:** no autoplay,
+  deliberate Show direction, pause/resume/reset, reduced-motion static diagrams, and no focus-triggered motion.
+- **Implementation boundary:** dependency-free SVG geometry and a requestAnimationFrame clock demonstrate
+  simple hinge folds, the cut, and a labelled top view of the slit opening. Steps 4, 7, 8, and 10 stay static;
+  do not invent transitions for reorientation or book closing. All steps stay readable without JavaScript.
+  Three semantic instruction lines may wrap with zoom/mobile; a shared card footprint reserves the tallest
+  content. No line clamping, tiny-font fitting, or forced three-line overflow.
+- **Unproven:** improved physical folding success has not been measured with novice makers. This website
+  prototype does not authorize porting animation to Compose; a paper task is still the next usability check.

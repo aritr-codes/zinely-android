@@ -40,17 +40,24 @@ The brief and the code disagree, and **VOICE.md is already on the brief's side.*
 
 ## 1.2 The privacy repetition — 10 live, 4 dead, 1 should survive
 
+> **Superseded by the D-079 owner ruling (2026-08-24).** This section is preserved as the research input
+> that identified the repetition, but its proposed survivor was not adopted. The single product-level
+> sentence now lives in the Shelf-owned [Colophon](COLOPHON-FREEZE.md); operational failure/recovery
+> reassurance remains state-specific. The table's old recommendations below are historical, not current.
+
 | Where | Literal | Verdict |
 |---|---|---|
-| `ZineShelfEmpty.kt:526` | "Everything stays on your phone — no account, nothing uploaded." | **KEEP — the one survivor.** Lands once, on an empty shelf, before any work exists |
+| `ZineShelfEmpty.kt:526` | "Everything stays on your phone — no account, nothing uploaded." | ~~**KEEP — the one survivor.**~~ **SUPERSEDED — remove; D-079 moves the sole statement to the Colophon** |
 | `Copy.kt:321` → `EditorEmptyState.kt:176` | "works offline · stays on your phone" | **REMOVE** — every blank page, of every zine, forever |
 | `Copy.kt:242` → `BenchAddChooser.kt:273` | "From your phone — it never leaves the device" | **REMOVE** — mid-task, third statement |
 | `Copy.kt:632` → `ProofScreen.kt:1040` | "… · $paper · stays on your phone" | **REMOVE** (trailing clause only) |
-| `Copy.kt:255` → `BenchStatusStrip.kt:127` | "Saved on this device" | **KEEP — load-bearing** (a11y live region; the drawn chip only says "SAVED") |
+| `Copy.kt:255` → `BenchStatusStrip.kt:127` | "Saved on this device" | ~~**KEEP — load-bearing**~~ **SUPERSEDED — the live region says `Saved`; save state does not carry privacy copy** |
 | `ZineShelfFail.kt:316,325-326` · `Copy.kt:572` · `Copy.kt:418` | recovery reassurance in errors | **KEEP** — reassurance during failure is not marketing |
 | `Copy.kt:252,254,499,506` | `SAVED_MARK "✿"`, `SAVED_QUALIFIER`, `ON_THIS_DEVICE`, `KEPT_ON_DEVICE` | **DELETE** — dead constants, zero references |
 
-**Four drawn repetitions → one.** None of these is legally required; the Play data-safety declaration is a console artifact, not UI.
+**Historical recommendation:** four drawn repetitions → one on the empty Shelf. **Current ruling:** the one
+survivor is in the Colophon. None is legally required; the Play data-safety declaration is a console artifact,
+not UI.
 
 ## 1.3 The ten highest-confidence removals
 
@@ -201,13 +208,19 @@ CC BY-SA's trigger is *Adapted Material*, not use ([§1(a)](https://creativecomm
 | ❌ **Reject** | **OpenMoji (CC BY-SA)** · Noun Project (no redistribution right; scraping prohibited) · Flaticon (no redistribution) · **unDraw** (*"no right to compile assets… or distribute the assets in packs"* — aimed precisely at apps like ours) · **Blush** (*"printing an Illustration straight onto a T-shirt is not allowed"* — hostile to a printing app) · Internet Archive (no archive-wide licence) |
 | ⏸ **Unverified — do not use yet** | Rijksmuseum · Smithsonian · Wikimedia (per-file triage) · Open Font Library (dormant) |
 
-### Emoji: bundle vectors, never text runs
+### Emoji: own the glyphs and verify the real print path
 
 Skia's PDF backend keeps a font embedded only if each glyph *"is empty or has an unmodified path"*; a colour glyph fails and falls to a **Type3 font** — CBDT emoji become **rasterised images at a fixed 64px/em strike**. The PDF Association confirms no colour-font format is supported in PDF, **including PDF 2.0** ([paper](https://pdfa.org/wp-content/uploads/2021/06/OpenType-Color-Fonts-in-PDF.pdf)). And Android 13+ ships COLRv1 while earlier ships CBDT, Samsung ships its own designs, and `androidx.emoji2` defaults to **downloadable fonts over the network** — which this product cannot take.
 
 > **The same zine exported on two phones would contain different artwork.** For a product whose promise is a reproducible printed object, that is a correctness defect, not a cosmetic one.
 
-**Recommendation:** bundled vector emoji placed as ordinary objects, never in text runs. **Unicode geometric shapes, arrows and dingbats are meaningfully safer** — monochrome outlines keep the TrueType path and embed as a proper subset — on two conditions: **ship the font**, and append **VS15 `U+FE0E`** to codepoints with `Emoji_Presentation=Yes` or they re-enter the emoji font. Monochrome ink is already the aesthetic.
+**The original recommendation was:** bundled vector emoji placed as ordinary objects, never in text runs.
+**ADR-112 supersedes that recommendation with measured production evidence:** bundled Emoji2 with forced
+replacement draws deterministic local spans through Zinely's one `StaticLayout`/Canvas seam, and the real Samsung
+PDF path rasterises those spans successfully at 10/24/48 pt. The output is not clean vector text, but it is owned,
+offline and preview/export-consistent; the accepted 9.42-MiB APK cost removes OEM artwork from the document.
+Unicode geometric shapes, arrows and dingbats remain safer as monochrome Inter glyphs where the design asks for
+ink rather than emoji.
 
 ### Ruling: bundled library only. No network. Ever.
 

@@ -195,15 +195,15 @@ class SelectionChromeGoldenTest {
      *
      * **A third token, a third discriminator, and the reason is worth keeping.** V1's guide was `--teal`
      * and was found by `G−R`; V2's `--matcha` is an olive whose `G−R` is 4 after AA, so
-     * [countMatchaGuide] moved to `G−B`. V2.1's `--butter` (`#F6B22C`) inverts that again: it is a warm
-     * amber, `R > G > B` with a large `R−B`, and it scores **`G > r`: false** — the matcha probe cannot
+     * [countMatchaGuide] moved to `G−B`. The 37596 `--butter` (`#E9E29B`) inverts that again: it is a pale
+     * primrose, `R > G > B` with a large `R−B`, and it scores **`G > r`: false** — the matcha probe cannot
      * see it at all, which is exactly how this recolour was caught rather than silently re-recorded.
      *
      * So the discriminator here is `R−B`, the one thing butter has in quantity that neither the paper
-     * (`R−B` ≈ 8 on `#FFF6E8`) nor the ink ring (near-neutral, dark) nor matcha (`R−B` ≈ 14 and `G ≥ R`)
+     * (`R−B` = 23 on `#FFF6E8`) nor the ink ring (near-neutral, dark) nor matcha (`G ≥ R`)
      * has. `r > g` excludes matcha's remaining olive blends outright.
      *
-     * ⚠ **Butter composites to 1.60:1 on paper**, so this probe is looking for a genuinely faint mark —
+     * ⚠ **Butter is deliberately low-contrast against physical paper**, so this probe is looking for a faint mark —
      * the count is real but the threshold is necessarily lower than matcha's was at a stronger hue. That
      * faintness is the ruled acceptance, not a bug; see [SnapGuides].
      */
@@ -224,12 +224,12 @@ class SelectionChromeGoldenTest {
      *
      * **The discriminator changes kind, not just value.** V2's `--matcha` was an *olive* and had to be
      * proved by a hue signature, because AA blending moved it far enough that no exact match survived.
-     * V2.1's ring is `--ink` (`#33261C`) — the darkest thing the palette has, and the same colour the
+     * V2.1's ring is `--ink` (`#27270F`) — the darkest thing the palette has, and the same colour the
      * page's own body text is set in. A hue predicate would therefore count the **content** as well as
      * the chrome and pass with the ring deleted.
      *
      * So this counts pixels **near** the ring's own ink, which the content cannot supply: the sheet's
-     * text is rendered by the export tape at the model's own colour (black), and `#33261C` is more than
+     * text is rendered by the export tape at the model's own colour (black), and `#27270F` is more than
      * the tolerance away from it on every channel. The island guarantees the token is the light value
      * here in both themes, which is what makes comparing against a fixed hex legitimate at all.
      *

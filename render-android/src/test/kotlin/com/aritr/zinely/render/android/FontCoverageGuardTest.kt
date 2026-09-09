@@ -42,9 +42,12 @@ class FontCoverageGuardTest {
 
     @Test
     fun theGuardCoversEveryScriptTheAppPromises() {
-        // If a script is added to BUNDLED_SCRIPTS, this fails until the guard probes it too — so the
-        // promise cannot silently outrun what is verified.
-        assertEquals(SupportedScripts.BUNDLED_SCRIPTS, FontCoverage.guardedScripts)
+        // Inter owns the alphabetic subset. Emoji are verified against their separate bundled font by
+        // EmojiRenderingInstrumentedTest on the real Android graphics/PDF stack (ADR-112).
+        assertEquals(
+            SupportedScripts.BUNDLED_SCRIPTS - Script.EMOJI,
+            FontCoverage.guardedScripts,
+        )
     }
 
     @Test

@@ -30,7 +30,7 @@ public class JsonDocumentSerializer internal constructor(
     private val migrations: DocumentMigrations,
 ) : DocumentSerializer {
 
-    /** Wire the real (currently empty) migrator registry; this is the app-facing constructor. */
+    /** Wire the real contiguous migrator registry; this is the app-facing constructor. */
     public constructor() : this(DocumentMigrations(MIGRATORS))
 
     override val format: PersistedFormat = PersistedFormat.JSON
@@ -101,7 +101,7 @@ public class JsonDocumentSerializer internal constructor(
          * The ordered JSON-tree migrator chain. If a non-JSON format is ever adopted, migration moves
          * to per-version typed snapshots ([ADR-020]).
          *
-         * **v1 → v2 is an identity step, on purpose.** `DecorElement` (ADR-105) changes nothing about
+         * **v1 → v2 and v2 → v3 are identity steps, on purpose.** `DecorElement` (ADR-105) changes nothing about
          * an existing document — no field moved, no field was renamed, and no v1 document contains a
          * `decor` element, so there is genuinely nothing to transform. SUPPLIES-SPEC §2.1 concluded
          * from that that no version bump was needed; [D-029's 2026-08-16 ruling]
@@ -112,9 +112,14 @@ public class JsonDocumentSerializer internal constructor(
          *
          * The migrator is required by mechanism, not by content: [DocumentMigrations] demands a
          * contiguous `vN -> vN+1` chain and throws [MissingMigratorException] on a gap, so without
-         * this step every already-saved v1 zine would refuse to open.
+         * this step every already-saved v1 zine would refuse to open. The v2→v3 step has the same
+         * forward shape: new flip Booleans default false, but the version bump makes pre-flip builds
+         * refuse a v3 document before a tolerant decode/save can erase active flags (ADR-113).
          */
-        val MIGRATORS: List<DocumentMigrator> = listOf(IdentityMigrator(from = 1))
+        val MIGRATORS: List<DocumentMigrator> = listOf(
+            IdentityMigrator(from = 1),
+            IdentityMigrator(from = 2),
+        )
 
         /** A structural no-op step, for a version bump that exists purely to gate old readers out. */
         private class IdentityMigrator(from: Int) : DocumentMigrator {

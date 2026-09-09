@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Zinely" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Zinely" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Match the launch window to the logo edge, preventing a white/black flash before Compose. -->
+        <item name="android:windowBackground">@color/zinely_logo_pink</item>
+    </style>
+
+    <!-- ADR-111: system splash only. The platform controls duration and transition. -->
+    <style name="Theme.Zinely.Starting" parent="Theme.SplashScreen.IconBackground">
+        <item name="windowSplashScreenBackground">@color/zinely_logo_pink</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/zinely_logo_pink</item>
+        <item name="postSplashScreenTheme">@style/Theme.Zinely</item>
+    </style>
 </resources>
