@@ -1,0 +1,7 @@
+title: Zinely
+url: https://aritr-codes.github.io
+baseurl: /zinely-android
+markdown: kramdown
+plugins: []
+exclude:
+  - privacy-source.md

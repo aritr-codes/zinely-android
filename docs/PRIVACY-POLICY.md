@@ -87,6 +87,15 @@ the app's release notes.
 
 ---
 
+## This website
+
+The Zinely website has no analytics, advertising, contact form, or third-party fonts. It is hosted by
+GitHub Pages, so GitHub may process standard technical data needed to serve the site under the
+[GitHub General Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+This hosting does not change how the Zinely Android app handles your information.
+
+---
+
 ## Contact
 
 Questions about this policy or about Zinely's handling of your information:

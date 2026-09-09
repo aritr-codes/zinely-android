@@ -3,6 +3,10 @@
 **A privacy-first, offline-first Android app for creating printable zines.**
 Turn photos and words into a physical, foldable zine in minutes — entirely on your device. No account. No cloud. No internet required. Your photos never leave your phone.
 
+[Website](https://aritr-codes.github.io/zinely-android/) ·
+[Privacy policy](https://aritr-codes.github.io/zinely-android/privacy/) ·
+[Download the latest beta](https://github.com/aritr-codes/zinely-android/releases/tag/v0.9.0-beta.4-r3)
+
 > *Physical media instead of social media.*
 
 [![status](https://img.shields.io/badge/status-in--development-green)](docs/ROADMAP.md)

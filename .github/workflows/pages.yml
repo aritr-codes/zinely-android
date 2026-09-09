@@ -1,0 +1,65 @@
+name: Deploy website
+
+on:
+  push:
+    branches: [ main, feat/zine-backup-v2 ]
+    paths:
+      - website/**
+      - .github/workflows/pages.yml
+      - app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp
+      - feature/editor/src/test/roborazzi/v21_library_content_light.png
+      - docs/PRIVACY-POLICY.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build static site
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare site
+        run: |
+          mkdir -p _pages_source/assets _pages_source/privacy
+          cp -R website/. _pages_source/
+          cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp _pages_source/assets/logo.webp
+          cp feature/editor/src/test/roborazzi/v21_library_content_light.png _pages_source/assets/library.png
+          printf '%s\n' '---' 'layout: policy' 'permalink: /privacy/' '---' > _pages_source/privacy/index.md
+          cat docs/PRIVACY-POLICY.md >> _pages_source/privacy/index.md
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./_pages_source
+          destination: ./_site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    name: Publish static site
+    runs-on: ubuntu-24.04
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

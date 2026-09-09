@@ -182,6 +182,18 @@ old tags (`git show v0.8.0:…/ProofScreen.kt`) rather than remembering.
 Play Store distribution is not in use yet. It would additionally need an upload key, a Play Console
 listing, a privacy policy, a content rating and a data-safety declaration.
 
+### Public GitHub distribution and website
+
+GitHub is the current public beta channel while Play account verification remains unavailable. Release
+APKs live on the repository's GitHub Releases page; the public website and privacy policy live at
+<https://aritr-codes.github.io/zinely-android/>.
+
+The website source is `website/`, and `.github/workflows/pages.yml` generates the public policy from the
+canonical [privacy-policy document](PRIVACY-POLICY.md). Enabling a new Pages site is a one-time repository
+administration step: set **Settings → Pages → Build and deployment → Source** to **GitHub Actions** (or use
+the equivalent GitHub Pages API setting) before the first workflow run. After this feature branch reaches
+`main`, remove `feat/zine-backup-v2` from the workflow's push branches so only `main` can update production.
+
 ---
 
 ## 4. Play Store — closed testing
@@ -229,7 +241,7 @@ cohort received.
 | 4 | **App icon** | 512×512 PNG, 32-bit, no alpha |
 | 5 | **Feature graphic** | **1024×500** PNG or JPEG — mandatory, and the one asset with no source in this repo |
 | 6 | **Phone screenshots** | 2–8, min 320px, max 3840px, 16:9 or 9:16. Shelf · Editor · Read · Print & fold is the honest four |
-| 7 | **Privacy policy URL** | [docs/PRIVACY-POLICY.md](PRIVACY-POLICY.md), hosted anywhere public (GitHub Pages, a gist, any static host) |
+| 7 | **Privacy policy URL** | <https://aritr-codes.github.io/zinely-android/privacy/> — generated from [docs/PRIVACY-POLICY.md](PRIVACY-POLICY.md) |
 | 8 | **Data safety form** | See §4.5 — every answer is "no" |
 | 9 | **Content rating questionnaire** | No user-generated content *sharing*, no ads, no data collection |
 | 10 | **Target audience** | 13+ is the safe answer; the app has no child-directed content |
@@ -319,4 +331,5 @@ mechanism and does not change any answer above.
 
 - **The feature graphic (1024×500)** — the only listing asset with no source in this repository.
 - **Screenshots** from a real device on a release build.
-- **A public URL for the privacy policy.**
+- ~~**A public URL for the privacy policy.**~~ Completed 9 September 2026 through GitHub Pages; the
+  canonical source remains [docs/PRIVACY-POLICY.md](PRIVACY-POLICY.md).
