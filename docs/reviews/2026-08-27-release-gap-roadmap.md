@@ -42,6 +42,11 @@ unfocused link is offscreen. `node --check` and `git diff --check` pass. Tooling
 axe Playwright 4.13.0; browser is isolated Chromium, not the owner's signed-in profile. A physical novice
 paper test, form submission/delivery, and native-app animation acceptance remain unclaimed.
 
+The broader mobile pass found the existing privacy permissions table was 650 px wide, ending at x=699
+on a 390 px viewport. Wrap it in the existing scroll-container style, with a named, keyboard-focusable
+region. Keep readable column widths inside that container rather than squeezing words into slivers.
+This is a focused existing reflow defect, not a policy change; verify Jekyll's rendered table before merge.
+
 Deployment gate: commit the reviewed source, require latest-head Android/core CI and Pages build, then
 merge PR #63 and verify main-only Pages live. This paragraph records the pre-merge gate, not a deployment claim.
 

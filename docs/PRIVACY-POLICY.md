@@ -34,12 +34,16 @@ back up your work using Android's system file interfaces.
 
 ## Permissions Zinely asks for, and why
 
+<div class="table-wrap" role="region" aria-label="Android app permissions (scroll horizontally on small screens)" tabindex="0" markdown="1">
+
 | Permission | When | Why |
 |---|---|---|
 | **Photo picker** (no permission required) | When you add a photo | Zinely uses the Android system photo picker. You choose individual photos; Zinely never receives access to your photo library as a whole. |
 | **`WRITE_EXTERNAL_STORAGE`** — *Android 9 and older only* | The first time you save a PDF | Needed to write your exported PDF into your **Downloads** folder. On Android 10 and newer, Zinely uses the system's scoped Downloads mechanism and asks for no permission at all. Zinely writes only the export file you asked for. |
 | **System file picker** (no permission required) | When you make or restore a backup | You choose the backup file and its location. Zinely receives access only to the file selected through Android's picker. |
 | **Vibration** (no prompt) | When you use certain controls | Provides brief touch feedback. It gives Zinely no access to personal information. |
+
+</div>
 
 **Zinely does not request the `INTERNET` permission.** Its legacy storage permission is limited to
 Android 9 and older, and its vibration permission does not provide access to personal information.
