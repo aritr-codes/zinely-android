@@ -25,10 +25,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refined the website fold guide into a deliberate one-step-at-a-time paper desk, with pause/replay,
+  static checkpoints, keyboard controls, stable instruction space, and all-steps/print/no-JS fallback.
+- Linked the owner-published Google feedback form, retained email for screenshots, and introduced Aastra
+  as the two-person team. Privacy wording covers voluntary feedback separately from the offline app.
 - Replaced the website's three-example fold demo with a complete ten-step illustrated guide. Original SVG
   diagrams show creases, the single cut, and the finished booklet. Optional direction tracing and subtle
   button/link effects respect reduced motion; all instructions remain available without JavaScript.
 - Updated the website About story with Zinely's indie origins and an invitation to share suggestions.
+- Reconciled the roadmap against current code, issues and releases: distinguish the conditional Google Play
+  publication plan and approved Reframe investigation from uncommitted app improvements; keep completed
+  website work in the public changelog. No Android behavior or public APK changes in this website slice.
 
 - Replaced the standalone website Accessibility page with a short accessibility statement and contact route
   in the home-page About section. Accessibility remains a site-wide implementation requirement rather than a

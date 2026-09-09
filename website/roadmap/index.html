@@ -27,43 +27,32 @@
     <article class="policy">
       <p class="eyebrow">Roadmap</p>
       <h1>What comes next.</h1>
-      <p class="policy-intro">This is a direction, not a promise. Zinely stays small: an idea moves forward only when it solves a real problem without weakening saved work, print correctness, accessibility, or the offline experience.</p>
+      <p class="policy-intro">A short list of what we intend to do and what we are still considering. Planned means we intend to deliver it; Exploring means no decision to build it yet. There are no promised release dates.</p>
       <p class="policy-date"><strong>Last reviewed:</strong> 9 September 2026</p>
 
       <div class="roadmap-groups">
         <section class="roadmap-group planned" aria-labelledby="planned-title">
           <p class="status-label">Planned</p>
-          <h2 id="planned-title">Finish the public-beta path</h2>
+          <h2 id="planned-title">Measure, then improve</h2>
           <ul>
-            <li>Keep the signed beta download, privacy information, backup guidance, and support path current.</li>
-            <li>Complete store publication when the owner’s account-verification requirements can be satisfied.</li>
-            <li>Continue focused fixes only when device or tester evidence shows a real problem.</li>
+            <li><strong>Investigate Reframe loading and restore its regression test.</strong> Measure cold and repeated photo opening, and make the unavailable-photo accessibility test reliable. A speedup is not promised.</li>
+            <li>Publish on Google Play after developer-account verification, required testing, and store review. Account verification is currently blocked; the <a href="../#download-title">GitHub beta download</a> is available now.</li>
           </ul>
+          <p>No additional app feature is committed for the next release yet.</p>
         </section>
 
         <section class="roadmap-group exploring" aria-labelledby="exploring-title">
           <p class="status-label">Exploring</p>
-          <h2 id="exploring-title">Useful improvements, not commitments</h2>
+          <h2 id="exploring-title">Small improvements worth testing</h2>
           <ul>
-            <li>Optional folding animations in the app, if testing shows they make the instructions easier to follow.</li>
-            <li>Safe cleanup of unused imported images, but only with import pinning and recovery tests.</li>
-            <li>Shelf search or organization if a larger real library proves the need.</li>
-            <li>A small, licensed font set only after editor, preview, raster, PDF, and print parity.</li>
-          </ul>
-        </section>
-
-        <section class="roadmap-group uncommitted" aria-labelledby="uncommitted-title">
-          <p class="status-label">Not committed</p>
-          <h2 id="uncommitted-title">Ideas kept outside the current product</h2>
-          <ul>
-            <li>New zine formats, freehand drawing, and a much larger Art catalogue.</li>
-            <li>Cloud accounts, feeds, social features, or automatic online processing.</li>
-            <li>Direct in-app printing until fixed-scale output can be proven across real printer paths.</li>
+            <li><strong>Remove the unavailable Font button.</strong> Test hiding the disabled Font action until font choice is supported.</li>
+            <li><strong>Make the in-app fold guide clearer.</strong> Test the illustrated website guide with first-time makers before deciding whether the app needs new diagrams or optional motion.</li>
           </ul>
         </section>
       </div>
 
-      <p class="notice">The detailed engineering sequence remains in the repository’s <a href="https://github.com/aritr-codes/zinely-android/blob/main/docs/ROADMAP.md">canonical roadmap</a>.</p>
+      <p class="notice">Already shipped? See the <a href="../changelog/">changelog</a>. Have a different priority? <a href="https://forms.gle/7ejUVJBdUaYoDytu6">Suggest an improvement</a> through our optional Google Form, or <a href="mailto:aritr.g06@gmail.com">email us</a>. <a href="../privacy/#feedback-and-email">How we handle feedback</a>.</p>
+      <p>The <a href="https://github.com/aritr-codes/zinely-android/blob/main/docs/ROADMAP.md#current-priorities">development roadmap</a> records the evidence and technical follow-ups.</p>
     </article>
   </main>
 
@@ -72,7 +61,7 @@
     <nav aria-label="Footer navigation">
       <a href="../#about">About</a><a href="../#accessibility">Accessibility</a>
       <a href="../changelog/">Changelog</a><a href="./" aria-current="page">Roadmap</a>
-      <a href="../privacy/">Privacy</a><a href="mailto:aritr.g06@gmail.com">Contact</a>
+      <a href="../privacy/">Privacy</a><a href="https://forms.gle/7ejUVJBdUaYoDytu6">Share feedback</a><a href="mailto:aritr.g06@gmail.com">Email us</a>
       <a href="https://github.com/aritr-codes/zinely-android">GitHub</a>
     </nav>
   </footer>

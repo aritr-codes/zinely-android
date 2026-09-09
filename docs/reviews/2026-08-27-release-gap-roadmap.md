@@ -1,6 +1,142 @@
 # Release-gap roadmap — 2026-08-27
 
+<a id="2026-09-09-current-state-review"></a>
+## 2026-09-09 current-state review
+
+### Website follow-up — supersedes the initial audit's pending decisions
+
+At the start of this follow-up, live Pages matched policy-only commit `a8b9ff6` (run `34382725165`).
+The concrete Roadmap and website Changelog entry below were still local, not deployed. Owner then
+authorized the website fold refinement, feedback link, Aastra attribution, and verified merge/deployment.
+
+- Google Forms was selected and published by the owner: `https://forms.gle/7ejUVJBdUaYoDytu6`.
+  Read-only unauthenticated fetch returns the three-question responder page. No test response was sent;
+  private form settings and inbox delivery are not independently audited. Policy is canonical in
+  [PRIVACY-POLICY.md](../PRIVACY-POLICY.md#feedback-and-email), including 90-day team-managed retention.
+- Aastra is the owner-confirmed two-person team. Website/README/About/privacy wording is aligned;
+  no app copy or APK was changed in this slice.
+- The folding desk is an HTML/SVG/JavaScript prototype: intentional step selection and six controlled
+  demonstrations, pause/resume/reset, static checkpoints, reduced motion, all-steps/print/no-JS fallback.
+  Three instruction lines at standard desktop width wrap safely at narrow widths/enlarged text. The
+  maximum card size is reserved to keep playback aligned. No novice physical-paper success claim is made.
+  Research and rejected alternatives: [R18](../RESEARCH.md#r18-deliberate-folding-instructions--9-september).
+- Issue #53 was closed with Replace Photo evidence; #54 narrowed to evaluating long-press usefulness;
+  #55 narrowed to full Reframe photo-overlay goldens. #56 and #57 remain open. These actions supersede
+  the initial read-only audit's proposed dispositions below. No branches or worktrees were removed.
+- Existing PR #63 merge review found no product blocker in the bounded evidence review. Its draft body
+  was stale against Replace Photo and r3 hardware/release acceptance. The backup torture matrix's
+  foundation NO-GO is now explicitly historical; actual unresolved stress/device coverage is retained.
+- Local website checks use `tools/check-website.cjs` with isolated, externally installed Playwright and
+  axe tooling (no app/runtime dependency). Coverage: ten steps, normal desktop three-line text, stable
+  controls at 390/320 px and 200% text, keyboard play/pause/resume/reset, no autoplay, cut endpoint,
+  live reduced-motion change, no-JS and print fallback, axe WCAG A/AA checks and JavaScript errors.
+  Screenshots are inspected separately; automated checks are not a WCAG certification.
+
+The remaining paragraphs in this September section preserve the **initial audit snapshot**. Its
+read-only status, Tally preference, missing form, and uncommitted/deployment statements are historical.
+**Pre-merge verification:** independent review **GO**, including a separate browser regression run and
+inspection of desktop/final, paused diamond, mobile/200%-text, Roadmap, and Changelog captures. Accepted
+and fixed enlarged-text button word splitting and disabled-button hover movement. The apparent skip-link
+overlay in full-element captures is a capture artifact: a direct viewport-bounds assertion confirms the
+unfocused link is offscreen. `node --check` and `git diff --check` pass. Tooling versions: Playwright 1.63.0,
+axe Playwright 4.13.0; browser is isolated Chromium, not the owner's signed-in profile. A physical novice
+paper test, form submission/delivery, and native-app animation acceptance remain unclaimed.
+
+Deployment gate: commit the reviewed source, require latest-head Android/core CI and Pages build, then
+merge PR #63 and verify main-only Pages live. This paragraph records the pre-merge gate, not a deployment claim.
+
+This checkpoint supersedes the older next-action/status wording below. Planning authority remains
+[ROADMAP.md](../ROADMAP.md#current-priorities); this section owns the evidence, not a second backlog.
+
+### Scope and confidence
+
+- Reviewed `730fe47` on `feat/zine-backup-v2`, current source/tests, stakeholder and performance reports,
+  live GitHub issues/PRs/releases/CI, and the public website. Home, Roadmap, Changelog and Privacy returned HTTP 200.
+- Samsung SM-A176B is connected; package read-back reports `0.9.0-beta.4-r3`, code 9. This was **not** a fresh
+  device UX, performance, TalkBack or physical-paper test. No app data, settings or APKs were changed.
+- The public APK is older than HEAD: the app About simplification at `4bcd0a9` is repository-implemented, not in
+  the frozen r3 artifact. Website updates are deployed independently. A green HEAD is not a rebuilt public APK.
+- Prior accepted Replace Photo, Flip, Reframe routing, Duplicate, deletion, Add/Art, backup and PDF work is not
+  reopened. The app remains open to improvement; a missing feature is not automatically a defect.
+
+### What is worth improving
+
+| Candidate | Observed fact | Assessment and next evidence |
+|---|---|---|
+| Reframe entry loading | `ReframeOverlay.kt` calls intrinsic reads and `decodePhoto` synchronously in composition; `decodePhoto` has no sampling options. `ImportMasterDecoder` already bounds normal imports to 4096 px. Issue #56 is open. | **High confidence code risk; unmeasured user impact.** Best next technical investigation: benchmark small/large bounded masters, cold/warm entry and peak bitmap allocation. Pair any fix with deterministic unavailable-photo tests. Do not claim a measured stall or promise a speedup yet. |
+| Disabled Font verb | `benchContextVerbs(TEXT)` explicitly sets `Font` disabled with `Not yet`. This is distinct from the corrected inline typing row. | **High confidence presence; medium confidence benefit.** Prototype removing this unavailable action rather than building an entire font system to justify it. Check whether makers can still find Edit, Size, Ink, Duplicate and Delete. Requires a freeze amendment. |
+| Feedback access | Website contact links work; there is no submission form. Current `ColophonScreen` contains paper preference, licences, privacy copy and version, but no feedback route. | **High confidence gap; recommendation, not a defect.** A linked external form can avoid requiring a configured email app or GitHub account. Keep email visible. If demand warrants an app entry later, add one quiet external link through the existing surface, not a new screen/SDK. |
+| Fold understanding | Website has ten complete static steps with optional arrow tracing; native guide has not been replaced. No novice comparison test is recorded. | **High confidence evidence gap.** Test paper execution before porting motion. Success is fewer wrong cuts/folds or requests for help, not more animation. |
+| Dense toolbar / finding old zines | Context verbs scroll at enlarged text; shelf search/sort were deliberately omitted, with newest-first repository order. Existing tests protect reachability. | **Hypotheses, not observed regressions.** In a small novice task session, ask for Delete after selecting a photo and for a named older zine in a realistic library. Only a repeated failure justifies another affordance or search UI. |
+| Storage and recovery edges | Image sweeping is explicitly deferred until imports pin assets; private-stage low space is classified, but provider writes can still map to generic IO. Existing recovery reports are bounded. | **Known technical work, not a quick polish task.** Use disposable storage/provider fixtures and a second API/device. Do not ship a “clean storage” button ahead of liveness/undo/recovery safety. |
+
+The 31 August Art follow-up measured about 89.6 ms in first `measureAndLayout`, 17.1 ms recompose and 7.6 ms
+diagnostic body draw; the earlier “raster” label was too broad. It explicitly deferred production changes.
+Preserve the shared host and path warmup. This is lower priority than #56 unless new tester evidence changes it.
+
+**Recommended short usability round:** ask first-time makers to create a page, edit/align its text, distinguish
+Resize from Reframe, find Duplicate/Delete, visit another page, save and locate the PDF, then fold it. Separately,
+ask them to locate a backup and explain what it protects. Record the exact task and hesitation without coaching.
+The earlier stakeholder findings were fixed; this round looks for remaining friction, not reasons to reopen them.
+
+### GitHub hygiene — read-only findings
+
+| Item | Current evidence | Recommended action, not performed |
+|---|---|---|
+| Branches | Task branch and local `main` each match their own remote. Task HEAD is 96 commits ahead of `origin/main`, with zero commits behind. Default branch is `main`. | Retire the old claim that local main is diverged. Review the feature branch for an explicitly approved merge; do not merge merely to tidy the graph. |
+| PR #63 | Draft, mergeable; latest HEAD CI `34357389981` passed core and Android/lint/test jobs. | Review the full release/app change set and evidence before marking ready. A documentation audit is not merge approval. |
+| PR #62 | Open; its remote head `28c28e3` is already an ancestor of task HEAD. Its local branch also has one unpushed commit. | After #63 disposition, reconcile as incorporated/superseded if appropriate. Preserve the local extra commit and worktree ownership. |
+| Issue #53 | Replace Photo implementation, tests and r3 release evidence exist, but issue is open. | Close with implementation evidence after owner approval; do not schedule Replace again. |
+| Issue #55 | Its “no goldens” premise is stale: `ReframeControlsGoldenTest` has light/dark captures. Full photo-overlay coverage is a separate question. | Narrow to uncovered overlay states; do not claim all Reframe visual debt is closed. |
+| Issues #56 / #57 | Synchronous decode and the ignored accessibility test are both still in source. | Keep open; investigate together. |
+| Issue #54 | A visual long-press sheet is still a future enhancement; selected-object actions already have a visible toolbar. | Reassess usefulness instead of adding a duplicate menu by convention. |
+| Releases | One published prerelease, r3; asset size 16,052,043 bytes, digest `3522042340e85042b7e3e314ae07de49d85fe7b4da553462438cd9f1ab97c3a1`. Annotated tag peels to `534831a`. | Preserve the artifact/tag. Release API `targetCommitish=main` does not override the actual tag target. No release repair is indicated by that field alone. |
+| Pages / public links | Pages run `34357153693` succeeded; both main and feature-branch pushes can deploy. Public engineering links pointed at older `main`. | Point the revised roadmap at the actual development plan meanwhile; after an approved merge, use main-only Pages and main links. Do not change deployment ownership now. |
+| Old checklists | Owner checklist still lists missing policy hosting, missing Art outlines, unreachable Mirror and a diverged main; newer code/reports contradict these. | A bounded evidence-backed tracker reconciliation is useful. Do not bulk-close the entire historical checklist. |
+
+No GitHub issue, PR, release, branch or worktree was mutated by this check. Existing protected untracked paths
+remain untouched. No broad secret scan or security certification is claimed.
+
+### Feedback recommendation
+
+Prefer a **link to a short owner-controlled Tally form**, not an embedded widget or custom backend; keep the
+current email fallback. Google Forms is a workable alternative if avoiding another owner account is more important.
+GitHub Issues can remain an optional technical route, not the primary feedback UI for makers.
+
+Suggested fields: one required message (“What would you like to tell me?”), optional category (idea/problem/general),
+and optional email (“Only if you want a reply”). Ask for app version/device/reproduction steps as optional bug-report
+guidance, not required fields for every idea. No name, account, photo upload, zine attachment or automatic diagnostics.
+Confirmation: “Thanks for helping make Zinely better. I read every message, but can't promise every idea will be built.”
+That first-person promise must be accepted by the owner before publication.
+
+Before activation: owner selects the provider/account, approves response access and a retention/deletion practice,
+and confirms who reads messages. Keep drafts/partial submissions and tracking integrations off; review provider
+metadata rather than promise anonymity. Update the website privacy section (currently explicitly says no form),
+including voluntary feedback processing separately from the offline app. Test keyboard, mobile, zoom, errors,
+screen-reader confirmation, spam handling, delivery and deletion using non-personal test data. Do not embed provider
+code in the app. [Sources and trade-offs](../RESEARCH.md#r17-feedback-and-quality-of-life-review).
+
+### Handoff
+
+Validation of this documentation-only change: `git diff --check` passed; W3C Nu returned no messages for the
+revised public Roadmap and Changelog. Isolated Edge found no meaningful main-content overflow at 1200 px,
+390 px, or 320 px with 200% root text; mobile renders were inspected. The normal browser integration was unavailable.
+No Android build/test suite was rerun and no fresh device UX acceptance is claimed.
+
+Independent review: **GO**, no required fixes remaining. Accepted the request to avoid implying a measured
+Reframe pause and to label the one-message form as a recommendation. The reported heading-order issue was not
+present on final read-back (one H1, first line). Reviewer independently confirmed the source/issue/release/branch
+facts and the Planned/Exploring/Completed boundaries. Six scoped documentation/site files remain local and
+uncommitted for owner review; no GitHub mutation or deployment was performed.
+
+This change is roadmap/content reconciliation only: no app fix, new form, provider configuration, release or merge.
+Next engineering brief: measure #56 with the existing pipeline, fix #57's test seam, propose a bounded loading
+change only if measurements justify it, and carry any implementation through normal parity/device/review gates.
+Next owner decision: whether to approve that slice and which hosted-feedback provider/retention practice to use.
+
 ## Scope and evidence boundary
+
+**Historical 27 August checkpoint follows.** Read the September checkpoint above for current dispositions.
 
 This is a live-checkout audit of `feat/zine-backup-v2` after the reported physical printer run. It separates
 confirmed defects from release evidence still required and from scale-up work. Source documents and tests remain

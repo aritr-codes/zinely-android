@@ -3,7 +3,7 @@
 **Last updated: 9 September 2026**
 
 Zinely is an offline app for making printable zines. This policy covers the Android app, this website,
-and feedback you choose to send to Zinely's independent developer.
+and feedback you choose to send to Aastra, the independent two-person team behind Zinely.
 
 ---
 
@@ -14,7 +14,7 @@ and feedback you choose to send to Zinely's independent developer.
 There is no account, no sign-in, no analytics, no advertising, no tracking, and no crash reporting.
 Zinely does not request internet access, so it cannot transmit your information even accidentally.
 
-Feedback is separate: if you submit a Google Form or send an email, the developer receives the
+Feedback is separate: if you submit a Google Form or send an email, the team receives the
 information you choose to share. You do not need to send feedback to use the app.
 
 ---
@@ -101,16 +101,16 @@ This hosting does not change how the Zinely Android app handles your information
 
 ## Feedback and email
 
-Sending feedback is optional. If you use the Google Forms feedback form, the developer receives your
+Sending feedback is optional. If you use the Google Forms feedback form, the team receives your
 message and submission time, plus the feedback category and reply email if you provide them. Only the
 message is required. The form does not ask for your name, file uploads, or automatic app diagnostics.
 
-If you email **[aritr.g06@gmail.com](mailto:aritr.g06@gmail.com)**, the developer receives your message,
+If you email **[aritr.g06@gmail.com](mailto:aritr.g06@gmail.com)**, the team receives your message,
 sender email address, any sender name supplied by your email service, and any attachments you choose
 to send. Screenshots or short screen recordings can help explain a problem, but are never required.
 Please hide private photos, notifications, names, and other personal information before sending them.
 
-The developer uses feedback to understand problems, improve Zinely, and reply if you provide an email
+The team uses feedback to understand problems, improve Zinely, and reply if you provide an email
 address. It is not used for marketing or sold. Identifiable feedback is kept private, not published in
 public response summaries or development issues. Development notes may describe the problem or idea
 without identifying you.
@@ -125,9 +125,9 @@ These services are separate from the offline Android app; no zines or diagnostic
 
 ### Retention and deletion
 
-The developer deletes identifiable feedback within **90 days of receiving it**, including form
+The team deletes identifiable feedback within **90 days of receiving it**, including form
 responses, feedback emails, attachments, and any copies kept in spreadsheets or downloaded files.
-Only development notes that do not identify you may be kept longer. This is a developer-managed
+Only development notes that do not identify you may be kept longer. This is a team-managed
 cleanup commitment, not an automatic Google Forms deletion setting. Google's own retention and
 deletion processes are governed by its privacy policy.
 

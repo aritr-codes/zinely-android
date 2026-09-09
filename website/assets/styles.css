@@ -536,7 +536,7 @@ h3 {
   letter-spacing: -0.02em;
 }
 
-/* A complete, readable paper guide; JavaScript only enhances the direction cues. */
+/* A paper instruction deck. The complete ordered guide is the no-JS fallback. */
 .fold-guide {
   padding: 68px clamp(20px, 4vw, 48px);
   margin-bottom: 110px;
@@ -547,18 +547,20 @@ h3 {
 }
 .fold-key { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: .88rem; color: var(--ink-soft); }
 .fold-instructions {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 44px 28px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 32px;
   padding: 0;
   margin: 40px 0;
   list-style: none;
 }
-.fold-card { min-width: 0; padding-top: 18px; border-top: 2px dashed var(--ink-soft); }
+.fold-card { flex: 1 1 360px; max-width: 700px; min-width: 0; padding: 24px; border: 2px solid var(--ink); border-radius: 5px 20px 8px 14px; background: #fffdf5; box-shadow: 4px 5px 0 var(--ink); }
 .fold-card h3 { display: flex; align-items: baseline; gap: 10px; font-size: 1.35rem; line-height: 1.2; }
 .fold-number { flex: 0 0 auto; font-family: Georgia, serif; font-style: italic; color: var(--ink-soft); }
-.fold-card svg { display: block; width: 100%; height: auto; stroke-linejoin: round; stroke-linecap: round; }
+.fold-card svg { display: block; width: 100%; height: 260px; stroke-linejoin: round; stroke-linecap: round; }
 .fold-card .sheet { fill: #fffdf5; stroke: var(--ink); stroke-width: 2.5; }
+.fold-card .moving-paper { fill: var(--surface); }
 .fold-card .crease-line { fill: none; stroke: var(--ink-soft); stroke-width: 1.5; stroke-dasharray: 4 5; }
 .fold-card .fold-edge { fill: none; stroke: var(--ink); stroke-width: 5; }
 .fold-card .direction { fill: none; stroke: var(--ink); stroke-width: 2.5; }
@@ -566,7 +568,24 @@ h3 {
 .fold-card .stop-dot { fill: #a42b40; }
 .fold-card svg text { fill: var(--ink); font: italic 14px Georgia, serif; }
 .fold-card p { margin: 12px 0 18px; color: var(--ink-soft); }
-.fold-card:last-child { background: var(--room-raised); border: 2px solid var(--ink); border-radius: 18px; padding: 18px; }
+.fold-card p span { display: block; }
+.fold-card:last-child { flex: 0 1 700px; background: var(--room-raised); text-align: center; }
+.fold-card:last-child h3 { justify-content: center; }
+.fold-focused .fold-instructions { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 840px; margin-inline: auto; }
+.fold-focused .fold-card { grid-area: 1 / 1; width: 100%; max-width: none; display: grid; grid-template-rows: minmax(3rem, auto) 260px 1fr; }
+.fold-focused .fold-inactive { visibility: hidden; pointer-events: none; }
+.fold-focused .fold-card p { min-height: 4.8em; }
+.fold-controls, .fold-navigation, .fold-playback { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 16px; }
+.fold-controls { margin-top: 28px; }
+.fold-picker { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; font-weight: 750; max-width: 100%; }
+.fold-picker select { font: inherit; color: var(--ink); background: var(--paper); border: var(--border); padding: 10px; min-height: 48px; max-width: 100%; border-radius: 8px; }
+.fold-controls button, .fold-playback button { font: inherit; font-weight: 750; cursor: pointer; }
+.fold-playback { max-width: 840px; margin-inline: auto; }
+.fold-playback button { min-width: 190px; }
+.fold-playback p { flex-basis: 100%; min-height: 3.2em; margin: 4px 0 0; color: var(--ink-soft); text-align: center; }
+.button:disabled { cursor: default; box-shadow: none; border-style: dashed; background: var(--paper); color: var(--ink-soft); }
+[hidden] { display: none !important; }
+select:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 .fold-finish { font-family: Georgia, serif; font-size: clamp(1.4rem, 3vw, 2rem); font-style: italic; text-align: center; }
 .button.quiet { background: var(--paper); color: var(--ink); }
 .direction-button { font: inherit; font-weight: 750; font-size: .9rem; cursor: pointer; }
@@ -576,19 +595,21 @@ h3 {
   .button, .note-links a { transition: translate 180ms ease, transform 180ms ease, box-shadow 180ms ease; }
   nav a, .text-link { transition: text-underline-offset 180ms ease; }
   nav a:hover, .text-link:hover { text-underline-offset: 7px; }
-  .tracing-direction .direction { stroke-dasharray: 300; animation: trace-direction 800ms ease-out; }
   @media (hover: hover) and (pointer: fine) {
-    .button:hover { transform: translateY(-2px); box-shadow: 4px 7px 0 var(--ink); }
+    .button:not(:disabled):hover { transform: translateY(-2px); box-shadow: 4px 7px 0 var(--ink); }
     .note-links a:hover { translate: 0 -3px; }
   }
-  .button:active { transform: translate(3px, 4px); box-shadow: 1px 1px 0 var(--ink); }
+  .button:not(:disabled):active { transform: translate(3px, 4px); box-shadow: 1px 1px 0 var(--ink); }
 }
-@keyframes trace-direction { from { stroke-dashoffset: 300; } to { stroke-dashoffset: 0; } }
 .button:focus-visible, .note-links a:focus-visible { box-shadow: 0 0 0 7px var(--ink); }
-@media (max-width: 900px) { .fold-instructions { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) {
-  .fold-instructions { grid-template-columns: minmax(0, 1fr); gap: 28px; }
-  .fold-card svg { max-width: 300px; margin-inline: auto; }
+  .fold-instructions { gap: 28px; }
+  .fold-card { padding: 16px; }
+  .fold-card svg { height: 210px; margin-inline: auto; }
+  .fold-focused .fold-card { grid-template-rows: minmax(3rem, auto) 210px 1fr; }
+  .fold-navigation { width: 100%; }
+  .fold-picker { order: -1; width: 100%; }
+  .fold-navigation .button { flex: 1 1 6rem; width: auto; min-width: min(100%, 9rem); }
 }
 
 .project-notes { padding: 12px 0 110px; }
@@ -782,7 +803,7 @@ code { font-size: 0.9em; }
 .release-theme { margin: 0 0 18px; color: var(--ink); font-family: Georgia, serif; font-size: 1.08rem; font-weight: 700; }
 
 .roadmap-layout { width: min(1100px, calc(100% - 40px)); }
-.roadmap-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin-top: 50px; }
+.roadmap-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 50px; }
 .roadmap-group {
   padding: 24px;
   border: var(--border);
@@ -880,4 +901,8 @@ code { font-size: 0.9em; }
   body { background: white; }
   .policy-layout { width: 100%; padding: 0; }
   .policy { border: 0; box-shadow: none; }
+  .fold-controls, .fold-playback { display: none !important; }
+  .fold-focused .fold-instructions { display: block; }
+  .fold-focused .fold-inactive { visibility: visible; }
+  .fold-card { break-inside: avoid; margin: 20px auto; box-shadow: none; }
 }

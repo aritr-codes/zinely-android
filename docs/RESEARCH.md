@@ -510,3 +510,86 @@ Zinely hides optional tracing controls in that mode while retaining all diagrams
 
 **Sources:** [Photoworks single-sheet zine](https://photoworks.org.uk/learn/how-to/single-sheet-zine/) ·
 [W3C reduced-motion technique C39](https://www.w3.org/WAI/WCAG21/Techniques/css/C39.html).
+
+<a id="r17-feedback-and-quality-of-life-review"></a>
+## R17. Feedback and quality-of-life review
+
+**Reviewed 2026-09-09.** Provider capabilities are current documentation claims, not an audit of a configured
+Zinely form. Product recommendations remain uncommitted in [ROADMAP.md](ROADMAP.md#current-priorities).
+
+### Evidence
+
+- **Verified:** GitHub Pages serves a static site. A real submission box therefore needs an external receiver;
+  drawing a form alone does not deliver messages. [GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages).
+- **Verified:** W3C recommends short forms asking only for necessary information, visible labels, clear
+  instructions and usable feedback. [W3C forms tutorial](https://www.w3.org/WAI/tutorials/forms/).
+  **Recommendation:** require only the message in Zinely's initial suggestion form.
+- **Verified provider claims:** Tally offers a free tier subject to fair-use conditions and free owner email
+  notifications. It documents keyboard/screen-reader support, but explicitly does not guarantee full accessibility
+  for every form. Automatic response retention is a Business feature; a free setup needs an owner-operated deletion
+  practice. A provider's GDPR statement does not make Zinely's particular workflow compliant automatically.
+  [FAQ](https://tally.so/help/faq), [notifications](https://tally.so/help/self-email-notifications),
+  [accessibility](https://tally.so/help/accessibility), [settings](https://tally.so/help/form-settings),
+  [data responsibility](https://tally.so/help/gdpr).
+- **Verified:** Google Forms supports anyone-with-link responder access; limiting to one response requires Google
+  sign-in. Shared response summaries can expose full written responses. A feedback form should not enable either
+  setting. [Google Forms sharing/settings](https://support.google.com/docs/answer/2839588).
+- **Verified:** GitHub issue forms support structured reports, but create repository issues rather than a private
+  support inbox. They fit technical contributors; do not make public issue creation the only feedback path for
+  an app built around personal photos. [GitHub issue templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository).
+- **Verified:** Android warns that UI-thread bitmap loading can hurt responsiveness. This supports investigating
+  the observed synchronous Reframe master decode, not claiming a measured stall. Zinely already samples normal
+  imports; any preview change must retain source geometry and export quality.
+  [Android bitmap guidance](https://developer.android.com/develop/ui/views/graphics).
+- **Verified:** Moderated usability tasks can reveal where an existing service or prototype causes difficulty.
+  **Recommendation:** run a short create/edit/export/fold session before adding more onboarding, menus or search.
+  [GOV.UK usability testing](https://www.gov.uk/service-manual/user-research/using-moderated-usability-testing).
+
+### Initial recommendation — superseded by owner selection below
+
+Use a normal link to a short Tally form after owner/provider/privacy approval; keep visible email fallback.
+Linking avoids adding a third-party embed to every page visit and keeps the website's existing lightweight
+structure. Google Forms is acceptable if the owner prefers its existing account workflow. Neither needs a custom
+backend, app network permission, analytics SDK, voting board or chat service. Do not call submissions anonymous:
+the message may contain personal information and the provider may process technical metadata.
+
+Only the message is required; category and reply email are optional. Avoid uploads and collecting unfinished
+answers. Test the exact form's keyboard/zoom/screen-reader error and success states plus delivery/deletion before
+publishing. Privacy text must distinguish voluntary website feedback from the offline Android app. No provider
+account, terms acceptance, form endpoint or submission has been created in this review.
+
+### Owner decision and public feedback route — 9 September
+
+The owner selected Google Forms, created/published the three-question form, and approved 90-day deletion
+of identifiable feedback. Only message is required; category and reply email are optional. Screenshots and
+recordings go by email, not form upload. The public responder page was fetched without authentication;
+no response was submitted during this check. This is not an audit of private response-summary settings.
+The website links rather than embeds the form, without campaign query parameters. Google Forms uploads
+require sign-in; optional email does not imply anonymous processing by Google.
+[Google question types](https://support.google.com/docs/answer/7322334),
+[Google privacy](https://policies.google.com/privacy),
+[Zinely policy](PRIVACY-POLICY.md#feedback-and-email).
+
+## R18. Deliberate folding instructions — 9 September
+
+- **Verified:** [Origami Guide](https://origami.guide/origami-boxes/easy-origami-basket/) pairs numbered
+  actions with pictures and explicit next/previous navigation. [iFixit EDU](https://edu.ifixit.com/editing-project/edit-edit-edit)
+  recommends sufficient procedural detail rather than vague directions. **Recommendation:** one action card
+  at a time, persistent instructions, and a complete all-steps view; never hide cut safety to fit a line count.
+- **Verified:** [Photoworks](https://photoworks.org.uk/learn/how-to/single-sheet-zine/) identifies cutting
+  from the folded edge toward the midpoint. **Recommendation:** retain folded-edge and stop-dot cues, and
+  animate the cut only to its prescribed endpoint. The diagram remains authoritative without animation.
+- **Verified:** [Origami Simulator](https://amandaghassaei.com/projects/origami_simulator) solves creases
+  simultaneously using WebGL, not a sequential human tutorial. **Rejected for Zinely:** a physics engine,
+  draggable camera, or general origami renderer would add dependencies and cognitive load for one booklet.
+- **Verified:** [WCAG 2.2.2](https://www.w3.org/WAI/WCAG21/Understanding/pause-stop-hide.html) addresses
+  qualifying automatic motion (Level A); [2.3.3](https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions.html)
+  supports disabling interaction motion (Level AAA, beyond the AA baseline). **Recommendation:** no autoplay,
+  deliberate Show direction, pause/resume/reset, reduced-motion static diagrams, and no focus-triggered motion.
+- **Implementation boundary:** dependency-free SVG geometry and a requestAnimationFrame clock demonstrate
+  simple hinge folds, the cut, and a labelled top view of the slit opening. Steps 4, 7, 8, and 10 stay static;
+  do not invent transitions for reorientation or book closing. All steps stay readable without JavaScript.
+  Three semantic instruction lines may wrap with zoom/mobile; a shared card footprint reserves the tallest
+  content. No line clamping, tiny-font fitting, or forced three-line overflow.
+- **Unproven:** improved physical folding success has not been measured with novice makers. This website
+  prototype does not authorize porting animation to Compose; a paper task is still the next usability check.

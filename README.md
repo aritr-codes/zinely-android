@@ -7,9 +7,12 @@ Turn photos and words into a physical, foldable zine in minutes — entirely on 
 [Privacy policy](https://aritr-codes.github.io/zinely-android/privacy/) ·
 [Changelog](https://aritr-codes.github.io/zinely-android/changelog/) ·
 [Roadmap](https://aritr-codes.github.io/zinely-android/roadmap/) ·
+[Share feedback](https://forms.gle/7ejUVJBdUaYoDytu6) ·
 [Download the latest beta](https://github.com/aritr-codes/zinely-android/releases/tag/v0.9.0-beta.4-r3)
 
 > *Physical media instead of social media.*
+
+An independent project by **Aastra, a two-person team**.
 
 [![status](https://img.shields.io/badge/status-public--beta-green)](docs/ROADMAP.md)
 [![platform](https://img.shields.io/badge/platform-Android-green)]()
@@ -47,7 +50,9 @@ Persistence is **files-as-truth**: `DocumentRepository` writes `projects/<id>/do
 
 The public website uses sanitized, light-mode renders from the canonical HTML prototypes rather than private
 device photos. It includes a concise About section, public changelog and non-committal roadmap, plus a complete
-illustrated folding guide with optional direction tracing. The existing in-app fold guide remains unchanged;
+illustrated folding desk with Previous/Next, deliberate pauseable direction demonstrations, and a complete
+static fallback. Feedback goes to an optional linked Google Form or email, under the public retention policy.
+The existing in-app fold guide remains unchanged;
 native animation still depends on evidence that it improves understanding.
 
 ---

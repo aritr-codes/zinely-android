@@ -2,7 +2,14 @@
 
 **Opened:** 2026-08-21  
 **Decision:** [ADR-110](../DECISIONS.md#adr-110)  
-**Scope today:** executable contract tests first; no claim that backup/restore is user-operable yet.
+**Historical scope (21 August):** executable contract tests first; backup/restore was not yet user-operable.
+
+**9 September reconciliation:** the table and foundation verdict below are a dated snapshot, not the
+current shipping verdict. Repository integration and the production UI subsequently landed; see the
+[22 August UI acceptance](2026-08-22-backup-restore-ui-device-verification.md) and
+[28 August bounded clean-reinstall recovery pass](2026-08-28-backup-wipe-restore-device-verification.md).
+Those passes do not close second-device/API, provider failure, disk-full, or full-media/print stress
+coverage. Preserve those limitations; current priorities live in [ROADMAP.md](../ROADMAP.md#current-priorities).
 
 This is the gate required by the V1 execution plan. A row is green only at the layer that can actually prove it. Pure structural tests cannot stand in for byte-level, transactional, SAF, or physical-device evidence.
 
@@ -33,7 +40,7 @@ This is the gate required by the V1 execution plan. A row is green only at the l
 | SAF provider revokes/returns null/throws mid-stream | Calm retry/alternate exit; no partial restore | Android/device | ⬜ Pending |
 | Airplane mode full journey | No behavior change and no network dependency | physical device | ⬜ Pending |
 
-## Current package verdict
+## Historical foundation verdict — 21 August
 
 The pure v2 contract passed independent review after its one required fix and is **GO as foundation work**. The feature itself remains **NO-GO for users** until every pending correctness row through transactional restore is green; the release gate additionally requires the physical-device rows and frozen UI flow.
 
