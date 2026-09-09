@@ -194,6 +194,11 @@ administration step: set **Settings → Pages → Build and deployment → Sourc
 the equivalent GitHub Pages API setting) before the first workflow run. After this feature branch reaches
 `main`, remove `feat/zine-backup-v2` from the workflow's push branches so only `main` can update production.
 
+Website product previews may be rendered from the canonical V2.1 HTML mockups. Play listing screenshots
+remain captures of the real release build: load a purpose-built demo zine made only from first-party or
+clearly licensed assets, then capture Shelf, Editor, Read, and Print/Fold in light mode. Never publish content
+from a developer's personal device library, even when it appears harmless.
+
 ---
 
 ## 4. Play Store — closed testing

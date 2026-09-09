@@ -433,7 +433,7 @@ footer p { margin: 0; }
 .policy-summary h2 { font-size: 1.4rem; }
 .policy-summary p:last-child { margin-bottom: 0; }
 .policy li + li { margin-top: 10px; }
-.policy a { font-weight: 750; text-underline-offset: 3px; }
+.policy a { overflow-wrap: anywhere; font-weight: 750; text-underline-offset: 3px; }
 
 .policy blockquote {
   margin: 24px 0;

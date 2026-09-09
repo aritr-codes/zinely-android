@@ -100,4 +100,4 @@ This hosting does not change how the Zinely Android app handles your information
 
 Questions about this policy or about Zinely's handling of your information:
 
-**slunia@releasemyad.com**
+**[aritr.g06@gmail.com](mailto:aritr.g06@gmail.com)**
