@@ -46,9 +46,9 @@ Public beta — the app boots onto the **My Shelf** library and mounts a working
 Persistence is **files-as-truth**: `DocumentRepository` writes `projects/<id>/document.json` atomically, with the Room `projects` table as a rebuildable index ([ADR-042](docs/DECISIONS.md#adr-042)). Still deferred: the Settings screen and the asset GC/sweeper. See the [roadmap](docs/ROADMAP.md).
 
 The public website uses sanitized, light-mode renders from the canonical HTML prototypes rather than private
-device photos. It includes a concise About section, public changelog and non-committal roadmap, plus an
-HTML-only fold-replay experiment. The existing in-app fold guide remains unchanged until that experiment is
-shown to improve understanding enough to justify another app interaction.
+device photos. It includes a concise About section, public changelog and non-committal roadmap, plus a complete
+illustrated folding guide with optional direction tracing. The existing in-app fold guide remains unchanged;
+native animation still depends on evidence that it improves understanding.
 
 ---
 

@@ -108,7 +108,7 @@ separates **Planned**, **Exploring**, and **Not committed**, contains no deliver
 repository's canonical engineering roadmap. This makes both pages useful without creating a second planning
 authority or promising speculative features.
 
-## 7. Verification record
+## 7. Verification record (initial publication)
 
 ### Website and assets
 
@@ -162,3 +162,34 @@ authority or promising speculative features.
   for Home, Changelog, Roadmap, and Privacy with the expected titles and contact address. The logo, three gallery
   WebPs, stylesheet, script, and beta.4-r3 APK all returned HTTP 200 with their expected media types and byte
   sizes. A fresh live desktop render was visually inspected with the deployed logo and artsy workbench layout.
+
+## 8. Website follow-up: complete folding guide and subtle motion
+
+The public three-action demonstration described above is superseded by a complete ten-step illustrated guide.
+Original inline SVG diagrams take inspiration from the owner's reference's sequential teaching approach, without
+reusing its artwork. All instructions remain visible without JavaScript. Four optional controls trace existing
+direction arrows; they do not simulate paper physics. Native buttons retain focus and announce the full instruction.
+Reduced-motion mode hides these optional controls and disables decorative motion, leaving the complete static guide.
+Button lifts/presses and linked-card effects are short, interaction-triggered, and limited to capable pointers.
+
+About now explains the simple creative motivation, identifies the indie developer, and invites suggestions through
+the existing public contact address. No app code, device settings, or frozen release artifacts were changed.
+
+Verification on 9 September 2026:
+
+- JavaScript syntax and whitespace checks passed.
+- W3C Nu reported no HTML errors. Its sole advisory flags the explicit `role="list"` on the ordered guide;
+  this is intentional to preserve list semantics when CSS removes visual list markers in WebKit.
+- Isolated headless Edge: all ten steps fit at 1440 px and 390 px, and at 320 px with 200% root text;
+  no guide element overflowed the viewport. Desktop/full-guide and mobile renders were visually inspected.
+- Keyboard Space starts a direction trace while retaining button focus and announcing the complete instruction.
+- Reduced motion: zero visible optional replay controls, zero active traces, zero running animations.
+- JavaScript disabled: ten complete steps, zero visible inactive replay controls.
+- Review corrections removed misleading optional traces from the cut and refold steps and marked the refolded
+  strip's outer folded edges explicitly. The cut geometry was independently checked against the described sequence.
+- Independent reviewer: **GO**, with no required fixes remaining; independently reproduced 320 px/200% text
+  reflow, reduced-motion behavior, syntax, and whitespace checks. Updated About also passed desktop/mobile/200%
+  text reflow checks and mobile visual inspection.
+- Automatic approval review blocked launching the local guide in the connected Samsung browser. No physical-device
+  browser pass is claimed. The temporary ADB reverse was removed; no font, theme, accessibility, or animation setting
+  was modified. Physical first-time-user folding tests remain the next evidence gate for any native app animation.

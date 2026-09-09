@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replaced the website's three-example fold demo with a complete ten-step illustrated guide. Original SVG
+  diagrams show creases, the single cut, and the finished booklet. Optional direction tracing and subtle
+  button/link effects respect reduced motion; all instructions remain available without JavaScript.
+- Updated the website About story with Zinely's indie origins and an invitation to share suggestions.
+
 - Replaced the standalone website Accessibility page with a short accessibility statement and contact route
   in the home-page About section. Accessibility remains a site-wide implementation requirement rather than a
   primary navigation destination.

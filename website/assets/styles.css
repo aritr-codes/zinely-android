@@ -229,18 +229,8 @@ h3 {
   font-weight: 850;
   text-align: center;
   text-decoration: none;
-  transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
-.button:hover {
-  box-shadow: 2px 3px 0 var(--ink);
-  transform: translate(2px, 2px);
-}
-
-.button:active {
-  box-shadow: none;
-  transform: translate(4px, 5px);
-}
 
 .primary { background: var(--primary); }
 .secondary { background: var(--surface); }
@@ -546,148 +536,60 @@ h3 {
   letter-spacing: -0.02em;
 }
 
-.fold-lab {
-  position: relative;
-  z-index: 0;
-  isolation: isolate;
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(330px, 1.1fr);
-  gap: clamp(34px, 7vw, 82px);
-  align-items: center;
-  padding: 100px 0 120px;
-}
-
-.fold-lab::after {
-  content: "✂";
-  position: absolute;
-  z-index: -1;
-  right: -22px;
-  top: 48px;
-  color: var(--ink-soft);
-  font-size: 5rem;
-  line-height: 1;
-  opacity: 0.72;
-  transform: rotate(16deg);
-}
-
-.fold-copy p { max-width: 600px; color: var(--ink-soft); }
-.fold-principle { padding-left: 16px; border-left: 4px solid var(--primary); }
-
-.fold-demo {
-  padding: clamp(22px, 4vw, 36px);
-  border: 3px solid var(--ink);
-  border-radius: 28px;
-  background: var(--surface);
-  box-shadow: 9px 11px 0 var(--ink);
-}
-
-.fold-step {
-  margin: 0 0 16px;
-  color: var(--ink-soft);
-  font-size: 0.78rem;
-  font-weight: 850;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.fold-stage {
-  display: grid;
-  min-height: 260px;
-  place-items: center;
-  overflow: hidden;
-  border: 2px dashed var(--ink);
-  border-radius: 18px;
-  background: var(--room);
-  perspective: 760px;
-}
-
-.fold-paper {
-  position: relative;
-  width: min(78%, 280px);
-  aspect-ratio: 1.42;
+/* A complete, readable paper guide; JavaScript only enhances the direction cues. */
+.fold-guide {
+  padding: 68px clamp(20px, 4vw, 48px);
+  margin-bottom: 110px;
+  background: var(--paper);
   border: 2px solid var(--ink);
-  background:
-    linear-gradient(90deg, transparent 24.6%, rgba(39,39,15,.35) 25%, transparent 25.4%, transparent 49.6%, rgba(39,39,15,.35) 50%, transparent 50.4%, transparent 74.6%, rgba(39,39,15,.35) 75%, transparent 75.4%),
-    linear-gradient(transparent 49.4%, rgba(39,39,15,.35) 50%, transparent 50.6%),
-    #fffdf5;
-  box-shadow: 5px 6px 0 rgba(39,39,15,.3);
-  transform-style: preserve-3d;
+  border-radius: 8px 28px 12px 20px;
+  box-shadow: 8px 10px 0 var(--ink);
 }
-
-.crease {
-  position: absolute;
-  inset: -2px auto -2px 50%;
-  border-left: 4px dashed var(--primary);
+.fold-key { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: .88rem; color: var(--ink-soft); }
+.fold-instructions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 44px 28px;
+  padding: 0;
+  margin: 40px 0;
+  list-style: none;
 }
+.fold-card { min-width: 0; padding-top: 18px; border-top: 2px dashed var(--ink-soft); }
+.fold-card h3 { display: flex; align-items: baseline; gap: 10px; font-size: 1.35rem; line-height: 1.2; }
+.fold-number { flex: 0 0 auto; font-family: Georgia, serif; font-style: italic; color: var(--ink-soft); }
+.fold-card svg { display: block; width: 100%; height: auto; stroke-linejoin: round; stroke-linecap: round; }
+.fold-card .sheet { fill: #fffdf5; stroke: var(--ink); stroke-width: 2.5; }
+.fold-card .crease-line { fill: none; stroke: var(--ink-soft); stroke-width: 1.5; stroke-dasharray: 4 5; }
+.fold-card .fold-edge { fill: none; stroke: var(--ink); stroke-width: 5; }
+.fold-card .direction { fill: none; stroke: var(--ink); stroke-width: 2.5; }
+.fold-card .cut-mark { fill: none; stroke: #a42b40; stroke-width: 4; }
+.fold-card .stop-dot { fill: #a42b40; }
+.fold-card svg text { fill: var(--ink); font: italic 14px Georgia, serif; }
+.fold-card p { margin: 12px 0 18px; color: var(--ink-soft); }
+.fold-card:last-child { background: var(--room-raised); border: 2px solid var(--ink); border-radius: 18px; padding: 18px; }
+.fold-finish { font-family: Georgia, serif; font-size: clamp(1.4rem, 3vw, 2rem); font-style: italic; text-align: center; }
+.button.quiet { background: var(--paper); color: var(--ink); }
+.direction-button { font: inherit; font-weight: 750; font-size: .9rem; cursor: pointer; }
+.direction-button[hidden] { display: none; }
 
-.folding-half {
-  position: absolute;
-  inset: 0 0 0 50%;
-  border-left: 3px solid var(--primary);
-  background:
-    linear-gradient(90deg, transparent 49%, rgba(39,39,15,.28) 50%, transparent 51%),
-    linear-gradient(transparent 49%, rgba(39,39,15,.28) 50%, transparent 51%),
-    #fffdf5;
-  transform-origin: left center;
-  transform-style: preserve-3d;
+@media (prefers-reduced-motion: no-preference) {
+  .button, .note-links a { transition: translate 180ms ease, transform 180ms ease, box-shadow 180ms ease; }
+  nav a, .text-link { transition: text-underline-offset 180ms ease; }
+  nav a:hover, .text-link:hover { text-underline-offset: 7px; }
+  .tracing-direction .direction { stroke-dasharray: 300; animation: trace-direction 800ms ease-out; }
+  @media (hover: hover) and (pointer: fine) {
+    .button:hover { transform: translateY(-2px); box-shadow: 4px 7px 0 var(--ink); }
+    .note-links a:hover { translate: 0 -3px; }
+  }
+  .button:active { transform: translate(3px, 4px); box-shadow: 1px 1px 0 var(--ink); }
 }
-
-.cut-line,
-.push-left,
-.push-right { display: none; position: absolute; }
-
-.step-fold.is-playing .folding-half { animation: fold-over 850ms cubic-bezier(.45,0,.2,1) forwards; }
-.step-fold.is-shown .folding-half { transform: rotateY(-178deg); }
-
-.step-cut .crease { inset: 50% -2px auto 50%; width: 50%; border: 0; border-top: 3px dashed var(--primary); }
-.step-cut .folding-half { display: none; }
-.step-cut .cut-line {
-  display: block;
-  top: calc(50% - 2px);
-  left: 50%;
-  width: 50%;
-  border-top: 5px solid var(--accent);
-  transform: scaleX(0);
-  transform-origin: left;
+@keyframes trace-direction { from { stroke-dashoffset: 300; } to { stroke-dashoffset: 0; } }
+.button:focus-visible, .note-links a:focus-visible { box-shadow: 0 0 0 7px var(--ink); }
+@media (max-width: 900px) { .fold-instructions { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .fold-instructions { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .fold-card svg { max-width: 300px; margin-inline: auto; }
 }
-.step-cut.is-playing .cut-line { animation: make-cut 700ms ease-out forwards; }
-.step-cut.is-shown .cut-line { transform: scaleX(1); }
-
-.step-pop .crease,
-.step-pop .folding-half { display: none; }
-.step-pop .push-left,
-.step-pop .push-right {
-  display: block;
-  top: 25%;
-  bottom: 25%;
-  width: 24%;
-  border: 3px solid var(--primary);
-  background: rgba(187, 202, 111, 0.34);
-}
-.step-pop .push-left { left: 1%; }
-.step-pop .push-right { right: 1%; }
-.step-pop.is-playing .push-left { animation: push-left 780ms ease-in-out forwards; }
-.step-pop.is-playing .push-right { animation: push-right 780ms ease-in-out forwards; }
-.step-pop.is-shown .push-left { transform: translateX(72%) skewY(-12deg); }
-.step-pop.is-shown .push-right { transform: translateX(-72%) skewY(12deg); }
-
-@keyframes fold-over { to { transform: rotateY(-178deg); } }
-@keyframes make-cut { to { transform: scaleX(1); } }
-@keyframes push-left { to { transform: translateX(72%) skewY(-12deg); } }
-@keyframes push-right { to { transform: translateX(-72%) skewY(12deg); } }
-
-.fold-instruction {
-  min-height: 3.2em;
-  margin: 18px 0;
-  color: var(--ink);
-  font-family: Georgia, serif;
-  font-size: 1.08rem;
-  font-weight: 700;
-}
-
-.fold-actions { display: flex; flex-wrap: wrap; gap: 12px; }
-.fold-actions .button { flex: 1 1 150px; }
-.button.quiet { background: var(--paper); }
 
 .project-notes { padding: 12px 0 110px; }
 
@@ -920,7 +822,6 @@ code { font-size: 0.9em; }
   .mockup-gallery { grid-template-columns: minmax(0, 1fr); max-width: 440px; margin-inline: auto; }
   .mockup-card:nth-child(2),
   .mockup-card:nth-child(3) { transform: none; }
-  .fold-lab { grid-template-columns: minmax(0, 1fr); }
   .step-grid li:nth-child(2) { transform: none; }
   .privacy-card,
   .about-card { grid-template-columns: 1fr; text-align: center; }
@@ -962,7 +863,6 @@ code { font-size: 0.9em; }
   .privacy-card { box-shadow: 6px 8px 0 var(--ink); }
   .about-card { box-shadow: 6px 8px 0 var(--ink); }
   .note-links { grid-template-columns: 1fr; }
-  .fold-lab::after { display: none; }
   footer { align-items: flex-start; flex-direction: column; }
   .policy-layout { padding-top: 42px; }
   .policy { box-shadow: 6px 8px 0 var(--ink); }
@@ -970,10 +870,7 @@ code { font-size: 0.9em; }
 
 @media (prefers-reduced-motion: reduce) {
   .button { transition: none; }
-  .step-fold.is-playing .folding-half,
-  .step-cut.is-playing .cut-line,
-  .step-pop.is-playing .push-left,
-  .step-pop.is-playing .push-right { animation-duration: 1ms; }
+  .direction-button { display: none; }
 }
 
 @media print {

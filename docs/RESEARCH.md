@@ -499,3 +499,14 @@ paper layers, tape, ink marks, imperfect alignment, and direct interactions arou
 
 **Sources:** [NIC Ice Creams](https://www.nicicecreams.com/) ·
 [The Belgian Waffle Co.](https://thebelgianwaffle.co/).
+
+### R16.5 Complete folding instructions before optional motion
+
+The website follow-up presents every physical step in a static ordered guide. Photoworks' single-sheet instructions
+confirm the critical operation: cut from the folded side, then reopen and refold into the booklet. The diagram and
+wording must identify both the folded edge and the stopping point; an animated cue must not suggest a different cut.
+W3C technique C39 supports suppressing non-essential interaction animation with `prefers-reduced-motion`.
+Zinely hides optional tracing controls in that mode while retaining all diagrams and written steps.
+
+**Sources:** [Photoworks single-sheet zine](https://photoworks.org.uk/learn/how-to/single-sheet-zine/) ·
+[W3C reduced-motion technique C39](https://www.w3.org/WAI/WCAG21/Techniques/css/C39.html).
