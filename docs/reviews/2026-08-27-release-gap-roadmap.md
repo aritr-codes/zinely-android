@@ -21,16 +21,52 @@ authorized the website fold refinement, feedback link, Aastra attribution, and v
   maximum card size is reserved to keep playback aligned. No novice physical-paper success claim is made.
   Research and rejected alternatives: [R18](../RESEARCH.md#r18-deliberate-folding-instructions--9-september).
 - Issue #53 was closed with Replace Photo evidence; #54 narrowed to evaluating long-press usefulness;
-  #55 narrowed to full Reframe photo-overlay goldens. #56 and #57 remain open. These actions supersede
-  the initial read-only audit's proposed dispositions below. No branches or worktrees were removed.
-- Existing PR #63 merge review found no product blocker in the bounded evidence review. Its draft body
-  was stale against Replace Photo and r3 hardware/release acceptance. The backup torture matrix's
-  foundation NO-GO is now explicitly historical; actual unresolved stress/device coverage is retained.
+  #55 narrowed to full Reframe photo-overlay goldens. #56 and #57 were resolved through their measured
+  implementation record in [PR #64](https://github.com/aritr-codes/zinely-android/pull/64). These actions
+  supersede the initial read-only audit's proposed dispositions below. No branches or worktrees were removed.
+- PR #63 merged on 9 September at `7d0960b`; main-head CI run `34388262137` and Pages run `34388262130`
+  both passed. Its pre-merge draft had been stale against Replace Photo and r3 hardware/release acceptance.
+  The backup torture matrix's foundation NO-GO is explicitly historical; unresolved stress/device coverage remains.
 - Local website checks use `tools/check-website.cjs` with isolated, externally installed Playwright and
   axe tooling (no app/runtime dependency). Coverage: ten steps, normal desktop three-line text, stable
   controls at 390/320 px and 200% text, keyboard play/pause/resume/reset, no autoplay, cut endpoint,
   live reduced-motion change, no-JS and print fallback, axe WCAG A/AA checks and JavaScript errors.
   Screenshots are inspected separately; automated checks are not a WCAG certification.
+
+### 2026-09-10 Reframe loading follow-up
+
+Issues #56 and #57 were investigated together on Samsung SM-A176B / Android 16 with synthetic, non-private
+assets. Each comparison has five entry samples after resetting frame statistics immediately before Reframe;
+“cold” means a fresh app process, while “warm” reuses the process. These are transition-local `gfxinfo`
+measurements, not whole-app launch benchmarks or a universal device claim.
+
+| Asset and condition | Existing r3 APK p95/p99 | Task branch p95/p99 | Result |
+|---|---:|---:|---|
+| 800×600 JPEG, warm | 34–61 ms | 38–69 ms | No meaningful change |
+| 800×600 JPEG, cold process | 36–73 ms | 38–69 ms | No meaningful change |
+| 4096×4096 JPEG, warm | 150 ms | 34–53 ms | Large-image tail materially lower |
+| 4096×4096 JPEG, cold process | 150–200 ms | 73–77 ms | Large-image tail materially lower |
+
+Raw five-sample p95/p99 sequences (milliseconds; p95 and p99 were identical within each short sample) were:
+small warm r3 `61, 57, 57, 34, 40`, small warm branch `69, 48, 44, 57, 38`; small cold r3
+`65, 36, 69, 73, 73`, small cold branch `61, 65, 38, 65, 69`; large warm r3
+`150, 150, 150, 150, 150`, large warm branch `48, 53, 53, 34, 38`; large cold r3
+`150, 200, 150, 150, 200`, and large cold branch `73, 73, 73, 77, 77`.
+
+The large baseline trace showed a main-thread full decode, a 4096×4096 texture upload and approximately
+64 MiB of bitmap growth. The task-branch trace places decode work on `DefaultDispatcher`, uploads a 2048×2048
+preview and grows bitmap memory by approximately 16 MiB. Full intrinsic dimensions remain the geometry source;
+the sampled bitmap is display-only. Small-image measurements justify leaving already-small inputs unsampled.
+The local verification traces are `zinely-reframe-large-main.trace` (SHA-256
+`0410d41074733f2f27df602d25b4163343e25f48e97d73f2e0ce59b76f5b3d7b`) and
+`zinely-reframe-large-branch.trace` (SHA-256
+`eb59aa3233916692f310aa1b6bf0456753d2fff4788488900f250dca38c2e5ab`); they contain no task photo payload
+and are identified here rather than checked into the repository.
+
+The same atomic loader result supplies intrinsic size plus optional display pixels. Tests can now inject the
+specific “measurable but undisplayable” state without consuming a one-shot stream, so the ignored #57 case is
+restored and scheduling cannot change its precondition. The public r3 APK and its digest remain untouched;
+these are repository-branch findings until review, CI and merge complete.
 
 The remaining paragraphs in this September section preserve the **initial audit snapshot**. Its
 read-only status, Tally preference, missing form, and uncommitted/deployment statements are historical.
@@ -47,8 +83,8 @@ on a 390 px viewport. Wrap it in the existing scroll-container style, with a nam
 region. Keep readable column widths inside that container rather than squeezing words into slivers.
 This is a focused existing reflow defect, not a policy change; verify Jekyll's rendered table before merge.
 
-Deployment gate: commit the reviewed source, require latest-head Android/core CI and Pages build, then
-merge PR #63 and verify main-only Pages live. This paragraph records the pre-merge gate, not a deployment claim.
+Deployment gate outcome: PR #63 merged at `7d0960b` after review; main-head Android/core CI and the main-only
+Pages deployment both passed. This replaces the pre-merge instruction while preserving the audit history below.
 
 This checkpoint supersedes the older next-action/status wording below. Planning authority remains
 [ROADMAP.md](../ROADMAP.md#current-priorities); this section owns the evidence, not a second backlog.
@@ -68,7 +104,7 @@ This checkpoint supersedes the older next-action/status wording below. Planning 
 
 | Candidate | Observed fact | Assessment and next evidence |
 |---|---|---|
-| Reframe entry loading | `ReframeOverlay.kt` calls intrinsic reads and `decodePhoto` synchronously in composition; `decodePhoto` has no sampling options. `ImportMasterDecoder` already bounds normal imports to 4096 px. Issue #56 is open. | **High confidence code risk; unmeasured user impact.** Best next technical investigation: benchmark small/large bounded masters, cold/warm entry and peak bitmap allocation. Pair any fix with deterministic unavailable-photo tests. Do not claim a measured stall or promise a speedup yet. |
+| Reframe entry loading | The 10 September follow-up above measured small/large bounded masters and traced the large-image decode; PR #64 is the implementation record for #56/#57. | **Measured repository improvement, not yet public.** Keep the 2048 px bitmap display-only and preserve full intrinsic geometry. Add stale-completion coverage if the loader boundary changes again. |
 | Disabled Font verb | `benchContextVerbs(TEXT)` explicitly sets `Font` disabled with `Not yet`. This is distinct from the corrected inline typing row. | **High confidence presence; medium confidence benefit.** Prototype removing this unavailable action rather than building an entire font system to justify it. Check whether makers can still find Edit, Size, Ink, Duplicate and Delete. Requires a freeze amendment. |
 | Feedback access | Website contact links work; there is no submission form. Current `ColophonScreen` contains paper preference, licences, privacy copy and version, but no feedback route. | **High confidence gap; recommendation, not a defect.** A linked external form can avoid requiring a configured email app or GitHub account. Keep email visible. If demand warrants an app entry later, add one quiet external link through the existing surface, not a new screen/SDK. |
 | Fold understanding | Website has ten complete static steps with optional arrow tracing; native guide has not been replaced. No novice comparison test is recorded. | **High confidence evidence gap.** Test paper execution before porting motion. Success is fewer wrong cuts/folds or requests for help, not more animation. |

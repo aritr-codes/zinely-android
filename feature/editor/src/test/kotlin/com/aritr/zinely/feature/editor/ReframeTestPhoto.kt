@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.editor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.aritr.zinely.render.android.AssetBytesSource
+import com.aritr.zinely.render.android.ImageIntrinsics
 import org.junit.Assume.assumeTrue
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -88,9 +89,9 @@ internal fun assumeFullImageDecodeAvailable() {
  * kept producing. Probing per call costs one 4×4 decode and lets each test ask about *its own* moment.
  *
  * This narrows the window rather than closing it: a decoder that dies between this probe and the
- * composition still fails the test. That residue is [#57][https://github.com/aritr-codes/zinely-android/issues/57]'s
- * neighbourhood, not something to solve during a release freeze — and the honest fallback is that a red
- * run here has always been an environment failure, never once a product defect.
+ * composition still fails the test. That environment residue is D-101, distinct from #57's now-deterministic
+ * measurable-but-undisplayable fixture. The honest fallback is that a red run here has always been an
+ * environment failure, never once a product defect.
  */
 private fun fullImageDecodeAvailable(): Boolean {
     val probe = runCatching {
@@ -114,26 +115,14 @@ private const val DEFAULT_WIDTH_PX = 250
 private const val DEFAULT_HEIGHT_PX = 200
 
 /**
- * A photo that is **measurable but not displayable**: the first `open` yields the bytes, every later one
- * yields nothing. Since `ReframeOverlay` reads bounds before pixels, the overlay lands in exactly the
- * state INV-01 described — aspect known, pixels absent — and the session must go inert.
- *
- * **What this fixture proves.** It reproduces the *state* faithfully, which is what the session-level and
- * accessibility tests assert behaviour in. It does not attempt to pin *how* the aspect was obtained — since
- * [ADR-056][com.aritr.zinely.render.android.readImageIntrinsics] the overlay and the renderer call one
- * shared function, so there is no second implementation to drift from. That is why the seam was shared
- * rather than tested: four fixtures were tried and none could distinguish a header read from a pixel
- * decode on this decoder (truncated bytes decode to a partial bitmap; a one-shot source observes only one
- * call; an `IDAT`-less PNG is rejected outright; a corrupt-`IDAT` PNG still yields a bitmap).
+ * A photo that is **measurable but not displayable**, established directly through the loader seam.
+ * No stream is consumed, so the precondition cannot change with coroutine scheduling or consumer order.
  */
-internal fun reframeTestPhotoMeasurableOnly(widthPx: Int = 250, heightPx: Int = 200): AssetBytesSource {
-    // Guarded too, though this fixture deliberately fails its *second* open: the test still drives the
-    // mounted controls to prove they are inert, and without a decoder the surrounding surface never
-    // reaches the state whose inertness is the point.
-    assumeFullImageDecodeAvailable()
-    val bytes = reframeTestPhotoBytes(widthPx, heightPx)
-    var served = false
-    return AssetBytesSource { if (served) null else ByteArrayInputStream(bytes).also { served = true } }
+internal fun reframeTestPhotoMeasurableOnlyLoader(
+    widthPx: Int = 250,
+    heightPx: Int = 200,
+): ReframePhotoLoader = ReframePhotoLoader { _, _ ->
+    ReframePhoto(intrinsic = ImageIntrinsics(widthPx, heightPx), decoded = null)
 }
 
 private fun reframeTestPhotoBytes(widthPx: Int, heightPx: Int): ByteArray =

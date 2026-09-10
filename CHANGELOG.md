@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Reframe now reads image dimensions and decodes its display bitmap together off the main thread. Large masters
+  use a preview capped at 2048 px on the longest edge while crop, Flip, commit, preview and export geometry retain
+  the master's full intrinsic dimensions. This is a repository change only; no published APK contains it yet.
 - Refined the website fold guide into a deliberate one-step-at-a-time paper desk, with pause/replay,
   static checkpoints, keyboard controls, stable instruction space, and all-steps/print/no-JS fallback.
 - Linked the owner-published Google feedback form, retained email for screenshots, and introduced Aastra
@@ -42,6 +45,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   primary navigation destination.
 - Simplified the in-app About surface by removing the duplicated product story. It still provides the
   default-paper preference, bundled-font licences, offline/privacy assurance, and installed app version.
+
+### Fixed
+
+- Restored the Reframe accessibility regression that proves a measurable but undisplayable photo keeps every
+  adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
+  than stream-consumer ordering, eliminating the CI race tracked by issue #57.
 
 ## [0.9.0-beta.4-r3] — 2026-08-31 — Readable dark-mode confirmations
 

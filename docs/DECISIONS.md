@@ -1282,6 +1282,16 @@ The supersession above is now **closed**. [ADR-054](#adr-054) is the implementat
 
 > **Closure note (2026-07-20) — INV-01 / M7-01.** This ADR's `preview == commit` claim held on a premise it never stated: that the Reframe overlay's photo aspect equals the intrinsic aspect the renderer measures. The overlay drew document-owned pixels *outside* the `CanvasReplayer`, deriving that aspect from a full-resolution decode while `ImageBlitter` derived it from a header-only `inJustDecodeBounds`. The two are not equally robust — a master the renderer could measure was one the overlay could fail on — and on failure the overlay fell back to the box ratio while the renderer used the true one, so a commit could bake a crop that letterboxed content the overlay had never displayed. The geometry itself was correct in all three commit branches; the *inputs* were not guaranteed to match. **M7-01** resolves it in three layers: the overlay and the renderer now read the intrinsic size through **one shared seam** ([ADR-056](#adr-056)), so the two inputs cannot differ by construction; a session is **refused at entry** when the photo's size cannot be read at all, rather than opening inert; and every adjustment verb is gated on the photo actually being displayed, so a framing session that shows nothing commits nothing. The decode contract is unchanged (the overlay still decodes its own pixels, independently and unsampled), so no new ADR is triggered; the unsampled decode remains a recorded backlog observation. The aspect fallback to the box ratio still exists for the *drawing* path; what M7-01 removes is its reach into anything committed. Parity is asserted by `ReframeParityTest` (both the destination rect and the **source fraction**, the half that actually varies with pan and zoom) and the header-only aspect read is pinned by `ReframeDecodeParityTest` against a master that carries a header and no pixel data — so a regression to the pre-M7-01 aspect source fails the suite rather than passing it.
 
+> **Loading follow-up (2026-09-10) — issues #56/#57.** Device traces justified closing the recorded
+> unsampled/UI-thread debt without changing this ADR's product or editor-state decisions. Reframe now performs
+> one IO-confined load that returns the shared intrinsic size and optional display pixels atomically. Geometry,
+> crop/Flip math, commits and export continue to use the full intrinsic dimensions; only the overlay bitmap is
+> sampled, to a 2048 px longest edge. A composition-scoped immutable loader seam establishes “measurable but
+> undisplayable” directly, replacing the order-dependent one-shot byte fixture and restoring the ignored
+> accessibility regression test. Five-sample physical-device comparisons found no meaningful small-image
+> change and cut large-image warm p95/p99 from 150 ms to 34–53 ms, with cold-process p95/p99 falling from
+> 150–200 ms to 73–77 ms. This is implementation reconciliation under ADR-053/056, not a new decision.
+
 ### Context
 
 The engine has been able to fit and crop an image since S3: `computeImageBlit` ([ADR-027](#adr-027)) is the sole, pure, DPI-agnostic fit/crop math, `Fit.FIT`/`Fit.FILL` both exist, and both render backends call it. But the editor never exposed a control: `:core:editor` [`Intent`](../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/Intent.kt) has only `RequestAddImage`/`CommitAddImage` and no reframe/replace/fit/crop intent, so every placed photo stayed `Fit.FIT` (the model default; no `Intent` mutated it). That gap was recorded and deferred from the alpha in the [ADR-047 amendment](#adr-047) and [PRD §7.3](PRD.md#73-alpha-release-scope--v060-alpha1-adr-047). The Bench Image-Framing design milestone closes it: it completed the full HTML-first workflow (design, adversarial UX, accessibility, engineering, self-falsification, Design Director, and a Release/Architecture governance audit) and `bench.html` is DESIGN-FROZEN with the amendment. Because this **adds editor behaviour** (new intents, commands, a mode), it is not part of the behaviour-invariant M0–M6 re-skin — it is a new functional milestone (Milestone IF), and its decisions need a durable home before Compose.
@@ -1606,7 +1616,14 @@ M7-01's first implementation fixed the behaviour by having the overlay perform i
 
 **Testing.** The property no longer needs a test, which is the cleanest available resolution given that no fixture could express it. `ReframeDecodeParityTest` and `ImageBlitterConformanceTest` continue to cover the seam's own contract (true size, missing, corrupt).
 
-**Not decided here.** The overlay still decodes its own *pixels* independently and **unsampled** — that remains a recorded backlog observation from INV-01, not part of this ADR. Changing it would alter the overlay's decode contract and needs its own decision.
+**Originally not decided here.** The overlay's independent, unsampled pixel decode was left as a recorded
+backlog observation from INV-01. **Amended 2026-09-10:** the owner-authorized #56/#57 slice measured that
+contract before changing it. Five-sample physical-device comparisons showed no meaningful small-image change,
+but large 4096×4096 masters held warm p95/p99 at 150 ms and cold-process p95/p99 at 150–200 ms. Reframe now
+loads the shared intrinsic size and optional display pixels atomically on IO and samples only the display bitmap
+to a 2048 px longest edge; full intrinsic geometry remains unchanged. Large-image warm p95/p99 fell to 34–53 ms
+and cold-process p95/p99 to 73–77 ms. This amends the implementation contract recorded here without changing
+the single intrinsic-size seam, the product behavior decided by ADR-053, or the export master.
 
 ### Alternatives considered
 

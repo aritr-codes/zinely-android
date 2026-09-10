@@ -6,6 +6,7 @@ import com.aritr.zinely.render.android.readImageIntrinsics
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -13,18 +14,10 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
 /**
- * **The decode-asymmetry proof (M7-01).** The Reframe overlay reads the photo's aspect with a header-only
- * decode, the same way `ImageBlitter` does, rather than from the full-resolution bitmap it paints.
- *
- * That split is the whole fix. INV-01 found that deriving the aspect from the pixel decode made the
- * overlay strictly less robust than the renderer: a master the renderer could measure was one the overlay
- * could fail on, and on failure the overlay silently fell back to the box ratio while the renderer used
- * the true one — so the committed crop letterboxed content the overlay had never displayed.
- *
- * A real out-of-memory decode cannot be provoked deterministically in a test, so the asymmetry is
- * exercised with its honest analogue: **truncated bytes**, where the header is intact and the pixel data
- * is not. That is the same shape of failure — measurable but not decodable — and it is the case that used
- * to poison the aspect.
+ * **The atomic-load parity proof (M7-01 / issues #56 and #57).** Reframe resolves geometry through the
+ * renderer-shared header seam, decodes only a display-bounded bitmap, and publishes both outcomes as one
+ * immutable result. A deterministic loader supplies the rare measurable-but-undisplayable state directly;
+ * no assertion depends on stream-consumer order or a platform decoder accepting particular corrupt bytes.
  */
 @RunWith(RobolectricTestRunner::class)
 class ReframeDecodeParityTest {
@@ -76,15 +69,35 @@ class ReframeDecodeParityTest {
      */
     @Test
     fun `a measurable but undisplayable master yields the true aspect and no pixels`() {
-        val source = reframeTestPhotoMeasurableOnly(widthPx = 800, heightPx = 200)
-
-        val bounds = readImageIntrinsics(source, "a") // the renderer's method: header only, no pixels
-        val pixels = decodePhoto(source, "a") // the overlay's own decode, which has nothing to lift
+        val loaded = reframeTestPhotoMeasurableOnlyLoader(widthPx = 800, heightPx = 200)
+            .load(sourceOf(null), "a")
+        val bounds = loaded.intrinsic
+        val pixels = loaded.decoded
 
         assertNotNull("the size must be known from the header alone", bounds)
         assertEquals(800, bounds!!.widthPx)
         assertEquals(200, bounds.heightPx)
         assertEquals(4.0, bounds.aspect, 1e-9)
         assertNull("pixels must not be recoverable", pixels)
+    }
+
+    @Test
+    fun `production loading preserves master geometry and bounds preview pixels`() {
+        val loaded = ProductionReframePhotoLoader.load(sourceOf(pngBytes(4096, 16)), "a")
+
+        assertEquals(4096, loaded.intrinsic?.widthPx)
+        assertEquals(16, loaded.intrinsic?.heightPx)
+        assertNotNull(loaded.decoded)
+        assertTrue(loaded.decoded!!.widthPx <= ReframePreviewMaxEdgePx)
+        assertTrue(loaded.decoded!!.heightPx <= ReframePreviewMaxEdgePx)
+    }
+
+    @Test
+    fun `preview sampling changes only after the display bound`() {
+        assertEquals(1, reframePreviewSampleSize(800, 600))
+        assertEquals(1, reframePreviewSampleSize(2048, 16))
+        assertEquals(2, reframePreviewSampleSize(2049, 16))
+        assertEquals(2, reframePreviewSampleSize(4096, 4096))
+        assertEquals(4, reframePreviewSampleSize(4097, 16))
     }
 }

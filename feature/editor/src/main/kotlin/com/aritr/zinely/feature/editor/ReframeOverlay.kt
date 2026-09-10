@@ -6,8 +6,10 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -27,11 +29,13 @@ import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.render.android.AssetBytesSource
-import com.aritr.zinely.render.android.readImageIntrinsics
+import com.aritr.zinely.render.android.ImageIntrinsics
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Scrim
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** Test tag on the Reframe preview overlay canvas. */
 public const val ReframeOverlayTestTag: String = "reframe-overlay"
@@ -55,10 +59,8 @@ public const val ReframeOverlayTestTag: String = "reframe-overlay"
  *
  * @param element the reframing photo (the session `before`; supplies assetId + the frame box).
  * @param draft the ephemeral working fit/zoom/pan.
- * @param onAspect reports the photo's intrinsic aspect (`w/h`) up so the host can seed/commit with the
- *   true ratio. Fires **only when the photo is both measurable and displayable**, so it doubles as the
- *   host's "the user may adjust" signal (M7-01): while it has not fired, the frame is inert and the
- *   session commits the element unchanged. One signal, so the two gates cannot drift apart.
+ * @param imageBytes import-master byte source. The overlay loads it on IO and never decodes in composition.
+ * @param onAspect reports the true intrinsic aspect only after display pixels are also available.
  * @param onDraft receives a gesture-updated [draft] (host stores it; never the reducer).
  */
 @Composable
@@ -69,6 +71,36 @@ public fun ReframeOverlay(
     pageOffset: PtPoint,
     imageBytes: AssetBytesSource,
     onAspect: (Double) -> Unit,
+    onDraft: (FramingDraft) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val loader = LocalReframePhotoLoader.current
+    var photo by remember(element.assetId, imageBytes, loader) { mutableStateOf<ReframePhoto?>(null) }
+    LaunchedEffect(element.assetId, imageBytes, loader) {
+        photo = withContext(Dispatchers.IO) { loader.load(imageBytes, element.assetId) }
+    }
+    val loaded = photo ?: return
+    LaunchedEffect(loaded) {
+        if (loaded.intrinsic != null && loaded.decoded != null) onAspect(loaded.intrinsic.aspect)
+    }
+    LoadedReframeOverlay(
+        element = element,
+        draft = draft,
+        screenPxPerPt = screenPxPerPt,
+        pageOffset = pageOffset,
+        photo = loaded,
+        onDraft = onDraft,
+        modifier = modifier,
+    )
+}
+
+@Composable
+internal fun LoadedReframeOverlay(
+    element: ImageElement,
+    draft: FramingDraft,
+    screenPxPerPt: Float,
+    pageOffset: PtPoint,
+    photo: ReframePhoto,
     onDraft: (FramingDraft) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -106,7 +138,7 @@ public fun ReframeOverlay(
     val thirds = Color.White
     val bratio = element.transform.widthPt / element.transform.heightPt
 
-    // Aspect and pixels come from two DIFFERENT decodes, deliberately (M7-01).
+    // Aspect and pixels come from two DIFFERENT reads, deliberately (M7-01).
     //
     // **Aspect** comes from the shared [readImageIntrinsics] seam (ADR-056) — the *same function* the
     // renderer's `ImageBlitter` calls, not a second implementation that happens to agree. The committed
@@ -114,17 +146,16 @@ public fun ReframeOverlay(
     // size; deriving them separately is what broke `preview == export` before (INV-01 failure mode 3),
     // because the overlay's full-resolution decode could fail where a header read cannot, and its
     // fallback to the box ratio then disagreed with the renderer's true one.
-    val intrinsic = remember(element.assetId, imageBytes) { readImageIntrinsics(imageBytes, element.assetId) }
+    val intrinsic = photo.intrinsic
     // **Pixels** are what the user actually frames against; a missing/undecodable asset (the default
     // EmptyAssetBytes, or a TOCTOU delete) yields null.
-    val decoded: DecodedPhoto? = remember(element.assetId, imageBytes) { decodePhoto(imageBytes, element.assetId) }
+    val decoded = photo.decoded
     val pratio = intrinsic?.aspect ?: bratio
     // The frame is adjustable ONLY while the photo is genuinely on screen. Framing blind is what produced
     // the divergence above: the controls stayed live, the draft moved, and the commit baked a crop against
-    // a photo the user could not see. `onAspect` is therefore the single signal for BOTH "the true aspect
-    // is known" and "the user may adjust", so the host's gate and this one cannot drift apart.
+    // a photo the user could not see. The host publishes the true aspect only when this same loaded state
+    // has pixels, so the keyboard/button gate and this canvas cannot drift apart.
     val framable = intrinsic != null && decoded != null
-    LaunchedEffect(intrinsic, decoded) { if (intrinsic != null && decoded != null) onAspect(intrinsic.aspect) }
 
     val latestDraft by rememberUpdatedState(draft)
 
@@ -255,18 +286,38 @@ internal fun reframePanFraction(
     return if (flipped) -unflipped else unflipped
 }
 
-/** A decoded photo + its aspect (`w/h`). */
-internal class DecodedPhoto(val bitmap: ImageBitmap, val widthPx: Int, val heightPx: Int) {
-    val aspect: Double get() = widthPx.toDouble() / heightPx.toDouble()
-}
+/** One atomic Reframe load: renderer-shared geometry plus optional display pixels. */
+internal data class ReframePhoto(val intrinsic: ImageIntrinsics?, val decoded: DecodedPhoto?)
 
-/** Decode the master bytes to an [ImageBitmap]; null if absent/undecodable (treated as missing). */
-internal fun decodePhoto(source: AssetBytesSource, assetId: String): DecodedPhoto? {
+/** A decoded, display-bounded preview bitmap. */
+internal data class DecodedPhoto(val bitmap: ImageBitmap, val widthPx: Int, val heightPx: Int)
+
+/**
+ * Decode display pixels, never the export master at arbitrary size. The power-of-two sample keeps the
+ * preview at or below [ReframePreviewMaxEdgePx] while geometry continues to use the full intrinsic size.
+ */
+internal fun decodePhoto(
+    source: AssetBytesSource,
+    assetId: String,
+    intrinsic: ImageIntrinsics,
+): DecodedPhoto? {
     val stream = source.open(assetId) ?: return null
-    val bmp = runCatching { stream.use { BitmapFactory.decodeStream(it) } }.getOrNull() ?: return null
+    val options = BitmapFactory.Options().apply {
+        inSampleSize = reframePreviewSampleSize(intrinsic.widthPx, intrinsic.heightPx)
+    }
+    val bmp = runCatching { stream.use { BitmapFactory.decodeStream(it, null, options) } }.getOrNull() ?: return null
     if (bmp.width <= 0 || bmp.height <= 0) return null
     return DecodedPhoto(bmp.asImageBitmap(), bmp.width, bmp.height)
 }
+
+internal fun reframePreviewSampleSize(widthPx: Int, heightPx: Int): Int {
+    val longest = maxOf(widthPx, heightPx)
+    var sample = 1
+    while ((longest + sample - 1) / sample > ReframePreviewMaxEdgePx) sample *= 2
+    return sample
+}
+
+internal const val ReframePreviewMaxEdgePx: Int = 2_048
 
 /** The element's on-page box in device px (axis-aligned, pre-rotation; the caller rotates about its centre). */
 private fun frameRectPx(element: ImageElement, screenPxPerPt: Double, pageOffset: PtPoint): Rect {

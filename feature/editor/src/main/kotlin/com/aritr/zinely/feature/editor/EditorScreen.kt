@@ -16,6 +16,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -106,6 +107,21 @@ public const val EditorPaperSurfaceTestTag: String = "editor-paper"
 /** Test tag on the top "Preview" entry point (shown only when the host provides an `onPreview`). */
 public const val EditorPreviewActionTestTag: String = "editor-preview-action"
 
+/** Composition-scoped loader seam: deterministic in tests, immutable and production-backed by default. */
+internal fun interface ReframePhotoLoader {
+    fun load(source: AssetBytesSource, assetId: String): ReframePhoto
+}
+
+internal val ProductionReframePhotoLoader: ReframePhotoLoader = ReframePhotoLoader { source, assetId ->
+    val intrinsic = readImageIntrinsics(source, assetId)
+    ReframePhoto(
+        intrinsic = intrinsic,
+        decoded = intrinsic?.let { decodePhoto(source, assetId, it) },
+    )
+}
+
+internal val LocalReframePhotoLoader = staticCompositionLocalOf { ProductionReframePhotoLoader }
+
 
 /**
  * The S4 editor host (ADR-029 §5, §6) — the screen that assembles every interaction layer over one
@@ -190,6 +206,7 @@ public fun EditorScreen(
     val uiState by store.uiState.collectAsStateWithLifecycle()
     val dispatch: (Intent) -> Unit = store::dispatch
     val currentState = { store.uiState.value }
+    val reframePhotoLoader = LocalReframePhotoLoader.current
 
     // A known save failure (ADR-035) gates the optimistic "Saved ✨" + the move/resize hint and raises the
     // banner. The presence flag drives all the suppression below; the kind only selects the banner copy.
@@ -266,6 +283,7 @@ public fun EditorScreen(
     // photo never reaches `true`, so no overlay and no controls are ever composed — where previously the
     // session rendered for the duration of the readability read before being cancelled.
     var reframeReadable by remember { mutableStateOf<Boolean?>(null) }
+    var reframePhoto by remember { mutableStateOf<ReframePhoto?>(null) }
     var reframeAdjusted by remember { mutableStateOf(false) }
     // The Reframe screen-reader announcements (bench `#rfLive` / `rfSay`): every discrete adjustment, fit
     // change, and session end speaks (WCAG 4.1.3). Routed through [onReframeAnnounce] to the host's
@@ -735,14 +753,16 @@ public fun EditorScreen(
     val sayStyle = { msg: String -> latestStyleAnnounce(msg) }
     val styleBuzz = rememberStyleBuzz()
 
-    // Open/refresh the draft when a session begins (keyed on token): seed from the current framing so
-    // reframing continues from the present look, then re-seed once the true photo aspect decodes — unless
-    // the user already adjusted the draft. Clears when the session ends.
-    LaunchedEffect(reframing?.token) {
+    // Open/refresh the draft when a session begins: seed from the current framing so reframing continues
+    // from the present look, then re-seed once the atomic photo load resolves — unless the user already
+    // adjusted the draft. Source/loader keys keep the composition-scoped test seam and a replaced source
+    // honest without relying on a new session token. Clears when the session ends.
+    LaunchedEffect(reframing?.token, imageBytes, reframePhotoLoader) {
         val rf = reframing
         reframeAdjusted = false
         reframePratio = null
         reframeReadable = null // nothing is presented until this resolves true
+        reframePhoto = null
         reframeDraft = rf?.let { Framing.seedDraft(it.before, bratioOf(it.before), bratioOf(it.before)) }
         if (rf != null) {
             // **Refuse a session we cannot honour (M7-01 / RF-4, founder Choice 1).** A photo whose
@@ -755,9 +775,9 @@ public fun EditorScreen(
             // Reframe chip, and the a11y custom action — under one rule. It runs *before* the entry
             // announcement, so a refused session never announces that it started.
             //
-            // This catches the common cases (absent / corrupt master) cheaply, with a header read that
-            // allocates no pixels. It cannot predict a pixel decode that fails later, so the in-session
-            // gate below remains as the second layer for that rarer case.
+            // One IO-confined load returns both the renderer-shared intrinsic size and optional preview
+            // pixels. Publishing that result atomically prevents the old header/decode ordering race while
+            // retaining the in-session inert state for the rarer measurable-but-undisplayable case.
             //
             // **Keyboard ownership is claimed BEFORE the read (M7-01-R1).** Focus is keystroke *routing*,
             // not presentation: the receiver is the root Column, which is composed either way, and every
@@ -768,10 +788,10 @@ public fun EditorScreen(
             // Compose considers the effect idle. Escape during the window now cancels, which is exactly
             // what the user asked for.
             runCatching { editorKeyFocus.requestFocus() }
-            val measurable = withContext(Dispatchers.IO) {
-                readImageIntrinsics(imageBytes, rf.before.assetId)
+            val loaded = withContext(Dispatchers.IO) {
+                reframePhotoLoader.load(imageBytes, rf.before.assetId)
             }
-            if (measurable == null) {
+            if (loaded.intrinsic == null) {
                 // A25: the refusal is visible and spoken once. BenchSnack owns the polite live-region
                 // announcement, so do not also send the same line through `sayReframe` and make TalkBack
                 // repeat it. The ordinary Add control returns as the truthful recovery path; Photo Replace
@@ -790,6 +810,8 @@ public fun EditorScreen(
             // Readable: release the chrome. Nothing above this line has presented anything, so a refused
             // session is never seen — the session exists in the reducer for as long as this read takes,
             // but it has no surface until here.
+            reframePhoto = loaded
+            reframePratio = loaded.decoded?.let { loaded.intrinsic.aspect }
             reframeReadable = true
             // Announce entry. The coach-mark has now done its teaching job (bench `taughtReframe = true`),
             // so persist it unless already positively seen. (The keyboard was claimed before the read.)
@@ -1483,14 +1505,14 @@ public fun EditorScreen(
                         uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == rf.id } as? ImageElement
                     }
                     val currentDraft = reframeDraft
-                    if (reframeEl != null && currentDraft != null && reframeReadable == true) {
-                        ReframeOverlay(
+                    val currentReframePhoto = reframePhoto
+                    if (reframeEl != null && currentDraft != null && currentReframePhoto != null && reframeReadable == true) {
+                        LoadedReframeOverlay(
                             element = reframeEl,
                             draft = currentDraft,
                             screenPxPerPt = uiState.view.screenPxPerPt,
                             pageOffset = uiState.view.pageOffset,
-                            imageBytes = imageBytes,
-                            onAspect = { reframePratio = it },
+                            photo = currentReframePhoto,
                             onDraft = { adjustDraft(it) },
                             modifier = Modifier.fillMaxSize(),
                         )
