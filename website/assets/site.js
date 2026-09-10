@@ -181,7 +181,7 @@
       sheet.classList.toggle('is-print', print);
       label.textContent = print ? 'Print layout' : 'Reading order';
       note.textContent = print
-        ? 'Print layout: 8, 1, 2, 7 upside down; 6, 3, 4, 5 upright. Looks wrong. Folds right. Press again for reading order.'
+        ? 'Print layout: 5, 4, 3, 2 upside down; 6, 7, 8, 1 upright. Looks wrong. Folds right. Press again for reading order.'
         : 'Reading order: 1 to 8, front cover to back cover. A layout comparison, not a folding simulation.';
     });
   }

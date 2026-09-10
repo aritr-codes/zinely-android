@@ -8,6 +8,14 @@ const { chromium } = require(path.join(process.argv[2], 'playwright'));
 const { default: AxeBuilder } = require(path.join(process.argv[2], '@axe-core/playwright'));
 const root = path.resolve(__dirname, '..');
 const site = path.join(root, 'website');
+// The product convention, not another hand-maintained website example, is the oracle.
+const convention = fs.readFileSync(path.join(root, 'core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/Convention.kt'), 'utf8');
+const cells = [...convention.matchAll(/(\d+) to GridCell\((\d+), (\d+)\)/g)]
+  .map(([, number, row, column]) => ({ number: Number(number), row: Number(row), column: Number(column) }))
+  .sort((a, b) => a.row - b.row || a.column - b.column);
+const rotations = new Map([...convention.matchAll(/(\d+) to Rotation\.(NONE|HALF)/g)].map(([, n, r]) => [Number(n), r === 'HALF']));
+assert.equal(cells.length, 8, 'Canonical eight-page cell table parsed');
+assert.equal(rotations.size, 8, 'Canonical eight-page rotation table parsed');
 const out = process.argv[4];
 fs.mkdirSync(out, { recursive: true });
 const failures = [];
@@ -47,8 +55,15 @@ const server = http.createServer((req, res) => {
       const matrix = new DOMMatrix(getComputedStyle(n).transform);
       return { number: Number(n.querySelector('b').textContent), x: rect.x, y: rect.y, inverted: matrix.a < 0 };
     }).sort((a, b) => Math.abs(a.y - b.y) > 2 ? a.y - b.y : a.x - b.x));
-    assert.deepEqual(printed.map(p => p.number), [8, 1, 2, 7, 6, 3, 4, 5]);
-    assert.deepEqual(printed.map(p => p.inverted), [true, true, true, true, false, false, false, false]);
+    assert.deepEqual(printed.map(p => p.number), cells.map(p => p.number));
+    assert.deepEqual(printed.map(p => p.inverted), cells.map(p => rotations.get(p.number)));
+    const hero = await page.locator('.paper-story-sheet > span').evaluateAll(nodes => nodes.map(n => ({
+      number: Number(n.textContent), inverted: getComputedStyle(n).transform !== 'none' && new DOMMatrix(getComputedStyle(n).transform).a < 0
+    })));
+    assert.deepEqual(hero.map(p => p.number), cells.map(p => p.number), 'Hero matches product convention too');
+    assert.deepEqual(hero.map(p => p.inverted), cells.map(p => rotations.get(p.number)));
+    assert.ok((await page.locator('#page-order-note').textContent()).includes(cells.slice(0, 4).map(p => p.number).join(', ')), 'Text alternative matches top row');
+    assert.ok((await page.locator('#page-order-note').textContent()).includes(cells.slice(4).map(p => p.number).join(', ')), 'Text alternative matches bottom row');
     await page.locator('.page-lab').screenshot({ path: path.join(out, 'page-lab-print.png') });
     await page.keyboard.press('Space');
     assert.equal(await orderToggle.getAttribute('aria-pressed'), 'false', 'Keyboard reverses comparison');

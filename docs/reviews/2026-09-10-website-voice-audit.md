@@ -61,6 +61,10 @@ Voice rules live in [VOICE.md](../design/VOICE.md#public-website-voice), so this
   motion, instantaneous reduced-motion comparison, existing folding tests, 320/390px and 200% text reflow,
   no-JavaScript and print fallback, axe checks, and zero page errors.
 - Physical-device and novice paper-folding success are not established by browser automation.
+- Final independent copy review caught an inherited factual error in the hero illustration that had also entered
+  the new comparison. Both now match `SingleSheet8.TOP_ROW_ROTATED`: top 5, 4, 3, 2 inverted; bottom 6, 7, 8, 1
+  upright. The browser suite reads the canonical Kotlin cell/rotation tables to verify both diagrams and the text
+  alternative. Review also prompted removing a grammar error, excess About asides, and a changelog reliability joke.
 - W3C Nu validation returns zero errors (one existing informational redundant-list-role advisory). JavaScript
   syntax and diff-whitespace checks pass. All 27 homepage link targets remain byte-identical; added lines across
   the complete patch contain zero em dashes. HTML, CSS, and JavaScript together add approximately 3.3 KB gzipped
