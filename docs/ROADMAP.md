@@ -12,13 +12,13 @@
 commitment. **Completed** work belongs in [CHANGELOG.md](../CHANGELOG.md), with public APK changes kept separate
 from repository-only changes and website updates. No new app feature is committed for the next release yet.
 
+Reframe loading and the deterministic accessibility regression were completed through
+[PR #64](https://github.com/aritr-codes/zinely-android/pull/64). The repository change does not alter the public
+beta.4-r3 APK; measurements and evidence remain in the
+[release-gap review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-10-reframe-loading-follow-up).
+
 ### Planned
 
-- **Reframe loading investigation and regression test #57:** implemented on the current task branch and awaiting
-  its normal PR gates. Five-sample device comparisons justify a local large-preview change: Reframe now performs
-  one atomic IO-confined load and bounds display pixels to 2048 px while preserving full intrinsic geometry.
-  The deterministic unavailable-photo test seam restores the ignored accessibility case. Issues #56/#57 remain
-  open until the reviewed branch is merged; no public APK contains this repository change yet.
 - **Google Play publication**, after owner account verification, mandatory testing and store review. Account
   verification remains blocked; the signed GitHub beta and public policy already exist. This is a distribution
   task, not a reason to rebuild or overwrite beta.4-r3. [Release authority](RELEASING.md#3-beta-distribution-side-load).
@@ -35,9 +35,8 @@ from repository-only changes and website updates. No new app feature is committe
 
 ### Engineering follow-ups — not extra public feature promises
 
-- Close [#56](https://github.com/aritr-codes/zinely-android/issues/56) and
-  [#57](https://github.com/aritr-codes/zinely-android/issues/57) only after the task branch passes independent
-  review, latest-head CI, and merge. Preserve the measurement record in the release-gap review.
+- Add a blocked-loader regression proving a cancelled or superseded Reframe load cannot publish stale state,
+  if this boundary changes again. Preserve the raw measurement and trace-hash record in the release-gap review.
 - Verify backup/restore on a second Android/API environment and realistic interrupted/low-storage providers.
   Treat this as coverage expansion, not a claim that the accepted Samsung recovery path is broken. Do not fill,
   wipe or uninstall the owner's device to manufacture a test condition.

@@ -21,9 +21,9 @@ authorized the website fold refinement, feedback link, Aastra attribution, and v
   maximum card size is reserved to keep playback aligned. No novice physical-paper success claim is made.
   Research and rejected alternatives: [R18](../RESEARCH.md#r18-deliberate-folding-instructions--9-september).
 - Issue #53 was closed with Replace Photo evidence; #54 narrowed to evaluating long-press usefulness;
-  #55 narrowed to full Reframe photo-overlay goldens. #56 and #57 remain open pending merge of their
-  measured implementation branch. These actions supersede the initial read-only audit's proposed dispositions
-  below. No branches or worktrees were removed.
+  #55 narrowed to full Reframe photo-overlay goldens. #56 and #57 were resolved through their measured
+  implementation record in [PR #64](https://github.com/aritr-codes/zinely-android/pull/64). These actions
+  supersede the initial read-only audit's proposed dispositions below. No branches or worktrees were removed.
 - PR #63 merged on 9 September at `7d0960b`; main-head CI run `34388262137` and Pages run `34388262130`
   both passed. Its pre-merge draft had been stale against Replace Photo and r3 hardware/release acceptance.
   The backup torture matrix's foundation NO-GO is explicitly historical; unresolved stress/device coverage remains.
@@ -104,7 +104,7 @@ This checkpoint supersedes the older next-action/status wording below. Planning 
 
 | Candidate | Observed fact | Assessment and next evidence |
 |---|---|---|
-| Reframe entry loading | The 10 September follow-up above measured small/large bounded masters and traced the large-image decode. Issue #56 remains open pending branch merge. | **Measured branch improvement, not yet public.** Keep the 2048 px bitmap display-only, preserve full intrinsic geometry, and close #56/#57 only after independent review and latest-head CI. |
+| Reframe entry loading | The 10 September follow-up above measured small/large bounded masters and traced the large-image decode; PR #64 is the implementation record for #56/#57. | **Measured repository improvement, not yet public.** Keep the 2048 px bitmap display-only and preserve full intrinsic geometry. Add stale-completion coverage if the loader boundary changes again. |
 | Disabled Font verb | `benchContextVerbs(TEXT)` explicitly sets `Font` disabled with `Not yet`. This is distinct from the corrected inline typing row. | **High confidence presence; medium confidence benefit.** Prototype removing this unavailable action rather than building an entire font system to justify it. Check whether makers can still find Edit, Size, Ink, Duplicate and Delete. Requires a freeze amendment. |
 | Feedback access | Website contact links work; there is no submission form. Current `ColophonScreen` contains paper preference, licences, privacy copy and version, but no feedback route. | **High confidence gap; recommendation, not a defect.** A linked external form can avoid requiring a configured email app or GitHub account. Keep email visible. If demand warrants an app entry later, add one quiet external link through the existing surface, not a new screen/SDK. |
 | Fold understanding | Website has ten complete static steps with optional arrow tracing; native guide has not been replaced. No novice comparison test is recorded. | **High confidence evidence gap.** Test paper execution before porting motion. Success is fewer wrong cuts/folds or requests for help, not more animation. |
