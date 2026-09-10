@@ -1,6 +1,7 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -35,7 +36,6 @@ import com.aritr.zinely.render.android.AssetBytesSource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -90,19 +90,26 @@ class ReframeA11yTest {
     // from inside the test body, not from the constructor, to be honoured as a skip.
     private val photo by lazy { reframeTestPhoto() }
 
-    private fun render(s: EditorStore, coachSeen: Boolean? = true, bytes: AssetBytesSource = photo) {
+    private fun render(
+        s: EditorStore,
+        coachSeen: Boolean? = true,
+        bytes: AssetBytesSource = photo,
+        loader: ReframePhotoLoader = ProductionReframePhotoLoader,
+    ) {
         coachSeenCalls = 0
         announced.clear()
         composeRule.setContent {
             ZinelyTheme {
-                EditorScreen(
-                    store = s,
-                    pageSizePt = pageSizePt,
-                    imageBytes = bytes,
-                    reframeCoachSeen = coachSeen,
-                    onReframeCoachSeen = { coachSeenCalls++ },
-                    onReframeAnnounce = { announced += it },
-                )
+                CompositionLocalProvider(LocalReframePhotoLoader provides loader) {
+                    EditorScreen(
+                        store = s,
+                        pageSizePt = pageSizePt,
+                        imageBytes = bytes,
+                        reframeCoachSeen = coachSeen,
+                        onReframeCoachSeen = { coachSeenCalls++ },
+                        onReframeAnnounce = { announced += it },
+                    )
+                }
             }
         }
     }
@@ -186,38 +193,33 @@ class ReframeA11yTest {
      * test therefore pins the *current* behaviour honestly and will need updating when that lands — which
      * is the point of writing it down rather than leaving the strand untested.
      */
-    // TODO(#57): restore this test — quarantined for the 0.9.0-beta.1 release freeze, not deleted.
-    //
-    // It is flaky because its FIXTURE's precondition is order-dependent, not because the behaviour it
-    // asserts is unstable. `reframeTestPhotoMeasurableOnly()` serves real bytes on the first `open` and
-    // nothing after, so it only produces "measurable but not displayable" if the overlay reads bounds
-    // BEFORE it decodes pixels — and that ordering is two LaunchedEffects. Under CI load it sometimes
-    // flips: the decode wins, the photo really is displayable, the verbs legitimately act and speak, and
-    // the assertion below fails. A failing precondition, dressed as a failing assertion.
-    //
-    // This is NOT the decoder-exhaustion problem that `forkEvery = 50` addresses; that mitigation took
-    // the failing set from two tests down to this one, and cannot fix this one.
-    //
-    // The invariant is not left uncovered. The commit-side half — an undisplayable photo cannot bake a
-    // crop — is still asserted and still runs, in
-    // ReframeSessionTest.an_undisplayable_photo_commits_nothing_and_records_no_command. What is
-    // unguarded until #57 lands is specifically the "…and stays silent" clause.
-    //
-    // The fix is to establish the precondition through a seam rather than by inferring it from which
-    // consumer opens the stream first. That is a test-architecture change, deliberately out of scope
-    // during the freeze.
-    @Ignore("Flaky: fixture precondition is order-dependent — see #57. Commit-side coverage retained.")
+    // The composition-scoped loader pins this precondition directly; no stream-open race is involved.
     @Test
     fun an_undisplayable_photo_leaves_the_adjustment_verbs_inert_and_silent() {
         val s = store()
         val id = imageId(s)
-        render(s, bytes = reframeTestPhotoMeasurableOnly())
+        render(
+            s,
+            bytes = AssetBytesSource { null },
+            loader = reframeTestPhotoMeasurableOnlyLoader(),
+        )
         s.dispatch(Intent.BeginReframe(id))
         composeRule.waitForIdle()
 
         announced.clear() // drop the session-entry announcement; we are testing the verbs
-        composeRule.onNodeWithContentDescription("Zoom in").performClick()
-        composeRule.onNodeWithContentDescription("Zoom out").performClick()
+        listOf(
+            "Move photo up",
+            "Move photo left",
+            "Move photo right",
+            "Move photo down",
+            "Zoom out",
+            "Zoom in",
+            "Fill",
+            "Whole photo",
+            "Reset framing",
+        ).forEach { description ->
+            composeRule.onNodeWithContentDescription(description).performClick()
+        }
         composeRule.waitForIdle()
 
         assertTrue("no verb may act or speak while the photo is undisplayable", announced.isEmpty())

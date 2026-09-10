@@ -62,11 +62,12 @@ entirely. **Two lines of real work, neither containing the other, one of them ex
 machine.** A disk failure loses 45 reviewed commits. 🟦 **Push local `main` and reconcile it deliberately,
 as its own act** — not folded into a feature merge. **Decision + Credential** (it needs a push).
 
-⚠ **A red `feature:editor` run has *three* possible causes and the exit code does not separate them** —
-a genuine regression · a golden owed a re-record (B1) · or [D-101](design/V2-SPEC-DEFECTS.md#d-101)'s
-Robolectric decoder window, which is stochastic and already tracked as **#57**. I hit all three in one
-run. **Before treating a red gate as a blocker, re-run it**; and before trusting a *green* Reframe suite,
-read the `skipped` count, because that guard turns absent coverage into a green tick by design.
+⚠ **A red `feature:editor` run still needs its evidence classified** — a genuine regression, a golden owed a
+re-record (B1), or [D-101](design/V2-SPEC-DEFECTS.md#d-101)'s environment-specific Robolectric decoder window.
+That decoder residue is distinct from **#57**, whose order-dependent unavailable-photo fixture was replaced by
+a deterministic loader seam on 2026-09-10. Do not clear a red gate by retrying it: inspect the failing test and
+decoder evidence. Before trusting a green Reframe suite, still read the `skipped` count because unrelated
+decode-capability guards can intentionally skip on hosts whose native decoder is unavailable.
 
 **Known limitations to carry into release notes** (do **not** block the merge): the PDF/vector parity suite now
 has real-device evidence (5/5, SM-A176B / Android 16, 2026-08-25), all sixteen frozen Art supplies are live,

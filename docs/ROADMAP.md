@@ -2,7 +2,7 @@
 
 > **The single source of truth for phasing.** *Every roadmap change is reflected here.* Scope detail per phase lives in [PRD.md](PRD.md); the "how" in [ARCHITECTURE.md](ARCHITECTURE.md); rationale in [DECISIONS.md](DECISIONS.md). No dates are committed yet — phases are ordered, not scheduled.
 
-- **Current priorities reviewed:** 2026-09-09. Earlier phase plans below are historical context, not a list of
+- **Current priorities reviewed:** 2026-09-10. Earlier phase plans below are historical context, not a list of
   promised or still-missing features. Use this current section for next-work decisions.
 
 <a id="current-priorities"></a>
@@ -14,39 +14,38 @@ from repository-only changes and website updates. No new app feature is committe
 
 ### Planned
 
-- **Reframe loading investigation and regression test #57:** owner-approved next engineering slice.
-  Measure cold/warm entry, restore deterministic unavailable-photo accessibility coverage, then decide
-  whether a local decode change is justified. This commits to investigation and test restoration, not a speedup.
+- **Reframe loading investigation and regression test #57:** implemented on the current task branch and awaiting
+  its normal PR gates. Five-sample device comparisons justify a local large-preview change: Reframe now performs
+  one atomic IO-confined load and bounds display pixels to 2048 px while preserving full intrinsic geometry.
+  The deterministic unavailable-photo test seam restores the ignored accessibility case. Issues #56/#57 remain
+  open until the reviewed branch is merged; no public APK contains this repository change yet.
 - **Google Play publication**, after owner account verification, mandatory testing and store review. Account
   verification remains blocked; the signed GitHub beta and public policy already exist. This is a distribution
   task, not a reason to rebuild or overwrite beta.4-r3. [Release authority](RELEASING.md#3-beta-distribution-side-load).
 
 ### Exploring — recommended next decisions, in order
 
-1. **Reframe decode approach:** the investigation is planned above; moving or sizing the preview remains
-   uncommitted pending measurements. Imports already cap masters at 4096 px. Preserve true dimensions,
-   crop/Flip math, cancellation, unavailable-photo gating, one undo step, and preview/PDF parity. No cache assumed.
-2. **Unavailable Font control:** prototype removing the disabled selected-text `Font` verb until font choice
+1. **Unavailable Font control:** prototype removing the disabled selected-text `Font` verb until font choice
    exists. Current code intentionally draws it with `Not yet`; this is a real no-op control, not a missing font
    implementation to rush. HTML freeze amendment and user reading precede Compose. No change to the already-fixed
    typing-row Ink/Done behavior is implied.
-3. **Fold clarity:** observe first-time makers using the existing app guide and the ten-step website guide with
+2. **Fold clarity:** observe first-time makers using the existing app guide and the ten-step website guide with
    paper. Record cut mistakes, hesitation and completion without coaching. Change diagrams or add motion only
    if evidence identifies an improvement. The website guide is shipped; native replay is not.
 
 ### Engineering follow-ups — not extra public feature promises
 
-- Restore the ignored unusable-photo accessibility regression test
-  ([#57](https://github.com/aritr-codes/zinely-android/issues/57)) through a deterministic decode/readability seam;
-  protect this before changing Reframe loading. Existing commit-side protection remains active.
+- Close [#56](https://github.com/aritr-codes/zinely-android/issues/56) and
+  [#57](https://github.com/aritr-codes/zinely-android/issues/57) only after the task branch passes independent
+  review, latest-head CI, and merge. Preserve the measurement record in the release-gap review.
 - Verify backup/restore on a second Android/API environment and realistic interrupted/low-storage providers.
   Treat this as coverage expansion, not a claim that the accepted Samsung recovery path is broken. Do not fill,
   wipe or uninstall the owner's device to manufacture a test condition.
 - Reconcile issue/PR and owner-checklist drift using the
   [current evidence review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-09-current-state-review).
   Issue #53 was closed as implemented; #55 was narrowed to full photo-overlay golden coverage.
-- Main integration is owner-authorized. Require independent review and latest-head CI before merging PR #63;
-  use main-only Pages and main engineering links. Preserve old branches/worktrees and frozen release artifacts.
+- PR #63 merged to `main` at `7d0960b`; its Android/core CI passed and the main-only Pages deployment is live.
+  Preserve old branches/worktrees and frozen release artifacts.
 
 The owner-published Google feedback form is linked from the website; the 90-day policy and email fallback
 are in [PRIVACY-POLICY.md](PRIVACY-POLICY.md#feedback-and-email). Completed website work belongs in the

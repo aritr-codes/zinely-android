@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.editor
 import android.view.KeyEvent as NativeKeyEvent
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -94,13 +95,19 @@ class ReframeSessionTest {
         s.uiState.value.document.pages[s.uiState.value.currentPageIndex].elements
             .first { it is ImageElement } as ImageElement
 
-    private fun render(s: EditorStore, bytes: AssetBytesSource = photo) {
+    private fun render(
+        s: EditorStore,
+        bytes: AssetBytesSource = photo,
+        loader: ReframePhotoLoader = ProductionReframePhotoLoader,
+    ) {
         composeRule.setContent {
             ZinelyTheme {
                 val state by s.uiState.collectAsState()
                 // Read state so the host recomposes; EditorScreen itself collects the store too.
                 @Suppress("UNUSED_EXPRESSION") state
-                EditorScreen(store = s, pageSizePt = pageSizePt, imageBytes = bytes)
+                CompositionLocalProvider(LocalReframePhotoLoader provides loader) {
+                    EditorScreen(store = s, pageSizePt = pageSizePt, imageBytes = bytes)
+                }
             }
         }
     }
@@ -210,7 +217,11 @@ class ReframeSessionTest {
     fun an_undisplayable_photo_commits_nothing_and_records_no_command() {
         val s = store()
         val id = imageId(s)
-        render(s, reframeTestPhotoMeasurableOnly())
+        render(
+            s,
+            bytes = AssetBytesSource { null },
+            loader = reframeTestPhotoMeasurableOnlyLoader(),
+        )
         s.dispatch(Intent.BeginReframe(id))
         composeRule.waitForIdle()
 
