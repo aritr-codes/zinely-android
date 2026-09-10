@@ -56,6 +56,7 @@ class ReframeOverlayGoldenTest {
         const val HOST_TAG = "reframeOverlayGoldenHost"
         const val PHOTO_WIDTH_PX = 320
         const val PHOTO_HEIGHT_PX = 180
+        const val SCREEN_PX_PER_PT = 2f
         const val RED = 0xFFE45B4F.toInt()
         const val GREEN = 0xFF6F8F45.toInt()
         const val BLUE = 0xFF5577B8.toInt()
@@ -113,14 +114,16 @@ class ReframeOverlayGoldenTest {
     ) {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
-                paperArgb = ZinelyTheme.v21Colors.paper.toArgb()
-                inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
-                deskEdgeArgb = ZinelyTheme.v21Colors.deskEdge.toArgb()
-                OverlayPage(
-                    draft = draft,
-                    element = element(flippedHorizontally, flippedVertically),
-                    photo = photo(),
-                )
+                BenchSheetIsland {
+                    paperArgb = ZinelyTheme.v21Colors.paper.toArgb()
+                    inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
+                    deskEdgeArgb = ZinelyTheme.v21Colors.deskEdge.toArgb()
+                    OverlayPage(
+                        draft = draft,
+                        element = element(flippedHorizontally, flippedVertically),
+                        photo = photo(),
+                    )
+                }
             }
         }
         composeRule.waitForIdle()
@@ -137,7 +140,7 @@ class ReframeOverlayGoldenTest {
             LoadedReframeOverlay(
                 element = element,
                 draft = draft,
-                screenPxPerPt = 2f,
+                screenPxPerPt = SCREEN_PX_PER_PT,
                 pageOffset = PtPoint(0.0, 0.0),
                 photo = photo,
                 onDraft = {},
@@ -160,7 +163,7 @@ class ReframeOverlayGoldenTest {
         val bitmap = cropToBounds(composeRule.activity.window.decorView.rasterizeToBitmap(), bounds)
 
         assertTrue("paper ground did not paint ($name)", bitmap.pixelCountOf(paperArgb) > 1_000)
-        assertTrue("dashed frame boundary did not paint ($name)", bitmap.pixelCountOf(inkArgb) > 50)
+        assertTrue("dashed frame boundary did not paint ($name)", boundaryInkCount(bitmap) > 50)
         assertTrue(
             "asymmetric photo did not paint ($name)",
             PHOTO_COLOURS.sumOf(bitmap::pixelCountOf) > 2_000,
@@ -170,6 +173,31 @@ class ReframeOverlayGoldenTest {
         }
 
         bitmap.captureRoboImage("$GOLDEN_DIR/$name.png", aa())
+    }
+
+    /**
+     * Counts ink only in a narrow perimeter around the crop frame. A whole-image ink count is
+     * vacuous in dark mode because the crop scrim can contribute the room's ink elsewhere.
+     */
+    private fun boundaryInkCount(bitmap: Bitmap): Int {
+        val transform = element().transform
+        val left = (transform.xPt * SCREEN_PX_PER_PT).toInt()
+        val top = (transform.yPt * SCREEN_PX_PER_PT).toInt()
+        val right = ((transform.xPt + transform.widthPt) * SCREEN_PX_PER_PT).toInt()
+        val bottom = ((transform.yPt + transform.heightPt) * SCREEN_PX_PER_PT).toInt()
+        val radius = 3
+
+        var count = 0
+        for (y in (top - radius)..(bottom + radius)) {
+            for (x in (left - radius)..(right + radius)) {
+                val nearHorizontal = y in (top - radius)..(top + radius) ||
+                    y in (bottom - radius)..(bottom + radius)
+                val nearVertical = x in (left - radius)..(left + radius) ||
+                    x in (right - radius)..(right + radius)
+                if ((nearHorizontal || nearVertical) && bitmap.getPixel(x, y) == inkArgb) count++
+            }
+        }
+        return count
     }
 
     private fun centredFill() = FramingDraft(FrameFit.FILL, zoom = 1.0, panX = 0.0, panY = 0.0)
