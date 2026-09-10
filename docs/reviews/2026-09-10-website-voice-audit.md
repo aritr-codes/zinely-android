@@ -1,5 +1,75 @@
 # Website voice audit
 
+## Second pass: paper, personality, and interaction
+
+The owner's first-pass feedback was that warmth alone did not deliver enough humor. This second pass is explicitly
+authorized to improve presentation and interaction as well as copy, while preserving the existing information architecture.
+
+### Research before implementation
+
+- **Verified observation, creative studio:** [Mouthwash](https://mouthwash.studio/) uses a brief identity statement,
+  project-led navigation, and editorial side projects. **Application:** make Zinely's maker story concrete and let the
+  object do some explaining. Its agency vocabulary is not a voice model for Zinely.
+- **Verified observation, unconventional brand:** [MSCHF](https://mschf.com/) presents named projects as invitations
+  to investigate. [Dollar Shave Club](https://us.dollarshaveclub.com/) pairs irreverence with literal product and support
+  information. **Application:** a short curiosity hook followed immediately by a useful explanation; no shock tactics.
+- **Verified observation, indie / unusual products:** [Neal.fun](https://neal.fun/) identifies the person behind the
+  experiments in plain language. [Are.na](https://www.are.na/) explains actions and its independent business directly.
+  **Application:** say why two people built this particular thing, and show page arrangement with one reversible action.
+- **Verified observation, internet culture:** [Cameron's World](https://www.cameronsworld.net/) preserves personal,
+  eccentric web fragments. [Know Your Meme's This Is Fine entry](https://knowyourmeme.com/memes/this-is-fine) documents
+  the mismatch between calm words and an absurd situation. **Application:** use understatement about writing software
+  for folded paper. Do not reproduce memes, characters, slang, or somebody else's joke.
+- **Verified gallery observations:** [Hoverstat.es](https://www.hoverstat.es/) describes portfolios using scattered
+  stacks, contact sheets, restrained hover changes, and mechanical controls. These are gallery descriptions, not a
+  claim that we interactively tested every featured site. **Application:** local paper movement and deliberate presses,
+  never scroll effects that delay reading. Poolsuite and Awwwards were also opened, but their limited text responses
+  do not support detailed interaction claims and did not drive implementation.
+- **Verified accessibility guidance:** [W3C animation from interactions](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html)
+  supports disabling nonessential interaction animation. **Application:** the same content and state changes work
+  instantly with reduced motion, and touch/keyboard can reach every discovery.
+
+### Direction and opportunities
+
+Keep the main headline, product screenshots, workflow, ten-step instructions, and direct download path. Give the hero
+a handwritten editorial aside, shorten excessive viewport-dependent empty space, and refine depth using paper edges.
+Retain system fonts and existing assets. Plain facts surround the jokes.
+
+Five planned moments: (1) a bounded pointer response on the hero paper with a native disclosure note for touch and
+keyboard; (2) a page-order comparison that explains print arrangement, explicitly not a folding simulation; (3) a
+small optional zine-idea picker; (4) folding-guide position feedback and a final-step aside without claiming physical
+completion; (5) a native footer disclosure with a dry paper joke. No autoplay, random timed copy, sound, confetti,
+tracking, animation library, or dependency is needed.
+
+The homepage will carry the expressive changes. Secondary factual pages retain their release and policy content.
+The public roadmap still contains older Reframe status; that factual maintenance is recorded for follow-up rather
+than silently bundled into this creative task.
+
+Voice rules live in [VOICE.md](../design/VOICE.md#public-website-voice), so this audit does not become a second voice authority.
+
+### Second-pass implementation and validation
+
+- Preserved the headline, core product definition, download destinations, screenshots, ten folding instructions,
+  and factual accessibility/privacy/release material. Added specific dry asides, a more direct maker story, and
+  selective screenshot captions. The purpose is stronger character without losing the plain-language floor.
+- Implemented the five planned moments with CSS, native disclosures, and small JavaScript enhancements. The
+  page-order comparison states the actual imposed order and never claims to simulate physical folding.
+- Refined homepage spacing, paper edges, card shadows, editorial serif asides, mobile branding, and tap targets.
+  No assets, fonts, runtime dependencies, navigation routes, or Android code were added or changed.
+- Expanded `tools/check-website.cjs` and passed in headless Edge: actual print-position geometry and inversion,
+  keyboard/reversible toggle behavior, native disclosures, idea changes, emulated touch, pointer reset on reduced
+  motion, instantaneous reduced-motion comparison, existing folding tests, 320/390px and 200% text reflow,
+  no-JavaScript and print fallback, axe checks, and zero page errors.
+- Physical-device and novice paper-folding success are not established by browser automation.
+- W3C Nu validation returns zero errors (one existing informational redundant-list-role advisory). JavaScript
+  syntax and diff-whitespace checks pass. All 27 homepage link targets remain byte-identical; added lines across
+  the complete patch contain zero em dashes. HTML, CSS, and JavaScript together add approximately 3.3 KB gzipped
+  relative to PR #68, with no new network requests or dependencies.
+
+## First-pass historical record (PR #68)
+
+The following records the earlier copy-only pass, not the expanded scope of the second pass above.
+
 **Date:** 2026-09-10
 
 **Scope:** Public website information architecture and reader-facing copy.

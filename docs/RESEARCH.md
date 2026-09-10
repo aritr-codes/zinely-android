@@ -593,3 +593,20 @@ require sign-in; optional email does not imply anonymous processing by Google.
   content. No line clamping, tiny-font fitting, or forced three-line overflow.
 - **Unproven:** improved physical folding success has not been measured with novice makers. This website
   prototype does not authorize porting animation to Compose; a paper task is still the next usability check.
+
+## R19. Public website personality and paper interaction, 10 September
+
+- **Verified:** [MSCHF](https://mschf.com/) uses compact named projects to invite curiosity;
+  [Neal.fun](https://neal.fun/) names its maker plainly; [Are.na](https://www.are.na/) explains concrete actions
+  and its independent context. **Recommendation:** make the odd little object and the people behind it specific,
+  with a literal product explanation before optional wit. Do not borrow wording or visual identity.
+- **Verified:** [Hoverstat.es](https://www.hoverstat.es/) documents tactile portfolio motifs including stacks,
+  contact sheets, and mechanical controls. These are gallery observations, not firsthand interaction tests.
+  **Recommendation:** bounded local movement and reversible page arrangement, not an animated agency template.
+- **Verified:** [W3C interaction animation guidance](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html)
+  supports disabling nonessential interaction animation. **Implementation:** no motion at rest, instant reduced-motion
+  states, native keyboard/touch disclosures, no-JavaScript content, and no new runtime dependencies.
+- The [website audit](reviews/2026-09-10-website-voice-audit.md#second-pass-paper-personality-and-interaction)
+  records the broader agency, indie, unconventional-brand, internet-culture, and experimental-web research, its
+  limits, and selected applications. The [voice guide](design/VOICE.md#public-website-voice) is the writing authority.
+- **Unproven:** humor, memorability, and improved product understanding still need first-visitor feedback.

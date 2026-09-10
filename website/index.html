@@ -15,7 +15,7 @@
   <link rel="icon" href="assets/logo.webp" type="image/webp">
   <link rel="stylesheet" href="assets/styles.css">
 </head>
-<body>
+<body class="home-page">
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="site-header">
@@ -33,9 +33,10 @@
   <main id="main">
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="eyebrow">A tiny print studio for Android</p>
+        <p class="eyebrow">An Android app with a paper habit</p>
         <h1 id="hero-title"><span>Make a little</span><span>zine.</span></h1>
         <p class="lede">Gather photos, words, and simple art. Zinely helps you turn them into an eight-page booklet you can print, cut, fold, and hand to someone.</p>
+        <p class="margin-note">Yes, we built an app to get you off your phone.</p>
         <div class="actions">
           <a class="button primary" href="https://github.com/aritr-codes/zinely-android/releases/download/v0.9.0-beta.4-r3/zinely-0.9.0-beta.4-r3-release.apk">Get the Android beta</a>
           <a class="button secondary" href="#see-zinely">Take a look inside</a>
@@ -56,7 +57,13 @@
           <span>8</span><span>1</span><span>2</span><span>7</span>
           <span>6</span><span>3</span><span>4</span><span>5</span>
         </div>
-        <figcaption><strong>One sheet</strong><span aria-hidden="true"> → </span><strong>one little book</strong></figcaption>
+        <figcaption>
+          <strong>One sheet</strong><span aria-hidden="true"> → </span><strong>one little book</strong>
+          <details class="paper-note">
+            <summary>A note from the paper</summary>
+            <p>I used to be a PDF. Things got out of hand.</p>
+          </details>
+        </figcaption>
       </figure>
     </section>
 
@@ -69,7 +76,7 @@
       <div class="mockup-gallery">
         <figure class="mockup-card">
           <div class="mockup-frame"><img src="assets/mockup-shelf.webp" width="390" height="812" alt="Zinely’s light-mode My Shelf screen with six fictional handmade zine covers"></div>
-          <figcaption><strong>Keep your zines together.</strong> Start a new one or return to something unfinished.</figcaption>
+          <figcaption><strong>A shelf. Not a feed.</strong> Start a new zine or pick up where you left off. The half-finished ones are in good company.</figcaption>
         </figure>
         <figure class="mockup-card">
           <div class="mockup-frame"><img src="assets/mockup-bench.webp" width="390" height="812" loading="lazy" alt="Zinely’s light-mode editing bench showing a fictional garden zine page and editing controls"></div>
@@ -77,7 +84,7 @@
         </figure>
         <figure class="mockup-card">
           <div class="mockup-frame"><img src="assets/mockup-proof.webp" width="390" height="812" loading="lazy" alt="Zinely’s light-mode Proof screen showing a fictional zine cover and Save PDF controls"></div>
-          <figcaption><strong>Make it physical.</strong> Save one correctly imposed PDF, then print and fold it.</figcaption>
+          <figcaption><strong>Publish. With scissors.</strong> Save a PDF with the pages arranged for folding. Print it, make one cut, and fold.</figcaption>
         </figure>
       </div>
     </section>
@@ -91,7 +98,7 @@
         <li>
           <span class="step-number" aria-hidden="true">1</span>
           <h3>Gather the good bits</h3>
-          <p>Add photos, write a few words, or make a little art.</p>
+          <p>Photos from a walk. A poem. An unreasonable number of pictures of your cat. Start there.</p>
         </li>
         <li>
           <span class="step-number" aria-hidden="true">2</span>
@@ -101,16 +108,39 @@
         <li>
           <span class="step-number" aria-hidden="true">3</span>
           <h3>Leave the page math to us</h3>
-          <p>Zinely puts all eight pages in the odd-looking order that folds into a book. You get a home-print-ready PDF.</p>
+          <p>Zinely arranges all eight pages for a home-print-ready PDF. Some will look upside down. We did that on purpose.</p>
         </li>
       </ol>
+      <div class="page-lab" role="group" aria-labelledby="page-lab-title">
+        <div class="page-lab-copy">
+          <p class="eyebrow">The bit we got carried away with</p>
+          <h3 id="page-lab-title">Eight pages. A very particular order.</h3>
+          <p>You make pages 1 to 8. Zinely works out where they go on the sheet so they read in order after folding.</p>
+          <button class="button quiet" id="page-order-toggle" type="button" aria-pressed="false" aria-controls="page-order-sheet page-order-note" hidden>Show print layout</button>
+          <p id="page-order-note" class="lab-note" role="status">Reading order: 1 to 8, front cover to back cover. A layout comparison, not a folding simulation.</p>
+        </div>
+        <div class="page-order-demo">
+          <p id="page-order-label" class="eyebrow">Reading order</p>
+          <div id="page-order-sheet" class="page-order-sheet" aria-hidden="true">
+            <span style="--read-x:0;--read-y:0;--print-x:1;--print-y:0;--turn:180deg"><b>1</b><small>front</small></span>
+            <span style="--read-x:1;--read-y:0;--print-x:2;--print-y:0;--turn:180deg"><b>2</b></span>
+            <span style="--read-x:2;--read-y:0;--print-x:1;--print-y:1;--turn:0deg"><b>3</b></span>
+            <span style="--read-x:3;--read-y:0;--print-x:2;--print-y:1;--turn:0deg"><b>4</b></span>
+            <span style="--read-x:0;--read-y:1;--print-x:3;--print-y:1;--turn:0deg"><b>5</b></span>
+            <span style="--read-x:1;--read-y:1;--print-x:0;--print-y:1;--turn:0deg"><b>6</b></span>
+            <span style="--read-x:2;--read-y:1;--print-x:3;--print-y:0;--turn:180deg"><b>7</b></span>
+            <span style="--read-x:3;--read-y:1;--print-x:0;--print-y:0;--turn:180deg"><b>8</b><small>back</small></span>
+          </div>
+          <p class="sheet-caption">A layout comparison. For the actual folds, the guide is next.</p>
+        </div>
+      </div>
     </section>
 
     <section class="fold-guide" id="fold-guide" aria-labelledby="fold-title">
       <div class="section-heading">
         <p class="eyebrow">Clear a little space on your desk</p>
         <h2 id="fold-title">How to fold a mini zine.</h2>
-        <p>One printed sheet, a pair of scissors, and a few good creases. Take one step at a time, at your own pace.</p>
+        <p>One printed sheet, a pair of scissors, and a few good creases. This is where the software becomes stationery.</p>
         <p><strong>Start with:</strong> your Zinely PDF printed on one side of A4 or US Letter paper. A blank sheet works for practice, too.</p>
       </div>
       <p class="fold-key"><span>Dashed line = crease</span><span>Thick edge = folded edge</span><span>Red line + stop dot = cut</span><span>Arrow = movement</span></p>
@@ -123,6 +153,11 @@
           <button class="button quiet" type="button" id="fold-next">Next</button>
         </div>
         <button class="button quiet" type="button" id="fold-view" aria-pressed="false">All steps</button>
+      </div>
+      <div class="fold-position" hidden>
+        <span id="fold-position-label">Step 1 of 10</span>
+        <div class="fold-position-track" aria-hidden="true"><span></span></div>
+        <p id="fold-position-note">Take your time. The paper has nowhere to be.</p>
       </div>
       <ol class="fold-instructions" role="list">
         <li class="fold-card" id="fold-1">
@@ -189,11 +224,12 @@
       <div class="about-mark" aria-hidden="true">Z</div>
       <div>
         <p class="eyebrow">About Zinely</p>
-        <h2 id="about-title">Small enough to make. Real enough to keep.</h2>
-        <p>We wanted an Android app that could turn a handful of photos and words into a real paper zine. No account, no feed, and no uploading our work. We couldn’t find one, so we started building it.</p>
-        <p>The eight-page limit keeps the project small enough to finish. One sheet turns it into something you can hold, keep, or pass on.</p>
-        <p>Zinely is an independent project by <strong>Aastra, a two-person team</strong>. We’re making the app we kept looking for, and we would genuinely like to hear what works, what gets in your way, and what could be better.</p>
-        <p id="feedback"><a class="button quiet" href="https://forms.gle/7ejUVJBdUaYoDytu6">Share feedback</a></p>
+        <h2 id="about-title">Apparently, we had to make it ourselves.</h2>
+        <p>We wanted to make little paper zines on our phones. Keep the photos on the phone. Skip the account. Get the page order right. We couldn’t find the app we wanted, so we started building it.</p>
+        <p class="maker-aside">A lot of code. One small piece of paper.</p>
+        <p>Zinely is an independent project by <strong>Aastra, a two-person team</strong>. We care about the fiddly bits so you can get on with the good bits. Eight pages keeps a project small enough to finish. Paper gives it somewhere to go.</p>
+        <p>Try it. Tell us what feels good, what gets in your way, or which tiny detail has been bothering you. We understand the tiny-detail thing.</p>
+        <p id="feedback"><a class="button quiet" href="https://forms.gle/7ejUVJBdUaYoDytu6">Tell us what you think</a></p>
         <p>A short Google Form: only your message is required; type and reply email are optional. Prefer email, or want to send a screenshot? Write to <a href="mailto:aritr.g06@gmail.com">aritr.g06@gmail.com</a>. Please hide personal information first. Identifiable feedback is deleted within 90 days; <a href="privacy/#feedback-and-email">read how feedback is handled</a>.</p>
         <h3 id="accessibility">Accessibility</h3>
         <p>This website is designed toward WCAG 2.1 Level AA, with keyboard access, visible focus, semantic structure, readable contrast, responsive reflow, and reduced-motion support. If something gets in your way, email <a href="mailto:aritr.g06@gmail.com">aritr.g06@gmail.com</a>.</p>
@@ -207,7 +243,7 @@
         <h2 id="notes-title">We show our working.</h2>
       </div>
       <div class="note-links">
-        <a href="changelog/"><strong>Changelog</strong><span>What shipped, what changed, and the occasional stubborn bug.</span></a>
+        <a href="changelog/"><strong>Changelog</strong><span>Things we fixed. Things we thought we had fixed. The actual release notes.</span></a>
         <a href="roadmap/"><strong>Roadmap</strong><span>What we plan to try, plus the ideas still earning their place.</span></a>
       </div>
     </section>
@@ -217,13 +253,24 @@
         <p class="eyebrow">Ready when you are</p>
         <h2 id="download-title">There is probably a zine hiding in your camera roll.</h2>
         <p>Zinely 0.9.0-beta.4-r3 is free to test on Android 7.0 and newer.</p>
+        <div class="idea-slip">
+          <p class="eyebrow">In case the blank page is winning</p>
+          <p id="zine-idea" role="status">A tiny field guide to the cats on your street.</p>
+          <button class="text-button" id="another-idea" type="button" aria-controls="zine-idea" hidden>Give me another zine idea</button>
+        </div>
       </div>
       <a class="button primary" href="https://github.com/aritr-codes/zinely-android/releases/download/v0.9.0-beta.4-r3/zinely-0.9.0-beta.4-r3-release.apk">Get the Android beta</a>
     </section>
   </main>
 
   <footer>
-    <p><strong>Zinely</strong> — physical media instead of social media.</p>
+    <div class="footer-colophon">
+      <p><strong>Zinely.</strong> Physical media instead of social media.</p>
+      <details class="footer-secret">
+        <summary>Fine print. Suspiciously short.</summary>
+        <p>Paper does not support infinite scroll. We consider this a feature.</p>
+      </details>
+    </div>
     <nav aria-label="Footer navigation">
       <a href="#about">About</a>
       <a href="#accessibility">Accessibility</a>

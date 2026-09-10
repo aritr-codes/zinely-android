@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Gave the public homepage a more tactile paper presentation and stronger independent voice, with an interactive
+  print-order comparison, optional zine ideas, folding progress, and small native-disclosure surprises. All work
+  without essential hover or motion; product claims, download links, and Android behavior remain unchanged.
 - Refined the public homepage voice with clearer page-arrangement language, a repository-grounded two-person origin
   story, warmer calls to action, and restrained indie personality. Routes, product behavior, and factual policy or
   release claims are unchanged.
