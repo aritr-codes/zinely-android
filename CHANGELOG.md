@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refined the public homepage voice with clearer page-arrangement language, a repository-grounded two-person origin
+  story, warmer calls to action, and restrained indie personality. Routes, product behavior, and factual policy or
+  release claims are unchanged.
 - Evaluated the proposed long-press element menu and retained the visible selected-element toolbar, contextual
   guidance and accessibility actions. No app behavior or published APK changed; a post-fix first-time task round
   demonstrating repeated discoverability failure remains the threshold for reconsidering another menu.
