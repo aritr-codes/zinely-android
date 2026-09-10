@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added an HTML-only A/B experiment for evaluating removal of the unavailable selected-text Font action. It leaves
+  the canonical design and Android app unchanged; first-time comparison evidence and an owner decision remain gates.
 - Added full Reframe photo-overlay golden coverage for centred Fill, representative panned/zoomed framing,
   both-axis Flip, and Whole-photo containment in light and dark themes. This is repository test coverage only;
   it does not change the published app.

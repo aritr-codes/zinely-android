@@ -26,9 +26,11 @@ beta.4-r3 APK; measurements and evidence remain in the
 ### Exploring — recommended next decisions, in order
 
 1. **Unavailable Font control:** prototype removing the disabled selected-text `Font` verb until font choice
-   exists. Current code intentionally draws it with `Not yet`; this is a real no-op control, not a missing font
-   implementation to rush. HTML freeze amendment and user reading precede Compose. No change to the already-fixed
-   typing-row Ink/Done behavior is implied.
+   exists. The [HTML A/B experiment](reviews/2026-09-10-font-control-removal-experiment.md) is prepared without
+   changing the canonical freeze; the first-time comparison and owner decision are still pending. Current code
+   intentionally draws Font with `Not yet`; this is a real no-op control, not a missing font implementation to rush.
+   An accepted result, explicit OD-9 supersession and HTML freeze amendment precede Compose. No change to the
+   already-fixed typing-row Ink/Done behavior is implied.
 2. **Fold clarity:** observe first-time makers using the existing app guide and the ten-step website guide with
    paper. Record cut mistakes, hesitation and completion without coaching. Change diagrams or add motion only
    if evidence identifies an improvement. The website guide is shipped; native replay is not.

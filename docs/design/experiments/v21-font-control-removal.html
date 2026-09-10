@@ -1,0 +1,80 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zinely selected-text toolbar experiment</title>
+
+<!--
+  EXPERIMENT ONLY — not a design freeze amendment and not an implementation specification.
+
+  v=0 keeps the canonical selected-text toolbar.
+  v=1 removes only its unavailable Font action.
+  scale=1.8 applies a web text-size stress approximation; Android font-scale acceptance remains separate.
+
+  Both conditions load the same canonical v21 Bench. Keeping the intervention here prevents an untested
+  hypothesis from changing the frozen source or Compose before the evidence and owner-decision gates pass.
+-->
+<style>
+  html, body, iframe { width: 100%; height: 100%; margin: 0; border: 0; }
+  body { overflow: hidden; background: #27270f; }
+</style>
+
+<iframe
+  id="prototype"
+  title="Zinely Bench prototype"
+  src="../mockups/v21-bench.html"
+></iframe>
+
+<script>
+const params = new URLSearchParams(location.search);
+const variant = params.get('v') === '1' ? 'no-font' : 'current';
+const requestedScale = Number(params.get('scale') || '1');
+const textScale = Number.isFinite(requestedScale) && requestedScale >= 1 && requestedScale <= 2
+  ? requestedScale
+  : 1;
+const frame = document.getElementById('prototype');
+
+frame.addEventListener('load', () => {
+  const bench = frame.contentWindow;
+  const originalToolsFor = bench.toolsFor;
+  const originalBuildCtx = bench.buildCtx;
+  if (typeof originalToolsFor !== 'function' || typeof originalBuildCtx !== 'function') {
+    throw new Error('Canonical Bench did not expose its toolbar builders; experiment cannot preserve its control set.');
+  }
+
+  if (variant === 'no-font') {
+    bench.toolsFor = kind => originalToolsFor(kind).filter(tool => kind !== 'text' || tool[0] !== 'Font');
+  }
+
+  const expected = variant === 'no-font'
+    ? ['Edit', 'Size', 'Ink', 'Duplicate', 'Delete']
+    : ['Edit', 'Font', 'Size', 'Ink', 'Duplicate', 'Delete'];
+  const observed = bench.toolsFor('text').map(tool => tool[0]);
+  if (JSON.stringify(observed) !== JSON.stringify(expected)) {
+    throw new Error(`Unexpected selected-text actions: ${observed.join(', ')}`);
+  }
+
+  bench.buildCtx = kind => {
+    originalBuildCtx(kind);
+    if (variant !== 'current' || kind !== 'text') return;
+
+    const font = [...bench.document.querySelectorAll('#ctx button')]
+      .find(button => button.textContent.trim() === 'Font');
+    if (!font) throw new Error('Current condition could not find the selected-text Font control.');
+    font.disabled = true;
+  };
+
+  const experimentStyle = bench.document.createElement('style');
+  experimentStyle.textContent = [
+    '.ctx button:disabled{opacity:.35;cursor:default}',
+    '.ctx button:disabled:hover{background:none}'
+  ].join('');
+  bench.document.head.appendChild(experimentStyle);
+
+  bench.document.documentElement.style.fontSize = `${textScale * 100}%`;
+  document.documentElement.dataset.experimentVariant = variant;
+  document.documentElement.dataset.experimentReady = 'true';
+
+  const selected = bench.document.querySelector('.el.selected');
+  if (selected) bench.buildCtx(selected.dataset.kind);
+});
+</script>
