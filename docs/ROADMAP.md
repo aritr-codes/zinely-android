@@ -42,7 +42,8 @@ beta.4-r3 APK; measurements and evidence remain in the
   wipe or uninstall the owner's device to manufacture a test condition.
 - Reconcile issue/PR and owner-checklist drift using the
   [current evidence review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-09-current-state-review).
-  Issue #53 was closed as implemented; #55 was narrowed to full photo-overlay golden coverage.
+  Issues #53 and #55 were closed with implementation evidence; #54 remains a usability decision rather than
+  committed menu scope.
 - PR #63 merged to `main` at `7d0960b`; its Android/core CI passed and the main-only Pages deployment is live.
   Preserve old branches/worktrees and frozen release artifacts.
 
