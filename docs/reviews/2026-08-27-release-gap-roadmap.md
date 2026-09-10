@@ -21,9 +21,9 @@ authorized the website fold refinement, feedback link, Aastra attribution, and v
   maximum card size is reserved to keep playback aligned. No novice physical-paper success claim is made.
   Research and rejected alternatives: [R18](../RESEARCH.md#r18-deliberate-folding-instructions--9-september).
 - Issue #53 was closed with Replace Photo evidence; #54 was evaluated and closed without adding a long-press
-  element menu because the current visible toolbar, contextual coach and accessibility actions already cover the
-  job and no repeated post-fix discoverability failure was recorded. #55's full Reframe photo-overlay golden
-  coverage was completed through
+  element menu because the current visible toolbar and accessibility actions already expose the operations and no
+  post-fix first-time round has demonstrated a discovery failure that another menu would solve. #55's full Reframe
+  photo-overlay golden coverage was completed through
   [PR #65](https://github.com/aritr-codes/zinely-android/pull/65). #56 and #57 were resolved through their
   measured implementation record in [PR #64](https://github.com/aritr-codes/zinely-android/pull/64). These
   actions supersede the initial read-only audit's proposed dispositions below. No branches or worktrees were removed.

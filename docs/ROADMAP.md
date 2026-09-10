@@ -43,8 +43,8 @@ beta.4-r3 APK; measurements and evidence remain in the
 - Reconcile issue/PR and owner-checklist drift using the
   [current evidence review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-09-current-state-review).
   Issues #53 and #55 were closed with implementation evidence. Issue #54 was evaluated and closed without an
-  element-menu implementation: the visible toolbar, contextual coach and accessibility actions already cover the
-  job, and no repeated post-fix discoverability failure supports a duplicate hidden menu.
+  element-menu implementation: the visible toolbar and accessibility actions already expose the operations, while
+  no post-fix first-time round has demonstrated a discovery failure that justifies a duplicate hidden menu.
 - PR #63 merged to `main` at `7d0960b`; its Android/core CI passed and the main-only Pages deployment is live.
   Preserve old branches/worktrees and frozen release artifacts.
 

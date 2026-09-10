@@ -1345,11 +1345,13 @@ Milestone IF shipped on branch `feat/if1-image-framing-core` (unmerged) as three
 This supersedes the July classification of the menu as an unassessed Future Enhancement.
 
 **Decision: do not add a separate visual long-press element menu.** The current editor already exposes selected-element
-actions in a visible toolbar and through accessibility actions. The post-feedback surface also names Move, Resize,
-Rotate and Layer and teaches the relevant controls contextually. No observation after those corrections shows a
-repeated failure to find an existing action. A long-press sheet would therefore duplicate the visible surface behind
-a hidden gesture and add another interaction mode without demonstrated value. Issue #54 is closed as evaluated; no
-HTML or Compose behavior changes in this decision.
+actions in a visible toolbar and through accessibility actions, with contextual guidance for direct manipulation and
+Reframe. The transform controls remain glyph-only visually, carry spoken labels, and are introduced by a coach for
+move, resize, turn and photo Reframe; that coach does not name Layer. No post-correction first-time usability round
+has been recorded, so the evidence demonstrates neither successful discovery nor a repeated failure that another
+menu would solve. A long-press sheet would duplicate the visible surface behind a hidden gesture and add another
+interaction mode without demonstrated need. Issue #54 is closed as evaluated; no HTML or Compose behavior changes
+in this decision.
 
 This is a reversible product decision, not a claim that discoverability is perfect. Reconsider only if repeated
 first-time task observation shows that makers cannot find a relevant existing action after the current labels and
