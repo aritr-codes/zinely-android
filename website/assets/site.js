@@ -10,6 +10,7 @@
   const reset = guide.querySelector('#fold-reset');
   const note = guide.querySelector('#fold-motion-note');
   const status = guide.querySelector('#direction-status');
+  const position = guide.querySelector('.fold-position');
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const originals = cards.map(card => card.querySelector('svg').cloneNode(true));
   // Unfold/checkpoint and final book pictures stay static until physical-paper
@@ -69,6 +70,14 @@
       else card.removeAttribute('aria-hidden');
     });
     updateControls();
+    if (position) {
+      position.hidden = allSteps;
+      position.style.setProperty('--position', (index + 1) / cards.length);
+      position.querySelector('#fold-position-label').textContent = `Step ${index + 1} of ${cards.length}`;
+      guide.querySelector('.fold-finish').textContent = index === cards.length - 1 && !allSteps
+        ? 'Last fold. If yours looks like a little book, you are now a publisher. Very small circulation. Still counts.'
+        : 'Made by you. Ready to pass on.';
+    }
     if (announce) status.textContent = `Step ${index + 1} of ${cards.length}. ${cards[index].querySelector('h3').textContent.replace(/^\d+/, '')}. ${[...cards[index].querySelectorAll('p span')].map(line => line.textContent).join(' ')}`;
   }
 
@@ -156,4 +165,71 @@
   guide.querySelector('.fold-controls').hidden = false;
   guide.querySelector('.fold-playback').hidden = false;
   showStep(0, false);
+})();
+
+// Small, independent enhancements. The page and native disclosures also work without JS.
+(() => {
+  const toggle = document.querySelector('#page-order-toggle');
+  if (toggle) {
+    const sheet = document.querySelector('#page-order-sheet');
+    const label = document.querySelector('#page-order-label');
+    const note = document.querySelector('#page-order-note');
+    toggle.hidden = false;
+    toggle.addEventListener('click', () => {
+      const print = toggle.getAttribute('aria-pressed') !== 'true';
+      toggle.setAttribute('aria-pressed', String(print));
+      sheet.classList.toggle('is-print', print);
+      label.textContent = print ? 'Print layout' : 'Reading order';
+      note.textContent = print
+        ? 'Print layout: 5, 4, 3, 2 upside down; 6, 7, 8, 1 upright. Looks wrong. Folds right. Press again for reading order.'
+        : 'Reading order: 1 to 8, front cover to back cover. A layout comparison, not a folding simulation.';
+    });
+  }
+
+  const ideas = [
+    'A tiny field guide to the cats on your street.',
+    'Eight pages defending your most unreasonable sandwich opinion.',
+    'A museum of things you found in your pockets.',
+    'A photo essay about a walk that was supposed to take ten minutes.',
+    'A very small cookbook for one very specific friend.',
+    'The holiday photos, including the one nobody posed for.'
+  ];
+  const another = document.querySelector('#another-idea');
+  if (another) {
+    let idea = 0;
+    another.hidden = false;
+    another.addEventListener('click', () => {
+      idea = (idea + 1) % ideas.length;
+      document.querySelector('#zine-idea').textContent = ideas[idea];
+    });
+  }
+
+  const paper = document.querySelector('.paper-story');
+  if (!paper) return;
+  const allowed = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 821px) and (prefers-reduced-motion: no-preference)');
+  let frame = 0;
+  let point = null;
+  function rest() {
+    cancelAnimationFrame(frame);
+    frame = 0;
+    point = null;
+    paper.style.removeProperty('--paper-x');
+    paper.style.removeProperty('--paper-y');
+  }
+  paper.addEventListener('pointermove', event => {
+    if (!allowed.matches || event.pointerType !== 'mouse') return;
+    point = { x: event.clientX, y: event.clientY };
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      const box = paper.getBoundingClientRect();
+      const x = Math.max(-.5, Math.min(.5, (point.x - box.left) / box.width - .5));
+      const y = Math.max(-.5, Math.min(.5, (point.y - box.top) / box.height - .5));
+      paper.style.setProperty('--paper-x', `${-y * 5}deg`);
+      paper.style.setProperty('--paper-y', `${x * 5}deg`);
+    });
+  });
+  paper.addEventListener('pointerleave', rest);
+  allowed.addEventListener('change', rest);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) rest(); });
 })();

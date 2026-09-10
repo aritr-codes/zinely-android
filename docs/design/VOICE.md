@@ -55,6 +55,28 @@ the table, slides the supplies over, and says *"ooh, do the one with your dog."*
 8. **Earned, not constant, enthusiasm.** Exclamation marks are for genuine wins (export done,
    first photo placed). If everything shouts, nothing lands.
 
+## Public website voice
+
+The owner requested a more outspoken public website on 2026-09-10. This website-specific guidance extends the
+warm craft-table voice above; it does not rewrite frozen Android microcopy. Research and the critique of the first
+pass are in the [website voice audit](../reviews/2026-09-10-website-voice-audit.md#second-pass-paper-personality-and-interaction).
+
+- **Sounds like:** two stubborn people who made the tool they wanted. Warm, concrete, dry, occasionally mischievous.
+  The humor comes from actual paper, small projects, peculiar page order, and caring too much about the details.
+- **Never sounds like:** a pitch deck, a meme account, a guilt appeal, or a brand demanding attention. No invented
+  metrics, testimonials, release promises, or capability claims.
+- **Sentence patterns:** a plain fact followed by a small admission ("Some will look upside down. We did that on
+  purpose."); a physical verb with an unexpected ending ("Publish. With scissors."); a sincere explanation followed
+  by understatement ("A lot of code. One small piece of paper."). These are examples, not a formula for every paragraph.
+- **Humor rules:** the maker is never the butt of the joke. One good aside is enough for a section. Keep safety,
+  installation, privacy, accessibility, navigation, and instructional steps literal. Read aloud and cut jokes that
+  need an explanation. Never use an em dash in new website copy.
+- **Interaction rules:** reward a deliberate action with a small, local response. Provide native buttons/disclosures,
+  clear labels, keyboard and touch access, visible focus, instant reduced-motion states, and useful no-JavaScript
+  content. No surprise audio, automatic copy rotation, scroll hijacking, or essential hover-only information.
+- **Avoid:** revolutionary, game-changing, next-generation, unlock your creativity, empower your workflow,
+  seamless experience, powerful platform, elevate, transform the way you, fake urgency, and excessive exclamation marks.
+
 ## 3. Microcopy library
 
 The canonical strings. Format: **preferred** — *(avoid: the generic-Android version)*.

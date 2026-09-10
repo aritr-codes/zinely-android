@@ -8,7 +8,16 @@ const { chromium } = require(path.join(process.argv[2], 'playwright'));
 const { default: AxeBuilder } = require(path.join(process.argv[2], '@axe-core/playwright'));
 const root = path.resolve(__dirname, '..');
 const site = path.join(root, 'website');
+// The product convention, not another hand-maintained website example, is the oracle.
+const convention = fs.readFileSync(path.join(root, 'core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/Convention.kt'), 'utf8');
+const cells = [...convention.matchAll(/(\d+) to GridCell\((\d+), (\d+)\)/g)]
+  .map(([, number, row, column]) => ({ number: Number(number), row: Number(row), column: Number(column) }))
+  .sort((a, b) => a.row - b.row || a.column - b.column);
+const rotations = new Map([...convention.matchAll(/(\d+) to Rotation\.(NONE|HALF)/g)].map(([, n, r]) => [Number(n), r === 'HALF']));
+assert.equal(cells.length, 8, 'Canonical eight-page cell table parsed');
+assert.equal(rotations.size, 8, 'Canonical eight-page rotation table parsed');
 const out = process.argv[4];
+fs.mkdirSync(out, { recursive: true });
 const failures = [];
 const server = http.createServer((req, res) => {
   let name = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).replace(/^\/zinely-android\//, '');
@@ -31,6 +40,55 @@ const server = http.createServer((req, res) => {
     const page = await context.newPage();
     page.on('pageerror', error => failures.push(error.message));
     await page.goto(url);
+    await page.screenshot({ path: path.join(out, 'home-desktop.png'), fullPage: true });
+    for (const selector of ['.hero', '.gallery-section', '.about-card', '.download-card']) {
+      await page.locator(selector).screenshot({ path: path.join(out, selector.slice(1) + '-desktop.png') });
+    }
+    const orderToggle = page.locator('#page-order-toggle');
+    await orderToggle.focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await orderToggle.getAttribute('aria-pressed'), 'true');
+    await page.waitForTimeout(550);
+    // Read visual positions rather than copying the CSS mapping into the test.
+    const printed = await page.locator('#page-order-sheet > span').evaluateAll(nodes => nodes.map(n => {
+      const rect = n.getBoundingClientRect();
+      const matrix = new DOMMatrix(getComputedStyle(n).transform);
+      return { number: Number(n.querySelector('b').textContent), x: rect.x, y: rect.y, inverted: matrix.a < 0 };
+    }).sort((a, b) => Math.abs(a.y - b.y) > 2 ? a.y - b.y : a.x - b.x));
+    assert.deepEqual(printed.map(p => p.number), cells.map(p => p.number));
+    assert.deepEqual(printed.map(p => p.inverted), cells.map(p => rotations.get(p.number)));
+    const hero = await page.locator('.paper-story-sheet > span').evaluateAll(nodes => nodes.map(n => ({
+      number: Number(n.textContent), inverted: getComputedStyle(n).transform !== 'none' && new DOMMatrix(getComputedStyle(n).transform).a < 0
+    })));
+    assert.deepEqual(hero.map(p => p.number), cells.map(p => p.number), 'Hero matches product convention too');
+    assert.deepEqual(hero.map(p => p.inverted), cells.map(p => rotations.get(p.number)));
+    assert.ok((await page.locator('#page-order-note').textContent()).includes(cells.slice(0, 4).map(p => p.number).join(', ')), 'Text alternative matches top row');
+    assert.ok((await page.locator('#page-order-note').textContent()).includes(cells.slice(4).map(p => p.number).join(', ')), 'Text alternative matches bottom row');
+    await page.locator('.page-lab').screenshot({ path: path.join(out, 'page-lab-print.png') });
+    await page.keyboard.press('Space');
+    assert.equal(await orderToggle.getAttribute('aria-pressed'), 'false', 'Keyboard reverses comparison');
+    const idea = await page.locator('#zine-idea').textContent();
+    await page.locator('#another-idea').focus();
+    await page.keyboard.press('Enter');
+    assert.notEqual(await page.locator('#zine-idea').textContent(), idea);
+    for (const selector of ['.paper-note', '.footer-secret']) {
+      await page.locator(`${selector} summary`).focus();
+      await page.keyboard.press('Enter');
+      assert.equal(await page.locator(selector).getAttribute('open'), '', 'Native disclosure opens by keyboard');
+      await page.keyboard.press('Space');
+      assert.equal(await page.locator(selector).getAttribute('open'), null);
+    }
+    await page.locator('.paper-story').hover({ position: { x: 20, y: 20 } });
+    await page.waitForTimeout(100);
+    assert.notEqual(await page.locator('.paper-story').evaluate(el => el.style.getPropertyValue('--paper-x')), '');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.waitForTimeout(100);
+    assert.equal(await page.locator('.paper-story').evaluate(el => el.style.getPropertyValue('--paper-x')), '');
+    await orderToggle.click();
+    assert.equal(await page.locator('#page-order-sheet > span').first().evaluate(el => getComputedStyle(el).transitionDuration), '0s');
+    assert.equal(await orderToggle.getAttribute('aria-pressed'), 'true', 'Reduced motion retains the interaction');
+    await orderToggle.click();
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
     const picker = page.locator('#fold-step');
     const play = page.locator('#fold-play');
     await page.locator('#fold-guide').scrollIntoViewIfNeeded();
@@ -66,6 +124,8 @@ const server = http.createServer((req, res) => {
     }
     assert.ok(Math.max(...controlYs) - Math.min(...controlYs) < 2, 'Playback alignment stable');
     assert.equal(await page.locator('#fold-next').isDisabled(), true);
+    assert.equal(await page.locator('#fold-position-label').textContent(), 'Step 10 of 10');
+    assert.match(await page.locator('.fold-finish').textContent(), /If yours looks like a little book/);
     await page.locator('#fold-guide').screenshot({ path: path.join(out, 'fold-desktop-final.png') });
     await picker.selectOption('5');
     await play.click();
@@ -84,6 +144,7 @@ const server = http.createServer((req, res) => {
     await page.waitForFunction(() => !document.querySelector('#fold-play').disabled);
     await page.locator('#fold-view').click();
     assert.equal(await page.locator('.fold-card:visible').count(), 10);
+    assert.equal(await page.locator('.fold-position').isVisible(), false, 'Position hidden in all-steps view');
     const final = await page.locator('#fold-10').boundingBox();
     const list = await page.locator('.fold-instructions').boundingBox();
     assert.ok(Math.abs(final.x + final.width / 2 - list.x - list.width / 2) < 2, 'Final step centered');
@@ -93,6 +154,10 @@ const server = http.createServer((req, res) => {
     for (const [width, scale] of [[390, 1], [320, 1], [320, 2]]) {
       await page.setViewportSize({ width, height: 900 });
       await page.evaluate(scale => { document.documentElement.style.fontSize = `${16 * scale}px`; }, scale);
+      // Open optional content too: hidden disclosures must not conceal reflow defects.
+      await page.locator('.paper-note').evaluate(el => { el.open = true; });
+      await page.locator('.footer-secret').evaluate(el => { el.open = true; });
+      await orderToggle.click();
       const ys = [];
       for (let i = 0; i < 10; i++) {
         await picker.selectOption(String(i));
@@ -113,6 +178,13 @@ const server = http.createServer((req, res) => {
       assert.equal(buttonLineCount, 1, 'Previous label does not split at enlarged text');
       await picker.selectOption('5');
       await page.locator('#fold-guide').screenshot({ path: path.join(out, `fold-${width}-${scale}x.png`) });
+      await page.screenshot({ path: path.join(out, `home-${width}-${scale}x.png`), fullPage: true });
+      await page.evaluate(() => scrollTo(0, 0));
+      assert.ok(await page.locator('.skip-link').evaluate(el => el.getBoundingClientRect().bottom < 0), 'Unfocused skip link stays offscreen on mobile');
+      await page.screenshot({ path: path.join(out, `viewport-${width}-${scale}x.png`) });
+      for (const selector of ['.hero', '.page-lab', '.download-card']) {
+        await page.locator(selector).screenshot({ path: path.join(out, `${selector.slice(1)}-${width}-${scale}x.png`) });
+      }
       axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
       assert.deepEqual(axe.violations.map(v => v.id), [], 'Focused accessibility');
     }
@@ -129,12 +201,27 @@ const server = http.createServer((req, res) => {
     await staticPage.goto(url);
     assert.equal(await staticPage.locator('.fold-card:visible').count(), 10, 'No-JS complete fallback');
     assert.equal(await staticPage.locator('.fold-controls').isVisible(), false);
+    assert.equal(await staticPage.locator('#page-order-toggle').isVisible(), false);
+    assert.equal(await staticPage.locator('#another-idea').isVisible(), false);
+    await staticPage.locator('.footer-secret summary').click();
+    assert.equal(await staticPage.locator('.footer-secret p').isVisible(), true, 'Disclosure works without JS');
     await staticPage.close();
+    const touch = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const touchPage = await touch.newPage();
+    touchPage.on('pageerror', error => failures.push(error.message));
+    await touchPage.goto(url);
+    await touchPage.locator('#page-order-toggle').tap();
+    assert.equal(await touchPage.locator('#page-order-toggle').getAttribute('aria-pressed'), 'true');
+    await touchPage.locator('.paper-note summary').tap();
+    assert.equal(await touchPage.locator('.paper-note p').isVisible(), true);
+    await touchPage.locator('#another-idea').tap();
+    assert.notEqual(await touchPage.locator('#zine-idea').textContent(), idea);
+    await touch.close();
     await page.goto(url);
     await page.emulateMedia({ media: 'print' });
     assert.equal(await page.locator('.fold-card:visible').count(), 10, 'Print all steps');
     assert.deepEqual(failures, [], 'No JavaScript errors');
-    console.log('PASS: no autoplay; keyboard play/pause/resume/reset; ten steps; cut endpoint; reduced motion; stable controls; centered final; mobile/200% reflow; no-JS/print fallback; axe checks; zero page errors.');
+    console.log('PASS: paper comparison geometry; keyboard and touch discoveries; reduced motion; no autoplay; fold controls and cut endpoint; mobile/200% reflow; no-JS/print fallback; axe; zero page errors.');
     console.log(`Screenshots: ${out}`);
   } finally { await browser.close(); server.close(); }
 })().catch(error => { console.error(error); server.close(); process.exitCode = 1; });
