@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Evaluated the proposed long-press element menu and retained the visible selected-element toolbar, contextual
+  coach and accessibility actions. No app behavior or published APK changed; repeated first-time discoverability
+  failure remains the evidence threshold for reconsidering another menu.
 - Reframe now reads image dimensions and decodes its display bitmap together off the main thread. Large masters
   use a preview capped at 2048 px on the longest edge while crop, Flip, commit, preview and export geometry retain
   the master's full intrinsic dimensions. This is a repository change only; no published APK contains it yet.

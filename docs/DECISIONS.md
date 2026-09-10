@@ -1340,6 +1340,22 @@ Milestone IF shipped on branch `feat/if1-image-framing-core` (unmerged) as three
 
 **IF5 completed — parity restored; merge unblocked (reconciled 2026-07-14).** Milestone IF5 shipped as commit `685f753` (reviewed **GO**), a pure `:feature:editor` visual-parity restoration of `ReframeControls.kt` — no `:core:model`/`:core:render`/reducer/`FramingDraft`/`FramingMath` change, no behaviour change. It restored all five confirmed divergences to the frozen `bench.html`: **P1** the fit-segment sub-captions "crops edges" / "may add margins" (visible chip and a11y label); **P2** the cross-shaped 3×3 nudge-pad; **P3** the full "Cancel" text; **P4** the prominent coral "Done" proof pill; **P5** the affordance-chip corner-frame icon; plus **M1** the frozen two-surface chrome (floating `reframebar` pill above the desk toolbar). Two robustness fixes landed with it (desk toolbar as a `FlowRow` so no action is crushed off-screen on the narrow test viewport; Done + chip click on `Modifier.clickable` outside `clearAndSetSemantics` so the OnClick fires under assistive tech). `:feature:editor` suite green. The first human gate then **passed**: device pixel-parity against frozen `bench.html` was re-verified on-device (device `RZCYA1VBQ2H`) — P1–P5 and M1 all match. The accessibility semantics verification also **passed**: the live semantics tree (`uiautomator dump`) confirms every Reframe control is labeled and in logical focus order, the Fill/Whole toggle exposes selected state, the zoom readout is labeled, and there is no unlabeled interactive node. **Final engineering verdict: GO.** Image Framing (IF1–IF5) is ready to merge into `main`. Residual deferrals are unchanged and carry no merge gate: `ReframeOverlay`'s full-master UI-thread decode (R1) and the Reframe Roborazzi goldens are **Technical Debt**; Replace-picture UI wiring for the existing `Intent.ReplaceImage` branch and the long-press visual context menu are **Future Enhancements**; the auditory TalkBack TTS-playback / Switch-Access scan-cadence residue is a **Known Limitation** (semantics verified; audio playback is not machine-certifiable, and no failing evidence exists).
 
+### Issue #54 evaluation — retain the visible element toolbar (2026-09-10)
+
+This supersedes the July classification of the menu as an unassessed Future Enhancement.
+
+**Decision: do not add a separate visual long-press element menu.** The current editor already exposes selected-element
+actions in a visible toolbar and through accessibility actions. The post-feedback surface also names Move, Resize,
+Rotate and Layer and teaches the relevant controls contextually. No observation after those corrections shows a
+repeated failure to find an existing action. A long-press sheet would therefore duplicate the visible surface behind
+a hidden gesture and add another interaction mode without demonstrated value. Issue #54 is closed as evaluated; no
+HTML or Compose behavior changes in this decision.
+
+This is a reversible product decision, not a claim that discoverability is perfect. Reconsider only if repeated
+first-time task observation shows that makers cannot find a relevant existing action after the current labels and
+coach. Any proposal then starts as a canonical `v21-bench.html` variant, compares the existing toolbar with the
+candidate interaction, and passes accessibility and device review before Compose changes.
+
 ## ADR-054 {#adr-054}
 
 **Save a copy to your phone — the "Save PDF" backend writes a permanent copy to shared Downloads through one `ZineExporter.export(destination)` funnel that returns a sealed `ExportOutcome` (`ExportReady` retained for Intent transport + new `ExportSaved` for durable storage); an `ExportDestination { TRANSPORT, DOWNLOADS }` selects the sink, a pure `ExportNaming` helper owns the user-facing name and a `:app/export` `DownloadsWriter` owns the MediaStore (API 29+) / File-API (API 24–28, `WRITE_EXTERNAL_STORAGE` `maxSdkVersion=28`) write and its own stream lifecycle. `ACTION_VIEW` for Save PDF is retired; Share (`ACTION_SEND`) and the post-export Fold hand-off are preserved. `:render-android` and `:core:*` are untouched.** This is the implementation ADR the [ADR-052](#adr-052) supersession note anticipated: it closes that ADR's `export(PDF) → ACTION_VIEW` Save-PDF backend and realises the DESIGN-FROZEN [`proof.html`](design/v1/proof.html) Save-to-phone freeze (2026-07-15). Implementation detail (MediaStore column mechanics, permission-request UX copy, prune tuning) is spec/PR-owned, not decided here.
