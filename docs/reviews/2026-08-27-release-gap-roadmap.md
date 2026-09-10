@@ -21,9 +21,10 @@ authorized the website fold refinement, feedback link, Aastra attribution, and v
   maximum card size is reserved to keep playback aligned. No novice physical-paper success claim is made.
   Research and rejected alternatives: [R18](../RESEARCH.md#r18-deliberate-folding-instructions--9-september).
 - Issue #53 was closed with Replace Photo evidence; #54 narrowed to evaluating long-press usefulness;
-  #55 narrowed to full Reframe photo-overlay goldens. #56 and #57 were resolved through their measured
-  implementation record in [PR #64](https://github.com/aritr-codes/zinely-android/pull/64). These actions
-  supersede the initial read-only audit's proposed dispositions below. No branches or worktrees were removed.
+  #55's full Reframe photo-overlay golden coverage was completed through
+  [PR #65](https://github.com/aritr-codes/zinely-android/pull/65). #56 and #57 were resolved through their
+  measured implementation record in [PR #64](https://github.com/aritr-codes/zinely-android/pull/64). These
+  actions supersede the initial read-only audit's proposed dispositions below. No branches or worktrees were removed.
 - PR #63 merged on 9 September at `7d0960b`; main-head CI run `34388262137` and Pages run `34388262130`
   both passed. Its pre-merge draft had been stale against Replace Photo and r3 hardware/release acceptance.
   The backup torture matrix's foundation NO-GO is explicitly historical; unresolved stress/device coverage remains.

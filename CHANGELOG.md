@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added full Reframe photo-overlay golden coverage for centred Fill, representative panned/zoomed framing,
+  both-axis Flip, and Whole-photo containment in light and dark themes. This is repository test coverage only;
+  it does not change the published app.
 - Rebuilt the public website around an expressive, DIY-inspired working-desk presentation with three
   sanitized light-mode renders produced from the canonical HTML mockups. No private device photos are used.
 - Added concise public Changelog and Roadmap pages. The roadmap separates planned work, explorations, and
