@@ -4,14 +4,14 @@
 <title>Zinely selected-text toolbar experiment</title>
 
 <!--
-  EXPERIMENT ONLY — not a design freeze amendment and not an implementation specification.
+  HISTORICAL COMPARISON ONLY. The implementation specification is canonical Bench A24 / ADR-115.
 
-  v=0 keeps the canonical selected-text toolbar.
-  v=1 removes only its unavailable Font action.
+  v=0 reconstructs the pre-A24 selected-text toolbar with its disabled Font action.
+  v=1 shows the accepted five-action toolbar without Font.
   scale=1.8 applies a web text-size stress approximation; Android font-scale acceptance remains separate.
 
-  Both conditions load the same canonical v21 Bench. Keeping the intervention here prevents an untested
-  hypothesis from changing the frozen source or Compose before the evidence and owner-decision gates pass.
+  Both conditions load the same canonical v21 Bench. Owner approval replaced the cohort study;
+  no measured usability benefit is claimed. The old alternative remains available for comparison.
 -->
 <style>
   html, body, iframe { width: 100%; height: 100%; margin: 0; border: 0; }
@@ -41,9 +41,12 @@ frame.addEventListener('load', () => {
     throw new Error('Canonical Bench did not expose its toolbar builders; experiment cannot preserve its control set.');
   }
 
-  if (variant === 'no-font') {
-    bench.toolsFor = kind => originalToolsFor(kind).filter(tool => kind !== 'text' || tool[0] !== 'Font');
-  }
+  // ADR-115/A24 removed Font from the canonical source. Preserve historical A explicitly.
+  bench.toolsFor = kind => {
+    const tools = originalToolsFor(kind).filter(tool => kind !== 'text' || tool[0] !== 'Font');
+    if (kind !== 'text' || variant === 'no-font') return tools;
+    return bench.toolsForBeforeA24(kind);
+  };
 
   const expected = variant === 'no-font'
     ? ['Edit', 'Size', 'Ink', 'Duplicate', 'Delete']

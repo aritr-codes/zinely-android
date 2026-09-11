@@ -27,6 +27,11 @@ them. If anything here could be closed by an implementer, that is a bug in this 
 
 ## Why an item lands here
 
+**2026-09-11 Font decision:** resolved by owner under [ADR-115](DECISIONS.md#adr-115). The first-time cohort
+comparison is waived, but human TalkBack and the independent device reading remain pending in the
+[verification record](reviews/2026-09-10-font-control-removal-experiment.md). The historical counts above are
+not a current release-readiness assertion.
+
 | Reason | Meaning |
 |---|---|
 | **Decision** | The frozen spec doesn't rule on it; choosing would be redesigning a frozen surface |

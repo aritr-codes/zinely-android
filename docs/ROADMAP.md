@@ -23,15 +23,16 @@ beta.4-r3 APK; measurements and evidence remain in the
   verification remains blocked; the signed GitHub beta and public policy already exist. This is a distribution
   task, not a reason to rebuild or overwrite beta.4-r3. [Release authority](RELEASING.md#3-beta-distribution-side-load).
 
+### Current implementation
+
+**Unavailable Font control:** owner approved removal as a design judgment under [ADR-115](DECISIONS.md#adr-115),
+waiving the cohort study and superseding only OD-9's Font-presence requirement. Bench A24 is frozen before
+Compose. Implementation verification is in progress; no measured usability benefit or published APK change is
+claimed. [Evidence and remaining gates](reviews/2026-09-10-font-control-removal-experiment.md).
+
 ### Exploring — recommended next decisions, in order
 
-1. **Unavailable Font control:** prototype removing the disabled selected-text `Font` verb until font choice
-   exists. The [HTML A/B experiment](reviews/2026-09-10-font-control-removal-experiment.md) is prepared without
-   changing the canonical freeze; the first-time comparison and owner decision are still pending. Current code
-   intentionally draws Font with `Not yet`; this is a real no-op control, not a missing font implementation to rush.
-   An accepted result, explicit OD-9 supersession and HTML freeze amendment precede Compose. No change to the
-   already-fixed typing-row Ink/Done behavior is implied.
-2. **Fold clarity:** observe first-time makers using the existing app guide and the ten-step website guide with
+1. **Fold clarity:** observe first-time makers using the existing app guide and the ten-step website guide with
    paper. Record cut mistakes, hesitation and completion without coaching. Change diagrams or add motion only
    if evidence identifies an improvement. The website guide is shipped; native replay is not.
 
