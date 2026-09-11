@@ -56,10 +56,10 @@ import org.robolectric.annotation.GraphicsMode
  * The verb sets are asserted as **whole lists**, not as membership: `toolsFor()` is an ordered set per
  * kind, and a permutation would satisfy "each verb exists" while being the wrong bar.
  *
- * What this file deliberately does **not** claim is `Font`'s disabled state as seen by TalkBack. The
+ * What this file deliberately does **not** claim is the spoken output of TalkBack. The
  * Compose semantics assertion below is necessary and insufficient — [ADR-058](../../../../../../../../../docs/DECISIONS.md#adr-058)'s
  * `ReframeControls.ZoomButton` passed `assertIsNotEnabled` here while telling the *platform* it was
- * enabled. Row 2.13a's real gate is `uiautomator dump` on hardware.
+ * enabled. Blank-text guards still require `uiautomator dump` on hardware after ADR-115.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -82,7 +82,7 @@ class BenchContextBarTest {
     private var inkSoftArgb: Int = 0
     private var leafArgb: Int = 0
 
-    private fun host(verbs: List<BenchVerb>, visible: Boolean = true, fontScale: Float = 1f) {
+    private fun host(verbs: List<BenchVerb>, visible: Boolean = true, fontScale: Float = 1f, widthDp: Int = 360) {
         composeRule.setContent {
             ZinelyTheme {
                 val base = LocalDensity.current
@@ -93,7 +93,7 @@ class BenchContextBarTest {
                     inkSoftArgb = ZinelyTheme.v21Colors.inkSoft.toArgb()
                     leafArgb = ZinelyTheme.v21Colors.leaf.toArgb()
                     Box(
-                        Modifier.size(360.dp, 200.dp).testTag(HOST).background(BACKDROP),
+                        Modifier.size(widthDp.dp, 200.dp).testTag(HOST).background(BACKDROP),
                         contentAlignment = Alignment.BottomCenter,
                     ) {
                         BenchContextBar(
@@ -123,7 +123,6 @@ class BenchContextBarTest {
         assertEquals(
             listOf(
                 Copy.BenchVerbs.EDIT,
-                Copy.BenchVerbs.FONT,
                 Copy.BenchVerbs.SIZE,
                 Copy.BenchVerbs.INK,
                 Copy.BenchVerbs.DUPLICATE,
@@ -339,38 +338,60 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `only Font remains drawn without a behaviour`() {
+    fun `authored text and photos have no unavailable capability placeholders`() {
         val inert = (benchContextVerbs(BenchVerbKind.TEXT) + benchContextVerbs(BenchVerbKind.PHOTO))
             .filterNot { it.enabled }
             .map { it.label }
             .toSet()
-        assertEquals(setOf(Copy.BenchVerbs.FONT), inert)
+        assertTrue(inert.isEmpty())
     }
 
-    // ── Row 2.13a — drawn, and not operable ─────────────────────────────────────────────────────────
+    // ADR-115: no unavailable Font placeholder; blank-text guards remain.
 
     @Test
-    fun `Font is present and not enabled, while its neighbours are`() {
+    fun `Font is absent while every remaining authored text verb is enabled`() {
         host(benchContextVerbs(BenchVerbKind.TEXT))
-        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.FONT}").assertIsNotEnabled()
-        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}").assertIsEnabled()
-        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").assertIsEnabled()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.FONT}").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(Copy.BenchVerbs.FONT).assertDoesNotExist()
+        for (verb in benchContextVerbs(BenchVerbKind.TEXT)) {
+            composeRule.onNodeWithTag("$BenchContextBarTestTag-${verb.label}")
+                .assertIsEnabled().assertHasClickAction()
+        }
+    }
+
+    @Test
+    fun `five text actions fit a 320dp host without shrinking touch floors`() {
+        host(benchContextVerbs(BenchVerbKind.TEXT), widthDp = 320)
+        val bounds = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
+        val floor = with(composeRule.density) { 48.dp.toPx() }
+        for (verb in benchContextVerbs(BenchVerbKind.TEXT)) {
+            val button = composeRule.onNodeWithTag("$BenchContextBarTestTag-${verb.label}")
+                .fetchSemanticsNode().boundsInWindow
+            assertTrue(button.width >= floor && button.height >= floor)
+            assertTrue(button.left >= bounds.left - 1f && button.right <= bounds.right + 1f)
+        }
+    }
+
+    @Test
+    fun `five text actions remain reachable at 320dp and font scale 1_8`() {
+        host(benchContextVerbs(BenchVerbKind.TEXT), fontScale = 1.8f, widthDp = 320)
+        val bounds = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
+        val floor = with(composeRule.density) { 48.dp.toPx() }
+        for (verb in benchContextVerbs(BenchVerbKind.TEXT)) {
+            val node = composeRule.onNodeWithTag("$BenchContextBarTestTag-${verb.label}")
+            node.performScrollTo().assertIsEnabled().assertHasClickAction()
+            val button = node.fetchSemanticsNode().boundsInWindow
+            assertTrue(button.width >= floor && button.height >= floor)
+            assertTrue(button.left >= bounds.left - 1f && button.right <= bounds.right + 1f)
+            assertTrue(button.top >= bounds.top - 1f && button.bottom <= bounds.bottom + 1f)
+        }
     }
 
     /**
      * **F-1 — a control that is drawn and disabled says why.**
      *
-     * [OD-9](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling) keeps `Font` drawn and
-     * forbids inventing a capability for it. It does not make the control mute, and a first-time
-     * device pass found that silence is what reads as breakage rather than as "not built yet"
-     * (`docs/BETA-UX-REVIEW.md` F-1). Explaining an absence invents nothing.
-     *
-     * The reason rides `stateDescription`, **not** the name: `Font` stays `Font`, so the verb-set
-     * assertions above keep working and TalkBack announces a state rather than a differently-named control.
-     *
-     * The two reasons are asserted apart because they are answerable in opposite ways — `NOT_YET` is a
-     * capability the product lacks, `TYPE_FIRST` is one move the user can make right now. A single
-     * "unavailable" would throw away the half that is actionable.
+     * ADR-115 removes the unsupported capability, but preserves the actionable blank-text guard.
+     * Its TYPE_FIRST reason rides stateDescription, not the control's name.
      */
     @Test
     fun `a drawn but disabled verb announces why, and an enabled one announces no state`() {
@@ -383,7 +404,7 @@ class BenchContextBarTest {
 
         fun state(label: String) = config(label).getOrNull(SemanticsProperties.StateDescription)
 
-        assertEquals(Copy.BenchVerbs.NOT_YET, state(Copy.BenchVerbs.FONT))
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.FONT}").assertDoesNotExist()
         assertEquals(Copy.BenchVerbs.TYPE_FIRST, state(Copy.BenchVerbs.SIZE))
         assertEquals(Copy.BenchVerbs.TYPE_FIRST, state(Copy.BenchVerbs.INK))
         assertEquals(Copy.BenchVerbs.TYPE_FIRST, state(Copy.BenchVerbs.DUPLICATE))
@@ -391,8 +412,8 @@ class BenchContextBarTest {
 
         // The name is untouched — this is the assertion that fails if the reason ever migrates into it.
         assertEquals(
-            listOf(Copy.BenchVerbs.FONT),
-            config(Copy.BenchVerbs.FONT).getOrNull(SemanticsProperties.ContentDescription),
+            listOf(Copy.BenchVerbs.SIZE),
+            config(Copy.BenchVerbs.SIZE).getOrNull(SemanticsProperties.ContentDescription),
         )
     }
 
@@ -421,10 +442,10 @@ class BenchContextBarTest {
         }
         val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
         val hostB = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
-        // The card is its six verbs plus five A21 1dp gaps plus 4dp of padding a side — still less than
+        // The card is its five verbs plus four A21 1dp gaps plus 4dp of padding a side — still less than
         // the 360dp host. Under V2's `flex:1` strip it would be the host less 24dp.
         val sum = widths.values.sum() +
-            with(composeRule.density) { (BenchContextBarGapDp * 5 + BenchContextBarPaddingDp * 2).toPx() }
+            with(composeRule.density) { (BenchContextBarGapDp * 4 + BenchContextBarPaddingDp * 2).toPx() }
         assertEquals("the card is exactly its content", sum.toDouble(), bar.width.toDouble(), 1.5)
         assertTrue(
             "the card measures ${bar.width}px against a ${hostB.width}px host — it is still a strip",
@@ -520,7 +541,7 @@ class BenchContextBarTest {
         val rightGap = hostBounds.right - barBounds.right
         assertEquals("the card is centred, so its two side gaps are equal", leftGap.toDouble(), rightGap.toDouble(), 1.0)
         assertTrue(
-            "…and A21's six-action card remains content-width rather than becoming a full strip: leftGap=$leftGap",
+            "A24's five-action card remains content-width rather than becoming a full strip: leftGap=$leftGap",
             leftGap > 0f,
         )
 
@@ -645,21 +666,21 @@ class BenchContextBarTest {
 
     @Test
     fun `an inert verb is drawn inert, and not merely announced so`() {
-        // Row 2.13a's other half: without the alpha the control says "disabled" to TalkBack and "tap me"
+        // Blank-text guards: without the alpha the control says "disabled" to TalkBack and "tap me"
         // to the eye. `.icon-btn:disabled{opacity:.35}` (`v21-bench.html:345`) is the corpus's own answer,
         // transcribed here rather than read from production so the constant and the assertion cannot agree
         // with each other on a wrong value.
-        host(benchContextVerbs(BenchVerbKind.TEXT))
+        host(benchContextVerbs(BenchVerbKind.TEXT, styleable = false))
         val bmp = hostBitmap()
-        val font = inkOf(bmp, Copy.BenchVerbs.FONT)
+        val size = inkOf(bmp, Copy.BenchVerbs.SIZE)
         val edit = inkOf(bmp, Copy.BenchVerbs.EDIT)
-        assertNotEquals("Font is dimmed; Edit is not", edit, font)
+        assertNotEquals("Size is dimmed on blank text; Edit is not", edit, size)
         // .35 alpha over `paper` lands between the two, and much nearer paper than full inkSoft.
-        assertTrue("the dimmed glyph is lighter than the live one", luma(font) > luma(edit))
-        assertTrue("…and still darker than the surface it sits on", luma(font) < luma(surfaceArgb))
+        assertTrue("the dimmed glyph is lighter than the live one", luma(size) > luma(edit))
+        assertTrue("…and still darker than the surface it sits on", luma(size) < luma(surfaceArgb))
         assertTrue(
             "the dim is the frozen .35, not an arbitrary fade",
-            dist(font, inkSoftArgb) > dist(font, surfaceArgb),
+            dist(size, inkSoftArgb) > dist(size, surfaceArgb),
         )
     }
 

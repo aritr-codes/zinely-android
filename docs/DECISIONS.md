@@ -124,6 +124,7 @@
 | [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, implemented through one bundled, deterministic preview/export path.** Bundled Emoji2 with forced replacement owns the glyphs; system/OEM fallback remains forbidden. | Accepted |
 | [ADR-113](#adr-113) | **Flip is one mobile verb with two local-axis toggles for a single Photo or Art element.** Text and multi-selection are excluded; persistence requires an honest schema v3 rather than a lossy v2 additive field. | Accepted |
 | [ADR-114](#adr-114) | **Public story on the website; installed-app utility in About; fold replay remains an HTML experiment.** The site uses sanitized canonical mockups, a concise embedded accessibility statement, curated release notes, and a non-committal roadmap. | Accepted |
+| [ADR-115](#adr-115) | Remove the unavailable selected-text Font action until font choice exists. Owner-led decision, not a demonstrated usability improvement. | Accepted; implementation verification pending |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -12951,3 +12952,28 @@ available to keyboard, touch, and screen-reader users without hidden state. Keep
 avoids creating a new Settings or Licences route, while removing its duplicated story makes the surface more
 direct. Deferring Compose replay prevents a prototype from becoming eight new animated states before its
 benefit is established.
+
+## ADR-115 {#adr-115}
+
+### Do not offer a Font action before font choice exists
+
+**Status:** Accepted by owner, 2026-09-11; implementation acceptance remains subject to verification.
+**Supersedes:** only the selected-text Font-presence requirement of OD-9 and its carry-forward in ADR-092.
+
+After reviewing the HTML A/B prototype and saying it looked good, the owner explicitly approved proceeding with
+removal as a design judgment. The proposed 16-person comparison requirement is waived for this decision. There is
+no first-time cohort result, measured discoverability gain, or claim that owner feedback proves usability.
+
+The frozen Bench A24 selected-text order is **Edit, Size, Ink, Duplicate, Delete**. Remove only Font. Preserve
+the shared Text/Add icon, the typing-row Ink/Done behavior, all five handlers, blank-text guards, touch floors,
+spacing, and the existing large-text overflow behavior. No font selection, renderer, model, persistence, export,
+undo, Photo or Art behavior is added or changed. Reintroducing Font requires a working capability and a new freeze.
+
+HTML is amended and frozen before Compose. The historical A/B wrapper remains inspectable by reconstructing its
+old disabled Font control in condition A; it is no longer an unresolved decision gate. See the
+[experiment and verification record](reviews/2026-09-10-font-control-removal-experiment.md).
+
+Before merge: ordered/absent-control and blank-text regressions, live action dispatch, narrow/large-text layout,
+platform accessibility checks, explicit golden verification, safe device installation, HTML/device comparison,
+independent review, and the two device readings required by CLAUDE.md. A human TalkBack reading remains distinct
+from automated semantics. The owner waived the cohort study, not these engineering acceptance checks.

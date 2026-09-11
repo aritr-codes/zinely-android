@@ -1,12 +1,22 @@
 # Selected-text Font-control removal experiment
 
-**Status:** HTML counter-prototype prepared; no user result, freeze amendment, owner supersession, or Compose
-change is claimed.
+**Status:** Owner accepted removal as a design judgment on 2026-09-11 after reviewing the prototype.
+[ADR-115](../DECISIONS.md#adr-115) is the decision authority, supersedes the Font portion of OD-9, and waives
+the cohort-study gate. Bench A24 is amended and frozen; implementation verification is pending. No cohort
+result or measured usability benefit is claimed.
+
+## Current implementation boundary
+
+The canonical HTML now omits Font. The historical wrapper reconstructs the old disabled control only in A,
+so the two original alternatives remain inspectable. The protocol below is retained as historical research
+design, not as a still-required gate or a study that was conducted. Owner feedback was "looks good" followed
+by explicit approval of the owner-led removal recommendation. Automated browser access was unavailable in
+the VS Code session; HTTP availability and owner inspection are not keyboard or visual-parity certification.
 
 ## Question and boundary
 
-The selected-text toolbar currently includes an unavailable **Font** action because OD-9 explicitly ruled that the
-frozen control must remain visible without inventing functionality. This experiment asks one narrower question:
+The pre-A24 selected-text toolbar included an unavailable **Font** action because OD-9 explicitly ruled that the
+frozen control must remain visible without inventing functionality. The proposed experiment asked one narrower question:
 does temporarily removing that dead action improve first-time use without hiding or confusing the five live actions?
 
 The experiment wrapper loads the canonical [`v21-bench.html`](../design/mockups/v21-bench.html) in both conditions.
@@ -17,8 +27,8 @@ not edit the frozen HTML, delete the shared Font icon, implement font choice, or
 
 Serve the repository root over HTTP and open the same viewport in both conditions:
 
-- **A — current:** `docs/design/experiments/v21-font-control-removal.html?v=0`. The wrapper marks Font disabled
-  to match the current Android behavior; the frozen mockup itself is unchanged.
+- **A — historical baseline:** `docs/design/experiments/v21-font-control-removal.html?v=0`. The wrapper reconstructs
+  the disabled Font action from the pre-A24 builder.
 - **B — no Font:** `docs/design/experiments/v21-font-control-removal.html?v=1`
 - **Text-size stress:** append `&scale=1.8` to either URL. This is a web-layout approximation, not Android
   font-scale acceptance.
@@ -52,12 +62,12 @@ while no more than one of eight B makers shows the same harm. For every live act
 must be no more than one maker below A's count; a larger drop is a material B regression. Do not authorize removal
 from a single participant or anecdote.
 
-If nobody notices or attempts Font, benefit remains unsupported and OD-9 stays in force. A passing comparison still
-does not change Compose: the owner must explicitly supersede OD-9, amend and re-freeze canonical HTML first, then
-approve keyboard/accessibility focus-order, human TalkBack, 360dp/default, 1.8× text, golden, and device gates.
+Under the original protocol, absent Font-specific harm would have left OD-9 in force. A passing comparison would
+still have required owner approval and an HTML amendment before Compose. ADR-115 instead records the explicit
+owner-led decision; keyboard/accessibility focus-order, human TalkBack, narrow/default, 1.8× text, golden, and device
+gates remain required.
 
-## Current verification limit
+## Original experiment verification limit
 
-The repository artifact can be inspected and its exact A/B action lists verified mechanically. No browser was
-available in the authoring session, so visual and keyboard browser acceptance remain pending. The connected Samsung
-can verify the current installed app but cannot represent the unshipped HTML-only condition B.
+The repository artifact was inspectable and its exact A/B action lists mechanically checkable. No automated browser
+was available in the authoring session. At that point the connected Samsung ran the unchanged release, not condition B.
