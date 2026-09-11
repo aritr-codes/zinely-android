@@ -12977,3 +12977,7 @@ Before merge: ordered/absent-control and blank-text regressions, live action dis
 platform accessibility checks, explicit golden verification, safe device installation, HTML/device comparison,
 independent review, and the two device readings required by CLAUDE.md. A human TalkBack reading remains distinct
 from automated semantics. The owner waived the cohort study, not these engineering acceptance checks.
+
+Independent review (2026-09-11): GO for code, tests, documentation, and pinned golden images after green CI on
+`c48960d`; overall merge NO-GO pending owner hands-on/TalkBack and rendered HTML/device parity/browser keyboard
+acceptance. No required implementation fix remains. Evidence and limitations are in the linked verification record.
