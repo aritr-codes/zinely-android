@@ -17,6 +17,9 @@ assert.match(home, /reduced-motion setting/);
 assert.match(home, /releases\/download\/v0\.9\.0-beta\.4-r3\/zinely-0\.9\.0-beta\.4-r3-release\.apk/);
 assert.match(roadmap, /still being tested, not in the download/);
 assert.match(roadmap, /not announced features/);
+for (const label of ['Planned', 'Exploring and testing', 'Ideas, not promises']) {
+  assert.ok(roadmap.includes(`class="status-label">${label}</p>`), `Keep commitment levels distinct: ${label}`);
+}
 assert.doesNotMatch(roadmap, /restore its regression test|Measure cold/);
 for (const id of ['website-september-9', 'beta-4-r3', 'beta-4-r2', 'beta-4', 'beta-3']) {
   assert.ok(notes.includes(`id="${id}"`), `Preserve release bookmark ${id}`);

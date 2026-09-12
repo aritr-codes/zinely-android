@@ -12979,3 +12979,6 @@ on both the website and in-app About screen. The owner reconfirmed the credit: A
   [roadmap assessment](ROADMAP.md#creative-tools-assessment) owns their scope and relative effort.
 
 Removing an unsupported Font button does not rule out a future working font picker. PR #70 retains its own gates.
+
+Independent review, 2026-09-12: GO for source copy/docs after restoring distinct roadmap commitment categories;
+rendered acceptance remains pending before website merge. No app story design freeze or Compose approval is claimed.

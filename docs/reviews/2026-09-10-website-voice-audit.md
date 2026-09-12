@@ -43,6 +43,14 @@ Review actual files, not this summary: check factual release/status boundaries, 
 creative capabilities, unchanged link destinations/permissions/privacy, draft-only app story and preserved utilities.
 Next owner decision: approve/refine the app story, then amend/freeze canonical About before any Compose work.
 
+Independent review: GO for source copy/docs, with rendered acceptance pending. Required category fix ACCEPTED:
+the public roadmap now separates Planned, Exploring and testing, and Ideas, not promises, preserving ADR-114 item 5.
+No required source fix remains. [Draft PR #71](https://github.com/aritr-codes/zinely-android/pull/71) contains the work;
+initial Pages build `34703800223` passed on `0e888b1`; the category follow-up requires its own run. Publishing was
+correctly skipped because this is a draft PR. No website deployment or native About delivery is claimed.
+Local About preview is served at `http://127.0.0.1:8766/docs/design/experiments/v21-about-story.html` (HTTP 200 checked,
+not rendered acceptance). Keep this preview server running only while needed for owner review.
+
 ## Second pass: paper, personality, and interaction
 
 The owner's first-pass feedback was that warmth alone did not deliver enough humor. This second pass is explicitly
