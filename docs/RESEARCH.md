@@ -610,3 +610,22 @@ require sign-in; optional email does not imply anonymous processing by Google.
   records the broader agency, indie, unconventional-brand, internet-culture, and experimental-web research, its
   limits, and selected applications. The [voice guide](design/VOICE.md#public-website-voice) is the writing authority.
 - **Unproven:** humor, memorability, and improved product understanding still need first-visitor feedback.
+
+## R20. Creative tools feasibility, 12 September 2026
+
+- **Verified:** Android supports [bundled font families and styles](https://developer.android.com/develop/ui/compose/text/fonts).
+  **Recommendation:** bundle a curated set for Zinely, not runtime-downloaded fonts, so editing and printing remain
+  offline. This platform capability is not evidence that Zinely already has a working document-font picker.
+- **Verified:** Android [Canvas](https://developer.android.com/reference/android/graphics/Canvas) exposes `clipPath`
+  and alpha-layer operations. **Recommendation:** carry masks and opacity through Zinely's shared document/render
+  model, not a Compose-only visual effect that disappears from exported pages. API availability alone does not prove
+  every PDF/bitmap/device combination; explicit export and physical-print checks remain necessary.
+- **Repository verified:** `DocumentFontRegistry.Bundled` registers only Inter; the image model and `DrawImage`
+  have no opacity or arbitrary mask fields; `Crop`/`localClip` are rectangular; authored `DecorElement`/`SupplyCatalog`
+  already provide an extension point for a curated art pack. UI-font credits are not document-font availability.
+- **Recommendation:** preserve original image assets for non-destructive cutouts. Treat rectangular crop presets,
+  shaped masks, freehand paths, and automatic segmentation as different scopes, not one “better crop” ticket.
+- **Unproven:** development duration, desired font set, font-file size impact, cutout quality and first-time usability.
+  Review each candidate font's actual licence and required script/style coverage before bundling. No licence change,
+  font acquisition, model download, product promise or implementation is authorized by this assessment.
+- The [roadmap assessment](ROADMAP.md#creative-tools-assessment) owns relative effort and proposed sequencing.

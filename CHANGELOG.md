@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Rewrote public update pages in plain language, refreshed their status, and moved homepage accessibility copy
+  from standard names to practical benefits. Expanded the Aastra origin story and prepared an HTML-only app About
+  opening under ADR-116. No Android behavior, download, legal text or release artifact changed.
+- Reopened creative tools for a scoped feasibility assessment, not a release commitment: fonts, Art, frames,
+  photo transparency, shaped cutouts and crop improvements. The roadmap separates their relative effort.
+
 - Gave the public homepage a more tactile paper presentation and stronger independent voice, with an interactive
   print-order comparison, optional zine ideas, folding progress, and small native-disclosure surprises. All work
   without essential hover or motion; product claims, download links, and Android behavior remain unchanged.

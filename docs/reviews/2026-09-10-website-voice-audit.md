@@ -1,5 +1,48 @@
 # Website voice audit
 
+## Plain-language follow-up, 12 September 2026
+
+Owner feedback: public history/plans were too technical; About should say what/who/why on both surfaces; public
+accessibility copy should explain benefits, not standards. Owner reconfirmed Aastra, a two-person team.
+[ADR-116](../DECISIONS.md#adr-116) owns the changed direction. Earlier passes below remain historical evidence.
+
+### Changes and boundaries
+
+- Homepage: literal Android/eight-page product definition, named two-person team, unmet-need origin, restrained
+  paper-versus-feed humor. Retained hero, workflow, screenshots, fold instructions, feedback policy and download.
+- Public links now read “What’s new” and “What’s next”; routes and existing release bookmarks are preserved.
+- Roadmap: removed completed Reframe investigation from the public to-do list. Described Font PR #70 as still
+  being checked and not in the download. Reopened creative-tool ideas are explicitly not announced features.
+- Release history: translated shrinking/image-format and UI implementation details into user outcomes. Added the
+  already-merged 10 September website work (PR #69 merged `2026-09-10T17:03:14Z`). No new app release is claimed.
+- Accessibility: practical keyboard, text zoom, readable static folding instructions and reduced-motion wording;
+  implementation requirements remain internal. This is neither a conformance certification nor a removal of support.
+- App About: separate HTML story proposal wraps the canonical screen without editing its frozen design or Compose.
+  Short what/who/why opening, existing paper preference/licences/privacy/version retained. Await owner review and
+  canonical freeze before native implementation. No product capability was added.
+- Creative-feature assessment lives in the [roadmap](../ROADMAP.md#creative-tools-assessment), grounded in model,
+  font registry, rendering and supply code plus [R20](../RESEARCH.md#r20-creative-tools-feasibility-12-september-2026).
+  Relative effort is a recommendation, not a calendar estimate. No fonts, stickers or models were downloaded.
+- Confirmed both `com.aritr.zinely` and isolated `com.aritr.zinely.fontqa` on Samsung. No uninstall performed:
+  owner asked for a recommendation, not deletion. Recommend keeping QA until its acceptance check, then removing
+  only QA and its disposable document. Future QA builds should be visibly named to avoid duplicate-app confusion.
+
+### Verification and handoff
+
+- `node tools/check-public-copy.cjs`: passed product/team/download/status copy contracts, local links and fragments,
+  unique IDs/main headings, stable release bookmarks, and proposal inline-script syntax. Added to Pages build checks.
+- `node --check website/assets/site.js` and `git diff --check`: passed. JavaScript and CSS behavior unchanged.
+- Rewritten roadmap/changelog and new app proposal contain no em dashes. Homepage retains three pre-existing
+  occurrences in metadata/install warning; none were introduced by this copy change.
+- Built-in automated Browser is unavailable in this VS Code environment; no fresh rendered/axe/keyboard pass is
+  claimed. Prior rendered results below apply only to their historical commits, not this follow-up.
+- Review/build/deployment status must be read from the current PR. This branch is independent of Font PR #70;
+  it neither merges that app change nor substitutes for its human acceptance checks.
+
+Review actual files, not this summary: check factual release/status boundaries, clear what/who/why, no invented
+creative capabilities, unchanged link destinations/permissions/privacy, draft-only app story and preserved utilities.
+Next owner decision: approve/refine the app story, then amend/freeze canonical About before any Compose work.
+
 ## Second pass: paper, personality, and interaction
 
 The owner's first-pass feedback was that warmth alone did not deliver enough humor. This second pass is explicitly
