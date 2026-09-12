@@ -9,8 +9,19 @@ const home = read('website/index.html');
 const roadmap = read('website/roadmap/index.html');
 const notes = read('website/changelog/index.html');
 const proposal = read('docs/design/experiments/v21-about-story.html');
+const appAbout = read('docs/design/mockups/v21-colophon.html');
+const copy = read('core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt');
+const makerConstants = [...copy.matchAll(/public const val (MAKER_\w+): String =\s*("[^"\r\n]*"(?:\s*\+\s*"[^"\r\n]*")*)/g)];
+assert.equal(makerConstants.length, 4, 'Four shared maker-note strings');
+for (const [, name, expression] of makerConstants) {
+  const value = [...expression.matchAll(/"([^"\r\n]*)"/g)].map(m => m[1]).join('');
+  assert.ok(appAbout.includes(`>${value}</`), `${name}: shared Android copy matches frozen HTML`);
+  assert.ok(!value.includes('\u2014'), `${name}: no em dash`);
+}
 assert.match(home, /Aastra, a two-person team/);
-assert.match(home, /Android app for making little eight-page books/);
+assert.match(home, /Sometimes you want to make something you can hand to someone/);
+assert.match(home, /An Android app with a paper habit/);
+assert.match(home, /eight-page booklet you can print, cut, fold, and hand to someone/);
 assert.doesNotMatch(home, /WCAG/);
 assert.match(home, /id="accessibility"/);
 assert.match(home, /reduced-motion setting/);
@@ -46,6 +57,22 @@ for (const html of [roadmap, notes, proposal]) assert.ok(!html.includes('\u2014'
 for (const html of [home, proposal]) {
   for (const [, script] of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) new vm.Script(script);
 }
-assert.match(proposal, /Proposal, not a design freeze/);
-assert.match(proposal, /Aastra, a two-person team/);
+assert.match(proposal, /Design approved, 12 September 2026/);
+assert.match(proposal, /src="\.\.\/mockups\/v21-colophon.html"/);
+assert.doesNotMatch(proposal, /<script/); // One canonical copy, no injected duplicate.
+assert.match(appAbout, /Aastra, the two people behind Zinely/);
+assert.match(appAbout, /A little about this little app/);
+assert.match(appAbout, /little paper books/);
+assert.match(appAbout, /making an Android app/);
+assert.match(appAbout, /The page order became our problem\. What goes on the pages is entirely yours\./);
+assert.match(appAbout, /Thanks for making something with it\./);
+assert.doesNotMatch(appAbout, /Sometimes you want to make something you can hand to someone/);
+assert.ok(!appAbout.match(/<section class="section maker-note"[\s\S]*?<\/section>/)[0].includes('\u2014'));
+assert.match(home, /We handle the page order\. You decide what deserves eight pages\./);
+for (const html of [home, proposal]) {
+  assert.doesNotMatch(html, /This got slightly out of hand/);
+}
+const about = home.match(/<section class="about-card"[\s\S]*?<\/section>/);
+assert.ok(about, 'Homepage About section is present');
+assert.ok(!about[0].includes('\u2014'), 'No em dashes in About copy');
 console.log('PASS: public copy, local links/anchors, release bookmarks, stable download, and proposal script syntax. Source-only checks.');

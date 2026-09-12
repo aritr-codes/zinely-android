@@ -629,3 +629,13 @@ require sign-in; optional email does not imply anonymous processing by Google.
   Review each candidate font's actual licence and required script/style coverage before bundling. No licence change,
   font acquisition, model download, product promise or implementation is authorized by this assessment.
 - The [roadmap assessment](ROADMAP.md#creative-tools-assessment) owns relative effort and proposed sequencing.
+
+## R21: About return-focus test mode, 12 September 2026
+
+- **Verified:** AndroidX's [ClickableTest](https://android.googlesource.com/platform/frameworks/support/+/c8a071114c193cd7b43a05ba1489e72d21f3b833/compose/foundation/foundation/src/androidInstrumentedTest/kotlin/androidx/compose/foundation/ClickableTest.kt)
+  explicitly switches to keyboard mode for focus requests and states that clickable is focusable in non-touch mode.
+  The existing Zinely shelf focus test follows the same pattern.
+- **Application:** About tests that assert keyboard focus must request `InputMode.Keyboard`; touch visibility and
+  click tests alone cannot prove or disprove keyboard restoration. This does not verify TalkBack accessibility focus.
+- **Recommendation:** preserve the About list state across licence navigation and request return focus inside the
+  restored lazy row, where its target is attached. The final regression result, not source reasoning, gates acceptance.

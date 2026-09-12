@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added the owner-approved, app-specific Aastra maker's note to the canonical About design and Android source.
+  Paper preference, font licences, privacy and version remain. Native verification is pending; not yet released.
 - Added an HTML-only A/B experiment for evaluating removal of the unavailable selected-text Font action. It leaves
   the canonical design and Android app unchanged; first-time comparison evidence and an owner decision remain gates.
 - Added full Reframe photo-overlay golden coverage for centred Fill, representative panned/zoomed framing,

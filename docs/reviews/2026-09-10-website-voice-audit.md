@@ -1,5 +1,59 @@
 # Website voice audit
 
+## Native maker's note implementation, 12 September 2026
+
+Owner approved the updated app preview with "looks good. proceed". [ADR-116](../DECISIONS.md#adr-116) records the
+canonical amendment and design freeze. Earlier draft-only notes below describe preceding review rounds.
+
+- Promoted approved copy/styles to canonical About; experiment URL remains a thin wrapper, avoiding duplicate text.
+- Added matching shared copy and Compose note with a semantic heading, themed ink and scalable text. Existing
+  utility controls remain. Retain the main lazy list state across licence navigation so the returning row can
+  receive focus instead of resetting to the new opening.
+- Expanded focused tests for note content/heading, utilities, licence return focus and 320dp/1.8 text scaling.
+  Updated shelf integration test to scroll to utilities and back. Website narrative remains unchanged.
+- Initial focused run: 33 tests, 31 passed; both new licence-return focus assertions failed, although the row
+  was visible. Moved restoration from the parent destination effect into the lazy row's effect so its focus
+  target is attached first. Retained list scroll state. A second run reproduced the same failures because the
+  focus tests still used touch mode. Corrected them to request keyboard mode, matching the existing shelf test
+  and [AndroidX evidence](../RESEARCH.md#r21-about-return-focus-test-mode-12-september-2026). These failures alone
+  are not proof of a user-facing focus defect. A corrected run is required.
+- Independent source review accepted the copy contract and spacing fix (24dp note-to-utility break). The
+  lifecycle fix above requires the second test run; source review alone did not catch the timing failure.
+- Corrected run: all 8 About tests passed (XML timestamp `2026-09-12T16:54:55.629Z`), including keyboard focus
+  after licence return at normal and 1.8 text scale. No uninitialized-focus warning. All 25 shelf integration
+  tests passed in the preceding runs. Public-copy contracts and whitespace checks passed.
+- QA APK packaging and visual/device validation in progress. No golden, physical-device parity, TalkBack,
+  deployment or release pass is claimed.
+
+## Separate app maker's note, 12 September 2026
+
+- Owner approved the website story but requested different copy in the installed app, then approved the short
+  maker's note. Updated only the app proposal: new heading, two-person credit and paper-book origin, page-order
+  line and brief thank-you. Website copy is unchanged by this refinement.
+- Source contracts now check each surface independently and reject the website opening in the app proposal.
+  Canonical About, Compose and existing paper/licence/privacy utilities remain unchanged. The copy is approved;
+  rendered layout review and canonical design freeze remain pending. See [ADR-116](../DECISIONS.md#adr-116).
+- Validation: public-copy source checks and whitespace checks passed; local preview returned HTTP 200 with the
+  new heading. No new em dashes. No native build, rendered acceptance or deployment is claimed.
+- Independent source review: GO, no required fixes. Approved wording, surface separation and draft-only
+  boundaries verified. Rendered review remains pending.
+
+## Narrative refinement, 12 September 2026
+
+- Owner approved the story direction for now and requested updating the About preview next. Replaced the
+  disconnected product/team/joke paragraphs with one arc: wanting a physical object, looking for the app,
+  building it, then handing the result to someone. Kept the page-order closing line.
+- App proposal uses the agreed four paragraphs. Website About uses the same opening and maker story with a
+  shorter ending, avoiding a second explanation of the hero/workflow. Removed the separate code/paper aside
+  and cat/feed joke so the story is not interrupted by competing punchlines.
+- Scope: copy only, source contracts and this decision/review record. No CSS, interaction, link, legal text,
+  canonical About design, Compose, installed app or deployment changes.
+- Validation: `node tools/check-public-copy.cjs` and `git diff --check` passed. Local About preview returned
+  HTTP 200 with the updated story. New About copy contains no em dashes; links and release anchors pass contracts.
+- Independent narrative-refinement review: GO, no required fixes or recommended improvements. Source-only review
+  confirmed the narrative arc, accurate claims and unchanged utilities/legal text. Rendered day/night, large-text,
+  keyboard and utility-discoverability review remains necessary before the app design freeze. No deployment claimed.
+
 ## Plain-language follow-up, 12 September 2026
 
 Owner feedback: public history/plans were too technical; About should say what/who/why on both surfaces; public

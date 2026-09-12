@@ -33,8 +33,9 @@ beta.4-r3 APK; measurements and evidence remain in the
    if evidence identifies an improvement. The website guide is shipped; native replay is not.
 3. **Creative tools:** owner reopened fonts, graphics/stickers, frames, photo transparency, shaped cutouts and crop
    improvements for evaluation on 2026-09-12. See the assessment below. No feature or delivery date is committed.
-4. **Human About opening:** owner requested a short product/team/origin story inside the app as well as the website.
-   [ADR-116](DECISIONS.md#adr-116) records the direction; the HTML story proposal awaits review/freeze before Compose.
+4. **Human About opening:** owner approved separate website narrative and app maker's note. The canonical app
+   design is frozen and implemented in Compose, with native verification still pending, not a published change.
+   [ADR-116](DECISIONS.md#adr-116) records the approval and retained acceptance gates.
 
 ### Engineering follow-ups — not extra public feature promises
 

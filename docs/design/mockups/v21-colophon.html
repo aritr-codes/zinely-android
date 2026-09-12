@@ -14,8 +14,8 @@
   - Default paper changes only the preselection for a future zine; it never rewrites an existing zine.
   - Each bundled typeface opens its locally bundled SIL OFL notice.
   - The offline/privacy promise appears exactly once, here.
-  - 2026-09-09 simplification: the website owns the product story. This utility screen starts with
-    the paper preference and keeps only information that is useful for the installed app.
+  - 2026-09-12 amendment / ADR-116: owner approved the app-specific maker's note and its preview.
+    The note precedes the unchanged installed-app utilities; website narrative stays separate.
   - Palette amended 2026-08-24 by THEME-37596-FREEZE; the interaction ruling is unchanged.
 -->
 
@@ -57,6 +57,8 @@ body{margin:0;min-height:100vh;display:grid;place-items:center;gap:18px;padding:
 .top h1{margin:0;text-align:center;font:700 25px/1.1 var(--voice)}
 .scroll{overflow-y:auto;overscroll-behavior:contain;padding:22px 24px 42px;scrollbar-gutter:stable}
 .section{margin-top:24px}.section:first-of-type{margin-top:0}
+#storyTitle{font:700 1.5rem/1.2 var(--voice);margin:0 0 12px}
+.maker-note p{font-size:1rem;line-height:1.55;color:var(--ink)}
 .eyebrow{margin:0 0 10px;color:var(--ink-soft);font-size:11px;font-weight:700;
   letter-spacing:.1em;text-transform:uppercase}
 .card{--surface:#F2CFBB;--ink:#27270F;--ink-soft:#6A452F;--leaf:#8E9546;
@@ -100,6 +102,12 @@ Shelf → About Zinely. Test the paper preference, each local licence, Back/Esca
       <h1 id="colophonTitle">About Zinely</h1><span></span>
     </header>
     <div class="scroll" tabindex="0">
+      <section class="section maker-note" aria-labelledby="storyTitle">
+        <h2 id="storyTitle">A little about this little app</h2>
+        <p>We’re Aastra, the two people behind Zinely. We wanted to make little paper books, and somehow that turned into making an Android app.</p>
+        <p>The page order became our problem. What goes on the pages is entirely yours.</p>
+        <p>Thanks for making something with it.</p>
+      </section>
       <section class="section" aria-labelledby="paperTitle">
         <h2 class="eyebrow" id="paperTitle">Paper for new zines</h2>
         <div class="card paper-choices" role="radiogroup" aria-labelledby="paperTitle">

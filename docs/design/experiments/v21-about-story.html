@@ -2,32 +2,13 @@
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>About Zinely story proposal | Not frozen</title>
+<title>About Zinely maker's note | Approved design</title>
 <style>
   html,body{height:100%;margin:0;background:#f2debc;color:#27270f;font:16px/1.5 system-ui}
   body{display:flex;flex-direction:column}
   .proposal-note{margin:0;padding:12px 20px}
   iframe{flex:1;width:100%;border:0;min-height:0}
 </style>
-<p class="proposal-note">Proposal, not a design freeze. A short story above the existing About tools. Check day/night, larger text, and the paper and licence controls below it.</p>
-<iframe id="about" title="Proposed About Zinely story" src="../mockups/v21-colophon.html"></iframe>
-<script>
-document.getElementById('about').addEventListener('load',function(){
-  const doc=this.contentDocument;
-  if(!doc.querySelector('#mainScreen .scroll'))throw new Error('Canonical About screen unavailable');
-  doc.title='About Zinely story proposal (not frozen)';
-  doc.querySelector('.cap').textContent='Story proposal. Existing paper preference, font licences, and privacy information stay here.';
-  const section=doc.createElement('section');
-  section.className='section';
-  section.setAttribute('aria-labelledby','storyTitle');
-  section.innerHTML='<h2 id="storyTitle">Small books. Stubborn people.</h2>'
-    +'<p>Zinely turns your photos, words, and bits of art into an eight-page paper zine. Make it here. Print one sheet. Cut, fold, and give it to someone.</p>'
-    +'<p>We’re Aastra, a two-person team. We wanted this app, couldn’t find the one we wanted, and started building it. This got slightly out of hand. In a good way.</p>'
-    +'<p>We handle the page order. You decide what deserves eight pages.</p>';
-  const style=doc.createElement('style');
-  style.textContent='#storyTitle{font:700 1.5rem/1.2 var(--voice);margin:0 0 12px}.section p:not(.promise):not(.note){font-size:1rem;line-height:1.55;color:var(--ink)}';
-  doc.head.append(style);
-  doc.querySelector('#mainScreen .scroll').prepend(section);
-});
-</script>
+<p class="proposal-note">Design approved, 12 September 2026. The maker's note now lives in the canonical About design. Android verification is separate.</p>
+<iframe id="about" title="Approved About Zinely design" src="../mockups/v21-colophon.html"></iframe>
 </html>

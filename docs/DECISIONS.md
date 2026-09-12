@@ -124,7 +124,7 @@
 | [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, implemented through one bundled, deterministic preview/export path.** Bundled Emoji2 with forced replacement owns the glyphs; system/OEM fallback remains forbidden. | Accepted |
 | [ADR-113](#adr-113) | **Flip is one mobile verb with two local-axis toggles for a single Photo or Art element.** Text and multi-selection are excluded; persistence requires an honest schema v3 rather than a lossy v2 additive field. | Accepted |
 | [ADR-114](#adr-114) | **Public story on the website; installed-app utility in About; fold replay remains an HTML experiment.** The site uses sanitized canonical mockups, a concise embedded accessibility statement, curated release notes, and a non-committal roadmap. | Accepted |
-| [ADR-116](#adr-116) | **Plain-language public updates and a human About story on both surfaces.** Retain technical documentation and accessibility requirements; app story prototype awaits design freeze. | Direction accepted; app prototype pending |
+| [ADR-116](#adr-116) | **Plain-language public updates and distinct About copy on both surfaces.** Retain technical documentation and accessibility requirements; app maker's note design frozen. | Accepted; native verification pending |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -12960,11 +12960,26 @@ benefit is established.
 
 ### Explain the product before explaining the engineering
 
-**Status:** Direction accepted by owner, 2026-09-12. Website copy in review; in-app story proposal awaits design freeze.
+**Status:** Direction and app maker's-note design accepted by owner, 2026-09-12. Canonical About amended and frozen; native verification pending.
 **Partially supersedes:** ADR-114 items 2 and 3 only. All accessibility and installed-app utility requirements remain.
 
 The owner asked for plain-language public updates, benefits rather than accessibility acronyms, and a human story
 on both the website and in-app About screen. The owner reconfirmed the credit: Aastra, a two-person team.
+
+Story refinement, 2026-09-12: owner accepted the narrative copy direction for now. The proposal moves from the
+desire to make something physical, through the team's search and decision to build, to the reader's own booklet.
+The website uses a shorter ending because its hero and workflow already explain the product. Copy approval is
+not a rendered design freeze; the canonical prototype and Compose remain unchanged.
+
+Surface-specific refinement, 2026-09-12: owner approved keeping the website narrative and replacing the app's
+repeated story with a short maker's note, headed "A little about this little app". The website invites discovery;
+the installed app credits Aastra, explains the paper-book motivation and thanks the reader. Same voice, different
+copy. This supersedes the shared-story proposal above, not the pending rendered review and canonical freeze.
+
+Design freeze, 2026-09-12: after reviewing the separate app preview, the owner said "looks good. proceed".
+The approved note is promoted to `v21-colophon.html`; the experiment URL now wraps that canonical source without
+injecting duplicate content. Compose implementation is authorized. This approval does not claim automated browser
+acceptance, native pixel parity, golden verification or either physical-device acceptance pass.
 
 - Public labels are “What’s new” and “What’s next”; existing routes remain stable. Release history explains user
   outcomes. Technical changelog and roadmap remain authoritative, with optional links from the public pages.
@@ -12972,13 +12987,13 @@ on both the website and in-app About screen. The owner reconfirmed the credit: A
   an engineering target in internal documentation, not a homepage headline or an unverified conformance claim.
 - Both About surfaces should explain what Zinely makes, who builds it, and why. The app gets a short opening,
   not the whole landing page. Paper preference, licences, privacy and installed version stay in place.
-- The [app story proposal](design/experiments/v21-about-story.html) wraps the unchanged canonical About prototype.
-  It is deliberately not frozen and changes no Compose code. Owner review, canonical amendment/freeze, Compose
-  tests/goldens, device readings and accessibility acceptance precede app delivery.
+- The [app story preview](design/experiments/v21-about-story.html) now wraps the amended canonical About prototype.
+  The approved maker's note is implemented in Compose. Tests/goldens, device readings, parity and accessibility
+  acceptance still precede app delivery. Licence return retains the main list's scroll position and row focus.
 - Creative tools requested by the owner are reopened for evaluation, not added to a release commitment. The
   [roadmap assessment](ROADMAP.md#creative-tools-assessment) owns their scope and relative effort.
 
 Removing an unsupported Font button does not rule out a future working font picker. PR #70 retains its own gates.
 
-Independent review, 2026-09-12: GO for source copy/docs after restoring distinct roadmap commitment categories;
-rendered acceptance remains pending before website merge. No app story design freeze or Compose approval is claimed.
+Earlier source review, 2026-09-12: GO for website copy/docs after restoring distinct roadmap commitment categories.
+That review preceded the app freeze and does not certify the subsequent Compose implementation.
