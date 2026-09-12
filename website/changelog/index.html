@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#E9E29B">
   <meta name="description" content="Important Zinely releases, improvements, and fixes, newest first.">
   <link rel="canonical" href="https://aritr-codes.github.io/zinely-android/changelog/">
-  <title>Changelog — Zinely</title>
+  <title>What’s new | Zinely</title>
   <link rel="icon" href="../assets/logo.webp" type="image/webp">
   <link rel="stylesheet" href="../assets/styles.css">
 </head>
@@ -25,21 +25,32 @@
 
   <main id="main" class="policy-layout">
     <article class="policy release-notes">
-      <p class="eyebrow">Changelog</p>
+      <p class="eyebrow">The small improvements add up</p>
       <h1>What changed.</h1>
-      <p class="policy-intro">A short, human-readable history of public releases and earlier tester builds that affect people using Zinely. Newest entries appear first.</p>
+      <p class="policy-intro">What got better, what got fixed, and where you can try it. The current Android download is <a href="../#download-title">0.9.0-beta.4-r3</a>. Website updates happen separately.</p>
+
+      <section class="release-entry" id="website-september-10">
+        <p class="release-channel">On the website</p>
+        <p class="release-date"><time datetime="2026-09-10">10 September 2026</time></p>
+        <h2>A little more paper. A little less serious.</h2>
+        <ul>
+          <li>Try the page-order switch to see why a printed sheet looks out of order before you fold it.</li>
+          <li>Stuck for an idea? Ask the homepage for a tiny zine prompt.</li>
+          <li>Meet the people behind Zinely, with a few small surprises tucked around the site.</li>
+        </ul>
+        <p>Your Android app hasn’t changed with this website update.</p>
+      </section>
 
       <section class="release-entry" id="website-september-9">
-        <p class="release-channel">Website update — not an app release</p>
+        <p class="release-channel">On the website</p>
         <p class="release-date">Published <time datetime="2026-09-09">9 September 2026</time></p>
         <h2>A clearer guide, and a place for your feedback</h2>
         <ul>
-          <li>Added a light-mode gallery with sample zines, without using personal photos.</li>
-          <li>Added a one-step-at-a-time folding desk with controlled direction demonstrations, pause/replay, reduced-motion support, and a complete static guide.</li>
-          <li>Added a short Google feedback form, with email available for screenshots and a published retention policy.</li>
-          <li>Introduced Aastra, the two-person team behind Zinely, and made the roadmap more specific.</li>
+          <li>Take a look around the app through example screenshots.</li>
+          <li>Fold along one step at a time. Pause, replay, or read all the instructions without animation.</li>
+          <li>Send us a suggestion through a short form, or email a screenshot when something goes wrong.</li>
         </ul>
-        <p>The Android download remains 0.9.0-beta.4-r3; these website changes do not update an installed app.</p>
+        <p>This changed the website, not the app on your phone.</p>
       </section>
 
       <section class="release-entry" id="beta-4-r3">
@@ -48,8 +59,7 @@
         <h2>0.9.0-beta.4-r3</h2>
         <p class="release-theme">Readable dark-mode confirmations</p>
         <ul>
-          <li>Fixed the low-contrast “Duplicated” confirmation and Undo action in dark mode.</li>
-          <li>Kept the message wording, timing, placement, and light-mode appearance unchanged.</li>
+          <li>The “Duplicated” message and its Undo button are easier to read in dark mode.</li>
         </ul>
       </section>
 
@@ -59,8 +69,7 @@
         <h2>0.9.0-beta.4-r2</h2>
         <p class="release-theme">A smaller download</p>
         <ul>
-          <li>Reduced the release package using Android’s release-only code and resource shrinking.</li>
-          <li>Changed the generated launcher artwork from PNG to lossless WebP without changing its pixels.</li>
+          <li>Trimmed the download without changing what the app does or how its icon looks.</li>
         </ul>
       </section>
 
@@ -70,9 +79,9 @@
         <h2>0.9.0-beta.4</h2>
         <p class="release-theme">Replace a photo without rebuilding the page</p>
         <ul>
-          <li>Added Replace Photo through Android’s existing photo picker.</li>
-          <li>Preserved position, crop, framing, effects, and undo history while changing only the photo source.</li>
-          <li>Made Photo and Art replacement routes unambiguous for screen readers.</li>
+          <li>Swap a photo without starting its placement all over again. Its position, crop, and effects stay put.</li>
+          <li>Changed your mind? Undo brings the old photo back.</li>
+          <li>Screen-reader labels now distinguish replacing a photo from replacing a piece of art.</li>
         </ul>
       </section>
 
@@ -82,21 +91,21 @@
         <h2>0.9.0-beta.3</h2>
         <p class="release-theme">A clearer, more dependable editor</p>
         <ul>
-          <li>Added whole-library backup and recovery, persistent deletion, Flip, Reframe, and duplicate-page improvements.</li>
-          <li>Improved large-text, TalkBack, dark-mode, page-navigation, and autosave behavior.</li>
-          <li>Reduced the first Add-to-Art transition frame work while preserving one stable shared sheet.</li>
+          <li>Back up your collection and bring it back when you need it. Deleted zines stay deleted when you reopen the app.</li>
+          <li>Improved flipping photos and art, adjusting photo crops, and making copies of pages.</li>
+          <li>Smoothed out rough spots when using larger text, a screen reader, or dark mode, and when moving between pages.</li>
         </ul>
       </section>
 
-      <p class="notice">Looking for implementation detail? Read the <a href="https://github.com/aritr-codes/zinely-android/blob/main/CHANGELOG.md">complete project changelog on GitHub</a>.</p>
+      <p class="notice">Want the technical details? They’re in the <a href="https://github.com/aritr-codes/zinely-android/blob/main/CHANGELOG.md">full developer changelog</a>. Looking ahead? See <a href="../roadmap/">what’s next</a>.</p>
     </article>
   </main>
 
   <footer>
-    <p><strong>Zinely</strong> — physical media instead of social media.</p>
+    <p><strong>Zinely.</strong> Physical media instead of social media.</p>
     <nav aria-label="Footer navigation">
       <a href="../#about">About</a><a href="../#accessibility">Accessibility</a>
-      <a href="./" aria-current="page">Changelog</a><a href="../roadmap/">Roadmap</a>
+      <a href="./" aria-current="page">What’s new</a><a href="../roadmap/">What’s next</a>
       <a href="../privacy/">Privacy</a><a href="https://forms.gle/7ejUVJBdUaYoDytu6">Share feedback</a><a href="mailto:aritr.g06@gmail.com">Email us</a>
       <a href="https://github.com/aritr-codes/zinely-android">GitHub</a>
     </nav>

@@ -1003,6 +1003,13 @@ public object Copy {
     public object Colophon {
         public const val ACTION: String = "About"
         public const val TITLE: String = "About Zinely"
+        public const val MAKER_TITLE: String = "A little about this little app"
+        public const val MAKER_ORIGIN: String =
+            "We’re Aastra, the two people behind Zinely. We wanted to make little paper books, " +
+                "and somehow that turned into making an Android app."
+        public const val MAKER_PAGES: String =
+            "The page order became our problem. What goes on the pages is entirely yours."
+        public const val MAKER_THANKS: String = "Thanks for making something with it."
         public const val DEFAULT_PAPER: String = "Paper for new zines"
         public const val PAPER_EXPLANATION: String =
             "We’ll suggest this paper when you start. You can always choose the other one."

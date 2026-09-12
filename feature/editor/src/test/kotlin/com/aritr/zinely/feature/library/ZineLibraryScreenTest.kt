@@ -1,5 +1,8 @@
 package com.aritr.zinely.feature.library
 
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.performScrollToNode
+
 import android.graphics.Bitmap
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
@@ -246,10 +249,14 @@ class ZineLibraryScreenTest {
         val colophonActionTag = zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)
 
         composeRule.onNodeWithTag(colophonActionTag).performClick()
+        composeRule.onNodeWithTag(ColophonScreenTestTag)
+            .performScrollToNode(hasTestTag(ColophonPaperGroupTestTag))
         composeRule.onNodeWithTag(ColophonPaperGroupTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(colophonPaperTestTag(PaperSize.LETTER)).performClick()
         assertEquals("the preferred-paper callback was not wired from Colophon", PaperSize.LETTER, preferredPaperChanges.lastOrNull())
 
+        composeRule.onNodeWithTag(ColophonScreenTestTag)
+            .performScrollToNode(hasTestTag(ColophonBackTestTag))
         composeRule.onNodeWithTag(ColophonBackTestTag).performClick()
         composeRule.onNodeWithTag(colophonActionTag).assertIsDisplayed()
     }

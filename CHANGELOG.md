@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added the owner-approved, app-specific Aastra maker's note to the canonical About design and Android source.
+  Paper preference, font licences, privacy and version remain. Native verification is pending; not yet released.
 - Added an HTML-only A/B experiment for evaluating removal of the unavailable selected-text Font action. It leaves
   the canonical design and Android app unchanged; first-time comparison evidence and an owner decision remain gates.
 - Added full Reframe photo-overlay golden coverage for centred Fill, representative panned/zoomed framing,
@@ -29,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   written instructions, and a reduced-motion path. It remains a prototype and does not alter the app.
 
 ### Changed
+
+- Rewrote public update pages in plain language, refreshed their status, and moved homepage accessibility copy
+  from standard names to practical benefits. Expanded the Aastra origin story and prepared an HTML-only app About
+  opening under ADR-116. No Android behavior, download, legal text or release artifact changed.
+- Reopened creative tools for a scoped feasibility assessment, not a release commitment: fonts, Art, frames,
+  photo transparency, shaped cutouts and crop improvements. The roadmap separates their relative effort.
 
 - Gave the public homepage a more tactile paper presentation and stronger independent voice, with an interactive
   print-order comparison, optional zine ideas, folding progress, and small native-disclosure surprises. All work

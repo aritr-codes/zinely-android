@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -112,6 +114,8 @@ public fun ColophonScreen(
         ColophonTypeface.entries.associateWith { FocusRequester() }
     }
     var returnFocusTo by remember { mutableStateOf<ColophonTypeface?>(null) }
+    // Keep the licence row composed when returning from its separate destination.
+    val mainScrollState = rememberLazyListState()
 
     BackHandler {
         when (val current = destination) {
@@ -123,13 +127,6 @@ public fun ColophonScreen(
         }
     }
 
-    LaunchedEffect(destination, returnFocusTo) {
-        if (destination == ColophonDestination.Main) {
-            returnFocusTo?.let { typefaceFocusRequesters.getValue(it).requestFocus() }
-            returnFocusTo = null
-        }
-    }
-
     when (val current = destination) {
         ColophonDestination.Main -> ColophonMain(
             preferredPaper = preferredPaper,
@@ -138,6 +135,9 @@ public fun ColophonScreen(
             onBack = onBackToShelf,
             onOpenLicence = { destination = ColophonDestination.Licence(it) },
             typefaceFocusRequesters = typefaceFocusRequesters,
+            scrollState = mainScrollState,
+            returnFocusTo = returnFocusTo,
+            onFocusRestored = { returnFocusTo = null },
             modifier = modifier,
         )
         is ColophonDestination.Licence -> LicenceScreen(
@@ -160,6 +160,9 @@ private fun ColophonMain(
     onBack: () -> Unit,
     onOpenLicence: (ColophonTypeface) -> Unit,
     typefaceFocusRequesters: Map<ColophonTypeface, FocusRequester>,
+    scrollState: LazyListState,
+    returnFocusTo: ColophonTypeface?,
+    onFocusRestored: () -> Unit,
     modifier: Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -174,6 +177,7 @@ private fun ColophonMain(
             .semantics { paneTitle = Copy.Colophon.TITLE }
             .padding(horizontal = ZinelyV21Dimens.gapXl),
         verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapLg),
+        state = scrollState,
     ) {
         item { ColophonHeader(Copy.Colophon.BACK_TO_SHELF, onBack, Modifier.testTag(ColophonBackTestTag)) }
         item {
@@ -186,6 +190,28 @@ private fun ColophonMain(
                     fontSize = 34.sp,
                 ),
                 modifier = Modifier.semantics { heading() },
+            )
+        }
+        item {
+            Text(
+                Copy.Colophon.MAKER_TITLE,
+                color = colors.ink,
+                fontFamily = ZinelyV21Fonts.Voice,
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp,
+                lineHeight = 29.sp,
+                modifier = Modifier.semantics { heading() },
+            )
+        }
+        items(listOf(Copy.Colophon.MAKER_ORIGIN, Copy.Colophon.MAKER_PAGES, Copy.Colophon.MAKER_THANKS)) { text ->
+            Text(
+                text,
+                color = colors.ink,
+                fontFamily = ZinelyV21Fonts.Work,
+                fontSize = 16.sp,
+                lineHeight = 25.sp,
+                // Canonical section break: 24dp, including the list's 16dp item spacing.
+                modifier = Modifier.padding(bottom = if (text == Copy.Colophon.MAKER_THANKS) 8.dp else 0.dp),
             )
         }
         item { SectionHeading(Copy.Colophon.DEFAULT_PAPER) }
@@ -237,6 +263,13 @@ private fun ColophonMain(
         item { BodyText(Copy.Colophon.PAPER_EXPLANATION) }
         item { SectionHeading(Copy.Colophon.TYPEFACES) }
         items(ColophonTypeface.entries, key = { it.name }) { typeface ->
+            // Lazy rows attach after the parent destination effect. Restore focus here, once this row exists.
+            LaunchedEffect(returnFocusTo) {
+                if (returnFocusTo == typeface) {
+                    typefaceFocusRequesters.getValue(typeface).requestFocus()
+                    onFocusRestored()
+                }
+            }
             val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
             Row(
                 Modifier
