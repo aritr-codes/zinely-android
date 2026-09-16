@@ -22,8 +22,51 @@ canonical amendment and design freeze. Earlier draft-only notes below describe p
 - Corrected run: all 8 About tests passed (XML timestamp `2026-09-12T16:54:55.629Z`), including keyboard focus
   after licence return at normal and 1.8 text scale. No uninitialized-focus warning. All 25 shelf integration
   tests passed in the preceding runs. Public-copy contracts and whitespace checks passed.
-- QA APK packaging and visual/device validation in progress. No golden, physical-device parity, TalkBack,
-  deployment or release pass is claimed.
+- QA assembly passed with the corrected tests. Installed over the existing disposable QA identity only:
+  `com.aritr.zinely.fontqa`, version `0.9.0-beta.4-r3-about-qa`, label `Zinely QA`. Local build overlay and APK
+  are under ignored `build/about-qa-20260912/`; no third installation and no data clear/uninstall.
+- Regular `com.aritr.zinely` remains beta.4-r3, last updated `2026-09-10 13:55:00`, verified after QA install.
+  Samsung SM-A176B is connected but locked; owner unlock requested before native screen verification. Settings
+  were read only (font scale 1.0, night mode yes). No physical-device parity or TalkBack pass is claimed.
+- This is an About-only QA build from PR #71, not the separate Font-removal PR #70. To resume Font acceptance,
+  reinstall its pinned QA APK first. Its disposable document was preserved, and its previous APK remains on disk.
+- Source commit `64347f5` pushed to draft PR #71. Pages build `34706951681` passed, publish skipped; core CI passed.
+  Android CI `34706951693` and local focused Colophon golden verification were still running at this checkpoint.
+  No golden refresh, merge, public website deployment or app release is claimed.
+
+### About device continuation, 16 September 2026
+
+The owner connected and opened Zinely QA directly on About. Verification used Samsung SM-A176B, Android 16,
+1080x2340 at 420dpi override, dark mode, QA `0.9.0-beta.4-r3-about-qa`. Regular Zinely remained beta.4-r3 with
+the unchanged `2026-09-10 13:55:00` update time.
+
+- Developer pass: the approved maker note rendered without clipping at system font scale 1.0. Paper controls
+  remained visible on the opening viewport; US Letter could be selected and A4 was restored. Averia licence opened
+  locally and Back returned to About. All three licences, offline/privacy promise and app version remained reachable.
+- Platform-tree evidence: About is one scrollable surface. Back is an enabled Button with a 126x126px (~48dp)
+  bound. The maker title and all three paragraphs are exposed as text. Paper choices expose checked state and
+  890x126px bounds. Licence rows are enabled Buttons with distinct names such as “Averia Sans Libre, Read font
+  licence”. The dump cannot prove spoken output or `stateDescription`.
+- Large-text pass: temporarily set system font scale to 1.8. The note reflowed without overlap or truncation;
+  paper controls, all licences, offline/privacy promise and version remained reachable by scrolling. Restored and
+  read back font scale 1.0 after the pass.
+- First reader, developer perspective: the opening clearly changes from product pitch to a note from the makers;
+  utility headings remain visually distinct. No confusing or unprofessional wording found. Independent screenshot
+  review also returned GO at normal and 1.8 text scale. It found the maker note clear, warm and concise, with strong
+  hierarchy, clean wrapping and reachable utilities. Its verdict is visual only, not a TalkBack claim.
+- TalkBack 16.2.00.13 is installed but was not enabled (`enabled_accessibility_services=null`). No human spoken
+  acceptance is claimed. The structural platform tree and automated keyboard-focus checks do not replace it.
+- Device artefacts are local-only under ignored `build/about-qa-20260912/`. Temporary copies in phone Downloads
+  are removed after verification. The QA package remains installed pending completion; owner data is untouched.
+- CI failures `34706951693` and `35104105464` are limited to the four intentionally changed
+  `ColophonGoldenTest` baselines; the latter passed Android graph/lint/unit validation before the golden gate.
+  Light/dark and 1.8 compare images show only the approved note insertion and expected downward displacement.
+  Recorder `35103655989` failed before Gradle because the Android setup action's default `tools` package is no
+  longer available. Commit `a4e851c` restricts both Android workflows to `platform-tools`; pinned recorder
+  `35104113588` then passed. Its four About candidates were inspected before replacing the baselines.
+- Full local golden gate passed after replacement: `tools/grun.sh gold`, 109 tasks, 13m54s. No other baseline was
+  copied from the artifact. CI must rerun on the baseline commit before merge. No public website deployment or app
+  release is claimed.
 
 ## Separate app maker's note, 12 September 2026
 
