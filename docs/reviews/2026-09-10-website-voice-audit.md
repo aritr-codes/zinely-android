@@ -65,8 +65,11 @@ the unchanged `2026-09-10 13:55:00` update time.
   longer available. Commit `a4e851c` restricts both Android workflows to `platform-tools`; pinned recorder
   `35104113588` then passed. Its four About candidates were inspected before replacing the baselines.
 - Full local golden gate passed after replacement: `tools/grun.sh gold`, 109 tasks, 13m54s. No other baseline was
-  copied from the artifact. CI must rerun on the baseline commit before merge. No public website deployment or app
-  release is claimed.
+  copied from the artifact. Baseline CI `35106419110` passed core plus Android graph/lint/unit validation, then found
+  one unrelated Reframe test-selector failure among 958 tests: the existing “Whole photo” node was present only in
+  the unmerged Compose tree for that run. The test now addresses its owned node with `useUnmergedTree = true`;
+  focused rerun passed (80 tasks, 2m21s). CI must rerun on that selector commit before merge. No public website
+  deployment or app release is claimed.
 
 ## Separate app maker's note, 12 September 2026
 

@@ -297,7 +297,9 @@ class ReframeSessionTest {
         s.dispatch(Intent.BeginReframe(id))
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithContentDescription("Whole photo").performClick()
+        composeRule
+            .onNodeWithContentDescription("Whole photo", useUnmergedTree = true)
+            .performClick()
         composeRule.onNodeWithContentDescription("Done reframing").performClick()
         composeRule.waitForIdle()
 
