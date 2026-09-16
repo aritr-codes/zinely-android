@@ -210,6 +210,33 @@ class ColophonScreenTest {
     }
 
     @Test
+    fun `system back unwinds licence credits and about`() {
+        var backCalls = 0
+        val typeface = ColophonTypeface.INTER
+        setContent(
+            preferredPaper = PaperSize.A4,
+            appVersion = "v1",
+            onBackToShelf = { backCalls++ },
+            onPreferredPaperChange = {},
+            loadLicence = { "Local licence" },
+        )
+
+        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
+        openCredits()
+        scrollToTag(colophonTypefaceTestTag(typeface))
+        composeRule.onNodeWithTag(colophonTypefaceTestTag(typeface)).performClick()
+        composeRule.onNodeWithText("Local licence").assertIsDisplayed()
+
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeRule.onNodeWithTag(colophonTypefaceTestTag(typeface)).assertIsDisplayed().assertIsFocused()
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeRule.onNodeWithTag(ColophonCreditsRowTestTag).assertIsDisplayed().assertIsFocused()
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeRule.waitForIdle()
+        assertEquals(1, backCalls)
+    }
+
+    @Test
     fun `colophon back control is at least 48 dp tall`() {
         setContent(
             preferredPaper = PaperSize.A4,
