@@ -2,7 +2,7 @@
 
 > **The single source of truth for phasing.** *Every roadmap change is reflected here.* Scope detail per phase lives in [PRD.md](PRD.md); the "how" in [ARCHITECTURE.md](ARCHITECTURE.md); rationale in [DECISIONS.md](DECISIONS.md). No dates are committed yet — phases are ordered, not scheduled.
 
-- **Current priorities reviewed:** 2026-09-10. Earlier phase plans below are historical context, not a list of
+- **Current priorities reviewed:** 2026-09-12. Earlier phase plans below are historical context, not a list of
   promised or still-missing features. Use this current section for next-work decisions.
 
 <a id="current-priorities"></a>
@@ -25,15 +25,17 @@ beta.4-r3 APK; measurements and evidence remain in the
 
 ### Exploring — recommended next decisions, in order
 
-1. **Unavailable Font control:** prototype removing the disabled selected-text `Font` verb until font choice
-   exists. The [HTML A/B experiment](reviews/2026-09-10-font-control-removal-experiment.md) is prepared without
-   changing the canonical freeze; the first-time comparison and owner decision are still pending. Current code
-   intentionally draws Font with `Not yet`; this is a real no-op control, not a missing font implementation to rush.
-   An accepted result, explicit OD-9 supersession and HTML freeze amendment precede Compose. No change to the
-   already-fixed typing-row Ink/Done behavior is implied.
+1. **Unavailable Font control:** owner approved removal as a design judgment. [PR #70](https://github.com/aritr-codes/zinely-android/pull/70)
+   contains the implementation and green automated checks; it remains draft pending hands-on/TalkBack and rendered
+   HTML parity acceptance. No published APK change. Removing the dead action does not reject future font choice.
 2. **Fold clarity:** observe first-time makers using the existing app guide and the ten-step website guide with
    paper. Record cut mistakes, hesitation and completion without coaching. Change diagrams or add motion only
    if evidence identifies an improvement. The website guide is shipped; native replay is not.
+3. **Creative tools:** owner reopened fonts, graphics/stickers, frames, photo transparency, shaped cutouts and crop
+   improvements for evaluation on 2026-09-12. See the assessment below. No feature or delivery date is committed.
+4. **Human About opening:** owner approved separate website narrative and app maker's note. The canonical app
+   design is frozen and implemented in Compose, with native verification still pending, not a published change.
+   [ADR-116](DECISIONS.md#adr-116) records the approval and retained acceptance gates.
 
 ### Engineering follow-ups — not extra public feature promises
 
@@ -56,8 +58,34 @@ changelog, not in the feature backlog. No app feedback screen or SDK is planned.
 
 **Parked, not next:** Art cold-entry precomposition (latest trace did not justify a safe local change), image
 garbage collection (import/undo/recovery safety prerequisites), shelf search/sort (owner previously removed them;
-needs real-library evidence), extra fonts/formats, new menus and catalogue expansion. These can be reconsidered
+needs real-library evidence), extra formats and new menus. Fonts and catalogue expansion are reopened for evaluation
+above, not scheduled for delivery. Other parked work can be reconsidered
 when a concrete user problem warrants it; the app is not declared final.
+
+<a id="creative-tools-assessment"></a>
+### Creative tools assessment (2026-09-12)
+
+**Recommendation, not an estimate or release promise.** Relative effort includes design, implementation, saved-file
+compatibility, undo, accessibility and matching print output. No calendar estimate until a specific tool is frozen.
+
+| Capability | Existing foundation and missing work | Relative effort |
+|---|---|---|
+| Curated document fonts | `TextStyle.fontFamily`, `DocumentFontRegistry` and `BundledFontResolver` already exist. Only Inter is registered for zine content; app-interface fonts are a different set. Add curated font assets/styles, a picker, reducer patch/undo, glyph/fallback checks, and identical editing/preview/PDF layout. | Medium |
+| More authored graphics and stickers | `DecorElement`, `SupplyCatalog`, Add Art, ink and transforms exist. A small pack of single-colour authored marks can reuse them. Imported or multicolour stickers need separate import/tint/alpha and ownership decisions. | Small to medium for a curated pack; higher for a general sticker system |
+| Frames | An independent decorative frame can reuse an Art outline. A frame attached to a photo must resize/crop/duplicate/undo as one unit and survive save/export. Those are different features. | Small to medium for decorative overlays; medium to large for attached frames |
+| Photo transparency | No per-image opacity field exists in `ImageElement` or `DrawImage`. Add a validated saved value, slider/undo semantics and consistent image paint in preview and PDF, including interaction with Copier. Existing source-image alpha is not a user opacity control. | Medium |
+| Circle, oval or rounded photo cutouts | `Crop` and command clips are rectangular. Add non-destructive mask metadata, selection/hit-test behavior, shape-aware rendering and preserved original photo bytes. Platform path clipping exists, but the app document/render contract must carry it. | Medium to large |
+| Freehand snipping or automatic background removal | Freehand needs a path editor, simplification, accessible alternatives, mask storage and edge-quality tests. Automatic removal is a separate on-device inference, model-size and quality investigation, not an extension of the crop slider. | Large; investigate separately |
+| Better cropping | Reframe already supports rectangular framing. First identify the missing task: aspect presets/reset/straightening/handles have different costs. Preserve photo transforms and undo rather than replacing the whole editor. | Small to medium for focused improvements; large for a new crop model |
+
+**Recommended first creative slice:** a small, visibly distinct set of bundled fonts with a real picker, followed by
+a curated Art pack and decorative frames. Evaluate transparency next, preset shape cutouts after that, and leave
+freehand/automatic cutting for a separate design effort. This recommendation does not reorder the retained release,
+fold-study or acceptance gates without owner approval.
+
+All new features must preserve old zines and the rule that the preview matches what prints. Unknown-font fallback
+must not silently become layout loss. Photo-opacity exploration does not overturn the deliberate no-opacity rule
+for authored Art in `SUPPLIES-SPEC`. Sources and API boundary notes: [RESEARCH R20](RESEARCH.md#r20-creative-tools-feasibility-12-september-2026).
 
 ## Historical phase context
 

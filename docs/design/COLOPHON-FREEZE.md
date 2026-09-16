@@ -8,6 +8,10 @@
 maker-facing Shelf action is **`About`** and the destination is **`About Zinely`**. The opening below replaces
 the earlier jargon-forward title and generic introduction; the four-section D-079 contract is unchanged.
 
+**Owner hierarchy amendment · 2026-09-16:** the main About screen keeps one compact **`Licences & credits`**
+row near the bottom. Typeface names and complete local notices move to a child screen. Decorative role blurbs
+are retired. This supersedes the earlier direct three-card font section without removing any licence access.
+
 This freeze resolves where Zinely states its privacy promise and where the product's small amount of
 configuration belongs. It does not authorise Compose implementation by itself; production work still
 follows the HTML-first workflow in [`CLAUDE.md`](../../CLAUDE.md#html-first-ui-workflow-mandatory).
@@ -22,8 +26,8 @@ The user arrives asking: **“What is Zinely, how is it made, and what small def
 - **Colophon** remains the internal architectural name for the printer's-note concept established by ADR-103.
   Maker-facing copy uses **`About Zinely`** so no knowledge of print jargon is required; it is not named
   Settings, Privacy, or Licences.
-- It contains exactly four sections: default paper, bundled typefaces and licences, the one offline/privacy
-  sentence, and version.
+- It presents the maker's note, default paper, the one offline/privacy sentence, one compact route to licences
+  and credits, and version.
 
 ## Interaction rules
 
@@ -31,9 +35,11 @@ The user arrives asking: **“What is Zinely, how is it made, and what small def
 
 1. `About` opens the full Shelf-owned `About Zinely` destination.
 2. Its leading Back control and Android system Back both return to the existing Shelf state without reload.
-3. A typeface row opens its licence as a child destination.
-4. Back from a licence returns to `About Zinely` at the originating row; a second Back returns to the Shelf.
-5. There is no route from the Bench or Proof and no deep settings hierarchy.
+3. `Licences & credits` opens a child destination containing the three bundled typeface names.
+4. A typeface row there opens its complete local licence notice.
+5. Back unwinds one level at a time: licence → credits → `About Zinely` → Shelf, restoring focus to the
+   invoking row at each step.
+6. There is no route from the Bench or Proof and no general settings hierarchy.
 
 ### Default paper
 
@@ -44,9 +50,11 @@ The user arrives asking: **“What is Zinely, how is it made, and what small def
 - The choice persists locally. There is no Apply/Save button; accepting a selection is immediate and the
   discrete change is announced.
 
-### Typeface licences
+### Licences and credits
 
-- Rows are `Averia Sans Libre`, `Fraunces`, and `Inter`, each named by its actual bundled family and role.
+- The main About screen shows one full-width `Licences & credits` button after the privacy promise and before
+  version. It does not list font names or decorative design-role descriptions.
+- The child screen lists `Averia Sans Libre`, `Fraunces`, and `Inter`, each named by its actual bundled family.
 - Each row is a full button and opens the corresponding **locally bundled** SIL Open Font License notice.
 - Licence text is selectable, vertically scrollable, and readable without network access or another app.
 - The implementation may deduplicate byte-identical notices internally, but every displayed family must have
@@ -58,13 +66,14 @@ The user arrives asking: **“What is Zinely, how is it made, and what small def
 |---|---|
 | Shelf action | `About` |
 | Title | `About Zinely` |
-| Featured opening | `Some things deserve pages.` |
-| Intro | `Zinely began with a simple wish: to make something for someone. We hope it helps you make something worth keeping.` |
+| Maker heading | `A little about this little app` |
+| Maker note | The approved three-paragraph Aastra note in `Copy.Colophon` |
 | Paper heading | `Paper for new zines` |
 | Choices | `A4` · `US Letter` |
 | Paper explanation | `We’ll suggest this paper when you start. You can always choose the other one.` |
-| Typeface heading | `Fonts we use` |
-| Typeface roles | `Warm, handmade lettering` · `A little bookish flair` · `Clear, everyday text` |
+| Main credits row | `Licences & credits` · `Open-source notices` |
+| Credits introduction | `Zinely uses a few open-source typefaces. Their licence notices live here.` |
+| Typeface rows | `Averia Sans Libre` · `Fraunces` · `Inter` |
 | Licence row / child labels | `Read font licence` · `Font licence` |
 | Privacy heading | `Your zines stay yours` |
 | **The one product-level privacy sentence** | **`Zinely works offline. Your zines stay on this device unless you choose to share or back them up.`** |
@@ -87,15 +96,18 @@ chosen destination or additive restore will do, but must not repeat the offline/
 
 ## Accessibility semantics
 
-- The screen exposes one `paneTitle`: `About Zinely`; each licence child exposes its family name as `paneTitle`.
+- The main screen exposes `About Zinely` as its `paneTitle`; the credits child exposes `Licences & credits`;
+  each licence child exposes its family name.
 - Section headings are headings in traversal order.
 - Paper is one single-select group with two radio controls exposing selected state and an accepted-change
   announcement.
-- Typeface rows are buttons named `<family>, Read font licence` and do not announce decorative arrows.
-- Back controls are `Back to My Shelf` and `Back to About Zinely` respectively.
+- The compact main row is a button named `Licences & credits`. Typeface rows are buttons named
+  `<family>, Read font licence`; decorative arrows are not announced.
+- Back controls name their actual destination: `Back to My Shelf`, `Back to About Zinely`, or
+  `Back to Licences & credits`.
 - Version is readable text, not an interactive control.
 - Focus enters at the screen heading, returns to the invoking dock action on exit, and returns to the invoking
-  typeface row after closing a licence.
+  typeface row after closing a licence, then to the compact credits row after closing the credits child.
 
 ## Privacy-repetition amendment
 
@@ -114,7 +126,7 @@ colour implementation.
 ## Compose acceptance gate
 
 - Shelf dock parity in content and empty states, including both quiet actions.
-- Back stack and focus-return tests for Shelf → About Zinely → licence.
+- Back stack and focus-return tests for Shelf → About Zinely → Licences & credits → licence.
 - Preference tests proving the default affects only the next create sheet's leading paper choice.
 - Tests proving all three bundled families resolve to locally readable licence text.
 - Platform `AccessibilityNodeInfo` verification for radio roles/states, button names, headings, Back, focus,

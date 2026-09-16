@@ -1003,13 +1003,20 @@ public object Copy {
     public object Colophon {
         public const val ACTION: String = "About"
         public const val TITLE: String = "About Zinely"
+        public const val MAKER_TITLE: String = "A little about this little app"
+        public const val MAKER_ORIGIN: String =
+            "We’re Aastra, the two people behind Zinely. We wanted to make little paper books, " +
+                "and somehow that turned into making an Android app."
+        public const val MAKER_PAGES: String =
+            "The page order became our problem. What goes on the pages is entirely yours."
+        public const val MAKER_THANKS: String = "Thanks for making something with it."
         public const val DEFAULT_PAPER: String = "Paper for new zines"
         public const val PAPER_EXPLANATION: String =
             "We’ll suggest this paper when you start. You can always choose the other one."
-        public const val TYPEFACES: String = "Fonts we use"
-        public const val AVERIA_ROLE: String = "Warm, handmade lettering"
-        public const val FRAUNCES_ROLE: String = "A little bookish flair"
-        public const val INTER_ROLE: String = "Clear, everyday text"
+        public const val CREDITS: String = "Licences & credits"
+        public const val CREDITS_SUMMARY: String = "Open-source notices"
+        public const val CREDITS_INTRO: String =
+            "Zinely uses a few open-source typefaces. Their licence notices live here."
         public const val LICENCE_ACTION: String = "Read font licence"
         public const val LICENCE_TITLE: String = "Font licence"
         public const val HOW_IT_WORKS: String = "Your zines stay yours"
@@ -1018,6 +1025,7 @@ public object Copy {
         public const val VERSION: String = "App version"
         public const val BACK_TO_SHELF: String = "Back to My Shelf"
         public const val BACK_TO_COLOPHON: String = "Back to About Zinely"
+        public const val BACK_TO_CREDITS: String = "Back to Licences & credits"
         public const val LICENCE_UNAVAILABLE: String = "This font licence couldn’t be opened."
         public const val PAPER_SAVE_FAILED: String = "Couldn’t save that paper choice."
         public fun licenceButton(family: String): String = "$family, $LICENCE_ACTION"

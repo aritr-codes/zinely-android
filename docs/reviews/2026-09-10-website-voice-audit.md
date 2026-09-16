@@ -1,5 +1,156 @@
 # Website voice audit
 
+## Native maker's note implementation, 12 September 2026
+
+Owner approved the updated app preview with "looks good. proceed". [ADR-116](../DECISIONS.md#adr-116) records the
+canonical amendment and design freeze. Earlier draft-only notes below describe preceding review rounds.
+
+- Promoted approved copy/styles to canonical About; experiment URL remains a thin wrapper, avoiding duplicate text.
+- Added matching shared copy and Compose note with a semantic heading, themed ink and scalable text. Existing
+  utility controls remain. Retain the main lazy list state across licence navigation so the returning row can
+  receive focus instead of resetting to the new opening.
+- Expanded focused tests for note content/heading, utilities, licence return focus and 320dp/1.8 text scaling.
+  Updated shelf integration test to scroll to utilities and back. Website narrative remains unchanged.
+- Initial focused run: 33 tests, 31 passed; both new licence-return focus assertions failed, although the row
+  was visible. Moved restoration from the parent destination effect into the lazy row's effect so its focus
+  target is attached first. Retained list scroll state. A second run reproduced the same failures because the
+  focus tests still used touch mode. Corrected them to request keyboard mode, matching the existing shelf test
+  and [AndroidX evidence](../RESEARCH.md#r21-about-return-focus-test-mode-12-september-2026). These failures alone
+  are not proof of a user-facing focus defect. A corrected run is required.
+- Independent source review accepted the copy contract and spacing fix (24dp note-to-utility break). The
+  lifecycle fix above requires the second test run; source review alone did not catch the timing failure.
+- Corrected run: all 8 About tests passed (XML timestamp `2026-09-12T16:54:55.629Z`), including keyboard focus
+  after licence return at normal and 1.8 text scale. No uninitialized-focus warning. All 25 shelf integration
+  tests passed in the preceding runs. Public-copy contracts and whitespace checks passed.
+- QA assembly passed with the corrected tests. Installed over the existing disposable QA identity only:
+  `com.aritr.zinely.fontqa`, version `0.9.0-beta.4-r3-about-qa`, label `Zinely QA`. Local build overlay and APK
+  are under ignored `build/about-qa-20260912/`; no third installation and no data clear/uninstall.
+- Regular `com.aritr.zinely` remains beta.4-r3, last updated `2026-09-10 13:55:00`, verified after QA install.
+  Samsung SM-A176B is connected but locked; owner unlock requested before native screen verification. Settings
+  were read only (font scale 1.0, night mode yes). No physical-device parity or TalkBack pass is claimed.
+- This is an About-only QA build from PR #71, not the separate Font-removal PR #70. To resume Font acceptance,
+  reinstall its pinned QA APK first. Its disposable document was preserved, and its previous APK remains on disk.
+- Source commit `64347f5` pushed to draft PR #71. Pages build `34706951681` passed, publish skipped; core CI passed.
+  Android CI `34706951693` and local focused Colophon golden verification were still running at this checkpoint.
+  No golden refresh, merge, public website deployment or app release is claimed.
+
+### About device continuation, 16 September 2026
+
+The owner connected and opened Zinely QA directly on About. Verification used Samsung SM-A176B, Android 16,
+1080x2340 at 420dpi override, dark mode, QA `0.9.0-beta.4-r3-about-qa`. Regular Zinely remained beta.4-r3 with
+the unchanged `2026-09-10 13:55:00` update time.
+
+- Developer pass: the approved maker note rendered without clipping at system font scale 1.0. Paper controls
+  remained visible on the opening viewport; US Letter could be selected and A4 was restored. Averia licence opened
+  locally and Back returned to About. All three licences, offline/privacy promise and app version remained reachable.
+- Platform-tree evidence: About is one scrollable surface. Back is an enabled Button with a 126x126px (~48dp)
+  bound. The maker title and all three paragraphs are exposed as text. Paper choices expose checked state and
+  890x126px bounds. Licence rows are enabled Buttons with distinct names such as “Averia Sans Libre, Read font
+  licence”. The dump cannot prove spoken output or `stateDescription`.
+- Large-text pass: temporarily set system font scale to 1.8. The note reflowed without overlap or truncation;
+  paper controls, all licences, offline/privacy promise and version remained reachable by scrolling. Restored and
+  read back font scale 1.0 after the pass.
+- First reader, developer perspective: the opening clearly changes from product pitch to a note from the makers;
+  utility headings remain visually distinct. No confusing or unprofessional wording found. Independent screenshot
+  review also returned GO at normal and 1.8 text scale. It found the maker note clear, warm and concise, with strong
+  hierarchy, clean wrapping and reachable utilities. Its verdict is visual only, not a TalkBack claim.
+- TalkBack 16.2.00.13 is installed but was not enabled (`enabled_accessibility_services=null`). No human spoken
+  acceptance is claimed. The structural platform tree and automated keyboard-focus checks do not replace it.
+- Device artefacts are local-only under ignored `build/about-qa-20260912/`. Temporary copies in phone Downloads
+  are removed after verification. The QA package remains installed pending completion; owner data is untouched.
+- CI failures `34706951693` and `35104105464` are limited to the four intentionally changed
+  `ColophonGoldenTest` baselines; the latter passed Android graph/lint/unit validation before the golden gate.
+  Light/dark and 1.8 compare images show only the approved note insertion and expected downward displacement.
+  Recorder `35103655989` failed before Gradle because the Android setup action's default `tools` package is no
+  longer available. Commit `a4e851c` restricts both Android workflows to `platform-tools`; pinned recorder
+  `35104113588` then passed. Its four About candidates were inspected before replacing the baselines.
+- Full local golden gate passed after replacement: `tools/grun.sh gold`, 109 tasks, 13m54s. No other baseline was
+  copied from the artifact. Baseline CI `35106419110` passed core plus Android graph/lint/unit validation, then found
+  one unrelated Reframe test-selector failure among 958 tests: the existing “Whole photo” node was present only in
+  the unmerged Compose tree for that run. The test now addresses its owned node with `useUnmergedTree = true`;
+  focused rerun passed (80 tasks, 2m21s). CI must rerun on that selector commit before merge. No public website
+  deployment or app release is claimed.
+
+## Separate app maker's note, 12 September 2026
+
+- Owner approved the website story but requested different copy in the installed app, then approved the short
+  maker's note. Updated only the app proposal: new heading, two-person credit and paper-book origin, page-order
+  line and brief thank-you. Website copy is unchanged by this refinement.
+- Source contracts now check each surface independently and reject the website opening in the app proposal.
+  Canonical About, Compose and existing paper/licence/privacy utilities remain unchanged. The copy is approved;
+  rendered layout review and canonical design freeze remain pending. See [ADR-116](../DECISIONS.md#adr-116).
+- Validation: public-copy source checks and whitespace checks passed; local preview returned HTTP 200 with the
+  new heading. No new em dashes. No native build, rendered acceptance or deployment is claimed.
+- Independent source review: GO, no required fixes. Approved wording, surface separation and draft-only
+  boundaries verified. Rendered review remains pending.
+
+## Narrative refinement, 12 September 2026
+
+- Owner approved the story direction for now and requested updating the About preview next. Replaced the
+  disconnected product/team/joke paragraphs with one arc: wanting a physical object, looking for the app,
+  building it, then handing the result to someone. Kept the page-order closing line.
+- App proposal uses the agreed four paragraphs. Website About uses the same opening and maker story with a
+  shorter ending, avoiding a second explanation of the hero/workflow. Removed the separate code/paper aside
+  and cat/feed joke so the story is not interrupted by competing punchlines.
+- Scope: copy only, source contracts and this decision/review record. No CSS, interaction, link, legal text,
+  canonical About design, Compose, installed app or deployment changes.
+- Validation: `node tools/check-public-copy.cjs` and `git diff --check` passed. Local About preview returned
+  HTTP 200 with the updated story. New About copy contains no em dashes; links and release anchors pass contracts.
+- Independent narrative-refinement review: GO, no required fixes or recommended improvements. Source-only review
+  confirmed the narrative arc, accurate claims and unchanged utilities/legal text. Rendered day/night, large-text,
+  keyboard and utility-discoverability review remains necessary before the app design freeze. No deployment claimed.
+
+## Plain-language follow-up, 12 September 2026
+
+Owner feedback: public history/plans were too technical; About should say what/who/why on both surfaces; public
+accessibility copy should explain benefits, not standards. Owner reconfirmed Aastra, a two-person team.
+[ADR-116](../DECISIONS.md#adr-116) owns the changed direction. Earlier passes below remain historical evidence.
+
+### Changes and boundaries
+
+- Homepage: literal Android/eight-page product definition, named two-person team, unmet-need origin, restrained
+  paper-versus-feed humor. Retained hero, workflow, screenshots, fold instructions, feedback policy and download.
+- Public links now read “What’s new” and “What’s next”; routes and existing release bookmarks are preserved.
+- Roadmap: removed completed Reframe investigation from the public to-do list. Described Font PR #70 as still
+  being checked and not in the download. Reopened creative-tool ideas are explicitly not announced features.
+- Release history: translated shrinking/image-format and UI implementation details into user outcomes. Added the
+  already-merged 10 September website work (PR #69 merged `2026-09-10T17:03:14Z`). No new app release is claimed.
+- Accessibility: practical keyboard, text zoom, readable static folding instructions and reduced-motion wording;
+  implementation requirements remain internal. This is neither a conformance certification nor a removal of support.
+- App About: separate HTML story proposal wraps the canonical screen without editing its frozen design or Compose.
+  Short what/who/why opening, existing paper preference/licences/privacy/version retained. Await owner review and
+  canonical freeze before native implementation. No product capability was added.
+- Creative-feature assessment lives in the [roadmap](../ROADMAP.md#creative-tools-assessment), grounded in model,
+  font registry, rendering and supply code plus [R20](../RESEARCH.md#r20-creative-tools-feasibility-12-september-2026).
+  Relative effort is a recommendation, not a calendar estimate. No fonts, stickers or models were downloaded.
+- Confirmed both `com.aritr.zinely` and isolated `com.aritr.zinely.fontqa` on Samsung. No uninstall performed:
+  owner asked for a recommendation, not deletion. Recommend keeping QA until its acceptance check, then removing
+  only QA and its disposable document. Future QA builds should be visibly named to avoid duplicate-app confusion.
+
+### Verification and handoff
+
+- `node tools/check-public-copy.cjs`: passed product/team/download/status copy contracts, local links and fragments,
+  unique IDs/main headings, stable release bookmarks, and proposal inline-script syntax. Added to Pages build checks.
+- `node --check website/assets/site.js` and `git diff --check`: passed. JavaScript and CSS behavior unchanged.
+- Rewritten roadmap/changelog and new app proposal contain no em dashes. Homepage retains three pre-existing
+  occurrences in metadata/install warning; none were introduced by this copy change.
+- Built-in automated Browser is unavailable in this VS Code environment; no fresh rendered/axe/keyboard pass is
+  claimed. Prior rendered results below apply only to their historical commits, not this follow-up.
+- Review/build/deployment status must be read from the current PR. This branch is independent of Font PR #70;
+  it neither merges that app change nor substitutes for its human acceptance checks.
+
+Review actual files, not this summary: check factual release/status boundaries, clear what/who/why, no invented
+creative capabilities, unchanged link destinations/permissions/privacy, draft-only app story and preserved utilities.
+Next owner decision: approve/refine the app story, then amend/freeze canonical About before any Compose work.
+
+Independent review: GO for source copy/docs, with rendered acceptance pending. Required category fix ACCEPTED:
+the public roadmap now separates Planned, Exploring and testing, and Ideas, not promises, preserving ADR-114 item 5.
+No required source fix remains. [Draft PR #71](https://github.com/aritr-codes/zinely-android/pull/71) contains the work;
+initial Pages build `34703800223` passed on `0e888b1`; the category follow-up requires its own run. Publishing was
+correctly skipped because this is a draft PR. No website deployment or native About delivery is claimed.
+Local About preview is served at `http://127.0.0.1:8766/docs/design/experiments/v21-about-story.html` (HTTP 200 checked,
+not rendered acceptance). Keep this preview server running only while needed for owner review.
+
 ## Second pass: paper, personality, and interaction
 
 The owner's first-pass feedback was that warmth alone did not deliver enough humor. This second pass is explicitly
