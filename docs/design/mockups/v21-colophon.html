@@ -16,6 +16,8 @@
   - The offline/privacy promise appears exactly once, here.
   - 2026-09-12 amendment / ADR-116: owner approved the app-specific maker's note and its preview.
     The note precedes the unchanged installed-app utilities; website narrative stays separate.
+  - 2026-09-16 amendment / ADR-117: About shows one compact Licences & credits row near the bottom.
+    Typeface names and complete local notices move to a child screen; decorative role blurbs are retired.
   - Palette amended 2026-08-24 by THEME-37596-FREEZE; the interaction ruling is unchanged.
 -->
 
@@ -70,16 +72,16 @@ body{margin:0;min-height:100vh;display:grid;place-items:center;gap:18px;padding:
   font:700 14px/1.2 var(--sans);cursor:pointer}
 .choice[aria-checked="true"]{background:var(--leaf);color:var(--on-leaf)}
 .note{margin:9px 2px 0;color:var(--ink-soft);font-size:12px;line-height:1.45}
-.font-row{width:100%;min-height:64px;display:grid;grid-template-columns:1fr auto;gap:12px;
+.utility-row,.font-row{width:100%;min-height:64px;display:grid;grid-template-columns:1fr auto;gap:12px;
   align-items:center;padding:12px 14px;border:0;border-bottom:1px dashed var(--hair);
   color:var(--ink);background:transparent;text-align:left;cursor:pointer}
-.font-row:last-child{border-bottom:0}.font-row b{display:block;font-size:15px}.font-row small{
+.utility-row:last-child,.font-row:last-child{border-bottom:0}.utility-row b,.font-row b{display:block;font-size:15px}.utility-row small,.font-row small{
   display:block;margin-top:3px;color:var(--ink-soft);font-size:11px}.arrow{font-size:18px}
 .promise{margin:0;padding:16px;background:var(--leaf-tint);border-left:4px solid var(--leaf);
   color:var(--ink);font-size:14px;line-height:1.55}
 .version{display:flex;justify-content:space-between;gap:18px;padding:15px 16px;font-size:14px}
 .version span:last-child{color:var(--ink-soft)}
-.licence-page{display:none}.licence-page.show{display:flex}.main.hide{display:none}
+.licence-page,.credits-page{display:none}.licence-page.show,.credits-page.show{display:flex}.main.hide,.credits-page.hide{display:none}
 .licence-page .scroll{background:var(--surface-soft)}
 .licence-lead{margin:0 0 15px;color:var(--ink-soft);font-size:13px;line-height:1.5}
 .licence-frame{width:100%;height:570px;border:1.5px solid var(--ink);border-radius:10px;
@@ -117,33 +119,47 @@ Shelf → About Zinely. Test the paper preference, each local licence, Back/Esca
         <p class="note" id="paperHelp">We’ll suggest this paper when you start. You can always choose the other one.</p>
       </section>
 
-      <section class="section" aria-labelledby="typeTitle">
-        <h2 class="eyebrow" id="typeTitle">Fonts we use</h2>
-        <div class="card">
-          <button class="font-row" data-name="Averia Sans Libre"
-            data-src="../../../feature/editor/src/main/assets/fonts/OFL-AveriaSansLibre.txt">
-            <span><b>Averia Sans Libre</b><small>Warm, handmade lettering · Read font licence</small></span><span class="arrow">→</span>
-          </button>
-          <button class="font-row" data-name="Fraunces"
-            data-src="../../../feature/editor/src/main/assets/fonts/OFL-Fraunces.txt">
-            <span><b>Fraunces</b><small>A little bookish flair · Read font licence</small></span><span class="arrow">→</span>
-          </button>
-          <button class="font-row" data-name="Inter"
-            data-src="../../../feature/editor/src/main/assets/fonts/OFL-Inter.txt">
-            <span><b>Inter</b><small>Clear, everyday text · Read font licence</small></span><span class="arrow">→</span>
-          </button>
-        </div>
-      </section>
-
       <section class="section" aria-labelledby="careTitle">
         <h2 class="eyebrow" id="careTitle">Your zines stay yours</h2>
         <p class="promise">Zinely works offline. Your zines stay on this device unless you choose to share or back them up.</p>
+      </section>
+
+      <section class="section" aria-label="Licences and credits">
+        <div class="card">
+          <button class="utility-row" id="creditsOpen">
+            <span><b>Licences &amp; credits</b><small>Open-source notices</small></span><span class="arrow">→</span>
+          </button>
+        </div>
       </section>
 
       <section class="section" aria-labelledby="versionTitle">
         <h2 class="eyebrow" id="versionTitle">App version</h2>
         <div class="card version"><strong>Zinely</strong><span>0.9.0-beta.2</span></div>
       </section>
+    </div>
+  </section>
+
+  <section class="screen credits-page" id="creditsScreen" aria-labelledby="creditsTitle">
+    <header class="top">
+      <button class="back" type="button" aria-label="Back to About Zinely" id="creditsBack">←</button>
+      <h1 id="creditsTitle">Licences &amp; credits</h1><span></span>
+    </header>
+    <div class="scroll" tabindex="0">
+      <p class="licence-lead">Zinely uses a few open-source typefaces. Their licence notices live here.</p>
+      <div class="card">
+        <button class="font-row" data-name="Averia Sans Libre"
+          data-src="../../../feature/editor/src/main/assets/fonts/OFL-AveriaSansLibre.txt">
+          <span><b>Averia Sans Libre</b><small>Read font licence</small></span><span class="arrow">→</span>
+        </button>
+        <button class="font-row" data-name="Fraunces"
+          data-src="../../../feature/editor/src/main/assets/fonts/OFL-Fraunces.txt">
+          <span><b>Fraunces</b><small>Read font licence</small></span><span class="arrow">→</span>
+        </button>
+        <button class="font-row" data-name="Inter"
+          data-src="../../../feature/editor/src/main/assets/fonts/OFL-Inter.txt">
+          <span><b>Inter</b><small>Read font licence</small></span><span class="arrow">→</span>
+        </button>
+      </div>
     </div>
   </section>
 
@@ -163,6 +179,7 @@ Shelf → About Zinely. Test the paper preference, each local licence, Back/Esca
 
 <script>
 const root=document.documentElement,main=document.getElementById('mainScreen');
+const credits=document.getElementById('creditsScreen');
 const licence=document.getElementById('licenceScreen'),title=document.getElementById('licenceTitle');
 const frame=document.getElementById('licenceFrame');
 document.querySelectorAll('.choice').forEach(button=>button.onclick=()=>{
@@ -170,20 +187,29 @@ document.querySelectorAll('.choice').forEach(button=>button.onclick=()=>{
 });
 function openLicence(button){
   title.textContent=button.dataset.name;frame.src=button.dataset.src;
-  main.classList.add('hide');licence.classList.add('show');document.getElementById('licenceBack').focus();
+  credits.classList.add('hide');licence.classList.add('show');document.getElementById('licenceBack').focus();
 }
 function closeLicence(){
-  licence.classList.remove('show');main.classList.remove('hide');
+  licence.classList.remove('show');credits.classList.remove('hide');
   document.querySelector(`.font-row[data-name="${title.textContent}"]`)?.focus();
+}
+function openCredits(){
+  main.classList.add('hide');credits.classList.add('show');document.getElementById('creditsBack').focus();
+}
+function closeCredits(){
+  credits.classList.remove('show');main.classList.remove('hide');document.getElementById('creditsOpen').focus();
 }
 document.querySelectorAll('.font-row').forEach(button=>button.onclick=()=>openLicence(button));
 document.getElementById('licenceBack').onclick=closeLicence;
+document.getElementById('creditsOpen').onclick=openCredits;
+document.getElementById('creditsBack').onclick=closeCredits;
 document.getElementById('shelfBack').onclick=()=>alert('Returns to your shelf.');
 document.getElementById('theme').onclick=()=>{
   const current=root.getAttribute('data-theme')||'light';root.setAttribute('data-theme',current==='light'?'dark':'light');
 };
 addEventListener('keydown',event=>{
   if(event.key==='Escape'&&licence.classList.contains('show')){event.preventDefault();closeLicence();}
+  else if(event.key==='Escape'&&credits.classList.contains('show')){event.preventDefault();closeCredits();}
   else if(event.key==='Escape')document.getElementById('shelfBack').click();
 });
 </script>

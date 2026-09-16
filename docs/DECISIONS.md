@@ -125,6 +125,7 @@
 | [ADR-113](#adr-113) | **Flip is one mobile verb with two local-axis toggles for a single Photo or Art element.** Text and multi-selection are excluded; persistence requires an honest schema v3 rather than a lossy v2 additive field. | Accepted |
 | [ADR-114](#adr-114) | **Public story on the website; installed-app utility in About; fold replay remains an HTML experiment.** The site uses sanitized canonical mockups, a concise embedded accessibility statement, curated release notes, and a non-committal roadmap. | Accepted |
 | [ADR-116](#adr-116) | **Plain-language public updates and distinct About copy on both surfaces.** Retain technical documentation and accessibility requirements; app maker's note design frozen. | Accepted; native verification pending |
+| [ADR-117](#adr-117) | **Licence notices stay complete, but leave the main About narrative.** One compact row opens a child credits screen; font-role blurbs retire. | Accepted; owner ruling 2026-09-16 |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -12997,3 +12998,22 @@ Removing an unsupported Font button does not rule out a future working font pick
 
 Earlier source review, 2026-09-12: GO for website copy/docs after restoring distinct roadmap commitment categories.
 That review preceded the app freeze and does not certify the subsequent Compose implementation.
+
+## ADR-117 {#adr-117}
+
+### Keep the notices, lose the font showcase
+
+**Status:** Accepted by owner, 2026-09-16. Amends ADR-116 and the Colophon freeze only where they made three
+font cards prominent on the main About screen.
+
+The owner questioned why an About page should foreground the interface typefaces. The answer separates a legal
+distribution duty from a product-story choice: Zinely keeps each bundled copyright statement and complete SIL OFL
+text locally accessible, but it does not need to market those fonts or explain their visual roles.
+
+- Main About shows one compact `Licences & credits` button after the privacy promise and before version.
+- The child screen lists Averia Sans Libre, Fraunces and Inter. Each row opens the existing complete local notice.
+- `Fonts we use` and the three decorative role descriptions are retired.
+- Back and focus unwind one level at a time: licence → credits → About → Shelf.
+- The website does not add a font-attribution section. Its public story remains separate.
+
+This keeps compliance discoverable without interrupting the maker note, paper choice or privacy explanation.

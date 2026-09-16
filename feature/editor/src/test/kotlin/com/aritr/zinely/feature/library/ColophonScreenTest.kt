@@ -94,6 +94,40 @@ class ColophonScreenTest {
         ).assertDoesNotExist()
         scrollToTag(ColophonPaperGroupTestTag)
         composeRule.onNodeWithTag(ColophonPaperGroupTestTag).assertIsDisplayed()
+
+        scrollToTag(ColophonCreditsRowTestTag)
+        val credits = composeRule.onNodeWithTag(ColophonCreditsRowTestTag)
+        credits.assertIsDisplayed().assertContentDescriptionEquals(Copy.Colophon.CREDITS)
+        assertTrue(credits.fetchSemanticsNode().boundsInRoot.height >= 48f)
+        ColophonTypeface.entries.forEach { typeface ->
+            composeRule.onNodeWithTag(colophonTypefaceTestTag(typeface)).assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `credits lists bundled typefaces and returns focus to its compact row`() {
+        setContent(
+            preferredPaper = PaperSize.A4,
+            appVersion = "v1",
+            onBackToShelf = {},
+            onPreferredPaperChange = {},
+        )
+
+        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
+        openCredits()
+        ColophonTypeface.entries.forEach { typeface ->
+            composeRule.onNodeWithTag(ColophonScreenTestTag)
+                .performScrollToNode(hasTestTag(colophonTypefaceTestTag(typeface)))
+            composeRule.onNodeWithTag(colophonTypefaceTestTag(typeface))
+                .assertIsDisplayed()
+                .assertContentDescriptionEquals(Copy.Colophon.licenceButton(typeface.family))
+        }
+
+        scrollToTag(ColophonBackTestTag)
+        composeRule.onNodeWithTag(ColophonBackTestTag)
+            .assertContentDescriptionEquals(Copy.Colophon.BACK_TO_COLOPHON)
+            .performClick()
+        composeRule.onNodeWithTag(ColophonCreditsRowTestTag).assertIsDisplayed().assertIsFocused()
     }
 
     @Test
@@ -130,16 +164,18 @@ class ColophonScreenTest {
         )
 
         composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
-        composeRule.onNodeWithTag(ColophonScreenTestTag)
-            .performScrollToNode(hasTestTag(colophonTypefaceTestTag(licenseTypeface)))
+        openCredits()
+        scrollToTag(colophonTypefaceTestTag(licenseTypeface))
         composeRule.onNodeWithTag(colophonTypefaceTestTag(licenseTypeface)).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Locally licensed text").assertIsDisplayed()
-        composeRule.onNodeWithTag(ColophonBackTestTag).performClick()
+        composeRule.onNodeWithTag(ColophonBackTestTag)
+            .assertContentDescriptionEquals(Copy.Colophon.BACK_TO_CREDITS)
+            .performClick()
         composeRule.onNodeWithTag(colophonTypefaceTestTag(licenseTypeface)).assertIsDisplayed().assertIsFocused()
         scrollToTag(ColophonBackTestTag)
-        composeRule.onNodeWithTag(ColophonBackTestTag)
-            .assertContentDescriptionEquals(Copy.Colophon.BACK_TO_SHELF)
+        composeRule.onNodeWithTag(ColophonBackTestTag).performClick()
+        composeRule.onNodeWithTag(ColophonCreditsRowTestTag).assertIsDisplayed().assertIsFocused()
     }
 
     @Test
@@ -152,8 +188,8 @@ class ColophonScreenTest {
             loadLicence = { throw IllegalStateException("local failure") },
         )
 
-        composeRule.onNodeWithTag(ColophonScreenTestTag)
-            .performScrollToNode(hasTestTag(colophonTypefaceTestTag(ColophonTypeface.INTER)))
+        openCredits()
+        scrollToTag(colophonTypefaceTestTag(ColophonTypeface.INTER))
         composeRule.onNodeWithTag(colophonTypefaceTestTag(ColophonTypeface.INTER)).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText(Copy.Colophon.LICENCE_UNAVAILABLE).assertIsDisplayed()
@@ -198,13 +234,24 @@ class ColophonScreenTest {
         scrollToTag(colophonPaperTestTag(PaperSize.LETTER))
         composeRule.onNodeWithTag(colophonPaperTestTag(PaperSize.LETTER)).performClick().assertIsSelected()
         val licence = colophonTypefaceTestTag(ColophonTypeface.INTER)
+        openCredits()
         scrollToTag(licence)
         composeRule.onNodeWithTag(licence).performClick()
         composeRule.onNodeWithText("Local licence").assertIsDisplayed()
         composeRule.onNodeWithTag(ColophonBackTestTag).performClick()
         composeRule.onNodeWithTag(licence).assertIsDisplayed().assertIsFocused()
+        scrollToTag(ColophonBackTestTag)
+        composeRule.onNodeWithTag(ColophonBackTestTag).performClick()
+        composeRule.onNodeWithTag(ColophonCreditsRowTestTag).assertIsDisplayed().assertIsFocused()
         scrollToTag(ColophonVersionTestTag)
         composeRule.onNodeWithText("v-large").assertIsDisplayed()
+    }
+
+    private fun openCredits() {
+        scrollToTag(ColophonCreditsRowTestTag)
+        composeRule.onNodeWithTag(ColophonCreditsRowTestTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(Copy.Colophon.CREDITS).assertIsDisplayed()
     }
 
     private fun scrollToTag(tag: String) {

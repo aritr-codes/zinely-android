@@ -57,6 +57,7 @@ for (const html of [roadmap, notes, proposal]) assert.ok(!html.includes('\u2014'
 for (const html of [home, proposal]) {
   for (const [, script] of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) new vm.Script(script);
 }
+for (const [, script] of appAbout.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) new vm.Script(script);
 assert.match(proposal, /Design approved, 12 September 2026/);
 assert.match(proposal, /src="\.\.\/mockups\/v21-colophon.html"/);
 assert.doesNotMatch(proposal, /<script/); // One canonical copy, no injected duplicate.
@@ -66,6 +67,13 @@ assert.match(appAbout, /little paper books/);
 assert.match(appAbout, /making an Android app/);
 assert.match(appAbout, /The page order became our problem\. What goes on the pages is entirely yours\./);
 assert.match(appAbout, /Thanks for making something with it\./);
+assert.match(appAbout, /Licences &amp; credits/);
+assert.match(appAbout, /Open-source notices/);
+assert.match(appAbout, /Zinely uses a few open-source typefaces\. Their licence notices live here\./);
+assert.doesNotMatch(appAbout, /Fonts we use|Warm, handmade lettering|A little bookish flair|Clear, everyday text/);
+for (const family of ['Averia Sans Libre', 'Fraunces', 'Inter']) {
+  assert.match(appAbout, new RegExp(`data-name="${family}"`));
+}
 assert.doesNotMatch(appAbout, /Sometimes you want to make something you can hand to someone/);
 assert.ok(!appAbout.match(/<section class="section maker-note"[\s\S]*?<\/section>/)[0].includes('\u2014'));
 assert.match(home, /We handle the page order\. You decide what deserves eight pages\./);
