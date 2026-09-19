@@ -1,0 +1,177 @@
+/*
+ * The quieter corner of the Zinely studio.
+ * Legal and utility pages share the paper-and-ink language without inheriting
+ * the busier interactions used by the product tour.
+ */
+
+.quiet-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.quiet-page .site-header,
+.quiet-page footer {
+  flex: none;
+}
+
+.quiet-page .policy-layout {
+  flex: 1;
+}
+
+.quiet-scene {
+  position: relative;
+  isolation: isolate;
+}
+
+.quiet-scene::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: -28px -34px;
+  border: 1px solid rgba(39, 39, 15, 0.14);
+  background:
+    linear-gradient(rgba(39, 39, 15, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(39, 39, 15, 0.045) 1px, transparent 1px),
+    rgba(255, 249, 232, 0.72);
+  background-size: 22px 22px;
+  transform: rotate(-0.35deg);
+}
+
+.quiet-scene__tab {
+  position: absolute;
+  z-index: 2;
+  top: -13px;
+  right: clamp(30px, 8vw, 92px);
+  width: 82px;
+  height: 26px;
+  background: rgba(242, 136, 146, 0.68);
+  box-shadow: 0 1px 0 rgba(39, 39, 15, 0.15);
+  transform: rotate(2.2deg);
+  pointer-events: none;
+}
+
+.quiet-scene__mark {
+  position: absolute;
+  z-index: -1;
+  width: 42px;
+  height: 42px;
+  border-color: var(--ink-soft);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.quiet-scene__mark--top {
+  top: -10px;
+  left: -15px;
+  border-top: 2px solid;
+  border-left: 2px solid;
+}
+
+.quiet-scene__mark--bottom {
+  right: -15px;
+  bottom: -10px;
+  border-right: 2px solid;
+  border-bottom: 2px solid;
+}
+
+.quiet-page .policy {
+  border-radius: 8px 18px 10px 7px;
+  box-shadow:
+    5px 6px 0 var(--paper),
+    8px 9px 0 var(--ink),
+    14px 16px 0 rgba(39, 39, 15, 0.13);
+}
+
+.quiet-page .policy::before {
+  left: clamp(70px, 24%, 180px);
+  transform: translateX(-50%) rotate(-2.5deg);
+}
+
+.policy-page .policy > h1:first-child {
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.not-found-page .site-header {
+  justify-content: flex-start;
+}
+
+.not-found-page .policy-layout {
+  display: grid;
+  place-items: center;
+  padding-top: 42px;
+}
+
+.not-found-page .quiet-scene {
+  width: min(680px, 100%);
+}
+
+.not-found-page .policy {
+  text-align: center;
+}
+
+.not-found-page .policy h1 {
+  margin-bottom: 18px;
+  font-size: clamp(3rem, 9vw, 5.4rem);
+}
+
+.not-found-page .policy-intro {
+  margin-inline: auto;
+  margin-bottom: 30px;
+}
+
+.not-found-page .button {
+  min-width: min(240px, 100%);
+}
+
+@media (max-width: 620px) {
+  .quiet-scene::before,
+  .quiet-scene__mark {
+    display: none;
+  }
+
+  .quiet-page .policy {
+    border-radius: 7px 14px 8px 6px;
+    box-shadow: 6px 8px 0 var(--ink);
+  }
+
+  .not-found-page .site-header {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .not-found-page .button {
+    transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+
+  .not-found-page .button:hover {
+    transform: translate(-1px, -1px) rotate(-0.35deg);
+    box-shadow: 5px 6px 0 var(--ink);
+  }
+
+  .not-found-page .button:active {
+    transform: translate(3px, 4px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+}
+
+@media print {
+  .quiet-page {
+    display: block;
+  }
+
+  .quiet-scene::before,
+  .quiet-scene__tab,
+  .quiet-scene__mark {
+    display: none;
+  }
+
+  .quiet-page .policy {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}

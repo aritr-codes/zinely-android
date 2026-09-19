@@ -9,8 +9,9 @@
   <title>What’s next | Zinely</title>
   <link rel="icon" href="../assets/logo.webp" type="image/webp">
   <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="../assets/roadmap.css">
 </head>
-<body>
+<body class="roadmap-page">
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <a class="brand" href="../" aria-label="Zinely home">
@@ -24,14 +25,20 @@
   </header>
 
   <main id="main" class="policy-layout roadmap-layout">
-    <article class="policy">
-      <p class="eyebrow">Our to-make list</p>
-      <h1>What comes next.</h1>
-      <p class="policy-intro">Here’s where our attention is going. Some things are being tested. Others are still ideas scribbled in the margin. No release dates until we can stand behind them.</p>
-      <p class="policy-date"><strong>Last updated:</strong> <time datetime="2026-09-12">12 September 2026</time></p>
+    <article class="policy roadmap-board">
+      <header class="roadmap-heading">
+        <div>
+          <p class="eyebrow">Our to-make list</p>
+          <h1>What comes next.</h1>
+          <p class="policy-intro">Here’s where our attention is going. Some things are being tested. Others are still ideas scribbled in the margin. No release dates until we can stand behind them.</p>
+        </div>
+        <p class="policy-date roadmap-date"><span aria-hidden="true">Filed</span><strong>Last updated:</strong> <time datetime="2026-09-12">12 September 2026</time></p>
+      </header>
 
-      <div class="roadmap-groups">
+      <div class="roadmap-groups" aria-label="Zinely roadmap press board">
         <section class="roadmap-group planned" aria-labelledby="planned-title">
+          <span class="roadmap-pin" aria-hidden="true"></span>
+          <p class="press-zone">On the press</p>
           <p class="status-label">Planned</p>
           <h2 id="planned-title">An easier way to get Zinely</h2>
           <ul>
@@ -41,6 +48,8 @@
         </section>
 
         <section class="roadmap-group exploring" aria-labelledby="exploring-title">
+          <span class="roadmap-pin" aria-hidden="true"></span>
+          <p class="press-zone">On the bench</p>
           <p class="status-label">Exploring and testing</p>
           <h2 id="exploring-title">Less getting in your way</h2>
           <ul>
@@ -49,15 +58,19 @@
           </ul>
         </section>
 
-        <section class="roadmap-group" aria-labelledby="ideas-title">
+        <section class="roadmap-group uncommitted" aria-labelledby="ideas-title">
+          <span class="roadmap-pin" aria-hidden="true"></span>
+          <p class="press-zone">In the margins</p>
           <p class="status-label">Ideas, not promises</p>
           <h2 id="ideas-title">More ways to make it yours</h2>
           <p>We’re looking at font choices, stickers, frames, and new ways to crop or cut out photos. These are ideas under consideration, not announced features. We haven’t committed to building them yet.</p>
         </section>
       </div>
 
-      <p class="notice">Looking for changes you can already use? See <a href="../changelog/">what’s new</a>. Missing something that would help you make a zine? <a href="https://forms.gle/7ejUVJBdUaYoDytu6">Tell us</a> through our optional Google Form, or <a href="mailto:aritr.g06@gmail.com">email us</a>. <a href="../privacy/#feedback-and-email">How we handle feedback</a>.</p>
-      <p>Curious about the nuts and bolts? The <a href="https://github.com/aritr-codes/zinely-android/blob/main/docs/ROADMAP.md#current-priorities">developer notes</a> keep the longer list.</p>
+      <div class="roadmap-desk-note">
+        <p class="notice">Looking for changes you can already use? See <a href="../changelog/">what’s new</a>. Missing something that would help you make a zine? <a href="https://forms.gle/7ejUVJBdUaYoDytu6">Tell us</a> through our optional Google Form. <a href="../privacy/#feedback-and-email">How we handle feedback</a>.</p>
+        <p>Curious about the nuts and bolts? The <a href="https://github.com/aritr-codes/zinely-android/blob/main/docs/ROADMAP.md#current-priorities">developer notes</a> keep the longer list.</p>
+      </div>
     </article>
   </main>
 

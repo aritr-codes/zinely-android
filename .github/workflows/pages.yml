@@ -44,6 +44,7 @@ jobs:
           mkdir -p _pages_source/assets _pages_source/privacy
           cp -R website/. _pages_source/
           cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp _pages_source/assets/logo.webp
+          rm -f _pages_source/privacy/index.html
           printf '%s\n' '---' 'layout: policy' 'permalink: /privacy/' '---' > _pages_source/privacy/index.md
           cat docs/PRIVACY-POLICY.md >> _pages_source/privacy/index.md
 
