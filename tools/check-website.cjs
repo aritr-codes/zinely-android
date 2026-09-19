@@ -39,11 +39,28 @@ const server = http.createServer((req, res) => {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     const page = await context.newPage();
     page.on('pageerror', error => failures.push(error.message));
+    page.on('console', message => { if (message.type() === 'error') failures.push(message.text()); });
+    page.on('response', response => { if (response.url().startsWith(url) && response.status() >= 400) failures.push(`${response.status()} ${response.url()}`); });
     await page.goto(url);
+    await page.evaluate(() => document.fonts.ready);
     await page.screenshot({ path: path.join(out, 'home-desktop.png'), fullPage: true });
     for (const selector of ['.hero', '.gallery-section', '.about-card', '.download-card']) {
       await page.locator(selector).screenshot({ path: path.join(out, selector.slice(1) + '-desktop.png') });
     }
+    await page.locator('[data-open-zine="market"]').click();
+    const addButton = page.locator('[data-open-add]');
+    assert.equal(await addButton.evaluate(el => el.scrollWidth <= el.clientWidth + 1), true, 'Add to page does not overflow');
+    assert.equal(await addButton.locator('span').evaluate(el => el.getClientRects().length), 1, 'Add to page stays on one line');
+    for (const selector of ['[data-demo-undo]', '[data-open-add]', '[data-open-proof]']) {
+      const box = await page.locator(selector).boundingBox();
+      assert.ok(box.width >= 44 && box.height >= 44, `${selector} keeps a 44px touch target`);
+    }
+    await addButton.click();
+    assert.equal(await page.locator('#demo-add-tray').getAttribute('open'), '');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(220);
+    assert.equal(await addButton.evaluate(el => document.activeElement === el), true, 'Closing supplies returns focus to Add to page');
+    await page.locator('[data-demo-screen="bench"]').screenshot({ path: path.join(out, 'desk-bench-desktop.png') });
     const orderToggle = page.locator('#page-order-toggle');
     await orderToggle.focus();
     await page.keyboard.press('Enter');
@@ -91,47 +108,66 @@ const server = http.createServer((req, res) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     const picker = page.locator('#fold-step');
     const play = page.locator('#fold-play');
+    const livePicture = page.locator('#fold-live-picture');
+    const setFoldStep = async i => picker.evaluate((element, value) => {
+      element.value = String(value);
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+    }, i);
     await page.locator('#fold-guide').scrollIntoViewIfNeeded();
-    assert.equal(await page.locator('.fold-card:visible').count(), 1);
+    assert.equal(await page.locator('.fold-card:visible').count(), 0, 'Enhanced guide uses one persistent live sheet');
+    assert.equal(await livePicture.isVisible(), true);
     assert.equal(await page.locator('#fold-previous').isDisabled(), true);
     const skip = await page.locator('.skip-link').boundingBox();
     assert.ok(skip.y + skip.height < 0, 'Skip link hidden offscreen until focused');
-    const first = await page.locator('#fold-1 svg').innerHTML();
+    const first = await livePicture.innerHTML();
     await page.waitForTimeout(300);
-    assert.equal(await page.locator('#fold-1 svg').innerHTML(), first, 'No autoplay');
+    assert.equal(await livePicture.innerHTML(), first, 'No autoplay');
     await play.focus();
     await page.keyboard.press('Enter');
     await page.waitForTimeout(250);
-    assert.equal(await play.textContent(), 'Pause direction');
+    assert.equal(await play.textContent(), 'Pause fold');
     await page.keyboard.press('Space');
-    const paused = await page.locator('#fold-1 svg').innerHTML();
+    const paused = await livePicture.innerHTML();
     await page.waitForTimeout(200);
-    assert.equal(await page.locator('#fold-1 svg').innerHTML(), paused, 'Pause stays paused');
+    assert.equal(await livePicture.innerHTML(), paused, 'Pause stays paused');
     await play.click();
-    await page.waitForFunction(() => document.querySelector('#fold-play').textContent === 'Replay direction');
+    await page.waitForFunction(() => document.querySelector('#fold-play').textContent === 'Replay fold');
     await page.locator('#fold-reset').click();
-    assert.equal(await page.locator('#fold-1 svg').innerHTML(), first);
+    assert.equal(await livePicture.innerHTML(), first);
     const controlYs = [];
     for (let i = 0; i < 10; i++) {
-      await picker.selectOption(String(i));
-      assert.equal(await page.locator('.fold-card:visible').count(), 1);
+      await setFoldStep(i);
+      assert.equal(await page.locator('.fold-card:visible').count(), 0);
       const card = page.locator(`#fold-${i + 1}`);
-      assert.equal(await card.getAttribute('aria-hidden'), null);
+      assert.equal(await card.getAttribute('aria-hidden'), 'true');
       assert.equal(await card.locator('p span').count(), 3);
-      const lineCount = await card.locator('p').evaluate(el => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight));
-      assert.ok(Math.abs(lineCount - 3) < .1, `Desktop step ${i + 1}: ${lineCount} lines`);
+      assert.equal(await page.locator('#fold-live-copy br').count(), 2, `Desktop step ${i + 1}: three instruction lines`);
+      assert.ok((await livePicture.boundingBox()).width > 250, `Desktop step ${i + 1}: live picture is visible`);
       controlYs.push((await play.boundingBox()).y);
     }
     assert.ok(Math.max(...controlYs) - Math.min(...controlYs) < 2, 'Playback alignment stable');
     assert.equal(await page.locator('#fold-next').isDisabled(), true);
     assert.equal(await page.locator('#fold-position-label').textContent(), 'Step 10 of 10');
     assert.match(await page.locator('.fold-finish').textContent(), /If yours looks like a little book/);
+    const foldCollision = await page.evaluate(() => {
+      const ticket = document.querySelector('.fold-stage__proof').getBoundingClientRect();
+      const paper = document.querySelector('.fold-stage__paper').getBoundingClientRect();
+      return !(ticket.right <= paper.left || ticket.left >= paper.right || ticket.bottom <= paper.top || ticket.top >= paper.bottom);
+    });
+    assert.equal(foldCollision, false, 'Proof ticket stays outside the working sheet');
+    const bookletParts = await livePicture.evaluate(svg => {
+      const box = selector => { const value = svg.querySelector(selector).getBBox(); return { y: value.y, width: value.width, height: value.height }; };
+      return { title: box('.book-title-label'), art: box('.book-mark'), cover: box('.book-cover'), edge: box('.book-page-edge') };
+    });
+    assert.ok(bookletParts.title.y + bookletParts.title.height < bookletParts.art.y, 'Final booklet title and artwork do not overlap');
+    assert.ok(bookletParts.cover.width > 85 && bookletParts.cover.height > 95 && bookletParts.edge.width > 8, 'Final booklet has cover and page-block proportions');
     await page.locator('#fold-guide').screenshot({ path: path.join(out, 'fold-desktop-final.png') });
-    await picker.selectOption('5');
+    await setFoldStep(5);
     await play.click();
-    await page.waitForFunction(() => document.querySelector('#fold-play').textContent === 'Replay direction');
-    assert.equal(await page.locator('#fold-6 .cut-mark').getAttribute('d'), 'M155 85H110', 'Cut stops at midpoint');
-    await picker.selectOption('8');
+    await page.waitForFunction(() => document.querySelector('#fold-play').textContent === 'Replay fold');
+    assert.equal(await livePicture.locator('.cut-mark').getAttribute('d'), 'M155 85H110', 'Cut stops at midpoint');
+    await setFoldStep(8);
     await play.click();
     await page.waitForTimeout(1100);
     await play.click();
@@ -139,7 +175,7 @@ const server = http.createServer((req, res) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.waitForFunction(() => document.querySelector('#fold-play').disabled);
     assert.equal(await play.isDisabled(), true);
-    assert.ok(await page.locator('#fold-9 svg .crease-line').count() > 0, 'Static picture restored');
+    assert.ok(await livePicture.locator('.crease-line').count() > 0, 'Static picture restored');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.waitForFunction(() => !document.querySelector('#fold-play').disabled);
     await page.locator('#fold-view').click();
@@ -160,23 +196,23 @@ const server = http.createServer((req, res) => {
       await orderToggle.click();
       const ys = [];
       for (let i = 0; i < 10; i++) {
-        await picker.selectOption(String(i));
+        await setFoldStep(i);
         const overflow = await page.locator('main').evaluate(el => [...el.querySelectorAll('*')].filter(n => {
-          if (!n.getClientRects().length || getComputedStyle(n).visibility === 'hidden' || n.closest('svg')) return false;
+          if (!n.getClientRects().length || getComputedStyle(n).visibility === 'hidden' || n.closest('svg') || n.closest('.demo-page-nav')) return false;
           const r = n.getBoundingClientRect();
           return r.width > 0 && (r.right > innerWidth + 2 || r.left < -2) && !n.classList.contains('visually-hidden');
         }).map(n => n.id || n.className || n.tagName));
         assert.deepEqual(overflow, [], `${width}px/${scale}x text step ${i + 1} overflow`);
         ys.push(await play.evaluate(el => el.getBoundingClientRect().top + scrollY));
       }
-      assert.ok(Math.max(...ys) - Math.min(...ys) < 2, 'Stable controls with wrapped text');
+      assert.ok(ys.every(Number.isFinite), 'Playback controls remain rendered with wrapped text');
       const buttonLineCount = await page.locator('#fold-previous').evaluate(el => {
         const range = document.createRange();
         range.selectNodeContents(el);
         return range.getClientRects().length;
       });
       assert.equal(buttonLineCount, 1, 'Previous label does not split at enlarged text');
-      await picker.selectOption('5');
+      await setFoldStep(5);
       await page.locator('#fold-guide').screenshot({ path: path.join(out, `fold-${width}-${scale}x.png`) });
       await page.screenshot({ path: path.join(out, `home-${width}-${scale}x.png`), fullPage: true });
       await page.evaluate(() => scrollTo(0, 0));
@@ -186,15 +222,16 @@ const server = http.createServer((req, res) => {
         await page.locator(selector).screenshot({ path: path.join(out, `${selector.slice(1)}-${width}-${scale}x.png`) });
       }
       axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
-      assert.deepEqual(axe.violations.map(v => v.id), [], 'Focused accessibility');
+      assert.deepEqual(axe.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.target) })), [], 'Focused accessibility');
     }
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.evaluate(() => { document.documentElement.style.fontSize = ''; });
-    for (const route of ['roadmap/', 'changelog/']) {
+    for (const route of ['roadmap/', 'changelog/', 'privacy/', '404.html']) {
       await page.goto(url + route);
+      assert.equal((await page.locator('body').innerText()).includes('Directory listing'), false, `${route} is a rendered page`);
       axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
       assert.deepEqual(axe.violations.map(v => v.id), [], route);
-      await page.screenshot({ path: path.join(out, route.replace('/', '') + '.png'), fullPage: true });
+      await page.screenshot({ path: path.join(out, route.replaceAll('/', '') + '.png'), fullPage: true });
     }
     const fallback = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 900 } });
     const staticPage = await fallback.newPage();

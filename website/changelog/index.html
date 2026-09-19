@@ -9,6 +9,7 @@
   <title>What’s new | Zinely</title>
   <link rel="icon" href="../assets/logo.webp" type="image/webp">
   <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="../assets/journal.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -24,14 +25,31 @@
   </header>
 
   <main id="main" class="policy-layout">
-    <article class="policy release-notes">
-      <p class="eyebrow">The small improvements add up</p>
-      <h1>What changed.</h1>
-      <p class="policy-intro">What got better, what got fixed, and where you can try it. The current Android download is <a href="../#download-title">0.9.0-beta.4-r3</a>. Website updates happen separately.</p>
+    <article class="policy release-notes studio-journal">
+      <header class="journal-masthead">
+        <p class="eyebrow">The small improvements add up</p>
+        <h1>What changed.</h1>
+        <p class="policy-intro">What got better, what got fixed, and where you can try it. The current Android download is <a href="../#download-title">0.9.0-beta.4-r3</a>. Website updates happen separately.</p>
+        <span class="journal-stamp" aria-hidden="true">Studio<br>journal</span>
+      </header>
 
-      <section class="release-entry" id="website-september-10">
-        <p class="release-channel">On the website</p>
-        <p class="release-date"><time datetime="2026-09-10">10 September 2026</time></p>
+      <nav class="journal-index" aria-label="Jump to an update">
+        <a href="#website-september-10"><span>Website</span><strong>10 Sep</strong></a>
+        <a href="#website-september-9"><span>Website</span><strong>9 Sep</strong></a>
+        <a href="#beta-4-r3"><span>Public beta</span><strong>r3</strong></a>
+        <a href="#beta-4-r2"><span>Tester build</span><strong>r2</strong></a>
+        <a href="#beta-4"><span>Tester build</span><strong>beta.4</strong></a>
+        <a href="#beta-3"><span>Tester build</span><strong>beta.3</strong></a>
+      </nav>
+
+      <div class="journal-timeline">
+
+      <section class="release-entry journal-entry website-note" id="website-september-10">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">On the website</p>
+          <p class="release-date"><time datetime="2026-09-10">10 September 2026</time></p>
+        </header>
         <h2>A little more paper. A little less serious.</h2>
         <ul>
           <li>Try the page-order switch to see why a printed sheet looks out of order before you fold it.</li>
@@ -41,9 +59,12 @@
         <p>Your Android app hasn’t changed with this website update.</p>
       </section>
 
-      <section class="release-entry" id="website-september-9">
-        <p class="release-channel">On the website</p>
-        <p class="release-date">Published <time datetime="2026-09-09">9 September 2026</time></p>
+      <section class="release-entry journal-entry website-note" id="website-september-9">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">On the website</p>
+          <p class="release-date">Published <time datetime="2026-09-09">9 September 2026</time></p>
+        </header>
         <h2>A clearer guide, and a place for your feedback</h2>
         <ul>
           <li>Take a look around the app through example screenshots.</li>
@@ -53,9 +74,12 @@
         <p>This changed the website, not the app on your phone.</p>
       </section>
 
-      <section class="release-entry" id="beta-4-r3">
-        <p class="release-channel">Public beta release</p>
-        <p class="release-date">Published <time datetime="2026-09-09">9 September 2026</time></p>
+      <section class="release-entry journal-entry public-release" id="beta-4-r3">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">Public beta release</p>
+          <p class="release-date">Published <time datetime="2026-09-09">9 September 2026</time></p>
+        </header>
         <h2>0.9.0-beta.4-r3</h2>
         <p class="release-theme">Readable dark-mode confirmations</p>
         <ul>
@@ -63,9 +87,12 @@
         </ul>
       </section>
 
-      <section class="release-entry" id="beta-4-r2">
-        <p class="release-channel">Tester build</p>
-        <p class="release-date">Built <time datetime="2026-08-31">31 August 2026</time></p>
+      <section class="release-entry journal-entry tester-note" id="beta-4-r2">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">Tester build</p>
+          <p class="release-date">Built <time datetime="2026-08-31">31 August 2026</time></p>
+        </header>
         <h2>0.9.0-beta.4-r2</h2>
         <p class="release-theme">A smaller download</p>
         <ul>
@@ -73,9 +100,12 @@
         </ul>
       </section>
 
-      <section class="release-entry" id="beta-4">
-        <p class="release-channel">Tester build</p>
-        <p class="release-date">Built <time datetime="2026-08-31">31 August 2026</time></p>
+      <section class="release-entry journal-entry tester-note" id="beta-4">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">Tester build</p>
+          <p class="release-date">Built <time datetime="2026-08-31">31 August 2026</time></p>
+        </header>
         <h2>0.9.0-beta.4</h2>
         <p class="release-theme">Replace a photo without rebuilding the page</p>
         <ul>
@@ -85,9 +115,12 @@
         </ul>
       </section>
 
-      <section class="release-entry" id="beta-3">
-        <p class="release-channel">Tester build</p>
-        <p class="release-date">Built <time datetime="2026-08-30">30 August 2026</time></p>
+      <section class="release-entry journal-entry tester-note" id="beta-3">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">Tester build</p>
+          <p class="release-date">Built <time datetime="2026-08-30">30 August 2026</time></p>
+        </header>
         <h2>0.9.0-beta.3</h2>
         <p class="release-theme">A clearer, more dependable editor</p>
         <ul>
@@ -96,6 +129,7 @@
           <li>Smoothed out rough spots when using larger text, a screen reader, or dark mode, and when moving between pages.</li>
         </ul>
       </section>
+      </div>
 
       <p class="notice">Want the technical details? They’re in the <a href="https://github.com/aritr-codes/zinely-android/blob/main/CHANGELOG.md">full developer changelog</a>. Looking ahead? See <a href="../roadmap/">what’s next</a>.</p>
     </article>

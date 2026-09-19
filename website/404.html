@@ -1,22 +1,37 @@
----
----
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Page not found — Zinely</title>
-  <link rel="icon" href="{{ '/assets/logo.webp' | relative_url }}" type="image/webp">
-  <link rel="stylesheet" href="{{ '/assets/styles.css' | relative_url }}">
+  <meta name="theme-color" content="#E9E29B">
+  <meta name="description" content="This page slipped off the Zinely desk. Head back to the homepage to keep making.">
+  <title>Page not found | Zinely</title>
+  <link rel="icon" href="assets/logo.webp" type="image/webp">
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/quiet-pages.css">
 </head>
-<body>
+<body class="quiet-page not-found-page">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="Zinely home">
+      <img src="assets/logo.webp" width="48" height="48" alt="">
+      <span>Zinely</span>
+    </a>
+  </header>
+
   <main id="main" class="policy-layout">
-    <article class="policy">
-      <p class="eyebrow">A loose page</p>
-      <h1>Nothing here yet.</h1>
-      <p class="policy-intro">This page may have moved, or the link may be unfinished.</p>
-      <a class="button primary" href="{{ '/' | relative_url }}">Back to Zinely</a>
-    </article>
+    <div class="quiet-scene">
+      <span class="quiet-scene__tab" aria-hidden="true"></span>
+      <span class="quiet-scene__mark quiet-scene__mark--top" aria-hidden="true"></span>
+      <span class="quiet-scene__mark quiet-scene__mark--bottom" aria-hidden="true"></span>
+      <article class="policy">
+        <p class="eyebrow">A loose page</p>
+        <h1>Nothing here yet.</h1>
+        <p class="policy-intro">This page may have moved, or the link may be unfinished.</p>
+        <a class="button primary" href="./">Back to Zinely</a>
+      </article>
+    </div>
   </main>
 </body>
 </html>

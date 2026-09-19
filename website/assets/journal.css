@@ -1,0 +1,214 @@
+/* What changed is a studio journal, not a software status dashboard. */
+.release-notes.studio-journal {
+  --journal-rule: rgba(106, 69, 47, 0.13);
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, transparent 0 48px, rgba(242, 136, 146, 0.22) 48px 50px, transparent 50px),
+    repeating-linear-gradient(0deg, transparent 0 31px, var(--journal-rule) 31px 32px),
+    var(--paper);
+}
+
+.studio-journal::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 92% 7%, rgba(187, 202, 111, 0.38) 0 92px, transparent 93px);
+}
+
+.studio-journal > * {
+  position: relative;
+  z-index: 1;
+}
+
+.journal-masthead {
+  position: relative;
+  padding-right: clamp(0px, 18vw, 155px);
+}
+
+.journal-masthead h1 {
+  max-width: 9ch;
+  margin-bottom: 20px;
+}
+
+.journal-stamp {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  display: grid;
+  width: 112px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 3px double var(--ink-soft);
+  border-radius: 50%;
+  color: var(--ink-soft);
+  font: 850 0.82rem/1.15 "Trebuchet MS", ui-rounded, sans-serif;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+  transform: rotate(8deg);
+}
+
+.journal-index {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 38px 0 54px;
+  padding: 18px;
+  border: 2px dashed var(--ink-soft);
+  border-radius: 8px;
+  background: rgba(255, 253, 245, 0.72);
+}
+
+.journal-index a {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1.5px solid var(--ink);
+  border-radius: 3px 9px 4px 3px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.78rem;
+  text-decoration: none;
+  box-shadow: 2px 2px 0 rgba(39, 39, 15, 0.45);
+}
+
+.journal-index a:nth-child(3n + 2) { background: var(--surface); }
+.journal-index a:nth-child(3n) { background: var(--room-raised); }
+.journal-index a span { color: var(--ink-soft); font-weight: 750; }
+.journal-index a strong { font-size: 0.88rem; }
+.journal-index a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.journal-timeline {
+  position: relative;
+  display: grid;
+  gap: 38px;
+  padding-left: 36px;
+}
+
+.journal-timeline::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 10px;
+  border-left: 2px dashed var(--ink-soft);
+}
+
+.studio-journal .journal-entry {
+  scroll-margin-top: 28px;
+  margin: 0;
+  padding: clamp(22px, 4vw, 32px);
+  border-radius: 4px 14px 6px 4px;
+  background:
+    linear-gradient(rgba(39, 39, 15, 0.025) 1px, transparent 1px),
+    #fffdf5;
+  background-size: 100% 24px;
+  box-shadow: 5px 6px 0 var(--ink);
+  transform: rotate(-0.2deg);
+}
+
+.studio-journal .journal-entry:nth-child(even) { transform: rotate(0.25deg); }
+.studio-journal .journal-entry.website-note { background-color: var(--surface); }
+.studio-journal .journal-entry.public-release { background-color: #eff2b2; }
+
+.journal-pin {
+  position: absolute;
+  top: 25px;
+  left: -37px;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.journal-pin::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+.release-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 13px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px dashed var(--ink-soft);
+}
+
+.studio-journal .release-heading p { margin-bottom: 0; }
+.studio-journal .release-channel { flex: 0 0 auto; }
+.studio-journal .release-date { text-align: right; }
+.studio-journal .journal-entry h2 { text-wrap: balance; }
+.studio-journal .journal-entry li::marker { color: var(--ink); font-weight: 900; }
+.studio-journal .journal-entry > p:last-child { margin-bottom: 0; }
+
+.studio-journal > .notice {
+  position: relative;
+  margin: 54px 0 0 36px;
+  border-radius: 5px;
+  background: var(--room-raised);
+  transform: rotate(-0.3deg);
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .journal-index a { transition: transform 130ms ease, box-shadow 130ms ease; }
+  .journal-index a:hover { transform: translateY(-2px) rotate(-0.4deg); box-shadow: 3px 4px 0 var(--ink); }
+}
+
+@media (max-width: 680px) {
+  .release-notes.studio-journal {
+    background:
+      repeating-linear-gradient(0deg, transparent 0 31px, var(--journal-rule) 31px 32px),
+      var(--paper);
+  }
+  .journal-masthead { padding-right: 0; }
+  .journal-stamp { position: static; width: 86px; margin: 24px 0 0 auto; }
+  .journal-index { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 40px; padding: 12px; }
+  .journal-timeline { gap: 28px; padding-left: 24px; }
+  .journal-timeline::before { left: 5px; }
+  .journal-pin { left: -28px; width: 16px; height: 16px; }
+  .journal-pin::after { top: 3px; left: 4px; width: 4px; height: 4px; }
+  .release-heading { align-items: flex-start; flex-direction: column; gap: 7px; }
+  .studio-journal .release-date { text-align: left; }
+  .studio-journal > .notice { margin-left: 24px; }
+}
+
+@media (max-width: 420px) {
+  .journal-index { grid-template-columns: minmax(0, 1fr); }
+  .journal-index a { min-height: 52px; }
+}
+
+@media print {
+  .release-notes.studio-journal { overflow: visible; background: white; }
+  .studio-journal::before,
+  .studio-journal::after,
+  .journal-stamp,
+  .journal-index,
+  .journal-timeline::before,
+  .journal-pin { display: none; }
+  .journal-masthead { padding-right: 0; }
+  .journal-timeline { display: block; padding-left: 0; }
+  .studio-journal .journal-entry,
+  .studio-journal .journal-entry:nth-child(even),
+  .studio-journal > .notice {
+    break-inside: avoid;
+    margin: 24px 0;
+    box-shadow: none;
+    transform: none;
+  }
+}

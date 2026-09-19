@@ -8,11 +8,12 @@
   <meta name="theme-color" content="#E9E29B">
   <meta name="description" content="Zinely privacy policy: what the offline Android app stores, what leaves your device, and when.">
   <link rel="canonical" href="https://aritr-codes.github.io/zinely-android/privacy/">
-  <title>Privacy policy — Zinely</title>
+  <title>Privacy policy | Zinely</title>
   <link rel="icon" href="{{ '/assets/logo.webp' | relative_url }}" type="image/webp">
   <link rel="stylesheet" href="{{ '/assets/styles.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/assets/quiet-pages.css' | relative_url }}">
 </head>
-<body>
+<body class="quiet-page policy-page">
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="site-header">
@@ -28,9 +29,14 @@
   </header>
 
   <main id="main" class="policy-layout">
-    <article class="policy">
-      {{ content }}
-    </article>
+    <div class="quiet-scene">
+      <span class="quiet-scene__tab" aria-hidden="true"></span>
+      <span class="quiet-scene__mark quiet-scene__mark--top" aria-hidden="true"></span>
+      <span class="quiet-scene__mark quiet-scene__mark--bottom" aria-hidden="true"></span>
+      <article class="policy">
+        {{ content }}
+      </article>
+    </div>
   </main>
 
   <footer>
@@ -38,8 +44,8 @@
     <nav aria-label="Footer navigation">
       <a href="{{ '/#about' | relative_url }}">About</a>
       <a href="{{ '/#accessibility' | relative_url }}">Accessibility</a>
-      <a href="{{ '/changelog/' | relative_url }}">Changelog</a>
-      <a href="{{ '/roadmap/' | relative_url }}">Roadmap</a>
+      <a href="{{ '/changelog/' | relative_url }}">What's new</a>
+      <a href="{{ '/roadmap/' | relative_url }}">What's next</a>
       <a href="{{ '/privacy/' | relative_url }}" aria-current="page">Privacy</a>
       <a href="https://forms.gle/7ejUVJBdUaYoDytu6">Share feedback</a>
       <a href="mailto:aritr.g06@gmail.com">Email us</a>
