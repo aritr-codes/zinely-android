@@ -76,6 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   than stream-consumer ordering, eliminating the CI race tracked by issue #57.
 - Sending a mirrored photo across the fold now puts each half on the correct page. Before, both halves were
   mirrored in place, so the printed spread broke at the fold.
+- An Undo that jumps to another page no longer keeps something selected from the page you left. Before, the
+  element's actions stayed on screen and did nothing.
 
 ## [0.9.0-beta.4-r3] — 2026-08-31 — Readable dark-mode confirmations
 

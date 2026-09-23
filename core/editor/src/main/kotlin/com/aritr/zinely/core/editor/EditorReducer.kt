@@ -597,10 +597,12 @@ public object EditorReducer {
         // `undo()` captions `Rest` (`v2-bench.html:721`). Found by C9's return-to-Rest invariant, which is
         // the cross-package kind of defect no single package's review was scoped to see.
         //
-        // Filtered against the whole document rather than the current page: element ids are unique, page
-        // changes clear the selection anyway (`leavePage`), and an undo that navigates has already moved
-        // `currentPageIndex` by the time this is read.
-        val liveIds = doc.pages.asSequence().flatMap { it.elements.asSequence() }.map { it.id }.toSet()
+        // An undo that navigates is a page change, and page changes clear the selection (`leavePage`) —
+        // except that this one never goes through `leavePage`, so filter against the page it lands on: a
+        // selection made on the page being left names nothing there. Otherwise filter against the whole
+        // document (element ids are unique), which keeps a DeletePage undo's restored selection.
+        val liveIds = (if (nav) doc.pages[target!!].elements.asSequence()
+        else doc.pages.asSequence().flatMap { it.elements.asSequence() }).map { it.id }.toSet()
         val selection = carried.intersect(liveIds)
         val next = model.copy(
             document = doc,
