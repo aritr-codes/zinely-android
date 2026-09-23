@@ -75,13 +75,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
   than stream-consumer ordering, eliminating the CI race tracked by issue #57.
 - Sending a mirrored photo across the fold now puts each half on the correct page. Before, both halves were
-  mirrored in place, so the printed spread broke at the fold.
+  mirrored in place, so the printed spread broke at the fold. The fold warning stays hidden for a matched
+  pair and comes back if you later flip only one half.
 - An Undo that jumps to another page no longer keeps something selected from the page you left. Before, the
   element's actions stayed on screen and did nothing.
 - A picture with a see-through background, such as a logo or sticker PNG, now comes in on white. Before, the
   see-through parts turned black. Transparency still isn't kept: placed over a photo, it shows a white box.
 - On Android 7–9, a Save PDF that fails part-way no longer leaves an empty or broken file in Downloads.
 - A move or resize that ends exactly where it started no longer wipes Redo or adds an empty Undo step.
+
+### Known limitations
+
+- Transparency in imported pictures isn't kept: the see-through parts are flattened onto white when the
+  picture comes in. Exports and prints are right, because the paper is white. On the cream editor page,
+  though, a transparent logo shows as a faint white rectangle. Keeping transparency is future work.
 
 ## [0.9.0-beta.4-r3] — 2026-08-31 — Readable dark-mode confirmations
 
