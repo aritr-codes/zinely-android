@@ -2,6 +2,7 @@ package com.aritr.zinely.editor
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
@@ -9,6 +10,7 @@ import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -86,6 +88,36 @@ class ImportMasterDecoderTest {
         assertNotNull(master)
         assertEquals(80, master!!.widthPx)
         assertEquals(120, master.heightPx)
+    }
+
+    /**
+     * The master is a JPEG (ADR-023), which has no alpha. A PNG with a transparent background (a logo,
+     * a sticker, a cut-out) must come out on paper, not on black: a transparent pixel is paper, not ink
+     * (D-099) — and a page is always paper, since nothing constructs `Background.Solid`.
+     */
+    @Test
+    fun `decodeToMaster lays a transparent background onto paper white`() {
+        // Given a 40×40 PNG that is transparent except for an opaque red centre
+        val source = Bitmap.createBitmap(40, 40, Bitmap.Config.ARGB_8888)
+        source.eraseColor(Color.TRANSPARENT)
+        for (x in 15 until 25) for (y in 15 until 25) source.setPixel(x, y, Color.RED)
+        val bytes = ByteArrayOutputStream().also { source.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            .toByteArray()
+        source.recycle()
+        val uri = Uri.parse("content://media/picker/0/com.test.provider/media/5")
+        shadowOf(context.contentResolver).registerInputStreamSupplier(uri) { ByteArrayInputStream(bytes) }
+
+        // When the import-master is decoded
+        val master = decoder().decodeToMaster(uri)!!
+        val pixels = BitmapFactory.decodeByteArray(master.bytes, 0, master.bytes.size)
+
+        // Then the transparent corner is paper white and the opaque centre keeps its ink (JPEG-lossy)
+        val corner = pixels.getPixel(2, 2)
+        assertTrue("transparent corner must be near white, was #${Integer.toHexString(corner)}",
+            Color.red(corner) > 240 && Color.green(corner) > 240 && Color.blue(corner) > 240)
+        val centre = pixels.getPixel(20, 20)
+        assertTrue("opaque centre must stay red, was #${Integer.toHexString(centre)}",
+            Color.red(centre) > 200 && Color.green(centre) < 60 && Color.blue(centre) < 60)
     }
 
     @Test
