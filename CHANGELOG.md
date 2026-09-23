@@ -80,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   element's actions stayed on screen and did nothing.
 - A picture with a see-through background, such as a logo or sticker PNG, now lands on paper white. Before,
   the see-through parts turned black.
+- On Android 7–9, a Save PDF that fails part-way no longer leaves an empty or broken file in Downloads.
 
 ## [0.9.0-beta.4-r3] — 2026-08-31 — Readable dark-mode confirmations
 
