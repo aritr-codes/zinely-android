@@ -103,7 +103,7 @@ public class ImportMasterDecoder(private val contentResolver: ContentResolver) {
      *
      * A source with alpha is drawn onto paper white in that same single allocation: the JPEG master has
      * no alpha channel, and encoding a transparent pixel writes it as black — a transparent pixel is
-     * paper, not ink (D-099).
+     * paper, not ink, the same source-over-white composite `Photocopier.lumaOf` applies.
      */
     private fun normalise(src: Bitmap, orientation: Int): Bitmap {
         val matrix = Matrix()

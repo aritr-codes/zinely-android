@@ -93,7 +93,7 @@ class ImportMasterDecoderTest {
     /**
      * The master is a JPEG (ADR-023), which has no alpha. A PNG with a transparent background (a logo,
      * a sticker, a cut-out) must come out on paper, not on black: a transparent pixel is paper, not ink
-     * (D-099) — and a page is always paper, since nothing constructs `Background.Solid`.
+     * (as `Photocopier.lumaOf` already rules) — and a page is always paper, since nothing constructs `Background.Solid`.
      */
     @Test
     fun `decodeToMaster lays a transparent background onto paper white`() {
