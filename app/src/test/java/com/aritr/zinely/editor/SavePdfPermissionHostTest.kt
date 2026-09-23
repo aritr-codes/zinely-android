@@ -1,6 +1,8 @@
 package com.aritr.zinely.editor
 
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
@@ -26,6 +28,7 @@ import com.aritr.zinely.export.ExportSaved
 import com.aritr.zinely.export.SheetExporter
 import com.aritr.zinely.feature.editor.BenchBottomBarTestTag
 import com.aritr.zinely.feature.editor.ProofErrorPaneTestTag
+import com.aritr.zinely.feature.editor.ProofRetryTestTag
 import com.aritr.zinely.feature.editor.ProofSavePdfTestTag
 import com.aritr.zinely.feature.editor.ProofShareTestTag
 import com.aritr.zinely.render.android.AssetBytesSource
@@ -40,6 +43,7 @@ import dagger.hilt.android.testing.UninstallModules
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -51,6 +55,8 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowActivity
+import org.robolectric.util.ReflectionHelpers
+import org.robolectric.util.ReflectionHelpers.ClassParameter
 import java.util.Collections
 import java.util.UUID
 import javax.inject.Inject
@@ -63,7 +69,7 @@ import javax.inject.Singleton
  * Only the [SheetExporter] is faked. It records every export it is asked for, so each test asserts what
  * actually happened: whether a save ran, how many times, to which destination. That is what a maker sees.
  * The permission dialog is Robolectric's: [ShadowActivity.getLastRequestedPermission] is the request the
- * host made, and [HiltTestActivity.onRequestPermissionsResult] delivers the answer back through the
+ * host made, and the platform's `dispatchRequestPermissionsResult` delivers the answer back through the
  * Activity Result registry, which is how the real system answers too.
  *
  * Why the platform tree's default holds: Robolectric denies every runtime permission until one is granted,
@@ -128,6 +134,24 @@ class SavePdfPermissionHostTest {
         settle(300)
         assertEquals(emptyList<ExportDestination>(), exporter.destinations)
         assertSame("no second request without a tap", request, shadowOf(composeRule.activity).lastRequestedPermission)
+    }
+
+    @Test
+    fun `Try again after a denial asks again, and a grant then saves exactly once`() {
+        openProofOnFreshZine()
+        composeRule.onNodeWithTag(ProofSavePdfTestTag).performClick()
+        val denied = answerStoragePermission(granted = false)
+        awaitRealWork("the save error") {
+            composeRule.onAllNodesWithTag(ProofRetryTestTag).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithTag(ProofRetryTestTag).performClick()
+        val second = answerStoragePermission(granted = true)
+
+        assertNotSame("Try again must ask again, not save unasked", denied, second)
+        awaitRealWork("the retried save") { exporter.destinations.isNotEmpty() }
+        settle(300)
+        assertEquals(listOf(ExportDestination.DOWNLOADS), exporter.destinations)
     }
 
     @Test
@@ -198,7 +222,13 @@ class SavePdfPermissionHostTest {
         }
     }
 
-    /** Answers the host's pending request as the system dialog would, and returns that request. */
+    /**
+     * Answers the host's pending request as the system dialog would, and returns that request.
+     *
+     * The answer goes through the platform's own `Activity.dispatchRequestPermissionsResult`, as the system's
+     * does. Calling `onRequestPermissionsResult` directly would skip the step that clears the Activity's
+     * request-in-flight flag, and the platform then cancels the *next* request unasked, with an empty result.
+     */
     private fun answerStoragePermission(granted: Boolean): ShadowActivity.PermissionsRequest {
         composeRule.waitForIdle()
         val request = checkNotNull(shadowOf(composeRule.activity).lastRequestedPermission) {
@@ -209,11 +239,18 @@ class SavePdfPermissionHostTest {
                 shadowOf(composeRule.activity.application).grantPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
             val result = if (granted) PackageManager.PERMISSION_GRANTED else PackageManager.PERMISSION_DENIED
-            @Suppress("DEPRECATION")
-            composeRule.activity.onRequestPermissionsResult(
-                request.requestCode,
-                request.requestedPermissions,
-                IntArray(request.requestedPermissions.size) { result },
+            val answer = Intent()
+                .putExtra("android.content.pm.extra.REQUEST_PERMISSIONS_NAMES", request.requestedPermissions)
+                .putExtra(
+                    "android.content.pm.extra.REQUEST_PERMISSIONS_RESULTS",
+                    IntArray(request.requestedPermissions.size) { result },
+                )
+            ReflectionHelpers.callInstanceMethod<Unit>(
+                Activity::class.java,
+                composeRule.activity,
+                "dispatchRequestPermissionsResult",
+                ClassParameter.from(Int::class.javaPrimitiveType, request.requestCode),
+                ClassParameter.from(Intent::class.java, answer),
             )
         }
         return request

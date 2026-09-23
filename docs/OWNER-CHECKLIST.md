@@ -276,7 +276,7 @@ No AAB, no Play submission. PR #70 (Font removal) is **not** in it. Release note
 | ☐ | Samsung Pass 2 — *your* first-time reading | About opening; finding Licences & credits; the transparent PNG's white box on cream; overall sanity |
 | ☐ | TalkBack listen | About, Licences & credits, licence screen, Save PDF and Share |
 | ☐ | R-1 keystore backup (below) | Before any artifact is sent |
-| ☐ | **"Proceed with the beta.5 release"** | Tag `v0.9.0-beta.5`, GitHub pre-release, website download links. Owner approval only |
+| ☐ | **"Proceed with the beta.5 release"** | Tag `v0.9.0-beta.5`, GitHub pre-release, website + README + `website/changelog` + `website/roadmap` download links, tester package `docs/releases/0.9.0-beta.5.md`. Owner approval only |
 
 ### ☐ R-1 — Back up the keystore *(do this first)*
 [`RELEASING.md`](RELEASING.md) — *"No agent, script, or CI job can do this or verify it was done."* The

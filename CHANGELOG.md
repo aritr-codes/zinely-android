@@ -82,7 +82,7 @@ APK only.
 
 ### Fixed
 
-- On Android 7–9, **Save PDF** now asks for storage access the first time. Before, it never asked, so every
+- On Android 7–9, **Save PDF** now asks for storage access until you allow it. Before, it never asked, so every
   save on those versions failed with "Couldn’t make the PDF". If you decline, Zinely shows that same message
   and saves nothing; **Share** never needs this access. Android 10 and later are unchanged.
 - On Android 7–9, a Save PDF that fails part-way no longer leaves an empty or broken file in Downloads.
