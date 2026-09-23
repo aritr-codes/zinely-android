@@ -292,8 +292,11 @@ public object EditorReducer {
                 // Keep only ids the session actually snapshotted, so the command stays fully invertible
                 // (a foreign id in `after` would have no `before` entry to restore).
                 val after = intent.after.filterKeys { it in tx.before }
-                committing(model.copy(interaction = Interaction.Idle),
-                    TransformCommand(tx.pageIndex, tx.before, after))
+                val idle = model.copy(interaction = Interaction.Idle)
+                // A gesture that ends where it began (e.g. snapped back) changed nothing: close the
+                // session without an undo step, an autosave, or wiping Redo — as CommitReframe does.
+                if (after.all { (id, t) -> tx.before[id] == t }) Reduction(idle)
+                else committing(idle, TransformCommand(tx.pageIndex, tx.before, after))
             }
         }
         is Intent.CancelTransform -> {
