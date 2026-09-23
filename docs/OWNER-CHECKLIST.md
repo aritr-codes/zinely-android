@@ -74,9 +74,11 @@ has real-device evidence (5/5, SM-A176B / Android 16, 2026-08-25), all sixteen f
 and D-083/D-103 are closed. The owner completed the first-person TalkBack listen pass and physical print/fold
 checks on 2026-08-25; beta-cohort photocopier feedback remains ongoing evidence rather than a release gate.
 
-⚠ **Also true and not about this branch:** local `main` is **46 commits ahead of `origin/main` and
-diverged** — `git pull --ff-only` fails. *"Merge to main"* currently means merging into a `main` nobody
-else has seen.
+~~⚠ **Also true and not about this branch:** local `main` is **46 commits ahead of `origin/main` and
+diverged** — `git pull --ff-only` fails.~~ ✅ **No longer true (checked 2026-09-23):** local `main` and
+`origin/main` are the same commit (`72e620e`, PR #73's merge), and `git merge --ff-only origin/main`
+succeeds. Whether the 45 local-only commits described above were integrated or dropped was not
+re-verified here.
 
 ---
 
@@ -256,6 +258,26 @@ expose `stateDescription`** — so no dump I take substitutes for an ear.
 
 ## 3. Release & credentials
 
+### ☐ `0.9.0-beta.5` — the maintenance release (APK only)
+
+Scope, per the owner's 2026-09-23 decisions: stability fixes (PR #73), the Android 7–9 Save PDF permission
+request ([ADR-054 §8](DECISIONS.md#adr-054) amendment), the About maker's note with Licences & credits
+([ADR-116](DECISIONS.md#adr-116)/[ADR-117](DECISIONS.md#adr-117)), and the off-main-thread Reframe load.
+No AAB, no Play submission. PR #70 (Font removal) is **not** in it. Release notes:
+[CHANGELOG `0.9.0-beta.5`](../CHANGELOG.md).
+
+| ☐ | Gate | Note |
+|---|---|---|
+| ☑ | PR #73 stability fixes merged | `72e620e`, CI run `35858746779` green on `main` |
+| ☐ | Save PDF permission request merged | On branch `release/0.9.0-beta.5`; independent review GO |
+| ☐ | **Rule on "Don't ask again"** for the Android 7–9 storage prompt | After that choice, "Try again" has no visible effect and nothing points to Settings. Shipped as a Known Limitation unless you rule for copy + a Settings link |
+| ☐ | Android 7–9 Save PDF on an emulator or device | No API 24–28 image on this machine. Ask, grant, save twice, deny, Share, forced failure; no partial file in Downloads |
+| ☐ | Samsung Pass 1 | Update over r3 keeps library + backups; About → Licences & credits → licence with hardware Back and focus at each level; `uiautomator` dump; light mode; 1.8× text; Reframe with a 4096 px photo; flipped spread (Bench, Proof, Read, print + fold); transparent PNG import; Undo across pages; Save PDF; Share |
+| ☐ | Samsung Pass 2 — *your* first-time reading | About opening; finding Licences & credits; the transparent PNG's white box on cream; overall sanity |
+| ☐ | TalkBack listen | About, Licences & credits, licence screen, Save PDF and Share |
+| ☐ | R-1 keystore backup (below) | Before any artifact is sent |
+| ☐ | **"Proceed with the beta.5 release"** | Tag `v0.9.0-beta.5`, GitHub pre-release, website download links. Owner approval only |
+
 ### ☐ R-1 — Back up the keystore *(do this first)*
 [`RELEASING.md`](RELEASING.md) — *"No agent, script, or CI job can do this or verify it was done."* The
 passwords exist only in `keystore.properties` on this machine; they were generated in a shell and never
@@ -274,10 +296,10 @@ printed. Nothing in the repo or build output would reveal the backup is missing.
 | ☐ | Complete data-safety form, content rating, target-audience declarations | Legal attestations signed by a person; answers pre-drafted |
 | ☐ | Produce the feature graphic (1024×500) | *"The one asset with no source in this repository"* |
 | ☐ | Take store screenshots on a real device from a release build | — |
-| ☐ | Host the privacy policy at a public URL | Needs an account/domain you control |
+| ☑ | ~~Host the privacy policy at a public URL~~ | Done 2026-09-09 through GitHub Pages ([RELEASING §4.6](RELEASING.md#46-what-is-still-owed-before-submitting)) |
 
-### ☐ Repository state
-- ☐ Local `main` is **46 commits ahead of `origin/main`** and diverged (`git pull --ff-only` fails). Pre-existing work of yours; I have left it untouched and will keep leaving it untouched.
+### ☑ Repository state
+- ☑ ~~Local `main` is **46 commits ahead of `origin/main`** and diverged (`git pull --ff-only` fails).~~ Checked 2026-09-23: local `main` equals `origin/main` (`72e620e`).
 
 ---
 

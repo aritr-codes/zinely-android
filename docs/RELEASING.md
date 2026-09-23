@@ -180,7 +180,8 @@ document standing between them and irreversible data loss, and it reads as autho
 old tags (`git show v0.8.0:…/ProofScreen.kt`) rather than remembering.
 
 Play Store distribution is not in use yet. It would additionally need an upload key, a Play Console
-listing, a privacy policy, a content rating and a data-safety declaration.
+listing, a content rating and a data-safety declaration. (The privacy policy it also needs has been live
+since 2026-09-09; see §4.6.)
 
 ### Public GitHub distribution and website
 
@@ -204,8 +205,9 @@ from a developer's personal device library, even when it appears harmless.
 ## 4. Play Store — closed testing
 
 > Added 2026-07-24 for the first Play submission. §3 above remains the record for side-load
-> distribution; this section owns Play. **The build is unchanged** — the Play artifact is the same
-> code as `0.9.0-beta.1`, delivered as an App Bundle instead of an APK.
+> distribution; this section owns Play. It was written when the Play artifact was to be the
+> `0.9.0-beta.1` code as an App Bundle. That is no longer the plan: a first Play upload would be
+> whatever release build is current. `0.9.0-beta.5` is APK-only, and Play is still deferred.
 
 ### 4.1 The gate that is not code
 
@@ -232,9 +234,15 @@ the upload key** — Play then holds the app signing key and this one only prove
 Back it up exactly as §1 requires; losing the upload key is recoverable, losing an un-enrolled app
 signing key is not.
 
-`versionCode` does not need bumping for the first Play upload: nothing has been uploaded to Play, so
-`3` is free, and reusing it keeps the Play build honestly identified as the same build the side-load
-cohort received.
+**`versionCode`:** upload the current release build with its own `versionCode` (`10` for
+`0.9.0-beta.5`). The earlier advice here, to reuse `3` for a Play copy of beta.1, predates beta.2
+through beta.5 and no longer applies.
+
+⚠ **Check the bundle's signer before any upload.** The debug-signing gate in
+[app/build.gradle.kts](../app/build.gradle.kts) is attached to `packageRelease`, which is in the APK task
+graph only. `bundleRelease` goes through `signReleaseBundle` instead, so on a machine without the release
+key it would produce a debug-signed `.aab` with no error. Until the gate covers the bundle as well, run
+`jarsigner -verify -certs` on the `.aab` and confirm the release certificate.
 
 ### 4.3 The console checklist
 
@@ -261,6 +269,10 @@ cohort received.
 ```
 Make a printable zine on your phone. No account, no cloud, works offline.
 ```
+
+> ⚠ Drafted for `0.9.0-beta.1`. Re-check every line against the current build before any Play upload.
+> Its backup line was corrected on 2026-09-23, because `.zine` Backups now ship; the other lines were not
+> re-verified. The beta.1 release notes further down are a record of that build and stay as written.
 
 **Full description:**
 
@@ -290,8 +302,8 @@ Zinely's own private storage and nowhere else.
 
 BEFORE YOU START — THIS IS A BETA
 
-• There is no backup or restore yet. Your zines live only on this phone. Uninstalling Zinely
-  deletes them. Save a PDF of anything you care about.
+• Your zines live only on this phone, and uninstalling Zinely deletes them. Use Backups on your
+  shelf to save them to a file you choose first.
 • Print at 100% or "Actual size". A printer's "fit to page" shifts everything and breaks the
   fold alignment.
 • Text renders in the bundled Inter family only. Non-Latin scripts — Bengali, Hindi, CJK — and

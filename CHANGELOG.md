@@ -16,9 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added the owner-approved, app-specific Aastra maker's note to the canonical About design and Android source.
-  Paper preference, privacy and version remain on the main screen. Complete font notices now sit behind one compact
-  `Licences & credits` row, so legal detail stays available without interrupting the story. Not yet released.
 - Added an HTML-only A/B experiment for evaluating removal of the unavailable selected-text Font action. It leaves
   the canonical design and Android app unchanged; first-time comparison evidence and an owner decision remain gates.
 - Added full Reframe photo-overlay golden coverage for centred Fill, representative panned/zoomed framing,
@@ -34,11 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rewrote public update pages in plain language, refreshed their status, and moved homepage accessibility copy
-  from standard names to practical benefits. Expanded the Aastra origin story and prepared an HTML-only app About
-  opening under ADR-116. No Android behavior, download, legal text or release artifact changed.
+  from standard names to practical benefits, and expanded the Aastra origin story. No download, legal text or
+  release artifact changed.
 - Reopened creative tools for a scoped feasibility assessment, not a release commitment: fonts, Art, frames,
   photo transparency, shaped cutouts and crop improvements. The roadmap separates their relative effort.
-
 - Gave the public homepage a more tactile paper presentation and stronger independent voice, with an interactive
   print-order comparison, optional zine ideas, folding progress, and small native-disclosure surprises. All work
   without essential hover or motion; product claims, download links, and Android behavior remain unchanged.
@@ -48,9 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Evaluated the proposed long-press element menu and retained the visible selected-element toolbar, contextual
   guidance and accessibility actions. No app behavior or published APK changed; a post-fix first-time task round
   demonstrating repeated discoverability failure remains the threshold for reconsidering another menu.
-- Reframe now reads image dimensions and decodes its display bitmap together off the main thread. Large masters
-  use a preview capped at 2048 px on the longest edge while crop, Flip, commit, preview and export geometry retain
-  the master's full intrinsic dimensions. This is a repository change only; no published APK contains it yet.
 - Refined the website fold guide into a deliberate one-step-at-a-time paper desk, with pause/replay,
   static checkpoints, keyboard controls, stable instruction space, and all-steps/print/no-JS fallback.
 - Linked the owner-published Google feedback form, retained email for screenshots, and introduced Aastra
@@ -62,33 +55,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reconciled the roadmap against current code, issues and releases: distinguish the conditional Google Play
   publication plan and approved Reframe investigation from uncommitted app improvements; keep completed
   website work in the public changelog. No Android behavior or public APK changes in this website slice.
-
 - Replaced the standalone website Accessibility page with a short accessibility statement and contact route
   in the home-page About section. Accessibility remains a site-wide implementation requirement rather than a
   primary navigation destination.
-- Simplified the in-app About surface by removing the duplicated product story. It still provides the
-  default-paper preference, bundled-font licences, offline/privacy assurance, and installed app version.
 
 ### Fixed
 
 - Restored the Reframe accessibility regression that proves a measurable but undisplayable photo keeps every
   adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
   than stream-consumer ordering, eliminating the CI race tracked by issue #57.
+
+## [0.9.0-beta.5] — 2026-09-23 — Steadier editing and saving
+
+This maintenance release carries `versionCode 10`. It installs over earlier release-signed beta builds
+without uninstalling, and it does not change the saved-document or backup format. It is published as an
+APK only.
+
+### Changed
+
+- **About** now opens with a short note from Aastra, the two people behind Zinely, in place of the earlier
+  tagline and introduction. The font licence notices moved behind one **Licences & credits** row, a tap
+  away. Your default paper, the offline promise and the app version stay on the main About screen.
+- Reframe opens a large photo more smoothly. The photo now loads off the main thread, and the on-screen
+  preview is capped at 2048 px on its longest edge. Crop, Flip and the printed result still use the
+  full-size photo.
+
+### Fixed
+
+- On Android 7–9, **Save PDF** now asks for storage access the first time. Before, it never asked, so every
+  save on those versions failed with "Couldn’t make the PDF". If you decline, Zinely shows that same message
+  and saves nothing; **Share** never needs this access. Android 10 and later are unchanged.
+- On Android 7–9, a Save PDF that fails part-way no longer leaves an empty or broken file in Downloads.
 - Sending a mirrored photo across the fold now puts each half on the correct page. Before, both halves were
   mirrored in place, so the printed spread broke at the fold. The fold warning stays hidden for a matched
   pair and comes back if you later flip only one half.
 - An Undo that jumps to another page no longer keeps something selected from the page you left. Before, the
   element's actions stayed on screen and did nothing.
 - A picture with a see-through background, such as a logo or sticker PNG, now comes in on white. Before, the
-  see-through parts turned black. Transparency still isn't kept: placed over a photo, it shows a white box.
-- On Android 7–9, a Save PDF that fails part-way no longer leaves an empty or broken file in Downloads.
+  see-through parts turned black.
 - A move or resize that ends exactly where it started no longer wipes Redo or adds an empty Undo step.
 
 ### Known limitations
 
 - Transparency in imported pictures isn't kept: the see-through parts are flattened onto white when the
   picture comes in. Exports and prints are right, because the paper is white. On the cream editor page,
-  though, a transparent logo shows as a faint white rectangle. Keeping transparency is future work.
+  though, a transparent logo shows as a faint white rectangle, and placed over a photo it shows a white box.
+  Keeping transparency is future work.
+- On Android 7–9, if you decline storage access and ask Android not to ask again, Save PDF keeps showing
+  "Couldn’t make the PDF" until you allow storage for Zinely in the phone's settings. Share still works.
+- Replaced and deleted photo assets are retained; app storage is not reclaimed yet.
+- Font choice remains unavailable. Unsupported print scripts are kept and warned about but do not print.
+- Zinely saves the PDF; printing happens in the phone's PDF or print app.
 
 ## [0.9.0-beta.4-r3] — 2026-08-31 — Readable dark-mode confirmations
 

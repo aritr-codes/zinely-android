@@ -12,6 +12,15 @@ the earlier jargon-forward title and generic introduction; the four-section D-07
 row near the bottom. Typeface names and complete local notices move to a child screen. Decorative role blurbs
 are retired. This supersedes the earlier direct three-card font section without removing any licence access.
 
+**Implementation status · 2026-09-23 (beta.5):** the 2026-09-16 hierarchy is implemented in Compose (landed in
+2cce221) and ships in `0.9.0-beta.5`. Of the [Compose acceptance gate](#compose-acceptance-gate), the automated
+items have evidence: `ColophonScreenTest` (Back/focus through licence → credits → About → Shelf, the paper
+preference, licence text and its failure state, 48dp Back) and `ColophonGoldenTest` (About and credits, light,
+dark and maximum font scale), verified with `verifyRoborazziDebug --rerun-tasks`. There is no golden of a
+licence screen and no maximum-font-scale dark golden of the credits screen. The platform `AccessibilityNodeInfo`
+pass, pixel parity and both device passes have **not** been done for the credits and licence screens. The only
+device record (2026-09-16) predates the credits screen, so acceptance stays open.
+
 This freeze resolves where Zinely states its privacy promise and where the product's small amount of
 configuration belongs. It does not authorise Compose implementation by itself; production work still
 follows the HTML-first workflow in [`CLAUDE.md`](../../CLAUDE.md#html-first-ui-workflow-mandatory).
