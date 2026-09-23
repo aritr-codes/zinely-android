@@ -69,6 +69,7 @@ internal fun imageSpreadInnerEdge(
     val partner = pages.getOrNull(partnerIndex)?.elements?.filterIsInstance<ImageElement>()?.firstOrNull { candidate ->
         candidate.assetId == selected.assetId && candidate.fit == Fit.FIT &&
             candidate.flippedHorizontally == selected.flippedHorizontally &&
+            candidate.flippedVertically == selected.flippedVertically &&
             candidate.transform.isFullPage(pageSizePt) &&
             if (holdsLeftHalf) selected.crop.right.near(0.5) && candidate.crop.left.near(0.5)
             else selected.crop.left.near(0.5) && candidate.crop.right.near(0.5)

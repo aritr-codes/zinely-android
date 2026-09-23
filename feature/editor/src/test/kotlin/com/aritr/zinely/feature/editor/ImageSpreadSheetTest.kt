@@ -97,6 +97,20 @@ class ImageSpreadSheetTest {
         assertEquals(SpreadInnerEdge.LEFT, imageSpreadInnerEdge(after.document.pages, 2, right, size))
     }
 
+    /** Turning one half upside down afterwards breaks the seam, so the cue must come back. */
+    @Test
+    fun refuses_a_pair_whose_halves_disagree_on_the_top_bottom_flip() {
+        val left = ImageElement("left", full, assetId = "asset", crop = Crop(0.0, 0.1, 0.5, 0.9), fit = Fit.FIT)
+        val right = ImageElement(
+            "right", full, assetId = "asset", crop = Crop(0.5, 0.1, 1.0, 0.9), fit = Fit.FIT,
+            flippedVertically = true,
+        )
+        val pages = pages(page1 = left, page2 = right)
+
+        assertNull(imageSpreadInnerEdge(pages, 1, left, size))
+        assertNull(imageSpreadInnerEdge(pages, 2, right, size))
+    }
+
     private fun pages(page1: ImageElement, page2: ImageElement): List<Page> =
         List(8) { index ->
             val elements = when (index) {
