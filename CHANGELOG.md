@@ -74,6 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restored the Reframe accessibility regression that proves a measurable but undisplayable photo keeps every
   adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
   than stream-consumer ordering, eliminating the CI race tracked by issue #57.
+- Sending a mirrored photo across the fold now puts each half on the correct page. Before, both halves were
+  mirrored in place, so the printed spread broke at the fold.
 
 ## [0.9.0-beta.4-r3] — 2026-08-31 — Readable dark-mode confirmations
 

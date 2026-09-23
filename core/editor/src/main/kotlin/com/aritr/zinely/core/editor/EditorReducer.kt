@@ -240,8 +240,12 @@ public object EditorReducer {
                 val partnerBack = (partnerPage.elements.minOfOrNull { it.zIndex } ?: 0).let {
                     if (it == Int.MIN_VALUE) it else it - 1
                 }
-                val sourceCrop = if (pair.sourceIsLeft) leftCrop else rightCrop
-                val partnerCrop = if (pair.sourceIsLeft) rightCrop else leftCrop
+                // A horizontal flip mirrors each half inside its own box *after* the crop picks the
+                // source region (ADR-113), so a flipped photo reads [mirror(right) | mirror(left)]
+                // across the spread: the left page needs the source's right half.
+                val sourceTakesLeft = pair.sourceIsLeft != source.flippedHorizontally
+                val sourceCrop = if (sourceTakesLeft) leftCrop else rightCrop
+                val partnerCrop = if (sourceTakesLeft) rightCrop else leftCrop
                 val sourceAfter = source.copy(
                     transform = fullPage,
                     zIndex = sourceBack,
