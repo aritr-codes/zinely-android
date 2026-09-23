@@ -197,6 +197,35 @@ class EditorReviewFixesTest {
         assertTrue(r.guides.isEmpty())
     }
 
+    /**
+     * Document-global undo navigates to the page its command touched. A selection made on the page the
+     * maker was on must not ride along: it would name an element on another page, so the bar shows
+     * verbs for it while every verb (which acts on the current page) silently does nothing.
+     */
+    @Test
+    fun `Undo that navigates to another page drops a selection from the page it left`() {
+        val start = model(listOf(pageOf(0, txt("a")), pageOf(1, txt("b"))), current = 0, selection = setOf("a"))
+        val nudged = EditorReducer.reduce(start, Intent.Nudge(PtPoint(1.0, 0.0))).model
+        val onPageTwo = EditorReducer.reduce(EditorReducer.reduce(nudged, Intent.GoToPage(1)).model, Intent.Select("b")).model
+        assertEquals(setOf("b"), onPageTwo.selection)
+
+        val undone = EditorReducer.reduce(onPageTwo, Intent.Undo).model
+
+        assertEquals(0, undone.currentPageIndex)
+        assertTrue(undone.selection.isEmpty())
+    }
+
+    @Test
+    fun `Undo on the current page keeps a live selection`() {
+        val start = model(listOf(pageOf(0, txt("a"), txt("c", x = 50.0))), selection = setOf("a"))
+        val nudged = EditorReducer.reduce(start, Intent.Nudge(PtPoint(1.0, 0.0))).model
+        val reselected = EditorReducer.reduce(nudged, Intent.Select("c")).model
+
+        val undone = EditorReducer.reduce(reselected, Intent.Undo).model
+
+        assertEquals(setOf("c"), undone.selection)
+    }
+
     @Test
     fun `Undo of DeletePage restores the prior selection`() {
         val m = model(listOf(pageOf(0, txt("a")), pageOf(1, txt("b"))), current = 1, selection = setOf("b"))

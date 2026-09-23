@@ -126,7 +126,7 @@ class ReframeA11yTest {
         val id = imageId(s)
         render(s)
         composeRule.onNodeWithTag("$ElementNodeTagPrefix$id").invokeCustomAction("Reframe photo")
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
 
         assertTrue("custom action opened the session", s.uiState.value.interaction is Interaction.Reframing)
         composeRule.onNodeWithTag(ReframeControlsTestTag).assertIsDisplayed()
@@ -139,7 +139,7 @@ class ReframeA11yTest {
         render(s)
         // First bake a real reframe (zoom) so there is something to reset.
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
         composeRule.onNodeWithContentDescription("Zoom in").performClick()
         composeRule.onNodeWithContentDescription("Done reframing").performClick()
         composeRule.waitForIdle()
@@ -158,7 +158,7 @@ class ReframeA11yTest {
         val id = imageId(s)
         render(s, coachSeen = false)
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
 
         assertEquals(
             "Reframing photo. Drag to reposition, pinch to zoom, or use the on-screen move and zoom " +
@@ -174,7 +174,7 @@ class ReframeA11yTest {
         val id = imageId(s)
         render(s)
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
 
         composeRule.onNodeWithContentDescription("Zoom in").performClick()
         composeRule.waitForIdle()
@@ -204,7 +204,7 @@ class ReframeA11yTest {
             loader = reframeTestPhotoMeasurableOnlyLoader(),
         )
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
 
         announced.clear() // drop the session-entry announcement; we are testing the verbs
         listOf(
@@ -234,7 +234,7 @@ class ReframeA11yTest {
         val id = imageId(s)
         render(s)
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
 
         // Zoom in first to give the photo somewhere to go. This fixture's photo is sized to the element's
         // own box aspect, so at 100% Fill the crop spans the whole image and the pan is clamped to zero on
@@ -272,7 +272,7 @@ class ReframeA11yTest {
         val id = imageId(s)
         render(s)
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
 
         // A fresh Fill sits at the zoom floor, and this photo matches its frame's aspect, so the cover crop
         // already spans the image: only "zoom in" can do anything at all.
@@ -309,7 +309,7 @@ class ReframeA11yTest {
         val id = imageId(s)
         render(s)
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
 
         announced.clear() // drop the session-entry line; we are testing the refusal
         composeRule.onNodeWithTag(EditorCanvasTestTag).performKeyInput { pressKey(Key.DirectionLeft) }
@@ -347,7 +347,7 @@ class ReframeA11yTest {
         val id = imageId(s)
         render(s)
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
 
         // Arrow + zoom via the hardware keyboard mutate the draft (doc untouched mid-session).
         composeRule.onNodeWithTag(EditorCanvasTestTag).performKeyInput { pressKey(Key.DirectionRight) }
@@ -363,7 +363,7 @@ class ReframeA11yTest {
 
         // Re-open and Escape: writes nothing.
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
         val beforeCrop = image(s).crop
         composeRule.onNodeWithTag(EditorCanvasTestTag).performKeyInput { pressKey(Key.DirectionLeft) }
         composeRule.onNodeWithTag(EditorCanvasTestTag).performKeyInput { pressKey(Key.Escape) }

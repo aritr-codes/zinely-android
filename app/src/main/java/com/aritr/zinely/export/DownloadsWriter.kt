@@ -51,8 +51,8 @@ internal class DownloadsWriter(
      * Writes [body]'s bytes to Downloads as a copy named from [title] with extension [ext] and type
      * [mime]. Returns the exact durable item and its final display name — **both** paths resolve collisions:
      * the legacy path appends its own `" (N)"` suffix, and the API 29+ path reads back the `DISPLAY_NAME`
-     * MediaStore chose. Throws on IO/MediaStore failure; the API 29+ path removes its pending row first, so
-     * Downloads is never left holding a partial file.
+     * MediaStore chose. Throws on IO/MediaStore failure; each path removes its partial output first (the
+     * pending row, or the legacy file), so Downloads is never left holding a partial file.
      */
     @SuppressLint("NewApi") // requiresLegacyWrite(SDK_INT) is the version guard around the API 29+ branch.
     fun write(title: String, ext: String, mime: String, body: (OutputStream) -> Unit): DownloadedFile =
@@ -103,7 +103,14 @@ internal class DownloadsWriter(
             .apply { mkdirs() }
         val name = ExportNaming.nextAvailableName(title, ext) { File(dir, it).exists() }
         val file = File(dir, name)
-        FileOutputStream(file).use(body)
+        try {
+            FileOutputStream(file).use(body)
+        } catch (t: Throwable) {
+            // Mirror the MediaStore branch: a failed render (e.g. OOM on the sheet) must not leave a
+            // partial file in the user's Downloads. Best-effort, and never masks the original cause.
+            runCatching { file.delete() }
+            throw t
+        }
         MediaScannerConnection.scanFile(context, arrayOf(file.absolutePath), arrayOf(mime), null)
         return DownloadedFile(
             displayName = name,

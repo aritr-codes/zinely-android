@@ -240,8 +240,12 @@ public object EditorReducer {
                 val partnerBack = (partnerPage.elements.minOfOrNull { it.zIndex } ?: 0).let {
                     if (it == Int.MIN_VALUE) it else it - 1
                 }
-                val sourceCrop = if (pair.sourceIsLeft) leftCrop else rightCrop
-                val partnerCrop = if (pair.sourceIsLeft) rightCrop else leftCrop
+                // A horizontal flip mirrors each half inside its own box *after* the crop picks the
+                // source region (ADR-113), so a flipped photo reads [mirror(right) | mirror(left)]
+                // across the spread: the left page needs the source's right half.
+                val sourceTakesLeft = pair.sourceIsLeft != source.flippedHorizontally
+                val sourceCrop = if (sourceTakesLeft) leftCrop else rightCrop
+                val partnerCrop = if (sourceTakesLeft) rightCrop else leftCrop
                 val sourceAfter = source.copy(
                     transform = fullPage,
                     zIndex = sourceBack,
@@ -288,8 +292,11 @@ public object EditorReducer {
                 // Keep only ids the session actually snapshotted, so the command stays fully invertible
                 // (a foreign id in `after` would have no `before` entry to restore).
                 val after = intent.after.filterKeys { it in tx.before }
-                committing(model.copy(interaction = Interaction.Idle),
-                    TransformCommand(tx.pageIndex, tx.before, after))
+                val idle = model.copy(interaction = Interaction.Idle)
+                // A gesture that ends where it began (e.g. snapped back) changed nothing: close the
+                // session without an undo step, an autosave, or wiping Redo — as CommitReframe does.
+                if (after.all { (id, t) -> tx.before[id] == t }) Reduction(idle)
+                else committing(idle, TransformCommand(tx.pageIndex, tx.before, after))
             }
         }
         is Intent.CancelTransform -> {
@@ -593,10 +600,12 @@ public object EditorReducer {
         // `undo()` captions `Rest` (`v2-bench.html:721`). Found by C9's return-to-Rest invariant, which is
         // the cross-package kind of defect no single package's review was scoped to see.
         //
-        // Filtered against the whole document rather than the current page: element ids are unique, page
-        // changes clear the selection anyway (`leavePage`), and an undo that navigates has already moved
-        // `currentPageIndex` by the time this is read.
-        val liveIds = doc.pages.asSequence().flatMap { it.elements.asSequence() }.map { it.id }.toSet()
+        // An undo that navigates is a page change, and page changes clear the selection (`leavePage`) —
+        // except that this one never goes through `leavePage`, so filter against the page it lands on: a
+        // selection made on the page being left names nothing there. Otherwise filter against the whole
+        // document (element ids are unique), which keeps a DeletePage undo's restored selection.
+        val liveIds = (if (nav) doc.pages[target!!].elements.asSequence()
+        else doc.pages.asSequence().flatMap { it.elements.asSequence() }).map { it.id }.toSet()
         val selection = carried.intersect(liveIds)
         val next = model.copy(
             document = doc,

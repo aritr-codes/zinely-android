@@ -131,6 +131,42 @@ class ImageSpreadReducerTest {
         assertEquals(0.5, pageOne.crop.left)
     }
 
+    /**
+     * A horizontal flip is the innermost reflection inside each half's box, applied *after* the crop
+     * picks its source region (ADR-113). So a mirrored photo reads across the spread as
+     * [mirror(right half) | mirror(left half)]: the left page must carry the right-half crop. Handing
+     * each page its own side's crop printed [mirror(left) | mirror(right)] — both halves mirrored in
+     * place, with a visible break at the seam.
+     */
+    @Test
+    fun `a horizontally flipped photo swaps which half lands on each page`() {
+        val start = model(sourcePage = 1, source = image().copy(flippedHorizontally = true))
+        val after = EditorReducer.reduce(
+            start,
+            Intent.MakeImageSpread("photo", photoAspect = 16.0 / 9.0, pageSizePt = pageSize),
+        ).model
+        val left = after.document.pages[1].elements.filterIsInstance<ImageElement>().single()
+        val right = after.document.pages[2].elements.filterIsInstance<ImageElement>().single()
+
+        assertTrue(left.flippedHorizontally && right.flippedHorizontally)
+        assertEquals(0.5, left.crop.left, "the left page shows the mirrored photo's left = the source's right half")
+        assertEquals(0.5, right.crop.right, "the right page shows the source's left half")
+    }
+
+    @Test
+    fun `a vertical flip does not change which half lands on each page`() {
+        val start = model(sourcePage = 1, source = image().copy(flippedVertically = true))
+        val after = EditorReducer.reduce(
+            start,
+            Intent.MakeImageSpread("photo", photoAspect = 16.0 / 9.0, pageSizePt = pageSize),
+        ).model
+        val left = after.document.pages[1].elements.filterIsInstance<ImageElement>().single()
+        val right = after.document.pages[2].elements.filterIsInstance<ImageElement>().single()
+
+        assertEquals(0.5, left.crop.right)
+        assertEquals(0.5, right.crop.left)
+    }
+
     @Test
     fun `invalid aspect missing image and missing partner are no-ops`() {
         val start = model(sourcePage = 3)

@@ -117,7 +117,7 @@ class ReframeSessionTest {
         val s = store()
         render(s)
         s.dispatch(Intent.DoubleTapAt(PtPoint(100.0, 90.0))) // inside the 50..150 × 50..130 box
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
 
         assertTrue("Reframe session open", s.uiState.value.interaction is Interaction.Reframing)
         composeRule.onNodeWithTag(ReframeControlsTestTag).assertIsDisplayed()
@@ -173,6 +173,9 @@ class ReframeSessionTest {
         val id = imageId(s)
         render(s, AssetBytesSource { null }) // nothing to measure, nothing to show
         s.dispatch(Intent.BeginReframe(id))
+        // Refusal lands after the readability read on Dispatchers.IO, which waitForIdle does not cover.
+        composeRule.waitForIdle()
+        composeRule.waitUntil(timeoutMillis = 5_000) { s.uiState.value.interaction is Interaction.Idle }
         composeRule.waitForIdle()
 
         assertTrue("the session must be declined", s.uiState.value.interaction is Interaction.Idle)
@@ -223,7 +226,7 @@ class ReframeSessionTest {
             loader = reframeTestPhotoMeasurableOnlyLoader(),
         )
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
 
         composeRule.onNodeWithContentDescription("Zoom in").performClick()
         composeRule.onNodeWithContentDescription("Zoom in").performClick()
@@ -252,7 +255,7 @@ class ReframeSessionTest {
         val id = imageId(s)
         render(s)
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
 
         composeRule.onNodeWithContentDescription("Zoom in").performClick()
         composeRule.onNodeWithContentDescription("Zoom in").performClick()
@@ -278,7 +281,7 @@ class ReframeSessionTest {
         val id = imageId(s)
         render(s)
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
 
         composeRule.onNodeWithContentDescription("Zoom in").performClick()
         composeRule.onNodeWithContentDescription("Cancel reframing").performClick()
@@ -295,7 +298,7 @@ class ReframeSessionTest {
         val id = imageId(s)
         render(s)
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
 
         composeRule
             .onNodeWithContentDescription("Whole photo", useUnmergedTree = true)
@@ -313,7 +316,7 @@ class ReframeSessionTest {
         val id = imageId(s)
         render(s)
         s.dispatch(Intent.BeginReframe(id))
-        composeRule.waitForIdle()
+        composeRule.awaitReframeControls()
         composeRule.onNodeWithContentDescription("Zoom in").performClick()
         composeRule.onNodeWithTag(ReframeControlsTestTag).assertIsDisplayed()
 
