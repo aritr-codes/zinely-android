@@ -63,14 +63,18 @@ import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import com.aritr.zinely.ui.theme.ZinelyV21Press
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Intent
 import com.aritr.zinely.MainActivity
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
@@ -86,6 +90,7 @@ import com.aritr.zinely.export.ExportSaved
 import com.aritr.zinely.export.ExportUiState
 import kotlinx.coroutines.flow.MutableSharedFlow
 import com.aritr.zinely.export.ExportViewModel
+import com.aritr.zinely.export.requiresLegacyWrite
 import com.aritr.zinely.home.HomeUiState
 import com.aritr.zinely.home.HomeViewModel
 import com.aritr.zinely.home.LibraryBackupRestorePickerRequest
@@ -381,6 +386,35 @@ private fun ProofDestination(
             // The Proof-local paper choice (ADR-052): seeded from the document, threaded into the export as
             // a copy so `export == what you see` without writing through the single-writer store (ADR-026).
             val paper = rememberSaveable { mutableStateOf(uiState.document.paperSize) }
+            val exportTo: (ExportDestination) -> Unit = { destination ->
+                exportViewModel.export(
+                    uiState.document.copy(paperSize = paper.value),
+                    state.pageSizePt,
+                    state.imageBytes,
+                    ExportFormat.PDF,
+                    destination,
+                )
+            }
+            // ADR-054 §8. On Android 7–9 Save PDF writes a public Downloads file, which needs the runtime
+            // storage grant. The host asks at the tap because only the host has an Activity; the VM and
+            // DownloadsWriter never learn that permissions exist. A grant continues this one save; a denial
+            // shows the same error a failed save does, and nothing retries by itself.
+            val storagePermission = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission(),
+            ) { granted ->
+                if (granted) exportTo(ExportDestination.DOWNLOADS)
+                else exportViewModel.couldNotStart(ExportDestination.DOWNLOADS)
+            }
+            val needsStoragePermission: (ExportDestination) -> Boolean = { destination ->
+                needsLegacyStoragePermission(
+                    destination,
+                    Build.VERSION.SDK_INT,
+                    granted = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    ) == PackageManager.PERMISSION_GRANTED,
+                )
+            }
             ProofScreen(
                 // The `zineName` this used to pass was `Copy.Nav.ZINE_NAME_FALLBACK` — a placeholder,
                 // because the real title lives in Room project metadata (ADR-042) and never reached the
@@ -390,13 +424,12 @@ private fun ProofDestination(
                 paper = paper.value,
                 onPaperSelected = { paper.value = it },
                 onExportPdf = { target ->
-                    exportViewModel.export(
-                        uiState.document.copy(paperSize = paper.value),
-                        state.pageSizePt,
-                        state.imageBytes,
-                        ExportFormat.PDF,
-                        target.toDestination(),
-                    )
+                    val destination = target.toDestination()
+                    if (needsStoragePermission(destination)) {
+                        storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    } else {
+                        exportTo(destination)
+                    }
                 },
                 // Single-flight, but named: WHICH button is rendering, not merely that one is. Both
                 // controls still go non-interactive (the VM drops a concurrent tap, so an enabled button
@@ -408,9 +441,13 @@ private fun ProofDestination(
                 // that failed, so "Try again" is a promise the screen can keep.
                 failedTarget = (exportState as? ExportUiState.Error)?.destination?.toTarget(),
                 onRetryExport = {
+                    // A Save PDF that failed for want of the grant asks again, through the same gate.
+                    val failed = (exportState as? ExportUiState.Error)?.destination
                     // ⚠ No `dismissError()` here. It would clear the very state `retry` reads the
                     // destination from — and `export` overwrites Error with Working by itself.
-                    exportViewModel.retry(
+                    if (failed != null && needsStoragePermission(failed)) {
+                        storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    } else exportViewModel.retry(
                         uiState.document.copy(paperSize = paper.value),
                         state.pageSizePt,
                         state.imageBytes,
@@ -492,6 +529,14 @@ internal fun ExportDestination.toTarget(): ProofExportTarget = when (this) {
     ExportDestination.TRANSPORT -> ProofExportTarget.SEND
     ExportDestination.DOWNLOADS -> ProofExportTarget.SAVE
 }
+
+/**
+ * Whether a Proof export must first ask for `WRITE_EXTERNAL_STORAGE` (ADR-054 §8). Only Save PDF, only on
+ * API 24–28 (the legacy public-Downloads file path), and only while the grant is missing. Share writes the
+ * app's own cache and API 29+ saves through MediaStore, so neither ever asks.
+ */
+internal fun needsLegacyStoragePermission(destination: ExportDestination, sdkInt: Int, granted: Boolean): Boolean =
+    destination == ExportDestination.DOWNLOADS && requiresLegacyWrite(sdkInt) && !granted
 
 // ---------------------------------------------------------------------------------------------
 // The two boot states, in V2.1. Both the editor and the Proof boot the SAME EditorViewModel and so
