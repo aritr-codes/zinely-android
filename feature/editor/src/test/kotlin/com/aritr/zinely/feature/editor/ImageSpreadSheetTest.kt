@@ -73,6 +73,30 @@ class ImageSpreadSheetTest {
         assertEquals(SpreadInnerEdge.RIGHT, imageSpreadInnerEdge(after.document.pages, 7, left, size))
     }
 
+    /** A flipped spread swaps which half each page holds (ADR-113); the fold cue must still recognise it. */
+    @Test
+    fun recognises_the_pair_the_reducer_writes_for_a_flipped_photo() {
+        val source = ImageElement(
+            "photo", Transform(10.0, 10.0, 40.0, 50.0), assetId = "asset", flippedHorizontally = true,
+        )
+        val document = ZineDocument(
+            format = ZineFormat.SINGLE_SHEET_8,
+            paperSize = PaperSize.LETTER,
+            pages = List(8) { index ->
+                Page(index = index, role = PageRole.INTERIOR, elements = if (index == 1) listOf(source) else emptyList())
+            },
+        )
+        val after = EditorReducer.reduce(
+            EditorModel(document = document, currentPageIndex = 1, selection = setOf(source.id)),
+            Intent.MakeImageSpread(source.id, photoAspect = 1080.0 / 2340.0, pageSizePt = size),
+        ).model
+        val left = after.document.pages[1].elements.single() as ImageElement
+        val right = after.document.pages[2].elements.single() as ImageElement
+
+        assertEquals(SpreadInnerEdge.RIGHT, imageSpreadInnerEdge(after.document.pages, 1, left, size))
+        assertEquals(SpreadInnerEdge.LEFT, imageSpreadInnerEdge(after.document.pages, 2, right, size))
+    }
+
     private fun pages(page1: ImageElement, page2: ImageElement): List<Page> =
         List(8) { index ->
             val elements = when (index) {

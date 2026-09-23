@@ -63,10 +63,14 @@ internal fun imageSpreadInnerEdge(
         7 -> 0 to true
         else -> return null
     }
+    // A horizontally flipped pair is mirrored inside each box after the crop (ADR-113), so the left
+    // page carries the source's right half — the same swap MakeImageSpread writes.
+    val holdsLeftHalf = sourceIsLeft != selected.flippedHorizontally
     val partner = pages.getOrNull(partnerIndex)?.elements?.filterIsInstance<ImageElement>()?.firstOrNull { candidate ->
         candidate.assetId == selected.assetId && candidate.fit == Fit.FIT &&
+            candidate.flippedHorizontally == selected.flippedHorizontally &&
             candidate.transform.isFullPage(pageSizePt) &&
-            if (sourceIsLeft) selected.crop.right.near(0.5) && candidate.crop.left.near(0.5)
+            if (holdsLeftHalf) selected.crop.right.near(0.5) && candidate.crop.left.near(0.5)
             else selected.crop.left.near(0.5) && candidate.crop.right.near(0.5)
     } ?: return null
     if (!selected.crop.top.near(partner.crop.top) || !selected.crop.bottom.near(partner.crop.bottom)) return null
