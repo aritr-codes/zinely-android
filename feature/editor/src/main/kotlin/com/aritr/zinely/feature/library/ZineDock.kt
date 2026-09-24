@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.ui.a11y.screenReaderFocus
 import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.components.zinelyV21Frame
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
@@ -161,7 +162,12 @@ private fun QuietAction(action: ZineDockSecondaryAction) {
         text = action.label,
         modifier = Modifier
             .then(
-                if (action.focusRequester != null) Modifier.focusRequester(action.focusRequester) else Modifier,
+                if (action.focusRequester != null) {
+                    // Focus returns here after About or Backups closes; under TalkBack that needs touch-mode focus.
+                    Modifier.focusRequester(action.focusRequester).screenReaderFocus()
+                } else {
+                    Modifier
+                },
             )
             .testTag(zineDockSecondaryActionTestTag(action.label))
             .clip(RoundedCornerShape(ZinelyV21Dimens.radiusPill))

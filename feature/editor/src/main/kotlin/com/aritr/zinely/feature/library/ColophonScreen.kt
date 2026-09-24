@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.library
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.ui.a11y.screenReaderFocus
 import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
@@ -116,6 +118,8 @@ public fun ColophonScreen(
     val creditsFocusRequester = remember { FocusRequester() }
     var returnFocusTo by remember { mutableStateOf<ColophonTypeface?>(null) }
     var returnFocusToCredits by remember { mutableStateOf(false) }
+    // Going forward, focus enters at the new screen's heading; going Back, the return targets above take it.
+    var focusHeading by remember { mutableStateOf(true) }
     // Keep the licence row composed when returning from its separate destination.
     val mainScrollState = rememberLazyListState()
     val creditsScrollState = rememberLazyListState()
@@ -124,10 +128,12 @@ public fun ColophonScreen(
         when (val current = destination) {
             ColophonDestination.Main -> onBackToShelf()
             ColophonDestination.Credits -> {
+                focusHeading = false
                 returnFocusToCredits = true
                 destination = ColophonDestination.Main
             }
             is ColophonDestination.Licence -> {
+                focusHeading = false
                 returnFocusTo = current.typeface
                 destination = ColophonDestination.Credits
             }
@@ -140,32 +146,51 @@ public fun ColophonScreen(
             appVersion = appVersion,
             onPreferredPaperChange = onPreferredPaperChange,
             onBack = onBackToShelf,
-            onOpenCredits = { destination = ColophonDestination.Credits },
+            onOpenCredits = {
+                focusHeading = true
+                // A return target left unconsumed (two Backs in one frame) would beat the heading on re-entry.
+                returnFocusTo = null
+                // The heading must be composed for its entry effect to run; a list left scrolled by an earlier
+                // visit would otherwise leave the flag armed until the user scrolls up, then yank focus.
+                creditsScrollState.requestScrollToItem(0)
+                destination = ColophonDestination.Credits
+            },
             creditsFocusRequester = creditsFocusRequester,
             scrollState = mainScrollState,
             returnFocusToCredits = returnFocusToCredits,
             onCreditsFocusRestored = { returnFocusToCredits = false },
+            focusHeading = focusHeading,
+            onHeadingFocused = { focusHeading = false },
             modifier = modifier,
         )
         ColophonDestination.Credits -> CreditsScreen(
             onBack = {
+                focusHeading = false
                 returnFocusToCredits = true
                 destination = ColophonDestination.Main
             },
-            onOpenLicence = { destination = ColophonDestination.Licence(it) },
+            onOpenLicence = {
+                focusHeading = true
+                destination = ColophonDestination.Licence(it)
+            },
             typefaceFocusRequesters = typefaceFocusRequesters,
             scrollState = creditsScrollState,
             returnFocusTo = returnFocusTo,
             onFocusRestored = { returnFocusTo = null },
+            focusHeading = focusHeading,
+            onHeadingFocused = { focusHeading = false },
             modifier = modifier,
         )
         is ColophonDestination.Licence -> LicenceScreen(
             typeface = current.typeface,
             onBack = {
+                focusHeading = false
                 returnFocusTo = current.typeface
                 destination = ColophonDestination.Credits
             },
             loadLicence = effectiveLicenceLoader,
+            focusHeading = focusHeading,
+            onHeadingFocused = { focusHeading = false },
             modifier = modifier,
         )
     }
@@ -182,6 +207,8 @@ private fun ColophonMain(
     scrollState: LazyListState,
     returnFocusToCredits: Boolean,
     onCreditsFocusRestored: () -> Unit,
+    focusHeading: Boolean,
+    onHeadingFocused: () -> Unit,
     modifier: Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -208,7 +235,7 @@ private fun ColophonMain(
                     fontWeight = FontWeight.Bold,
                     fontSize = 34.sp,
                 ),
-                modifier = Modifier.semantics { heading() },
+                modifier = Modifier.entryFocus(focusHeading, onHeadingFocused).semantics { heading() },
             )
         }
         item {
@@ -303,6 +330,7 @@ private fun ColophonMain(
                 Modifier
                     .testTag(ColophonCreditsRowTestTag)
                     .focusRequester(creditsFocusRequester)
+                    .screenReaderFocus()
                     .fillMaxWidth()
                     .background(printed.surface, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
                     .zinelyV2Control(
@@ -334,6 +362,8 @@ private fun CreditsScreen(
     scrollState: LazyListState,
     returnFocusTo: ColophonTypeface?,
     onFocusRestored: () -> Unit,
+    focusHeading: Boolean,
+    onHeadingFocused: () -> Unit,
     modifier: Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -357,7 +387,7 @@ private fun CreditsScreen(
                 Modifier.testTag(ColophonBackTestTag),
             )
         }
-        item { SectionHeading(Copy.Colophon.CREDITS) }
+        item { SectionHeading(Copy.Colophon.CREDITS, Modifier.entryFocus(focusHeading, onHeadingFocused)) }
         item { BodyText(Copy.Colophon.CREDITS_INTRO) }
         items(ColophonTypeface.entries, key = { it.name }) { typeface ->
             // Lazy rows attach after the parent destination effect. Restore focus here, once this row exists.
@@ -372,6 +402,7 @@ private fun CreditsScreen(
                 Modifier
                     .testTag(colophonTypefaceTestTag(typeface))
                     .focusRequester(typefaceFocusRequesters.getValue(typeface))
+                    .screenReaderFocus()
                     .fillMaxWidth()
                     .sizeIn(minHeight = 48.dp)
                     .background(printed.surface, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
@@ -399,6 +430,8 @@ private fun LicenceScreen(
     typeface: ColophonTypeface,
     onBack: () -> Unit,
     loadLicence: suspend (ColophonTypeface) -> String,
+    focusHeading: Boolean,
+    onHeadingFocused: () -> Unit,
     modifier: Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -417,7 +450,7 @@ private fun LicenceScreen(
             .padding(horizontal = ZinelyV21Dimens.gapXl),
     ) {
         ColophonHeader(Copy.Colophon.BACK_TO_CREDITS, onBack, Modifier.testTag(ColophonBackTestTag))
-        SectionHeading(typeface.family)
+        SectionHeading(typeface.family, Modifier.entryFocus(focusHeading, onHeadingFocused))
         Text(Copy.Colophon.LICENCE_TITLE, color = colors.inkSoft, fontSize = 13.sp)
         Spacer(Modifier.height(ZinelyV21Dimens.gapLg))
         Box(
@@ -463,7 +496,7 @@ private fun ColophonHeader(label: String, onBack: () -> Unit, modifier: Modifier
 }
 
 @Composable
-private fun SectionHeading(text: String) {
+private fun SectionHeading(text: String, modifier: Modifier = Modifier) {
     val colors = ZinelyTheme.v21Colors
     Text(
         text,
@@ -471,7 +504,7 @@ private fun SectionHeading(text: String) {
         fontFamily = ZinelyV21Fonts.Work,
         fontWeight = FontWeight.Bold,
         fontSize = 17.sp,
-        modifier = Modifier.semantics { heading() },
+        modifier = modifier.semantics { heading() },
     )
 }
 
@@ -489,4 +522,22 @@ private fun BodyText(
         fontSize = 15.sp,
         lineHeight = 22.sp,
     )
+}
+
+/**
+ * Where focus enters a Colophon screen: its heading ([COLOPHON-FREEZE](docs/design/COLOPHON-FREEZE.md)
+ * accessibility semantics). One-shot via [pending] — a lazy item re-runs its effects when scrolled back into
+ * view, and that must not pull focus back to the top mid-read. Focusable only under a screen reader, so a
+ * keyboard user gets no Tab stop on a line of text.
+ */
+@Composable
+private fun Modifier.entryFocus(pending: Boolean, onDone: () -> Unit): Modifier {
+    val requester = remember { FocusRequester() }
+    LaunchedEffect(pending) {
+        if (pending) {
+            requester.requestFocus()
+            onDone()
+        }
+    }
+    return focusRequester(requester).screenReaderFocus(onlyUnderScreenReader = true).focusable()
 }

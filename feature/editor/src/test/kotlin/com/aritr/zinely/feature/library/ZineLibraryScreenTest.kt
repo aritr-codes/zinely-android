@@ -244,6 +244,37 @@ class ZineLibraryScreenTest {
     }
 
     @Test
+    fun `the sheet scrim is not an accessibility stop but a tap still dismisses`() {
+        content(zines(2))
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).performClick()
+        composeRule.waitForIdle()
+
+        val scrim = composeRule.onNodeWithTag(ZSheetScrimTestTag).fetchSemanticsNode()
+        assertTrue(
+            "the frozen scrim is a plain div; exposed it is an unlabelled full-screen button",
+            androidx.compose.ui.semantics.SemanticsActions.OnClick !in scrim.config,
+        )
+        composeRule.onNodeWithTag(ZSheetScrimTestTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(KeepSafeSheetTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun `under TalkBack in touch mode closing About returns focus to its dock action`() {
+        val manager = composeRule.activity.getSystemService(android.view.accessibility.AccessibilityManager::class.java)
+        org.robolectric.Shadows.shadowOf(manager).setEnabled(true)
+        org.robolectric.Shadows.shadowOf(manager).setTouchExplorationEnabled(true)
+        content(zines(2))
+        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Touch)) }
+        val colophonActionTag = zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)
+
+        composeRule.onNodeWithTag(colophonActionTag).performClick()
+        composeRule.onNodeWithTag(ColophonBackTestTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(colophonActionTag).assertIsFocused()
+    }
+
+    @Test
     fun `Colophon can set preferred paper and returns to the shelf action`() {
         content(zines(2))
         val colophonActionTag = zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)
