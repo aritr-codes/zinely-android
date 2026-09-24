@@ -18,9 +18,10 @@
       <img src="../assets/logo.webp" width="48" height="48" alt=""><span>Zinely</span>
     </a>
     <nav aria-label="Primary navigation">
-      <a href="../#see-zinely">See Zinely</a>
-      <a href="../#how-it-works">How it works</a>
+      <a href="../#see-zinely">Take a look</a>
       <a href="../#fold-guide">Fold guide</a>
+      <a href="../roadmap/">What’s next</a>
+      <a href="../download/">Download</a>
     </nav>
   </header>
 
@@ -29,50 +30,32 @@
       <header class="journal-masthead">
         <p class="eyebrow">The small improvements add up</p>
         <h1>What changed.</h1>
-        <p class="policy-intro">What got better, what got fixed, and where you can try it. The current Android download is <a href="../#download-title">0.9.0-beta.4-r3</a>. Website updates happen separately.</p>
+        <p class="policy-intro">What got better, what got fixed, and where you can try it. App releases come first. Website updates are listed separately below them.</p>
         <span class="journal-stamp" aria-hidden="true">Studio<br>journal</span>
       </header>
 
+      <section class="journal-status" aria-labelledby="status-title">
+        <h2 id="status-title">Where things stand</h2>
+        <dl>
+          <div><dt>In the download</dt><dd><a href="../download/">0.9.0-beta.4-r3</a>, the public beta from 9 September 2026.</dd></div>
+          <div><dt>Next beta</dt><dd>Being tested. Not released yet, so it is not listed here.</dd></div>
+          <div><dt>Still in development</dt><dd>Changes that are not in any download yet live in the <a href="https://github.com/aritr-codes/zinely-android/blob/main/CHANGELOG.md">developer changelog</a>.</dd></div>
+        </dl>
+      </section>
+
       <nav class="journal-index" aria-label="Jump to an update">
-        <a href="#website-september-10"><span>Website</span><strong>10 Sep</strong></a>
-        <a href="#website-september-9"><span>Website</span><strong>9 Sep</strong></a>
         <a href="#beta-4-r3"><span>Public beta</span><strong>r3</strong></a>
         <a href="#beta-4-r2"><span>Tester build</span><strong>r2</strong></a>
         <a href="#beta-4"><span>Tester build</span><strong>beta.4</strong></a>
         <a href="#beta-3"><span>Tester build</span><strong>beta.3</strong></a>
+        <a href="#beta-2"><span>Tester build</span><strong>beta.2</strong></a>
+        <a href="#beta-1"><span>Tester build</span><strong>beta.1</strong></a>
+        <a href="#early-builds"><span>Early builds</span><strong>0.8.0</strong></a>
+        <a href="#website-september-10"><span>Website</span><strong>10 Sep</strong></a>
+        <a href="#website-september-9"><span>Website</span><strong>9 Sep</strong></a>
       </nav>
 
       <div class="journal-timeline">
-
-      <section class="release-entry journal-entry website-note" id="website-september-10">
-        <span class="journal-pin" aria-hidden="true"></span>
-        <header class="release-heading">
-          <p class="release-channel">On the website</p>
-          <p class="release-date"><time datetime="2026-09-10">10 September 2026</time></p>
-        </header>
-        <h2>A little more paper. A little less serious.</h2>
-        <ul>
-          <li>Try the page-order switch to see why a printed sheet looks out of order before you fold it.</li>
-          <li>Stuck for an idea? Ask the homepage for a tiny zine prompt.</li>
-          <li>Meet the people behind Zinely, with a few small surprises tucked around the site.</li>
-        </ul>
-        <p>Your Android app hasn’t changed with this website update.</p>
-      </section>
-
-      <section class="release-entry journal-entry website-note" id="website-september-9">
-        <span class="journal-pin" aria-hidden="true"></span>
-        <header class="release-heading">
-          <p class="release-channel">On the website</p>
-          <p class="release-date">Published <time datetime="2026-09-09">9 September 2026</time></p>
-        </header>
-        <h2>A clearer guide, and a place for your feedback</h2>
-        <ul>
-          <li>Take a look around the app through example screenshots.</li>
-          <li>Fold along one step at a time. Pause, replay, or read all the instructions without animation.</li>
-          <li>Send us a suggestion through a short form, or email a screenshot when something goes wrong.</li>
-        </ul>
-        <p>This changed the website, not the app on your phone.</p>
-      </section>
 
       <section class="release-entry journal-entry public-release" id="beta-4-r3">
         <span class="journal-pin" aria-hidden="true"></span>
@@ -125,13 +108,87 @@
         <p class="release-theme">A clearer, more dependable editor</p>
         <ul>
           <li>Back up your collection and bring it back when you need it. Deleted zines stay deleted when you reopen the app.</li>
-          <li>Improved flipping photos and art, adjusting photo crops, and making copies of pages.</li>
+          <li>Improved flipping photos and art, adjusting photo crops, and making copies of things on a page.</li>
           <li>Smoothed out rough spots when using larger text, a screen reader, or dark mode, and when moving between pages.</li>
         </ul>
       </section>
+
+      <section class="release-entry journal-entry tester-note" id="beta-2">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">Tester build</p>
+          <p class="release-date">Built <time datetime="2026-08-16">16 August 2026</time></p>
+        </header>
+        <h2>0.9.0-beta.2</h2>
+        <p class="release-theme">Share a photo straight in, and photocopy it</p>
+        <ul>
+          <li>Send a photo to Zinely from your gallery or another app with the Share button. It lands on the page you were working on.</li>
+          <li>The photocopier: a look for any photo that breaks it into dots, the way a home printer or copy shop would. Your original photo is never changed.</li>
+        </ul>
+      </section>
+
+      <section class="release-entry journal-entry tester-note" id="beta-1">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">Tester build</p>
+          <p class="release-date">Built <time datetime="2026-07-22">22 July 2026</time></p>
+        </header>
+        <h2>0.9.0-beta.1</h2>
+        <p class="release-theme">Read your zine</p>
+        <ul>
+          <li>See your finished zine page by page, the way a reader will, before you print it.</li>
+          <li>The first build signed with Zinely’s own key. Every beta since installs over it and keeps your zines.</li>
+        </ul>
+      </section>
+
+      <section class="release-entry journal-entry tester-note" id="early-builds">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">Early builds</p>
+          <p class="release-date">June and July 2026</p>
+        </header>
+        <h2>Before the beta</h2>
+        <p class="release-theme">From page order to a PDF in your Downloads</p>
+        <ul>
+          <li>0.8.0 (15 July): Save PDF puts a copy of your zine in your phone’s Downloads folder.</li>
+          <li>Earlier builds made the page-order engine, saving, drawing, the editor, and photo framing. The <a href="https://github.com/aritr-codes/zinely-android/blob/main/CHANGELOG.md">developer changelog</a> has the details.</li>
+        </ul>
+      </section>
+
+      <h2 class="journal-divider">On the website</h2>
+
+      <section class="release-entry journal-entry website-note" id="website-september-10">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">On the website</p>
+          <p class="release-date"><time datetime="2026-09-10">10 September 2026</time></p>
+        </header>
+        <h2>A little more paper. A little less serious.</h2>
+        <ul>
+          <li>Try the page-order switch to see why a printed sheet looks out of order before you fold it.</li>
+          <li>Stuck for an idea? Ask the homepage for a tiny zine prompt.</li>
+          <li>Meet the people behind Zinely, with a few small surprises tucked around the site.</li>
+        </ul>
+        <p>Your Android app hasn’t changed with this website update.</p>
+      </section>
+
+      <section class="release-entry journal-entry website-note" id="website-september-9">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">On the website</p>
+          <p class="release-date">Published <time datetime="2026-09-09">9 September 2026</time></p>
+        </header>
+        <h2>A clearer guide, and a place for your feedback</h2>
+        <ul>
+          <li>Take a look around the app through example screenshots.</li>
+          <li>Fold along one step at a time. Pause, replay, or read all the instructions without animation.</li>
+          <li>Send us a suggestion through a short form, or email a screenshot when something goes wrong.</li>
+        </ul>
+        <p>This changed the website, not the app on your phone.</p>
+      </section>
       </div>
 
-      <p class="notice">Want the technical details? They’re in the <a href="https://github.com/aritr-codes/zinely-android/blob/main/CHANGELOG.md">full developer changelog</a>. Looking ahead? See <a href="../roadmap/">what’s next</a>.</p>
+      <p class="notice">Want the technical details? They’re in the <a href="https://github.com/aritr-codes/zinely-android/blob/main/CHANGELOG.md">full developer changelog</a>. Looking ahead? See <a href="../roadmap/">what’s next</a>. Ready to try it? <a href="../download/">Get the Android beta</a>.</p>
     </article>
   </main>
 
@@ -140,7 +197,7 @@
     <nav aria-label="Footer navigation">
       <a href="../#about">About</a><a href="../#accessibility">Accessibility</a>
       <a href="./" aria-current="page">What’s new</a><a href="../roadmap/">What’s next</a>
-      <a href="../privacy/">Privacy</a><a href="https://forms.gle/7ejUVJBdUaYoDytu6">Share feedback</a><a href="mailto:aritr.g06@gmail.com">Email us</a>
+      <a href="../download/">Download</a><a href="../privacy/">Privacy</a><a href="https://forms.gle/7ejUVJBdUaYoDytu6">Share feedback</a><a href="mailto:aritr.g06@gmail.com">Email us</a>
       <a href="https://github.com/aritr-codes/zinely-android">GitHub</a>
     </nav>
   </footer>
