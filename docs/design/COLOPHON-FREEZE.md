@@ -17,9 +17,18 @@ are retired. This supersedes the earlier direct three-card font section without 
 items have evidence: `ColophonScreenTest` (Back/focus through licence → credits → About → Shelf, the paper
 preference, licence text and its failure state, 48dp Back) and `ColophonGoldenTest` (About and credits, light,
 dark and maximum font scale), verified with `verifyRoborazziDebug --rerun-tasks`. There is no golden of a
-licence screen and no maximum-font-scale dark golden of the credits screen. The platform `AccessibilityNodeInfo`
-pass, pixel parity and both device passes have **not** been done for the credits and licence screens. The only
-device record (2026-09-16) predates the credits screen, so acceptance stays open.
+licence screen and no maximum-font-scale dark golden of the credits screen.
+
+**Device evidence · 2026-09-24** (Samsung SM-A176B, Android 16, beta.5 APK; record in the [beta.5 tester
+package](../releases/0.9.0-beta.5.md#on-device---samsung-sm-a176b-android-16-api-36-build-a176bxxs7czh3-2026-09-24)):
+the platform tree carries the frozen names (`Back to …` labels, `<family>, Read font licence` buttons), every
+control is ≥ 48dp, licence text loads locally, system Back unwinds licence → credits → About → Shelf, and at 1.8×
+in light theme nothing clips. **One gate item fails on device** (screens were opened by tap, not TalkBack
+double-tap, so real use may differ): TalkBack's focus does not follow the focus rules above (entry lands on Back,
+not the heading; return lands on Back, the first paragraph or the shelf title, not the invoking row or dock
+action). **One is suspect:** the paper group's checked state and its `RadioButton` role sit on different platform
+nodes ([ADR-059](../DECISIONS.md#adr-059)); only a listen can say whether it is announced correctly. Not done: a
+TalkBack listen, the owner's first-time reading (Pass 2) and HTML/Compose pixel parity. Acceptance stays open.
 
 This freeze resolves where Zinely states its privacy promise and where the product's small amount of
 configuration belongs. It does not authorise Compose implementation by itself; production work still
