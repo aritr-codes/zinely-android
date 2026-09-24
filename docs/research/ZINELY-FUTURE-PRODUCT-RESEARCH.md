@@ -134,7 +134,9 @@ The genuinely new findings are:
    ✅ **The deadline is about 30 Aug to 9 Sep 2027.** Source: [constitution §VII](../zinely-constitution.md#vii-the-feature-tribunal),
    the *Monetization experiment* row. The supplies commit is `e8f2145` (2026-08-17); the first build after it is
    beta.3 (2026-08-30, [CHANGELOG](../../CHANGELOG.md)) and the first public tag containing it is
-   `v0.9.0-beta.4-r3` (2026-09-09). Which of those counts as "release" is the owner's call. Tracked in
+   `v0.9.0-beta.4-r3` (2026-09-09). Which of those counts as "release" is the owner's call. The earliest,
+   weakest candidate is beta.2 (2026-08-16), which put supplies in the file format while saying *"Nothing
+   appears on a page yet"*; counting it would move the deadline to mid-August 2027. Tracked in
    [OWNER-CHECKLIST §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship); nothing about pricing goes on the website.
 6. 🟦 **Ratified-but-dropped starters.** The Tribunal's KEEP rows for starters, a seeded first project and a
    browsable prompt library were not carried into later direction documents (`BETA-DIRECTION.md` says

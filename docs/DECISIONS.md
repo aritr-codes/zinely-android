@@ -123,7 +123,7 @@
 | [ADR-111](#adr-111) | **The supplied collage owns launcher identity; launch is a system-only transition with no delay or marketing screen.** | Accepted |
 | [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, implemented through one bundled, deterministic preview/export path.** Bundled Emoji2 with forced replacement owns the glyphs; system/OEM fallback remains forbidden. | Accepted |
 | [ADR-113](#adr-113) | **Flip is one mobile verb with two local-axis toggles for a single Photo or Art element.** Text and multi-selection are excluded; persistence requires an honest schema v3 rather than a lossy v2 additive field. | Accepted |
-| [ADR-114](#adr-114) | **Public story on the website; installed-app utility in About; fold replay remains an HTML experiment.** The site uses sanitized canonical mockups, a concise embedded accessibility statement, curated release notes, and a non-committal roadmap. | Accepted |
+| [ADR-114](#adr-114) | **Public story on the website; installed-app utility in About; fold replay remains an HTML experiment.** The site uses sanitized canonical mockups, a concise embedded accessibility statement, curated release notes, and a non-committal roadmap. | Accepted; §1 and §5 amended by [ADR-118](#adr-118) |
 | [ADR-116](#adr-116) | **Plain-language public updates and distinct About copy on both surfaces.** Retain technical documentation and accessibility requirements; app maker's note design frozen. | Accepted; native verification pending |
 | [ADR-117](#adr-117) | **Licence notices stay complete, but leave the main About narrative.** One compact row opens a child credits screen; font-role blurbs retire. | Accepted; owner ruling 2026-09-16 |
 | [ADR-118](#adr-118) | **The public website tells one product story and shows only shipped UI.** Self-hosted fonts, a truthful Bench render, a Download page, and one public status scheme (Available / In development / Planned / Exploring) by horizon. Amends ADR-114 §1 and §5. | Accepted 2026-09-24; owner-directed |
@@ -13067,8 +13067,9 @@ current features separated from direction.
    but a prototype element that the app does not ship is hidden in the render and removed from the interactive
    demo. `mockup-bench.webp` was re-rendered from `v21-bench.html` in headless Edge at 390 × 812, light theme,
    with `#tray` hidden. The frozen prototype itself is unchanged. The tray is the H1 materials shelf, which owner ruling
-   OD-2 (2026-08-01) re-seated beyond Phase C, unscheduled ([ADR-089 §2.3](#adr-089),
-   [D-029](design/V2-SPEC-DEFECTS.md#d-029)). It is deferred, not dropped, so the freeze keeps it and the website
+   OD-2 (2026-08-01) re-seated beyond Phase C, unscheduled ([ADR-089 §2.3](#adr-089)); the
+   [D-029 ruling of 2026-08-16](design/V2-SPEC-DEFECTS.md#d-029-ruling-2026-08-16) carries its open questions to
+   X2, the Supplies tray, which has no date. It is deferred, not dropped, so the freeze keeps it and the website
    hides it until it ships.
 3. **Story order:** what it is → why paper → what you can make → Shelf → Bench → Proof (with a Today / Direction
    table) → what is different (*imperfect surface, perfect mechanics*) → try it → where it is going → About.
