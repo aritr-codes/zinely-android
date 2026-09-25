@@ -94,8 +94,9 @@ APK only.
 - A picture with a see-through background, such as a logo or sticker PNG, now comes in on white. Before, the
   see-through parts turned black.
 - A move or resize that ends exactly where it started no longer wipes Redo or adds an empty Undo step.
-- With TalkBack on, the dimmed area behind a sheet is no longer read out as an unlabelled button. Close a sheet
-  with Back, as before.
+- With TalkBack on, the dimmed area behind most sheets, such as **Start a zine** and **Backups**, is no longer
+  read out as an unlabelled button, so TalkBack starts inside the sheet. Close a sheet with Back, as before.
+  The zine actions sheet on the shelf still has this unlabelled area.
 
 ### Known limitations
 

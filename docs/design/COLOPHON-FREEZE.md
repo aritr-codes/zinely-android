@@ -30,6 +30,12 @@ action). **One is suspect:** the paper group's checked state and its `RadioButto
 nodes ([ADR-059](../DECISIONS.md#adr-059)); only a listen can say whether it is announced correctly. Not done: a
 TalkBack listen, the owner's first-time reading (Pass 2) and HTML/Compose pixel parity. Acceptance stays open.
 
+**2026-09-25:** a fix that moved Compose focus to the heading and back to the invoking control (`596d52d`) was
+disproved on the same phone - TalkBack does not follow programmatic focus in touch mode - and removed
+(`d957f1f`). The focus rules above are **not met in beta.5**; the gap is a
+[CHANGELOG Known Limitation](../../CHANGELOG.md#090-beta5--2026-09-23--steadier-editing-and-saving), not a
+change to this spec.
+
 This freeze resolves where Zinely states its privacy promise and where the product's small amount of
 configuration belongs. It does not authorise Compose implementation by itself; production work still
 follows the HTML-first workflow in [`CLAUDE.md`](../../CLAUDE.md#html-first-ui-workflow-mandatory).
