@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Rebuilt the public website story around Shelf, Bench and Proof, told in the order a visitor asks: what it is, why
+  paper, what you can make, how it works, what is different, how to try it and where it is going. Added a Download
+  page with install steps, backup and phone-move advice, the published SHA-256, and honest Google Play and iPhone
+  status. The roadmap now uses one scheme (Available, In development, Planned, Exploring) by horizon, and the public
+  changelog tells the app's story back to its early builds ([ADR-118](docs/DECISIONS.md#adr-118)).
+  No Android behavior, download or release artifact changed.
+
 - Added the owner-approved, app-specific Aastra maker's note to the canonical About design and Android source.
   Paper preference, privacy and version remain on the main screen. Complete font notices now sit behind one compact
   `Licences & credits` row, so legal detail stays available without interrupting the story. Not yet released.
@@ -70,6 +77,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   default-paper preference, bundled-font licences, offline/privacy assurance, and installed app version.
 
 ### Fixed
+
+- The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
+  privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
+  the files.
+- The website's Bench demo and screenshot no longer show a "Your shelf · 4 things kept" tray that the app does not
+  have. The screenshot was re-rendered from the frozen prototype with only that tray hidden.
+- The website's not-found page now finds its styles and links at any URL depth.
 
 - Restored the Reframe accessibility regression that proves a measurable but undisplayable photo keeps every
   adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather

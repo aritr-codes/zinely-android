@@ -26,8 +26,8 @@ const server = http.createServer((req, res) => {
   if (!file.startsWith(site + path.sep)) { res.writeHead(403); res.end(); return; }
   if (name === 'assets/logo.webp') file = path.join(root, 'app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp');
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end(); return; }
-  const mime = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.webp': 'image/webp' };
-  res.setHeader('Content-Type', (mime[path.extname(file)] || 'application/octet-stream') + '; charset=utf-8');
+  const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.webp': 'image/webp', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.txt': 'text/plain; charset=utf-8' };
+  res.setHeader('Content-Type', mime[path.extname(file)] || 'application/octet-stream');
   res.end(fs.readFileSync(file));
 });
 
@@ -35,8 +35,14 @@ const server = http.createServer((req, res) => {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}/zinely-android/`;
   const browser = await chromium.launch({ executablePath: process.argv[3], headless: true });
+  // Privacy promise: the site itself makes no third-party requests (fonts included), in every context below.
+  const newContext = async options => {
+    const context = await browser.newContext(options);
+    context.on('request', request => { if (!/^(http:\/\/127\.0\.0\.1:|data:|about:)/.test(request.url())) failures.push(`Third-party request ${request.url()}`); });
+    return context;
+  };
   try {
-    const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const context = await newContext({ viewport: { width: 1280, height: 900 } });
     const page = await context.newPage();
     page.on('pageerror', error => failures.push(error.message));
     page.on('console', message => { if (message.type() === 'error') failures.push(message.text()); });
@@ -226,14 +232,32 @@ const server = http.createServer((req, res) => {
     }
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.evaluate(() => { document.documentElement.style.fontSize = ''; });
-    for (const route of ['roadmap/', 'changelog/', 'privacy/', '404.html']) {
+    assert.ok((await page.evaluate(() => [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family.replaceAll('"', '')))).includes('Inter'), 'Self-hosted Inter loads');
+    for (const route of ['roadmap/', 'changelog/', 'download/', 'privacy/', '404.html']) {
       await page.goto(url + route);
       assert.equal((await page.locator('body').innerText()).includes('Directory listing'), false, `${route} is a rendered page`);
       axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
       assert.deepEqual(axe.violations.map(v => v.id), [], route);
       await page.screenshot({ path: path.join(out, route.replaceAll('/', '') + '.png'), fullPage: true });
     }
-    const fallback = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 900 } });
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 844 });
+      for (const route of ['', 'roadmap/', 'changelog/', 'download/', 'privacy/', '404.html']) {
+        await page.goto(url + route);
+        const where = `${route || 'home'} at ${width}px`;
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `${where}: no horizontal scroll`);
+        // scrollWidth cannot see text clipped by an ancestor, so also check that copy stays inside its box.
+        const escaped = await page.evaluate(() => [...document.querySelectorAll('main :is(p, li, dd, dt, td, th, h1, h2, h3)')]
+          .filter(el => el.getClientRects().length && getComputedStyle(el).position !== 'absolute')
+          .filter(el => el.parentElement.getBoundingClientRect().width > 1) // skip visually-hidden (1px clip) headers
+          .filter(el => el.getBoundingClientRect().right > el.parentElement.getBoundingClientRect().right + 2)
+          .map(el => `${el.tagName} ${el.textContent.trim().slice(0, 40)}`));
+        assert.deepEqual(escaped, [], `${where}: text stays inside its container`);
+        await page.screenshot({ path: path.join(out, `mobile-${width}-${route.replaceAll('/', '') || 'home'}.png`), fullPage: true });
+      }
+    }
+    await page.setViewportSize({ width: 1280, height: 900 });
+    const fallback = await newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 900 } });
     const staticPage = await fallback.newPage();
     await staticPage.goto(url);
     assert.equal(await staticPage.locator('.fold-card:visible').count(), 10, 'No-JS complete fallback');
@@ -243,7 +267,7 @@ const server = http.createServer((req, res) => {
     await staticPage.locator('.footer-secret summary').click();
     assert.equal(await staticPage.locator('.footer-secret p').isVisible(), true, 'Disclosure works without JS');
     await staticPage.close();
-    const touch = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const touch = await newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const touchPage = await touch.newPage();
     touchPage.on('pageerror', error => failures.push(error.message));
     await touchPage.goto(url);

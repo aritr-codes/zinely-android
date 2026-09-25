@@ -8,14 +8,28 @@
 <a id="current-priorities"></a>
 ## Current priorities
 
-**Planned** means an accepted intention to deliver. **Exploring** means a proposal or investigation, not a
-commitment. **Completed** work belongs in [CHANGELOG.md](../CHANGELOG.md), with public APK changes kept separate
+**In development** means built or under test but not in the public download. **Planned** means an accepted
+intention to deliver. **Exploring** means a proposal or investigation, not a commitment. **Completed** work belongs in [CHANGELOG.md](../CHANGELOG.md), with public APK changes kept separate
 from repository-only changes and website updates. No new app feature is committed for the next release yet.
+The public website projects this list with four labels (Available, In development, Planned, Exploring) grouped by
+horizon ([ADR-118](DECISIONS.md#adr-118)).
 
 Reframe loading and the deterministic accessibility regression were completed through
 [PR #64](https://github.com/aritr-codes/zinely-android/pull/64). The repository change does not alter the public
 beta.4-r3 APK; measurements and evidence remain in the
 [release-gap review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-10-reframe-loading-follow-up).
+
+### In development — built or being tested, not in the public download
+
+- **The next beta:** the repository fixes listed under [Unreleased](../CHANGELOG.md#unreleased) are being prepared
+  as the next tester build by the release process in [RELEASING.md](RELEASING.md). Not released; the public
+  download stays beta.4-r3 until it is.
+- **Unavailable Font control removal:** owner approved removal as a design judgment. [PR #70](https://github.com/aritr-codes/zinely-android/pull/70)
+  contains the implementation and green automated checks; it remains draft pending hands-on/TalkBack and rendered
+  HTML parity acceptance. No published APK change. Removing the dead action does not reject future font choice.
+- **Human About opening:** owner approved separate website narrative and app maker's note. The canonical app
+  design is frozen and implemented in Compose, with native verification still pending, not a published change.
+  [ADR-116](DECISIONS.md#adr-116) records the approval and retained acceptance gates.
 
 ### Planned
 
@@ -25,17 +39,11 @@ beta.4-r3 APK; measurements and evidence remain in the
 
 ### Exploring — recommended next decisions, in order
 
-1. **Unavailable Font control:** owner approved removal as a design judgment. [PR #70](https://github.com/aritr-codes/zinely-android/pull/70)
-   contains the implementation and green automated checks; it remains draft pending hands-on/TalkBack and rendered
-   HTML parity acceptance. No published APK change. Removing the dead action does not reject future font choice.
-2. **Fold clarity:** observe first-time makers using the existing app guide and the ten-step website guide with
+1. **Fold clarity:** observe first-time makers using the existing app guide and the ten-step website guide with
    paper. Record cut mistakes, hesitation and completion without coaching. Change diagrams or add motion only
    if evidence identifies an improvement. The website guide is shipped; native replay is not.
-3. **Creative tools:** owner reopened fonts, graphics/stickers, frames, photo transparency, shaped cutouts and crop
+2. **Creative tools:** owner reopened fonts, graphics/stickers, frames, photo transparency, shaped cutouts and crop
    improvements for evaluation on 2026-09-12. See the assessment below. No feature or delivery date is committed.
-4. **Human About opening:** owner approved separate website narrative and app maker's note. The canonical app
-   design is frozen and implemented in Compose, with native verification still pending, not a published change.
-   [ADR-116](DECISIONS.md#adr-116) records the approval and retained acceptance gates.
 
 ### Engineering follow-ups — not extra public feature promises
 
@@ -319,6 +327,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-09-24 | Current priorities gain an **In development** group (next beta, Font-control removal, About maker's note), moved out of Exploring, so the public website's four labels project this list rather than inventing statuses. No scope change. | [ADR-118](DECISIONS.md#adr-118) |
 | 2026-09-09 | Reconciled current priorities against code, issues, releases and website: one conditional publication plan, four explicit explorations, scoped engineering follow-ups; historical phases retained but no longer presented as today's promises. | [Current-state review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-09-current-state-review) |
 | 2026-08-26 | **September emoji printing and X9 spreads implemented.** X9 follows the frozen A19 ruling as two ordinary image elements with complementary crops. Emoji uses bundled Emoji2 with forced replacement through `SharedTextLayout`; the Samsung raster/PDF corpus passed at 10/24/48 pt, with a measured 9.42-MiB release-APK cost accepted for offline determinism. | [ADR-109](DECISIONS.md#adr-109) · [ADR-112](DECISIONS.md#adr-112) |
 | 2026-08-26 | **Public launch set for 2026-09-11.** The remaining runway is explicitly stabilisation-first: feature freeze on 2026-09-04, release-candidate verification before stakeholder acceptance, and no broad feature expansion. The stakeholder pass is classified against current source so discoverability reports are not misimplemented as missing editor capabilities. | [Stakeholder feedback review](reviews/2026-08-26-stakeholder-feedback.md) · [D-080](design/V2-SPEC-DEFECTS.md#d-080) · [D-107](design/V2-SPEC-DEFECTS.md#d-107) |

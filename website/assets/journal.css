@@ -157,6 +157,29 @@
 .studio-journal .journal-entry li::marker { color: var(--ink); font-weight: 900; }
 .studio-journal .journal-entry > p:last-child { margin-bottom: 0; }
 
+.journal-status {
+  margin-top: 30px;
+  padding: 20px 22px;
+  border: 2px solid var(--ink);
+  border-radius: 5px 14px 6px 4px;
+  background: #eff2b2;
+  box-shadow: 4px 5px 0 var(--ink);
+}
+
+.studio-journal .journal-status h2 { margin: 0 0 12px; font-size: clamp(1.3rem, 3vw, 1.6rem); }
+.journal-status dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 22px; margin: 0; }
+.journal-status dt { color: var(--ink); font-size: 0.74rem; font-weight: 850; letter-spacing: 0.1em; text-transform: uppercase; }
+.journal-status dd { margin: 4px 0 0; color: var(--ink-soft); font-size: 0.94rem; }
+
+.studio-journal .journal-divider {
+  margin: 18px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
 .studio-journal > .notice {
   position: relative;
   margin: 54px 0 0 36px;
@@ -177,6 +200,7 @@
       var(--paper);
   }
   .journal-masthead { padding-right: 0; }
+  .journal-status dl { grid-template-columns: minmax(0, 1fr); }
   .journal-stamp { position: static; width: 86px; margin: 24px 0 0 auto; }
   .journal-index { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 40px; padding: 12px; }
   .journal-timeline { gap: 28px; padding-left: 24px; }

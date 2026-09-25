@@ -8,7 +8,7 @@ Turn photos and words into a physical, foldable zine in minutes — entirely on 
 [Changelog](https://aritr-codes.github.io/zinely-android/changelog/) ·
 [Roadmap](https://aritr-codes.github.io/zinely-android/roadmap/) ·
 [Share feedback](https://forms.gle/7ejUVJBdUaYoDytu6) ·
-[Download the latest beta](https://github.com/aritr-codes/zinely-android/releases/tag/v0.9.0-beta.4-r3)
+[Download the beta](https://aritr-codes.github.io/zinely-android/download/)
 
 > *Physical media instead of social media.*
 
@@ -83,6 +83,7 @@ Start here, then follow links. Each document is the **single source of truth** f
 | [docs/RELEASING.md](docs/RELEASING.md) | Release mechanics — signing key, cutting a build, beta distribution |
 | [docs/releases/](docs/releases/) | Per-release tester packages — what ships alongside an APK (install, warnings, limitations, how to report) |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Cited evidence base (verified / recommendation / assumption / future) |
+| [docs/research/ZINELY-FUTURE-PRODUCT-RESEARCH.md](docs/research/ZINELY-FUTURE-PRODUCT-RESEARCH.md) | Future-product research (2026-09-24) — **proposal only, nothing decided**; each recommendation needs an ADR |
 | [docs/DEVICE-VERIFICATION.md](docs/DEVICE-VERIFICATION.md) | The on-device verification **recipe** — reference device, the `uiautomator` accessibility-tree dump, TalkBack, reading app-private files, and the environment traps. The *policy* (two passes, acceptance) stays in [CLAUDE.md](CLAUDE.md#device-verification-mandatory) |
 | [docs/COMPOSE-V2-HANDOVER.md](docs/COMPOSE-V2-HANDOVER.md) | Historical Compose V2 handover: product context, frozen artefacts, implementation method, and package records. Use the live checkout and later ADRs for current status. |
 | [docs/design/V2-CONSTITUTION.md](docs/design/V2-CONSTITUTION.md) | The V2 **highest authority** — outranks every other document, including the code |
