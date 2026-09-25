@@ -196,6 +196,22 @@ there is no UI for it.
   down), so a genuine 48px span is reported as 47. At this device's density that is under 0.4dp. See
   `ZinelyV2ControlPlatformA11yTest`.
 
+- **No JVM focus test proves where TalkBack goes.** `requestFocus()` moves Compose's *input* focus;
+  TalkBack keeps its own. Under `InputMode.Keyboard` a test passes because a keyboard user's focus really
+  does move — and TalkBack follows a hardware-keyboard Tab. In touch mode, which is where a TalkBack user
+  is, a `clickable` cannot take input focus at all. beta.5 tried making the targets focusable in touch mode
+  while touch exploration was on: the tests went green, the device's platform tree showed the heading
+  `focused=true`, and Samsung TalkBack stayed on the Back button anyway. The attempt was removed. Treat any
+  "focus returns to X" claim for a screen reader as **device-only evidence**: the TalkBack highlight in a
+  screenshot, not a Robolectric assertion.
+- **On this phone `adb shell input` bypasses TalkBack's touch exploration**: a tap activates directly and a
+  swipe does not move TalkBack focus. `uiautomator dump` also resets TalkBack focus. Read TalkBack's focus
+  from its highlight in a screenshot, taken *before* any dump; a hardware-keyboard Tab moves focus and
+  TalkBack follows it.
+- **Revoking storage on Android 7–9 needs both permissions.** `pm revoke … WRITE_EXTERNAL_STORAGE` alone
+  leaves `READ_EXTERNAL_STORAGE` granted, and Android then grants the rest of the Storage group with no
+  dialog, which looks exactly like the app skipping its own request. Revoke both, then check `dumpsys
+  package` before testing a prompt.
 ---
 
 ## 6. Cross-references

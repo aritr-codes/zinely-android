@@ -352,6 +352,20 @@ class ProofExportTargetMappingTest {
         assertEquals(ExportDestination.TRANSPORT, ProofExportTarget.SEND.toDestination())
         assertEquals(ExportDestination.DOWNLOADS, ProofExportTarget.SAVE.toDestination())
     }
+
+    @Test
+    fun `only Save PDF on Android 7 to 9 without the grant asks for storage`() {
+        // ADR-054 §8: the legacy public-Downloads file path is API 24–28 and Save PDF only.
+        assertTrue(needsLegacyStoragePermission(ExportDestination.DOWNLOADS, sdkInt = 24, granted = false))
+        assertTrue(needsLegacyStoragePermission(ExportDestination.DOWNLOADS, sdkInt = 28, granted = false))
+        // Already granted: save straight away.
+        assertFalse(needsLegacyStoragePermission(ExportDestination.DOWNLOADS, sdkInt = 26, granted = true))
+        // API 29+ saves through MediaStore and never asks.
+        assertFalse(needsLegacyStoragePermission(ExportDestination.DOWNLOADS, sdkInt = 29, granted = false))
+        assertFalse(needsLegacyStoragePermission(ExportDestination.DOWNLOADS, sdkInt = 36, granted = false))
+        // Share writes the app's own cache on every version.
+        assertFalse(needsLegacyStoragePermission(ExportDestination.TRANSPORT, sdkInt = 26, granted = false))
+    }
 }
 
 /** The ADR-042 §4 adoption fallback title every on-disk-seeded test project carries. */

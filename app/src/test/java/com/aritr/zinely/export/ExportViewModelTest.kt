@@ -176,4 +176,35 @@ class ExportViewModelTest {
         fake.gate!!.complete(Unit)
         advanceUntilIdle()
     }
+
+    /**
+     * A Save PDF the host could not even start (Android 7–9 storage permission denied, ADR-054 §8) shows
+     * the same recoverable error a failed save shows, names Save as the failed action, and renders nothing.
+     */
+    @Test
+    fun couldNotStartShowsTheSaveErrorWithoutRendering() = runTest {
+        val fake = FakeExporter(saved())
+        val vm = ExportViewModel(fake)
+
+        vm.couldNotStart(ExportDestination.DOWNLOADS)
+
+        val error = vm.state.value as ExportUiState.Error
+        assertEquals(ExportDestination.DOWNLOADS, error.destination)
+        assertEquals("Couldn’t make your file just now. Please try again.", error.message)
+        assertEquals(emptyList<ExportDestination>(), fake.destinations)
+    }
+
+    /** Like a second tap, it never interrupts a render already in flight. */
+    @Test
+    fun couldNotStartLeavesARenderInFlightAlone() = runTest {
+        val fake = FakeExporter(saved()).apply { gate = CompletableDeferred() }
+        val vm = ExportViewModel(fake)
+
+        vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.TRANSPORT)
+        vm.couldNotStart(ExportDestination.DOWNLOADS)
+
+        assertEquals(ExportDestination.TRANSPORT, (vm.state.value as ExportUiState.Working).destination)
+        fake.gate!!.complete(Unit)
+        advanceUntilIdle()
+    }
 }

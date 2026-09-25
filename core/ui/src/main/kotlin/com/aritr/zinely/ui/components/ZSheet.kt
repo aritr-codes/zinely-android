@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -172,6 +173,10 @@ public fun ZSheet(
                         .fillMaxSize()
                         .testTag(ZSheetScrimTestTag)
                         .background(ScrimFill)
+                        // The frozen `.scrim` is a plain div with an onclick: never announced. Exposed, it was an
+                        // unlabelled full-screen button TalkBack landed on first; Back (the Dialog) still
+                        // dismisses. The clear must come BEFORE `clickable` — placed after, it leaves the click.
+                        .clearAndSetSemantics { }
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,

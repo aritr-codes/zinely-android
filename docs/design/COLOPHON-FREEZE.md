@@ -12,6 +12,30 @@ the earlier jargon-forward title and generic introduction; the four-section D-07
 row near the bottom. Typeface names and complete local notices move to a child screen. Decorative role blurbs
 are retired. This supersedes the earlier direct three-card font section without removing any licence access.
 
+**Implementation status · 2026-09-23 (beta.5):** the 2026-09-16 hierarchy is implemented in Compose (landed in
+2cce221) and ships in `0.9.0-beta.5`. Of the [Compose acceptance gate](#compose-acceptance-gate), the automated
+items have evidence: `ColophonScreenTest` (Back/focus through licence → credits → About → Shelf, the paper
+preference, licence text and its failure state, 48dp Back) and `ColophonGoldenTest` (About and credits, light,
+dark and maximum font scale), verified with `verifyRoborazziDebug --rerun-tasks`. There is no golden of a
+licence screen and no maximum-font-scale dark golden of the credits screen.
+
+**Device evidence · 2026-09-24** (Samsung SM-A176B, Android 16, beta.5 APK; record in the [beta.5 tester
+package](../releases/0.9.0-beta.5.md#on-device---samsung-sm-a176b-android-16-api-36-build-a176bxxs7czh3-2026-09-24)):
+the platform tree carries the frozen names (`Back to …` labels, `<family>, Read font licence` buttons), every
+control is ≥ 48dp, licence text loads locally, system Back unwinds licence → credits → About → Shelf, and at 1.8×
+in light theme nothing clips. **One gate item fails on device** (screens were opened by tap, not TalkBack
+double-tap, so real use may differ): TalkBack's focus does not follow the focus rules above (entry lands on Back,
+not the heading; return lands on Back, the first paragraph or the shelf title, not the invoking row or dock
+action). **One is suspect:** the paper group's checked state and its `RadioButton` role sit on different platform
+nodes ([ADR-059](../DECISIONS.md#adr-059)); only a listen can say whether it is announced correctly. Not done: a
+TalkBack listen, the owner's first-time reading (Pass 2) and HTML/Compose pixel parity. Acceptance stays open.
+
+**2026-09-25:** a fix that moved Compose focus to the heading and back to the invoking control (`596d52d`) was
+disproved on the same phone - TalkBack does not follow programmatic focus in touch mode - and removed
+(`d957f1f`). The focus rules above are **not met in beta.5**; the gap is a
+[CHANGELOG Known Limitation](../../CHANGELOG.md#090-beta5--2026-09-23--steadier-editing-and-saving), not a
+change to this spec.
+
 This freeze resolves where Zinely states its privacy promise and where the product's small amount of
 configuration belongs. It does not authorise Compose implementation by itself; production work still
 follows the HTML-first workflow in [`CLAUDE.md`](../../CLAUDE.md#html-first-ui-workflow-mandatory).
