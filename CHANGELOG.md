@@ -94,6 +94,8 @@ APK only.
 - A picture with a see-through background, such as a logo or sticker PNG, now comes in on white. Before, the
   see-through parts turned black.
 - A move or resize that ends exactly where it started no longer wipes Redo or adds an empty Undo step.
+- With TalkBack on, the dimmed area behind a sheet is no longer read out as an unlabelled button. Close a sheet
+  with Back, as before.
 
 ### Known limitations
 
@@ -103,6 +105,9 @@ APK only.
   Keeping transparency is future work.
 - On Android 7–9, if you decline storage access and ask Android not to ask again, Save PDF keeps showing
   "Couldn’t make the PDF" until you allow storage for Zinely in the phone's settings. Share still works.
+- With TalkBack on, **About**, **Licences & credits** and a font licence open with TalkBack on the Back
+  button, and going Back returns TalkBack to the top of the previous screen rather than to the row or button
+  that opened it. Everything stays reachable by swiping.
 - Replaced and deleted photo assets are retained; app storage is not reclaimed yet.
 - Font choice remains unavailable. Unsupported print scripts are kept and warned about but do not print.
 - Zinely saves the PDF; printing happens in the phone's PDF or print app.

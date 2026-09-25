@@ -14,7 +14,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
@@ -34,7 +33,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -274,81 +272,6 @@ class ColophonScreenTest {
         composeRule.onNodeWithTag(ColophonCreditsRowTestTag).assertIsDisplayed().assertIsFocused()
         scrollToTag(ColophonVersionTestTag)
         composeRule.onNodeWithText("v-large").assertIsDisplayed()
-    }
-
-    // The 0.9.0-beta.5 device finding: every focus test above forces InputMode.Keyboard, but a TalkBack user
-    // is in TOUCH mode, where a clickable cannot take focus — so each requestFocus silently did nothing and
-    // TalkBack stayed on the first node. These two differ only in whether touch exploration is on.
-    @Test
-    fun `under TalkBack in touch mode focus enters at each heading and returns to the invoking row`() {
-        var backCalls = 0
-        setTouchExploration(true)
-        setContent(PaperSize.A4, "v1", { backCalls++ }, {}, { "Local licence" })
-        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Touch)) }
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText(Copy.Colophon.TITLE).assertIsFocused()
-
-        openCredits()
-        composeRule.onNodeWithText(Copy.Colophon.CREDITS).assertIsFocused()
-        val typeface = ColophonTypeface.INTER
-        scrollToTag(colophonTypefaceTestTag(typeface))
-        composeRule.onNodeWithTag(colophonTypefaceTestTag(typeface)).performClick()
-        composeRule.onNodeWithText("Local licence").assertIsDisplayed()
-        composeRule.onNodeWithText(typeface.family).assertIsFocused()
-
-        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
-        composeRule.onNodeWithTag(colophonTypefaceTestTag(typeface)).assertIsFocused()
-        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
-        composeRule.onNodeWithTag(ColophonCreditsRowTestTag).assertIsFocused()
-        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
-        composeRule.waitForIdle()
-        assertEquals(1, backCalls)
-    }
-
-    @Test
-    // Landscape-short at large text: scrolled to the last row, the heading leaves composition entirely.
-    @Config(qualifiers = "w640dp-h300dp", sdk = [28])
-    fun `under TalkBack re-entering credits scrolled down still focuses its heading`() {
-        setTouchExploration(true)
-        setContent(PaperSize.A4, "v1", {}, {}, { "Local licence" }, fontScale = 1.8f)
-        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Touch)) }
-        openCredits()
-        val last = colophonTypefaceTestTag(ColophonTypeface.INTER)
-        scrollToTag(last)
-        composeRule.onNodeWithTag(last).performClick()
-        composeRule.onNodeWithText("Local licence").assertIsDisplayed()
-        // Two Backs inside one frame: Credits never recomposes, so its row-return request is never consumed.
-        // Re-entering must not let that stale request beat the heading.
-        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
-        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
-        composeRule.onNodeWithTag(ColophonCreditsRowTestTag).assertIsFocused()
-
-        composeRule.onNodeWithTag(ColophonCreditsRowTestTag).performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText(Copy.Colophon.CREDITS).assertIsDisplayed().assertIsFocused()
-    }
-
-    @Test
-    fun `without a screen reader touch mode moves no focus and keyboard gets no heading stop`() {
-        setTouchExploration(false)
-        setContent(PaperSize.A4, "v1", {}, {}, { "Local licence" })
-        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Touch)) }
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText(Copy.Colophon.TITLE).assertIsNotFocused()
-        openCredits()
-        composeRule.onNodeWithTag(ColophonBackTestTag).performClick()
-        // A sighted touch user sees no focus land anywhere, exactly as before the fix.
-        composeRule.onNodeWithTag(ColophonCreditsRowTestTag).assertIsNotFocused()
-
-        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
-        openCredits()
-        composeRule.onNodeWithText(Copy.Colophon.CREDITS).assertIsNotFocused()
-    }
-
-    private fun setTouchExploration(enabled: Boolean) {
-        val manager = composeRule.activity.getSystemService(android.view.accessibility.AccessibilityManager::class.java)
-        shadowOf(manager).setEnabled(enabled)
-        shadowOf(manager).setTouchExplorationEnabled(enabled)
     }
 
     private fun openCredits() {

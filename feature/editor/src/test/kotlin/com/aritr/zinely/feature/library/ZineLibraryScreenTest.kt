@@ -260,21 +260,6 @@ class ZineLibraryScreenTest {
     }
 
     @Test
-    fun `under TalkBack in touch mode closing About returns focus to its dock action`() {
-        val manager = composeRule.activity.getSystemService(android.view.accessibility.AccessibilityManager::class.java)
-        org.robolectric.Shadows.shadowOf(manager).setEnabled(true)
-        org.robolectric.Shadows.shadowOf(manager).setTouchExplorationEnabled(true)
-        content(zines(2))
-        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Touch)) }
-        val colophonActionTag = zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)
-
-        composeRule.onNodeWithTag(colophonActionTag).performClick()
-        composeRule.onNodeWithTag(ColophonBackTestTag).performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag(colophonActionTag).assertIsFocused()
-    }
-
-    @Test
     fun `Colophon can set preferred paper and returns to the shelf action`() {
         content(zines(2))
         val colophonActionTag = zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)
