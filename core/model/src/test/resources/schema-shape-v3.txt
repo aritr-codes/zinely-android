@@ -1,0 +1,93 @@
+com.aritr.zinely.core.model.ZineDocument CLASS
+  schemaVersion: kotlin.Int (optional)
+  format: com.aritr.zinely.core.model.ZineFormat
+  paperSize: com.aritr.zinely.core.model.PaperSize
+  defaults: com.aritr.zinely.core.model.DocumentDefaults (optional)
+  pages: LIST<com.aritr.zinely.core.model.Page> (optional)
+com.aritr.zinely.core.model.ZineFormat ENUM
+  single_sheet_8: com.aritr.zinely.core.model.ZineFormat.single_sheet_8
+com.aritr.zinely.core.model.PaperSize ENUM
+  letter: com.aritr.zinely.core.model.PaperSize.letter
+  a4: com.aritr.zinely.core.model.PaperSize.a4
+com.aritr.zinely.core.model.DocumentDefaults CLASS
+  textStyle: com.aritr.zinely.core.model.TextStyle (optional)
+  background: com.aritr.zinely.core.model.Background (optional)
+com.aritr.zinely.core.model.TextStyle CLASS
+  fontFamily: kotlin.String (optional)
+  sizePt: kotlin.Double (optional)
+  color: com.aritr.zinely.core.model.ColorRgba (optional)
+  align: com.aritr.zinely.core.model.TextAlign (optional)
+  bold: kotlin.Boolean (optional)
+  italic: kotlin.Boolean (optional)
+com.aritr.zinely.core.model.Background SEALED
+  type: kotlin.String
+  value: kotlinx.serialization.Sealed<Background>
+com.aritr.zinely.core.model.Page CLASS
+  index: kotlin.Int
+  role: com.aritr.zinely.core.model.PageRole
+  background: com.aritr.zinely.core.model.Background (optional)
+  elements: LIST<com.aritr.zinely.core.model.Element> (optional)
+com.aritr.zinely.core.model.ColorRgba CLASS
+  r: kotlin.Int
+  g: kotlin.Int
+  b: kotlin.Int
+  a: kotlin.Int (optional)
+com.aritr.zinely.core.model.TextAlign ENUM
+  start: com.aritr.zinely.core.model.TextAlign.start
+  center: com.aritr.zinely.core.model.TextAlign.center
+  end: com.aritr.zinely.core.model.TextAlign.end
+kotlinx.serialization.Sealed<Background> CONTEXTUAL
+  none: none
+  solid: solid
+com.aritr.zinely.core.model.PageRole ENUM
+  front_cover: com.aritr.zinely.core.model.PageRole.front_cover
+  back_cover: com.aritr.zinely.core.model.PageRole.back_cover
+  interior: com.aritr.zinely.core.model.PageRole.interior
+none OBJECT
+solid CLASS
+  color: com.aritr.zinely.core.model.ColorRgba
+com.aritr.zinely.core.model.Element SEALED
+  type: kotlin.String
+  value: kotlinx.serialization.Sealed<Element>
+kotlinx.serialization.Sealed<Element> CONTEXTUAL
+  decor: decor
+  image: image
+  text: text
+decor CLASS
+  id: kotlin.String
+  transform: com.aritr.zinely.core.model.Transform
+  zIndex: kotlin.Int (optional)
+  supplyId: kotlin.String
+  ink: com.aritr.zinely.core.model.ColorRgba
+  mirrored: kotlin.Boolean (optional)
+  flippedVertically: kotlin.Boolean (optional)
+image CLASS
+  id: kotlin.String
+  transform: com.aritr.zinely.core.model.Transform
+  zIndex: kotlin.Int (optional)
+  assetId: kotlin.String
+  crop: com.aritr.zinely.core.model.Crop (optional)
+  fit: com.aritr.zinely.core.model.Fit (optional)
+  copier: kotlin.Boolean (optional)
+  flippedHorizontally: kotlin.Boolean (optional)
+  flippedVertically: kotlin.Boolean (optional)
+text CLASS
+  id: kotlin.String
+  transform: com.aritr.zinely.core.model.Transform
+  zIndex: kotlin.Int (optional)
+  text: kotlin.String
+  style: com.aritr.zinely.core.model.TextStyle (optional)
+com.aritr.zinely.core.model.Transform CLASS
+  xPt: kotlin.Double
+  yPt: kotlin.Double
+  widthPt: kotlin.Double
+  heightPt: kotlin.Double
+  rotationDegrees: kotlin.Double (optional)
+com.aritr.zinely.core.model.Crop CLASS
+  left: kotlin.Double (optional)
+  top: kotlin.Double (optional)
+  right: kotlin.Double (optional)
+  bottom: kotlin.Double (optional)
+com.aritr.zinely.core.model.Fit ENUM
+  fit: com.aritr.zinely.core.model.Fit.fit
+  fill: com.aritr.zinely.core.model.Fit.fill
