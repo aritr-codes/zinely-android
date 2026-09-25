@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The public website now offers 0.9.0-beta.5 as the current download: version, size, versionCode 10, the APK
+  link and its published SHA-256 on the Download page; a beta.5 entry in What's new with its known limitations;
+  a short "New in 0.9.0-beta.5" note on the homepage; and the roadmap moves beta.5 to Available. Google Play
+  and iPhone stay shown as unavailable. No Android behavior or release artifact changed.
 - Rewrote public update pages in plain language, refreshed their status, and moved homepage accessibility copy
   from standard names to practical benefits, and expanded the Aastra origin story. No download, legal text or
   release artifact changed.

@@ -33,14 +33,14 @@
       <section class="release-card" aria-labelledby="current-title">
         <h2 id="current-title">Current version</h2>
         <dl class="release-facts">
-          <div><dt>Version</dt><dd>0.9.0-beta.4-r3</dd></div>
-          <div><dt>Released</dt><dd><time datetime="2026-09-09">9 September 2026</time></dd></div>
+          <div><dt>Version</dt><dd>0.9.0-beta.5</dd></div>
+          <div><dt>Released</dt><dd><time datetime="2026-09-25">25 September 2026</time></dd></div>
           <div><dt>Needs</dt><dd>Android 7.0 or newer</dd></div>
-          <div><dt>Size</dt><dd>About 16 MB</dd></div>
+          <div><dt>Size</dt><dd>About 16 MB (16,068,423 bytes)</dd></div>
           <div><dt>Price</dt><dd>Free. No account.</dd></div>
         </dl>
-        <p><a class="button primary" href="https://github.com/aritr-codes/zinely-android/releases/download/v0.9.0-beta.4-r3/zinely-0.9.0-beta.4-r3-release.apk">Download the APK</a></p>
-        <p class="release-card-note">What changed in this version: <a href="../changelog/#beta-4-r3">what’s new</a>, or the <a href="https://github.com/aritr-codes/zinely-android/releases/tag/v0.9.0-beta.4-r3">release page on GitHub</a>.</p>
+        <p><a class="button primary" href="https://github.com/aritr-codes/zinely-android/releases/download/v0.9.0-beta.5/zinely-0.9.0-beta.5-release.apk">Download the APK</a></p>
+        <p class="release-card-note">The file is <code>zinely-0.9.0-beta.5-release.apk</code>. What changed in this version: <a href="../changelog/#beta-5">what’s new</a>, or the <a href="https://github.com/aritr-codes/zinely-android/releases/tag/v0.9.0-beta.5">release page on GitHub</a>.</p>
       </section>
 
       <h2 id="install">Install it</h2>
@@ -66,23 +66,25 @@
 
       <h2 id="known-limits">Known limits in this version</h2>
       <ul>
-        <li><strong>On Android 7, 8 and 9, Save PDF does not work in this beta.</strong> Use <strong>Share</strong> instead and send the PDF to your Files app, email, or a printer app. Android 10 and newer can save normally.</li>
-        <li>A flipped photo sent across the fold prints with the spread broken at the fold.</li>
-        <li>Pictures with see-through backgrounds, like logos, come in with black where they should be clear.</li>
+        <li><strong>On Android 7, 8 and 9, Save PDF asks for storage access.</strong> If you decline and tell Android not to ask again, Save PDF keeps showing “Couldn’t make the PDF” until you allow storage for Zinely in your phone’s settings. <strong>Share</strong> always works. We have tested this on an Android 9 emulator, but not yet on a real Android 7, 8 or 9 phone. If you have one, <a href="https://forms.gle/7ejUVJBdUaYoDytu6">tell us</a> how it goes.</li>
+        <li>Pictures with see-through backgrounds, like logos, lose their transparency. The clear parts come in as white. They print correctly on white paper, but on the cream page in the app a logo shows as a faint white rectangle, and over a photo as a white box.</li>
+        <li>With TalkBack, <strong>About</strong> and its credits pages open on the Back button, and going back lands at the top of the previous screen. Everything is still reachable by swiping. The dimmed area behind the zine actions sheet on your shelf is still read out as an unlabelled button.</li>
+        <li>Photos you replace or delete still take up space inside the app. Zinely does not reclaim that storage yet.</li>
+        <li>You cannot choose a font yet.</li>
         <li>Text in scripts Zinely cannot print yet, such as Bengali or Tamil, is kept and flagged, but does not print.</li>
         <li>Zinely makes the PDF. Printing happens in your phone’s PDF or print app.</li>
       </ul>
-      <p>When the next beta is released, <a href="../changelog/">what’s new</a> will say which of these it fixes.</p>
+      <p><a href="../changelog/#beta-5">What’s new</a> lists what this version fixed.</p>
 
       <h2 id="checksum">Check the download (optional)</h2>
-      <p>You do not need this to use Zinely. If you want to confirm the file is the one we published, compare its SHA-256 checksum with ours:</p>
-      <p class="checksum"><code>3522042340e85042b7e3e314ae07de49d85fe7b4da553462438cd9f1ab97c3a1</code></p>
+      <p>You do not need this to use Zinely. If you want to confirm the file is the one we published, compare its SHA-256 checksum with ours. This is for <code>zinely-0.9.0-beta.5-release.apk</code>, version 0.9.0-beta.5 (Android version code 10):</p>
+      <p class="checksum"><code>ac18f4fab6162bef91d86ddc6b9f009044d1a4544f170a477e69dca76e7cf5bf</code></p>
 
       <h2 id="other-ways">Other ways to get Zinely</h2>
       <dl class="other-ways">
         <div><dt>Google Play</dt><dd>Not yet. We plan to publish Zinely there, but there is no date. Until then, this page is the way to get it.</dd></div>
         <div><dt>iPhone and iPad</dt><dd>Zinely is Android only today. There is no iPhone version, and we have not announced one.</dd></div>
-        <div><dt>The next beta</dt><dd>Being tested, not released yet. When it is ready, it will appear here and in <a href="../changelog/">what’s new</a>.</dd></div>
+        <div><dt>Earlier versions</dt><dd>The previous public beta is still on the <a href="https://github.com/aritr-codes/zinely-android/releases">GitHub releases page</a>. Use the current version above unless you have a reason not to.</dd></div>
         <div><dt>Building it yourself</dt><dd>The source code is on <a href="https://github.com/aritr-codes/zinely-android">GitHub</a>. Builds made from it are for development and may not match this beta.</dd></div>
       </dl>
 

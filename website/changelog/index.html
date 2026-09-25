@@ -37,13 +37,13 @@
       <section class="journal-status" aria-labelledby="status-title">
         <h2 id="status-title">Where things stand</h2>
         <dl>
-          <div><dt>In the download</dt><dd><a href="../download/">0.9.0-beta.4-r3</a>, the public beta from 9 September 2026.</dd></div>
-          <div><dt>Next beta</dt><dd>Being tested. Not released yet, so it is not listed here.</dd></div>
+          <div><dt>In the download</dt><dd><a href="../download/">0.9.0-beta.5</a>, the public beta released on 25 September 2026.</dd></div>
           <div><dt>Still in development</dt><dd>Changes that are not in any download yet live in the <a href="https://github.com/aritr-codes/zinely-android/blob/main/CHANGELOG.md">developer changelog</a>.</dd></div>
         </dl>
       </section>
 
       <nav class="journal-index" aria-label="Jump to an update">
+        <a href="#beta-5"><span>Public beta</span><strong>beta.5</strong></a>
         <a href="#beta-4-r3"><span>Public beta</span><strong>r3</strong></a>
         <a href="#beta-4-r2"><span>Tester build</span><strong>r2</strong></a>
         <a href="#beta-4"><span>Tester build</span><strong>beta.4</strong></a>
@@ -56,6 +56,40 @@
       </nav>
 
       <div class="journal-timeline">
+
+      <section class="release-entry journal-entry public-release" id="beta-5">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">Public beta release</p>
+          <p class="release-date">Published <time datetime="2026-09-25">25 September 2026</time></p>
+        </header>
+        <h2>0.9.0-beta.5</h2>
+        <p class="release-theme">Steadier editing and saving</p>
+        <p>Released and in the <a href="../download/">download</a> now. It installs over earlier betas and keeps your zines. Your saved zines and backups work exactly as before.</p>
+        <h3>Changed</h3>
+        <ul>
+          <li>The About screen opens with a short note from Aastra, the two of us who make Zinely. Font credits now sit one tap away under <strong>Licences &amp; credits</strong>.</li>
+          <li>Reframe opens big photos more smoothly. Your crop, flip, and printed page still use the full-size photo.</li>
+        </ul>
+        <h3>Fixed</h3>
+        <ul>
+          <li>On Android 7, 8 and 9, Save PDF now asks for storage access instead of failing every time. Decline, and nothing is saved. Share never needs it.</li>
+          <li>On those phones, a save that fails part-way no longer leaves an empty or broken file in Downloads.</li>
+          <li>A flipped photo sent across the fold now lands the right way round on both pages, so the printed spread lines up.</li>
+          <li>After an Undo that jumps to another page, nothing from the page you left stays selected.</li>
+          <li>Pictures with see-through backgrounds, like logos, come in on white instead of black.</li>
+          <li>A move or resize that ends exactly where it started no longer wipes Redo or adds an empty Undo step.</li>
+          <li>With TalkBack, the dimmed area behind most sheets, such as <strong>Start a zine</strong> and <strong>Backups</strong>, is no longer read out as a button, so TalkBack starts inside the sheet.</li>
+        </ul>
+        <h3>Known limitations</h3>
+        <ul>
+          <li>See-through pictures lose their transparency. They print correctly, but on the cream page in the app a logo shows as a faint white rectangle.</li>
+          <li>On Android 7, 8 and 9, if you decline storage access and tell Android not to ask again, Save PDF keeps failing until you allow storage in your phone’s settings. Share still works.</li>
+          <li>With TalkBack, About and its credits pages open on the Back button, and going back lands at the top of the previous screen. Everything is still reachable by swiping. The zine actions sheet still has the unlabelled dimmed area.</li>
+          <li>Replaced and deleted photos still take up space. You cannot choose a font yet. Scripts Zinely cannot print yet are kept but do not print. Printing happens in another app.</li>
+        </ul>
+        <p>All of them are listed on the <a href="../download/#known-limits">download page</a>.</p>
+      </section>
 
       <section class="release-entry journal-entry public-release" id="beta-4-r3">
         <span class="journal-pin" aria-hidden="true"></span>

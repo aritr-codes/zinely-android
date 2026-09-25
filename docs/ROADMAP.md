@@ -19,23 +19,21 @@ Reframe loading and the deterministic accessibility regression were completed th
 beta.4-r3 APK; measurements and evidence remain in the
 [release-gap review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-10-reframe-loading-follow-up).
 
+**Released 2026-09-25:** beta.5 and the About maker's note are in the public download
+([0.9.0-beta.5](../CHANGELOG.md#090-beta5--2026-09-23--steadier-editing-and-saving), tag `v0.9.0-beta.5`,
+GitHub pre-release, APK only). No next tester build is scheduled yet.
+
 ### In development — built or being tested, not in the public download
 
-- **The next beta:** the repository fixes listed under [Unreleased](../CHANGELOG.md#unreleased) are being prepared
-  as the next tester build by the release process in [RELEASING.md](RELEASING.md). Not released; the public
-  download stays beta.4-r3 until it is.
 - **Unavailable Font control removal:** owner approved removal as a design judgment. [PR #70](https://github.com/aritr-codes/zinely-android/pull/70)
   contains the implementation and green automated checks; it remains draft pending hands-on/TalkBack and rendered
   HTML parity acceptance. No published APK change. Removing the dead action does not reject future font choice.
-- **Human About opening:** owner approved separate website narrative and app maker's note. The canonical app
-  design is frozen and implemented in Compose, with native verification still pending, not a published change.
-  [ADR-116](DECISIONS.md#adr-116) records the approval and retained acceptance gates.
 
 ### Planned
 
 - **Google Play publication**, after owner account verification, mandatory testing and store review. Account
   verification remains blocked; the signed GitHub beta and public policy already exist. This is a distribution
-  task, not a reason to rebuild or overwrite beta.4-r3. [Release authority](RELEASING.md#3-beta-distribution-side-load).
+  task, not a reason to rebuild or overwrite beta.5. [Release authority](RELEASING.md#3-beta-distribution-side-load).
 
 ### Exploring — recommended next decisions, in order
 
@@ -49,6 +47,11 @@ beta.4-r3 APK; measurements and evidence remain in the
 
 - Add a blocked-loader regression proving a cancelled or superseded Reframe load cannot publish stale state,
   if this boundary changes again. Preserve the raw measurement and trace-hash record in the release-gap review.
+- About maker's note: HTML/Compose pixel parity for About and its pages is recorded as **not verified** in the
+  [beta.5 release notes](releases/0.9.0-beta.5.md#not-verified), and [ADR-116](DECISIONS.md#adr-116) still reads
+  "native verification pending". Run the parity check and update ADR-116's status; the focus-return gate became a
+  Known Limitation by owner ruling.
+- Save PDF on a real Android 7–9 phone: beta.5's storage-permission path was verified on an Android 9 emulator only.
 - Verify backup/restore on a second Android/API environment and realistic interrupted/low-storage providers.
   Treat this as coverage expansion, not a claim that the accepted Samsung recovery path is broken. Do not fill,
   wipe or uninstall the owner's device to manufacture a test condition.
@@ -327,6 +330,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-09-25 | **beta.5 released** (tag `v0.9.0-beta.5`, merge `32da280`): the next-beta and About maker's note items leave In development; About pixel parity and real-phone Android 7–9 Save PDF checks become engineering follow-ups. The public website now offers beta.5. No scope change. | [ADR-116](DECISIONS.md#adr-116) · [ADR-118](DECISIONS.md#adr-118) |
 | 2026-09-24 | Current priorities gain an **In development** group (next beta, Font-control removal, About maker's note), moved out of Exploring, so the public website's four labels project this list rather than inventing statuses. No scope change. | [ADR-118](DECISIONS.md#adr-118) |
 | 2026-09-09 | Reconciled current priorities against code, issues, releases and website: one conditional publication plan, four explicit explorations, scoped engineering follow-ups; historical phases retained but no longer presented as today's promises. | [Current-state review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-09-current-state-review) |
 | 2026-08-26 | **September emoji printing and X9 spreads implemented.** X9 follows the frozen A19 ruling as two ordinary image elements with complementary crops. Emoji uses bundled Emoji2 with forced replacement through `SharedTextLayout`; the Samsung raster/PDF corpus passed at 10/24/48 pt, with a measured 9.42-MiB release-APK cost accepted for offline determinism. | [ADR-109](DECISIONS.md#adr-109) · [ADR-112](DECISIONS.md#adr-112) |
