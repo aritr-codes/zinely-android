@@ -1,3 +1,14 @@
+/* Self-hosted so the site makes no third-party font requests. Built by tools/build-web-fonts.py; licences sit
+   beside the files in assets/fonts/. Averia is the unmodified app file because its licence reserves the name. */
+@font-face { font-family: "Inter"; font-weight: 400; font-display: swap; src: url("fonts/inter-regular.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 500; font-display: swap; src: url("fonts/inter-medium.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; font-display: swap; src: url("fonts/inter-semibold.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; font-display: swap; src: url("fonts/inter-bold.woff2") format("woff2"); }
+@font-face { font-family: "Fraunces"; font-weight: 400; font-display: swap; src: url("fonts/fraunces-regular.woff2") format("woff2"); }
+@font-face { font-family: "Fraunces"; font-weight: 500; font-display: swap; src: url("fonts/fraunces-medium.woff2") format("woff2"); }
+@font-face { font-family: "Averia Sans Libre"; font-weight: 400; font-display: swap; src: url("fonts/averia-sans-libre-regular.ttf") format("truetype"); }
+@font-face { font-family: "Averia Sans Libre"; font-weight: 700; font-display: swap; src: url("fonts/averia-sans-libre-bold.ttf") format("truetype"); }
+
 :root {
   color-scheme: light;
   --room: #e9e29b;
@@ -947,6 +958,48 @@ summary:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; bord
 .idea-slip .eyebrow { color: var(--ink-soft); }
 .idea-slip #zine-idea { min-height: 3.2em; margin-top: 8px; font: italic 1.15rem/1.6 Georgia, serif; }
 .text-button { border: 0; border-radius: 3px; background: transparent; color: var(--ink); padding: 10px 0; min-height: 48px; text-align: left; text-decoration: underline; text-underline-offset: 4px; font: inherit; font-weight: 750; cursor: pointer; }
+
+/* Story order: what, why, what you can make, how, what is different, try it, where it is going. */
+.lede-small { max-width: 620px; margin: 0 0 18px; color: var(--ink-soft); }
+.why-paper, .make-section, .different { padding: 90px 0 20px; }
+.why-grid, .different-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 0; padding: 0; list-style: none; }
+.why-grid li, .different-card { padding: 26px; border: var(--border); border-radius: 6px 18px 8px 6px; background: var(--paper); box-shadow: 4px 5px 0 var(--ink); }
+.why-grid li:nth-child(2), .different-card:nth-child(2) { background: var(--surface); transform: rotate(-0.6deg); }
+.why-grid li:nth-child(3), .different-card:nth-child(3) { background: var(--room-raised); }
+.why-grid p, .different-card li { color: var(--ink-soft); }
+.why-grid p { margin-bottom: 0; }
+.different-card ul { margin: 0; padding-left: 1.1rem; }
+.different-card li + li { margin-top: 10px; }
+.make-desk { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; gap: clamp(24px, 5vw, 56px); }
+.make-list { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.make-list li { padding: 10px 16px; border: 1.5px solid var(--ink); border-radius: 3px; background: #fffdf5; box-shadow: 2px 3px 0 var(--ink); font: italic 1.05rem/1.4 Georgia, serif; }
+.make-list li:nth-child(3n + 2) { transform: rotate(-1deg); background: var(--surface); }
+.make-list li:nth-child(3n) { transform: rotate(0.8deg); }
+.make-desk .idea-slip { margin: 0; padding: 22px 24px 12px; border: 1.5px dashed var(--ink); background: var(--paper); transform: rotate(1deg); }
+.press-status { padding: 10px 0 20px; }
+.press-status h2 { font-size: clamp(1.6rem, 3.4vw, 2.3rem); }
+.press-status table { min-width: 0; }
+.press-status tbody th { font-family: "Trebuchet MS", ui-rounded, sans-serif; font-size: 1.1rem; white-space: nowrap; }
+.press-status-note { color: var(--ink-soft); }
+.status-chip { display: inline-block; margin: 2px 4px 2px 0; padding: 1px 8px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--paper); color: var(--ink); font-size: 0.7rem; font-weight: 850; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+.status-chip.available { background: var(--primary); }
+.status-chip.development { background: #f6b22c; }
+.status-chip.planned { background: var(--surface-soft); }
+.download-direct { font-size: 0.92rem; color: var(--ink-soft); }
+.download-direct a { font-weight: 800; text-underline-offset: 3px; }
+@media (max-width: 820px) {
+  .why-grid, .different-grid, .make-desk { grid-template-columns: minmax(0, 1fr); }
+  .why-grid li:nth-child(2), .different-card:nth-child(2), .make-desk .idea-slip { transform: none; }
+}
+@media (max-width: 640px) {
+  .press-status table, .press-status tbody, .press-status tr, .press-status th, .press-status td { display: block; }
+  .press-status thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .press-status tr { border-bottom: 1px solid rgba(39, 39, 15, 0.35); }
+  .press-status tbody tr:last-child { border-bottom: 0; }
+  .press-status td { border: 0; padding-top: 0; }
+  .press-status td:nth-child(2)::before { content: "Today: "; font-weight: 800; color: var(--ink); }
+  .press-status td:nth-child(3)::before { content: "Direction (not a promise): "; font-weight: 800; color: var(--ink); }
+}
 footer .footer-colophon { display: block; flex: 1 1 44%; font-weight: 400; }
 .footer-secret { margin-top: 8px; }
 .footer-secret p { max-width: 32ch; font: italic 1rem/1.5 Georgia, serif; }
@@ -1017,6 +1070,8 @@ footer .footer-colophon { display: block; flex: 1 1 44%; font-weight: 400; }
   --app-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.34'/%3E%3C/svg%3E");
   color: var(--app-ink);
   font-family: var(--app-sans);
+  /* No Fraunces italic is bundled with the app, so the demo's few italic notes lean the upright face. */
+  font-synthesis: style;
   position: relative;
   width: 100%;
 }
@@ -1600,18 +1655,6 @@ footer .footer-colophon { display: block; flex: 1 1 44%; font-weight: 400; }
 .demo-page[data-page="1"] .demo-page-text.is-heading { font-size: 1.42rem; text-align: center; }
 .demo-empty-page { position: absolute; top: 50%; left: 50%; width: min(76%,190px); margin: 0; color: #6a452f; font: italic .9rem/1.45 var(--app-serif); text-align: center; transform: translate(-50%,-50%) rotate(-1deg); }
 .demo-page-number { position: absolute; z-index: 2; right: 9px; bottom: 6px; color: #6a452f; font: 700 .6rem/1 var(--app-sans); }
-.demo-supply-shelf { position: relative; flex: none; padding: 8px 16px; border-top: 1.5px solid var(--app-ink); background: var(--app-room); }
-.demo-supply-shelf::before { content: ""; position: absolute; top: 0; right: 0; left: 0; height: 3px; background: var(--app-room); opacity: .55; }
-.demo-supply-shelf > div:first-child { display: flex; align-items: center; justify-content: space-between; font-size: .78rem; }
-.demo-supply-shelf strong { font: 700 .88rem/1.2 var(--app-voice); }
-.demo-supply-shelf strong span { color: var(--app-ink-soft); font: 500 .68rem/1 var(--app-sans); }
-.demo-kept { display: flex; height: 58px; align-items: center; gap: 8px; }
-.demo-kept i { position: relative; display: grid; width: 48px; height: 48px; place-items: center; border: 1.5px solid var(--app-ink); border-radius: 8px; background: var(--app-surface-soft); box-shadow: 2px 2px 0 var(--app-ink); color: var(--app-ink-soft); font: 700 .65rem/1 var(--app-sans); font-style: normal; }
-.demo-kept i:first-child { border-style: dashed; background: var(--app-paper); box-shadow: none; }
-.demo-kept i:nth-child(3) { background: var(--app-surface); }
-.demo-kept i:nth-child(4) { background: var(--app-room-raised); }
-.demo-kept i::before { content: ""; position: absolute; top: -5px; left: 50%; width: 23px; height: 9px; background: rgba(246,178,44,.65); transform: translateX(-50%) rotate(-3deg); }
-.demo-kept i:first-child::before { display: none; }
 .demo-nav-row { display: flex; min-height: 50px; padding: 8px 12px 4px; align-items: center; gap: 8px; background: var(--app-room); }
 .demo-grid-mark { display: grid; width: 38px; height: 38px; padding: 10px; flex: none; grid-template-columns: 1fr 1fr; gap: 3px; border: 1.5px solid var(--app-ink); border-radius: 8px; background: var(--app-surface); box-shadow: 2px 2px 0 var(--app-ink); }
 .demo-grid-mark i { border: 1px solid currentColor; border-radius: 1px; }
@@ -1805,3 +1848,16 @@ footer .footer-colophon { display: block; flex: 1 1 44%; font-weight: 400; }
 @media print {
   .demo-add-dialog { display: none !important; }
 }
+
+/* Download page: facts first, then literal install steps. */
+.release-card { margin: 34px 0 10px; padding: clamp(20px, 4vw, 30px); border: var(--border); border-radius: 6px 18px 8px 6px; background: var(--surface); box-shadow: 4px 5px 0 var(--ink); }
+.release-card h2 { margin-top: 0; }
+.release-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); gap: 14px 22px; margin: 0 0 22px; }
+.release-facts dt, .other-ways dt { color: var(--ink-soft); font-size: 0.74rem; font-weight: 850; letter-spacing: 0.1em; text-transform: uppercase; }
+.release-facts dd { margin: 2px 0 0; color: var(--ink); font-weight: 750; }
+.release-card-note { margin-bottom: 0; font-size: 0.92rem; }
+.install-steps li { padding-left: 4px; }
+.checksum code { display: block; padding: 12px 14px; border: 1.5px dashed var(--ink); background: #fffdf5; color: var(--ink); overflow-wrap: anywhere; }
+.other-ways { display: grid; gap: 18px; margin: 0; }
+.other-ways dd { margin: 4px 0 0; color: var(--ink-soft); }
+.policy .button { color: var(--ink); }

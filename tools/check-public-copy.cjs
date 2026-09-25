@@ -16,6 +16,9 @@ const quietStyles = read('website/assets/quiet-pages.css');
 const policyLayout = read('website/_layouts/policy.html');
 const privacyFallback = read('website/privacy/index.html');
 const notFound = read('website/404.html');
+const download = read('website/download/index.html');
+const sitemap = read('website/sitemap.xml');
+const releaseNotes = read('docs/releases/0.9.0-beta.4-r3.md');
 const proposal = read('docs/design/experiments/v21-about-story.html');
 const appAbout = read('docs/design/mockups/v21-colophon.html');
 const copy = read('core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt');
@@ -37,9 +40,8 @@ assert.match(home, /Fold this step/);
 assert.match(siteScript, /picker\.addEventListener\('input'/);
 assert.match(siteStyles, /Phase 2 shared workbench story/);
 assert.match(roadmap, /assets\/roadmap\.css/);
-assert.match(roadmap, /On the press/);
-assert.match(roadmap, /On the bench/);
-assert.match(roadmap, /In the margins/);
+for (const horizon of ['Foundation', 'Craft', 'Proof']) assert.ok(roadmap.includes(`class="press-zone">${horizon}</p>`), `Roadmap horizon ${horizon}`);
+assert.match(roadmap, /Not on our list/);
 assert.match(notes, /assets\/journal\.css/);
 assert.match(notes, /studio-journal/);
 assert.match(policyLayout, /assets\/quiet-pages\.css/);
@@ -47,6 +49,8 @@ assert.match(privacyFallback, /id="feedback-and-email"/);
 assert.match(privacyFallback, /Zinely does not request the <code>INTERNET<\/code> permission/);
 assert.doesNotMatch(privacyFallback, /Directory listing/);
 assert.doesNotMatch(notFound, /relative_url/);
+// GitHub Pages serves 404.html at any depth, so every local reference must be root-absolute.
+for (const [, ref] of notFound.matchAll(/\b(?:href|src)="([^"]+)"/g)) assert.match(ref, /^(\/zinely-android\/|#|https:)/, `404 reference ${ref} works at any depth`);
 assert.match(roadmapStyles, /\.roadmap-board/);
 assert.match(journalStyles, /\.studio-journal/);
 assert.match(quietStyles, /\.quiet-scene/);
@@ -65,7 +69,24 @@ assert.match(siteScript, /for \(let index = 0; index < 8; index \+= 1\)/);
 assert.match(siteScript, /event\.key === 'ArrowRight'/);
 assert.match(siteScript, /dialog\.show\(\)/);
 assert.doesNotMatch(siteScript, /showModal|Math\.random/);
-assert.match(home, /Averia\+Sans\+Libre/);
+// Privacy promise: no third-party fonts, scripts or styles on any page. Fonts ship with their licences.
+for (const [name, text] of [['home', home], ['roadmap', roadmap], ['changelog', notes], ['download', download], ['404', notFound], ['policy layout', policyLayout], ['privacy fallback', privacyFallback],
+  ['styles', siteStyles], ['roadmap styles', roadmapStyles], ['journal styles', journalStyles], ['quiet styles', quietStyles], ['script', siteScript]]) {
+  assert.doesNotMatch(text, /fonts\.(googleapis|gstatic)\.com/, `${name}: no Google Fonts request`);
+  // Anything the browser fetches by itself: embedded elements, CSS url() and @import. Plain <a> links are fine.
+  assert.doesNotMatch(text, /<(?:script|link|img|iframe|source|video|audio|embed|object)\b[^>]*\b(?:src|href|srcset)=["']?(?:https?:)?\/\/(?!aritr-codes\.github\.io\/)/, `${name}: no third-party embedded resource`);
+  assert.doesNotMatch(text, /url\(\s*["']?(?:https?:)?\/\/|@import/, `${name}: no remote CSS resource`);
+}
+for (const [, font] of siteStyles.matchAll(/url\("(fonts\/[^"]+)"\)/g)) assert.ok(fs.existsSync(path.join(root, 'website/assets', font)), `Self-hosted ${font} exists`);
+for (const licence of ['OFL-AveriaSansLibre.txt', 'OFL-Fraunces.txt', 'OFL-Inter.txt']) {
+  assert.ok(fs.existsSync(path.join(root, 'website/assets/fonts', licence)), `${licence} ships beside the fonts`);
+}
+for (const weight of ['regular', 'bold']) {
+  const web = fs.readFileSync(path.join(root, `website/assets/fonts/averia-sans-libre-${weight}.ttf`));
+  const app = fs.readFileSync(path.join(root, `core/ui/src/main/res/font/averia_sans_libre_${weight}.ttf`));
+  assert.ok(web.equals(app), `Averia ${weight} is the unmodified app file (Reserved Font Name)`);
+}
+assert.doesNotMatch(home, /things kept|\+ keep/, 'The demo shows only shipped Bench UI');
 assert.match(home, /data-demo-undo disabled aria-label="Undo"/);
 assert.match(home, /data-open-proof aria-label="Done and preview"/);
 assert.match(home, /data-demo-share/);
@@ -126,17 +147,27 @@ assert.ok(!deskDemoCopy.includes('\u2014'), 'No em dashes in interactive desk co
 assert.doesNotMatch(home, /WCAG/);
 assert.match(home, /id="accessibility"/);
 assert.match(home, /reduced-motion setting/);
-assert.match(home, /releases\/download\/v0\.9\.0-beta\.4-r3\/zinely-0\.9\.0-beta\.4-r3-release\.apk/);
+for (const html of [home, download]) assert.match(html, /releases\/download\/v0\.9\.0-beta\.4-r3\/zinely-0\.9\.0-beta\.4-r3-release\.apk/);
+const sha = releaseNotes.match(/SHA-256 \| `([0-9a-f]{64})`/)[1];
+assert.ok(download.includes(`<code>${sha}</code>`), 'Download checksum matches the release record');
+assert.match(download, /id="install"/);
+assert.match(download, /Google Play<\/dt><dd>Not yet\./);
+assert.match(download, /There is no iPhone version/);
+assert.match(download, /id="known-limits"[\s\S]*On Android 7, 8 and 9,\s+Save PDF does not\s+work/, 'Download page states the published Save PDF limit');
+assert.match(sitemap, /zinely-android\/download\//);
+for (const [name, html] of [['home', home], ['changelog', notes], ['download', download], ['roadmap', roadmap]]) {
+  assert.doesNotMatch(html, /beta\.5|App Store|available on (?:Google )?Play/i, `${name}: no unreleased build, iOS or Play claim`);
+}
 assert.match(roadmap, /still being tested, not in the download/);
 assert.match(roadmap, /not announced features/);
-for (const label of ['Planned', 'Exploring and testing', 'Ideas, not promises']) {
-  assert.ok(roadmap.includes(`class="status-label">${label}</p>`), `Keep commitment levels distinct: ${label}`);
+for (const [status, label] of [['available', 'Available'], ['development', 'In development'], ['planned', 'Planned'], ['exploring', 'Exploring']]) {
+  assert.ok(roadmap.includes(`class="status-chip ${status}">${label}</span>`), `Keep commitment levels distinct: ${label}`);
 }
 assert.doesNotMatch(roadmap, /restore its regression test|Measure cold/);
-for (const id of ['website-september-9', 'beta-4-r3', 'beta-4-r2', 'beta-4', 'beta-3']) {
+for (const id of ['website-september-10', 'website-september-9', 'beta-4-r3', 'beta-4-r2', 'beta-4', 'beta-3', 'beta-2', 'beta-1', 'early-builds']) {
   assert.ok(notes.includes(`id="${id}"`), `Preserve release bookmark ${id}`);
 }
-for (const [name, html] of [['index.html', home], ['roadmap/index.html', roadmap], ['changelog/index.html', notes]]) {
+for (const [name, html] of [['index.html', home], ['roadmap/index.html', roadmap], ['changelog/index.html', notes], ['download/index.html', download]]) {
   assert.match(html, /<html lang="en">/);
   assert.equal((html.match(/<h1(?:\s|>)/g) || []).length, 1, `${name}: one main heading`);
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
@@ -154,7 +185,7 @@ for (const [name, html] of [['index.html', home], ['roadmap/index.html', roadmap
     if (fragment) assert.ok(fs.readFileSync(file, 'utf8').includes(`id="${fragment}"`), `${name}: anchor ${href}`);
   }
 }
-for (const html of [roadmap, notes, proposal]) assert.ok(!html.includes('\u2014'), 'No em dashes in rewritten pages/proposal');
+for (const html of [home, roadmap, notes, download, notFound, proposal]) assert.ok(!html.includes('\u2014'), 'No em dashes in public website copy');
 for (const html of [home, proposal]) {
   for (const [, script] of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) new vm.Script(script);
 }

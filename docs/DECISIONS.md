@@ -123,9 +123,10 @@
 | [ADR-111](#adr-111) | **The supplied collage owns launcher identity; launch is a system-only transition with no delay or marketing screen.** | Accepted |
 | [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, implemented through one bundled, deterministic preview/export path.** Bundled Emoji2 with forced replacement owns the glyphs; system/OEM fallback remains forbidden. | Accepted |
 | [ADR-113](#adr-113) | **Flip is one mobile verb with two local-axis toggles for a single Photo or Art element.** Text and multi-selection are excluded; persistence requires an honest schema v3 rather than a lossy v2 additive field. | Accepted |
-| [ADR-114](#adr-114) | **Public story on the website; installed-app utility in About; fold replay remains an HTML experiment.** The site uses sanitized canonical mockups, a concise embedded accessibility statement, curated release notes, and a non-committal roadmap. | Accepted |
+| [ADR-114](#adr-114) | **Public story on the website; installed-app utility in About; fold replay remains an HTML experiment.** The site uses sanitized canonical mockups, a concise embedded accessibility statement, curated release notes, and a non-committal roadmap. | Accepted; §1 and §5 amended by [ADR-118](#adr-118) |
 | [ADR-116](#adr-116) | **Plain-language public updates and distinct About copy on both surfaces.** Retain technical documentation and accessibility requirements; app maker's note design frozen. | Accepted; native verification pending |
 | [ADR-117](#adr-117) | **Licence notices stay complete, but leave the main About narrative.** One compact row opens a child credits screen; font-role blurbs retire. | Accepted; owner ruling 2026-09-16 |
+| [ADR-118](#adr-118) | **The public website tells one product story and shows only shipped UI.** Self-hosted fonts, a truthful Bench render, a Download page, and one public status scheme (Available / In development / Planned / Exploring) by horizon. Amends ADR-114 §1 and §5. | Accepted 2026-09-24; owner-directed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -12936,6 +12937,9 @@ device passes; and independent review of the actual repository state.
 **Partial supersession, 2026-09-12:** ADR-116 replaces the public standards-name requirement and the prohibition
 on an in-app story opening. Installed-app utilities, accessibility behavior, and the HTML-first acceptance gates remain.
 
+**Partial amendment, 2026-09-24:** [ADR-118](#adr-118) replaces §5's labels with Available / In development /
+Planned / Exploring and requires §1's renders to show only shipped UI. §2 to §4 stand.
+
 **Status:** Accepted — owner-approved 2026-09-09
 **Date:** 2026-09-09 — **Supersedes:** nothing — **Extends:** [ADR-008](#adr-008),
 [ADR-060](#adr-060), [ADR-099](#adr-099)
@@ -13029,3 +13033,66 @@ text locally accessible, but it does not need to market those fonts or explain t
 - The website does not add a font-attribution section. Its public story remains separate.
 
 This keeps compliance discoverable without interrupting the maker note, paper choice or privacy explanation.
+
+## ADR-118 {#adr-118}
+
+### One public story, and only shipped UI on the website
+
+**Status:** Accepted, 2026-09-24. Owner-directed: the website brief of 2026-09-24 set the story order, the four
+status labels and the horizon grouping, and asked for acceptance once the repository confirmed no new product
+choice was involved. It formalises rules already in force: the [privacy policy](PRIVACY-POLICY.md)'s
+no-third-party-fonts statement, ADR-114's fictional, non-committal public site, and OD-2's deferral of the shelf.
+Two independent reviews (public-claims truth; accessibility, UX and tests) returned GO WITH FIXES, and every
+Required Fix was applied before commit. **Amends:** [ADR-114](#adr-114) §1 and §5. **Keeps:** ADR-114 §2 to §4, [ADR-116](#adr-116)
+and [ADR-117](#adr-117) unchanged.
+
+#### Context
+
+An inspection of the live site against its source, the app and the docs found three contradictions: the homepage
+loaded Google Fonts while the [privacy policy](PRIVACY-POLICY.md) says the website uses no third-party fonts; the
+Bench demo and its render showed a *"Your shelf · 4 things kept"* tray that exists only in the frozen
+`docs/design/mockups/v21-bench.html`, not in the app; and `404.html` used relative paths, so it broke at any
+nested URL. The owner also asked for the product story to be told once, in the order a visitor asks it, with
+current features separated from direction.
+
+#### Decision
+
+1. **The website loads nothing from a third party.** Fonts are self-hosted from the app's own files by
+   `tools/build-web-fonts.py`: Averia Sans Libre is copied byte for byte (it carries Reserved Font Names, so a
+   subset or format change would be a renamed Modified Version, as
+   [ZINE-DIRECTION §16.5](design/ZINE-DIRECTION.md#165-the-fonts--two-verified-compliance-findings) records); Inter and Fraunces reserve no names and are Latin-subset
+   WOFF2. Each OFL text sits beside the files. No Fraunces italic is bundled, so the few italic demo notes use a
+   synthesized slant. The policy wording stays as it is, because it is now true.
+2. **The site shows only shipped UI** (amends ADR-114 §1). Renders still come from the canonical HTML prototypes,
+   but a prototype element that the app does not ship is hidden in the render and removed from the interactive
+   demo. `mockup-bench.webp` was re-rendered from `v21-bench.html` in headless Edge at 390 × 812, light theme,
+   with `#tray` hidden. The frozen prototype itself is unchanged. The tray is the H1 materials shelf, which owner ruling
+   OD-2 (2026-08-01) re-seated beyond Phase C, unscheduled ([ADR-089 §2.3](#adr-089)); the
+   [D-029 ruling of 2026-08-16](design/V2-SPEC-DEFECTS.md#d-029-ruling-2026-08-16) carries its open questions to
+   X2, the Supplies tray, which has no date. It is deferred, not dropped, so the freeze keeps it and the website
+   hides it until it ships.
+3. **Story order:** what it is → why paper → what you can make → Shelf → Bench → Proof (with a Today / Direction
+   table) → what is different (*imperfect surface, perfect mechanics*) → try it → where it is going → About.
+4. **One public status scheme** (amends ADR-114 §5): **Available** (in the download), **In development** (built or
+   being tested, not in the download), **Planned** (intended, no date) and **Exploring** (may never ship), grouped
+   by horizon (Foundation, Craft, Proof). The roadmap also lists what Zinely will not build, quoting only
+   [constitution §VI](zinely-constitution.md). There are still no dates or guarantees, and the website remains a
+   projection of [ROADMAP.md](ROADMAP.md#current-priorities). Research proposals stay off it until an ADR accepts them.
+5. **A Download page** (`/download/`) owns the install facts: version, date, Android 7.0+, size, SHA-256 (the
+   source checker verifies it against the release record), install steps, updating, moving phones through a
+   `.zine` backup, and the Google Play and iPhone status. It never names an unreleased build.
+6. **`404.html` uses root-absolute `/zinely-android/` paths**, which the source checker enforces.
+
+#### Consequences
+
+- The homepage no longer links the APK from the hero. The hero goes to the Download page and the download card
+  keeps a direct link for people who have installed an APK before.
+- Checks: `tools/check-public-copy.cjs` guards third-party loads, the unmodified Averia files, the licences, the
+  status labels, the checksum, and claims about unreleased builds, iOS or Play. `tools/check-website.cjs` fails on
+  any third-party request in every browser context, and on horizontal scroll or text escaping its container at
+  390 px and 320 px on every page, 404 included.
+- Moving phones is described as backup and restore only. The page says that restoring on a second phone has not
+  been tested yet ([torture matrix](reviews/2026-08-21-zine-backup-torture-matrix.md) row pending;
+  [ROADMAP.md](ROADMAP.md#current-priorities) follow-up). The Download page lists the published build's known
+  limits, including Save PDF failing on Android 7 to 9 in beta.4-r3 (Share still works).
+

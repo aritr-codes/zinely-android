@@ -104,7 +104,6 @@
 
 .roadmap-page .roadmap-group:nth-child(3) {
   margin-top: 7px;
-  border-style: dashed;
   background:
     repeating-linear-gradient(0deg, transparent 0 25px, rgba(39, 39, 15, 0.08) 25px 26px),
     var(--room-raised);
@@ -149,12 +148,63 @@
   text-transform: uppercase;
 }
 
-.roadmap-page .exploring .press-zone {
+.roadmap-page .craft .press-zone {
   background: #f6b22c;
 }
 
-.roadmap-page .uncommitted .press-zone {
+.roadmap-page .proof .press-zone {
   background: var(--paper);
+}
+
+.roadmap-key {
+  margin-top: 34px;
+}
+
+.roadmap-page .roadmap-key h2,
+.roadmap-page .roadmap-never h2 {
+  margin: 0 0 14px;
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+}
+
+.roadmap-key dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+.roadmap-key dd {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.roadmap-page .roadmap-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roadmap-page .roadmap-items li + li {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(39, 39, 15, 0.35);
+}
+
+.roadmap-never {
+  margin-top: 54px;
+  padding: 26px;
+  border: 2px dashed var(--ink);
+  border-radius: 6px 18px 8px 6px;
+  background: #fffdf5;
+}
+
+.roadmap-never ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+  gap: 8px 24px;
+  margin: 0;
+  padding-left: 1.1rem;
 }
 
 .roadmap-page .status-label {
@@ -309,4 +359,8 @@
     break-inside: avoid;
     margin: 18px 0;
   }
+}
+
+.roadmap-page .roadmap-never li + li {
+  margin-top: 0;
 }
