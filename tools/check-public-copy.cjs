@@ -18,7 +18,7 @@ const privacyFallback = read('website/privacy/index.html');
 const notFound = read('website/404.html');
 const download = read('website/download/index.html');
 const sitemap = read('website/sitemap.xml');
-const releaseNotes = read('docs/releases/0.9.0-beta.4-r3.md');
+const releaseNotes = read('docs/releases/0.9.0-beta.5.md');
 const proposal = read('docs/design/experiments/v21-about-story.html');
 const appAbout = read('docs/design/mockups/v21-colophon.html');
 const copy = read('core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt');
@@ -147,16 +147,21 @@ assert.ok(!deskDemoCopy.includes('\u2014'), 'No em dashes in interactive desk co
 assert.doesNotMatch(home, /WCAG/);
 assert.match(home, /id="accessibility"/);
 assert.match(home, /reduced-motion setting/);
-for (const html of [home, download]) assert.match(html, /releases\/download\/v0\.9\.0-beta\.4-r3\/zinely-0\.9\.0-beta\.4-r3-release\.apk/);
+for (const html of [home, download]) assert.match(html, /releases\/download\/v0\.9\.0-beta\.5\/zinely-0\.9\.0-beta\.5-release\.apk/);
+for (const html of [home, download, notes]) assert.doesNotMatch(html, /releases\/download\/v0\.9\.0-beta\.4/, 'No superseded APK is offered as the download');
+assert.match(releaseNotes, /\| `versionCode` \| 10 \|/);
+assert.match(download, /Android version code 10/, 'Download page states the released versionCode');
 const sha = releaseNotes.match(/SHA-256 \| `([0-9a-f]{64})`/)[1];
 assert.ok(download.includes(`<code>${sha}</code>`), 'Download checksum matches the release record');
 assert.match(download, /id="install"/);
 assert.match(download, /Google Play<\/dt><dd>Not yet\./);
 assert.match(download, /There is no iPhone version/);
-assert.match(download, /id="known-limits"[\s\S]*On Android 7, 8 and 9,\s+Save PDF does not\s+work/, 'Download page states the published Save PDF limit');
+assert.match(download, /id="known-limits"[\s\S]*On Android 7, 8 and 9, Save PDF asks for storage access[\s\S]*not yet on a real Android 7, 8 or 9 phone/, 'Download page states the published Save PDF limit and its test coverage');
+assert.match(download, /id="known-limits"[\s\S]*TalkBack/, 'Download page keeps the TalkBack focus limitation');
+assert.doesNotMatch(notes, /TalkBack focus (?:is )?fixed|fixed TalkBack focus/i, 'Never claim the TalkBack focus limitation is fixed');
 assert.match(sitemap, /zinely-android\/download\//);
 for (const [name, html] of [['home', home], ['changelog', notes], ['download', download], ['roadmap', roadmap]]) {
-  assert.doesNotMatch(html, /beta\.5|App Store|available on (?:Google )?Play/i, `${name}: no unreleased build, iOS or Play claim`);
+  assert.doesNotMatch(html, /beta\.6|App Store|available on (?:Google )?Play/i, `${name}: no unreleased build, iOS or Play claim`);
 }
 assert.match(roadmap, /still being tested, not in the download/);
 assert.match(roadmap, /not announced features/);
@@ -164,7 +169,7 @@ for (const [status, label] of [['available', 'Available'], ['development', 'In d
   assert.ok(roadmap.includes(`class="status-chip ${status}">${label}</span>`), `Keep commitment levels distinct: ${label}`);
 }
 assert.doesNotMatch(roadmap, /restore its regression test|Measure cold/);
-for (const id of ['website-september-10', 'website-september-9', 'beta-4-r3', 'beta-4-r2', 'beta-4', 'beta-3', 'beta-2', 'beta-1', 'early-builds']) {
+for (const id of ['website-september-10', 'website-september-9', 'beta-5', 'beta-4-r3', 'beta-4-r2', 'beta-4', 'beta-3', 'beta-2', 'beta-1', 'early-builds']) {
   assert.ok(notes.includes(`id="${id}"`), `Preserve release bookmark ${id}`);
 }
 for (const [name, html] of [['index.html', home], ['roadmap/index.html', roadmap], ['changelog/index.html', notes], ['download/index.html', download]]) {

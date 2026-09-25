@@ -5,6 +5,9 @@ not public copy. The website states only what the published build does ([ADR-118
 Date: 2026-09-24 · Author: Implementer Agent (Claude), for the owner (Aastra)
 Review: first draft reviewed by two independent Review Agents (both GO WITH FIXES); all findings reconciled in
 this revision — see [Review record](#review-record). This revision has not been re-reviewed.
+Snapshot: statements about builds, branches and pull requests describe the repository on 2026-09-24. On
+2026-09-25 beta.5 was released (merge `32da280`, tag `v0.9.0-beta.5`, GitHub pre-release, versionCode 10,
+APK only, not on Google Play); the few places that said otherwise are marked below, not rewritten.
 
 > **How to read this.** This document recommends; it does not decide. Every decision it proposes must
 > become an ADR in [DECISIONS.md](../DECISIONS.md) (or a PRD/ROADMAP change) before anyone builds it. It
@@ -202,8 +205,10 @@ route shown before it can proceed.
 printing it at home. No `INTERNET` permission in any module; declared permissions are
 `WRITE_EXTERNAL_STORAGE` (capped at SDK 28, for Save PDF on old Android) and `VIBRATE` (from
 `:feature:editor`). minSdk 24, targetSdk 36. English-only UI (all copy in `core:copy`'s `Copy.kt`).
-`main` is `0.9.0-beta.4-r3` (versionCode 9) plus unreleased work; **beta.5** (versionCode 10) is prepared on
-the unmerged `release/0.9.0-beta.5` branch / draft PR #74 and not tagged. Made by a team of two.
+At the time of this research snapshot (2026-09-24), `main` was `0.9.0-beta.4-r3` (versionCode 9) plus
+unreleased work, and **beta.5** (versionCode 10) was prepared on the unmerged `release/0.9.0-beta.5` branch /
+draft PR #74. *Since then: beta.5 was merged and published as the current public beta on 2026-09-25*
+*(tag `v0.9.0-beta.5`).* Made by a team of two.
 
 **Journey — Shelf → Bench → Proof** ([V2 constitution Amendment 2](../design/V2-CONSTITUTION.md),
 [ADR-103](../DECISIONS.md#adr-103)):
@@ -1190,8 +1195,8 @@ cannot print. **Necessary** · long.
 
 **Cost basis.** Every UI item below follows the mandatory pipeline in [CLAUDE.md](../../CLAUDE.md#html-first-ui-workflow-mandatory):
 HTML prototype → design freeze → Compose → pixel parity → **both** device-verification passes → review.
-That process is most of the cost of any UI feature for a two-person team that is also shipping beta.5 and
-Google Play. Following the [ROADMAP](../ROADMAP.md)'s own practice, this document gives **relative effort,
+That process is most of the cost of any UI feature for a two-person team that was also shipping beta.5 (released 2026-09-25)
+and still has Google Play ahead. Following the [ROADMAP](../ROADMAP.md)'s own practice, this document gives **relative effort,
 no calendar dates**.
 
 ```mermaid
@@ -1388,7 +1393,7 @@ One scheme for the whole site — the roadmap included.
 | Label | Meaning | Examples today |
 |---|---|---|
 | **Available** | in the current public build | photos, text, 32 Art pieces, emoji, copier, Reframe, Save PDF, Share PDF, Read, fold guide (static steps), whole-library backup and restore |
-| **In development** | on a branch or draft PR | beta.5 fixes (PR #74); Font control removal (PR #70) |
+| **In development** | on a branch or draft PR | at the time of this snapshot: beta.5 fixes (PR #74, *released 2026-09-25, now Available*); Font control removal (PR #70) |
 | **Planned** | on the ROADMAP with owner agreement — intended, no date, not a promise (ADR-114 §5) | Google Play |
 | **Exploring** | being researched; may never ship | anything from this document until an ADR accepts it |
 

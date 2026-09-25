@@ -236,3 +236,5 @@
     transform: none;
   }
 }
+
+.studio-journal .release-entry h3 { margin: 20px 0 6px; font-size: 1.05rem; line-height: 1.25; }
