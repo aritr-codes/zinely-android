@@ -10,6 +10,12 @@ them. If anything here could be closed by an implementer, that is a bug in this 
 
 **Last swept:** 2026-08-18 · **89 open items** · ⛔ **5 of them are merge blockers** (§below)
 
+> **2026-09-25 (1.x plan, proposal):** 1.x owner rows added to §1.5 and §3 (developer verification), two
+> existing rows reframed, and the `Mirror` row flagged as likely stale. ⚠ **The 89 above was already stale:**
+> counting open `☐` table rows and `- ☐` bullets gives **70 at `5f7707a` and 81 after this change**. That
+> method may miss items written in other shapes (§2.1–§2.2), so the header is left for a full sweep rather
+> than replaced with a number nobody re-derived section by section.
+
 > ⚠ **The count read 70 and the file held 80.** Corrected 2026-08-18 by counting the rows rather than
 > trusting the header — which is how it drifted: each new row incremented a number nobody re-derived.
 > This is an index of work owed to the owner, so an undercount is the failure mode that matters. The
@@ -187,16 +193,28 @@ The whole milestone is **Not started** ([ROADMAP.md](ROADMAP.md)) and is the dec
 
 ### 1.5 Product & design authorship
 
+> The [1.x decision gate](planning/ZINELY-1X-DECISION-GATE.md) reduces the 1.x plan's O1–O15 to eight questions with evidence and framing (it reframes O12, notes that O7's removal is already approved, and adds the tap-through scope, the D5 stretch policy, the D3 "Actual size" question and the next-release shape). Read it before answering any 1.x row below; record each answer in the row's linked record.
+
 | ☐ | Item | Where | Note |
 |---|---|---|---|
 | ☐ | **Author or commission the four remaining hand-drawn supply outlines** | [SUPPLIES-SPEC.md](design/SUPPLIES-SPEC.md) | ⚠ Was twelve; eight were authored 2026-08-18 and needed no house style at all. **Only three need a hand** — `tape.torn` · `paper.strip` · `paper.underline` all need the same authored *tear*, so they are one commission, not three. `fix.clip` is not a style problem: a paper clip is a **wire** object and the renderer is fill-only, so it must be drawn as the closed ribbon around the wire. `outlineOf()` returns `null` for each. Blocks S5 and S9 |
-| ☐ | Choose the bundled font set (which OFL families) — Q3 | [PRD.md §13](PRD.md) | Blocks typography |
+| ☐ | Choose the bundled font set (which OFL families) — Q3 | [PRD.md §13](PRD.md) · [1.x plan O8](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#9-owner-decisions-needed-before-implementation) | Blocks typography. ZINE-DIRECTION X6 names three voices; confirming them is plan O8 |
 | ☐ | Settle brand / visual identity direction — Q4 | [PRD.md §13](PRD.md) | Blocks UI theme |
 | ☐ | Decide V2.1 prototypes for Read · Fold · first-run | [V21-SPEC.md](design/V21-SPEC.md) | Three surfaces, no frozen artifact |
 | ☐ | Is `+ Add` suppressed while a card's green `Done` shows? — OD-14 | [BETA-UX-REVIEW.md](BETA-UX-REVIEW.md) | Never ruled; recorded as owed |
-| ☐ | **Does the maker get a `Mirror` verb, and when?** | [Intent.kt:40](../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/Intent.kt#L40) | `DecorElement.mirrored` **exists in the model and is unreachable from the UI** — zero callers. **Nine of the sixteen supplies are asymmetric**, so a torn tape or corner fix cannot be flipped. The frozen decor verb set is Replace/Ink/Delete, so adding a fourth verb is an amendment, not an implementation. The code calls it *"a maker verb that arrives later"* — this is the item that decides when "later" is |
+| ☐ | ⚠ **Likely stale (found 2026-09-25, verify and strike):** [ADR-113](DECISIONS.md#adr-113) Flip already toggles `mirrored` for Art (`EditorReducer.kt:212`, `FlipTray.kt:333`), and the KDoc at `Intent.kt:52-53` is stale too. Original row: **Does the maker get a `Mirror` verb, and when?** | [Intent.kt:40](../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/Intent.kt#L40) | `DecorElement.mirrored` **exists in the model and is unreachable from the UI** — zero callers. **Nine of the sixteen supplies are asymmetric**, so a torn tape or corner fix cannot be flipped. The frozen decor verb set is Replace/Ink/Delete, so adding a fourth verb is an amendment, not an implementation. The code calls it *"a maker verb that arrives later"* — this is the item that decides when "later" is |
 | ☐ | **Run the one-time paid-pack trial, or ratify free-forever: decide by about 30 Aug to 9 Sep 2027** | [constitution §VII](zinely-constitution.md#vii-the-feature-tribunal) · [research §26](research/ZINELY-FUTURE-PRODUCT-RESEARCH.md#26-foundational-decisions-to-make-now) | The Tribunal sets the trigger: *"decide within one year of the first bundled-supplies release"*, and not deciding ratifies free-forever. Supplies landed in `e8f2145` (2026-08-17); the first build after it is beta.3 (2026-08-30) and the first public one is `v0.9.0-beta.4-r3` (tagged 2026-09-09). Which one counts as "release" is yours to say (beta.2, 2026-08-16, is an earlier and weaker candidate: supplies in the file format, none on a page). Internal only: the website shows no pricing |
-| ☐ | **Phone migration: should Android's phone-to-phone transfer carry the Shelf?** | [research §18.2](research/ZINELY-FUTURE-PRODUCT-RESEARCH.md#182-the-device-transfer-finding-needs-an-owner-ruling) · [`data_extraction_rules.xml`](../app/src/main/res/xml/data_extraction_rules.xml) | Today every domain is excluded from cloud backup *and* device transfer, so a new phone starts with an empty Shelf unless the maker restores a `.zine` backup. Changing that is a privacy-invariant (ADR-030) decision. Restoring a backup on a second phone is also still untested; the Download page says so |
+| ☐ | **1.x plan (proposal, 2026-09-25) — starters** (O2): build a sample zine / prompt library, or keep "templates DO NOT BUILD"? | [1.x plan §9](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#9-owner-decisions-needed-before-implementation) · [constitution Art. 7](zinely-constitution.md#article-7--the-maker-makes-it) | Tribunal KEEP vs ZINE-/BETA-DIRECTION DO NOT BUILD — two authoritative records conflict. If built, Article 7's bright line applies |
+| ☐ | **1.x plan — ink lift** (O3): promote from EXPERIMENTAL to Planned, or leave | [1.x plan §9](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#9-owner-decisions-needed-before-implementation) | Only after an asset-model ADR and GC (plan F5) |
+| ☐ | **1.x plan — PR #70** (O7): removal **already approved** as a design judgment ([ROADMAP](ROADMAP.md#in-development--built-or-being-tested-not-in-the-public-download)); what remains is acceptance work (hands-on TalkBack, rendered HTML parity), not a ruling ([gate](planning/ZINELY-1X-DECISION-GATE.md#already-recorded--not-questions)) | [1.x plan §9](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#9-owner-decisions-needed-before-implementation) | Sequencing of Direction D2 |
+| ☐ | **1.x plan — tap-through scope**: holed pieces only, all Art, or no change; plus the `v21-bench.html` behaviour note | [decision gate Q3](planning/ZINELY-1X-DECISION-GATE.md#q3-tap-through-hit-testing-how-far-it-reaches) | Plan step 4; D5 |
+| ☐ | **1.x plan — next release and restore honesty**: approve a wave-1 release before the v4 bump; schedule the restore-message defects; skip-and-list backups (ADR-110) | [decision gate Q8](planning/ZINELY-1X-DECISION-GATE.md#q8-the-next-release-and-the-backuprestore-defects) | Plan steps 1b and 6–8 |
+| ☐ | **1.x plan — Art backlog selection** (O9): which of ~19 backlog supplies and which frames ship; who authors outlines; **and the stretch policy** (free stretch vs a uniform-scale lock — also open as [D-100](design/V2-SPEC-DEFECTS.md)) — [decision gate Q6](planning/ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch) | [1.x plan §9](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#9-owner-decisions-needed-before-implementation) · [ADR-107](DECISIONS.md#adr-107) | Direction D5 |
+| ☐ | **1.x plan — are `v21-typebar` / `v21-reframe` frozen?** (O10) | [1.x plan §9](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#9-owner-decisions-needed-before-implementation) · [V21-SPEC](design/V21-SPEC.md) | File headers say "proposal, not frozen"; ZINE-DIRECTION N2 says frozen |
+| ☐ | **1.x plan — which typefaces may set zine text** (O12, reframed): does V2-CONSTITUTION §III govern zine text or only the UI? If zine text: Hand for short text only, amend §III, two voices (which two), or a different imperfect face | [decision gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8) · [V2-CONSTITUTION](design/V2-CONSTITUTION.md) | §III names "the maker's own short strings" and "zine body" but ends "No fourth UI typeface"; *"The imperfect face never sets running text"* is binding either way. Blocks D2 |
+| ☐ | **1.x plan — print guidance** (O13 + D3 stage 2): after the print study — guidance only, or a static test page too; a per-device reach profile or one global margin; may the app promise "Actual size" on Android? | [decision gate Q7](planning/ZINELY-1X-DECISION-GATE.md#q7-print-o13--d3-stage-2) | Decide after the physical print study. Any inset change amends `v21-bench`, ADR-012 and the keep-clear rulings |
+| ☐ | **1.x plan — fold-study order** (O14): may a creative tool (D2 typefaces, D5 frames) start before the fold-clarity study reports? | [decision gate Q5](planning/ZINELY-1X-DECISION-GATE.md#q5-fold-study-before-creative-work-o14) · [ROADMAP](ROADMAP.md#exploring--recommended-next-decisions-in-order) | The ROADMAP says that gate is not reordered without owner approval |
+| ☐ | **Phone migration: should Android's phone-to-phone transfer carry the Shelf?** | [research §18.2](research/ZINELY-FUTURE-PRODUCT-RESEARCH.md#182-the-device-transfer-finding-needs-an-owner-ruling) · [`data_extraction_rules.xml`](../app/src/main/res/xml/data_extraction_rules.xml) | Today every domain is excluded from cloud backup *and* device transfer, so a new phone starts with an empty Shelf unless the maker restores a `.zine` backup. Changing that is a privacy-invariant (ADR-030) decision. Restoring a backup on a second phone is also still untested; the Download page says so. Research (2026-09-25): on Android 12+ `allowBackup="false"` does not stop device transfer, and Google's transfer skips side-loaded apps ([D1 audit](planning/ZINELY-1X-READINESS-AUDIT.md#5-d1-audit--last-backed-up--changing-phones); O1, [can wait](planning/ZINELY-1X-DECISION-GATE.md#decisions-that-can-wait)) |
 
 ---
 
@@ -288,6 +306,14 @@ printed. Nothing in the repo or build output would reveal the backup is missing.
 
 - ☑ Copy `zinely-release.jks` + `keystore.properties` to **two independently-failing** places
 - ☑ Verify with `keytool -list -v … -alias zinely`
+
+### ☐ Android developer verification *(gates side-loaded APKs too, not only Play)*
+From **30 Sep 2026** in four countries and **globally in 2027**, Android requires apps — side-loaded ones
+included — to come from a verified developer. That makes it a gate on GitHub distribution, not a Play
+step. Evidence: [research §23](research/ZINELY-FUTURE-PRODUCT-RESEARCH.md#23-website-strategy);
+decision: [1.x plan O15](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#9-owner-decisions-needed-before-implementation).
+
+- ☐ Register and verify as a developer before the cut-over applies to Zinely's testers
 
 ### ☐ Play Store path *(only if production is the goal)*
 
