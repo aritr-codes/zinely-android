@@ -257,6 +257,7 @@ expose `stateDescription`** — so no dump I take substitutes for an ear.
 | ☑ | Does `Copier` speak its On/Off state? | **OWNER-CONFIRMED 2026-08-25** — first-person TalkBack pass completed with no blocking issue reported |
 | ☑ | Is an import landing mid-transition announced at all? | **OWNER-CONFIRMED 2026-08-25** — first-person TalkBack pass completed with no blocking issue reported |
 | ☑ | Do the opener and two ink swatches speak `Ink`, `Spot ink`, and `Neutral ink`? | **OWNER-CONFIRMED 2026-08-25** — manual confirmation complements the platform-tree regression coverage for [D-083](design/V2-SPEC-DEFECTS.md#d-083) |
+| ☑ | **Step 2 ([ADR-119](DECISIONS.md#adr-119)):** on a real phone, does swiping through a Bench page go top to bottom, left to right — and stay the same after *Bring to front / Send to back* and after *Make spread* (the spread photo read first)? Does TalkBack skip the dimmed area behind the zine actions sheet, and do a tap there and Back still close it? | **OWNER-CONFIRMED 2026-09-26** on SM-A176B (TalkBack 16.2.00.13): photo → tape → text after restack and spread, reverse swipe the exact reverse, the scrim never focused, Back closes. Sighted listen: proxy evidence ([ADR-119](DECISIONS.md#adr-119)) |
 | ☑ | Does a supply's **`Change ink`** custom action work under real TalkBack? | **OWNER-CONFIRMED 2026-08-25** — manual confirmation complements the regression coverage for [D-091](design/V2-SPEC-DEFECTS.md#d-091) |
 
 ### 2.3 The print pass — [`DEVICE-VERIFICATION.md` §3.2](DEVICE-VERIFICATION.md)

@@ -2,13 +2,13 @@
 
 > This brief incorporates the findings of [ZINELY-1X-READINESS-AUDIT.md](ZINELY-1X-READINESS-AUDIT.md). If this brief conflicts with an older research document, this brief and the cited authoritative ADR/decision take precedence. It never overrides an Accepted ADR, the V2 constitution or a frozen spec — where it needs one changed, it says so and names the amendment.
 
-Status: **implementation brief; A1 + scrim READY** (owner rulings recorded 2026-09-26 in the
+Status: **implementation brief; A1 + scrim ✅ COMPLETE** (2026-09-26, PR #78, [ADR-119](../DECISIONS.md#adr-119)) (owner rulings recorded 2026-09-26 in the
 [decision gate](ZINELY-1X-DECISION-GATE.md); none of them changes D4's scope). Direction D4 of the [1.x plan](ZINELY-1X-IMPLEMENTATION-PLAN.md).
 Base: `origin/main` @ `0aa7a7d` (code citations made at `5f7707a`; `src/main` unchanged since). Revised 2026-09-25 from the readiness audit; dependencies updated 2026-09-26.
 **Readiness:**
-- **A1 + scrim fix:** READY TO START. No owner ruling, no schema change and no visual change. Its ordering rule is a
-  ZINELY-DESIGN-SYSTEM §4.5 clause recorded as an ADR (gate 2). The spike in gate 1 is the
-  session's first task, and A1 does not depend on its outcome.
+- **A1 + scrim fix:** ✅ COMPLETE (2026-09-26, PR #78). It needed no owner ruling, no schema change and no visual
+  change. Its ordering rule is a ZINELY-DESIGN-SYSTEM §4.5 clause recorded as [ADR-119](../DECISIONS.md#adr-119)
+  (gate 2). The gate-1 spike worked: `traversalBefore` hints are asserted on the JVM platform tree.
 - **A3:** READY AFTER PR #70 is settled (merged or closed; it amends the same `v21-bench.html` and `EditorScreen.kt`) **and** the owner-approved `v21-bench.html` undo-snack amendment (gate 3; it replaces frozen copy). It is its own session, after A1.
 - **A2:** READY AFTER a wording spec and a TalkBack listen (gate 4). A2 has not been audited.
 - **B:** BLOCKED BY the wave-1 release (approved by the owner on 2026-09-26 as a v3 release before v4, Q8), the F1 v4

@@ -127,6 +127,7 @@
 | [ADR-116](#adr-116) | **Plain-language public updates and distinct About copy on both surfaces.** Retain technical documentation and accessibility requirements; app maker's note design frozen. | Accepted; native verification pending |
 | [ADR-117](#adr-117) | **Licence notices stay complete, but leave the main About narrative.** One compact row opens a child credits screen; font-role blurbs retire. | Accepted; owner ruling 2026-09-16 |
 | [ADR-118](#adr-118) | **The public website tells one product story and shows only shipped UI.** Self-hosted fonts, a truthful Bench render, a Download page, and one public status scheme (Available / In development / Planned / Exploring) by horizon. Amends ADR-114 §1 and §5. | Accepted 2026-09-24; owner-directed |
+| [ADR-119](#adr-119) | **On the Bench, TalkBack reads a page in spatial reading order, not stacking order; the zine action sheet's scrim is silent.** A §4.5 canvas clause; nodes declared in that order; `ZineActionScrim` gets `ZSheet`'s one-modifier fix. | Accepted 2026-09-26; 1.x step 2; owner TalkBack listen passed on SM-A176B |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -13096,3 +13097,91 @@ current features separated from direction.
   [ROADMAP.md](ROADMAP.md#current-priorities) follow-up). The Download page lists the published build's known
   limits, including Save PDF failing on Android 7 to 9 in beta.4-r3 (Share still works).
 
+## ADR-119 {#adr-119}
+
+### Read the page in spatial order, and silence the action sheet's scrim
+
+**Status:** Accepted, 2026-09-26. Both device passes done the same day (see *Device evidence*); the listen was
+the owner's, and it is sighted proxy evidence ([OWNER-CHECKLIST §2.2](OWNER-CHECKLIST.md#22-the-talkback-listen-pass--device-verificationmd-31)).
+Zinely 1.x step 2 ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing),
+READY in §11 with no owner ruling outstanding), specified by
+[Brief 04](planning/BRIEF-04-READING-ORDER-AND-ALT-TEXT.md) part A1 and its scrim fix. **Amends:**
+[ZINELY-DESIGN-SYSTEM §4.5](ZINELY-DESIGN-SYSTEM.md#45-reading-order), which amends only by an ADR. **Keeps:**
+ADR-029 §6's accessible element mirror; only the order its nodes are declared in changes.
+
+#### Context
+
+Two shipped accessibility defects:
+
+1. **TalkBack read a Bench page in list order**, which is neither what is drawn on top nor the order anyone reads.
+   `ElementSemanticsLayer` walked `page.elements` with `traversalIndex = index`, while its comment claimed paint
+   order. Paint order sorts by `zIndex`. Restacking rewrites only `zIndex`, and Make-spread sends the source to the
+   back and appends the partner half with the lowest `zIndex`, so the order a listener heard was arbitrary and a
+   restack or a spread could scramble it. Z-order would be wrong for listeners anyway (Schaadhardt, Hiniker and
+   Wobbrock, CHI 2021, cited in Brief 04). §4.5 said the visual and accessibility orders are the same order, but not
+   what "visual order" means on a free canvas.
+2. **The zine action sheet's scrim was an unlabelled full-screen button** (a beta.5 known limitation).
+   `ZineActionScrim` lacked the fix `ZSheet`'s scrim already carries.
+
+#### Decision
+
+1. **§4.5 gains a canvas clause:** on a free canvas, visual order is spatial reading order, never stacking order.
+   The rule and its threshold are stated there, once
+   ([ZINELY-DESIGN-SYSTEM §4.5](ZINELY-DESIGN-SYSTEM.md#45-reading-order)); this ADR does not restate them. The
+   row rule is read as a pool: the highest *unread* piece opens each row, so a piece beside an earlier tall piece
+   joins that piece's row even when a later row has already opened.
+2. **`SpatialOrder`** (pure `core:editor`, `kotlin.math` only) implements it as a procedure, not a `Comparator`:
+   "shares a row" is intransitive, so a pairwise comparator would break `sortedWith`'s contract.
+3. **`ElementSemanticsLayer` declares its nodes in that order**, and `traversalIndex` restates it. The fix is
+   structural ([ZINELY-DESIGN-SYSTEM §11](ZINELY-DESIGN-SYSTEM.md) rule 6): child order and traversal order agree, and no override does the work. An unknown page
+   size (only non-production callers pass none) disables only the large-element guard.
+4. **`ZineActionScrim` gets `clearAndSetSemantics {}` before `clickable`**, as `ZSheet` does: no accessibility node;
+   a tap still dismisses, and Back still dismisses through the `Dialog`.
+
+#### Scope
+
+In: the order of the Bench's element nodes, and the one scrim. Out, unchanged: paint order, `page.elements`, every
+command, all copy and visuals (the nodes are semantics-only; the scrim keeps its fill), selection chrome and
+page-level nodes, programmatic focus (Brief 04 keeps it out of scope; the beta.5 `requestFocus` revert stands), the
+deprecated announce API, relative phrases (A2), named undo (A3) and alt text (B).
+
+#### Alternatives considered
+
+- **Paint order (back to front)**, which the old comment claimed. Rejected: it changes on every restack, and research
+  shows z-order misleads listeners.
+- **A `Comparator` with a row tolerance.** Rejected: intransitive, so `sortedWith` can throw.
+- **Rows with no large-element guard.** Rejected: a full-page photo or spread half opens a row spanning the page and
+  swallows everything else.
+- **A guard on width or area as well as height.** Rejected: a full-width banner is a heading and should read in its
+  row; only height makes a piece swallow rows.
+- **`traversalIndex` alone, keeping list declaration order.** Rejected by ZINELY-DESIGN-SYSTEM §11 rule 6: an override
+  that treats the symptom.
+
+#### Consequences
+
+- A restack or a spread no longer changes what TalkBack hears, and a full-page ground is read first.
+- **Supersedes** the "reading-then-z traversal order" of
+  [V2-BENCH-IA-INTERACTION §C.4](design/V2-BENCH-IA-INTERACTION.md): ties break by id, never by z.
+- Two columns whose tops do not line up interleave. Accepted and stated in the clause; relative phrases (A2) and the
+  maker's arrangement are the remedy.
+- **Evidence.** `SpatialOrderTest` (fixtures, and jqwik properties: a permutation, deterministic, blind to `zIndex`
+  and list order). `ElementReadingOrderTest` on the platform tree: declared order and `traversalIndex`, before and
+  after a restack and after a spread; all four of its tests fail against the old list-order wiring. **The Brief 04
+  spike worked:** with the shadow `AccessibilityManager` enabled *and* `forceAccessibilityForTesting(true)` (either
+  alone is not enough), Compose publishes `traversalBefore` hints, and the test asserts they chain the nodes in
+  reading order. The harness's "no hints" claim was a host artefact and is corrected in its KDoc.
+  `ZineActionSheetTest` asserts, on the platform tree of the sheet's own `Dialog` window, that the scrim offers no
+  click, and that a tap still dismisses. No golden changes. These
+  tests prove the tree, not where TalkBack goes; that is the device listen.
+- **Device evidence (2026-09-26).** The Step 0 fixture backup was restored (additively) on each device, and its page 4
+  used as the case: listed photo, caption, tape, while the tilted tape sits highest.
+  - *Pass 1, platform tree* (`uiautomator dump`): on the Samsung SM-A176B (Android 16, release-signed step-2 build) and
+    an API 36 emulator (debug build), the nodes were declared tape → photo → caption; unchanged after *Bring forward*
+    ×2 put the photo on top; photo → tape → caption after *Across fold*, with the partner half alone on page 5. The
+    zine action sheet had no full-screen or clickable scrim node on either device, and a tap on the dim and Back both
+    closed it.
+  - *TalkBack listen* (the owner, Samsung TalkBack 16.2.00.13, sighted): after the restack and the spread, forward
+    swipes from Preview read Photo → Torn tape → Text → the page strip → Undo, Redo, Add, Done; the reverse swipe read
+    the exact reverse; page 5 read only the photo; after undoing the spread, tape → photo → text; the action sheet
+    never landed on the dim, and Back closed it. Nothing surprised the listener (Pass 2).
+  - An emulator TalkBack walk was attempted and abandoned: injected key combinations did not move its focus.

@@ -525,7 +525,7 @@ restore-honesty defects** ([Q8](ZINELY-1X-DECISION-GATE.md#q8-the-next-release-a
 
 | Step | Readiness | What it still waits for |
 |---|---|---|
-| **2 · D4-A1 reading order + scrim** | ✅ **READY** | Nothing. Its ADR (next free number, 119 on `main` today) is written inside the session |
+| **2 · D4-A1 reading order + scrim** | ✅ **COMPLETE** (2026-09-26, PR #78: implementation `1587a40`; [ADR-119](../DECISIONS.md#adr-119)) | Nothing. Both device passes done, including the owner's TalkBack listen on SM-A176B |
 | **Q4-F · freeze typebar + reframe** | ✅ **READY** (docs/design session) | Nothing; the ruling and the scope line are recorded ([§5](#5-sequencing)). Reviewed like any HTML amendment |
 | **1a · `backup-restore.html` amendment** (steps 1 + 1b) | ✅ **READY to draw** | The poisoned-photo question is ruled (skip-and-list; its state is amendment item 10). The owner approves the drawn amendment before Compose ([Brief 01](BRIEF-01-VISIBLE-OWNERSHIP.md) specifies it) |
 | **1 · D1 part 1** | ⏳ after 1a | 1a approved |
