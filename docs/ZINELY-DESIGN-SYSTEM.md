@@ -514,6 +514,22 @@ The visual order and the accessibility order are **the same order**, and both ma
 the user needs the information ([R9](design/DESIGN-RULES.md)). If the screen reader's traversal
 surprises you, the layout is wrong — not the traversal.
 
+**On a free canvas** — the page a maker composes, where things are placed rather than laid out — *visual
+order* means **spatial reading order, never stacking order.** Stacking is how paper overlaps, not the order
+anyone reads it, and moving a piece to the front must not reshuffle what a screen reader says
+([ADR-119](DECISIONS.md#adr-119)). Judged on each piece's rotated bounds:
+
+1. **The ground first.** A piece taller than **six tenths of the page** is read before everything else — a
+   full-page photo, one half of a spread — by top edge, then left. Height only: a full-width, short banner
+   is not ground; it reads as a heading, in its row. Without this, one full-page piece opens a "row" that
+   swallows the page.
+2. **Then rows, top to bottom.** The highest unread piece opens a row; every unread piece whose vertical
+   centre falls within that piece's (rotated) height joins it. Within a row, left to right.
+3. **Ties break by a stable identity**, never by stacking.
+
+Row order is predictable, not clairvoyant: two columns whose tops do not line up interleave. The remedy is
+the maker's arrangement, not a smarter guess.
+
 ### 4.6 Subject placement and the thumb
 
 Primary actions live in the thumb zone; nothing important lives in the top corners

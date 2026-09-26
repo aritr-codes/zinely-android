@@ -71,6 +71,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- With TalkBack, the Bench now reads a page from top to bottom and left to right, whatever is stacked on top.
+  A full-page photo or a spread half is read first. Moving something to the front or back, or making a spread,
+  no longer changes the order ([ADR-119](docs/DECISIONS.md#adr-119)).
+- With TalkBack, the dimmed area behind the zine actions sheet is no longer read as an unlabelled button. Tapping
+  it or pressing Back still closes the sheet ([ADR-119](docs/DECISIONS.md#adr-119)).
 - The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
   privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
   the files.
