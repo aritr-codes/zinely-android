@@ -21,8 +21,10 @@ import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import java.security.MessageDigest
 
 /**
@@ -46,20 +48,70 @@ class DocumentFixtureCorpusTest {
 
     private val serializer = JsonDocumentSerializer()
 
+    /**
+     * One expected document per pinned fixture. Each entry spells out every field its file lacks, so a
+     * changed default fails. A fixture pinned in [FIXTURE_SHA256] without an entry here fails the
+     * per-fixture decode check; it is never merely listed.
+     */
+    private val expectedByVersion: Map<Int, () -> ZineDocument> = mapOf(
+        // v1 predates copier (ADR-106), decor (ADR-105) and the flips (ADR-113).
+        1 to {
+            expectedV3().mapElements { element ->
+                when (element) {
+                    is ImageElement -> element.copy(copier = false, flippedHorizontally = false, flippedVertically = false)
+                    is DecorElement -> null
+                    else -> element
+                }
+            }
+        },
+        // v2 predates the flips (ADR-113).
+        2 to {
+            expectedV3().mapElements { element ->
+                when (element) {
+                    is ImageElement -> element.copy(flippedHorizontally = false, flippedVertically = false)
+                    is DecorElement -> element.copy(flippedVertically = false)
+                    else -> element
+                }
+            }
+        },
+        3 to ::expectedV3,
+    )
+
     @Test
-    fun `every schema version has a frozen fixture`() {
+    fun `every schema version has a frozen fixture and an expected document`() {
         assertEquals((1..CURRENT_SCHEMA_VERSION).toSet(), FIXTURE_SHA256.keys) {
             "A schema bump needs document-v$CURRENT_SCHEMA_VERSION.json in the corpus, pinned and decoded here."
+        }
+        assertEquals(FIXTURE_SHA256.keys, expectedByVersion.keys) {
+            "Every pinned fixture needs an expected document, and every expected document a pinned fixture."
         }
     }
 
     @Test
-    fun `the current writer still writes the v3 bytes`() {
-        // Freezes the encode side too (key order, defaults on disk, the format marker) while v3 is the
-        // written version. After a bump this case is superseded by the new version's own fixture.
-        assumeTrue(CURRENT_SCHEMA_VERSION == 3)
-        assertEquals(fixtureBytes(3).decodeToString(), serializer.serialize(expectedV3()))
+    fun `the current writer still writes the pinned bytes of the current version`() {
+        // Freezes the encode side too (key order, defaults on disk, the format marker). A schema bump
+        // fails here on purpose rather than skipping: the encode check must move to the new version.
+        assertEquals(WRITER_PINNED_VERSION, CURRENT_SCHEMA_VERSION) {
+            "CURRENT_SCHEMA_VERSION is $CURRENT_SCHEMA_VERSION, but the writer-byte check still pins " +
+                "document-v$WRITER_PINNED_VERSION.json. Add document-v$CURRENT_SCHEMA_VERSION.json as written by " +
+                "the new serializer, pin its SHA-256 in FIXTURE_SHA256, add its expected document to " +
+                "expectedByVersion, then set WRITER_PINNED_VERSION to $CURRENT_SCHEMA_VERSION. Keep every older fixture."
+        }
+        val expected = expectedByVersion.getValue(WRITER_PINNED_VERSION)()
+        assertEquals(fixtureBytes(WRITER_PINNED_VERSION).decodeToString(), serializer.serialize(expected))
     }
+
+    /** One check per pinned fixture, generated from [FIXTURE_SHA256] itself. */
+    @TestFactory
+    fun `every pinned fixture decodes to its expected document`(): List<DynamicTest> =
+        FIXTURE_SHA256.keys.sorted().map { version ->
+            dynamicTest("document-v$version.json") {
+                val expected = checkNotNull(expectedByVersion[version]) {
+                    "document-v$version.json is pinned but has no expected document, so it would never be checked."
+                }
+                assertDecodes(version, expected())
+            }
+        }
 
     @Test
     fun `fixture files are the frozen bytes`() {
@@ -68,33 +120,6 @@ class DocumentFixtureCorpusTest {
                 "document-v$version.json changed. Fixtures are frozen: add a new file, never edit one."
             }
         }
-    }
-
-    @Test
-    fun `v3 fixture decodes to the fictional zine`() {
-        assertDecodes(3, expectedV3())
-    }
-
-    @Test
-    fun `v2 fixture decodes with every flip off`() {
-        assertDecodes(2, expectedV3().mapElements { element ->
-            when (element) {
-                is ImageElement -> element.copy(flippedHorizontally = false, flippedVertically = false)
-                is DecorElement -> element.copy(flippedVertically = false)
-                else -> element
-            }
-        })
-    }
-
-    @Test
-    fun `v1 fixture decodes with no copier and no decor`() {
-        assertDecodes(1, expectedV3().mapElements { element ->
-            when (element) {
-                is ImageElement -> element.copy(copier = false, flippedHorizontally = false, flippedVertically = false)
-                is DecorElement -> null
-                else -> element
-            }
-        })
     }
 
     private fun assertDecodes(version: Int, expected: ZineDocument) {
@@ -222,6 +247,9 @@ class DocumentFixtureCorpusTest {
         .joinToString("") { "%02x".format(it) }
 
     private companion object {
+        /** The version whose fixture the current writer must reproduce byte for byte; moved on each bump. */
+        const val WRITER_PINNED_VERSION = 3
+
         /** SHA-256 of the two fixture JPEGs, which live in the `:core:data-storage` library archive. */
         const val PHOTO_A = "380704824c8bf2b6f7f69cca9eae828fee7ff44b2328820e49eec362c674ed3a"
         const val PHOTO_B = "8f914e9d17abc02fbccbf33f384481a28e1ccb9dd642f3b4cf0e5b1ddd3f3219"
