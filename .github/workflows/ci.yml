@@ -97,6 +97,8 @@ jobs:
         # stays literally true (:app:testDebugUnitTest depends on it, but the named gate is preserved).
         # :app:lintDebug is named here so navigation lifecycle mistakes such as remembering a
         # NavBackStackEntry lookup by route data instead of the destination entry fail CI.
+        # :app:checkDependencyAllowlist (1.x step 0, F4) fails when the resolved release graph gains a
+        # library group outside the privacy allow-list in app/build.gradle.kts.
         #
         # :render-android (ADR-028 S3): the Robolectric NATIVE unit proofs run in the next step via
         # verifyRoborazziDebug (which runs testDebugUnitTest in verify mode — real-Skia raster provider +
@@ -116,7 +118,7 @@ jobs:
         # depends on :feature:editor yet, so that verify step is what actually gates it in CI.
         run: |
           chmod +x ./gradlew
-          ./gradlew :app:compileDebugKotlin :app:testDebugUnitTest :app:lintDebug \
+          ./gradlew :app:compileDebugKotlin :app:testDebugUnitTest :app:lintDebug :app:checkDependencyAllowlist \
             :data-android:testDebugUnitTest \
             :feature:editor:testDebugUnitTest \
             :core:ui:testDebugUnitTest \

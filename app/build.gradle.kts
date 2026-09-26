@@ -214,6 +214,60 @@ if (releaseSigning == null) {
     }
 }
 
+// Privacy invariant, library half (1.x plan §4 F4). PrivacyManifestTest proves no INTERNET permission,
+// so nothing can open a socket; this guards the *libraries* (CLAUDE.md privacy invariant): it walks the
+// whole resolved release graph, transitive dependencies included, and fails on any module group that is
+// not on the reviewed list below, or that is on the denied list. An entry covers its group and subgroups.
+// Widening the list is never quiet: a new group needs review, and a networking, analytics or billing
+// library (Play Billing included) needs an ADR first. Run in CI: `./gradlew :app:checkDependencyAllowlist`.
+// ponytail: groups, not artifacts. `androidx` and `org.jetbrains` are admitted wholesale because their
+// subgroups churn on every BOM bump, which leaves a known limit: AndroidX *does* publish network- and
+// ad-shaped libraries, so those subgroups are denied explicitly. A new such subgroup must be added to
+// deniedGroups when it appears; pin exact subgroups instead if this list ever stops being enough.
+tasks.register("checkDependencyAllowlist") {
+    val allowedGroups = listOf(
+        "androidx",
+        "com.google.code.findbugs", // jsr305 annotations
+        "com.google.dagger", // Hilt
+        "com.google.guava", // listenablefuture, via AndroidX
+        "com.squareup.okio", // file I/O for DataStore; not a network client
+        "jakarta.inject",
+        "javax.inject",
+        "org.jetbrains", // Kotlin stdlib, coroutines, serialization, annotations
+        "org.jspecify",
+    )
+    val deniedGroups = listOf(
+        "androidx.ads", // advertising ID
+        "androidx.media3", // ships HTTP data sources
+        "androidx.privacysandbox", // ad services
+        "androidx.webkit", // WebView content loading
+    )
+    val releaseGraph = configurations.named("releaseRuntimeClasspath")
+        .flatMap { it.incoming.resolutionResult.rootComponent }
+    doLast {
+        val seen = HashSet<org.gradle.api.artifacts.component.ComponentIdentifier>()
+        val pending = ArrayDeque(listOf(releaseGraph.get()))
+        val groups = sortedSetOf<String>()
+        while (pending.isNotEmpty()) {
+            val component = pending.removeFirst()
+            if (!seen.add(component.id)) continue
+            (component.id as? org.gradle.api.artifacts.component.ModuleComponentIdentifier)?.let { groups += it.group }
+            component.dependencies
+                .filterIsInstance<org.gradle.api.artifacts.result.ResolvedDependencyResult>()
+                .forEach { pending += it.selected }
+        }
+        fun List<String>.covers(group: String) = any { group == it || group.startsWith("$it.") }
+        val unexpected = groups.filter { deniedGroups.covers(it) || !allowedGroups.covers(it) }
+        check(unexpected.isEmpty()) {
+            "zinely: release dependencies denied by, or outside, the privacy allow-list: $unexpected\n" +
+                "No networking or analytics library may ship (PRD §5). A reviewed, harmless library is " +
+                "added to allowedGroups in app/build.gradle.kts; anything network-, analytics- or " +
+                "billing-shaped needs an ADR first."
+        }
+        logger.lifecycle("zinely: ${groups.size} release dependency groups, all on the privacy allow-list.")
+    }
+}
+
 dependencies {
     // S2B Android adapters (ADR-026 / ADR-025): the app consumes the data layer through this module.
     // Completes the intended one-way graph :app -> :data-android -> :core:* (core never depends back).
