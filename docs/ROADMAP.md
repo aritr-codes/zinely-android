@@ -21,7 +21,13 @@ beta.4-r3 APK; measurements and evidence remain in the
 
 **Released 2026-09-25:** beta.5 and the About maker's note are in the public download
 ([0.9.0-beta.5](../CHANGELOG.md#090-beta5--2026-09-23--steadier-editing-and-saving), tag `v0.9.0-beta.5`,
-GitHub pre-release, APK only). No next tester build is scheduled yet.
+GitHub pre-release, APK only). No next tester build is scheduled by date yet.
+
+**Owner rulings, 2026-09-26** ([1.x decision gate](planning/ZINELY-1X-DECISION-GATE.md)): the next tester build
+is planned as a *wave-1* release on the current document format, before any schema change, carrying the 1.x
+plan's backup-honesty, accessibility and tap-through steps ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)).
+This is an internal sequencing decision, not a public promise; nothing moves to *In development* here until it
+is built.
 
 ### In development — built or being tested, not in the public download
 
@@ -94,8 +100,13 @@ a curated Art pack and decorative frames. Evaluate transparency next, preset sha
 freehand/automatic cutting for a separate design effort. This recommendation does not reorder the retained release,
 fold-study or acceptance gates without owner approval.
 
+> **Owner rulings, 2026-09-26** ([decision gate](planning/ZINELY-1X-DECISION-GATE.md)): the fold-clarity study
+> runs now but **no longer gates** fonts or frames (Q5); fonts start as **two named voices** — Book (Fraunces)
+> and Plain (Inter), with Hand (Averia) deferred (Q2); frames start as **two** hand-cut pieces
+> whose names and look await the owner's visual approval (Q6).
+
 All new features must preserve old zines and the rule that the preview matches what prints. Unknown-font fallback
-must not silently become layout loss. Photo-opacity exploration does not overturn the deliberate no-opacity rule
+must not silently become layout loss. *(For document voices, qualified by the owner on 2026-09-26, [gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8): no schema bump; an older build keeps and restores the content and may draw an unknown voice as Inter, which is documented and tested as a layout change, not data loss.)* Photo-opacity exploration does not overturn the deliberate no-opacity rule
 for authored Art in `SUPPLIES-SPEC`. Sources and API boundary notes: [RESEARCH R20](RESEARCH.md#r20-creative-tools-feasibility-12-september-2026).
 
 ## Historical phase context
@@ -330,6 +341,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-09-26 | **Owner rulings on the 1.x plan recorded** in the [decision gate](planning/ZINELY-1X-DECISION-GATE.md): next tester build planned as a wave-1 release on the current format; fold study runs now and no longer gates fonts or frames; first fonts = two named voices (Book, Plain); first frames = two; unknown-font fallback for document voices qualified. No public-label change. | [1.x plan](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md) |
 | 2026-09-25 | **beta.5 released** (tag `v0.9.0-beta.5`, merge `32da280`): the next-beta and About maker's note items leave In development; About pixel parity and real-phone Android 7–9 Save PDF checks become engineering follow-ups. The public website now offers beta.5. No scope change. | [ADR-116](DECISIONS.md#adr-116) · [ADR-118](DECISIONS.md#adr-118) |
 | 2026-09-24 | Current priorities gain an **In development** group (next beta, Font-control removal, About maker's note), moved out of Exploring, so the public website's four labels project this list rather than inventing statuses. No scope change. | [ADR-118](DECISIONS.md#adr-118) |
 | 2026-09-09 | Reconciled current priorities against code, issues, releases and website: one conditional publication plan, four explicit explorations, scoped engineering follow-ups; historical phases retained but no longer presented as today's promises. | [Current-state review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-09-current-state-review) |

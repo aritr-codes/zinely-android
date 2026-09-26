@@ -56,6 +56,8 @@ A 🟦 recommendation in a brief or the audit is **not** a ruling.
 - <ADR-NNN — title — Proposed/Accepted>, or "new ADR-<next free number>: <title>, supersedes <…>", or
   "none, because <…>" (e.g. a defect fix inside an existing ADR's contract). Never leave it blank.
   Check the next free number in `docs/DECISIONS.md` first. ADR-115 is reserved on PR #70's branch.
+  If the brief carries an **ADR draft** (Brief 01 part 1b, Brief 05 hit test), start from it: a draft is not a
+  decision until it lands in `DECISIONS.md` in this session, with review.
 
 ## Files and seams
 - Modules and files from the brief's touchpoint table: <list>.
@@ -147,5 +149,6 @@ state. Reconcile every finding as ACCEPT / PARTIAL / REJECT before asking the ow
 
 | Date | Change |
 |---|---|
+| 2026-09-26 | Owner rulings recorded in the decision gate; ADR section points at the brief-held ADR drafts. |
 | 2026-09-26 | Step 0 merged (PR #75): foundation-step note updated; Tests section names Step 0's guards, which every session keeps green. |
 | 2026-09-25 | Created from the readiness audit's appendix, which it replaces. |
