@@ -6711,6 +6711,14 @@ lock nothing and accept the ellipse as expressive. **This defect does not choose
 🔭 Related but distinct: [D-092](#d-092) asks what aspect a supply should *land* at. This one asks what a
 maker may do to it afterwards. Ruling them together would be reasonable.
 
+**2026-09-26 — note.** §3.4.1 wrote `mark.*` when the catalogue had four marks. The shipped catalogue now
+has ten `mark.*` pieces, including strips that should stretch (`mark.perf` perforation, `mark.bar` colour
+bar, `mark.scan` copier streak), and the round pieces `shape.ring` and `fix.grommet` are not covered by
+the rule at all. The owner ruled on 2026-09-26 that resize behaviour is **decided per piece**
+([decision gate Q6](../planning/ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch)). The per-piece list is
+a recommendation in [Brief 05](../planning/BRIEF-05-MATERIALS-FRAMES.md#frames-d5); the implementation
+session finalises it and records it here.
+
 ---
 
 ### D-101 — the merge gate is not deterministically green, and the reason is a known flake nobody counted {#d-101}

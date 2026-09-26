@@ -2,7 +2,62 @@
 
 > ⚠️ **Corrections pending.** The [1.x readiness audit](ZINELY-1X-READINESS-AUDIT.md#6-d2-audit--typefaces--voices) (2026-09-25, reviewed) found coverage gaps, a missing editing-surface change, older-build clipping vs whole-backup refusal, and a reframed O12. Fold them into this document before any implementation session uses it ([audit §12](ZINELY-1X-READINESS-AUDIT.md#12-recommended-implementation-sequence)); until then, read that section beside this one.
 
-Status: **implementation brief, not authorised.** Part of the [1.x plan](ZINELY-1X-IMPLEMENTATION-PLAN.md)
+## Pre-rewrite record (2026-09-26) — rulings in, asset facts measured, rewrite still pending
+
+**Still not ready.** The owner ruled Q2 and Q4 on 2026-09-26 ([decision gate](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8));
+the body below predates those rulings and is superseded wherever it disagrees. A rewrite session folds this
+record, the audit's §6 and the rulings into one brief, then removes the banner.
+
+**Rulings the rewrite must implement (owner, 2026-09-26):**
+- **Two document voices: Book = Fraunces, Plain = Inter.** Hand (Averia) is **deferred** as a document voice;
+  Averia stays the interface voice. The title and "three voices" framing below are superseded.
+- **Scope ruling, not a rewrite:** text inside a zine may use a document voice; a document voice is not a UI
+  typeface under [V2-CONSTITUTION §III](../design/V2-CONSTITUTION.md) as written.
+- **No schema bump for document voices.** Compatibility rule: older builds keep restoring and preserving the
+  content (the `fontFamily` string survives); they may draw an unknown voice as Inter. That is a **layout
+  change, not data loss**, and the rewrite must document and test its extent honestly (re-wrap, possible
+  overflow of a fixed box).
+- **Typebar and Reframe freeze** (Q4): the Voice control amends `v21-typebar.html` after it is frozen
+  ([plan step Q4-F](ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)).
+- **Fold study is no longer a gate** (Q5). PR #70 (ADR-115) must still be settled first.
+
+**What Zinely actually bundles (✅ measured 2026-09-26 with fontTools from the files in this tree).** The
+owner's caveat holds upstream — Fraunces ships Roman and Italic variable fonts (wght, opsz, SOFT, WONK axes)
+— but **none of that is in the repository:**
+
+| File (tracked) | Name table | Weight | Style | Variable? | Latin Ext-A | Greek / Cyrillic |
+|---|---|---|---|---|---|---|
+| `core/ui/src/main/res/font/fraunces_regular.ttf` (102 KB) | "Fraunces 9pt" | 400 | Roman | static | 126/128 (no ŉ ſ) | 0 / 0 |
+| `…/fraunces_medium.ttf` (80 KB) | "Fraunces 9pt Medium" | 500 | Roman | static; **instanced by us** from upstream (`opsz=9 wght=500`, [DECISIONS.md ADR at ~:1944](../DECISIONS.md)) | 126/128 | 0 / 0 |
+| `…/fraunces_semibold.ttf` (105 KB) | "Fraunces 9pt SemiBold" | 600 | Roman | static | 126/128 | 0 / 0 |
+
+- **No Fraunces Bold (700), no Italic, no BoldItalic** exists anywhere in the tree; `post.italicAngle` is 0
+  on all three. All are `fsType 0` (embeddable), OFL (`feature/editor/src/main/assets/fonts/OFL-Fraunces.txt`).
+- **They are chrome fonts, in the wrong module.** They live in `:core:ui` `res/font`; document fonts live in
+  `render-android/src/main/assets/fonts/`, which holds only Inter's four faces.
+- **The registry needs four real static faces per family and forbids variable fonts** (minSdk 24):
+  `DocumentFontRegistry.kt:3-9`, one `DocumentFontFamily(regular, bold, italic, boldItalic)` row per family
+  (:102-113). DECISIONS.md already names the route: *"four static instances … the three weights in
+  `core/ui/src/main/res/font/` are the wrong set and carry no italic"* (~:6165-6169).
+- **So the D2 asset work is:** instance four static 9 pt faces from the upstream variable fonts — Roman 400,
+  Roman 700, Italic 400, Italic 700 (🟦 the weights are a recommendation; 9 pt matches the chrome cut and the
+  document's small sizes) — pin each by hash like `fraunces_medium.ttf`, add one registry row and the OFL,
+  and extend `FontCoverageGuardTest`. Expect ~400 KB of new assets (🟨 estimate from the 80–105 KB statics).
+- **Width, x-height:** Regular is ~2 % narrower than Inter on a pangram; x-height at 10 pt is 1.66 mm vs
+  Inter's 1.93 mm (research 2026-09-26). The Bold and Italic instances are **not yet measured**.
+
+**Still needed before the rewrite is ready:**
+1. Instance and measure the four faces (widths per style vs Inter, for the older-build layout note).
+2. **Minimum print size — owner decision after the physical print test** (one printed page at 10/12/14 pt on
+   a home inkjet — a separate physical test; the [print-and-fold study](STUDY-PRINT-AND-FOLD-PROTOCOL.md) excludes it). Not decided here.
+3. Coverage handling for scripts Fraunces lacks (Greek, Cyrillic): 🟦 recommend Book is disabled with a
+   reason for text containing them, per the audit's per-family coverage rule; the rewrite specifies it.
+4. The editing surface draws chrome Inter with synthesised italic (`BenchEditingSurface.kt:213-224`); the
+   rewrite specifies drawing the document face.
+5. PR #70 settled; `v21-typebar.html` frozen (Q4); the next free ADR number at that time (D2's ADR
+   supersedes ADR-055's exclusion and records the scope ruling's consequence).
+
+Status (superseded by the record above): **implementation brief, not authorised.** Part of the [1.x plan](ZINELY-1X-IMPLEMENTATION-PLAN.md)
 (Direction D2, wave 1). Base: `origin/main` @ `5c40e7b`.
 **Owner decisions first:** O7 (PR #70: remove the dead *Font* control now, or let this replace it), O8
 (confirm the three faces; OWNER-CHECKLIST still lists PRD §13 Q3 "choose the bundled font set" as open),

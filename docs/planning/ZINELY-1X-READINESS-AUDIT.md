@@ -8,6 +8,8 @@ to the `v0.9.0-beta.5` tag, `32da280`) · Audits: the [1.x plan](ZINELY-1X-IMPLE
 > merged** (PR #75, merge `eb75cf7`), adding tests, fixtures, one Gradle task (run in the existing CI step), a `.gitattributes` line and ARCHITECTURE §4.1,
 > and no `src/main` change. Where this audit says a guard or fixture "does not exist", read it as true at
 > `5f7707a`. Implementation status lives in the [plan](ZINELY-1X-IMPLEMENTATION-PLAN.md), not here.
+> **2026-09-26:** the owner ruled Q1–Q8 ([decision gate](ZINELY-1X-DECISION-GATE.md)). Factual corrections found
+> since are marked inline *(corrected 2026-09-26)*; the rest of the record is unchanged.
 
 > **Where this sits.**
 >
@@ -76,7 +78,7 @@ implementer:
   - `View.announceForAccessibility` is deprecated in API 36, and Zinely targets 36 ([View reference](https://developer.android.com/reference/android/view/View#announceForAccessibility(java.lang.CharSequence))).
   - The only reducer announcement, `"Changed page N"`, is hard-coded English (`EditorReducer.kt:618`). It sits outside `Copy` and outside the prose guard.
 - **Fonts:**
-  - Averia covers only Latin: Google Fonts lists only the `latin`/`menu` subsets. ⚠️ The audit pass counted 115 of 127 Latin Ext-A code points missing; re-count from the actual TTF cmap before relying on the number.
+  - Averia covers only Latin: Google Fonts lists only the `latin`/`menu` subsets. *Re-counted 2026-09-26 from the bundled TTF cmap: Averia covers **12 of 128** Latin Extended-A code points (116 missing); Fraunces 126, Inter 127.*
   - Fraunces has Latin Ext-A but no Greek or Cyrillic.
   - Raw size is 933,716 bytes, not ~840 KB (≈0.5 MB in the APK by inference).
   - Fraunces ships in several optical sizes (9pt / 72pt / 144pt plus Soft variants), so one must be chosen.
@@ -192,7 +194,7 @@ implementer:
   - Photograph each result. Ask "where were you unsure?"
 - **Evidence:** the same failure at the same step for **≥2 people** is a finding; anything seen once is only logged. Nielsen's five-user heuristic ([NN/g, 2000](https://www.nngroup.com/articles/why-you-only-need-to-test-with-5-users/)) supports *finding* problems, not measuring error reduction, so judge any improvement qualitatively.
 - **Decisions that depend on it:**
-  - caption and diagram fixes (step 1 orientation, step 5 cut);
+  - caption and diagram fixes (*2026-09-26: the step 1 orientation and step 5 cut captions already carry desk-critique fixes in `Copy.kt` `STEP_CAPTIONS`; the study tests them*);
   - whether a native fold replay is ever built, and only if the recurring failures are about direction and a still-image fix doesn't resolve them in a 3–5-person retest;
   - O14.
 - **Record it in:** `docs/reviews/` plus a [RESEARCH.md](../RESEARCH.md) entry.
@@ -312,7 +314,7 @@ implementer:
 - ⚠️ **Cancel during restore commit.** Tapping Cancel during the commit lets the commit finish but shows "Restore cancelled." The zines were in fact added.
 - **A failure after commit misleads.** A Room reconcile failure after a successful commit says "Couldn't read that file", although the zines are on disk (`RoomProjectRepository.kt:367-389`).
 - **A full disk during staging reads as "This backup looks damaged"** (`ZineLibraryBackupStager.kt:127-133`).
-- **A poisoned local photo with the same hash shows "Couldn't read that file"**, blaming the backup for a local problem.
+- **A poisoned local photo with the same hash shows "Couldn't read that file"** on **restore**, blaming the backup for a local problem. *(Corrected 2026-09-26: on the **backup** path a missing or unreadable local asset shows "This backup looks damaged" instead.)*
 - **A failed or cancelled backup leaves an empty or partial file** at the chosen location. Nothing deletes it.
 - **No janitor** cleans staging residue or orphaned photos after a process death.
 
@@ -399,7 +401,7 @@ Gaps:
 - **The dead control and its paperwork.**
   - The Font control is disabled (`BenchContextBar.kt:145-146`).
   - PR #70 is still an open draft, and ADR-115 exists only on its branch.
-  - `v21-typebar.html` says "PROPOSAL, NOT FROZEN", while ZINE-DIRECTION N2 marks it frozen.
+  - `v21-typebar.html` says "PROPOSAL, NOT FROZEN". *(Corrected 2026-09-26: ZINE-DIRECTION N2 reads "Freeze …" with its ✅ in the Evidence column — a to-do, not a frozen claim. The owner ruled both files freeze; [gate Q4](ZINELY-1X-DECISION-GATE.md#q4-typebar--reframe-specs-o10).)*
 - **Governance:** V2-CONSTITUTION §III (`V2-CONSTITUTION.md:146-153`) points both ways:
   - toward zine text: *"Averia carries headings, screen titles and **the maker's own short strings** … Fraunces carries long-form editorial: **zine body, captions, pull quotes**, guide prose."*
   - toward UI only: *"**No fourth UI typeface.**"* and the Amendment 1 log.
@@ -709,7 +711,7 @@ Each row: why it exists → is it still open → does it block implementation or
 
 | # | Why it exists | Still open? | Blocks | Deadline / evidence |
 |---|---|---|---|---|
-| **O15** Android developer verification | Side-loaded APKs will need a verified developer | Yes | **Every public APK after the cut-over** — distribution, not code | Starts **30 Sep 2026** in four countries, global in 2027 ([research summary item 4](../research/ZINELY-FUTURE-PRODUCT-RESEARCH.md), detail in its [§23](../research/ZINELY-FUTURE-PRODUCT-RESEARCH.md#23-website-strategy); primary source [developer.android.com/developer-verification](https://developer.android.com/developer-verification)). ⚠️ Re-check Google's current timeline before acting |
+| **O15** Android developer verification | Side-loaded APKs will need a verified developer | Yes | **Every public APK after the cut-over** — distribution, not code | *Corrected 2026-09-26:* the phase starting **30 Sep 2026** covers installs from named app stores in four countries, **not** side-loaded GitHub APKs; the **2027** global phase covers those (Google FAQ, updated 15 Jul 2026). Ruled: [gate Q1](ZINELY-1X-DECISION-GATE.md#q1-developer-verification-o15). Originally cited: ([research summary item 4](../research/ZINELY-FUTURE-PRODUCT-RESEARCH.md), detail in its [§23](../research/ZINELY-FUTURE-PRODUCT-RESEARCH.md#23-website-strategy); primary source [developer.android.com/developer-verification](https://developer.android.com/developer-verification)). ⚠️ Re-check Google's current timeline before acting |
 
 ### Must decide before implementation (of the direction it gates)
 
@@ -718,7 +720,7 @@ Each row: why it exists → is it still open → does it block implementation or
 | **O12** (reframed) | §III assigns faces to "the maker's own short strings" and "zine body" but closes on "No fourth UI typeface"; its running-text rule vs a Hand voice in zines | Yes | D2 implementation **and** its schema plan | Whether §III covers zine text; zine text lengths; an Averia print at 10–14 pt; launch languages (coverage, §6); the older-build trade-off (§6 Q3) |
 | **O8** | PRD §13 Q3 never closed | Yes | D2 | Folds into O12 — the answer to "two or three, which ones" *is* O8 |
 | **O7** | PR #70 removes the dead Font control; ADR-115 only on that branch | **No — approved** (ROADMAP In development); acceptance work remains (hands-on TalkBack, rendered HTML parity); draft since 2026-09-11 | D2 sequencing; also the **live** Bench still shows a dead control | The acceptance evidence, then a rebase (the branch conflicts with `main`) |
-| **O10** | `v21-typebar.html` (and `v21-reframe.html`, per plan §9) "PROPOSAL, NOT FROZEN" headers vs ZINE-DIRECTION N2 | Yes | D2's HTML-amendment route | Your intent when N2 was written |
+| **O10** | `v21-typebar.html` (and `v21-reframe.html`, per plan §9) "PROPOSAL, NOT FROZEN" headers vs ZINE-DIRECTION N2 (*2026-09-26: N2 is a to-do, not a conflict; ruled — both freeze*) | Yes | D2's HTML-amendment route | Your intent when N2 was written |
 | **O14** | ROADMAP says the creative slice (fonts, Art pack, decorative frames) does not reorder the fold-study gate without owner approval | Yes | D2 **and D5** timing | Run the study (§4) — then O14 disappears |
 | **O9** + stretch policy | ADR-107 R1 leaves ~19 backlog supplies; frames need outlines and a scaling rule | Yes | D5 | Which frames; who draws them; whether frames keep aspect |
 

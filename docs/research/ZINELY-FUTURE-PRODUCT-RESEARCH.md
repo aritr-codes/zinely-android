@@ -129,7 +129,7 @@ The genuinely new findings are:
    *Fixed 2026-09-24 by [ADR-118](../DECISIONS.md#adr-118): fonts are self-hosted and the tray is hidden from
    the website. The frozen prototype keeps it, because OD-2 deferred the shelf rather than dropping it
    ([D-029](../design/V2-SPEC-DEFECTS.md#d-029)).*
-4. ✅ **Android developer verification** starts 30 Sep 2026 in four countries and applies globally in 2027;
+4. ✅ **Android developer verification** starts 30 Sep 2026 in four countries and applies globally in 2027 *(corrected 2026-09-26: the 30 Sep phase covers installs from named app stores only, not side-loaded APKs; side-loaded apps are covered from the 2027 global phase — [decision gate Q1](../planning/ZINELY-1X-DECISION-GATE.md#q1-developer-verification-o15))*;
    side-loaded APKs will need a verified developer ([§23](#23-website-strategy)).
 5. ✅ **The monetisation clock is running.** The Tribunal puts a one-time IAP experiment "ON TRIAL, with a
    trigger: decide within one year of the first bundled-supplies release"; supplies shipped with
@@ -1362,7 +1362,7 @@ a real fold guide, honest privacy, and a journal/roadmap in the product's own vo
 | W8 | `og:image` is the logo; mockups are ~678 KB lossless WebP | head, assets | Low |
 | W9 | Roadmap is thin and maintenance-flavoured; changelog led by website entries | `/roadmap/`, `/changelog/` | Medium |
 | W10 | The site-wide accessibility statement (ADR-114 §2 retired the standalone page) should be checked against WCAG 2.2; the older review cites 2.0 | ADR-114 §2 | Medium |
-| W11 | Android developer verification starts 30 Sep 2026 in BR/ID/SG/TH, globally 2027 — side-loaded APKs will need a verified developer | [OWNER-CHECKLIST](../OWNER-CHECKLIST.md) item to add | High (distribution) |
+| W11 | Android developer verification starts 30 Sep 2026 in BR/ID/SG/TH, globally 2027 — side-loaded APKs will need a verified developer *(corrected 2026-09-26: side-loaded APKs only from the 2027 global phase; see [gate Q1](../planning/ZINELY-1X-DECISION-GATE.md#q1-developer-verification-o15))* | [OWNER-CHECKLIST](../OWNER-CHECKLIST.md) item to add | High (distribution) |
 
 ### 23.3 Proposed story
 

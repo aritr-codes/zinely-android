@@ -2,6 +2,12 @@
 
 > ⚠️ **Corrections pending.** The [1.x readiness audit](ZINELY-1X-READINESS-AUDIT.md#7-d3-audit--printer-test-page) (2026-09-25, reviewed) found flaws in the band test, an unverified "Actual size" promise, and a staged alternative. Fold them into this document before any implementation session uses it ([audit §12](ZINELY-1X-READINESS-AUDIT.md#12-recommended-implementation-sequence)); until then, read that section beside this one.
 
+> **Status 2026-09-26: still blocked on the physical print study.** The owner ruled Q7
+> ([decision gate](ZINELY-1X-DECISION-GATE.md#q7-print-o13--d3-stage-2)): design truthful, result-based
+> guidance now; ship nothing until the [print study](STUDY-PRINT-AND-FOLD-PROTOCOL.md) has measured the real
+> Zinely print path; any "100 %" advice is conditional on the print app exposing a scale control. This brief
+> is rewritten after the study reports.
+
 Status: **implementation brief, not authorised.** Part of the [1.x plan](ZINELY-1X-IMPLEMENTATION-PLAN.md)
 (Direction D3, wave 1). Base: `origin/main` @ `5c40e7b`.
 **Decisions first:** a new ADR amending [ADR-039](../DECISIONS.md#adr-039)'s ruler deferral; an additive

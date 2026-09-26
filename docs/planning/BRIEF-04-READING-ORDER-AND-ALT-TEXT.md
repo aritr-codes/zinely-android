@@ -2,22 +2,22 @@
 
 > This brief incorporates the findings of [ZINELY-1X-READINESS-AUDIT.md](ZINELY-1X-READINESS-AUDIT.md). If this brief conflicts with an older research document, this brief and the cited authoritative ADR/decision take precedence. It never overrides an Accepted ADR, the V2 constitution or a frozen spec — where it needs one changed, it says so and names the amendment.
 
-Status: **implementation brief, not authorised.** Direction D4 of the [1.x plan](ZINELY-1X-IMPLEMENTATION-PLAN.md).
-Base: `origin/main` @ `eb75cf7` (Step 0 merged; code citations made at `5f7707a`, `src/main` unchanged since). Revised 2026-09-25 from the readiness audit.
+Status: **implementation brief; A1 + scrim READY** (owner rulings recorded 2026-09-26 in the
+[decision gate](ZINELY-1X-DECISION-GATE.md); none of them changes D4's scope). Direction D4 of the [1.x plan](ZINELY-1X-IMPLEMENTATION-PLAN.md).
+Base: `origin/main` @ `0aa7a7d` (code citations made at `5f7707a`; `src/main` unchanged since). Revised 2026-09-25 from the readiness audit; dependencies updated 2026-09-26.
 **Readiness:**
 - **A1 + scrim fix:** READY TO START. No owner ruling, no schema change and no visual change. Its ordering rule is a
   ZINELY-DESIGN-SYSTEM §4.5 clause recorded as an ADR (gate 2). The spike in gate 1 is the
   session's first task, and A1 does not depend on its outcome.
-- **A3:** READY AFTER the owner-approved `v21-bench.html` undo-snack amendment (gate 3; it replaces frozen copy). It is its own session, after A1.
+- **A3:** READY AFTER PR #70 is settled (merged or closed; it amends the same `v21-bench.html` and `EditorScreen.kt`) **and** the owner-approved `v21-bench.html` undo-snack amendment (gate 3; it replaces frozen copy). It is its own session, after A1.
 - **A2:** READY AFTER a wording spec and a TalkBack listen (gate 4). A2 has not been audited.
-- **B:** BLOCKED BY the wave-1 release, the F1 v4 bump, a Read-semantics design and the Describe amendment (the F3
-  fixtures are done, step 0)
-  (gates 5–8).
+- **B:** BLOCKED BY the wave-1 release (approved by the owner on 2026-09-26 as a v3 release before v4, Q8), the F1 v4
+  bump, a Read-semantics design and the Describe amendment (the F3 fixtures are done, step 0) (gates 5–8).
 
 ## Gates before an implementation session may start
 
-No question in [the decision gate](ZINELY-1X-DECISION-GATE.md) (Q1–Q8) gates D4, except that Q8 approves the wave-1
-release B waits for. D4's open questions are copy, wording and accessibility calls; they are listed under
+No owner question gates D4. Q8 (ruled 2026-09-26) approved the wave-1 release on v3 that B waits for; A1 and A3
+ship in that release. D4's open questions are copy, wording and accessibility calls; they are listed under
 [decisions that can wait](ZINELY-1X-DECISION-GATE.md#decisions-that-can-wait). The owner approves each re-frozen HTML
 amendment (gates 3, 7, 8).
 
@@ -32,7 +32,8 @@ amendment (gates 3, 7, 8).
 2. **Write down the ordering rule and its threshold.** Work, done inside the A1 change. The authority is one canvas clause
    in [ZINELY-DESIGN-SYSTEM §4.5](../ZINELY-DESIGN-SYSTEM.md); the `SpatialOrder` KDoc links to it rather than restating it.
    The design system amends only "by a document of this rank, recorded as an ADR" (`ZINELY-DESIGN-SYSTEM.md:101-102`), so
-   the clause lands with a new ADR (next free number on `main`: 119; ADR-115 is reserved by PR #70).
+   the clause lands with a new ADR (the next free number at implementation time: 119 on `main` today; ADR-115 is
+   reserved by PR #70, and steps 1b and 4 also add ADRs, so check `DECISIONS.md` in-session).
 3. **Amend the frozen spec for A3: the undo snack in `docs/design/mockups/v21-bench.html`.** The file is frozen under
    [ADR-099](../DECISIONS.md#adr-099). The amendment is its own reviewed change, before any Compose work
    ([UI/UX proposal](#uiux-proposal)).
@@ -472,5 +473,6 @@ Stop and ask if any of the following happens:
 
 | Date | Change |
 |---|---|
+| 2026-09-26 | Owner rulings recorded (decision gate): no D4 scope change; A3 now also waits for PR #70 to be settled; B's wave-1 release approved as a v3 release before v4; ADR numbering note widened (steps 1b and 4 add ADRs too). Base `0aa7a7d`. |
 | 2026-09-26 | Base moved to `eb75cf7`: Step 0 merged (PR #75), so the F3 fixtures are done and no longer a B blocker. No scope change. |
 | 2026-09-25 | Folded readiness-audit corrections: command-derived undo labels, with no `History`/`committing()` change (P1, §4 F2); the duplicate and reset-framing ambiguities, with minimal options; one speaker, keyed per step; "Changed page N" moved into `Copy`; the row-rule collapse guard; the spread partner as a second cause of divergence; the `uiautomator` limits, the Robolectric `UNDEFINED` artefact and the spike; the `ZineActionScrim` fix bundled; Read speaks nothing, so B needs a Read design; A2 unaudited; the automatable/device-only table; the v4 whole-backup consequence and `explicitNulls`; the deprecated announce API; readiness per part. Added the product audit, the research, the frozen "Put back" state and the `v21-proof.html:634` divergence. Base moved to `5f7707a`, lines re-verified. |
