@@ -199,13 +199,19 @@ class SpatialOrderTest {
 
     @Property
     fun `every large element is read before every other element`(@ForAll("pages") els: List<Element>) {
-        val out = SpatialOrder.order(els, pageH)
-        val isLarge = out.map { e ->
+        val limit = SpatialOrder.LARGE_ELEMENT_HEIGHT_FRACTION * pageH
+        val heights = SpatialOrder.order(els, pageH).map { e ->
             val t = e.transform
             val r = t.rotationDegrees * kotlin.math.PI / 180.0
-            t.widthPt * kotlin.math.abs(kotlin.math.sin(r)) + t.heightPt * kotlin.math.abs(kotlin.math.cos(r)) >
-                SpatialOrder.LARGE_ELEMENT_HEIGHT_FRACTION * pageH
+            t.widthPt * kotlin.math.abs(kotlin.math.sin(r)) + t.heightPt * kotlin.math.abs(kotlin.math.cos(r))
         }
+        // This oracle and SpatialOrder compute the rotated height by different float paths, so a
+        // box landing exactly on the limit (e.g. 180×233 at 90°) can disagree by an ulp or two (≤ ~6e-14).
+        // Only the clearly-decided boxes are asserted. Generated sizes are whole points, so only
+        // exact-equality boxes fall inside the band (the nearest other height is ~3e-4 away), and
+        // the exact-threshold fixture above pins "0.6 is not large".
+        val band = 1e-9
+        val isLarge = heights.filter { kotlin.math.abs(it - limit) > band }.map { it > limit }
         assertEquals(isLarge.sortedDescending(), isLarge, "a large element came after an ordinary one")
     }
 
