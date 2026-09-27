@@ -6,8 +6,11 @@ public enum class LibraryBackupRestoreMode {
     Restore,
 }
 
-/** The product-level error families the shelf may show for backup / restore. */
-public enum class LibraryBackupRestoreFailureKind {
+/**
+ * The product-level error families the shelf may show for backup / restore. [retryable] is `false`
+ * where the same shelf would fail the same way, so the sheet offers only "Got it" (amendment 1a).
+ */
+public enum class LibraryBackupRestoreFailureKind(public val retryable: Boolean = true) {
     Damaged,
     NewerAppNeeded,
     ReadFailed,
@@ -15,7 +18,22 @@ public enum class LibraryBackupRestoreFailureKind {
     NotEnoughSpace,
     Busy,
     Generic,
+
+    /** Backup only: a zine on this phone couldn't be read, so no backup was saved (part 1's interim). */
+    BackupZineUnreadable(retryable = false),
+
+    /** Backup only: a zine on this phone needs a newer Zinely. */
+    BackupZineNewer(retryable = false),
+
+    /** Backup only: "Couldn't finish that backup" at a deterministic archive-wide or library-wide limit. */
+    BackupLimitReached(retryable = false),
 }
+
+/** The last saved backup, for the chooser's fact line (formatted at the UI edge). */
+public data class LibraryLastBackup(
+    val savedAtEpochMs: Long,
+    val fileName: String?,
+)
 
 /**
  * The backup / restore surface currently standing over the shelf.

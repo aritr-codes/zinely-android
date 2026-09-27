@@ -91,6 +91,9 @@ class LibraryBackupRestoreGoldenTest {
             KeepSafeSheet(
                 visible = true,
                 canBackup = true,
+                // The frozen chooser's default: saved, with the provider's name (backup-restore.html item 1).
+                // Noon UTC keeps the date the same in every CI time zone.
+                lastBackup = LibraryLastBackup(savedAtEpochMs = 1_789_214_400_000L, fileName = "zinely-backup-2026-09-12.zine"),
                 onDismiss = {},
                 onHidden = {},
                 onSaveBackup = {},

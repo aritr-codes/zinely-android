@@ -227,3 +227,8 @@ Android document picker, that exact file restored four additive copies, invalid 
 picker cancellation was silent, restored content remained editable and autosaved across cold relaunch, and
 the large-text and platform accessibility checks passed. The reproducible evidence is recorded in
 [the device-verification report](../reviews/2026-08-22-backup-restore-ui-device-verification.md).
+
+**Amendment 1a, part 1 (1.x step 1, [ADR-120](../DECISIONS.md#adr-120)):** the chooser's title, body, save option
+and last-backup line, the running backup body, and the backup-side failure states other than the 1b-only "none
+saved" and partial ones are implemented. The partial-backup, skip-and-list and restore-honesty states wait for
+step 1b. Device passes for step 1 are pending.

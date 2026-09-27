@@ -1492,9 +1492,11 @@ public object Copy {
     public object LibraryBackup {
         public const val BACKUPS: String = "Backups"
         public const val BRING_BACK: String = "Restore a backup"
-        public const val TITLE: String = "Your zines, kept safe"
+        // Amendment 1a (backup-restore.html, re-frozen 2026-09-27): the title no longer claims safety, and no
+        // line promises every zine before the result is known.
+        public const val TITLE: String = "Keep your zines"
         public const val SHEET_BODY: String =
-            "Save every zine on this shelf in one file, or bring a backup back. Restoring adds zines — nothing here is replaced."
+            "The backup file holds the zines and photos on this shelf. Keep a copy somewhere other than this phone."
         public const val EMPTY_TITLE: String = "Bring your zines back"
         public const val EMPTY_BODY: String = "Choose a Zinely backup and its zines will be added to this shelf."
         public const val DESTINATION_NOTE: String =
@@ -1502,14 +1504,14 @@ public object Copy {
         public const val EMPTY_DESTINATION_NOTE: String =
             "Restoring adds zines to this shelf; it does not replace anything."
         public const val SAVE_ACTION: String = "Back up this shelf"
-        public const val SAVE_BODY: String = "Choose where to keep a copy of this whole shelf."
+        public const val SAVE_BODY: String = "Choose where to keep the backup file."
         public const val RESTORE_ACTION: String = "Restore a backup"
         public const val RESTORE_BODY: String =
             "Add zines from a Zinely backup. What’s here stays here; a matching zine returns as a separate copy."
         public const val EMPTY_RESTORE_BODY: String = "Choose a Zinely backup to add its zines to this shelf."
 
         public const val BACKUP_RUNNING_TITLE: String = "Saving your backup"
-        public const val BACKUP_RUNNING_BODY: String = "Keeping every zine together in one file."
+        public const val BACKUP_RUNNING_BODY: String = "Putting zines together in one file."
         public const val BACKUP_RUNNING_HINT: String = "Keep Zinely open for a moment."
         public const val RESTORE_RUNNING_TITLE: String = "Bringing your zines back"
         public const val RESTORE_RUNNING_BODY: String = "Checking the backup before anything changes."
@@ -1531,6 +1533,18 @@ public object Copy {
         public const val ERROR_SPACE_BODY: String = "Free up some space, then try again."
         public const val ERROR_BUSY_TITLE: String = "Give Zinely a moment"
         public const val ERROR_BUSY_BODY: String = "A zine is still being put away. Try again shortly."
+
+        // Backup failures in backup words (amendment 1a item 4), never restore's "damaged" / "newer" copy.
+        // UNREADABLE is part 1's interim state: step 1b replaces the abort with skip-and-list.
+        public const val BACKUP_ZINE_UNREADABLE_TITLE: String = "A zine here can’t be opened"
+        public const val BACKUP_ZINE_UNREADABLE_BODY: String = "No backup was saved. It may not appear on your shelf."
+        public const val BACKUP_ZINE_NEWER_TITLE: String = "A zine here needs a newer Zinely"
+        public const val BACKUP_ZINE_NEWER_BODY: String = "Update Zinely, then back up."
+
+        // The last-backup fact (amendment 1a item 1): a date in the device's medium format, never relative.
+        public const val NO_BACKUP_YET: String = "No backup saved yet"
+        public fun lastBackupSaved(date: String, fileName: String?): String =
+            if (fileName.isNullOrBlank()) "Last backup saved $date" else "Last backup saved $date · $fileName"
         public const val CANCEL: String = "Cancel"
         public const val DONE: String = Common.GOT_IT
         public const val GOT_IT: String = Common.GOT_IT
