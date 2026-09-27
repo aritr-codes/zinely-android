@@ -19,6 +19,9 @@ public class OutcomeLatch {
     /** Claims the outcome for Cancel; `false` when the work was already done. */
     public fun requestCancel(): Boolean = state.compareAndSet(OPEN, CANCELLED)
 
+    /** `true` once a Cancel has won: nothing the work does afterwards may be reported as its failure. */
+    public val isCancelled: Boolean get() = state.get() == CANCELLED
+
     private companion object {
         const val OPEN = 0
         const val DONE = 1

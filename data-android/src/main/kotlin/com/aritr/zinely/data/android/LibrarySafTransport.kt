@@ -172,12 +172,10 @@ internal class ContentResolverLibrarySafTransport(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
-                return@withContext privateFailure(
-                    classifyPrivateWriteFailure(archive, "couldn't prepare a backup", failure).error,
-                )
+                return@withContext privateFailure(latch, privateWriteError("couldn't prepare a backup", failure))
             }
             val receipt = when (val created = backupRepository.createLibraryBackup(archive)) {
-                is DataResult.Failure -> return@withContext privateFailure(created.error)
+                is DataResult.Failure -> return@withContext privateFailure(latch, created.error)
                 is DataResult.Success -> created.value
             }
             // Zinely's own archive is opened first, and its reads are tagged, so a failure to read it is
@@ -187,7 +185,7 @@ internal class ContentResolverLibrarySafTransport(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
-                return@withContext privateFailure(DataError.Io("couldn't read the private backup", failure))
+                return@withContext privateFailure(latch, DataError.Io("couldn't read the private backup", failure))
             }
             input = archiveInput
             val output = try {
@@ -195,8 +193,8 @@ internal class ContentResolverLibrarySafTransport(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
-                return@withContext destinationFailure(failure)
-            } ?: return@withContext destinationFailure(null)
+                return@withContext destinationFailure(latch, failure)
+            } ?: return@withContext destinationFailure(latch, null)
 
             opened = true
             try {
@@ -204,11 +202,11 @@ internal class ContentResolverLibrarySafTransport(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (tooLarge: ArchiveTransferLimitException) {
-                return@withContext privateFailure(DataError.LimitExceeded("backup is larger than Zinely can save", tooLarge))
+                return@withContext privateFailure(latch, DataError.LimitExceeded("backup is larger than Zinely can save", tooLarge))
             } catch (unreadable: PrivateArchiveReadException) {
-                return@withContext privateFailure(DataError.Io("couldn't read the private backup", unreadable.cause))
+                return@withContext privateFailure(latch, DataError.Io("couldn't read the private backup", unreadable.cause))
             } catch (failure: Exception) {
-                return@withContext destinationFailure(failure)
+                return@withContext destinationFailure(latch, failure)
             }
             // The provider has the whole stream. Whoever claims the latch first decides: a Cancel that
             // already won makes this an honest cancel (the file is discarded below).
@@ -248,19 +246,31 @@ internal class ContentResolverLibrarySafTransport(
     private fun readFailure(cause: Throwable?): DataResult.Failure =
         DataResult.Failure(DataError.Io("couldn't read this backup", cause))
 
-    private fun privateFailure(error: DataError): LibraryBackupResult =
-        LibraryBackupResult.Failed(LibraryBackupStage.PrivateArchive, error)
+    // Every backup failure leaves through these two. Invariant (ADR-120): once a Cancel has won the latch,
+    // whatever the work throws afterwards — a provider's ordinary IOException as the stream is torn down —
+    // is the cancel's echo, never a failure of the backup, so it resolves as cancellation.
+    private fun privateFailure(latch: OutcomeLatch, error: DataError): LibraryBackupResult {
+        throwIfCancelled(latch)
+        return LibraryBackupResult.Failed(LibraryBackupStage.PrivateArchive, error)
+    }
 
     // The provider's free space can't be probed, so "no space" at the destination (F1: out of space
     // *anywhere*) is claimed only when the write itself says ENOSPC, never guessed.
-    private fun destinationFailure(cause: Throwable?): LibraryBackupResult = LibraryBackupResult.Failed(
-        LibraryBackupStage.Destination,
-        if (isOutOfSpace(cause)) {
-            DataError.OutOfSpace("the chosen location is full", cause)
-        } else {
-            DataError.Io("couldn't save the backup to that location", cause)
-        },
-    )
+    private fun destinationFailure(latch: OutcomeLatch, cause: Throwable?): LibraryBackupResult {
+        throwIfCancelled(latch)
+        return LibraryBackupResult.Failed(
+            LibraryBackupStage.Destination,
+            if (isOutOfSpace(cause)) {
+                DataError.OutOfSpace("the chosen location is full", cause)
+            } else {
+                DataError.Io("couldn't save the backup to that location", cause)
+            },
+        )
+    }
+
+    private fun throwIfCancelled(latch: OutcomeLatch) {
+        if (latch.isCancelled) throw CancellationException("backup cancelled before it completed")
+    }
 
     private fun discardDestination(destination: Uri, opened: Boolean) {
         bestEffort {
@@ -311,13 +321,25 @@ internal class ContentResolverLibrarySafTransport(
     }
 }
 
-/** A write failed because the device is full: `ENOSPC` anywhere in the cause chain. */
+/**
+ * A write failed because the device is full: `ENOSPC` anywhere in the cause chain — as a provider's
+ * `ErrnoException`, its message, or java.nio's `FileSystemException` reason (bionic's `strerror`, not localized).
+ */
 internal fun isOutOfSpace(failure: Throwable?): Boolean = generateSequence(failure) { it.cause }
     .take(MAX_CAUSE_DEPTH)
     .any { cause ->
-        cause.message?.contains("ENOSPC") == true ||
+        val message = cause.message.orEmpty()
+        "ENOSPC" in message || "No space left on device" in message ||
             (cause is ErrnoException && cause.errno == OsConstants.ENOSPC)
     }
+
+/**
+ * A backup's private-disk failure outside the writer (ADR-120 §3, F1 "genuine out of space"). No payload size is
+ * known here, so there is no ADR-036 required-bytes comparison to make: only the failure's own `ENOSPC` proves the
+ * disk is full. Low free space alone never turns an unrelated failure into "Not enough space".
+ */
+internal fun privateWriteError(message: String, failure: Throwable): DataError =
+    if (isOutOfSpace(failure)) DataError.OutOfSpace(message, failure) else DataError.Io(message, failure)
 
 private const val MAX_CAUSE_DEPTH = 8
 

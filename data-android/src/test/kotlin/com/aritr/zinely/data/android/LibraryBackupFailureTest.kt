@@ -10,6 +10,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
+import java.nio.file.AccessDeniedException
+import java.nio.file.FileSystemException
 
 /** ADR-120: the latch's two interleavings, and how a private-archive writer failure is classified. */
 class LibraryBackupFailureTest {
@@ -71,6 +74,23 @@ class LibraryBackupFailureTest {
             val error = backupWriteError(writing(Reason.INVALID_MANIFEST), documents, assets) { Long.MAX_VALUE }
             assertTrue(error.toString(), error is DataError.LimitExceeded)
         }
+    }
+
+    @Test fun `a private failure that says the disk is full is out of space`() {
+        val nio = FileSystemException("/data/cache/zine-transfers", null, "No space left on device")
+        assertTrue(privateWriteError("x", nio) is DataError.OutOfSpace)
+        assertTrue(privateWriteError("x", IOException("wrapped", IOException("write failed: ENOSPC"))) is DataError.OutOfSpace)
+    }
+
+    @Test fun `an unrelated private failure is never out of space, however little room is left`() {
+        // No free-space threshold: the old `< 64 KiB free ⇒ OutOfSpace` rule would have misread this.
+        assertTrue(privateWriteError("x", AccessDeniedException("/data/cache/zine-transfers")) is DataError.Io)
+        assertTrue(privateWriteError("x", IOException("I/O error")) is DataError.Io)
+    }
+
+    @Test fun `low free space that still holds the archive is an I-O failure, not out of space`() {
+        val error = backupWriteError(writing(Reason.IO_FAILURE), documentBytes = listOf(10), assetBytes = emptyList()) { 100 }
+        assertTrue(error is DataError.Io)
     }
 
     private fun writing(reason: Reason) = ZineBackupWritingException(reason, reason.name)

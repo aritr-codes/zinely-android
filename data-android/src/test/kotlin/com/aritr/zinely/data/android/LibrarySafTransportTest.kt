@@ -364,6 +364,59 @@ class LibrarySafTransportTest {
         assertEquals("a cancelled backup's file is not left looking like a backup", 1, provider.deletes)
     }
 
+    @Test fun `a Cancel that won the latch is not turned into a destination failure by a late IOException`() = runTest {
+        // Cancel wins, then the provider's stream fails with an ordinary IOException as it is torn down.
+        val latch = OutcomeLatch()
+        val sink = object : OutputStream() {
+            override fun write(value: Int) {
+                assertTrue("Cancel wins the latch before the provider fails", latch.requestCancel())
+                throw IOException("provider stream closed under us")
+            }
+        }
+        val provider = streams(output = { sink }, size = 1L)
+
+        val outcome = try {
+            transport(provider, backup = completeArchive()).backupTo(uri, latch)
+        } catch (cancelled: CancellationException) {
+            cancelled
+        }
+
+        assertTrue("resolves as cancellation, not $outcome", outcome is CancellationException)
+        assertEquals("the partial file is removed", 1, provider.deletes)
+        assertTransferRootClean()
+    }
+
+    @Test fun `a Cancel that won the latch is not turned into a private failure either`() = runTest {
+        val latch = OutcomeLatch()
+        val provider = streams(size = 0L)
+        val failsAfterCancel: suspend (Path) -> DataResult<LibraryBackupReceipt> = {
+            latch.requestCancel()
+            DataResult.Failure(DataError.Io("writer interrupted"))
+        }
+
+        val outcome = try {
+            transport(provider, backup = failsAfterCancel).backupTo(uri, latch)
+        } catch (cancelled: CancellationException) {
+            cancelled
+        }
+
+        assertTrue("resolves as cancellation, not $outcome", outcome is CancellationException)
+        assertEquals("the picker's empty file is removed", 1, provider.deletes)
+        assertTransferRootClean()
+    }
+
+    @Test fun `without a Cancel the same late IOException stays the destination's failure`() = runTest {
+        val latch = OutcomeLatch()
+        val sink = object : OutputStream() {
+            override fun write(value: Int): Unit = throw IOException("provider stream closed under us")
+        }
+
+        val result = transport(streams(output = { sink }, size = 1L), backup = completeArchive()).backupTo(uri, latch)
+
+        assertEquals(LibraryBackupStage.Destination, (result as LibraryBackupResult.Failed).stage)
+        assertTrue("the latch is still open for the view model", latch.requestCancel())
+    }
+
     @Test fun `once the file is complete a later Cancel loses the latch and the file stays`() = runTest {
         val latch = OutcomeLatch()
         val provider = streams(output = { ByteArrayOutputStream() })

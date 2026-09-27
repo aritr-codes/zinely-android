@@ -13241,13 +13241,20 @@ said "Backup cancelled." about a saved backup (Brief 01, "Problem").
    guessed. This departs from [ADR-036](#adr-036) §2's probe-not-errno rule on purpose and only here: a provider
    destination has no filesystem Zinely can probe, so errno is the only evidence there is, and its absence still
    means `Io`, never "no space". A failure reading Zinely's own archive during the copy is tagged and stays `PrivateArchive`, so it is
-   never blamed on the location.
+   never blamed on the location. Outside the writer — preparing the private transfer directory — no payload size
+   is known, so there is no ADR-036 comparison to make: only the failure's own `ENOSPC` is `OutOfSpace`, and low
+   free space alone never is (PR #81 review; backup previously shared restore's `< 64 KiB free` heuristic, which
+   restore still uses unchanged). The `ENOSPC` test is shared with the destination exit and also accepts
+   java.nio's "No space left on device" reason, so that wording counts at the destination too.
 4. **One outcome latch per backup.** `OutcomeLatch` is claimed once, by whichever comes first: the transport,
    right after the provider accepted the whole stream (`markDone`), or the maker's Cancel (`requestCancel`).
    `cancelBackupRestore` cancels the job only when Cancel wins. If Cancel won, the transport throws
    `CancellationException` even with every byte written, and the file is discarded, so "Backup cancelled." is
    true. If the transport won, Cancel is a no-op: the result is `Saved`, the record is written, and the file is
-   never deleted.
+   never deleted. **Invariant:** once `requestCancel` has won, a late non-cancellation failure — typically the
+   provider's ordinary `IOException` as its stream is torn down — never becomes a `Destination` (or
+   `PrivateArchive`) failure: every failure leaves the transport through one of two exits, and both resolve as
+   cancellation while the latch reads `isCancelled` (PR #81 review).
 5. **Clean-up.** The private archive is removed as before, whatever the outcome. Unless the result is `Saved`,
    the destination is discarded best-effort (`DocumentsContract.deleteDocument`): always once Zinely has opened
    it for writing, and otherwise only while the provider reports it empty. A file the maker chose to replace is
@@ -13314,4 +13321,11 @@ Pre-commit review by two independent Review Agents that did not write the change
   `finally` could clear a newer backup's latch: **ACCEPTED**, the clean-up is guarded to the job's own state.
   A single oversized photo reads as the library-wide limit: **ACCEPTED as a known part-1 gap**, owned by 1b.
 
-Still owed: the PR's review, and both device passes.
+PR #81 owner review, two correctness fixes, both **ACCEPTED**: (1) a Cancel that won the latch could still
+surface as "Couldn't save the backup there" when the provider then threw an ordinary `IOException` — both
+failure exits now resolve as cancellation once Cancel has won (§4), with a test for each exit that fails
+without the guard; (2) a private failure was called "Not enough space" whenever free space was under 64 KiB,
+which proves nothing about the cause — backup now requires `ENOSPC` there (§3); the writer's required-bytes
+comparison is unchanged.
+
+Still owed: both device passes.
