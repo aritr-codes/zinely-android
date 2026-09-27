@@ -13,7 +13,7 @@ the readiness audit and the D1 deep audit ([audit §5](ZINELY-1X-READINESS-AUDIT
 
 | Part | What | Readiness |
 |---|---|---|
-| **1** | "Last backup saved" fact, honest backup failures, no partial file left behind, no "Backup cancelled." after a complete file | ✅ **READY** — the one `backup-restore.html` amendment ([spec](#backup-restorehtml-amendment-specification)) was drawn, **owner-approved and re-frozen 2026-09-27** ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)) |
+| **1** | "Last backup saved" fact, honest backup failures, no partial file left behind, no "Backup cancelled." after a complete file | ✅ **READY** — the one `backup-restore.html` amendment ([spec](#backup-restorehtml-amendment-specification)) was drawn, **owner-approved and re-frozen 2026-09-27** ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)). The **backup-sheet polish** (no note, equal action tiles, file name on its own line) was frozen later the same day; step 1 (PR #81) implements it before merging |
 | **1b** | Restore honesty (three defects) and skip-and-list backups — complete or explicitly partial, never silently partial | **READY AFTER** part 1 has merged (the amendment is already approved, 2026-09-27) **and** the [ADR draft](#adr-draft--amendment-to-adr-110) and [product-law draft](#product-law-amendment-draft) are independently reviewed and landed in the implementation session, before any code |
 | **2** | "Changing phones?" line | **BLOCKED BY** the physical cross-device restore pass |
 | **3** | Android device-to-device transfer | **BLOCKED BY** O1. Research leans to not doing it |
@@ -677,6 +677,10 @@ sentences ADR-110 paraphrases are:
 > choices: title kept, commit-phase body replaced, retry only where it can help, save-error / space copy
 > reconciled to `Copy.kt`, the "not finished" state added, the stale "all/every zine" lines replaced).
 > The table is kept as the specification it was drawn from.
+>
+> **Backup-sheet polish, frozen 2026-09-27** ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)): `#trustNote`
+> is removed on both shelves and nothing replaces it; Backup and Restore share one icon-tile treatment; item 1's
+> file name sits on its own line under the date, with no "·". Row 1's copy below predates it.
 
 One amendment for parts 1 and 1b. Every string below was 🟦 **proposed**; the drawing decided. Each new or
 changed state is drawn light and dark, at **360 dp width and 200 % text**, with actions stacking and staying
@@ -726,7 +730,8 @@ Re-verified on `0aa7a7d`.
 
 Part 1:
 - `core/copy`: the last-backup line (two states), the title if changed, the "what this file holds" sentence,
-  and backup-failure strings separate from the restore ones.
+  and backup-failure strings separate from the restore ones. After the 2026-09-27 polish: the date and file
+  name are two lines (no "·"), and the sheet's note strings are no longer shown.
 - `data-android`: a `BackupRecordStore` (the date and, if reported, the file name) on the **existing**
   DataStore singleton. A second DataStore on the same file throws. Its interface lives beside the existing ones
   in `data-android/prefs` (`EditorOnboardingStore.kt`, `PreferredPaperStore.kt`), matching
@@ -862,6 +867,7 @@ Part 1b: [its own criteria](#part-1b-acceptance-criteria).
 | Date | Change |
 |---|---|
 | 2026-09-25 | Written at `5c40e7b`. |
+| 2026-09-27 | **Backup-sheet polish frozen** (continuation of step 1a, owner-approved after the step 1 device check): the note is removed on both shelves, the two action tiles match, and the file name moves under the date ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)). Visual only; F1, F2 and every behaviour are unchanged. Step 1 (PR #81) implements it before merging. |
 | 2026-09-27 | **Step 1a approved and re-frozen.** The drawn `backup-restore.html` amendment (items 1–10) is owner-approved and frozen ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)). New owner rulings recorded as the step 1 contract: **F1**, a whole-backup failure is shown by where it failed ([section](#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2)); **F2**, busy is not a failure. The skip-point table, the rewrite-target clean-up and "what still fails" now point at F1; the unnamed-zine copy follows the drawing; part 1 readiness is READY; 1b readiness no longer waits on the amendment. The 1b plan and the additive `omitted` manifest field are unchanged. |
 | 2026-09-26 | **Owner rulings (Q8) applied; base `0aa7a7d`.** Late "Backup cancelled." moved into part 1 (outcome latch). New part 1b written spec: R1 full disk ≠ damaged, R2 no "cancelled" after commit, R3 committed restore reported as added; skip-and-list with the verbatim rule; partial state recorded as an additive `omitted` manifest field (no version bump; older builds' `ignoreUnknownKeys` verified at beta.4-r3 and beta.5); restore notice; last-backup line records partial. ADR-110 amendment and `zinely-v1.md:68` product-law amendment drafted (the quoted "all zines in one user-owned file" is not verbatim in `docs/`). One combined HTML amendment specified. Readiness: part 1 after the amendment; 1b after the amendment plus in-session review of the drafts. Q8 defect 5's backup half resolved by skip-and-list; restore half stays out. |
 | 2026-09-26 | **Supplementary owner ruling (after the final planning audit):** a single poisoned or unreadable photo is skip-and-list, never a whole-backup failure. Added: the "A photo that fails its check" section (asset pre-hash; the writer backstop rebuilds a fresh private archive without the zines using the failing entry — verified the archive is private until complete, `RoomProjectRepository.kt:505`, `ZineLibraryBackupWriter.kt:94-104`); reason `photo` in the receipt and in the `omitted` manifest reason vocabulary (string with an `unreadable` fallback, `packageVersion` stays 2); amendment item 10 (photo-reason partial success) and a photo line in item 9; ADR draft Decision 3 (integrity checks never fail the whole backup), renumbered; acceptance item 4, a stop condition, tests and device plant. The restore half stays out. Then, after the independent review (GO WITH FIXES): every single-photo failure classified (a read retried once then skipped; over-limit skipped; the writer's `SOURCE_UNAVAILABLE` and read-side `IO_FAILURE` rebuilt, which needs the writer to separate read side from write side); the whole-backup failures that remain stated explicitly, none of them a photo; the rewrite target (delete and confirm, else a local-storage failure); restore clamps an untrusted `omitted`; item 4's "none" state gains a photo variant, and its shelf sentence appears only when a zine has no row; 1b readiness names part 1. |

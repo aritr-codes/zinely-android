@@ -111,7 +111,30 @@
   frozen copy (Brief 01's earlier "1 zine without a readable name" read as a cause).
 
   Review aids (not product): "360 dp" narrows the phone; "200 % text" doubles sheet text, stacks actions and
-  lets the sheet scroll, as the frozen large-text rules require.
+  lets the sheet scroll, as the frozen large-text rules require. "#scroll=end" (added with the polish below)
+  opens a scrolling sheet at its bottom.
+-->
+
+<!--
+  BACKUP-SHEET POLISH — owner-approved and FROZEN 2026-09-27 (continuation of step 1a; record:
+  docs/design/BACKUP-RESTORE-FREEZE.md, "Backup-sheet polish"). The owner reopened 1a after checking step 1
+  on the Samsung SM-A176B. Visual only, on the chooser (#trustSheet), content shelf AND empty shelf. Every
+  running / success / error state, all copy other than the removed note, and focus order are unchanged.
+
+  P1 (A1 + B) — the explanatory note (the green pill, #trustNote) is removed on both shelves and NOT replaced.
+     Content shelf: both halves repeated an action subline ("save as a file you choose" = "Choose where to keep
+     the backup file."; "Restores add separate zines" = "What's here stays here; a matching zine returns as a
+     separate copy."). Empty shelf: "Restoring adds zines to this shelf" repeated the body and the restore
+     subline, and an empty shelf has nothing to replace. Nothing only the note said is lost.
+  P2 (A2) — both action tiles use one treatment (.chip): leaf-tint tile, on-leaf glyph. The Backup tile was
+     butter-tint, which equals the sheet surface in both themes, so it drew no tile and Restore read as
+     primary. The Restore glyph moves from leaf-dark to on-leaf too (leaf-dark on leaf-tint is 1.80:1 in dark;
+     on-leaf is 8.52:1 light, 4.94:1 dark), matching what Compose draws for Restore.
+  P3 (A6) — the provider's file name sits on its own line under the date (.last-backup .file), with no "·",
+     so a wrap can no longer strand the separator. Whole, never truncated; a long name still wraps anywhere.
+
+  Separate and unchanged: A4 (200 % tile-radius parity), A7 (TalkBack opening focus). A3 (the note's
+  HTML/Compose contrast difference) no longer applies.
 -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -541,17 +564,6 @@ body{
   line-height:1.55;
 }
 
-.sheet-note{
-  display:inline-block;
-  align-self:flex-start;
-  padding:8px 12px;
-  border-radius:var(--br-pill);
-  background:var(--leaf-tint);
-  color:var(--leaf-text);
-  font-size:12px;
-  font-weight:600;
-}
-
 .option{
   display:flex;
   align-items:flex-start;
@@ -589,15 +601,14 @@ body{
   place-items:center;
   flex:none;
   border-radius:12px;
-  background:var(--butter-tint);
-  color:var(--ink-soft);
+  /* Backup-sheet polish (2026-09-27): one tile for both actions, so they read as peers. */
+  background:var(--leaf-tint);
+  color:var(--on-leaf);
   font-size:15px;
 }
 
-.option.restore .chip{
-  background:var(--leaf-tint);
-  color:var(--leaf-dark);
-}
+/* Backup-sheet polish: the file name has its own line under the date; no separator. */
+.last-backup .file{display:block}
 
 .option-title{
   margin:0;
@@ -757,7 +768,6 @@ body{
 .phone.t200 .sheet-copy h3{font-size:50px}
 .phone.t200 .sheet-copy p{font-size:29px}
 .phone.t200 .last-backup{font-size:26px}
-.phone.t200 .sheet-note{font-size:24px; border-radius:var(--br-md)}
 .phone.t200 .option-title{font-size:32px}
 .phone.t200 .option-body{font-size:26px}
 .phone.t200 .picker-note{font-size:24px}
@@ -766,7 +776,7 @@ body{
 </style>
 
 <div class="stage">
-  <p class="cap"><span class="badge">design freeze · 2026-08-22</span> <span class="badge">amendment 1a · frozen 2026-09-27</span><br>Production backup / restore surface. Whole-library only, additive restore only, no settings branch.</p>
+  <p class="cap"><span class="badge">design freeze · 2026-08-22</span> <span class="badge">amendment 1a · frozen 2026-09-27</span> <span class="badge">backup-sheet polish · frozen 2026-09-27</span><br>Production backup / restore surface. Whole-library only, additive restore only, no settings branch.</p>
 
   <div class="phone grain" id="phone">
     <div class="shelf" id="shelf">
@@ -823,8 +833,7 @@ body{
             <h3 id="trustTitle">Keep your zines</h3>
             <p id="trustBody">The backup file holds the zines and photos on this shelf. Keep a copy somewhere other than this phone.</p>
           </div>
-          <p class="last-backup" id="lastBackup">Last backup saved <time datetime="2026-09-12">12 September 2026</time> · zinely-backup-2026-09-12.zine</p>
-          <span class="sheet-note" id="trustNote">Backups save as a file you choose. Restores add separate zines.</span>
+          <p class="last-backup" id="lastBackup">Last backup saved <time datetime="2026-09-12">12 September 2026</time> <span class="file">zinely-backup-2026-09-12.zine</span></p>
           <button class="option" id="saveOption">
             <span class="chip">⤓</span>
             <span>
@@ -950,7 +959,7 @@ body{
     <button class="ctl" data-sheet="restored-partial-photo">partial, photo</button>
     <button class="ctl" data-sheet="restored-partial-unnamed">partial, unnamed</button>
   </div>
-  <p class="cap" style="margin-top:12px">Amendment 1a (frozen 2026-09-27): numbered groups are items 1–10 of the Brief 01 amendment specification. Everything above “review aids” is the frozen 2026-08-22 set; the amendment changes only the chooser’s title, body, save-option line and new last-backup line, the backup running line, and the save error / no space copy (reconciled to shipped Copy.kt).</p>
+  <p class="cap" style="margin-top:12px">Amendment 1a (frozen 2026-09-27): numbered groups are items 1–10 of the Brief 01 amendment specification. Everything above “review aids” is the frozen 2026-08-22 set; the amendment changes only the chooser’s title, body, save-option line and new last-backup line, the backup running line, and the save error / no space copy (reconciled to shipped Copy.kt). Backup-sheet polish (frozen 2026-09-27): the chooser has no note on either shelf, both actions share one tile, and the file name sits under the date.</p>
 </div>
 
 <script>
@@ -991,7 +1000,8 @@ function hideSheets(){
 const SAVED_ON = 'Last backup saved <time datetime="2026-09-12">12 September 2026</time>';
 const LAST_BACKUP = {
   none: "No backup saved yet",
-  saved: SAVED_ON + " · zinely-backup-2026-09-12.zine",
+  // Backup-sheet polish: the file name on its own line (.file), no "·"; the space keeps the words apart.
+  saved: SAVED_ON + ' <span class="file">zinely-backup-2026-09-12.zine</span>',
   "saved-noname": SAVED_ON,
   partial: SAVED_ON + " — 5 of 6 zines.",
 };
@@ -1139,13 +1149,11 @@ function showSheet(kind){
     document.getElementById("trustBody").textContent = isEmpty
       ? "Choose a Zinely backup and its zines will be added to this shelf."
       : "The backup file holds the zines and photos on this shelf. Keep a copy somewhere other than this phone.";
-    // AMENDMENT 1a item 1: the last-backup fact, between the body and the note; never on an empty shelf.
+    // AMENDMENT 1a item 1: the last-backup fact, after the body and before the actions; never on an
+    // empty shelf. Backup-sheet polish: no note follows it on either shelf (removed, not replaced).
     const line = document.getElementById("lastBackup");
     line.hidden = isEmpty;
     line.innerHTML = LAST_BACKUP[lastKind];
-    document.getElementById("trustNote").textContent = isEmpty
-      ? "Restoring adds zines to this shelf; it does not replace anything."
-      : "Backups save as a file you choose. Restores add separate zines.";
     document.getElementById("saveOption").classList.toggle("hidden", isEmpty);
     document.getElementById("restoreOptionBody").textContent = isEmpty
       ? "Choose a Zinely backup to add its zines to this shelf."
@@ -1291,5 +1299,7 @@ addEventListener("keydown", event => {
   if (LAST_BACKUP[params.get("last")]) document.querySelector(`[data-last="${params.get("last")}"]`).click();
   if (params.get("sheet")) document.querySelector(`[data-sheet="${params.get("sheet")}"]`)?.click();
   else showSheet("trust");
+  // Review aid (backup-sheet polish): #scroll=end shows the bottom of a scrolling (200 %) sheet.
+  if (params.get("scroll") === "end") document.querySelectorAll(".overlay.show .sheet").forEach(s => { s.scrollTop = s.scrollHeight; });
 }
 </script>

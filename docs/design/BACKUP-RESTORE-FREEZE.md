@@ -18,7 +18,8 @@ header lists every item and where it is drawn; this section records what the ame
   and photos on this shelf. Keep a copy somewhere other than this phone."* A last-backup fact sits between
   the body and the note, as secondary text: `No backup saved yet` · `Last backup saved 12 September 2026 ·
   <file name>` (the name only when the provider reports one) · `… — 5 of 6 zines.` for a partial backup. A
-  date, never a relative time. Not shown on an empty shelf.
+  date, never a relative time. Not shown on an empty shelf. (The polish below removed the note and put the
+  file name on its own line.)
 - **No promise of every zine before the result.** The save option reads *"Choose where to keep the backup
   file."* and the running backup body *"Putting zines together in one file."* Only a complete result says
   "All N zines…".
@@ -57,6 +58,31 @@ header lists every item and where it is drawn; this section records what the ame
 - **Known drift, not changed by 1a:** the frozen `saved` title "Your backup is saved" vs shipped "Backup
   saved"; the restore `generic` retry label and the `newer` / `read` bodies vs shipped copy.
 
+**Backup-sheet polish · owner-approved and frozen 2026-09-27** (continuation of step 1a). The owner reopened
+1a after checking step 1's build on the Samsung SM-A176B (PR #81, unmerged). The chooser sheet (`#trustSheet`)
+changes in three visual ways only. Behaviour, action labels, titles, bodies, focus order and every running,
+success and error state are unchanged.
+
+- **The explanatory note is removed, not replaced**, on both the content-shelf and the empty-shelf sheet. The
+  green pill (`Backups save as a file you choose. Restores add separate zines.` / `Restoring adds zines to
+  this shelf; it does not replace anything.`) drew more attention than the actions and only repeated them:
+  the save and restore sublines already say where the file goes and that restore is additive. No fallback
+  line takes its place.
+- **Backup and Restore have equal icon tiles.** Both use the Restore tile's existing treatment: a leaf-tint
+  tile with an on-leaf glyph. The Backup tile was butter-tint, which is the sheet surface colour in both
+  themes, so it showed no tile and Restore looked like the primary action. The HTML Restore glyph also moves
+  from leaf-dark (1.80:1 on leaf-tint in dark) to on-leaf, which is what Compose already draws: 8.52:1
+  (light) and 4.94:1 (dark).
+- **Date and file name are separate lines.** `Last backup saved 12 September 2026`, then the provider's file
+  name, whole, on the line below, with no `·`. A wrap can no longer leave the separator at a line end. With
+  no reported name, and in the partial form, the line is unchanged. The file name is never shortened.
+- **Unchanged and still separate:** A4 (the 200 % tile-radius parity item) and A7 (TalkBack's opening focus,
+  part of step 1's acceptance). A3 (the note's HTML/Compose contrast difference) no longer applies, because
+  the note is gone.
+- **Compose follows in PR #81**, before it merges: the Backup tile's tint and glyph colour, removal of the
+  note `Text`, and the last-backup line split into two lines, keeping a pause between date and file name for
+  TalkBack.
+
 This document freezes the first production `.zine` backup/restore user flow. The repository and
 current V2.1 shelf were reviewed, the interactive HTML was critiqued on the Samsung SM_A176B, and
 accessibility and large-text constraints were reviewed before this freeze. Compose must implement
@@ -93,8 +119,8 @@ Rationale:
 - The sheet says restore is additive before the picker is opened.
 - The sheet says that an ID collision returns as a separate copy rather than replacing a zine.
 - The sheet explains the operation rather than repeating the product privacy promise: backups save as a
-  file the user chooses, and restores add separate zines. The Android picker remains truthful about the
-  selected provider.
+  file the user chooses, and restores add separate zines. Since the 2026-09-27 polish the action sublines
+  say this; there is no separate note. The Android picker remains truthful about the selected provider.
 
 ### Backup
 
