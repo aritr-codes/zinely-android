@@ -129,7 +129,9 @@
   P2 (A2) — both action tiles use one treatment (.chip): leaf-tint tile, on-leaf glyph. The Backup tile was
      butter-tint, which equals the sheet surface in both themes, so it drew no tile and Restore read as
      primary. The Restore glyph moves from leaf-dark to on-leaf too (leaf-dark on leaf-tint is 1.80:1 in dark;
-     on-leaf is 8.52:1 light, 4.94:1 dark), matching what Compose draws for Restore.
+     on-leaf is 8.52:1 light, 4.94:1 dark). The Restore tile's existing treatment is the visual reference.
+     Compose has NOT implemented this polish yet: its Backup tile must be brought to that treatment, and the
+     note removal (P1) and the date / file-name split (P3) also still need the later Compose implementation.
   P3 (A6) — the provider's file name sits on its own line under the date (.last-backup .file), with no "·",
      so a wrap can no longer strand the separator. Whole, never truncated; a long name still wraps anywhere.
 
