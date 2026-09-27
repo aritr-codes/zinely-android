@@ -13,8 +13,8 @@ the readiness audit and the D1 deep audit ([audit §5](ZINELY-1X-READINESS-AUDIT
 
 | Part | What | Readiness |
 |---|---|---|
-| **1** | "Last backup saved" fact, honest backup failures, no partial file left behind, no "Backup cancelled." after a complete file | **READY AFTER** the one `backup-restore.html` amendment ([spec](#backup-restorehtml-amendment-specification)) is drawn and **owner-approved** (it changes copy inside frozen states) |
-| **1b** | Restore honesty (three defects) and skip-and-list backups — complete or explicitly partial, never silently partial | **READY AFTER** part 1 has merged, the same amendment is approved, **and** the [ADR draft](#adr-draft--amendment-to-adr-110) and [product-law draft](#product-law-amendment-draft) are independently reviewed and landed in the implementation session, before any code |
+| **1** | "Last backup saved" fact, honest backup failures, no partial file left behind, no "Backup cancelled." after a complete file | ✅ **READY** — the one `backup-restore.html` amendment ([spec](#backup-restorehtml-amendment-specification)) was drawn, **owner-approved and re-frozen 2026-09-27** ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)) |
+| **1b** | Restore honesty (three defects) and skip-and-list backups — complete or explicitly partial, never silently partial | **READY AFTER** part 1 has merged (the amendment is already approved, 2026-09-27) **and** the [ADR draft](#adr-draft--amendment-to-adr-110) and [product-law draft](#product-law-amendment-draft) are independently reviewed and landed in the implementation session, before any code |
 | **2** | "Changing phones?" line | **BLOCKED BY** the physical cross-device restore pass |
 | **3** | Android device-to-device transfer | **BLOCKED BY** O1. Research leans to not doing it |
 
@@ -25,10 +25,11 @@ Owner rulings: **Q8, approved 2026-09-26**, recorded in the
 skip-and-list in wave 1, moved the late "Backup cancelled." into part 1, and set the product rule. A
 supplementary ruling the same day (after the final planning audit) put a single poisoned or unreadable photo
 under skip-and-list ([below](#a-photo-that-fails-its-check)). No further owner *ruling* is needed for parts 1
-and 1b; the owner still approves the drawn HTML amendment.
+and 1b. The drawn HTML amendment was approved and re-frozen on 2026-09-27, with two further rulings on
+whole-backup failures ([F1 and F2](#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2)).
 
 Parts 1 and 1b:
-1. **Work (design), then owner approval:** one amendment to `docs/design/mockups/backup-restore.html` covering
+1. **✅ Done — step 1a, approved and re-frozen 2026-09-27:** one amendment to `docs/design/mockups/backup-restore.html` covering
    every state in [the amendment specification](#backup-restorehtml-amendment-specification), then review, owner
    approval and re-freeze. It adds states and changes copy inside existing ones, so it is not purely additive.
 2. **✅ Done — step 0** of the [plan sequence](ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing), the F3 fixture archive
@@ -354,8 +355,8 @@ saved"** and names every left-out zine it can. It is never silent.
 | Unsafe project path | :427-428 | Skip, list |
 | `meta.json` missing or unreadable | :429-430 | Skip, list (🟦 see note) |
 | `documents.load` fails — `Corrupt` / `Invalid` / `SchemaTooNew` | :431-433 | Skip, list; reason "newer Zinely" for `SchemaTooNew` |
-| `documents.load` fails — `Io` / `OutOfSpace` / `Busy` | :431-433 | **Whole backup fails**, as today (transient; a retry may succeed) |
-| Document size / hash `IOException` | :440-444, :451-455 | Whole backup fails (transient) |
+| `documents.load` fails — `Io` / `OutOfSpace` / `Busy` | :431-433 | **Whole backup fails** (transient; a retry may succeed). State by [F1/F2](#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2): `OutOfSpace` → no space; `Busy` → busy; `Io` → not finished |
+| Document size / hash `IOException` | :440-444, :451-455 | Whole backup fails (transient) → not finished ([F1](#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2)) |
 | Malformed JSON / no `schemaVersion` | :445-450 | Skip, list |
 | Asset missing | :479-481 | Skip **every** zine referencing it, list each; reason "photo" |
 | Asset not a readable image | :482-486 | Same |
@@ -364,7 +365,7 @@ saved"** and names every left-out zine it can. It is never silent.
 | Asset size `IOException`, or an `IOException` while pre-hashing an asset | :487-491; the new pre-hash | **Retry that read once; if it fails again, skip and list, reason "photo"** (owner ruling: an unreadable photo is skip-and-list). A single flaky read is absorbed by the retry; a photo that stays unreadable leaves its zines out, named, never silently |
 | Asset over the per-asset limit (declared, or growing during the copy) | writer `LIMIT_EXCEEDED`, `ZineLibraryBackupWriter.kt:226-227,247` | **Skip and list**, reason "photo": checked in the pre-check against `maximumAssetBytes`; a copy that grows past it is a backstop rebuild |
 | Writer `SOURCE_UNAVAILABLE` or a **read-side** `IO_FAILURE` on an asset entry | `ZineLibraryBackupWriter.kt:157,212` | **Rebuild without it**, reason "photo" (backstop). 🟦 The writer must say whether an `IOException` came from reading a named source or from writing the private archive; today `IO_FAILURE` wraps both (:155-160) |
-| **Write-side** `IO_FAILURE` (the private archive itself), library-wide limits (manifest size, entry count, total expansion — :181, :184, :285) | writer | **Whole backup fails**, as today, in backup wording (space / save-error). Not a photo problem: nothing is left out to fix it |
+| **Write-side** `IO_FAILURE` (the private archive itself), library-wide limits (manifest size, entry count, total expansion — :181, :184, :285) | writer | **Whole backup fails**, in backup wording by [F1](#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2): out of space → no space; other private-archive I/O → not finished (retry); a library-wide limit → not finished, *Got it* only. Not a photo problem: nothing is left out to fix it |
 
 - **Assets are shared** (content-addressed, ADR-110 §2). The asset pass runs after the project pass, so 1b
   makes it two-phase: collect candidate zines, check every referenced asset, drop zines that reference a bad
@@ -400,13 +401,14 @@ saved"** and names every left-out zine it can. It is never silent.
     **unreadable**), rebuilds the manifest from the survivors (exact closure) and rewrites the private archive;
   - **the rewrite target:** the repository deletes the incomplete archive at `destination` and confirms it is
     gone before rewriting there (the writer refuses an existing path, `DESTINATION_EXISTS`, :96-107). If that
-    private file can't be removed, the backup fails as a **local storage** error (existing save-error wording),
-    never as "damaged" and never blaming the photo; that is a failure of app-private storage, not of a photo;
+    private file can't be removed, the backup fails as a **local storage** error — "not finished" by
+    [F1](#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2), never the save-error wording, never "damaged" and never blaming the photo; that is a failure of app-private storage, not of a photo;
   - each rebuild removes at least one entry, so it ends; 🟦 bound it by the number of distinct entries;
   - if no zine survives, it is the "0 of M" case: no file, the "none" state.
 - **What still fails the whole backup after 1b, stated:** a write-side failure on the private archive (space,
   I/O); library-wide limits (manifest size, entry count, total expansion); a transient document read
-  (`Io`/`Busy`); the private-archive clean-up failure above. **None of them is a single photo.**
+  (`Io`/`Busy`); the private-archive clean-up failure above. **None of them is a single photo.** Which state
+  each shows is [F1/F2](#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2).
 - **Restore reads `omitted` from an untrusted archive.** 🟦 Clamp, never refuse: show at most the first 50
   entries' titles (the rest counted), truncate each title (e.g. 120 characters), render as plain text. A
   malformed or oversized `omitted` is ignored rather than making a valid archive unrestorable (restore's
@@ -436,7 +438,8 @@ saved"** and names every left-out zine it can. It is never silent.
 
 **How a left-out zine is named.** 🟦 Title source in order: readable `meta.json` title (the authority,
 ADR-042) → the zine's shelf-row title if it has a row → none. A zine with no readable title is counted, not
-named: "1 zine without a readable name". A listed zine with no shelf row adds the sentence "Some of these
+named. Frozen copy (amendment 1a): "Zinely couldn't open 1 zine, so it isn't in this backup. It has no
+readable name." (the earlier draft "1 zine without a readable name" read as a cause). A listed zine with no shelf row adds the sentence "Some of these
 aren't on your shelf." Names are shown up to three, then "and N more".
 
 **Receipt and state.** 🟦 `LibraryBackupReceipt` gains `totalCount` and `omitted: List<OmittedZine>` (`title:
@@ -450,6 +453,35 @@ Partial ⇔ `omitted` non-empty.
   zine isn't in this backup: “Moth Club Bulletin”." (It says *read*, not *damaged*: a missing photo and a
   changed one look the same from here.) Mixed reasons: one sentence per reason, in the order above.
 - Complete success keeps "All 6 zines are together in one backup file." (`Copy.kt:1544-1545`).
+
+#### Which state a whole-backup failure shows (owner rulings F1 and F2)
+
+**Approved 2026-09-27 — the contract step 1 implements.** Drawn in `backup-restore.html` (amendment 1a).
+A whole-backup failure is shown by **where** it failed, not by its raw `DataError` kind. In order:
+
+1. **Genuine out of space, anywhere** (the private archive or the chosen destination) → "Not enough space"
+   (Try again + Got it). The actionable truth wins over where it happened.
+2. **The completed archive can't be written or copied to the maker's chosen destination** → the save error,
+   "Couldn't save the backup there" / "Pick another location and try again." (Try again + Got it). Used
+   **only** for the chosen destination, never for a failure earlier in Zinely's own work.
+3. **A failure while Zinely builds, validates or privately cleans up the archive** → "Couldn't finish that
+   backup" / "Nothing about the zines on this shelf was changed." (`Copy.errorGenericTitle/Body(isBackup =
+   true)`, red "!"):
+   - Try again + Got it: a transient document read, private-archive I/O (not space), clean-up of the private
+     or temporary archive, any other local backup-process failure;
+   - **Got it only:** a deterministic archive-wide or library-wide limit (manifest size, entry count, total
+     expansion). The same shelf hits the same limit.
+4. **One photo's integrity or read failure** → skip-and-list, a partial success ([above](#a-photo-that-fails-its-check)).
+   Only when every zine is left out: the no-file "No zines could be saved" path.
+
+**F2:** `Busy` (a zine is still being put away) is an in-progress condition, not a failure. It keeps the
+frozen "Give Zinely a moment" state and is never folded into "not finished".
+
+This supersedes the earlier "as today" and "space / save-error wording" mappings for these failures. How
+step 1 carries it into error kinds (existing or new) is implementation work, with tests: today a backup
+`DataError.Io` maps to `SaveFailed` whether the destination or Zinely's own work failed
+(`HomeViewModel.kt:477,481-486`), and a library-wide limit reaches the maker as `Corrupt` → "damaged"
+(`RoomProjectRepository.kt:514`, `HomeViewModel.kt:473`). Both must change.
 
 ### How the partial state is recorded
 
@@ -640,7 +672,13 @@ sentences ADR-110 paraphrases are:
 
 ## `backup-restore.html` amendment specification
 
-One amendment for parts 1 and 1b. Every string below is 🟦 **proposed**; the drawing decides. Each new or
+> ✅ **Approved and re-frozen 2026-09-27.** The drawn amendment in `backup-restore.html` is now the
+> authority for every string below; where the two differ, the HTML wins (its header lists the owner's
+> choices: title kept, commit-phase body replaced, retry only where it can help, save-error / space copy
+> reconciled to `Copy.kt`, the "not finished" state added, the stale "all/every zine" lines replaced).
+> The table is kept as the specification it was drawn from.
+
+One amendment for parts 1 and 1b. Every string below was 🟦 **proposed**; the drawing decided. Each new or
 changed state is drawn light and dark, at **360 dp width and 200 % text**, with actions stacking and staying
 ≥ 48 dp. New states get their own `data-sheet` control beside the existing ones (:803-814).
 
@@ -654,7 +692,7 @@ running `#workSheet` (:743-759, `#workCancel` :755); success `#successSheet` (:7
 | 1 | Last-backup line in `#trustSheet` | **Add**, between `#trustBody` and `#trustNote`, secondary text; three variants | "No backup saved yet" · "Last backup saved 12 September 2026 · zinely-backup-2026-09-12.zine" · "Last backup saved 12 September 2026 — 5 of 6 zines." |
 | 2 | `#trustTitle` (non-empty shelf) | **Change** or keep — decided in the drawing | "Keep your zines" |
 | 3 | "What this file holds" | **Change** `#trustBody` or add under it | "The backup file holds the zines and photos on this shelf. Keep a copy somewhere other than this phone." |
-| 4 | Backup failures in backup wording (`#errorSheet`, new branches) | **Add**, separate from restore's `damaged`/`newer` | None readable: "No zines could be saved" / "Zinely couldn't read the zines on this phone, so no backup was saved." Plus "They may not appear on your shelf." **only** when some left-out zine has no shelf row. Photo variant, when every zine was left out for a photo: "Zinely couldn't read the photos in the zines on this phone, so no backup was saved." · Newer: "A zine here needs a newer Zinely" / "Update Zinely, then back up." Save-there / space / busy: **confirm** existing wording (`Copy.kt:1528-1533`), not redrawn |
+| 4 | Backup failures in backup wording (`#errorSheet`, new branches) | **Add**, separate from restore's `damaged`/`newer` | None readable: "No zines could be saved" / "Zinely couldn't read the zines on this phone, so no backup was saved." Plus "They may not appear on your shelf." **only** when some left-out zine has no shelf row. Photo variant, when every zine was left out for a photo: "Zinely couldn't read the photos in the zines on this phone, so no backup was saved." · Newer: "A zine here needs a newer Zinely" / "Update Zinely, then back up." Save-there / space / busy: **confirm** existing wording (`Copy.kt:1528-1533`), not redrawn. *Drawn (2026-09-27):* those three reconciled to `Copy.kt`, plus "Couldn't finish that backup" ([F1](#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2)) |
 | 5 | Partial-backup success (`#successSheet`) | **Add** | "5 of 6 zines saved" / "Zinely couldn't open 1 zine, so it isn't in this backup: “Moth Club Bulletin”." Draw 1 named, 1 unnamed, and 5 left out (three names + "and 2 more"), plus the "Some of these aren't on your shelf." variant |
 | 6 | R1 full disk on restore | **Confirm** `space` branch (:915-918) is used for restore staging; no redraw | existing |
 | 7 | R2 running, commit phase (`#workSheet`) | **Add** variant: `#workCancel` removed | hint "Adding zines to your shelf. This part can't be stopped." |
@@ -698,7 +736,9 @@ Part 1:
   (the [latch](#interaction-details)). Once done it never deletes and a late Cancel is a no-op.
 - `app`: write the record on success; the latch in `cancelBackupRestore`. In backup mode, map
   `Corrupt`/`Invalid` and `SchemaTooNew` to the two new backup-wording kinds (`HomeViewModel.kt:469-486`),
-  separately from restore; expose the record to Home state.
+  separately from restore; classify every other backup failure by *where* it failed
+  ([F1/F2](#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2)) — today `ioFailureKind()` maps every backup `Io` to `SaveFailed`, which F1 allows
+  only for the chosen destination; expose the record to Home state.
 - `feature/editor` (`feature/library` package): render the line and the new states.
 - **Not touched in part 1:** the archive format, writer, stager, committer, `data_extraction_rules.xml` and
   `backup_rules.xml`.
@@ -766,7 +806,7 @@ state; a failed backup is; a partial backup is a success with a fact.
 ## Acceptance criteria
 
 Part 1:
-1. The amended `backup-restore.html` is reviewed and re-frozen before any Compose work.
+1. ✅ The amended `backup-restore.html` is reviewed and re-frozen before any Compose work (2026-09-27).
 2. After a successful backup, the sheet shows that day's date. Cancel before the stream closed, failure, picker
    cancel, picker failure and restore leave it unchanged. A Cancel after the stream closed shows the saved
    state and records the date.
@@ -822,6 +862,7 @@ Part 1b: [its own criteria](#part-1b-acceptance-criteria).
 | Date | Change |
 |---|---|
 | 2026-09-25 | Written at `5c40e7b`. |
+| 2026-09-27 | **Step 1a approved and re-frozen.** The drawn `backup-restore.html` amendment (items 1–10) is owner-approved and frozen ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)). New owner rulings recorded as the step 1 contract: **F1**, a whole-backup failure is shown by where it failed ([section](#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2)); **F2**, busy is not a failure. The skip-point table, the rewrite-target clean-up and "what still fails" now point at F1; the unnamed-zine copy follows the drawing; part 1 readiness is READY; 1b readiness no longer waits on the amendment. The 1b plan and the additive `omitted` manifest field are unchanged. |
 | 2026-09-26 | **Owner rulings (Q8) applied; base `0aa7a7d`.** Late "Backup cancelled." moved into part 1 (outcome latch). New part 1b written spec: R1 full disk ≠ damaged, R2 no "cancelled" after commit, R3 committed restore reported as added; skip-and-list with the verbatim rule; partial state recorded as an additive `omitted` manifest field (no version bump; older builds' `ignoreUnknownKeys` verified at beta.4-r3 and beta.5); restore notice; last-backup line records partial. ADR-110 amendment and `zinely-v1.md:68` product-law amendment drafted (the quoted "all zines in one user-owned file" is not verbatim in `docs/`). One combined HTML amendment specified. Readiness: part 1 after the amendment; 1b after the amendment plus in-session review of the drafts. Q8 defect 5's backup half resolved by skip-and-list; restore half stays out. |
 | 2026-09-26 | **Supplementary owner ruling (after the final planning audit):** a single poisoned or unreadable photo is skip-and-list, never a whole-backup failure. Added: the "A photo that fails its check" section (asset pre-hash; the writer backstop rebuilds a fresh private archive without the zines using the failing entry — verified the archive is private until complete, `RoomProjectRepository.kt:505`, `ZineLibraryBackupWriter.kt:94-104`); reason `photo` in the receipt and in the `omitted` manifest reason vocabulary (string with an `unreadable` fallback, `packageVersion` stays 2); amendment item 10 (photo-reason partial success) and a photo line in item 9; ADR draft Decision 3 (integrity checks never fail the whole backup), renumbered; acceptance item 4, a stop condition, tests and device plant. The restore half stays out. Then, after the independent review (GO WITH FIXES): every single-photo failure classified (a read retried once then skipped; over-limit skipped; the writer's `SOURCE_UNAVAILABLE` and read-side `IO_FAILURE` rebuilt, which needs the writer to separate read side from write side); the whole-backup failures that remain stated explicitly, none of them a photo; the rewrite target (delete and confirm, else a local-storage failure); restore clamps an untrusted `omitted`; item 4's "none" state gains a photo variant, and its shelf sentence appears only when a zine has no row; 1b readiness names part 1. |
 | 2026-09-26 | Base moved to `eb75cf7`: Step 0 merged (PR #75); gate 2 (F3 fixture archive) marked done, and part 1 must keep the frozen fixture green. No scope change. |

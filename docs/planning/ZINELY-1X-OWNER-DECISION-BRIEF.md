@@ -62,7 +62,7 @@ two-phone restore pass.
 None has been made; the frozen HTML is untouched. Each is its own reviewed change, **before** any Compose work.
 
 **Next**
-- [ ] **`backup-restore.html`** — steps 1 and 1b in **one** amendment: last-backup line (incl. partial), title,
+- [x] **`backup-restore.html`** — ✅ approved and re-frozen 2026-09-27 (with rulings F1 and F2). Steps 1 and 1b in **one** amendment: last-backup line (incl. partial), title,
   "what this file holds", backup-failure wording, the three restore-honesty states, partial-backup success, a
   partial-archive notice on restore; 360 dp and 200 % text ([Brief 01](BRIEF-01-VISIBLE-OWNERSHIP.md)).
 - [ ] **`v21-typebar.html` / `v21-reframe.html`** — the freeze (step Q4-F): TypeBar's recorded correction, then
