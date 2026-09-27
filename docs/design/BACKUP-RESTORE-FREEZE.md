@@ -9,6 +9,54 @@ flow's `Backups` / `Restore a backup`, and `About`. The sibling `About Zinely` d
 Colophon) owns the sole product-level offline/privacy sentence; this flow retains only operational
 destination, additive-restore, and recovery copy.
 
+**Amendment 1a · drawn 2026-09-26 · owner-approved and re-frozen 2026-09-27** (1.x steps 1 and 1b; spec
+[Brief 01](../planning/BRIEF-01-VISIBLE-OWNERSHIP.md#backup-restorehtml-amendment-specification), rulings
+[Q8](../planning/ZINELY-1X-DECISION-GATE.md#q8-the-next-release-and-the-backuprestore-defects)). The HTML
+header lists every item and where it is drawn; this section records what the amendment freezes.
+
+- **Chooser.** Title `Keep your zines` (the old title claimed safety). Body: *"The backup file holds the zines
+  and photos on this shelf. Keep a copy somewhere other than this phone."* A last-backup fact sits between
+  the body and the note, as secondary text: `No backup saved yet` · `Last backup saved 12 September 2026 ·
+  <file name>` (the name only when the provider reports one) · `… — 5 of 6 zines.` for a partial backup. A
+  date, never a relative time. Not shown on an empty shelf.
+- **No promise of every zine before the result.** The save option reads *"Choose where to keep the backup
+  file."* and the running backup body *"Putting zines together in one file."* Only a complete result says
+  "All N zines…".
+- **Partial backup is a success.** Title `N of M zines saved`, ✓ mark, no warning colour. It names the
+  left-out zines (up to three, then "and N more") with one sentence per reason, in the order: couldn't open ·
+  newer Zinely · couldn't read a photo. A zine with no readable name is counted, not named. `Some of these
+  aren't on your shelf.` when a left-out zine has no shelf row.
+- **A photo that fails its check is skip-and-list** (owner ruling 2026-09-26): its zines are left out and
+  named with the photo reason, as a partial success. It is never "damaged" and never blames the location.
+- **Backup failures use backup words**, never restore's `damaged` / `newer` copy: `No zines could be saved`
+  (0 of M; a photo variant when every reason is a photo; "They may not appear on your shelf." only when a
+  left-out zine has no row), `A zine here needs a newer Zinely`, and a part-1-only interim state that no
+  release carries.
+- **Where a whole backup failed decides its state (owner ruling F1, 2026-09-27)**, in this order:
+  1. genuine out of space, anywhere → `Not enough space`;
+  2. the completed archive can't be written or copied to the maker's chosen destination → `Couldn't save the
+     backup there` / *"Pick another location and try again."*. Only ever for the chosen destination;
+  3. a failure while Zinely builds, validates or privately cleans up the archive → `Couldn't finish that
+     backup` / *"Nothing about the zines on this shelf was changed."*. Try again + Got it for retryable
+     transient or local failures; **Got it only** for a deterministic archive-wide or library-wide limit;
+  4. one photo's integrity or read failure → skip-and-list (above). Only when every zine is left out: the
+     no-file `No zines could be saved` path.
+- **Busy is not a failure (owner ruling F2, 2026-09-27).** `Give Zinely a moment` stays unchanged and is never
+  folded into "not finished".
+- **Retry only where a retry can help.** A failure no retry can fix (none saved, newer, the interim, a limit)
+  offers only `Got it`.
+- **Save-error and space copy** now match the shipped strings (`Copy.kt` `LibraryBackup`); the HTML's older
+  "Your zines are still safe here." is gone.
+- **Restore honesty.** A full disk while staging a restore shows `Not enough space` (restore retry: `Try
+  another backup`). Once commit starts, Cancel leaves the tree and Back does nothing: body *"Adding zines to
+  your shelf."*, hint *"This part can't be stopped."*. A committed restore whose shelf index lags says *"They
+  may take a moment to appear. If they don't, close Zinely and open it again."*. Restoring a partial backup
+  names what it was saved without, then *"What was already on this shelf stayed put."*.
+- **Unchanged:** the empty-shelf variants, restore option, complete `saved` / `restored` results, and the
+  restore error branches (`damaged`, `newer`, `read`, `generic`).
+- **Known drift, not changed by 1a:** the frozen `saved` title "Your backup is saved" vs shipped "Backup
+  saved"; the restore `generic` retry label and the `newer` / `read` bodies vs shipped copy.
+
 This document freezes the first production `.zine` backup/restore user flow. The repository and
 current V2.1 shelf were reviewed, the interactive HTML was critiqued on the Samsung SM_A176B, and
 accessibility and large-text constraints were reviewed before this freeze. Compose must implement
@@ -36,7 +84,7 @@ Rationale:
 ### Sheet
 
 - Tap the dock secondary action to open one library-level sheet.
-- On a non-empty shelf, the sheet title is `Your zines, kept safe`.
+- On a non-empty shelf, the sheet title is `Keep your zines` (amendment 1a; was `Your zines, kept safe`).
 - On an empty shelf, the sheet becomes restore-only rather than offering a meaningless empty backup.
 - On a non-empty shelf the sheet offers exactly two actions:
   - `Back up this shelf`
@@ -99,6 +147,9 @@ Frozen user-facing error families:
 - Not enough space
 - Generic failure
 - A brief writer-busy state while a zine is still being put away
+
+Amendment 1a adds the backup-side families (none saved, newer zine here, not finished) and the F1 rule for
+choosing between them; see [Amendment 1a](#backup--restore-ux--design-freeze) at the top of this document.
 
 The retry action relaunches the appropriate picker rather than retrying hidden state.
 

@@ -512,8 +512,8 @@ restore-honesty defects** ([Q8](ZINELY-1X-DECISION-GATE.md#q8-the-next-release-a
   rulings. One step per session.
 - **Within a step:** the ADR comes first. Check the next free number in `DECISIONS.md`; ADR-115 is reserved by
   PR #70. Then the HTML amendment, then Compose.
-- **Step 0 is complete** (PR #75). The next implementation step is 2 (READY now), or 1a → 1 → 1b once the
-  one `backup-restore.html` amendment is approved.
+- **Step 0 is complete** (PR #75). The next implementation step is 2 (READY now), or 1 → 1b (1a, the
+  `backup-restore.html` amendment, was approved and re-frozen on 2026-09-27).
 - **Nothing in the planning set changed code, tests, frozen specs, ADRs, the website or any release branch.**
   ADR text for steps 1b and 4 exists only as **drafts** inside Briefs 01 and 05; each lands in `DECISIONS.md`
   in its implementation session, with review.
@@ -527,7 +527,7 @@ restore-honesty defects** ([Q8](ZINELY-1X-DECISION-GATE.md#q8-the-next-release-a
 |---|---|---|
 | **2 · D4-A1 reading order + scrim** | ✅ **COMPLETE** (2026-09-26, PR #78: implementation `1587a40`; [ADR-119](../DECISIONS.md#adr-119)) | Nothing. Both device passes done, including the owner's TalkBack listen on SM-A176B |
 | **Q4-F · freeze typebar + reframe** | ✅ **READY** (docs/design session) | Nothing; the ruling and the scope line are recorded ([§5](#5-sequencing)). Reviewed like any HTML amendment |
-| **1a · `backup-restore.html` amendment** (steps 1 + 1b) | ✅ **READY to draw** | The poisoned-photo question is ruled (skip-and-list; its state is amendment item 10). The owner approves the drawn amendment before Compose ([Brief 01](BRIEF-01-VISIBLE-OWNERSHIP.md) specifies it) |
+| **1a · `backup-restore.html` amendment** (steps 1 + 1b) | ✅ **DONE — approved and re-frozen 2026-09-27** | Drawn, owner-approved, frozen ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)); rulings F1 (a whole-backup failure is shown by where it failed) and F2 (busy is not a failure) are in [Brief 01](BRIEF-01-VISIBLE-OWNERSHIP.md#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2). Step 1 may start |
 | **1 · D1 part 1** | ⏳ after 1a | 1a approved |
 | **1b · restore honesty + skip-and-list** | ⏳ after 1a and step 1 | 1a approved; its ADR drafts (Brief 01) reviewed and landed in-session |
 | **PR #70 acceptance** | ⏳ acceptance work | Rebase onto `main`, hands-on TalkBack, rendered HTML parity; then merge or close. Untouched by planning |

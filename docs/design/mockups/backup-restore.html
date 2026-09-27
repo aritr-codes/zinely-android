@@ -34,6 +34,86 @@
   - damaged / newer / generic error
 -->
 
+<!--
+  AMENDMENT 1a — drawn 2026-09-26 · owner-approved and RE-FROZEN 2026-09-27.
+
+  One amendment for 1.x steps 1 and 1b, drawn from the specification in
+  docs/planning/BRIEF-01-VISIBLE-OWNERSHIP.md ("backup-restore.html amendment specification", items 1–10).
+  Owner rulings: Q8 and its supplementary photo ruling (docs/planning/ZINELY-1X-DECISION-GATE.md).
+  This amendment is now part of the frozen contract (record: docs/design/BACKUP-RESTORE-FREEZE.md,
+  "Amendment 1a"). Compose implements it in 1.x steps 1 and 1b; any later UX change amends this file first.
+
+  Item → where it is drawn (controls under the phone; every state also opens from a URL hash, e.g.
+  backup-restore.html#sheet=partial-photo&theme=dark&w=360&t=200):
+   1  last-backup line in #trustSheet ........ "last backup" group: none · saved · saved (no name) · partial
+   2  #trustTitle (non-empty shelf) .......... "Keep your zines" (the 2026-08-22 title claimed safety)
+   3  what the file holds ..................... #trustBody rewritten (no longer "every zine": 1b may leave one out)
+   4  backup failures in backup words ........ "4 · backup failed": none · none, off shelf · none, photos ·
+                                               newer · part-1 interim · not finished · not finished (limit).
+                                               save error / no space / busy: reconciled to shipped Copy.kt
+   5  partial backup success .................. "5 · partial": 1 named · unnamed · 5 left out · off shelf · newer
+   6  R1 full disk on restore ................. "R1 no space": the shipped "Not enough space" state, restore mode
+   7  R2 restore, commit phase ................ "1a · restore": commit phase (Cancel removed; Back does not cancel)
+   8  R3 committed, shelf lagging ............. "1a · restore": lagging
+   9  restore of a partial archive ............ "1a · restore": partial · partial, photo · partial, unnamed
+  10  partial success, PHOTO reason ........... "1a · photo": 1 zine · shared photo · mixed reasons
+
+  Rules the drawing fixes (Brief 01; not new behaviour):
+  - A partial backup is a SUCCESS: the ✓ mark, no warning colour, no "damaged", no blame on the location.
+  - Reasons, one sentence each, in this order: couldn't open · newer Zinely · couldn't read a photo.
+  - Names: up to three, then "and N more". A zine with no readable name is counted, not named.
+    "Some of these aren't on your shelf." only when a left-out zine has no shelf row.
+  - "No zines could be saved" = 0 of M. Photo variant only when every zine was left out for a photo.
+  - A failure that no retry can fix (none saved, newer, interim, not finished at a limit) offers only
+    "Got it". A failure a retry may fix (not finished, save error, no space, busy) keeps the shipped pair:
+    "Try again" + "Got it" in backup mode ("Try another backup" + "Got it" in restore mode) —
+    LibraryBackupRestoreSheet.kt ErrorSheet.
+  - OWNER RULING F1 (approved 2026-09-27) — a whole-backup failure is shown by WHERE it failed, not by the raw
+    DataError kind. Step 1 must classify to this contract (existing or new error kinds, with tests); the
+    HTML records only the UI contract. Order of precedence:
+      1. Genuine out of space, anywhere (private archive or chosen destination) → "no space"
+         ("Not enough space" / "Free up some space, then try again." / Try again + Got it). The actionable
+         truth wins over where it happened.
+      2. The completed private archive cannot be written or copied to the maker's chosen destination →
+         "save error" ("Couldn't save the backup there" / "Pick another location and try again." /
+         Try again + Got it). Used ONLY for the chosen destination; never for a failure earlier in
+         Zinely's own backup-building.
+      3. Anything while Zinely assembles, validates or cleans up the private archive BEFORE it reaches the
+         chosen destination → "not finished" (red "!", "Couldn't finish that backup" / "Nothing about the
+         zines on this shelf was changed."):
+           transient zine/document read (Io) ............. Try again + Got it
+           private-archive I/O (not space) ............... Try again + Got it
+           private temporary/archive clean-up failure .... Try again + Got it
+           other local backup-process failure ............ Try again + Got it
+           archive-wide / library-wide limit (manifest size, entry count, total expansion) ... Got it only:
+             the same shelf hits the same limit, so "Try again" would promise a fix that isn't there.
+      4. A photo that fails its integrity/readability check is NOT a whole-backup failure: skip-and-list,
+         partial success (items 5, 10). Only when every zine is thereby left out: the existing 0-of-M path
+         (no file; "No zines could be saved", photo variant when every reason is a photo).
+  - OWNER RULING F2 (approved 2026-09-27): Busy (a zine is still being put away) is a separate in-progress
+    condition, not a failure. It keeps the frozen "Give Zinely a moment" state unchanged and is never
+    folded into "not finished".
+  - F1 supersedes Brief 01's earlier "as today" mapping (HomeViewModel Io → SaveFailed; space / save-error
+    wording for limits and clean-up). Brief 01 records F1 as the approved contract for step 1.
+  - A Cancel that lands after the file closed shows the frozen "saved" state (no new drawing).
+  - After a failed or cancelled backup the file is deleted best-effort; no copy claims it was removed.
+  - Empty shelf: neither last-backup line (unchanged).
+  - No line promises every zine before the result is known: #saveOption and the backup running body no
+    longer say "all 6" / "every" (only a complete result says "All 6 zines…").
+
+  Owner rulings on this drawing (2026-09-27, all approved): title "Keep your zines" kept; commit phase
+  replaces the restore body and splits the hint; "Got it" only where a retry is meaningless; the part-1
+  interim copy accepted as a non-shipping state; the singular off-shelf sentence and a "newer"-only
+  partial-restore notice are NOT drawn; the pre-existing dark-mode guard stays untouched. Round-1 fixes:
+  the stale "all/every zine" lines (E), save error / no space reconciled to shipped Copy.kt (F), and the
+  generic whole-backup failure drawn (G); then F1 (where it failed) and F2 (busy is not a failure).
+  Unnamed partial wording: the drawing's "…so it isn't in this backup. It has no readable name." is the
+  frozen copy (Brief 01's earlier "1 zine without a readable name" read as a cause).
+
+  Review aids (not product): "360 dp" narrows the phone; "200 % text" doubles sheet text, stacks actions and
+  lets the sheet scroll, as the frozen large-text rules require.
+-->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Averia+Sans+Libre:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -661,10 +741,32 @@ body{
   font-size:10px;
   padding-left:0;
 }
+
+/* AMENDMENT 1a — the last-backup fact: secondary text, the option-body scale, never a warning. */
+.last-backup{
+  margin:0;
+  color:var(--ink-soft);
+  font-size:13px;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+
+/* Review aids for amendment 1a: Brief 01 asks for every new state at 360 dp and 200 % text. */
+.phone.w360{max-width:360px}
+.phone.t200 .sheet{max-height:calc(100% - 16px); overflow-y:auto}
+.phone.t200 .sheet-copy h3{font-size:50px}
+.phone.t200 .sheet-copy p{font-size:29px}
+.phone.t200 .last-backup{font-size:26px}
+.phone.t200 .sheet-note{font-size:24px; border-radius:var(--br-md)}
+.phone.t200 .option-title{font-size:32px}
+.phone.t200 .option-body{font-size:26px}
+.phone.t200 .picker-note{font-size:24px}
+.phone.t200 .btn{font-size:30px; min-height:48px}
+.phone.t200 .actions{flex-direction:column; align-self:stretch}
 </style>
 
 <div class="stage">
-  <p class="cap"><span class="badge">design freeze · 2026-08-22</span><br>Production backup / restore surface. Whole-library only, additive restore only, no settings branch.</p>
+  <p class="cap"><span class="badge">design freeze · 2026-08-22</span> <span class="badge">amendment 1a · frozen 2026-09-27</span><br>Production backup / restore surface. Whole-library only, additive restore only, no settings branch.</p>
 
   <div class="phone grain" id="phone">
     <div class="shelf" id="shelf">
@@ -718,15 +820,16 @@ body{
         <div class="grab"></div>
         <div class="sheet-body">
           <div class="sheet-copy">
-            <h3 id="trustTitle">Your zines, kept safe</h3>
-            <p id="trustBody">Save every zine on this shelf in one file, or bring a backup back. Restoring adds zines — nothing here is replaced.</p>
+            <h3 id="trustTitle">Keep your zines</h3>
+            <p id="trustBody">The backup file holds the zines and photos on this shelf. Keep a copy somewhere other than this phone.</p>
           </div>
+          <p class="last-backup" id="lastBackup">Last backup saved <time datetime="2026-09-12">12 September 2026</time> · zinely-backup-2026-09-12.zine</p>
           <span class="sheet-note" id="trustNote">Backups save as a file you choose. Restores add separate zines.</span>
           <button class="option" id="saveOption">
             <span class="chip">⤓</span>
             <span>
               <p class="option-title">Back up this shelf</p>
-              <p class="option-body">Choose where to keep a copy of all 6 zines.</p>
+              <p class="option-body">Choose where to keep the backup file.</p>
             </span>
           </button>
           <button class="option restore" id="restoreOption">
@@ -748,7 +851,7 @@ body{
           <div class="paper" id="workProgress" role="progressbar" aria-label="Backup in progress"></div>
           <div class="sheet-copy">
             <h3 id="workTitle">Saving your backup</h3>
-            <p id="workBody">Keeping every zine together in one file.</p>
+            <p id="workBody">Putting zines together in one file.</p>
             <p class="picker-note" id="workHint">Keep Zinely open for a moment.</p>
           </div>
           <div class="actions">
@@ -767,6 +870,7 @@ body{
           <div class="sheet-copy">
             <h3 id="successTitle">Your backup is saved</h3>
             <p id="successBody">All 6 zines are together in one backup file.</p>
+            <p id="successNote" hidden></p>
           </div>
           <div class="actions">
             <button class="btn primary" id="successDone">Done</button>
@@ -812,7 +916,41 @@ body{
     <button class="ctl" data-sheet="space">no space</button>
     <button class="ctl" data-sheet="busy">busy</button>
     <button class="ctl" data-sheet="generic">generic</button>
+    <button class="ctl group">review aids</button>
+    <button class="ctl" id="w360Toggle">360 dp</button>
+    <button class="ctl" id="t200Toggle">200 % text</button>
+    <button class="ctl group">1 · last backup</button>
+    <button class="ctl" data-last="none">none</button>
+    <button class="ctl on" data-last="saved">saved</button>
+    <button class="ctl" data-last="saved-noname">saved (no name)</button>
+    <button class="ctl" data-last="partial">partial</button>
+    <button class="ctl group">4 · backup failed</button>
+    <button class="ctl" data-sheet="backup-none">none saved</button>
+    <button class="ctl" data-sheet="backup-none-offshelf">none, off shelf</button>
+    <button class="ctl" data-sheet="backup-none-photo">none, photos</button>
+    <button class="ctl" data-sheet="backup-newer">newer</button>
+    <button class="ctl" data-sheet="backup-interim">part-1 interim</button>
+    <button class="ctl" data-sheet="backup-generic">not finished</button>
+    <button class="ctl" data-sheet="backup-generic-limit">not finished (limit)</button>
+    <button class="ctl group">5 · partial</button>
+    <button class="ctl" data-sheet="partial">1 named</button>
+    <button class="ctl" data-sheet="partial-unnamed">unnamed</button>
+    <button class="ctl" data-sheet="partial-many">5 left out</button>
+    <button class="ctl" data-sheet="partial-offshelf">off shelf</button>
+    <button class="ctl" data-sheet="partial-newer">newer</button>
+    <button class="ctl group">10 · photo</button>
+    <button class="ctl" data-sheet="partial-photo">1 zine</button>
+    <button class="ctl" data-sheet="partial-photo-shared">shared photo</button>
+    <button class="ctl" data-sheet="partial-mixed">mixed reasons</button>
+    <button class="ctl group">6–9 · restore</button>
+    <button class="ctl" data-sheet="space-restore">R1 no space</button>
+    <button class="ctl" data-sheet="restore-commit">R2 commit phase</button>
+    <button class="ctl" data-sheet="restored-lagging">R3 lagging</button>
+    <button class="ctl" data-sheet="restored-partial">partial</button>
+    <button class="ctl" data-sheet="restored-partial-photo">partial, photo</button>
+    <button class="ctl" data-sheet="restored-partial-unnamed">partial, unnamed</button>
   </div>
+  <p class="cap" style="margin-top:12px">Amendment 1a (frozen 2026-09-27): numbered groups are items 1–10 of the Brief 01 amendment specification. Everything above “review aids” is the frozen 2026-08-22 set; the amendment changes only the chooser’s title, body, save-option line and new last-backup line, the backup running line, and the save error / no space copy (reconciled to shipped Copy.kt).</p>
 </div>
 
 <script>
@@ -847,17 +985,164 @@ function hideSheets(){
   Object.values(overlays).forEach(node => node.classList.remove("show"));
 }
 
+// ── AMENDMENT 1a (frozen) ──────────────────────────────────────────────────────────────────────
+// Item 1. A date in the device's medium format, never relative. The file name only when the provider
+// reports one. Written only when a backup is saved (a partial backup is a save).
+const SAVED_ON = 'Last backup saved <time datetime="2026-09-12">12 September 2026</time>';
+const LAST_BACKUP = {
+  none: "No backup saved yet",
+  saved: SAVED_ON + " · zinely-backup-2026-09-12.zine",
+  "saved-noname": SAVED_ON,
+  partial: SAVED_ON + " — 5 of 6 zines.",
+};
+let lastKind = "saved";
+
+// Items 4, 5, 7–10. `body` and `note` are separate paragraphs (one sentence per reason, or the
+// restore notice then the frozen "stayed put" line). An error state shows its `retry` label beside "Got it", or "Got it" alone when it has none.
+const AMEND = {
+  // 4 · a backup that saved nothing, in backup words (restore's damaged/newer wording is untouched)
+  "backup-none": { sheet: "error",
+    title: "No zines could be saved",
+    body: "Zinely couldn’t read the zines on this phone, so no backup was saved." },
+  "backup-none-offshelf": { sheet: "error",
+    title: "No zines could be saved",
+    body: "Zinely couldn’t read the zines on this phone, so no backup was saved. They may not appear on your shelf." },
+  "backup-none-photo": { sheet: "error",
+    title: "No zines could be saved",
+    body: "Zinely couldn’t read the photos in the zines on this phone, so no backup was saved." },
+  "backup-newer": { sheet: "error",
+    title: "A zine here needs a newer Zinely",
+    body: "Update Zinely, then back up." },
+  // Part 1 only, before skip-and-list lands (1 and 1b ship in one wave, so no release carries it).
+  "backup-interim": { sheet: "error",
+    title: "A zine here can’t be opened",
+    body: "No backup was saved. It may not appear on your shelf." },
+  // 4 · "not finished" (owner ruling H.F1): a failure while Zinely builds, validates or cleans up the
+  // private archive, before it reaches the chosen destination — transient document read, private-archive
+  // I/O, clean-up, other local failure. Shipped Copy.errorGenericTitle/Body(isBackup = true). A retry may
+  // succeed, so the shipped backup-mode pair stays.
+  "backup-generic": { sheet: "error",
+    title: "Couldn’t finish that backup",
+    body: "Nothing about the zines on this shelf was changed.",
+    retry: "Try again" },
+  // Same state at an archive-wide / library-wide limit: the same shelf hits the same limit, so no retry.
+  "backup-generic-limit": { sheet: "error",
+    title: "Couldn’t finish that backup",
+    body: "Nothing about the zines on this shelf was changed." },
+  // 6 · R1: a full disk while staging a restore shows the shipped "Not enough space", restore mode.
+  "space-restore": { sheet: "error",
+    title: "Not enough space",
+    body: "Free up some space, then try again.",
+    retry: "Try another backup" },
+
+  // 5 · partial backup: a success that names what it left out
+  "partial": { sheet: "success",
+    title: "5 of 6 zines saved",
+    body: "Zinely couldn’t open 1 zine, so it isn’t in this backup: “Moth Club Bulletin”." },
+  "partial-unnamed": { sheet: "success",
+    title: "5 of 6 zines saved",
+    body: "Zinely couldn’t open 1 zine, so it isn’t in this backup. It has no readable name." },
+  "partial-many": { sheet: "success",
+    title: "1 of 6 zines saved",
+    body: "Zinely couldn’t open 5 zines, so they aren’t in this backup: “Sunday market”, “Letters home”, “Riso tests” and 2 more." },
+  "partial-offshelf": { sheet: "success",
+    title: "4 of 9 zines saved",
+    body: "Zinely couldn’t open 5 zines, so they aren’t in this backup: “Moth Club Bulletin”, “Night bus”, “Riso tests” and 2 more. Some of these aren’t on your shelf." },
+  "partial-newer": { sheet: "success",
+    title: "5 of 6 zines saved",
+    body: "“Moth Club Bulletin” was made by a newer Zinely, so it isn’t in this backup. Update Zinely, then back up again." },
+
+  // 10 · partial backup, PHOTO reason (owner ruling 2026-09-26): still a success. It says "read",
+  // not "damaged": a missing photo and a changed one look the same from here.
+  "partial-photo": { sheet: "success",
+    title: "5 of 6 zines saved",
+    body: "Zinely couldn’t read a photo in 1 zine, so that zine isn’t in this backup: “Moth Club Bulletin”." },
+  "partial-photo-shared": { sheet: "success",
+    title: "4 of 6 zines saved",
+    body: "Zinely couldn’t read a photo in 2 zines, so those zines aren’t in this backup: “Moth Club Bulletin” and “Riso tests”." },
+  "partial-mixed": { sheet: "success",
+    title: "4 of 6 zines saved",
+    body: "Zinely couldn’t open 1 zine, so it isn’t in this backup: “Letters home”.",
+    note: "Zinely couldn’t read a photo in 1 zine, so that zine isn’t in this backup: “Moth Club Bulletin”." },
+
+  // 8 · R3: committed, the shelf index has not caught up
+  "restored-lagging": { sheet: "success",
+    title: "3 zines added to your shelf",
+    body: "They may take a moment to appear. If they don’t, close Zinely and open it again." },
+  // 9 · restoring a partial archive
+  "restored-partial": { sheet: "success",
+    title: "3 zines added to your shelf",
+    body: "This backup was saved without 1 zine that couldn’t be opened then: “Moth Club Bulletin”.",
+    note: "What was already on this shelf stayed put." },
+  "restored-partial-photo": { sheet: "success",
+    title: "3 zines added to your shelf",
+    body: "This backup was saved without 1 zine whose photo couldn’t be read then: “Moth Club Bulletin”.",
+    note: "What was already on this shelf stayed put." },
+  "restored-partial-unnamed": { sheet: "success",
+    title: "3 zines added to your shelf",
+    body: "This backup was saved without 1 zine that had no readable name.",
+    note: "What was already on this shelf stayed put." },
+};
+
+// Item 7 · R2: once commit starts the restore can't be cancelled. Cancel leaves the tree and Back
+// does nothing; the real outcome follows.
+let workCancellable = true;
+
+function showAmended(kind){
+  const a = AMEND[kind];
+  const prefix = a.sheet === "error" ? "error" : "success";
+  document.getElementById(prefix + "Title").textContent = a.title;
+  document.getElementById(prefix + "Body").textContent = a.body;
+  if (a.sheet === "error") {
+    const retry = document.getElementById("errorRetry");
+    retry.hidden = !a.retry;
+    retry.textContent = a.retry || "";
+  } else {
+    const note = document.getElementById("successNote");
+    note.hidden = !a.note;
+    note.textContent = a.note || "";
+  }
+  overlays[a.sheet].classList.add("show");
+}
+
 function showSheet(kind){
   hideSheets();
   trustLink.classList.toggle("active", kind === "trust");
+  // Reset the amendment's additions so every frozen state renders exactly as frozen.
+  document.getElementById("successNote").hidden = true;
+  document.getElementById("errorRetry").hidden = false;
+  document.getElementById("workCancel").hidden = false;
+  workCancellable = true;
+
+  if (AMEND[kind]) {
+    showAmended(kind);
+    return;
+  }
+  if (kind === "restore-commit") {
+    showSheet("restore");
+    // The frozen body ("Checking the backup before anything changes.") is false once commit starts,
+    // so this phase replaces it too. Brief 01's hint is split across the body and hint lines.
+    document.getElementById("workBody").textContent = "Adding zines to your shelf.";
+    document.getElementById("workHint").textContent = "This part can’t be stopped.";
+    document.getElementById("workCancel").hidden = true;
+    workCancellable = false;
+    return;
+  }
 
   if (kind === "trust") {
     const isEmpty = shelfKind === "empty";
+    // AMENDMENT 1a items 2–3: the non-empty title and body. Frozen 2026-08-22 copy was
+    // "Your zines, kept safe" / "Save every zine on this shelf in one file, or bring a backup back.
+    // Restoring adds zines — nothing here is replaced." The empty-shelf copy is unchanged.
     document.getElementById("trustTitle").textContent =
-      isEmpty ? "Bring your zines back" : "Your zines, kept safe";
+      isEmpty ? "Bring your zines back" : "Keep your zines";
     document.getElementById("trustBody").textContent = isEmpty
       ? "Choose a Zinely backup and its zines will be added to this shelf."
-      : "Save every zine on this shelf in one file, or bring a backup back. Restoring adds zines — nothing here is replaced.";
+      : "The backup file holds the zines and photos on this shelf. Keep a copy somewhere other than this phone.";
+    // AMENDMENT 1a item 1: the last-backup fact, between the body and the note; never on an empty shelf.
+    const line = document.getElementById("lastBackup");
+    line.hidden = isEmpty;
+    line.innerHTML = LAST_BACKUP[lastKind];
     document.getElementById("trustNote").textContent = isEmpty
       ? "Restoring adds zines to this shelf; it does not replace anything."
       : "Backups save as a file you choose. Restores add separate zines.";
@@ -873,7 +1158,7 @@ function showSheet(kind){
       kind === "backup" ? "Saving your backup" : "Bringing your zines back";
     document.getElementById("workBody").textContent =
       kind === "backup"
-        ? "Keeping every zine together in one file."
+        ? "Putting zines together in one file." // amendment 1a: no longer "every zine"
         : "Checking the backup before anything changes.";
     document.getElementById("workHint").textContent =
       kind === "backup"
@@ -909,13 +1194,15 @@ function showSheet(kind){
     body.textContent = "Nothing was added. Choose the backup again, or try another one.";
     retry.textContent = "Choose a backup";
   } else if (kind === "save-error") {
-    title.textContent = "Couldn’t save there";
-    body.textContent = "Your zines are still safe here. Choose another place for the backup.";
-    retry.textContent = "Choose another place";
+    // amendment 1a: reconciled to shipped Copy.ERROR_SAVE_* and the backup-mode retry (TRY_AGAIN)
+    title.textContent = "Couldn’t save the backup there";
+    body.textContent = "Pick another location and try again.";
+    retry.textContent = "Try again";
   } else if (kind === "space") {
-    title.textContent = "Not enough space on this phone";
-    body.textContent = "Free up some space, then try again. Nothing on your shelf was changed.";
-    retry.textContent = "Got it";
+    // amendment 1a: reconciled to shipped Copy.ERROR_SPACE_* and the backup-mode retry (TRY_AGAIN)
+    title.textContent = "Not enough space";
+    body.textContent = "Free up some space, then try again.";
+    retry.textContent = "Try again";
   } else if (kind === "busy") {
     title.textContent = "Give Zinely a moment";
     body.textContent = "A zine is still being put away. Try again shortly.";
@@ -934,6 +1221,24 @@ function showSheet(kind){
 
 showShelf("content");
 showSheet("trust");
+
+// Review aids (amendment 1a): 360 dp, 200 % text, and a URL hash that opens any state directly,
+// e.g. #sheet=partial-photo&last=partial&theme=dark&w=360&t=200&shelf=empty
+const phone = document.getElementById("phone");
+document.getElementById("w360Toggle").addEventListener("click", event => {
+  event.currentTarget.classList.toggle("on", phone.classList.toggle("w360"));
+});
+document.getElementById("t200Toggle").addEventListener("click", event => {
+  event.currentTarget.classList.toggle("on", phone.classList.toggle("t200"));
+});
+document.querySelectorAll("[data-last]").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll("[data-last]").forEach(node => node.classList.remove("on"));
+    button.classList.add("on");
+    lastKind = button.dataset.last;
+    showSheet("trust");
+  });
+});
 
 document.querySelectorAll("[data-view]").forEach(button => {
   button.addEventListener("click", () => {
@@ -969,9 +1274,22 @@ document.querySelectorAll(".overlay:not(#workSheet) .scrim").forEach(scrim => {
 addEventListener("keydown", event => {
   if (event.key !== "Escape") return;
   if (overlays.work.classList.contains("show")) {
+    if (!workCancellable) return; // amendment 1a item 7: Back does not cancel a commit in progress
     hideSheets(); // system Back is the explicit cancel twin while work is running
   } else {
     hideSheets();
   }
 });
+
+// Review aid (amendment 1a): open a state from the URL hash, after every control is wired.
+{
+  const params = new URLSearchParams(location.hash.slice(1));
+  if (params.get("theme")) document.documentElement.setAttribute("data-theme", params.get("theme"));
+  if (params.get("w") === "360") document.getElementById("w360Toggle").click();
+  if (params.get("t") === "200") document.getElementById("t200Toggle").click();
+  if (params.get("shelf")) document.querySelector(`[data-view="${params.get("shelf")}"]`)?.click();
+  if (LAST_BACKUP[params.get("last")]) document.querySelector(`[data-last="${params.get("last")}"]`).click();
+  if (params.get("sheet")) document.querySelector(`[data-sheet="${params.get("sheet")}"]`)?.click();
+  else showSheet("trust");
+}
 </script>
