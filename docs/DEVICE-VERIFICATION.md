@@ -30,6 +30,11 @@ verification report. A pass without them is not reproducible.
 
 ## 2. The accessibility tree — the highest-value artefact
 
+Use the no-device-file form below ("Or never write a device file at all") by default. The `/sdcard` form is
+the fallback, and every file it writes stays in shared storage until someone deletes it — 479 dumps had built
+up on the acceptance phone by 2026-09-27. If you use it, remove each file once you have read it
+(`MSYS_NO_PATHCONV=1 adb shell rm /sdcard/ui-<screen>.xml`).
+
 ```
 MSYS_NO_PATHCONV=1 adb shell uiautomator dump /sdcard/ui.xml
 MSYS_NO_PATHCONV=1 adb exec-out cat /sdcard/ui.xml | <your reader>
