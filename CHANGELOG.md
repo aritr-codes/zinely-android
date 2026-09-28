@@ -72,8 +72,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The Backups sheet now says when a backup was last saved on this phone, with the file's name when the storage
-  app gives one, or that none has been saved yet. It no longer calls the zines "kept safe" or promises every zine
-  before a backup has run ([ADR-120](docs/DECISIONS.md#adr-120)).
+  app gives one, on its own line under the date, or that none has been saved yet. It no longer calls the zines
+  "kept safe" or promises every zine before a backup has run. Back up and Restore now look like equal choices, and
+  the note that only repeated them is gone ([ADR-120](docs/DECISIONS.md#adr-120)).
 - A backup that fails now says where it failed. "Couldn't save the backup there" is shown only when the chosen
   location refused the file; a problem inside Zinely says "Couldn't finish that backup", and a zine that can't be
   opened or needs a newer Zinely says so in backup words instead of restore's "This backup looks damaged" (the

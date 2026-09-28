@@ -1499,10 +1499,6 @@ public object Copy {
             "The backup file holds the zines and photos on this shelf. Keep a copy somewhere other than this phone."
         public const val EMPTY_TITLE: String = "Bring your zines back"
         public const val EMPTY_BODY: String = "Choose a Zinely backup and its zines will be added to this shelf."
-        public const val DESTINATION_NOTE: String =
-            "Backups save as a file you choose. Restores add separate zines."
-        public const val EMPTY_DESTINATION_NOTE: String =
-            "Restoring adds zines to this shelf; it does not replace anything."
         public const val SAVE_ACTION: String = "Back up this shelf"
         public const val SAVE_BODY: String = "Choose where to keep the backup file."
         public const val RESTORE_ACTION: String = "Restore a backup"
@@ -1541,10 +1537,10 @@ public object Copy {
         public const val BACKUP_ZINE_NEWER_TITLE: String = "A zine here needs a newer Zinely"
         public const val BACKUP_ZINE_NEWER_BODY: String = "Update Zinely, then back up."
 
-        // The last-backup fact (amendment 1a item 1): a date in the device's medium format, never relative.
+        // The last-backup fact (amendment 1a item 1): a date in the device's medium format, never relative. The
+        // provider's file name is its own line under this one, whole, with no separator (backup-sheet polish).
         public const val NO_BACKUP_YET: String = "No backup saved yet"
-        public fun lastBackupSaved(date: String, fileName: String?): String =
-            if (fileName.isNullOrBlank()) "Last backup saved $date" else "Last backup saved $date · $fileName"
+        public fun lastBackupSaved(date: String): String = "Last backup saved $date"
         public const val CANCEL: String = "Cancel"
         public const val DONE: String = Common.GOT_IT
         public const val GOT_IT: String = Common.GOT_IT

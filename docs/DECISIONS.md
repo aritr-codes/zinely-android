@@ -13214,8 +13214,9 @@ said "Backup cancelled." about a saved backup (Brief 01, "Problem").
    transport returns `Saved`, including a backup a late Cancel lost to. Failure, a Cancel that won, picker cancel,
    picker failure and restore write nothing. It is device state: it never enters a document, `meta.json` or the
    archive, and it stays in app-private storage excluded from transfer (ADR-030 §7). The chooser shows "No backup
-   saved yet" or "Last backup saved ‹medium date›[ · ‹name›]", formatted at the UI edge in the device's locale and
-   time zone, never relative. An empty shelf shows neither line.
+   saved yet" or "Last backup saved ‹medium date›", formatted at the UI edge in the device's locale and time zone,
+   never relative, with the provider's name (when reported) whole on its own line below (§7). An empty shelf shows
+   neither line.
 2. **Two phases, classified by where they failed (F1).** `LibrarySafTransport.backupTo` returns
    `LibraryBackupResult.Saved(receipt, fileName)` or `Failed(stage, error)`. `stage` is `PrivateArchive`
    (building, validating or cleaning up the private archive; the destination was never written) or `Destination`
@@ -13263,6 +13264,16 @@ said "Backup cancelled." about a saved backup (Brief 01, "Problem").
    on this shelf. Keep a copy somewhere other than this phone."; "Choose where to keep the backup file.";
    "Putting zines together in one file."; a failure no retry can fix offers only "Got it". The drift the
    amendment records (the "saved" title; restore's `generic`, `newer` and `read` copy) is left as is.
+7. **Backup-sheet polish** (frozen 2026-09-27 in `backup-restore.html` after step 1's first device check;
+   [freeze record](design/BACKUP-RESTORE-FREEZE.md)). Visual only; behaviour and every other string unchanged:
+   - **Equal action tiles.** `KeepSafeOption` draws one tile for both actions, leaf-tint with an on-leaf glyph;
+     the tint is no longer a parameter, so the two cannot drift apart. Backup's old butter-tint tile was the
+     sheet surface in both themes and didn't show, so Restore read as primary.
+   - **No explanatory note** on either shelf, and no replacement. The two note strings are deleted.
+   - **Date and file name on separate lines.** `Copy.LibraryBackup.lastBackupSaved(date)` is the date line; the
+     file name is a second `Text`, whole, never shortened, with no "·". The two sit in one
+     `mergeDescendants` block, so TalkBack stops on them once, still before "Back up this shelf", and announces
+     the two texts in order with a pause between rather than as one run-on string.
 
 #### Boundary with step 1b
 
@@ -13298,8 +13309,13 @@ committer and the transfer rules are untouched.
   Cancel, and untouched by failure, picker cancel/failure and restore; the full F1 table.
   `LibraryBackupRestoreSheetTest`: the frozen chooser and running copy, the last-backup line and its reading order,
   retry only where it can help. The two chooser goldens change by design (title, body, save option, the new
-  line); no other golden changes.
-- Both device passes on the SM-A176B are owed before this ADR is Accepted.
+  line); no other golden changes. Polish (§7): `KeepSafeTileParityTest` reads both tiles' pixels in both themes
+  (equal, the leaf-tint token, and distinct from the sheet; it fails on the old butter tile);
+  `LibraryBackupRestoreSheetTest` covers the date and name as two texts in order, no "·", no note on either
+  shelf, and the no-name and no-backup forms. The two chooser goldens change again, by design.
+- Device passes on the SM-A176B: both passed on the pre-polish build (2026-09-27: Pass 1 by adb; the owner's
+  backup-completion check and TalkBack listen). The polish changed the sheet, so **both are owed again on the
+  polished build** before this ADR is Accepted.
 
 #### Review
 

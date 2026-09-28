@@ -68,7 +68,6 @@ internal fun lastBackupLine(lastBackup: LibraryLastBackup?): String =
     } else {
         Copy.LibraryBackup.lastBackupSaved(
             date = DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(lastBackup.savedAtEpochMs)),
-            fileName = lastBackup.fileName,
         )
     }
 
@@ -95,41 +94,27 @@ internal fun KeepSafeSheet(
             .testTag(KeepSafeSheetTestTag)
             .verticalScroll(rememberScrollState()),
     ) {
-        // The last-backup fact sits between the body and the note, before the action it explains; an
-        // empty shelf shows neither line (amendment 1a item 1).
+        // The last-backup fact sits after the body, before the action it explains; an empty shelf doesn't
+        // show it (amendment 1a item 1). No note follows it on either shelf (backup-sheet polish: removed, not
+        // replaced). The file name is its own line under the date, whole, with no separator. The two lines are
+        // one TalkBack stop: merged, their texts are announced in order with a pause between, never fused.
         if (canBackup) {
-            Text(
-                text = lastBackupLine(lastBackup),
-                modifier = Modifier
-                    .padding(start = ZinelyV21Dimens.gapHair)
-                    .testTag(KeepSafeLastBackupTestTag),
-                style = TextStyle(
-                    color = colors.inkSoft,
-                    fontFamily = ZinelyV21Fonts.Work,
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
-                ),
-            )
-        }
-        Text(
-            text = if (canBackup) {
-                Copy.LibraryBackup.DESTINATION_NOTE
-            } else {
-                Copy.LibraryBackup.EMPTY_DESTINATION_NOTE
-            },
-            modifier = Modifier
-                .padding(start = ZinelyV21Dimens.gapHair, top = ZinelyV21Dimens.gapXs)
-                .clip(RoundedCornerShape(ZinelyV21Dimens.radiusPill))
-                .background(colors.leafTint)
-                .padding(horizontal = ZinelyV21Dimens.gapMd, vertical = ZinelyV21Dimens.gapSm),
-            style = TextStyle(
-                color = colors.onLeaf,
+            val lineStyle = TextStyle(
+                color = colors.inkSoft,
                 fontFamily = ZinelyV21Fonts.Work,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 12.sp,
-                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-            ),
-        )
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+            )
+            Column(
+                Modifier
+                    .padding(start = ZinelyV21Dimens.gapHair)
+                    .testTag(KeepSafeLastBackupTestTag)
+                    .semantics(mergeDescendants = true) {},
+            ) {
+                Text(text = lastBackupLine(lastBackup), style = lineStyle)
+                lastBackup?.fileName?.takeIf { it.isNotBlank() }?.let { Text(text = it, style = lineStyle) }
+            }
+        }
 
         if (canBackup) {
             KeepSafeOption(
@@ -137,8 +122,6 @@ internal fun KeepSafeSheet(
                 label = Copy.LibraryBackup.SAVE_ACTION,
                 body = Copy.LibraryBackup.SAVE_BODY,
                 glyph = "⤓",
-                tint = colors.butterTint,
-                glyphTint = colors.ink,
                 onClick = onSaveBackup,
                 focusRequester = firstActionFocus,
             )
@@ -148,8 +131,6 @@ internal fun KeepSafeSheet(
             label = Copy.LibraryBackup.RESTORE_ACTION,
             body = if (canBackup) Copy.LibraryBackup.RESTORE_BODY else Copy.LibraryBackup.EMPTY_RESTORE_BODY,
             glyph = "↺",
-            tint = colors.leafTint,
-            glyphTint = colors.onLeaf,
             onClick = onRestoreBackup,
             focusRequester = if (canBackup) null else firstActionFocus,
         )
@@ -188,8 +169,6 @@ private fun KeepSafeOption(
     label: String,
     body: String,
     glyph: String,
-    tint: androidx.compose.ui.graphics.Color,
-    glyphTint: androidx.compose.ui.graphics.Color,
     onClick: () -> Unit,
     focusRequester: FocusRequester? = null,
 ) {
@@ -207,17 +186,19 @@ private fun KeepSafeOption(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapLg),
     ) {
+        // One tile for both actions, so they read as peers (backup-sheet polish). Backup's old butterTint tile
+        // was the sheet surface colour in both themes, so it didn't show and Restore read as primary.
         Box(
             Modifier
                 .size(32.dp)
                 .clip(RoundedCornerShape(ZinelyV21Dimens.radiusSm))
-                .background(tint),
+                .background(colors.leafTint),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = glyph,
                 style = TextStyle(
-                    color = glyphTint,
+                    color = colors.onLeaf,
                     fontFamily = ZinelyV21Fonts.Work,
                     fontSize = 15.sp,
                     lineHeight = ZinelyV21Fonts.InheritedLineHeight,

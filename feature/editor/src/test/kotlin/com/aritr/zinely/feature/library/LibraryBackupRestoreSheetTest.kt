@@ -6,13 +6,17 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -25,6 +29,7 @@ import com.aritr.zinely.ui.theme.LocalZinelyMotion
 import com.aritr.zinely.ui.theme.ZinelyMotion
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -39,7 +44,7 @@ class LibraryBackupRestoreSheetTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun `a loaded library explains both safe choices and reports each action`() {
+    fun `a loaded library offers both choices and reports each action`() {
         var backups = 0
         var restores = 0
         setContent {
@@ -54,7 +59,6 @@ class LibraryBackupRestoreSheetTest {
             )
         }
 
-        composeRule.onNodeWithText(Copy.LibraryBackup.DESTINATION_NOTE).assertIsDisplayed()
         composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).performClick()
         composeRule.onNodeWithTag(KeepSafeRestoreActionTestTag).performClick()
 
@@ -259,24 +263,31 @@ class LibraryBackupRestoreSheetTest {
     }
 
     @Test
-    fun `with no backup saved the chooser states it before the note and the actions`() {
+    fun `with no backup saved the chooser states it before the actions`() {
         chooser(lastBackup = null)
 
         val line = composeRule.onNodeWithTag(KeepSafeLastBackupTestTag)
             .assertTextEquals("No backup saved yet")
             .getUnclippedBoundsInRoot()
-        val note = composeRule.onNodeWithText(Copy.LibraryBackup.DESTINATION_NOTE).getUnclippedBoundsInRoot()
         val save = composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).getUnclippedBoundsInRoot()
-        assertTrue("the fact must read before the note", line.bottom <= note.top)
         assertTrue("the fact must read before the action", line.bottom <= save.top)
     }
 
     @Test
-    fun `a saved backup shows its medium date and the provider's file name`() {
-        chooser(LibraryLastBackup(savedAtEpochMs = SAVED_AT, fileName = "zinely-backup-2026-09-12.zine"))
+    fun `a saved backup shows its date, then the provider's whole file name on its own line`() {
+        val name = "zinely-backup-2026-09-12-a-long-name-the-provider-chose-for-this-shelf.zine"
+        chooser(LibraryLastBackup(savedAtEpochMs = SAVED_AT, fileName = name))
 
+        // One TalkBack stop, two texts in reading order: announced with a pause between, never fused.
         composeRule.onNodeWithTag(KeepSafeLastBackupTestTag)
-            .assertTextEquals("Last backup saved ${mediumDate(SAVED_AT)} · zinely-backup-2026-09-12.zine")
+            .assertTextEquals("Last backup saved ${mediumDate(SAVED_AT)}", name)
+        val date = composeRule.onNodeWithText("Last backup saved ${mediumDate(SAVED_AT)}", useUnmergedTree = true)
+            .getUnclippedBoundsInRoot()
+        val file = composeRule.onNodeWithText(name, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val save = composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).getUnclippedBoundsInRoot()
+        assertTrue("the file name sits under the date", date.bottom <= file.top)
+        assertTrue("both read before the action", file.bottom <= save.top)
+        composeRule.onNodeWithText("·", substring = true, useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test
@@ -285,6 +296,64 @@ class LibraryBackupRestoreSheetTest {
 
         composeRule.onNodeWithTag(KeepSafeLastBackupTestTag)
             .assertTextEquals("Last backup saved ${mediumDate(SAVED_AT)}")
+    }
+
+    @Test
+    fun `the content shelf has no explanatory note`() {
+        chooser(LibraryLastBackup(savedAtEpochMs = SAVED_AT, fileName = "a.zine"))
+
+        composeRule.onNodeWithText("Backups save as a file you choose", substring = true, useUnmergedTree = true)
+            .assertDoesNotExist()
+        // Removed, not replaced: no text of any wording between the last-backup line and the first action.
+        assertNoTextBetween(
+            composeRule.onNodeWithTag(KeepSafeLastBackupTestTag).getUnclippedBoundsInRoot().bottom,
+            composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).getUnclippedBoundsInRoot().top,
+        )
+    }
+
+    @Test
+    fun `the empty shelf has no explanatory note`() {
+        setContent {
+            KeepSafeSheet(
+                visible = true,
+                canBackup = false,
+                lastBackup = null,
+                onDismiss = {},
+                onHidden = {},
+                onSaveBackup = {},
+                onRestoreBackup = {},
+            )
+        }
+        composeRule.onNodeWithText("Restoring adds zines to this shelf", substring = true, useUnmergedTree = true)
+            .assertDoesNotExist()
+        assertNoTextBetween(
+            composeRule.onNodeWithText(Copy.LibraryBackup.EMPTY_BODY).getUnclippedBoundsInRoot().bottom,
+            composeRule.onNodeWithTag(KeepSafeRestoreActionTestTag).getUnclippedBoundsInRoot().top,
+        )
+    }
+
+    @Test
+    fun `a long file name wraps whole at 200 percent text, never cut off`() {
+        val name = "zinely-backup-2026-09-12-a-long-name-the-provider-chose-for-this-whole-shelf-of-zines.zine"
+        setContent(fontScale = 2f) {
+            KeepSafeSheet(
+                visible = true,
+                canBackup = true,
+                lastBackup = LibraryLastBackup(savedAtEpochMs = SAVED_AT, fileName = name),
+                onDismiss = {},
+                onHidden = {},
+                onSaveBackup = {},
+                onRestoreBackup = {},
+            )
+        }
+
+        val layouts = mutableListOf<TextLayoutResult>()
+        composeRule.onNodeWithText(name, useUnmergedTree = true).fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult].action!!.invoke(layouts)
+        val layout = layouts.single()
+        assertTrue("the name wraps rather than running off", layout.lineCount > 1)
+        assertFalse("no line of the name is clipped or ellipsised", layout.hasVisualOverflow)
+        assertEquals(name, layout.layoutInput.text.text)
     }
 
     @Test
@@ -373,6 +442,15 @@ class LibraryBackupRestoreSheetTest {
                 dismissals = 0
             }
         }
+    }
+
+    private fun assertNoTextBetween(top: androidx.compose.ui.unit.Dp, bottom: androidx.compose.ui.unit.Dp) {
+        val between = composeRule.onAllNodes(hasText("", substring = true), useUnmergedTree = true)
+            .fetchSemanticsNodes()
+            .filter { node ->
+                with(composeRule.density) { node.boundsInRoot.top.toDp() >= top && node.boundsInRoot.bottom.toDp() <= bottom }
+            }
+        assertTrue("nothing sits here, found: ${between.map { it.config.getOrNull(SemanticsProperties.Text) }}", between.isEmpty())
     }
 
     private fun chooser(lastBackup: LibraryLastBackup?) = setContent {
