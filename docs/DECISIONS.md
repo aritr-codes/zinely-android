@@ -13370,6 +13370,12 @@ no code changed in that merge.
   build.** Its evidence is the accessibility tree read on the device: the date and the file name are two
   separate text elements under one parent, placed before "Back up this shelf"; the unit test asserts one
   merged stop holding the two texts in that order.
+- **A7, TalkBack's opening focus, is not verified on any build** (recorded 2026-09-28). A7 asks where TalkBack
+  focus lands when the sheet opens: the sheet moves input focus to its first action, and whether TalkBack then
+  skips the last-backup line was never observed. The 2026-09-27 listen was started from the top of the sheet
+  by instruction, so it recorded reading order, not opening focus, and an accessibility-tree dump cannot show
+  it. The freeze record lists A7 as part of step 1's acceptance; whether ADR-120 stays Accepted with A7 open,
+  or waits on a device check, is the owner's ruling.
 - **Cancel during a running backup** could not be triggered by hand: this library backs up too fast. It stays
   covered by the automated race tests (§4).
 

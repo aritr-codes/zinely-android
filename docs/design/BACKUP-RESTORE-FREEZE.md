@@ -77,7 +77,8 @@ success and error state are unchanged.
   name, whole, on the line below, with no `·`. A wrap can no longer leave the separator at a line end. With
   no reported name, and in the partial form, the line is unchanged. The file name is never shortened.
 - **Unchanged and still separate:** A4 (the 200 % tile-radius parity item) and A7 (TalkBack's opening focus,
-  part of step 1's acceptance). A3 (the note's HTML/Compose contrast difference) no longer applies, because
+  part of step 1's acceptance; **not yet observed on any build**, see
+  [ADR-120](../DECISIONS.md#adr-120)'s acceptance record). A3 (the note's HTML/Compose contrast difference) no longer applies, because
   the note is gone.
 - **Compose implements it in PR #81** (1.x step 1, [ADR-120](../DECISIONS.md#adr-120)): the Backup tile's tint and glyph colour, removal of the
   note `Text`, and the last-backup line split into two lines, keeping a pause between date and file name for
