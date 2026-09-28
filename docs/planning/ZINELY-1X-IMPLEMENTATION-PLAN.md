@@ -314,6 +314,7 @@ flowchart TB
     S0["0 · Guards ✅ merged (PR #75)"]
     A1["1a · backup-restore.html amendment<br/>steps 1 + 1b, one amendment (owner approves)"] --> S1["1 · D1 part 1<br/>last backup + honest backup failures<br/>+ late 'Backup cancelled.'"]
     S1 --> S1B["1b · Restore honesty + skip-and-list<br/>(ADR amending ADR-110 + V1 product law)"]
+    SN["N · restore adds what's new<br/>design frozen 2026-09-28 (ADR-121)"] --> S1B
     S2["2 · D4-A1<br/>reading order + scrim fix (ADR)"] --> S3["3 · D4-A3<br/>named undo"]
     P70["PR #70 settled<br/>(rebase, merge or close)"] --> S3
     P70 --> S4["4 · Tap-through hit test<br/>six holed pieces (ADR + bench note)"]
@@ -530,7 +531,8 @@ restore-honesty defects** ([Q8](ZINELY-1X-DECISION-GATE.md#q8-the-next-release-a
 | **Q4-F · freeze typebar + reframe** | ✅ **READY** (docs/design session) | Nothing; the ruling and the scope line are recorded ([§5](#5-sequencing)). Reviewed like any HTML amendment |
 | **1a · `backup-restore.html` amendment** (steps 1 + 1b) | ✅ **DONE — approved and re-frozen 2026-09-27; backup-sheet polish frozen the same day** | Drawn, owner-approved, frozen ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)); rulings F1 (a whole-backup failure is shown by where it failed) and F2 (busy is not a failure) are in [Brief 01](BRIEF-01-VISIBLE-OWNERSHIP.md#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2). The owner reopened 1a once after the step 1 device check, for a visual-only polish (no note, equal action tiles, file name on its own line) |
 | **1 · D1 part 1** | ⏳ after 1a | 1a approved (done); PR #81 implements the 1a backup-sheet polish before merging |
-| **1b · restore honesty + skip-and-list** | ⏳ after 1a and step 1 | 1a approved; its ADR drafts (Brief 01) reviewed and landed in-session |
+| **N · restore adds what's new** (amendment, before 1b) | ✅ **Design FROZEN 2026-09-28** ([ADR-121](../DECISIONS.md#adr-121), Accepted, design); implementation ⏳ not started | Spec and tests in [Brief 01 Part N](BRIEF-01-VISIBLE-OWNERSHIP.md#part-n--restore-adds-whats-new). Its code shares 1b's restore receipt, so building it with 1b is the natural fit; the owner authorises the session |
+| **1b · restore honesty + skip-and-list** | ⏳ after 1a, step 1 **and Part N** | 1a approved; its ADR drafts (Brief 01) reviewed and landed in-session; [Part N](BRIEF-01-VISIBLE-OWNERSHIP.md#part-n--restore-adds-whats-new) frozen with [ADR-121](../DECISIONS.md#adr-121) (✅ 2026-09-28) |
 | **PR #70 acceptance** | ⏳ acceptance work | Rebase onto `main`, hands-on TalkBack, rendered HTML parity; then merge or close. Untouched by planning |
 | **3 · D4-A3 named undo** | ⏳ | PR #70 settled; the `v21-bench.html` undo-snack amendment approved |
 | **4 · tap-through hit test** | ⏳ | PR #70 settled; its ADR (draft in Brief 05); the `v21-bench.html` behaviour note approved |
@@ -587,6 +589,8 @@ rulings):
 
 | Date | Change |
 |---|---|
+| 2026-09-28 | **Part N frozen** (owner approval; final independent review GO): restore adds only zines not already on the shelf; [ADR-121](../DECISIONS.md#adr-121) Accepted (design). §11 row N and the §5 diagram updated; 1b's gate on Part N is met. Implementation not started. |
+| 2026-09-28 | **Restore amendment Part N proposed** (owner ruling 2026-09-28): restore adds only zines not already on the shelf and never replaces. New §11 row; 1b now waits on Part N's freeze and ADR. The §5 sequence diagram changes when Part N is frozen ([Brief 01](BRIEF-01-VISIBLE-OWNERSHIP.md#part-n--restore-adds-whats-new)). |
 | 2026-09-26 | **Final planning audit fixes.** §11 table repaired (the wave-1 risk note moved below it). Supplementary Q8 ruling applied: a poisoned or unreadable photo is skip-and-list (1b row; 1a no longer waits on it). Q4-F gains its scope line (the file's recorded owner questions and the Teal defect stay open; must-not list; the stale "three items need a device" header line corrected). §11: frames decision names set membership and order; the TypeBar questions listed as deferrable; the Fraunces page procedure, the older-build fallback test and the two-phone procedure marked as not yet written, and step 8 / D1 part 2 rows say so. No step moved. |
 | 2026-09-26 | **Owner rulings Q1–Q8 applied** (recorded in the decision gate). Status: direction approved, steps authorised one at a time via new §11 readiness. Q1 date framing corrected (the 30 Sep 2026 phase covers named stores, not GitHub APKs); Play Console chosen. D1 gains the late "Backup cancelled." and step 1b (restore honesty + skip-and-list, never silently partial). D2 = Book + Plain, no bump, measured assets recorded, no longer v4-bound. D3 guidance designed now, shipped after the print study. D5 = two frames after owner visual approval. Fold study no longer gates D2/D5. Q4-F freeze step added. N2 misreading corrected. No step changed position. Base `0aa7a7d`. |
 | 2026-09-26 | Re-based onto `eb75cf7` after Step 0 merged (PR #75). Step 0 marked complete with its commits; F1a/F3/F4 marked done; deferred advisories A2/A3/A4 and F6 recorded as non-blocking (§2/§7 "F6 now" wording aligned); §6 adds the Step 0 guard rule; step 6 names the fixture moves Step 0 now enforces; Tests snapshot and CI line citations re-checked. No step reordered, no owner question decided. |

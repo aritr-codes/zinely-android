@@ -83,6 +83,35 @@ success and error state are unchanged.
   note `Text`, and the last-backup line split into two lines, keeping a pause between date and file name for
   TalkBack.
 
+**Amendment N — restore adds what's new · drawn, owner-approved and frozen 2026-09-28**
+([ADR-121](../DECISIONS.md#adr-121), which amends ADR-110 §5; spec [Brief 01 Part N](../planning/BRIEF-01-VISIBLE-OWNERSHIP.md#part-n--restore-adds-whats-new)). The owner saw
+repeated restores of one backup each add a full set of copies on the SM-A176B and ruled: *"Restore adds zines
+that aren't already on your shelf. It never replaces what's here."*
+
+- **What counts as already here:** the same title, format, paper size and content as a zine on the shelf. One
+  shelf zine accounts for at most one zine in the backup, so extra identical copies in the backup are added.
+  A zine that differs in any of these is added alongside. Nothing on the shelf is replaced. The file name and
+  the phone never matter. When Zinely can't be sure, it adds.
+- **Chooser restore line (N1, content shelf):** *"Add zines from a Zinely backup. Zines already on this shelf
+  aren't added again. If a zine has changed since the backup, the changed one is added too."* The empty-shelf
+  line is unchanged.
+- **Results (N2–N4), all successes (✓, `Done`):**
+  - N2, all new: the frozen `restored` state.
+  - N3, some new: the title keeps the count added (`2 zines added to your shelf`), then *"The other 5 were
+    already here, so they weren't added again."* (one: *"The other zine was already here, so it wasn't added
+    again."*), then *"What was already on this shelf stayed put."*.
+  - N4, nothing new: `Nothing new to add` / *"The zines from this backup are already on your shelf."* (one
+    zine: *"The zine from…"*). Never `0 zines added`, never an error, and no retry.
+- **With part 1b (N5):** title → already-here line → partial-archive notice → lagging line *or* "stayed put".
+  A restore with nothing new never reaches the commit phase.
+- **Not in this amendment:** per-zine choices, version-aware messages, and a confirmation after the file is
+  chosen (all owner rulings, 2026-09-28). The instant start of a restore is a deferred observation, to be
+  revisited only if real testing shows it still misleads.
+- **Pass 2 question for the device check:** after a maker edits a zine, the restore adds the backup's copy.
+  Check that *"the changed one is added too"* isn't read as the maker's edited zine being added again.
+- **Compose has not implemented Amendment N.** Until it does, the shipped app still adds a separate copy of
+  every zine, as the 2026-08-22 contract did. Older builds keep that behaviour permanently.
+
 This document freezes the first production `.zine` backup/restore user flow. The repository and
 current V2.1 shelf were reviewed, the interactive HTML was critiqued on the Samsung SM_A176B, and
 accessibility and large-text constraints were reviewed before this freeze. Compose must implement
@@ -117,10 +146,12 @@ Rationale:
   - `Restore a backup`
 - On an empty shelf it offers only `Restore a backup`.
 - The sheet says restore is additive before the picker is opened.
-- The sheet says that an ID collision returns as a separate copy rather than replacing a zine.
+- The sheet says that a zine already on the shelf isn't added again, that a changed zine is added too, and
+  that nothing is replaced (Amendment N; until 2026-09-28: "an ID collision returns as a separate copy").
 - The sheet explains the operation rather than repeating the product privacy promise: backups save as a
-  file the user chooses, and restores add separate zines. Since the 2026-09-27 polish the action sublines
-  say this; there is no separate note. The Android picker remains truthful about the selected provider.
+  file the user chooses, and restores add what isn't already on the shelf (Amendment N; until 2026-09-28:
+  "restores add separate zines"). Since the 2026-09-27 polish the action sublines say this; there is no
+  separate note. The Android picker remains truthful about the selected provider.
 
 ### Backup
 
@@ -147,6 +178,8 @@ Rationale:
 - The UI must never imply device-level replacement, wipe, or full-phone restore.
 - The UI may say that restored zines are added to the current shelf.
 - The UI may say that what is already on the shelf stays put.
+- A zine already on the shelf (same title, format, paper size and content) is not added again; a changed zine
+  is added alongside; nothing on the shelf is replaced (Amendment N, [ADR-121](../DECISIONS.md#adr-121)).
 
 ## Cancellation
 
@@ -205,7 +238,9 @@ The retry action relaunches the appropriate picker rather than retrying hidden s
 ## Result rules
 
 - Backup success reports the number of zines saved.
-- Restore success reports the number of zines added and says the existing shelf stayed put.
+- Restore success reports the number of zines added and says the existing shelf stayed put. From Amendment
+  N it also says how many were already here, and a restore with nothing new is the success `Nothing new to
+  add`.
 - A failed restore says the shelf was unchanged.
 - A failed backup says the zines in Zinely were unchanged; it does not make unverifiable claims
   about a provider-owned destination.
@@ -223,7 +258,8 @@ The retry action relaunches the appropriate picker rather than retrying hidden s
 The frozen flow is implemented in Compose with focused state, cancellation, focus, large-text, and
 light/dark golden coverage. Repository, lint, debug, and release gates are green. Both production-UI device
 passes are accepted on the Samsung SM-A176B / Android 16: a four-zine shelf was saved through the real
-Android document picker, that exact file restored four additive copies, invalid input left the shelf intact,
+Android document picker, that exact file restored four additive copies (the pre-Amendment-N contract),
+invalid input left the shelf intact,
 picker cancellation was silent, restored content remained editable and autosaved across cold relaunch, and
 the large-text and platform accessibility checks passed. The reproducible evidence is recorded in
 [the device-verification report](../reviews/2026-08-22-backup-restore-ui-device-verification.md).

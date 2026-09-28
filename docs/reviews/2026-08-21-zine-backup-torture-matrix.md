@@ -11,6 +11,11 @@ current shipping verdict. Repository integration and the production UI subsequen
 Those passes do not close second-device/API, provider failure, disk-full, or full-media/print stress
 coverage. Preserve those limitations; current priorities live in [ROADMAP.md](../ROADMAP.md#current-priorities).
 
+**28 September:** [ADR-121](../DECISIONS.md#adr-121) changes the expected result of the row "Repeated restore of
+same backup" from safe additive duplicates to *nothing new to add* (zines identical to ones already on the
+shelf are not added again; changed zines are). The row below is kept as the dated snapshot; the new
+expectation is untested until ADR-121 is implemented.
+
 This is the gate required by the V1 execution plan. A row is green only at the layer that can actually prove it. Pure structural tests cannot stand in for byte-level, transactional, SAF, or physical-device evidence.
 
 | Case | Expected result | Evidence layer | Status |

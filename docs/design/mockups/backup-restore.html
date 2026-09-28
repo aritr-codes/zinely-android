@@ -139,6 +139,51 @@
   HTML/Compose contrast difference) no longer applies.
 -->
 
+<!--
+  AMENDMENT N — "restore adds what's new" — drawn and owner-approved 2026-09-28 · FROZEN 2026-09-28.
+
+  Owner ruling 2026-09-28 (O1): "Restore adds zines that aren't already on your shelf. It never replaces
+  what's here." Spec, matching model and ADR draft: docs/planning/BRIEF-01-VISIBLE-OWNERSHIP.md,
+  "Part N — restore adds what's new"; decision: docs/DECISIONS.md ADR-121 (amends ADR-110 §5). Record:
+  docs/design/BACKUP-RESTORE-FREEZE.md, "Amendment N". The states are under the "N · restore adds what's new"
+  controls; N1 is also the chooser's default restore subline, and N2 is the frozen "restored" state.
+
+  N REPLACES two earlier frozen assumptions (BACKUP-RESTORE-FREEZE.md "Sheet"):
+    - "an ID collision returns as a separate copy rather than replacing a zine";
+    - "restores add separate zines" (and the restore subline "a matching zine returns as a separate copy").
+  A zine that is already on the shelf (same title, format, paper size and content) is not added again; a
+  changed version is added alongside; nothing on the shelf is replaced. The file name and the phone never
+  matter.
+
+  N1  chooser, restore subline (content shelf) .. "Add zines from a Zinely backup. Zines already on this
+                                                   shelf aren't added again. If a zine has changed since the
+                                                   backup, the changed one is added too."
+                                                   Empty shelf: unchanged (nothing there can match).
+  N2  all new ......... "7 zines added to your shelf" / "What was already on this shelf stayed put." (the
+                        frozen "restored" state, unchanged)
+  N3  some new ........ title keeps the added count; the already-here count is the first body line:
+                        "The other 5 were already here, so they weren't added again." then "stayed put".
+                        Singular: "The other zine was already here, so it wasn't added again."
+  N4  nothing new ..... a SUCCESS, not an error: ✓ mark, "Done". "Nothing new to add" /
+                        "The zines from this backup are already on your shelf." (one zine: "The zine from
+                        this backup is already on your shelf."). No "0 zines added", no "stayed put" (nothing
+                        was added, so the body already says the shelf is as it was), and not "Nothing on this shelf was
+                        changed." (that is the frozen failure body).
+  N5  with part 1b .... line order: title → already-here line → partial-archive notice → 1b's R3 lagging line or
+                        "stayed put". A restore with nothing new never reaches the commit phase, so
+                        "This part can't be stopped." and the lagging line never follow N4.
+
+  Rejected on the way: the dot title "2 zines added · 5 already here" (every title in this flow is one
+  sentence; the polish just removed a "·" because a 200 % wrap strands it; and a count-first title keeps
+  1b's frozen partial / lagging titles unchanged). Per-zine Keep / Skip choices and version-aware messages
+  are out of scope (owner ruling). No confirmation after choosing the file (owner ruling; see the brief's
+  deferred "instant restore" observation).
+
+  Recorded for Pass 2 on the device (independent review, 2026-09-28): after the maker edits a zine, what a
+  restore adds is the backup's copy; check that "the changed one is added too" isn't read as "my edited zine
+  is added again". The owner's text stands; Pass 2 decides whether it needs another look.
+-->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Averia+Sans+Libre:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -778,7 +823,7 @@ body{
 </style>
 
 <div class="stage">
-  <p class="cap"><span class="badge">design freeze · 2026-08-22</span> <span class="badge">amendment 1a · frozen 2026-09-27</span> <span class="badge">backup-sheet polish · frozen 2026-09-27</span><br>Production backup / restore surface. Whole-library only, additive restore only, no settings branch.</p>
+  <p class="cap"><span class="badge">design freeze · 2026-08-22</span> <span class="badge">amendment 1a · frozen 2026-09-27</span> <span class="badge">backup-sheet polish · frozen 2026-09-27</span> <span class="badge">amendment N · frozen 2026-09-28</span><br>Production backup / restore surface. Whole-library only, additive restore only, no settings branch.</p>
 
   <div class="phone grain" id="phone">
     <div class="shelf" id="shelf">
@@ -847,7 +892,7 @@ body{
             <span class="chip">↺</span>
             <span>
               <p class="option-title">Restore a backup</p>
-              <p class="option-body" id="restoreOptionBody">Add zines from a Zinely backup. What’s here stays here; a matching zine returns as a separate copy.</p>
+              <p class="option-body" id="restoreOptionBody">Add zines from a Zinely backup. Zines already on this shelf aren’t added again. If a zine has changed since the backup, the changed one is added too.</p>
             </span>
           </button>
         </div>
@@ -882,6 +927,7 @@ body{
             <h3 id="successTitle">Your backup is saved</h3>
             <p id="successBody">All 6 zines are together in one backup file.</p>
             <p id="successNote" hidden></p>
+            <p id="successMore" hidden></p>
           </div>
           <div class="actions">
             <button class="btn primary" id="successDone">Done</button>
@@ -960,8 +1006,19 @@ body{
     <button class="ctl" data-sheet="restored-partial">partial</button>
     <button class="ctl" data-sheet="restored-partial-photo">partial, photo</button>
     <button class="ctl" data-sheet="restored-partial-unnamed">partial, unnamed</button>
+    <button class="ctl group">N · restore adds what’s new</button>
+    <button class="ctl" data-sheet="n-trust">N1 chooser</button>
+    <button class="ctl" data-sheet="n-all-new">N2 all new</button>
+    <button class="ctl" data-sheet="n-some-new">N3 some new</button>
+    <button class="ctl" data-sheet="n-some-new-one">N3 one here</button>
+    <button class="ctl" data-sheet="n-one-added">N3 one added</button>
+    <button class="ctl" data-sheet="n-nothing-new">N4 nothing new</button>
+    <button class="ctl" data-sheet="n-nothing-new-one">N4 one zine</button>
+    <button class="ctl" data-sheet="n-some-new-partial">N5 some new + partial</button>
+    <button class="ctl" data-sheet="n-some-new-lagging">N5 some new + lagging</button>
+    <button class="ctl" data-sheet="n-nothing-new-partial">N5 nothing new + partial</button>
   </div>
-  <p class="cap" style="margin-top:12px">Amendment 1a (frozen 2026-09-27): numbered groups are items 1–10 of the Brief 01 amendment specification. Everything above “review aids” is the frozen 2026-08-22 set; the amendment changes only the chooser’s title, body, save-option line and new last-backup line, the backup running line, and the save error / no space copy (reconciled to shipped Copy.kt). Backup-sheet polish (frozen 2026-09-27): the chooser has no note on either shelf, both actions share one tile, and the file name sits under the date.</p>
+  <p class="cap" style="margin-top:12px">Amendment 1a (frozen 2026-09-27): numbered groups are items 1–10 of the Brief 01 amendment specification. Everything above “review aids” is the frozen 2026-08-22 set; the amendment changes only the chooser’s title, body, save-option line and new last-backup line, the backup running line, and the save error / no space copy (reconciled to shipped Copy.kt). Backup-sheet polish (frozen 2026-09-27): the chooser has no note on either shelf, both actions share one tile, and the file name sits under the date. <strong>Amendment N (frozen 2026-09-28):</strong> restore adds only zines that aren’t already on the shelf; the chooser’s restore line says so, and the “N” controls show every result.</p>
 </div>
 
 <script>
@@ -1096,12 +1153,42 @@ const AMEND = {
     note: "What was already on this shelf stayed put." },
 };
 
+// ── AMENDMENT N (FROZEN 2026-09-28; ADR-121) ─────────────────────────────────────────────────────
+// Restore adds zines that aren't already on the shelf and never replaces what's here. Every result is a
+// success (✓, "Done"). Line order (N5): title → already-here line → partial-archive notice → 1b's R3
+// lagging line or "stayed put". `more` is the third paragraph (#successMore).
+const N_STAYED = "What was already on this shelf stayed put.";
+const N_PARTIAL = "This backup was saved without 1 zine that couldn’t be opened then: “Moth Club Bulletin”.";
+const N_LAGGING = "They may take a moment to appear. If they don’t, close Zinely and open it again.";
+const AMEND_N = {
+  "n-all-new": { sheet: "success", title: "7 zines added to your shelf", body: N_STAYED },
+  "n-some-new": { sheet: "success", title: "2 zines added to your shelf",
+    body: "The other 5 were already here, so they weren’t added again.", note: N_STAYED },
+  "n-some-new-one": { sheet: "success", title: "6 zines added to your shelf",
+    body: "The other zine was already here, so it wasn’t added again.", note: N_STAYED },
+  "n-one-added": { sheet: "success", title: "1 zine added to your shelf",
+    body: "The other 6 were already here, so they weren’t added again.", note: N_STAYED },
+  // N4: nothing new is a successful no-op, never "0 zines added" and never an error.
+  "n-nothing-new": { sheet: "success", title: "Nothing new to add",
+    body: "The zines from this backup are already on your shelf." },
+  "n-nothing-new-one": { sheet: "success", title: "Nothing new to add",
+    body: "The zine from this backup is already on your shelf." },
+  "n-some-new-partial": { sheet: "success", title: "2 zines added to your shelf",
+    body: "The other 5 were already here, so they weren’t added again.", note: N_PARTIAL, more: N_STAYED },
+  "n-some-new-lagging": { sheet: "success", title: "2 zines added to your shelf",
+    body: "The other 5 were already here, so they weren’t added again.", note: N_LAGGING },
+  "n-nothing-new-partial": { sheet: "success", title: "Nothing new to add",
+    body: "The zines from this backup are already on your shelf.", note: N_PARTIAL },
+};
+// N1: the content-shelf restore subline. The empty-shelf subline is unchanged.
+const N_RESTORE_SUBLINE = "Add zines from a Zinely backup. Zines already on this shelf aren’t added again. If a zine has changed since the backup, the changed one is added too.";
+
 // Item 7 · R2: once commit starts the restore can't be cancelled. Cancel leaves the tree and Back
 // does nothing; the real outcome follows.
 let workCancellable = true;
 
 function showAmended(kind){
-  const a = AMEND[kind];
+  const a = AMEND[kind] || AMEND_N[kind];
   const prefix = a.sheet === "error" ? "error" : "success";
   document.getElementById(prefix + "Title").textContent = a.title;
   document.getElementById(prefix + "Body").textContent = a.body;
@@ -1113,6 +1200,9 @@ function showAmended(kind){
     const note = document.getElementById("successNote");
     note.hidden = !a.note;
     note.textContent = a.note || "";
+    const more = document.getElementById("successMore"); // amendment N
+    more.hidden = !a.more;
+    more.textContent = a.more || "";
   }
   overlays[a.sheet].classList.add("show");
 }
@@ -1122,12 +1212,18 @@ function showSheet(kind){
   trustLink.classList.toggle("active", kind === "trust");
   // Reset the amendment's additions so every frozen state renders exactly as frozen.
   document.getElementById("successNote").hidden = true;
+  document.getElementById("successMore").hidden = true;
   document.getElementById("errorRetry").hidden = false;
   document.getElementById("workCancel").hidden = false;
   workCancellable = true;
 
-  if (AMEND[kind]) {
+  if (AMEND[kind] || AMEND_N[kind]) {
     showAmended(kind);
+    return;
+  }
+  if (kind === "n-trust") { // amendment N1: the chooser (its restore subline is N1 by default now)
+    showSheet("trust");
+    if (shelfKind !== "empty") document.getElementById("restoreOptionBody").textContent = N_RESTORE_SUBLINE;
     return;
   }
   if (kind === "restore-commit") {
@@ -1159,7 +1255,7 @@ function showSheet(kind){
     document.getElementById("saveOption").classList.toggle("hidden", isEmpty);
     document.getElementById("restoreOptionBody").textContent = isEmpty
       ? "Choose a Zinely backup to add its zines to this shelf."
-      : "Add zines from a Zinely backup. What’s here stays here; a matching zine returns as a separate copy.";
+      : N_RESTORE_SUBLINE; // amendment N1 (was "…What’s here stays here; a matching zine returns as a separate copy.")
     overlays.trust.classList.add("show");
     return;
   }

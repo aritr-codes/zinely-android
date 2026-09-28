@@ -119,7 +119,7 @@
 | [ADR-107](#adr-107) | **A larger material library — grown inside the frozen four, searchable, composed by hand.** First admits a 16-supply expansion to 32, keeps the remaining ~19 candidates as a curated backlog, upholds the randomiser ban, withdraws app-authored composites, and ships search with growth. | Accepted |
 | [ADR-108](#adr-108) | ✅ **Hollow supplies — not as an axis; admissible one mark at a time.** Fill-only means a flag cannot *implement* hollow, only select a second authored outline. Rule [D-093](design/V2-SPEC-DEFECTS.md#d-093) first: the cheap end of the promise is the tile, not the catalogue | Proposed | **Accepted 2026-08-20**; R4 shipped as *generation* — the tile renders the authored outline, `BenchArtGlyphs` deleted.
 | [ADR-109](#adr-109) | **One photo across two pages — a spread is two ordinary images, not a new kind of thing.** An action writes two `ImageElement`s sharing one `assetId` with complementary crops: no element type, no schema bump, no imposition change, no draw command. The frozen confirmation explains that the complete join first appears in the printed and folded zine | Accepted |
-| [ADR-110](#adr-110) | **A v2 `.zine` is one whole-library backup, additive beside the v1 single-project package.** Files remain authoritative, assets remain content-addressed, and restore validates a staged archive before touching live storage. | Accepted |
+| [ADR-110](#adr-110) | **A v2 `.zine` is one whole-library backup, additive beside the v1 single-project package.** Files remain authoritative, assets remain content-addressed, and restore validates a staged archive before touching live storage. | Accepted; §5 amended by [ADR-121](#adr-121) |
 | [ADR-111](#adr-111) | **The supplied collage owns launcher identity; launch is a system-only transition with no delay or marketing screen.** | Accepted |
 | [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, implemented through one bundled, deterministic preview/export path.** Bundled Emoji2 with forced replacement owns the glyphs; system/OEM fallback remains forbidden. | Accepted |
 | [ADR-113](#adr-113) | **Flip is one mobile verb with two local-axis toggles for a single Photo or Art element.** Text and multi-selection are excluded; persistence requires an honest schema v3 rather than a lossy v2 additive field. | Accepted |
@@ -128,6 +128,7 @@
 | [ADR-117](#adr-117) | **Licence notices stay complete, but leave the main About narrative.** One compact row opens a child credits screen; font-role blurbs retire. | Accepted; owner ruling 2026-09-16 |
 | [ADR-118](#adr-118) | **The public website tells one product story and shows only shipped UI.** Self-hosted fonts, a truthful Bench render, a Download page, and one public status scheme (Available / In development / Planned / Exploring) by horizon. Amends ADR-114 §1 and §5. | Accepted 2026-09-24; owner-directed |
 | [ADR-119](#adr-119) | **On the Bench, TalkBack reads a page in spatial reading order, not stacking order; the zine action sheet's scrim is silent.** A §4.5 canvas clause; nodes declared in that order; `ZineActionScrim` gets `ZSheet`'s one-modifier fix. | Accepted 2026-09-26; 1.x step 2; owner TalkBack listen passed on SM-A176B |
+| [ADR-121](#adr-121) | **Restore adds zines that aren't already on the shelf and never replaces what's here.** A zine is already here when its title, format, paper size and content equal a shelf zine's, counted one for one; a changed zine is added; doubt adds. No format change. Amends ADR-110 §5. | Accepted (design) 2026-09-28; owner ruling; implementation and device passes pending |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -12698,7 +12699,7 @@ Three challenges, honestly:
 
 ### One file owns the library — additive v2 `.zine` backup beside readable v1
 
-**Status:** Accepted · **Date:** 2026-08-21 · **Supersedes:** nothing · **Extends:** [ADR-009](#adr-009), [ADR-020](#adr-020), [ADR-022](#adr-022), [ADR-025](#adr-025)
+**Status:** Accepted · **Date:** 2026-08-21 · **Supersedes:** nothing · **Extends:** [ADR-009](#adr-009), [ADR-020](#adr-020), [ADR-022](#adr-022), [ADR-025](#adr-025) · **Amended by:** [ADR-121](#adr-121) (2026-09-28: §5 and the repeated-restore consequence; restore adds only zines not already on the shelf)
 
 #### Context and decision
 
@@ -13185,3 +13186,102 @@ deprecated announce API, relative phrases (A2), named undo (A3) and alt text (B)
     the exact reverse; page 5 read only the photo; after undoing the spread, tape → photo → text; the action sheet
     never landed on the dim, and Back closed it. Nothing surprised the listener (Pass 2).
   - An emulator TalkBack walk was attempted and abandoned: injected key combinations did not move its focus.
+
+## ADR-121 {#adr-121}
+
+### Restore adds what's new; it never replaces what's here
+
+**Status:** Accepted (design), 2026-09-28. The owner chose this contract, and the drawing is frozen:
+[`backup-restore.html`](design/mockups/backup-restore.html) Amendment N, recorded in
+[BACKUP-RESTORE-FREEZE.md](design/BACKUP-RESTORE-FREEZE.md). The implementation, its tests and both device
+passes are still owed; the spec is [Brief 01 Part N](planning/BRIEF-01-VISIBLE-OWNERSHIP.md#part-n--restore-adds-whats-new).
+**Amends:** [ADR-110](#adr-110) §5 and its consequence *"Repeated restores may create safe project duplicates;
+any future merge semantics need a new decision."* This is that decision.
+
+#### Context
+
+- ADR-110 made restore additive: an id that clashes gets a new one, so every restore adds every zine.
+- On 2026-09-28 the owner restored the same backup several times on the SM-A176B, and each restore added a
+  full set of copies.
+- Comparable apps that always add get steady duplicate complaints
+  ([Aegis #951](https://github.com/beemdevelopment/Aegis/issues/951),
+  [Joplin forum](https://discourse.joplinapp.org/t/importing-jex-while-file-system-sync-is-enabled-causes-duplicate-notes-no-id-collision-handling/48458)).
+- Zinely has no durable per-zine lineage. A re-minted id is not recorded, and Duplicate mints a fresh id with
+  no link to its source. So whether a zine is "the same" can only be decided by what the zine *is*.
+
+#### Decision
+
+The owner chose this restore contract on 2026-09-28 (option O1): *"Restore adds zines that aren't already on
+your shelf. It never replaces what's here."*
+
+1. **Already on the shelf** means the same **title** (exact), **format**, **paper size** and **content**.
+   - Content is the same when the raw document bytes match (SHA-256 against the backup's verified
+     `documentSha256`), or else when the decoded documents are equal.
+   - The id is never the test.
+   - The cover pair and the created and updated times are not compared.
+2. **Repeated restores leave identical zines alone.** Restoring the same backup again adds no zine that is
+   identical to one already on the shelf.
+3. **Matching counts one for one.** Each shelf zine accounts for at most one zine in the backup; surplus
+   identical zines in the backup are added.
+4. **Different content is added** alongside, whether the version is older or newer. If its id clashes, it gets
+   a new one.
+5. **Nothing is replaced.** ADR-110 §5's rule that the committer never overwrites is unchanged.
+6. **Doubt adds.** A zine is added unless the shelf zine can be shown to have the same content.
+   - Byte-identical files match at once.
+   - Otherwise the decoded content is compared.
+   - If equal content can't be shown (unequal, undecodable or unreadable), the zine is added. It is never
+     skipped silently.
+7. **Where it runs.** Matching runs before commit, inside the existing writer lease and repository mutex, and
+   reads the shelf's files, not Room. A restore that adds nothing returns success before the commit step,
+   whose non-empty guard stays.
+8. **What the maker sees.** The result reports how many were added and how many were already here, or
+   *"Nothing new to add"*. Each of these is a success; none is an error. There are no per-zine choices and no
+   confirmation after the file is chosen.
+9. **Duplicate** remains the one explicit way to put a second copy of a zine on the shelf.
+10. **No format change.**
+    - `packageVersion` stays 2.
+    - There is no new manifest, `meta.json` or document-schema field.
+    - There is no origin metadata. Version-aware messages were deferred by the owner, and they are the only
+      reason one would be needed.
+
+#### Consequences
+
+- **Older builds keep the old behaviour.** This is an application-level change in newer builds only. A build
+  without it, including every release up to `0.9.0-beta.5`, still adds a separate copy of every zine when it
+  restores the same file. Older builds do not gain this behaviour. Release notes must say so.
+- **Existing duplicates stay.** Nothing cleans up copies already on a shelf.
+- **Missing photos aren't repaired** by a restore that adds nothing, because it never commits.
+- **Editing and then reverting** a zine can leave float-level differences. The zine then counts as changed,
+  and it is added. That is the safe direction.
+- **Cost.** Restore hashes every shelf document, which is about the reading a backup does. It decodes a shelf
+  document only when its title, format and paper size match an entry in the backup but its bytes don't.
+- **Part 1b** designs its receipt and result copy together with this contract:
+  - its `addedCount` / `shelfUpToDate` sit beside the count of zines already here;
+  - a restore that adds nothing never enters 1b's commit phase;
+  - 1b's ADR draft item 7 references this ADR.
+- **Tests owed.** The tests listed in Brief 01 Part N. The
+  [torture matrix](reviews/2026-08-21-zine-backup-torture-matrix.md) row "Repeated restore of same backup" now
+  expects *nothing new to add*.
+
+#### Alternatives rejected
+
+- **Always add, with a confirmation:** it still duplicates.
+- **Match on id alone:** ids are re-minted on a clash, so the second restore still adds.
+- **Match on content alone, without the title:** it would merge a maker's identical zines that have different
+  titles.
+- **A saved history of restored archives:** it misses the same zine in a different backup, and wrongly refuses
+  after the maker deletes restored zines.
+- **Origin ids in `meta.json` and the manifest:** deferred by the owner.
+- **Per-zine Keep / Skip / Replace:** confusing at scale, and "Replace" breaks never-replace.
+
+#### Review
+
+- **Before the owner's ruling:** an independent review of the options returned GO WITH FIXES.
+  - Folding this into 1b's already-frozen amendment was impossible, so it became its own amendment.
+  - The empty-commit guard is named.
+  - A mid-restore choice was dropped, because it would have to hold the writer lease across a dialog.
+- **On the drawing and spec:** GO WITH FIXES. The fixes were three line numbers, the fields excluded from the
+  match, the identical-bytes precedence, and the decode-only-when-needed cost.
+- **Final pre-freeze review, after the owner's one copy refinement to N1:** GO.
+  - One recommended note was recorded, not applied: the Pass 2 check of "the changed one is added too".
+  - The owner's exact text stands.
