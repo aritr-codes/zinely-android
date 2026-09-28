@@ -13375,12 +13375,16 @@ no code changed in that merge.
   action. The 2026-09-27 listen did not answer it: it was started from the top of the sheet by instruction, so
   it recorded reading order only. The 2026-09-28 check turned TalkBack on, then opened Backups fresh, with no
   swipe. Initial focus landed on the body text, "The backup file holds the zines and photos on this shelf. Keep a copy somewhere other than this phone."
-  - **The A7 risk is absent:** that text is above the last-backup line, so the last-backup line is not skipped.
-  - **The intended target is not achieved:** A7's intended opening focus is the last-backup information, and
-    focus did not land there (nor on the title "Keep your zines" or "Back up this shelf"). A7 is therefore
-    **observed, not a clean PASS**. It was read from the focus highlight; the speech was not recorded.
-  - **Owner decision pending:** either accept the body-text opening and formally amend A7's criterion, or keep
-    the last-backup opening as required and make a focused implementation fix. ADR-120's status is unchanged.
+  - **The risk A7 guards against is absent:** that text is above the last-backup line, so the last-backup line
+    is not skipped.
+  - **The original target was not met.** A7 first required opening focus on the last-backup information, and
+    focus did not land there (nor on the title "Keep your zines" or "Back up this shelf"). That original
+    criterion is not recorded as passed.
+  - **A7 criterion amended by the owner, 2026-09-28, after this observation:**
+    "When the Backups sheet opens with TalkBack enabled, initial accessibility focus must land within the sheet's meaningful informational content, and the last-backup information must remain in the subsequent reading/focus order before the primary Backup action."
+  - **Accepted under the amended criterion.** The evidence is this observation: fresh open, no swipe, focus on
+    the body text, last-backup line not skipped. It was read from the TalkBack focus highlight; the exact speech
+    was not captured. No code or implementation change was needed.
 - **Cancel during a running backup** could not be triggered by hand: this library backs up too fast. It stays
   covered by the automated race tests (§4).
 
