@@ -14,7 +14,8 @@ the readiness audit and the D1 deep audit ([audit §5](ZINELY-1X-READINESS-AUDIT
 | Part | What | Readiness |
 |---|---|---|
 | **1** | "Last backup saved" fact, honest backup failures, no partial file left behind, no "Backup cancelled." after a complete file | ✅ **READY** — the one `backup-restore.html` amendment ([spec](#backup-restorehtml-amendment-specification)) was drawn, **owner-approved and re-frozen 2026-09-27** ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)). The **backup-sheet polish** (no note, equal action tiles, file name on its own line) was frozen later the same day; step 1 (PR #81) implements it before merging |
-| **1b** | Restore honesty (three defects) and skip-and-list backups — complete or explicitly partial, never silently partial | **READY AFTER** part 1 has merged (the amendment is already approved, 2026-09-27) **and** the [ADR draft](#adr-draft--amendment-to-adr-110) and [product-law draft](#product-law-amendment-draft) are independently reviewed and landed in the implementation session, before any code |
+| **1b** | Restore honesty (three defects) and skip-and-list backups — complete or explicitly partial, never silently partial | **READY AFTER** part 1 has merged (the amendment is already approved, 2026-09-27) **and** the [ADR draft](#adr-draft--amendment-to-adr-110) and [product-law draft](#product-law-amendment-draft) are independently reviewed and landed in the implementation session, before any code, **and** [Part N](#part-n--restore-adds-whats-new) is frozen with its ADR (✅ done 2026-09-28, [ADR-121](../DECISIONS.md#adr-121)); owner ruling 2026-09-28: both change what a restore reports |
+| **N** | Restore adds what's new: an identical zine is not added again, a changed version is added, nothing is replaced | ✅ **Design FROZEN 2026-09-28** ([ADR-121](../DECISIONS.md#adr-121), Accepted, design); implementation not started |
 | **2** | "Changing phones?" line | **BLOCKED BY** the physical cross-device restore pass |
 | **3** | Android device-to-device transfer | **BLOCKED BY** O1. Research leans to not doing it |
 
@@ -535,7 +536,8 @@ manifest with an unknown top-level key still stages (pins `ignoreUnknownKeys`, s
 - **Copy (🟦 proposed).** Title unchanged ("3 zines added to your shelf"); an extra line: "This backup was
   saved without 1 zine that couldn't be opened then: “Moth Club Bulletin”." Photo reason: "…without 1 zine
   whose photo couldn't be read then: “Moth Club Bulletin”." Unnamed: "…without 1 zine that had no readable
-  name." Then the existing "What was already on this shelf stayed put."
+  name." Then the existing "What was already on this shelf stayed put." With Part N the lines run in its N5
+  order: title → already-here line → this notice → "stayed put".
 - The reason vocabulary is a string with an "unreadable" fallback, so adding "photo" needs no version change;
   older builds ignore the whole field.
 
@@ -612,7 +614,8 @@ total loss is withdrawn by the very damage it exists for. The owner ruled on 202
    `packageVersion` stays 2. Older builds ignore the key (`ignoreUnknownKeys`, `ZineLibraryBackupStager.kt:105`,
    verified at beta.4-r3 and beta.5).
 6. **Exact closure is preserved** (ADR-110 §4): the asset table is rebuilt from the saved zines only.
-7. **Restore is unchanged in kind:** staged, fail-closed, additive (ADR-110 §5). A restore of a partial
+7. **Restore is unchanged in kind:** staged, fail-closed, additive (ADR-110 §5, as amended by
+   [ADR-121](../DECISIONS.md#adr-121): only zines not already on the shelf are added). A restore of a partial
    archive tells the maker what it lacked. (A poisoned photo met **during restore** stays out of this ADR's
    scope, as Q8 ruled.)
 8. **Restore reports what happened:** local staging-write failures aren't "damaged"; once commit starts Cancel is
@@ -862,10 +865,243 @@ Part 1b: [its own criteria](#part-1b-acceptance-criteria).
 - Single-zine `.zine` share and import (the unused v1 package).
 - Making the cross-device restore pass a standing release gate for every later backup change.
 
+## Part N — restore adds what's new
+
+> **✅ Frozen 2026-09-28; decision recorded as [ADR-121](../DECISIONS.md#adr-121) (Accepted, design).**
+> The owner approved the contract, the matching rule and one refinement to the N1 copy. The drawing is
+> Amendment N in [`backup-restore.html`](../design/mockups/backup-restore.html), and the freeze record is
+> [BACKUP-RESTORE-FREEZE.md](../design/BACKUP-RESTORE-FREEZE.md). **Implementation is not started**: no
+> Kotlin, tests or goldens yet (see [§11 of the plan](ZINELY-1X-IMPLEMENTATION-PLAN.md)). Until it ships, the
+> app still adds a separate copy of every zine, and older builds always will.
+
+### Owner rulings (2026-09-28)
+
+| # | Ruling |
+|---|---|
+| 1 | **Contract:** *"Restore adds zines that aren't already on your shelf. It never replaces what's here."* Restoring the same backup again does not add another identical set. |
+| 2 | **"Already on the shelf"** = same **title, format, paper size and content**. Never the id alone. Multiplicity counts: one identical shelf zine matches at most one identical backup zine; surplus identical backup zines are added. |
+| 3 | **A differing version** (older or newer) is added alongside; never replaces, never silently skipped. |
+| 4 | **Version-aware metadata and messages: deferred.** No origin id, no per-zine origin field. The result reports only how many were added, how many were already here, or "Nothing new to add". |
+| 5 | **Order of work:** this amendment → owner review → freeze → ADR → **only then** part 1b (both change what restore reports; 1b's R3 changes the result). |
+| 6 | **No confirmation** after choosing the file. Restore → choose `.zine` → restore begins. Revisit only if real usability testing shows the instant start still misleads ([deferred](#deferred-ux-observation-the-instant-restore)). |
+| 7 | **PR #81 unchanged:** no deduplication in step 1, no ADR-120 change. |
+
+### Current and new contract
+
+| | Until 2026-09-28 (ADR-110) | Part N (ADR-121) |
+|---|---|---|
+| Same backup restored twice | A second full set of copies ([ADR-110](../DECISIONS.md#adr-110) consequences: *"Repeated restores may create safe project duplicates"*) | Nothing new to add; the shelf is untouched |
+| A zine whose id is already on the shelf | Returns as a separate copy with a new id | Skipped if identical (title, format, paper, content); otherwise added with a new id |
+| A changed version | Added (as every zine is) | Added alongside |
+| Anything on the shelf | Never replaced | Never replaced (unchanged) |
+| Another phone / a renamed file | Everything added | Everything that isn't already there is added; file name and phone never matter |
+| A copy on purpose | Restore again, or Duplicate | **Duplicate** is the explicit way to make a copy |
+
+### States and copy (frozen 2026-09-28)
+
+| State | Title | Lines, in order |
+|---|---|---|
+| N1 chooser, content shelf | `Keep your zines` (unchanged) | Restore subline: *"Add zines from a Zinely backup. Zines already on this shelf aren't added again. If a zine has changed since the backup, the changed one is added too."* Empty-shelf subline unchanged (nothing there can match) |
+| N2 all new | `7 zines added to your shelf` | *"What was already on this shelf stayed put."* (the frozen `restored` state, unchanged) |
+| N3 some new | `2 zines added to your shelf` | *"The other 5 were already here, so they weren't added again."* · *"What was already on this shelf stayed put."* |
+| N3, one already here | `6 zines added to your shelf` | *"The other zine was already here, so it wasn't added again."* · stayed put |
+| N3, one added | `1 zine added to your shelf` | *"The other 6 were already here, so they weren't added again."* · stayed put |
+| N4 nothing new | `Nothing new to add` | *"The zines from this backup are already on your shelf."* (one zine: *"The zine from this backup is already on your shelf."*) |
+| N5 with 1b, partial archive | as N3 / N4 | already-here line · 1b's partial-archive notice · stayed put (N4: no stayed put) |
+| N5 with 1b's R3 (lagging) | as N3 | already-here line · the frozen lagging line (no stayed put, as frozen) |
+
+Rules the drawing fixes:
+- **Every outcome is a success**: ✓ mark, `Done`, no warning colour. N4 is a successful no-op, never
+  `0 zines added` and never an error. It avoids *"Nothing on this shelf was changed."*, because that is the
+  frozen **failure** body, and it omits "stayed put", because nothing was added.
+- **The title keeps the count added**, so 1b's frozen partial and lagging titles don't change. The owner's
+  example `2 zines added · 5 already here` was not adopted: every title in this flow is one sentence, and the
+  polish has just removed a `·` because a 200 % wrap strands it.
+- **Product words only.** No "hash", "id", "match", "duplicate" or "skip" in copy. "Already here" is the
+  maker's word for it.
+- **Line order (N5):** title → already-here line → partial-archive notice → lagging line *or* "stayed put".
+- **N4 never meets 1b's commit phase.** A restore with nothing new never commits, so *"This part can't be
+  stopped."* and the lagging line never follow it.
+- **Pass 2 question for the device check** (final review, 2026-09-28): after a maker edits a zine, the
+  restore adds the backup's copy. Check that *"the changed one is added too"* isn't read as "my edited zine is
+  added again". The owner's text stands.
+
+### Matching model (for implementation; not product copy)
+
+1. **Key.** Title (exact string; no trimming or case folding), format, paper size, and content. Title comes
+   from `meta.json` on the shelf side and from the manifest entry on the backup side. Format and paper size
+   live in the document and in the manifest entry; they are compared explicitly anyway.
+   **Not in the key:** the cover pair (`coverSurface` / `coverStamp`) and the created / updated times. A
+   backup zine that differs from a shelf zine only in its cover or its times is already here; its cover is
+   not brought back.
+2. **Content.**
+   - Equal SHA-256 of the raw `document.json` bytes (shelf file vs the manifest's verified `documentSha256`) is
+     a match.
+   - Otherwise, compare the **decoded** `ZineDocument` values (data-class equality after migration). This
+     catches equal content in older bytes: any save re-stamps the current schema
+     (`JsonDocumentSerializer.kt:47-49`), so an older backup of unchanged content differs by bytes.
+   - An equivalent implementation re-serializes each decoded document with the current serializer and
+     compares those hashes, which gives one sortable key.
+3. **Multiplicity.** Count shelf zines per key. Walk the backup entries in manifest order: if the key has a
+   shelf zine left, use it up and count the entry as already here; otherwise add the entry. A shelf zine
+   satisfies at most one backup entry. Because the key is an equality, this greedy count is exact.
+4. **Any doubt adds.** A zine is added unless the shelf zine can be shown to have the same content.
+   Byte-identical files match at once, whether or not they decode, because an identical copy adds nothing the
+   shelf zine lacks. Otherwise the decoded content is compared (item 2). If equal content can't be shown, the
+   zine is added. The cases below apply only when the bytes differ.
+   - A title that differs, an unreadable shelf zine, a document that can't be decoded on either side, or an
+     unequal value (including float noise such as `-0.0` vs `0.0`) all mean **add**, never a silent skip.
+   - An unreadable shelf zine matches nothing, so the restore stays fail-closed on the backup and fails open to
+     adding.
+5. **Nothing on the shelf is written.** Added entries keep today's path: `RestoreProjectIdAllocator` keeps a
+   free id and mints a new one on a clash (a changed version with the same id still gets a new id), and the
+   committer still refuses to overwrite.
+6. **Where it runs.**
+   - Inside `prepareRestore`, before allocation, under the existing writer lease and repository mutex
+     (`RoomProjectRepository.kt:316-360`).
+   - It reads the shelf from **files** (`meta.json` + `documents.load`), not Room, the way
+     `createLibraryBackup` does.
+   - Cost: hash every shelf document (about a backup's reading); **decode** a shelf document only when its
+     title, format and paper size equal some backup entry's and its bytes don't, so most restores decode
+     nothing on the shelf side.
+   - Pending undoable deletes are already committed before the picker opens
+     (`HomeViewModel.requestBackupRestorePicker`), so a zine the maker just deleted can't absorb a match.
+7. **Photos.** Unchanged: the committer installs the staged assets and skips hashes already present. A
+   restore that adds nothing never commits, so it repairs no missing photo file on the shelf. This is accepted:
+   it is a separate integrity question, not this contract.
+8. **Out of scope.** v1 single-zine packages (library restore accepts only v2,
+   `ZineLibraryBackupValidator.kt:38`), and cleaning up duplicates already on a shelf. Part N prevents new
+   ones; it removes nothing.
+
+Verified against the rulings with a standalone model of this rule; that model is not Zinely code. Checked cases:
+- 1 shelf / 1 backup identical → 0 added, 1 here.
+- 2 / 2 → 0, 2.
+- 2 / 1 → 0, 1.
+- 1 / 2 → 1, 1.
+- Identical + changed version → 1, 1.
+- Edited on the shelf since the backup → 1 added.
+- Renamed zine → added.
+- Equal content in older bytes → already here.
+- Empty shelf or another phone → all added.
+- The same backup restored twice → nothing new both times.
+
+The file name and the phone are not inputs.
+
+### Smallest implementation change (later; not now)
+
+- **Empty commit.** When every entry is already here, today's path fails:
+  - `prepareRestore` would hand an empty list to `AdditiveLibraryRestoreCommitter.commit`, whose validation
+    `require(prepared.projects.isNotEmpty())` (`AdditiveLibraryRestoreCommitter.kt:134`) throws.
+  - `restoreLibrary` turns that into `DataError.Io("failed to commit library restore")`
+    (`RoomProjectRepository.kt:364-366`).
+  - The ViewModel maps `Io` to `ReadFailed` (`HomeViewModel.kt:477`), so the maker would read "Couldn't read
+    that file".
+  - **Fix:** `restoreLibrary` returns success with nothing added *before* the `NonCancellable` commit block when
+    the prepared list is empty. The committer keeps its guard.
+  - A backup can't be empty (`ZineLibraryBackupValidator.kt:54`), so "nothing added" always means at least one
+    zine already here.
+- **Receipt.** `LibraryRestoreReceipt` gains an already-here count beside 1b's `addedCount` /
+  `shelfUpToDate` (R3). One receipt change, designed once.
+- **UI state.** `RestoreAdded` carries the already-here count. Either a `RestoreNothingNew` state is added, or
+  `RestoreAdded` with zero added renders N4 (the implementation picks one and documents it). New `Copy` strings
+  for N1, N3 and N4.
+- **Unchanged:** the manifest, the writer, the stager, the allocator, the committer's guards, and the document
+  schema.
+
+### Tests required later
+
+- **JVM, pure (the matching function):**
+  - every multiplicity case above;
+  - equal content in older bytes;
+  - title / format / paper differences;
+  - undecodable documents meaning add;
+  - manifest order preserved.
+- **Robolectric repository (`RoomProjectRepositoryRestoreTest`):**
+  - Restore the same archive twice. The second returns success with 0 added and N already here; no project
+    directory or row is created, and no commit journal is written.
+  - A mixed archive adds only the new and changed entries.
+  - A changed version with a clashing id gets a new id beside the original.
+  - An unreadable shelf zine never absorbs a match.
+  - The frozen fixture `library-backup-v2.zine` restored onto a shelf already holding its zines adds nothing;
+    the fixture itself stays byte-identical.
+  - The existing colliding-id test (`:156`) keeps passing unchanged: its entry differs in title and content,
+    so it is a changed version.
+- **ViewModel:** receipt → N2 / N3 / N4. N4 is never `Failed`, and Cancel before commit still says "Restore
+  cancelled.".
+- **Compose (`LibraryBackupRestoreSheetTest`):**
+  - N3 / N4 copy and line order;
+  - N4 has the ✓ and `Done`, and no retry;
+  - 200 % text;
+  - goldens for the new states only.
+- **Unchanged and still green:** `RestoreProjectIdAllocatorTest` (the allocator still serves added entries;
+  its repeated-restore case is now a unit fact about ids, not the product outcome) and
+  `AdditiveLibraryRestoreCommitterTest`.
+- **Device (Pass 1 + 2):**
+  - Restore the same backup twice on a test shelf, never the owner's own zines: the second restore reads
+    "Nothing new to add" and the shelf count is unchanged.
+  - Edit one zine and restore again: exactly one zine is added.
+  - Pass 2: does N4 read as success or as failure?
+
+### Format and version impact
+
+**None.**
+- `packageVersion` stays 2.
+- The document schema is unchanged; the v4 plan is unaffected.
+- No new manifest or `meta.json` field.
+- Matching uses only fields every v2 archive already carries (`title`, `format`, `paperSize`,
+  `documentSha256`, the document itself).
+- Older builds are unaffected: they don't read anything new. Restored onto an older build, the same file
+  still adds copies, because that build keeps the old contract. Release notes say so.
+
+### Interaction with part 1b
+
+- **1b waits for this amendment's freeze and ADR.** Both change what a restore reports: 1b's R3 adds
+  `addedCount` / `shelfUpToDate`, and Part N adds the already-here count and N4.
+- **1b's partial-archive notice** composes with N3 / N4 (line order above). A restore with nothing new never
+  enters 1b's commit phase (R2), and never lags (R3).
+- **1b's ADR draft, item 7** ("Restore is unchanged in kind") must be reworded to reference the Part N ADR.
+  1b's backup-side decisions (skip-and-list, `omitted`) are unaffected.
+
+### Deferred UX observation: the instant restore
+
+On 2026-09-28 the device log showed each "zines added" result follow **one tap in the system picker**. The
+restoring sheet then flashes for about 200–300 ms, so the owner read the result as appearing unprompted. It
+was not a race: no code path shows a result without a chosen file.
+- Part N makes a repeated restore harmless (N4).
+- The restore still begins as soon as a file is chosen.
+- A confirmation step is **not** part of this amendment (ruling 6). Revisit it only if real usability testing
+  shows the start still misleads.
+
+### Lines changed at the Part N freeze
+
+Changed in the freeze change (2026-09-28) unless the row says otherwise.
+
+| Where | Until 2026-09-28 | Now |
+|---|---|---|
+| [BACKUP-RESTORE-FREEZE.md](../design/BACKUP-RESTORE-FREEZE.md) "Sheet", :120 | "The sheet says that an ID collision returns as a separate copy rather than replacing a zine." | The sheet says restore adds only zines not already on the shelf and replaces nothing |
+| same, :121-123 | "…restores add separate zines. Since the 2026-09-27 polish the action sublines say this…" | "…restores add what's new…" |
+| same, "Restore semantics" :145-149 | "Restore is additive…" | Add: an identical zine is not added again; a changed version is added; nothing is replaced |
+| same, "Result rules" :208 | "Restore success reports the number of zines added and says the existing shelf stayed put." | Plus the already-here count, and "Nothing new to add" as a success |
+| same, "Implementation status" :225-226 | "that exact file restored four additive copies" | Kept as historical device evidence, marked as the pre-Amendment-N contract |
+| `backup-restore.html` restore subline (`#restoreOptionBody` and its content-shelf text in `showSheet("trust")`), plus the N states | "…a matching zine returns as a separate copy." | N1 is the default subline; the N states are frozen |
+| This brief, 1b ADR draft item 7 (:616) | "Restore is unchanged in kind: staged, fail-closed, additive (ADR-110 §5)." | "…additive as amended by ADR-121 (Part N)" |
+| This brief, "Restore of a partial backup" (:533-539) | Title + notice + stayed put | Line order N5 |
+| [ADR-110](../DECISIONS.md#adr-110) consequences (:12717) | "Repeated restores may create safe project duplicates; any future merge semantics need a new decision." | A status note on ADR-110 points to [ADR-121](../DECISIONS.md#adr-121); ADR-110's text is not edited |
+| [Torture matrix](../reviews/2026-08-21-zine-backup-torture-matrix.md) :37 | "Repeated restore of same backup \| Safe additive duplicates…" | A dated 28 September note records the new expectation; the row stays as the snapshot; its test is still owed |
+| [1.x plan](ZINELY-1X-IMPLEMENTATION-PLAN.md) §5 sequence and §11 | 1b after step 1 | Part N (design frozen, ADR-121) before 1b; §11 row N and the §5 diagram updated |
+
+### Decision record
+
+The decision is [ADR-121](../DECISIONS.md#adr-121) (Accepted, design, 2026-09-28). It amends ADR-110 §5.
+The draft that stood here landed there unchanged in substance, with its review record. Read the ADR, not this
+brief, for the decision.
+
 ## Change log
 
 | Date | Change |
 |---|---|
+| 2026-09-28 | **Part N frozen.** The owner approved the contract and matching rule, and refined the N1 line (*"…aren't added again. If a zine has changed since the backup, the changed one is added too."*). Final independent review: GO. Recorded as [ADR-121](../DECISIONS.md#adr-121); the ADR draft here was replaced by a pointer. The freeze applied the listed line changes (1b item 7, partial-restore order, readiness rows). Implementation not started. |
+| 2026-09-28 | **Part N (PROPOSED, not frozen):** owner ruling that restore adds only zines not already on the shelf (same title, format, paper size and content; multiplicity-aware; a changed version is added; nothing replaced; no origin metadata; no confirmation). Drawn in `backup-restore.html` ("N · proposed"); spec, matching model, tests, lines to change on freeze and an ADR draft added. 1b now waits on Part N's freeze and ADR (owner ruling). No frozen line changed. |
 | 2026-09-25 | Written at `5c40e7b`. |
 | 2026-09-27 | **Backup-sheet polish frozen** (continuation of step 1a, owner-approved after the step 1 device check): the note is removed on both shelves, the two action tiles match, and the file name moves under the date ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)). Visual only; F1, F2 and every behaviour are unchanged. Step 1 (PR #81) implements it before merging. |
 | 2026-09-27 | **Step 1a approved and re-frozen.** The drawn `backup-restore.html` amendment (items 1–10) is owner-approved and frozen ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)). New owner rulings recorded as the step 1 contract: **F1**, a whole-backup failure is shown by where it failed ([section](#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2)); **F2**, busy is not a failure. The skip-point table, the rewrite-target clean-up and "what still fails" now point at F1; the unnamed-zine copy follows the drawing; part 1 readiness is READY; 1b readiness no longer waits on the amendment. The 1b plan and the additive `omitted` manifest field are unchanged. |
