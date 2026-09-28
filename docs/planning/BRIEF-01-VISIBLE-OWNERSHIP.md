@@ -945,9 +945,10 @@ Rules the drawing fixes:
 3. **Multiplicity.** Count shelf zines per key. Walk the backup entries in manifest order: if the key has a
    shelf zine left, use it up and count the entry as already here; otherwise add the entry. A shelf zine
    satisfies at most one backup entry. Because the key is an equality, this greedy count is exact.
-4. **Any doubt adds.** Identical bytes are the one exception: they are a match whether or not the document
-   decodes, because an identical copy adds nothing the shelf zine lacks. Everything below applies only when
-   the bytes differ.
+4. **Any doubt adds.** A zine is added unless the shelf zine can be shown to have the same content.
+   Byte-identical files match at once, whether or not they decode, because an identical copy adds nothing the
+   shelf zine lacks. Otherwise the decoded content is compared (item 2). If equal content can't be shown, the
+   zine is added. The cases below apply only when the bytes differ.
    - A title that differs, an unreadable shelf zine, a document that can't be decoded on either side, or an
      unequal value (including float noise such as `-0.0` vs `0.0`) all mean **add**, never a silent skip.
    - An unreadable shelf zine matches nothing, so the restore stays fail-closed on the backup and fails open to

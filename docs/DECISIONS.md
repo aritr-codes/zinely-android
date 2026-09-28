@@ -13226,8 +13226,11 @@ your shelf. It never replaces what's here."*
 4. **Different content is added** alongside, whether the version is older or newer. If its id clashes, it gets
    a new one.
 5. **Nothing is replaced.** ADR-110 §5's rule that the committer never overwrites is unchanged.
-6. **Doubt adds.** An unequal, undecodable or unreadable comparison never skips silently. The one exception:
-   identical bytes are a match whether or not they decode.
+6. **Doubt adds.** A zine is added unless the shelf zine can be shown to have the same content.
+   - Byte-identical files match at once.
+   - Otherwise the decoded content is compared.
+   - If equal content can't be shown (unequal, undecodable or unreadable), the zine is added. It is never
+     skipped silently.
 7. **Where it runs.** Matching runs before commit, inside the existing writer lease and repository mutex, and
    reads the shelf's files, not Room. A restore that adds nothing returns success before the commit step,
    whose non-empty guard stays.
