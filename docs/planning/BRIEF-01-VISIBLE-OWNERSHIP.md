@@ -14,7 +14,7 @@ the readiness audit and the D1 deep audit ([audit §5](ZINELY-1X-READINESS-AUDIT
 | Part | What | Readiness |
 |---|---|---|
 | **1** | "Last backup saved" fact, honest backup failures, no partial file left behind, no "Backup cancelled." after a complete file | ✅ **READY** — the one `backup-restore.html` amendment ([spec](#backup-restorehtml-amendment-specification)) was drawn, **owner-approved and re-frozen 2026-09-27** ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)). The **backup-sheet polish** (no note, equal action tiles, file name on its own line) was frozen later the same day. **Step 1 ✅ COMPLETE 2026-09-28** (PR #81, [ADR-120](../DECISIONS.md#adr-120) Accepted), polish included |
-| **1b** | Restore honesty (three defects) and skip-and-list backups — complete or explicitly partial, never silently partial | **READY AFTER** part 1 has merged (the amendment is already approved, 2026-09-27) **and** the [ADR draft](#adr-draft--amendment-to-adr-110) and [product-law draft](#product-law-amendment-draft) are independently reviewed and landed in the implementation session, before any code, **and** [Part N](#part-n--restore-adds-whats-new) is frozen with its ADR (✅ done 2026-09-28, [ADR-121](../DECISIONS.md#adr-121)); owner ruling 2026-09-28: both change what a restore reports |
+| **1b** | Restore honesty (three defects) and skip-and-list backups — complete or explicitly partial, never silently partial | **READY AFTER** part 1 has merged (the amendment is already approved, 2026-09-27) **and** the ADR and product-law amendment are independently reviewed and landed in the implementation session, before any code (✅ landed 2026-09-28 as [ADR-122](../DECISIONS.md#adr-122), Proposed, and [`zinely-v1.md`](../zinely-v1.md) §5/§6; implementation ⏳ in progress), **and** [Part N](#part-n--restore-adds-whats-new) is frozen with its ADR (✅ done 2026-09-28, [ADR-121](../DECISIONS.md#adr-121)); owner ruling 2026-09-28: both change what a restore reports |
 | **N** | Restore adds what's new: an identical zine is not added again, a changed version is added, nothing is replaced | ✅ **Design FROZEN 2026-09-28** ([ADR-121](../DECISIONS.md#adr-121), Accepted, design); implementation not started |
 | **2** | "Changing phones?" line | **BLOCKED BY** the physical cross-device restore pass |
 | **3** | Android device-to-device transfer | **BLOCKED BY** O1. Research leans to not doing it |
@@ -39,8 +39,8 @@ Parts 1 and 1b:
    - Parts 1 and 1b must keep it green and must **never regenerate** it; the fixture is frozen.
 
 Part 1b only:
-3. **Work (review), in the implementation session, before code:** the [ADR draft](#adr-draft--amendment-to-adr-110)
-   and the [product-law draft](#product-law-amendment-draft) are independently reviewed (Review Agent) and landed
+3. **✅ Done 2026-09-28 — in the implementation session, before code:** the [ADR](#adr--amendment-to-adr-110)
+   and the [product-law amendment](#product-law-amendment) were independently reviewed (Review Agent) and landed
    in `DECISIONS.md` and `docs/zinely-v1.md`. `zinely-v1.md` outranks ADRs (`docs/zinely-v1.md:3`), so the two
    land together.
 
@@ -266,6 +266,13 @@ The Shelf itself does not change. The dock's *Backups* entry keeps its label. Th
   - If wanted later, compare the shelf's zine ids with the ids in the last backup. That is 🟦 future work.
 
 ## Part 1b — restore honesty and explicit partial backups
+
+> **[ADR-122](../DECISIONS.md#adr-122) is the decision; where this spec and the ADR differ, the ADR wins.** Its
+> review changed four details here: the package validator's per-entry rules (a zine's document size, times and schema
+> range; a photo's type, dimensions and byte count) are skip points too; a read-side failure or unavailable source on a
+> **document** at the writer fails the whole backup (only an integrity mismatch or a per-entry limit on a document is
+> rebuilt without it); 0 of M is a third transport result, `NothingSaved`, never a save; and R1 uses only the restore
+> transport's 64 KiB free-space probe, without errno sniffing.
 
 The written spec for plan step 1b. **The product rule, verbatim (owner, 2026-09-26):**
 
@@ -569,109 +576,17 @@ read the partial success with both reasons and the last-backup line; restore tha
 file and read the partial notice; TalkBack reads names in order. Pass 2: does "5 of 6 zines saved" read as a
 success the maker can trust, or as a failure?
 
-## ADR draft — amendment to ADR-110
+## ADR — amendment to ADR-110
 
-> **DRAFT. Not recorded.** It lands in `DECISIONS.md` only in the implementation session, after independent
-> review, numbered then. Next free on `main` is 119 (taken by step 2 if it lands first); ADR-115 is reserved
-> on PR #70.
+The draft that stood here landed as [ADR-122](../DECISIONS.md#adr-122) (Proposed, 2026-09-28) in the step 1b
+implementation session, after independent review; the review corrected it in substance (the shelf-entry premise,
+the per-entry validator rules as skip points, a transient document read at the writer failing the whole backup, the
+`NothingSaved` carrier for 0 of M, and R1 without errno sniffing). Read the ADR, not this brief, for the decision.
 
-### ADR-NNN (next free at implementation time) — A backup is complete or explicitly partial, never silently partial
+## Product-law amendment
 
-**Status:** Proposed · **Amends:** [ADR-110](../DECISIONS.md#adr-110) (the "all zines in one user-owned file" premise and the
-backup fail-closed clause) · **Extends:** ADR-042, ADR-110
-
-#### Context
-
-ADR-110 (`DECISIONS.md:12704`): *"Zinely's local-only promise makes a user-held backup a durability requirement.
-The original `ZinePackageManifest` is version 1 and contains one project; V1 product law now requires **all
-zines in one user-owned file**."*
-
-ADR-110, backup production (`DECISIONS.md:12728`): *"`RoomProjectRepository` exposes `LibraryBackupRepository`
-under the same writer lease and fails closed on unreadable metadata, missing assets, or poisoned bytes."*
-
-Fail-closed backup made one unreadable zine block every backup, permanently. A zine unreadable at indexing has
-no shelf row (`RoomProjectRepository.kt:674-676`), so the maker can't find or delete it: the protection against
-total loss is withdrawn by the very damage it exists for. The owner ruled on 2026-09-26 (Q8).
-
-#### Decision
-
-1. **Product rule:** *"A backup may be complete or explicitly partial, but it must never be silently partial."*
-2. **Backup is skip-and-list.** A zine that can't be read — unsafe path, unreadable `meta.json`, a document
-   that fails to load as corrupt, invalid or newer-version, malformed JSON, or a missing, unreadable or
-   hash-mismatched, over-limit or persistently unreadable asset it references — is left out; the rest is
-   saved. Transient **document** reads, write failures on the private archive and library-wide limits still
-   fail the whole backup. Zero zines saved writes no file.
-3. **One photo never fails the whole backup** (owner ruling, 2026-09-26: *a single poisoned or unreadable
-   photo is handled by skip-and-list*). Assets are checked before the archive is built (hash, size, one
-   retried read); a failure leaves out every zine that uses the asset. The writer's checks stay as a
-   backstop: when one trips on a named source entry, the zines using it are left out and the private archive
-   is rewritten. The archive is private until complete, so the maker's chosen file is never touched by the
-   retry.
-4. **Explicit to the maker:** the result reports "N of M" and names every left-out zine with a readable title,
-   with its reason (couldn't open · newer Zinely · couldn't read a photo).
-5. **Explicit in the file:** `ZineLibraryBackupManifest` gains the defaulted `omitted` list (title?, reason:
-   `unreadable` · `newer_version` · `photo`; unknown values read as `unreadable`).
-   `packageVersion` stays 2. Older builds ignore the key (`ignoreUnknownKeys`, `ZineLibraryBackupStager.kt:105`,
-   verified at beta.4-r3 and beta.5).
-6. **Exact closure is preserved** (ADR-110 §4): the asset table is rebuilt from the saved zines only.
-7. **Restore is unchanged in kind:** staged, fail-closed, additive (ADR-110 §5, as amended by
-   [ADR-121](../DECISIONS.md#adr-121): only zines not already on the shelf are added). A restore of a partial
-   archive tells the maker what it lacked. (A poisoned photo met **during restore** stays out of this ADR's
-   scope, as Q8 ruled.)
-8. **Restore reports what happened:** local staging-write failures aren't "damaged"; once commit starts Cancel is
-   withdrawn; a committed restore is reported as added even if the shelf index lags.
-
-ADR-110's premise sentence is read as: *V1 product law requires one user-owned file holding every zine Zinely
-can read, naming any it could not.* Its backup fail-closed clause (including "poisoned bytes") is superseded
-by Decisions 2–6.
-
-#### Consequences
-
-- A damaged zine no longer blocks backups; the maker is told which zine and, when it's on the shelf, can act.
-- A partial archive restored on a pre-amendment build restores without the partial notice (accepted, in
-  release notes).
-- The frozen v2 fixture stays valid; a new frozen partial fixture joins it. The
-  [torture matrix](../reviews/2026-08-21-zine-backup-torture-matrix.md) gains rows: unreadable zine at backup,
-  poisoned asset shared by two zines, writer backstop tripping after the pre-check, all zines unreadable,
-  partial archive on an old reader.
-- Backup reads each asset twice (pre-hash); bounded by the existing limits. A backstop retry rewrites the
-  private archive, at most once per failing entry.
-
-#### Alternatives
-
-- **Keep fail-closed, add a delete-by-id remedy:** needs a UI for an invisible zine; still no backup meanwhile.
-- **`packageVersion` 3 for partial archives:** older builds refuse the whole file; rejected.
-- **Record partiality only on the phone:** lost with the phone — the case backups exist for; rejected.
-- **Put "partial" in the suggested file name:** the name is chosen in the picker before the scan runs
-  (`HomeViewModel.kt:236-239`), so it can't know; rejected.
-
-#### Review
-
-To be filled by the implementation session's independent review (verdict, findings, reconciliation).
-
-## Product-law amendment draft
-
-**Source.** ADR-110 cites "V1 product law … **all zines in one user-owned file**". That exact phrase does not
-occur anywhere in `docs/` (searched: `docs/**/*.md` for "one user-owned file", "user-owned file", "all zines
-in one", "product law"; `PRD.md`, `zinely-constitution.md`, `zinely-v1-product-vision.md`,
-`zinely-v1-execution-plan.md`). The V1 product law is `docs/zinely-v1.md` (it outranks every ADR, :3); the
-sentences ADR-110 paraphrases are:
-
-- `docs/zinely-v1.md:68` (§5 Feature Tribunal): *"| User-held backup / restore / device migration (one file,
-  user destinations only) | **REQUIRED** | Art 3 — constitutional duty; ownership includes survival. No Zinely
-  servers, ever. |"*
-- `docs/zinely-v1.md:55` (§4 journey): *"Somewhere quiet: "Back up your zines" — one tap, one file, any
-  destination they own."*
-
-**Draft amendment** (to land with the ADR, per the amendment rule at `docs/zinely-v1.md:170`):
-
-- `:68` → *"| User-held backup / restore / device migration (one file, user destinations only; **complete or
-  explicitly partial, never silently partial** — a zine Zinely can't read is left out and named, never
-  silently dropped) | **REQUIRED** | Art 3 — constitutional duty; ownership includes survival. Art 5 — the
-  result says what it holds. No Zinely servers, ever. |"*
-- `:55`: unchanged (it describes the gesture, not completeness).
-- 🟦 `:107` (DoD 2, torture matrix): add "back up a library holding an unreadable zine (the rest is saved and
-  the missing one named)".
+The draft that stood here landed with ADR-122 in [`zinely-v1.md`](../zinely-v1.md) §5 (the backup row: *complete or
+explicitly partial, never silently partial*) and §6 DoD 2 (the torture-matrix case). Read that document for the law.
 
 ## `backup-restore.html` amendment specification
 
@@ -844,7 +759,7 @@ Part 1b: [its own criteria](#part-1b-acceptance-criteria).
 - A backup could end partial without the maker being told, on screen and in the manifest.
 - One photo (missing, unreadable after one retry, over the limit, or failing its hash — at the pre-check or
   the writer's backstop) could still fail the whole backup after part 1b, or a whole-backup failure appears
-  that is not in the [stated list](#a-photo-that-fails-its-check).
+  that is not in the stated list — now [ADR-122](../DECISIONS.md#adr-122) Decision 2, which supersedes the list [above](#a-photo-that-fails-its-check).
 - Part 2 work starts before Gate 4 is recorded.
 
 ## Out of scope

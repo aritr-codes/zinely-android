@@ -130,6 +130,7 @@
 | [ADR-119](#adr-119) | **On the Bench, TalkBack reads a page in spatial reading order, not stacking order; the zine action sheet's scrim is silent.** A §4.5 canvas clause; nodes declared in that order; `ZineActionScrim` gets `ZSheet`'s one-modifier fix. | Accepted 2026-09-26; 1.x step 2; owner TalkBack listen passed on SM-A176B |
 | [ADR-120](#adr-120) | **A backup says when it was last saved, and a failed backup says where it failed.** A last-backup record written only on a saved backup; two backup phases (private archive, then the chosen destination) classified by owner ruling F1; one Cancel-vs-complete latch; the destination discarded best-effort. Extends ADR-110; the step 1b boundary is explicit. | Accepted 2026-09-28 (proposed 2026-09-27); 1.x step 1; device passes and owner checks done |
 | [ADR-121](#adr-121) | **Restore adds zines that aren't already on the shelf and never replaces what's here.** A zine is already here when its title, format, paper size and content equal a shelf zine's, counted one for one; a changed zine is added; doubt adds. No format change. Amends ADR-110 §5. | Accepted (design) 2026-09-28; owner ruling; implementation and device passes pending |
+| [ADR-122](#adr-122) | **A backup is complete or explicitly partial, never silently partial; a restore reports what happened.** Backup is skip-and-list (one photo never fails it); the manifest gains a defaulted, leniently read `omitted` list, `packageVersion` stays 2; restore staging-write failures aren't "damaged", Cancel is withdrawn once commit starts, and a committed restore is a success even if the shelf lags. Amends ADR-110. | Proposed 2026-09-28; 1.x step 1b |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -12700,7 +12701,7 @@ Three challenges, honestly:
 
 ### One file owns the library — additive v2 `.zine` backup beside readable v1
 
-**Status:** Accepted · **Date:** 2026-08-21 · **Supersedes:** nothing · **Extends:** [ADR-009](#adr-009), [ADR-020](#adr-020), [ADR-022](#adr-022), [ADR-025](#adr-025) · **Amended by:** [ADR-121](#adr-121) (2026-09-28: §5 and the repeated-restore consequence; restore adds only zines not already on the shelf)
+**Status:** Accepted · **Date:** 2026-08-21 · **Supersedes:** nothing · **Extends:** [ADR-009](#adr-009), [ADR-020](#adr-020), [ADR-022](#adr-022), [ADR-025](#adr-025) · **Amended by:** [ADR-121](#adr-121) (2026-09-28: §5 and the repeated-restore consequence; restore adds only zines not already on the shelf) · [ADR-122](#adr-122) (proposed 2026-09-28: the premise and the backup fail-closed clause; a backup is complete or explicitly partial)
 
 #### Context and decision
 
@@ -13486,3 +13487,163 @@ your shelf. It never replaces what's here."*
 - **Final pre-freeze review, after the owner's one copy refinement to N1:** GO.
   - One recommended note was recorded, not applied: the Pass 2 check of "the changed one is added too".
   - The owner's exact text stands.
+
+## ADR-122 {#adr-122}
+
+### A backup is complete or explicitly partial, never silently partial; a restore reports what happened
+
+**Status:** Proposed, 2026-09-28. Zinely 1.x step 1b ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)),
+specified by [Brief 01](planning/BRIEF-01-VISIBLE-OWNERSHIP.md) part 1b (its ADR draft, landed here) and built together
+with [ADR-121](#adr-121)'s restore contract (Part N), whose receipt it shares. The states are the frozen
+[`backup-restore.html` amendment 1a](design/BACKUP-RESTORE-FREEZE.md) items 4–10 and Amendment N. Owner rulings: Q8
+(2026-09-26) and the supplementary photo ruling the same day
+([decision gate](planning/ZINELY-1X-DECISION-GATE.md#q8-the-next-release-and-the-backuprestore-defects)).
+**Amends:** [ADR-110](#adr-110) (the "all zines in one user-owned file" premise and the backup fail-closed clause).
+**Extends:** [ADR-042](#adr-042), [ADR-110](#adr-110), [ADR-120](#adr-120). Lands with the product-law amendment to
+[`zinely-v1.md`](zinely-v1.md) §5 (the backup row) and §6 (DoD 2), which outranks every ADR.
+
+#### Context
+
+ADR-110: *"V1 product law now requires **all zines in one user-owned file**"*, and backup production *"fails closed on
+unreadable metadata, missing assets, or poisoned bytes."* Fail-closed backup made one unreadable zine block every
+backup until the maker found and deleted it. That is not always possible: a zine whose only fault is a photo looks
+healthy on the shelf, and a zine with an unsafe path, a missing document, a transient load failure, or a document that
+loads but has no index row has no shelf entry at all (a corrupt or newer-version zine does show, as unavailable, since [ADR-042](#adr-042) §8). The protection against
+total loss is withdrawn by the very damage it exists for.
+
+Restore said three things that did not happen (Brief 01 R1–R3): a full disk while staging was "This backup looks
+damaged"; a Cancel during commit said "Restore cancelled." after the zines were on disk; a Room failure after a
+committed restore said "Couldn't read that file".
+
+#### Decision
+
+1. **Product rule** (owner, Q8): *"A backup may be complete or explicitly partial, but it must never be silently
+   partial."*
+2. **Backup is skip-and-list.** A zine that can't be read — unsafe path, unreadable `meta.json`, a document that fails
+   to load as corrupt, invalid or newer-version, malformed JSON or no `schemaVersion`, a manifest entry the package
+   validator refuses for that zine alone (document size, times, schema range) — or that uses a photo that fails its
+   check (Decision 3), is left out; the rest is saved.
+   **Still failing the whole backup**, shown by ADR-120's F1 classification:
+   - a transient **document** read: `documents.load` failing `Io` or `OutOfSpace`, an I/O failure sizing or hashing a
+     document, or a read-side I/O failure or unavailable source on a document entry at the writer;
+   - a write-side failure on the private archive;
+   - a library-wide limit (manifest size, entry count, total expansion);
+   - a private clean-up that can't remove an incomplete archive before a rewrite;
+   - anything else in Zinely's own backup process that names no single zine or photo — the lease, recovery and
+     reconcile that precede the scan, and a writer failure naming no entry. These are F1 item 3, "Couldn't finish that
+     backup"; a leftover private-archive `Corrupt` or `Invalid` goes there too, which retires ADR-120 §3's part-1
+     mapping to "A zine here can't be opened".
+
+   `Busy` (the lease, or a zine still being put away) keeps F2's "Give Zinely a moment": it is not a failure. **None of
+   these is a single photo.**
+3. **One photo never fails the whole backup** (owner, 2026-09-26). Each referenced photo is checked before the archive
+   is built: present, a readable image, and a streaming SHA-256 equal to its content-addressed name; an I/O failure
+   while sizing or hashing it is retried once. The package validator's per-photo rules (type, dimensions, byte count)
+   are applied to the candidate manifest before writing, by the same validator the writer runs: an issue whose path
+   names one zine (`projects[i]`) or one photo (`assets[j]`) leaves that zine, or every zine using that photo, out; an
+   issue naming an archive entry (`entries[k]`) maps to that entry's zine or photo. Validation reruns after each
+   removal, and only an issue that still names no zine or photo is library-wide. A photo that fails any check leaves out every zine that uses it, reason
+   `photo`. The writer's checks stay as a backstop: a `ZineBackupWritingException` now names the failing entry
+   (`entryPath`) and says whether an `IO_FAILURE` came from **reading** a source or **writing** the private archive
+   (`readSide`). When the writer fails on a named **photo** (integrity mismatch, per-entry limit, unavailable source,
+   read-side I/O), or on a named **document** by an integrity mismatch or a per-entry limit, the repository deletes
+   the incomplete private archive, confirms it is gone, leaves out every zine using that entry (photo → `photo`;
+   document → `unreadable`), rebuilds the manifest from the survivors and writes again. Each rebuild removes at least
+   one entry, so the loop is bounded by the number of distinct entries. The archive is private until complete, so the
+   maker's chosen file is never touched by a rebuild.
+4. **Explicit to the maker.** A backup that saves some zines is a success titled "N of M zines saved", naming each
+   left-out zine with a readable title (up to three, then "and N more"), one sentence per reason in the order couldn't
+   open · newer Zinely · couldn't read a photo. A left-out zine's name comes from its readable `meta.json`, else its
+   shelf row, else none (counted, not named). The last-backup line records the counts (device state, never in the
+   archive). **Zero of M is never saved:** the repository writes no archive and its receipt says so; the transport
+   returns a third `LibraryBackupResult`, `NothingSaved(totalCount, omitted)`, discards the destination as for any
+   unsaved result, and writes no record. The maker sees amendment 1a item 4, with "Got it" only: "A zine here needs a
+   newer Zinely" when every left-out zine is newer (a choice between frozen states that the freeze left without a
+   trigger; flagged for owner confirmation), "No zines could be saved" in its photo wording when every reason is
+   a photo, otherwise its general wording, adding "They may not appear on your shelf." when a left-out zine has no
+   shelf row.
+5. **Explicit in the file:** `ZineLibraryBackupManifest` gains the defaulted `omitted: List<ZineBackupOmission>`
+   (`title: String?`, `reason`: `unreadable` · `newer_version` · `photo`; an unknown value reads as `unreadable`).
+   Partial ⇔ `omitted` non-empty; no id, path or bytes of a left-out zine enter the archive. Complete backups carry
+   `"omitted":[]`. **`packageVersion` stays 2**; older builds ignore the key (`ignoreUnknownKeys`, verified at
+   beta.4-r3 and beta.5). Restore decodes this one display-only field **leniently** — a malformed or wrongly typed
+   value is ignored, never a refusal — and clamps it for display (the titles of the first 50 entries, the rest
+   counted; 120 characters per title; rendered as plain text). Restore's fail-closed validation of the zines
+   themselves is unchanged.
+6. **Exact closure is preserved** ([ADR-110](#adr-110) §4): the asset table is rebuilt from the saved zines only.
+7. **Restore is unchanged in kind:** staged, fail-closed, additive as amended by [ADR-121](#adr-121) (only zines not
+   already on the shelf are added). A restore of a partial archive says what the backup was saved without, in
+   ADR-121's N5 line order. A poisoned photo met **during restore** stays out of scope, as Q8 ruled.
+8. **Restore reports what happened.**
+   - **R1.** A failure to *write* the local staging copy is `ZineBackupStagingException.Reason.STAGING_WRITE_FAILED`,
+     never `MALFORMED_ARCHIVE`. It, and a failure preparing the restore, is `DataError.OutOfSpace` when the private
+     disk's free space is under the 64 KiB probe the restore transport already uses (one shared helper, so the two
+     can't disagree), else `DataError.Unknown`, which renders the existing "Couldn't finish that restore". No errno
+     sniffing is added here: [ADR-036](#adr-036) §2 holds, and ADR-120's `ENOSPC` exception stays limited to the
+     provider destination. Reading the archive keeps its mapping.
+   - **R2.** The repository calls a commit-start hook inside the lock immediately before the non-cancellable commit;
+     the hook claims ADR-120's `OutcomeLatch` as done. If Cancel won first, nothing is committed and "Restore
+     cancelled." is true. Once the hook wins, Cancel is a no-op: the running sheet drops its Cancel control (it
+     leaves the tree), dismissing it or pressing Back does not cancel, and it says "Adding zines to your shelf." /
+     "This part can't be stopped."
+   - **R3.** Once commit succeeds the outcome is a success: `LibraryRestoreReceipt` carries `addedCount` (known without
+     Room), `alreadyHereCount` (ADR-121), `shelfUpToDate` and the archive's `omitted`. A post-commit index failure is
+     `shelfUpToDate = false` with the "They may take a moment to appear" line, and the shelf is re-read. A commit
+     failure stays a failure: the committer rolls back.
+
+ADR-110's premise sentence is read as: *V1 product law requires one user-owned file holding every zine Zinely can
+read, naming any it could not.* Its backup fail-closed clause (including "poisoned bytes") is superseded by Decisions
+2–6.
+
+#### Consequences
+
+- A damaged zine no longer blocks backups; the maker is told which zine and, when it's on the shelf, can act on it.
+- A partial archive restored on a build before this decision (beta.4-r3, beta.5) restores what it holds **without**
+  the partial notice. That is the one place the rule is weaker, and no new build can change it; the maker was told at
+  backup time and the last-backup line still says so on that phone. Release notes must say it.
+- The frozen v2 fixture stays byte-identical and green; a new frozen partial fixture joins it. The
+  [torture matrix](reviews/2026-08-21-zine-backup-torture-matrix.md) gains rows: unreadable zine at backup, poisoned
+  photo shared by two zines, writer backstop after the pre-check, all zines unreadable, partial archive on an old
+  reader.
+- Backup reads each photo twice (pre-hash, then copy), bounded by the existing limits; a backstop rewrite happens at
+  most once per failing entry.
+- Part 1's interim state ("A zine here can't be opened") is retired: no release carries it.
+
+#### Alternatives
+
+- **Keep fail-closed, add a delete-by-id remedy:** needs a UI for the zines with no shelf entry and a way to find a
+  zine whose only fault is a photo; still no backup meanwhile.
+- **`packageVersion` 3 for partial archives:** older builds refuse the whole file; rejected.
+- **Record partiality only on the phone:** lost with the phone — the case backups exist for; rejected.
+- **Put "partial" in the suggested file name:** the name is chosen in the picker before the scan runs; rejected.
+- **A new `DataError` for "nothing saved":** every exhaustive `when` over `DataError` would grow a backup-only case.
+  The transport's own result type is where saved and unsaved are already told apart, so `NothingSaved` lives there.
+- **Duplicate the validator's per-entry rules in the repository's pre-check:** two copies of one rule set drift; the
+  candidate manifest is checked by the validator the writer itself runs.
+
+#### Review
+
+**Before code (2026-09-28), an independent Review Agent that did not write the draft:** **GO WITH FIXES**, then
+**GO** on re-review. Every Required Fix was ACCEPTED:
+
+1. The premise said an unreadable zine is always invisible. Since ADR-042 §8 a corrupt or newer zine shows as
+   unavailable, so the Context now names the cases that really have no shelf entry.
+2. The writer's validator refused per-zine and per-photo manifest rules (photo type and dimensions; document size,
+   times and schema range) with no entry named, so one photo could still fail the whole backup. Those rules now run
+   on the candidate manifest, by path, as skip points (Decision 3).
+3. Decisions 2 and 3 disagreed on a document's read-side failure at the writer. It now fails the whole backup; only
+   a document's integrity mismatch or per-entry limit is rebuilt without it.
+4. 0 of M had no defined carrier. It is now `NothingSaved`, never `Saved`.
+5. The whole-backup list read as exhaustive but wasn't. It now covers the pre-scan failures and writer failures
+   that name no entry, and retires ADR-120 §3's part-1 mapping.
+6. The Brief still held the full draft. It is replaced by a pointer, and the plan lines are updated.
+
+Recommendations applied:
+
+- R1 uses the transport's probe only, with no errno sniffing.
+- Dismiss or Back does not cancel a commit.
+- The clamp wording is complete.
+- The product law says "reported — by name when it has one".
+- `entries[k]` validator issues map to their zine or photo.
+- The newer-state trigger is flagged for owner confirmation.
+- The Brief's stop condition points here.
