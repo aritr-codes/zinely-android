@@ -71,6 +71,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The Backups sheet now says when a backup was last saved on this phone, with the file's name when the storage
+  app gives one, on its own line under the date, or that none has been saved yet. It no longer calls the zines
+  "kept safe" or promises every zine before a backup has run. Back up and Restore now look like equal choices, and
+  the note that only repeated them is gone ([ADR-120](docs/DECISIONS.md#adr-120)).
+- A backup that fails now says where it failed. "Couldn't save the backup there" is shown only when the chosen
+  location refused the file; a problem inside Zinely says "Couldn't finish that backup", and a zine that can't be
+  opened or needs a newer Zinely says so in backup words instead of restore's "This backup looks damaged" (the
+  "can't be opened" wording is interim: step 1b replaces it before release, and this line with it). A
+  failure that trying again can't fix offers only "Got it". After a failed or cancelled backup, Zinely tries to
+  remove the empty or unfinished file it was saving to ([ADR-120](docs/DECISIONS.md#adr-120)).
+- Pressing Cancel just as a backup finishes no longer says "Backup cancelled." about a file that was saved
+  ([ADR-120](docs/DECISIONS.md#adr-120)).
 - With TalkBack, the Bench now reads a page from top to bottom and left to right, whatever is stacked on top.
   A full-page photo or a spread half is read first. Moving something to the front or back, or making a spread,
   no longer changes the order ([ADR-119](docs/DECISIONS.md#adr-119)).

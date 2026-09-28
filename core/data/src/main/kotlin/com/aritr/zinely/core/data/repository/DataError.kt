@@ -45,6 +45,13 @@ public sealed interface DataError {
     /** The stored document is newer than this build supports (forward-incompatible). */
     public data class SchemaTooNew(val documentVersion: Int, val supportedVersion: Int) : DataError
 
+    /**
+     * The work exceeds a fixed size or count limit (for example a library backup's manifest size, entry
+     * count or total expansion). **Deterministic**: the same input fails the same way, so UI must not
+     * offer a retry as if one could help (ADR-120).
+     */
+    public data class LimitExceeded(val message: String, val cause: Throwable? = null) : DataError
+
     /** An unclassified failure; [cause] retained for diagnostics. */
     public data class Unknown(val message: String, val cause: Throwable? = null) : DataError
 }

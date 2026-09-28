@@ -47,6 +47,8 @@ import com.aritr.zinely.ui.components.zinelySweep
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import java.text.DateFormat
+import java.util.Date
 
 internal const val KeepSafeSheetTestTag = "keep-safe-sheet"
 internal const val KeepSafeSaveActionTestTag = "keep-safe-save"
@@ -57,11 +59,23 @@ internal const val BackupRestoreErrorSheetTestTag = "backup-restore-error"
 internal const val BackupRestoreCancelTestTag = "backup-restore-cancel"
 internal const val BackupRestoreDoneTestTag = "backup-restore-done"
 internal const val BackupRestoreRetryTestTag = "backup-restore-retry"
+internal const val KeepSafeLastBackupTestTag = "keep-safe-last-backup"
+
+/** The device locale's medium date and the device time zone, never a relative time (amendment 1a item 1). */
+internal fun lastBackupLine(lastBackup: LibraryLastBackup?): String =
+    if (lastBackup == null) {
+        Copy.LibraryBackup.NO_BACKUP_YET
+    } else {
+        Copy.LibraryBackup.lastBackupSaved(
+            date = DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(lastBackup.savedAtEpochMs)),
+        )
+    }
 
 @Composable
 internal fun KeepSafeSheet(
     visible: Boolean,
     canBackup: Boolean,
+    lastBackup: LibraryLastBackup?,
     onDismiss: () -> Unit,
     onHidden: () -> Unit,
     onSaveBackup: () -> Unit,
@@ -80,25 +94,27 @@ internal fun KeepSafeSheet(
             .testTag(KeepSafeSheetTestTag)
             .verticalScroll(rememberScrollState()),
     ) {
-        Text(
-            text = if (canBackup) {
-                Copy.LibraryBackup.DESTINATION_NOTE
-            } else {
-                Copy.LibraryBackup.EMPTY_DESTINATION_NOTE
-            },
-            modifier = Modifier
-                .padding(start = ZinelyV21Dimens.gapHair, top = ZinelyV21Dimens.gapXs)
-                .clip(RoundedCornerShape(ZinelyV21Dimens.radiusPill))
-                .background(colors.leafTint)
-                .padding(horizontal = ZinelyV21Dimens.gapMd, vertical = ZinelyV21Dimens.gapSm),
-            style = TextStyle(
-                color = colors.onLeaf,
+        // The last-backup fact sits after the body, before the action it explains; an empty shelf doesn't
+        // show it (amendment 1a item 1). No note follows it on either shelf (backup-sheet polish: removed, not
+        // replaced). The file name is its own line under the date, whole, with no separator. The two lines are
+        // one TalkBack stop: merged, their texts are announced in order with a pause between, never fused.
+        if (canBackup) {
+            val lineStyle = TextStyle(
+                color = colors.inkSoft,
                 fontFamily = ZinelyV21Fonts.Work,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 12.sp,
-                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-            ),
-        )
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+            )
+            Column(
+                Modifier
+                    .padding(start = ZinelyV21Dimens.gapHair)
+                    .testTag(KeepSafeLastBackupTestTag)
+                    .semantics(mergeDescendants = true) {},
+            ) {
+                Text(text = lastBackupLine(lastBackup), style = lineStyle)
+                lastBackup?.fileName?.takeIf { it.isNotBlank() }?.let { Text(text = it, style = lineStyle) }
+            }
+        }
 
         if (canBackup) {
             KeepSafeOption(
@@ -106,8 +122,6 @@ internal fun KeepSafeSheet(
                 label = Copy.LibraryBackup.SAVE_ACTION,
                 body = Copy.LibraryBackup.SAVE_BODY,
                 glyph = "⤓",
-                tint = colors.butterTint,
-                glyphTint = colors.ink,
                 onClick = onSaveBackup,
                 focusRequester = firstActionFocus,
             )
@@ -117,8 +131,6 @@ internal fun KeepSafeSheet(
             label = Copy.LibraryBackup.RESTORE_ACTION,
             body = if (canBackup) Copy.LibraryBackup.RESTORE_BODY else Copy.LibraryBackup.EMPTY_RESTORE_BODY,
             glyph = "↺",
-            tint = colors.leafTint,
-            glyphTint = colors.onLeaf,
             onClick = onRestoreBackup,
             focusRequester = if (canBackup) null else firstActionFocus,
         )
@@ -157,8 +169,6 @@ private fun KeepSafeOption(
     label: String,
     body: String,
     glyph: String,
-    tint: androidx.compose.ui.graphics.Color,
-    glyphTint: androidx.compose.ui.graphics.Color,
     onClick: () -> Unit,
     focusRequester: FocusRequester? = null,
 ) {
@@ -176,17 +186,19 @@ private fun KeepSafeOption(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapLg),
     ) {
+        // One tile for both actions, so they read as peers (backup-sheet polish). Backup's old butterTint tile
+        // was the sheet surface colour in both themes, so it didn't show and Restore read as primary.
         Box(
             Modifier
                 .size(32.dp)
                 .clip(RoundedCornerShape(ZinelyV21Dimens.radiusSm))
-                .background(tint),
+                .background(colors.leafTint),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = glyph,
                 style = TextStyle(
-                    color = glyphTint,
+                    color = colors.onLeaf,
                     fontFamily = ZinelyV21Fonts.Work,
                     fontSize = 15.sp,
                     lineHeight = ZinelyV21Fonts.InheritedLineHeight,
@@ -320,6 +332,7 @@ private fun ErrorSheet(
     onRetry: () -> Unit,
 ) {
     val retryFocus = remember { FocusRequester() }
+    val isBackup = state.mode == LibraryBackupRestoreMode.Backup
     val title = when (state.kind) {
         LibraryBackupRestoreFailureKind.Damaged -> Copy.LibraryBackup.ERROR_DAMAGED_TITLE
         LibraryBackupRestoreFailureKind.NewerAppNeeded -> Copy.LibraryBackup.ERROR_NEWER_TITLE
@@ -327,8 +340,11 @@ private fun ErrorSheet(
         LibraryBackupRestoreFailureKind.SaveFailed -> Copy.LibraryBackup.ERROR_SAVE_TITLE
         LibraryBackupRestoreFailureKind.NotEnoughSpace -> Copy.LibraryBackup.ERROR_SPACE_TITLE
         LibraryBackupRestoreFailureKind.Busy -> Copy.LibraryBackup.ERROR_BUSY_TITLE
-        LibraryBackupRestoreFailureKind.Generic ->
-            Copy.LibraryBackup.errorGenericTitle(state.mode == LibraryBackupRestoreMode.Backup)
+        LibraryBackupRestoreFailureKind.Generic,
+        LibraryBackupRestoreFailureKind.BackupLimitReached,
+        -> Copy.LibraryBackup.errorGenericTitle(isBackup)
+        LibraryBackupRestoreFailureKind.BackupZineUnreadable -> Copy.LibraryBackup.BACKUP_ZINE_UNREADABLE_TITLE
+        LibraryBackupRestoreFailureKind.BackupZineNewer -> Copy.LibraryBackup.BACKUP_ZINE_NEWER_TITLE
     }
     val body = when (state.kind) {
         LibraryBackupRestoreFailureKind.Damaged -> Copy.LibraryBackup.ERROR_DAMAGED_BODY
@@ -337,13 +353,17 @@ private fun ErrorSheet(
         LibraryBackupRestoreFailureKind.SaveFailed -> Copy.LibraryBackup.ERROR_SAVE_BODY
         LibraryBackupRestoreFailureKind.NotEnoughSpace -> Copy.LibraryBackup.ERROR_SPACE_BODY
         LibraryBackupRestoreFailureKind.Busy -> Copy.LibraryBackup.ERROR_BUSY_BODY
-        LibraryBackupRestoreFailureKind.Generic ->
-            Copy.LibraryBackup.errorGenericBody(state.mode == LibraryBackupRestoreMode.Backup)
+        LibraryBackupRestoreFailureKind.Generic,
+        LibraryBackupRestoreFailureKind.BackupLimitReached,
+        -> Copy.LibraryBackup.errorGenericBody(isBackup)
+        LibraryBackupRestoreFailureKind.BackupZineUnreadable -> Copy.LibraryBackup.BACKUP_ZINE_UNREADABLE_BODY
+        LibraryBackupRestoreFailureKind.BackupZineNewer -> Copy.LibraryBackup.BACKUP_ZINE_NEWER_BODY
     }
-    val retry = if (state.mode == LibraryBackupRestoreMode.Backup) {
-        Copy.LibraryBackup.TRY_AGAIN
-    } else {
-        Copy.LibraryBackup.TRY_ANOTHER_BACKUP
+    // A failure no retry can fix offers only "Got it" (amendment 1a); focus then lands on it.
+    val retry = when {
+        !state.kind.retryable -> null
+        isBackup -> Copy.LibraryBackup.TRY_AGAIN
+        else -> Copy.LibraryBackup.TRY_ANOTHER_BACKUP
     }
     val stackActions = LocalDensity.current.fontScale >= 1.5f
 
@@ -383,23 +403,27 @@ private fun ErrorSheet(
 
 @Composable
 private fun ErrorActions(
-    retry: String,
-    retryFocus: FocusRequester,
+    retry: String?,
+    firstActionFocus: FocusRequester,
     onRetry: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ZStampButton(
-        text = retry,
-        onClick = onRetry,
-        modifier = Modifier
-            .focusRequester(retryFocus)
-            .testTag(BackupRestoreRetryTestTag),
-    )
+    if (retry != null) {
+        ZStampButton(
+            text = retry,
+            onClick = onRetry,
+            modifier = Modifier
+                .focusRequester(firstActionFocus)
+                .testTag(BackupRestoreRetryTestTag),
+        )
+    }
     ZPrimaryButton(
         text = Copy.LibraryBackup.GOT_IT,
         onClick = onDismiss,
         metrics = ZPrimaryButtonMetrics.Shelf,
-        modifier = Modifier.testTag(BackupRestoreDoneTestTag),
+        modifier = Modifier
+            .then(if (retry == null) Modifier.focusRequester(firstActionFocus) else Modifier)
+            .testTag(BackupRestoreDoneTestTag),
     )
 }
 

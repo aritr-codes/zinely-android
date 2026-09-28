@@ -79,7 +79,7 @@ success and error state are unchanged.
 - **Unchanged and still separate:** A4 (the 200 % tile-radius parity item) and A7 (TalkBack's opening focus,
   part of step 1's acceptance). A3 (the note's HTML/Compose contrast difference) no longer applies, because
   the note is gone.
-- **Compose follows in PR #81**, before it merges: the Backup tile's tint and glyph colour, removal of the
+- **Compose implements it in PR #81** (1.x step 1, [ADR-120](../DECISIONS.md#adr-120)): the Backup tile's tint and glyph colour, removal of the
   note `Text`, and the last-backup line split into two lines, keeping a pause between date and file name for
   TalkBack.
 
@@ -263,3 +263,8 @@ invalid input left the shelf intact,
 picker cancellation was silent, restored content remained editable and autosaved across cold relaunch, and
 the large-text and platform accessibility checks passed. The reproducible evidence is recorded in
 [the device-verification report](../reviews/2026-08-22-backup-restore-ui-device-verification.md).
+
+**Amendment 1a, part 1 (1.x step 1, [ADR-120](../DECISIONS.md#adr-120)):** the chooser's title, body, save option
+and last-backup line, the running backup body, and the backup-side failure states other than the 1b-only "none
+saved" and partial ones are implemented. The partial-backup, skip-and-list and restore-honesty states wait for
+step 1b. Step 1 was accepted on 2026-09-28 (device pass, owner design check; see ADR-120).

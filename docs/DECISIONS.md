@@ -128,6 +128,7 @@
 | [ADR-117](#adr-117) | **Licence notices stay complete, but leave the main About narrative.** One compact row opens a child credits screen; font-role blurbs retire. | Accepted; owner ruling 2026-09-16 |
 | [ADR-118](#adr-118) | **The public website tells one product story and shows only shipped UI.** Self-hosted fonts, a truthful Bench render, a Download page, and one public status scheme (Available / In development / Planned / Exploring) by horizon. Amends ADR-114 §1 and §5. | Accepted 2026-09-24; owner-directed |
 | [ADR-119](#adr-119) | **On the Bench, TalkBack reads a page in spatial reading order, not stacking order; the zine action sheet's scrim is silent.** A §4.5 canvas clause; nodes declared in that order; `ZineActionScrim` gets `ZSheet`'s one-modifier fix. | Accepted 2026-09-26; 1.x step 2; owner TalkBack listen passed on SM-A176B |
+| [ADR-120](#adr-120) | **A backup says when it was last saved, and a failed backup says where it failed.** A last-backup record written only on a saved backup; two backup phases (private archive, then the chosen destination) classified by owner ruling F1; one Cancel-vs-complete latch; the destination discarded best-effort. Extends ADR-110; the step 1b boundary is explicit. | Accepted 2026-09-28 (proposed 2026-09-27); 1.x step 1; device passes and owner checks done |
 | [ADR-121](#adr-121) | **Restore adds zines that aren't already on the shelf and never replaces what's here.** A zine is already here when its title, format, paper size and content equal a shelf zine's, counted one for one; a changed zine is added; doubt adds. No format change. Amends ADR-110 §5. | Accepted (design) 2026-09-28; owner ruling; implementation and device passes pending |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
@@ -13186,6 +13187,191 @@ deprecated announce API, relative phrases (A2), named undo (A3) and alt text (B)
     the exact reverse; page 5 read only the photo; after undoing the spread, tape → photo → text; the action sheet
     never landed on the dim, and Back closed it. Nothing surprised the listener (Pass 2).
   - An emulator TalkBack walk was attempted and abandoned: injected key combinations did not move its focus.
+
+## ADR-120 {#adr-120}
+
+### A backup says when it was last saved, and a failed backup says where it failed
+
+**Status:** Accepted, 2026-09-28 (proposed 2026-09-27; acceptance record at the end). Zinely 1.x step 1 ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)),
+specified by [Brief 01](planning/BRIEF-01-VISIBLE-OWNERSHIP.md) part 1 and the re-frozen
+[`backup-restore.html` amendment 1a](design/BACKUP-RESTORE-FREEZE.md), with owner rulings F1 and F2
+([Brief 01](planning/BRIEF-01-VISIBLE-OWNERSHIP.md#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2)).
+**Extends:** [ADR-110](#adr-110) (the backup surface and its SAF transport) and [ADR-036](#adr-036) (the free-space
+probe). **Does not amend** ADR-110's fail-closed backup clause; that is step 1b's ADR.
+
+#### Context
+
+The shipped backup sheet said nothing about whether a backup existed, while its title claimed the zines were
+"kept safe". A failed backup read like a failed restore: a zine that couldn't be opened showed "This backup looks
+damaged"; any `DataError.Io` became "Couldn't save the backup there", whether the chosen location failed or
+Zinely's own private archive did; a library-wide limit reached the maker as "damaged". The picker's file stayed
+behind, empty or partial, after a failure. And a Cancel that landed after the provider had accepted the whole file
+said "Backup cancelled." about a saved backup (Brief 01, "Problem").
+
+#### Decision
+
+1. **The last-backup record.** A `BackupRecordStore` on the existing preferences `DataStore` holds the time a
+   backup was saved and the provider's display name when it reports one. It is written **only** when the
+   transport returns `Saved`, including a backup a late Cancel lost to. Failure, a Cancel that won, picker cancel,
+   picker failure and restore write nothing. It is device state: it never enters a document, `meta.json` or the
+   archive, and it stays in app-private storage excluded from transfer (ADR-030 §7). The chooser shows "No backup
+   saved yet" or "Last backup saved ‹medium date›", formatted at the UI edge in the device's locale and time zone,
+   never relative, with the provider's name (when reported) whole on its own line below (§7). An empty shelf shows
+   neither line.
+2. **Two phases, classified by where they failed (F1).** `LibrarySafTransport.backupTo` returns
+   `LibraryBackupResult.Saved(receipt, fileName)` or `Failed(stage, error)`. `stage` is `PrivateArchive`
+   (building, validating or cleaning up the private archive; the destination was never written) or `Destination`
+   (writing the completed archive to the chosen location). The Home view model maps, in order: `OutOfSpace` at
+   either stage → "Not enough space"; `Busy` → "Give Zinely a moment" (F2); any other `Destination` failure →
+   "Couldn't save the backup there"; then, for the private archive, `Corrupt`/`Invalid` → "A zine here can't be
+   opened" (part 1's interim), `SchemaTooNew` → "A zine here needs a newer Zinely", the new deterministic
+   `DataError.LimitExceeded` → "Couldn't finish that backup" with **Got it only**, and everything else →
+   "Couldn't finish that backup" with Try again. Restore's mapping is unchanged.
+3. **Writer failures on the private archive** are classified by a pure `backupWriteError`. A write-side
+   `IO_FAILURE` is `OutOfSpace` only when the private disk verifiably can't hold the archive's declared bytes (the
+   ADR-036 probe; a probe that can't answer never invents a full disk), else `Io`. `LIMIT_EXCEEDED` is
+   `LimitExceeded`. The writer's manifest validation enforces the document, photo and total size limits *before*
+   its own limit checks, so those arrive as `INVALID_MANIFEST`; declared sizes over any of the three are therefore
+   `LimitExceeded` whatever the reason says (review Required Fix — they were first reaching "A zine here can't be
+   opened"). `DESTINATION_EXISTS` and `SOURCE_UNAVAILABLE` are `Io`. Otherwise `INTEGRITY_MISMATCH`,
+   `INVALID_MANIFEST` and `SOURCE_MISMATCH` stay `Corrupt`, which part 1 shows as "A zine here can't be opened".
+   That is a deliberate part-1 choice following Brief 01's file table, not a claim that every private validation
+   failure is the zine's fault; F1 item 3's "Couldn't finish that backup" is the honest reading for some of them,
+   and 1b revisits the mapping when the writer names the entry. The provider's free space can't be probed, so a
+   destination failure is `OutOfSpace` only when the write itself says `ENOSPC` somewhere in its cause chain (how
+   `ExternalStorageProvider` reports a full disk — F1's "out of space *anywhere*"; review Required Fix), never
+   guessed. This departs from [ADR-036](#adr-036) §2's probe-not-errno rule on purpose and only here: a provider
+   destination has no filesystem Zinely can probe, so errno is the only evidence there is, and its absence still
+   means `Io`, never "no space". A failure reading Zinely's own archive during the copy is tagged and stays `PrivateArchive`, so it is
+   never blamed on the location. Outside the writer — preparing the private transfer directory — no payload size
+   is known, so there is no ADR-036 comparison to make: only the failure's own `ENOSPC` is `OutOfSpace`, and low
+   free space alone never is (PR #81 review; backup previously shared restore's `< 64 KiB free` heuristic, which
+   restore still uses unchanged). The `ENOSPC` test is shared with the destination exit and also accepts
+   java.nio's "No space left on device" reason, so that wording counts at the destination too.
+4. **One outcome latch per backup.** `OutcomeLatch` is claimed once, by whichever comes first: the transport,
+   right after the provider accepted the whole stream (`markDone`), or the maker's Cancel (`requestCancel`).
+   `cancelBackupRestore` cancels the job only when Cancel wins. If Cancel won, the transport throws
+   `CancellationException` even with every byte written, and the file is discarded, so "Backup cancelled." is
+   true. If the transport won, Cancel is a no-op: the result is `Saved`, the record is written, and the file is
+   never deleted. **Invariant:** once `requestCancel` has won, a late non-cancellation failure — typically the
+   provider's ordinary `IOException` as its stream is torn down — never becomes a `Destination` (or
+   `PrivateArchive`) failure: every failure leaves the transport through one of two exits, and both resolve as
+   cancellation while the latch reads `isCancelled` (PR #81 review).
+5. **Clean-up.** The private archive is removed as before, whatever the outcome. Unless the result is `Saved`,
+   the destination is discarded best-effort (`DocumentsContract.deleteDocument`): always once Zinely has opened
+   it for writing, and otherwise only while the provider reports it empty. A file the maker chose to replace is
+   never deleted for a failure that never touched it. A clean-up that fails never changes the outcome shown.
+6. **Copy** follows the frozen amendment: title "Keep your zines"; "The backup file holds the zines and photos
+   on this shelf. Keep a copy somewhere other than this phone."; "Choose where to keep the backup file.";
+   "Putting zines together in one file."; a failure no retry can fix offers only "Got it". The drift the
+   amendment records (the "saved" title; restore's `generic`, `newer` and `read` copy) is left as is.
+7. **Backup-sheet polish** (frozen 2026-09-27 in `backup-restore.html` after step 1's first device check;
+   [freeze record](design/BACKUP-RESTORE-FREEZE.md)). Visual only; behaviour and every other string unchanged:
+   - **Equal action tiles.** `KeepSafeOption` draws one tile for both actions, leaf-tint with an on-leaf glyph;
+     the tint is no longer a parameter, so the two cannot drift apart. Backup's old butter-tint tile was the
+     sheet surface in both themes and didn't show, so Restore read as primary.
+   - **No explanatory note** on either shelf, and no replacement. The two note strings are deleted.
+   - **Date and file name on separate lines.** `Copy.LibraryBackup.lastBackupSaved(date)` is the date line; the
+     file name is a second `Text`, whole, never shortened, with no "·". The two sit in one
+     `mergeDescendants` block, so TalkBack stops on them once, still before "Back up this shelf", and announces
+     the two texts in order with a pause between rather than as one run-on string.
+
+#### Boundary with step 1b
+
+Not in this decision: the manifest's `omitted` field, skip-and-list, any partial-backup state or partial
+last-backup line, restore honesty (R1–R3 and the restore latch), the writer's read-side/write-side split, the asset
+pre-hash and the backstop rebuild. So a photo that fails its check (`INTEGRITY_MISMATCH`, a missing or unreadable
+asset) still fails the whole backup, in part 1's backup words ("A zine here can't be opened"), and a per-entry
+`LIMIT_EXCEEDED` is still reported as a limit. Brief 01 schedules 1b in the same wave, so no release carries that
+interim; if one ever did, its notes must say so. The archive format, `packageVersion`, the writer, the stager, the
+committer and the transfer rules are untouched.
+
+#### Alternatives considered
+
+- **Keep `DataResult` and map every private-phase failure to `DataError.Unknown`.** Rejected: the phase would live
+  in a convention the view model has to trust, and the space and limit distinctions would be lost.
+- **Classify the limit from the writer exception carried as a `cause`.** Rejected: `cause` is for diagnostics
+  (ARCHITECTURE §9). A typed `DataError.LimitExceeded` says it where the classification happens.
+- **Delete the destination on every failure.** Rejected: before Zinely opens it, the chosen document may be an
+  older backup the maker picked to replace.
+- **Check the job's cancellation after the copy instead of a latch.** Rejected: a Cancel that lands after the
+  close is indistinguishable from one before (Brief 01, "the late Cancel").
+
+#### Consequences
+
+- The maker sees one true fact about their own backup, and a failure never blames the location for Zinely's own
+  work. A library-wide limit no longer offers a retry that can't help.
+- A failed backup no longer leaves an empty or partial file where the maker put it, where the provider allows
+  deletion. The copy never claims it was removed.
+- **Evidence.** `LibrarySafTransportTest`: both phases, a save with and without a name, clean-up by phase, a
+  failing clean-up, the transfer limit, a Cancel during the copy, a Cancel that won the latch after the last byte,
+  a late Cancel. `LibraryBackupFailureTest`: both latch interleavings and every writer reason.
+  `DataStoreBackupRecordStoreTest`. `HomeViewModelTest`: the record written only on a save, including the late
+  Cancel, and untouched by failure, picker cancel/failure and restore; the full F1 table.
+  `LibraryBackupRestoreSheetTest`: the frozen chooser and running copy, the last-backup line and its reading order,
+  retry only where it can help. The two chooser goldens change by design (title, body, save option, the new
+  line); no other golden changes. Polish (§7): `KeepSafeTileParityTest` reads both tiles' pixels in both themes
+  (equal, the leaf-tint token, and distinct from the sheet; it fails on the old butter tile);
+  `LibraryBackupRestoreSheetTest` covers the date and name as two texts in order, no "·", no note on either
+  shelf, and the no-name and no-backup forms. The two chooser goldens change again, by design.
+- Device passes on the SM-A176B: both passed on the pre-polish build (2026-09-27: Pass 1 by adb; the owner's
+  backup-completion check and TalkBack listen). The polish changed the sheet, so **both are owed again on the
+  polished build** before this ADR is Accepted.
+
+#### Review
+
+Pre-commit review by two independent Review Agents that did not write the change, with different lenses; both
+**GO WITH FIXES**. Every finding was reconciled against the working tree:
+
+- **Contract/copy/docs lens.** Copy matches the frozen HTML character for character; frozen HTML untouched.
+  *Required Fix* — the document, photo and total size limits reach the writer as `INVALID_MANIFEST` (its
+  manifest validation runs before its own limit checks), so a library over them read "A zine here can't be
+  opened": **ACCEPTED**, fixed in `backupWriteError` (§3) with a test per limit; the writer is untouched.
+  *Recommended* — the plan row claimed an open PR before one existed: **ACCEPTED**. The CHANGELOG described the
+  interim wording as shipped behaviour: **ACCEPTED**, marked interim. §3 implied F1 compliance for every
+  private validation failure: **ACCEPTED**, stated as a deliberate part-1 choice.
+- **Correctness/concurrency/1b lens.** Late-Cancel race, cleanup, record-only-on-save and the 1b boundary
+  verified correct. *Required Fix* — a full destination always read "Couldn't save the backup there", against
+  F1's "out of space anywhere": **ACCEPTED**, `ENOSPC` in the cause chain is `OutOfSpace` (§3), tested.
+  *Recommended* — a failure reading Zinely's own archive during the copy was blamed on the location:
+  **ACCEPTED**, the archive is opened before the destination and its reads are tagged, tested. A stale job's
+  `finally` could clear a newer backup's latch: **ACCEPTED**, the clean-up is guarded to the job's own state.
+  A single oversized photo reads as the library-wide limit: **ACCEPTED as a known part-1 gap**, owned by 1b.
+
+PR #81 owner review, two correctness fixes, both **ACCEPTED**: (1) a Cancel that won the latch could still
+surface as "Couldn't save the backup there" when the provider then threw an ordinary `IOException` — both
+failure exits now resolve as cancellation once Cancel has won (§4), with a test for each exit that fails
+without the guard; (2) a private failure was called "Not enough space" whenever free space was under 64 KiB,
+which proves nothing about the cause — backup now requires `ENOSPC` there (§3); the writer's required-bytes
+comparison is unchanged.
+
+#### Acceptance (2026-09-28)
+
+Accepted by the owner after the checks below. PR #81 was brought up to `main` (ADR-121) by a normal merge;
+no code changed in that merge.
+
+- **Automated.** Full local run with every task re-executed: 1,877 tests, 0 failures, 0 skipped, plus
+  `:app:lintDebug`, `:app:checkDependencyAllowlist` and the androidTest compiles. `grun gold`: 104 goldens
+  unchanged. PR #81's required CI checks green.
+- **Device, SM-A176B, Android 16**, release-signed build of the final code installed over the existing app
+  (no data cleared):
+  - A backup finished with "Backup saved"; the sheet then read "Last backup saved 28 Sept 2026" with the
+    provider's own name, "zinely-backup-2026-09-28 (2).zine", on its own line.
+  - Backing out of the picker was quiet, and the record did not change.
+  - Backup and Restore draw the same tile, and there is no note.
+  - The shelf kept all 32 zines, including "My zine".
+- **Owner design check** on the polished sheet: calmer and less cluttered, "it does"; Backup and Restore look
+  equal, "yes"; the last-backup information is easier to scan, "yes"; it still feels like Zinely, "yes";
+  nothing important lost with the note, "No". The owner gave no separate answer to "is it obvious when the
+  backup finished?" on this build; the backup-completion observation on the 2026-09-27 build passed.
+- **TalkBack.** The owner's listen passed on 2026-09-27, on the step 1 build before the polish (`e8e1d91`):
+  the last-backup line was announced before "Back up this shelf". The owner did not repeat the listen on the
+  polished build, because the polish did not change that order. **There is no owner listen of the polished
+  build.** Its evidence is the accessibility tree read on the device: the date and the file name are two
+  separate text elements under one parent, placed before "Back up this shelf"; the unit test asserts one
+  merged stop holding the two texts in that order.
+- **Cancel during a running backup** could not be triggered by hand: this library backs up too fast. It stays
+  covered by the automated race tests (§4).
 
 ## ADR-121 {#adr-121}
 

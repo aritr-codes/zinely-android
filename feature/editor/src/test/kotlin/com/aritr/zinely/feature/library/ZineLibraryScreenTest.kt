@@ -612,6 +612,7 @@ class ZineLibraryScreenTest {
                 state = shelfState,
                 events = events.receiveAsFlow(),
                 backupRestoreState = null,
+                lastBackup = null,
                 onOpenZine = { opened += it },
                 onShareExport = { shared += it },
                 onStartZine = { started += it },

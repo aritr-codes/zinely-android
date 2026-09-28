@@ -506,14 +506,13 @@ internal class RoomProjectRepository(
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (invalid: ZineBackupWritingException) {
-                    val error = when (invalid.reason) {
-                        ZineBackupWritingException.Reason.IO_FAILURE,
-                        ZineBackupWritingException.Reason.DESTINATION_EXISTS,
-                        ZineBackupWritingException.Reason.SOURCE_UNAVAILABLE,
-                        -> DataError.Io("couldn't create the private library backup", invalid)
-                        else -> DataError.Corrupt("the local library could not be backed up safely", invalid)
-                    }
-                    return@withLock failure(error)
+                    return@withLock failure(
+                        backupWriteError(
+                            invalid,
+                            documentBytes = projectEntries.map { it.documentByteCount },
+                            assetBytes = assetEntries.map { it.byteCount },
+                        ) { Files.getFileStore(destination.parent).usableSpace },
+                    )
                 }
                 DataResult.Success(
                     LibraryBackupReceipt(
@@ -855,8 +854,9 @@ internal class RoomProjectRepository(
     ): ProjectShelfEntry? {
         val reason = when (error) {
             is DataError.SchemaTooNew -> ProjectUnavailableReason.NEWER_APP_REQUIRED
-            is DataError.Corrupt, is DataError.Invalid, is DataError.Io, is DataError.Unknown ->
-                ProjectUnavailableReason.CORRUPT
+            is DataError.Corrupt, is DataError.Invalid, is DataError.Io, is DataError.Unknown,
+            is DataError.LimitExceeded,
+            -> ProjectUnavailableReason.CORRUPT
             is DataError.NotFound, is DataError.Busy -> return null
             is DataError.OutOfSpace -> return null
         }

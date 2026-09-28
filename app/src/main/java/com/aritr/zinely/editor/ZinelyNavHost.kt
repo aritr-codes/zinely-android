@@ -184,6 +184,7 @@ private fun HomeDestination(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val backupRestoreState by viewModel.backupRestoreState.collectAsStateWithLifecycle()
     val preferredPaper by viewModel.preferredPaper.collectAsStateWithLifecycle()
+    val lastBackup by viewModel.lastBackup.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val appVersion = remember(context) {
         @Suppress("DEPRECATION")
@@ -224,6 +225,7 @@ private fun HomeDestination(
         state = state.toLibraryShelfState(),
         events = viewModel.events,
         backupRestoreState = backupRestoreState,
+        lastBackup = lastBackup,
         onOpenZine = viewModel::openZine,
         onShareExport = onShareExport,
         onStartZine = viewModel::startZine,
