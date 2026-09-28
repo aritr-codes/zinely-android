@@ -13370,12 +13370,16 @@ no code changed in that merge.
   build.** Its evidence is the accessibility tree read on the device: the date and the file name are two
   separate text elements under one parent, placed before "Back up this shelf"; the unit test asserts one
   merged stop holding the two texts in that order.
-- **A7, TalkBack's opening focus, is not verified on any build** (recorded 2026-09-28). A7 asks where TalkBack
-  focus lands when the sheet opens: the sheet moves input focus to its first action, and whether TalkBack then
-  skips the last-backup line was never observed. The 2026-09-27 listen was started from the top of the sheet
-  by instruction, so it recorded reading order, not opening focus, and an accessibility-tree dump cannot show
-  it. The freeze record lists A7 as part of step 1's acceptance; whether ADR-120 stays Accepted with A7 open,
-  or waits on a device check, is the owner's ruling.
+- **A7, TalkBack's opening focus, observed 2026-09-28 on the polished build** (SM-A176B, Android 16, Samsung
+  TalkBack). A7 asks where TalkBack focus lands when the sheet opens; the sheet moves input focus to its first
+  action. The 2026-09-27 listen did not answer it: it was started from the top of the sheet by instruction, so
+  it recorded reading order only. The 2026-09-28 check turned TalkBack on, then opened Backups fresh, with no
+  swipe. Initial focus landed on the body text, "The backup file holds the zines and photos on this shelf. Keep a copy somewhere other than this phone."
+  - **The A7 risk is absent:** that text is above the last-backup line, so the last-backup line is not skipped.
+  - **No exact target was hit:** focus did not land on the last-backup line, the title "Keep your zines", or
+    "Back up this shelf". It was read from the focus highlight; the speech was not recorded.
+  - The freeze record lists A7 as part of step 1's acceptance; whether this result satisfies it is the owner's
+    ruling. ADR-120's status is unchanged.
 - **Cancel during a running backup** could not be triggered by hand: this library backs up too fast. It stays
   covered by the automated race tests (§4).
 
