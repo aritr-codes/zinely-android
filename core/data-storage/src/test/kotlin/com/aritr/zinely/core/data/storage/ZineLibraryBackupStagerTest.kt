@@ -15,6 +15,8 @@ import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import java.io.IOException
+import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -38,6 +40,7 @@ import org.junit.jupiter.api.io.TempDir
 class ZineLibraryBackupStagerTest {
     @TempDir
     lateinit var temp: Path
+    private val backupJson = Json { encodeDefaults = true }
 
     @Test
     fun `stages one valid project without assets and close removes staging`() = runBlocking {
@@ -87,6 +90,52 @@ class ZineLibraryBackupStagerTest {
 
             assertEquals(ZineBackupStagingException.Reason.MALFORMED_ARCHIVE, failure.reason)
             assertNoStagingChildren()
+        }
+    }
+
+    @Test
+    fun `a full disk while writing the staging copy is a staging write failure, not a damaged backup`() {
+        val archive = writeArchive(fixture(mapOf("one" to document())))
+        val fullDisk = ZineLibraryBackupStager(
+            openStagingFile = { target ->
+                object : OutputStream() {
+                    init { Files.createFile(target) }
+                    override fun write(b: Int): Unit = throw IOException("No space left on device")
+                    override fun write(b: ByteArray, off: Int, len: Int): Unit = throw IOException("No space left on device")
+                }
+            },
+        )
+
+        val failure = assertThrows(ZineBackupStagingException::class.java) {
+            runBlocking { fullDisk.stage(archive, temp.resolve("stage")) }
+        }
+
+        assertEquals(ZineBackupStagingException.Reason.STAGING_WRITE_FAILED, failure.reason)
+        assertNoStagingChildren()
+    }
+
+    @Test
+    fun `a staging directory that can't be created is a staging write failure`() {
+        val archive = writeArchive(fixture(mapOf("one" to document())))
+        val occupied = temp.resolve("occupied").also { Files.write(it, byteArrayOf(1)) }
+
+        val failure = assertThrows(ZineBackupStagingException::class.java) {
+            runBlocking { ZineLibraryBackupStager().stage(archive, occupied.resolve("stage")) }
+        }
+
+        assertEquals(ZineBackupStagingException.Reason.STAGING_WRITE_FAILED, failure.reason)
+    }
+
+    /** Pins `ignoreUnknownKeys`: older builds read newer manifests (ADR-122 §5), so no build may turn strict. */
+    @Test
+    fun `a manifest with an unknown top-level key still stages`() = runBlocking {
+        val fixture = fixture(mapOf("one" to document()))
+        val manifest = backupJson.encodeToString(ZineLibraryBackupManifest.serializer(), fixture.manifest)
+            .dropLast(1) + ",\"fromAFutureZinely\":{\"anything\":[1,2]}}"
+        val archive = writeArchive(fixture, entryOverrides = mapOf("manifest.json" to manifest.encodeToByteArray()))
+
+        ZineLibraryBackupStager().stage(archive, temp.resolve("stage")).use { staged ->
+            assertEquals(listOf("one"), staged.projects.map { it.manifestEntry.sourceProjectId })
         }
     }
 

@@ -20,6 +20,7 @@ import com.aritr.zinely.core.model.CURRENT_SCHEMA_VERSION
 import com.aritr.zinely.core.model.ZineDocument
 import java.io.BufferedInputStream
 import java.io.IOException
+import java.io.OutputStream
 import java.nio.charset.CharacterCodingException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -70,6 +71,12 @@ public class ZineBackupStagingException(
         INTEGRITY_MISMATCH,
         INVALID_DOCUMENT,
         FUTURE_VERSION,
+
+        /**
+         * Writing the private staging copy failed (ADR-122 R1): the phone's own storage, never the archive. Reading
+         * the archive keeps [MALFORMED_ARCHIVE]; only this reason says nothing about the backup file itself.
+         */
+        STAGING_WRITE_FAILED,
     }
 }
 
@@ -103,12 +110,18 @@ public class StagedZineLibraryBackup internal constructor(
 public class ZineLibraryBackupStager(
     private val limits: ZineArchiveLimits = ZineArchiveLimits(),
     private val manifestJson: Json = Json { ignoreUnknownKeys = true },
+    /** Opens one staging file for writing; a test seam for a full disk. Must refuse an existing file. */
+    private val openStagingFile: (Path) -> OutputStream = { target ->
+        Files.newOutputStream(target, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
+    },
 ) {
     public suspend fun stage(archive: Path, stagingParent: Path): StagedZineLibraryBackup {
         currentCoroutineContext().ensureActive()
         val archiveBytes = checkedArchiveSize(archive)
-        Files.createDirectories(stagingParent)
-        val stagingRoot = Files.createTempDirectory(stagingParent, STAGING_PREFIX)
+        val stagingRoot = stagingWrite("the staging directory") {
+            Files.createDirectories(stagingParent)
+            Files.createTempDirectory(stagingParent, STAGING_PREFIX)
+        }
         try {
             return openZip(archive).use { zip -> stageOpenArchive(zip, archiveBytes, stagingRoot) }
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
@@ -329,13 +342,21 @@ public class ZineLibraryBackupStager(
         return result
     }
 
+    /**
+     * Invariant: an `IOException` from the staging side (directories, open, write, close) leaves here as
+     * [ZineBackupStagingException.Reason.STAGING_WRITE_FAILED]; one from reading the archive stays an `IOException`
+     * for [stage] to call [ZineBackupStagingException.Reason.MALFORMED_ARCHIVE].
+     */
     private suspend fun copyEntry(zip: ZipFile, entry: ZipEntry, target: Path, limit: Long): CopiedEntry {
-        Files.createDirectories(target.parent)
         val digest = MessageDigest.getInstance("SHA-256")
         var count = 0L
         val buffer = ByteArray(limits.copyBufferBytes)
         BufferedInputStream(zip.getInputStream(entry), limits.copyBufferBytes).use { input ->
-            Files.newOutputStream(target, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE).use { output ->
+            val staged = stagingWrite(entry.name) {
+                Files.createDirectories(target.parent)
+                StagingOutput(openStagingFile(target), entry.name)
+            }
+            staged.use { output ->
                 while (true) {
                     currentCoroutineContext().ensureActive()
                     val read = input.read(buffer)
@@ -435,6 +456,14 @@ public class ZineLibraryBackupStager(
 
     private data class CopiedEntry(val path: Path, val byteCount: Long, val sha256: String)
 
+    /** Every failure of the underlying stream is a staging write failure, whichever call raised it. */
+    private class StagingOutput(private val out: OutputStream, private val name: String) : OutputStream() {
+        override fun write(b: Int): Unit = stagingWrite(name) { out.write(b) }
+        override fun write(b: ByteArray, off: Int, len: Int): Unit = stagingWrite(name) { out.write(b, off, len) }
+        override fun flush(): Unit = stagingWrite(name) { out.flush() }
+        override fun close(): Unit = stagingWrite(name) { out.close() }
+    }
+
     private companion object {
         const val STAGING_PREFIX: String = ".zine-restore-"
         val WINDOWS_DRIVE_PREFIX: Regex = Regex("^[A-Za-z]:.*")
@@ -442,6 +471,16 @@ public class ZineLibraryBackupStager(
 
         fun fail(reason: ZineBackupStagingException.Reason, message: String): Nothing =
             throw ZineBackupStagingException(reason, message)
+
+        inline fun <T> stagingWrite(what: String, block: () -> T): T = try {
+            block()
+        } catch (failure: IOException) {
+            throw ZineBackupStagingException(
+                ZineBackupStagingException.Reason.STAGING_WRITE_FAILED,
+                "Couldn't write the staging copy of '$what'",
+                failure,
+            )
+        }
     }
 }
 

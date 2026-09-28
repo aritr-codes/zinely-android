@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -103,6 +104,7 @@ class ZineLibraryBackupWriterTest {
         }
 
         assertEquals(ZineBackupWritingException.Reason.INTEGRITY_MISMATCH, error.reason)
+        assertEquals("projects/project/document.json", error.entryPath)
         assertFalse(Files.exists(destination))
     }
 
@@ -126,6 +128,7 @@ class ZineLibraryBackupWriterTest {
         }
 
         assertEquals(ZineBackupWritingException.Reason.INTEGRITY_MISMATCH, error.reason)
+        assertEquals("assets/$hash", error.entryPath)
         assertFalse(Files.exists(destination))
     }
 
@@ -141,6 +144,7 @@ class ZineLibraryBackupWriterTest {
         }
 
         assertEquals(ZineBackupWritingException.Reason.SOURCE_MISMATCH, error.reason)
+        assertEquals(null, error.entryPath)
         assertFalse(Files.exists(destination))
     }
 
@@ -159,7 +163,69 @@ class ZineLibraryBackupWriterTest {
         }
 
         assertEquals(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, error.reason)
+        assertEquals("projects/project/document.json", error.entryPath)
         assertFalse(Files.exists(destination))
+    }
+
+    @Test
+    fun `a photo that can't be read is a read-side failure naming its entry`() {
+        val photo = "jpeg-master".encodeToByteArray()
+        val hash = sha256(photo)
+        val fixture = fixture(mapOf("project" to document(hash)), mapOf(hash to photo))
+        val unreadable = fixture.assetPaths.getValue(hash)
+        val writer = ZineLibraryBackupWriter(
+            openSource = { source ->
+                if (source == unreadable) throw IOException("I/O error") else Files.newInputStream(source)
+            },
+        )
+        val destination = temp.resolve("unreadable-photo.zine")
+
+        val error = assertThrows(ZineBackupWritingException::class.java) {
+            runBlocking { writer.write(fixture.manifest, fixture.documentPaths, fixture.assetPaths, destination) }
+        }
+
+        assertEquals(ZineBackupWritingException.Reason.IO_FAILURE, error.reason)
+        assertTrue(error.readSide)
+        assertEquals("assets/$hash", error.entryPath)
+        assertFalse(Files.exists(destination))
+    }
+
+    @Test
+    fun `a missing photo is unavailable and names its entry`() {
+        val photo = "jpeg-master".encodeToByteArray()
+        val hash = sha256(photo)
+        val fixture = fixture(mapOf("project" to document(hash)), mapOf(hash to photo))
+        Files.delete(fixture.assetPaths.getValue(hash))
+
+        val error = assertThrows(ZineBackupWritingException::class.java) {
+            runBlocking {
+                ZineLibraryBackupWriter().write(fixture.manifest, fixture.documentPaths, fixture.assetPaths, temp.resolve("x.zine"))
+            }
+        }
+
+        assertEquals(ZineBackupWritingException.Reason.SOURCE_UNAVAILABLE, error.reason)
+        assertEquals("assets/$hash", error.entryPath)
+    }
+
+    @Test
+    fun `a failure writing the private archive names no entry and is not read-side`() {
+        val fixture = fixture(mapOf("project" to document()))
+        val notADirectory = temp.resolve("occupied").also { Files.write(it, byteArrayOf(1)) }
+
+        val error = assertThrows(ZineBackupWritingException::class.java) {
+            runBlocking {
+                ZineLibraryBackupWriter().write(
+                    fixture.manifest,
+                    fixture.documentPaths,
+                    fixture.assetPaths,
+                    notADirectory.resolve("backup.zine"),
+                )
+            }
+        }
+
+        assertEquals(ZineBackupWritingException.Reason.IO_FAILURE, error.reason)
+        assertFalse(error.readSide)
+        assertEquals(null, error.entryPath)
     }
 
     @Test
