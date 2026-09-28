@@ -128,7 +128,7 @@
 | [ADR-117](#adr-117) | **Licence notices stay complete, but leave the main About narrative.** One compact row opens a child credits screen; font-role blurbs retire. | Accepted; owner ruling 2026-09-16 |
 | [ADR-118](#adr-118) | **The public website tells one product story and shows only shipped UI.** Self-hosted fonts, a truthful Bench render, a Download page, and one public status scheme (Available / In development / Planned / Exploring) by horizon. Amends ADR-114 §1 and §5. | Accepted 2026-09-24; owner-directed |
 | [ADR-119](#adr-119) | **On the Bench, TalkBack reads a page in spatial reading order, not stacking order; the zine action sheet's scrim is silent.** A §4.5 canvas clause; nodes declared in that order; `ZineActionScrim` gets `ZSheet`'s one-modifier fix. | Accepted 2026-09-26; 1.x step 2; owner TalkBack listen passed on SM-A176B |
-| [ADR-120](#adr-120) | **A backup says when it was last saved, and a failed backup says where it failed.** A last-backup record written only on a saved backup; two backup phases (private archive, then the chosen destination) classified by owner ruling F1; one Cancel-vs-complete latch; the destination discarded best-effort. Extends ADR-110; the step 1b boundary is explicit. | Proposed 2026-09-27; 1.x step 1; device passes pending |
+| [ADR-120](#adr-120) | **A backup says when it was last saved, and a failed backup says where it failed.** A last-backup record written only on a saved backup; two backup phases (private archive, then the chosen destination) classified by owner ruling F1; one Cancel-vs-complete latch; the destination discarded best-effort. Extends ADR-110; the step 1b boundary is explicit. | Accepted 2026-09-28 (proposed 2026-09-27); 1.x step 1; device passes and owner checks done |
 | [ADR-121](#adr-121) | **Restore adds zines that aren't already on the shelf and never replaces what's here.** A zine is already here when its title, format, paper size and content equal a shelf zine's, counted one for one; a changed zine is added; doubt adds. No format change. Amends ADR-110 §5. | Accepted (design) 2026-09-28; owner ruling; implementation and device passes pending |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
@@ -13192,7 +13192,7 @@ deprecated announce API, relative phrases (A2), named undo (A3) and alt text (B)
 
 ### A backup says when it was last saved, and a failed backup says where it failed
 
-**Status:** Proposed, 2026-09-27. Zinely 1.x step 1 ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)),
+**Status:** Accepted, 2026-09-28 (proposed 2026-09-27; acceptance record at the end). Zinely 1.x step 1 ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)),
 specified by [Brief 01](planning/BRIEF-01-VISIBLE-OWNERSHIP.md) part 1 and the re-frozen
 [`backup-restore.html` amendment 1a](design/BACKUP-RESTORE-FREEZE.md), with owner rulings F1 and F2
 ([Brief 01](planning/BRIEF-01-VISIBLE-OWNERSHIP.md#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2)).
@@ -13345,7 +13345,33 @@ without the guard; (2) a private failure was called "Not enough space" whenever 
 which proves nothing about the cause — backup now requires `ENOSPC` there (§3); the writer's required-bytes
 comparison is unchanged.
 
-Still owed: both device passes.
+#### Acceptance (2026-09-28)
+
+Accepted by the owner after the checks below. PR #81 was brought up to `main` (ADR-121) by a normal merge;
+no code changed in that merge.
+
+- **Automated.** Full local run with every task re-executed: 1,877 tests, 0 failures, 0 skipped, plus
+  `:app:lintDebug`, `:app:checkDependencyAllowlist` and the androidTest compiles. `grun gold`: 104 goldens
+  unchanged. PR #81's required CI checks green.
+- **Device, SM-A176B, Android 16**, release-signed build of the final code installed over the existing app
+  (no data cleared):
+  - A backup finished with "Backup saved"; the sheet then read "Last backup saved 28 Sept 2026" with the
+    provider's own name, "zinely-backup-2026-09-28 (2).zine", on its own line.
+  - Backing out of the picker was quiet, and the record did not change.
+  - Backup and Restore draw the same tile, and there is no note.
+  - The shelf kept all 32 zines, including "My zine".
+- **Owner design check** on the polished sheet: calmer and less cluttered, "it does"; Backup and Restore look
+  equal, "yes"; the last-backup information is easier to scan, "yes"; it still feels like Zinely, "yes";
+  nothing important lost with the note, "No". The owner gave no separate answer to "is it obvious when the
+  backup finished?" on this build; the backup-completion observation on the 2026-09-27 build passed.
+- **TalkBack.** The owner's listen passed on 2026-09-27, on the step 1 build before the polish (`e8e1d91`):
+  the last-backup line was announced before "Back up this shelf". The owner did not repeat the listen on the
+  polished build, because the polish did not change that order. **There is no owner listen of the polished
+  build.** Its evidence is the accessibility tree read on the device: the date and the file name are two
+  separate text elements under one parent, placed before "Back up this shelf"; the unit test asserts one
+  merged stop holding the two texts in that order.
+- **Cancel during a running backup** could not be triggered by hand: this library backs up too fast. It stays
+  covered by the automated race tests (§4).
 
 ## ADR-121 {#adr-121}
 
