@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Restoring a backup adds only the zines that aren't already on your shelf. A zine with the same title, format,
+  paper size and content isn't added again; one that has changed since the backup is added alongside, and nothing
+  on the shelf is replaced. The result says how many were already here, or "Nothing new to add"
+  ([ADR-121](docs/DECISIONS.md#adr-121)).
 - The public website now offers 0.9.0-beta.5 as the current download: version, size, versionCode 10, the APK
   link and its published SHA-256 on the Download page; a beta.5 entry in What's new with its known limitations;
   a short "New in 0.9.0-beta.5" note on the homepage; and the roadmap moves beta.5 to Available. Google Play
@@ -76,11 +80,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "kept safe" or promises every zine before a backup has run. Back up and Restore now look like equal choices, and
   the note that only repeated them is gone ([ADR-120](docs/DECISIONS.md#adr-120)).
 - A backup that fails now says where it failed. "Couldn't save the backup there" is shown only when the chosen
-  location refused the file; a problem inside Zinely says "Couldn't finish that backup", and a zine that can't be
-  opened or needs a newer Zinely says so in backup words instead of restore's "This backup looks damaged" (the
-  "can't be opened" wording is interim: step 1b replaces it before release, and this line with it). A
-  failure that trying again can't fix offers only "Got it". After a failed or cancelled backup, Zinely tries to
-  remove the empty or unfinished file it was saving to ([ADR-120](docs/DECISIONS.md#adr-120)).
+  location refused the file, and a problem inside Zinely says "Couldn't finish that backup", never restore's "This
+  backup looks damaged". A failure that trying again can't fix offers only "Got it". After a failed or cancelled
+  backup, Zinely tries to remove the empty or unfinished file it was saving to ([ADR-120](docs/DECISIONS.md#adr-120)).
+- One zine Zinely can't open, or a photo that fails its check, no longer stops the whole backup. The rest is saved,
+  and the result says so: "5 of 6 zines saved", naming up to three of the zines left out, and why. The backup file
+  lists them too, and the Backups sheet's last-backup line adds "— 5 of 6 zines." When no zine can be saved, no
+  file is kept and the sheet says "No zines could be saved". Restoring a partial backup says what it was saved
+  without; versions of Zinely before this one restore it without saying so
+  ([ADR-122](docs/DECISIONS.md#adr-122)).
+- A restore now says what happened. A full phone while preparing it says "Not enough space", not "This backup
+  looks damaged". Once zines start being added, Cancel goes away and the sheet says "This part can't be stopped.",
+  so "Restore cancelled." is only ever shown when nothing was added. If the zines were added but the shelf hasn't
+  caught up yet, it's a success that says they may take a moment to appear, not "Couldn't read that file"
+  ([ADR-122](docs/DECISIONS.md#adr-122)).
 - Pressing Cancel just as a backup finishes no longer says "Backup cancelled." about a file that was saved
   ([ADR-120](docs/DECISIONS.md#adr-120)).
 - With TalkBack, the Bench now reads a page from top to bottom and left to right, whatever is stacked on top.

@@ -39,11 +39,27 @@ This is the gate required by the V1 execution plan. A row is green only at the l
 | Cancellation/process death during staging | Existing library unchanged; stale staging recoverable/cleanable | Android/device | 🟨 JVM cancellation cleanup green; process/device pending |
 | Failure during commit | All-or-nothing project visibility; Room rebuilds from files | JVM/Android integration | 🟨 Journal/rollback primitive green; repository lock, recovery wiring, and Room integration pending |
 | Existing project id collision | Restore mints a new local id; never overwrites | repository integration | 🟨 Pure allocator green; repository integration pending |
-| Repeated restore of same backup | Safe additive duplicates; assets deduplicate by verified hash | repository integration | 🟨 Pure id/allocation and verified-asset dedupe green; repository integration pending |
+| Repeated restore of same backup (**superseded by ADR-121**; see the step 1b rows below) | Safe additive duplicates; assets deduplicate by verified hash | repository integration | 🟨 Pure id/allocation and verified-asset dedupe green; repository integration pending |
 | Backup → uninstall/wipe → restore | All zines, text, photos, covers, timestamps, and print output survive | physical device | 🟨 Samsung clean reinstall pass: one real zine and committed text survived; media, cover, timestamp, and print-output parity still pending |
 | Restore onto a second device/API level | Same library and rendered/printed result | three-device gate incl. API 24 | ⬜ Pending |
 | SAF provider revokes/returns null/throws mid-stream | Calm retry/alternate exit; no partial restore | Android/device | ⬜ Pending |
 | Airplane mode full journey | No behavior change and no network dependency | physical device | ⬜ Pending |
+
+**1.x step 1b rows ([ADR-122](../DECISIONS.md#adr-122), [ADR-121](../DECISIONS.md#adr-121); added 2026-09-29, on branch
+`fix/1x-step1b-backup-restore`, not yet merged).** Evidence is `:data-android` Robolectric integration
+(`RoomProjectRepositoryRestoreTest`) unless named otherwise; device rows stay with the step 1b device pass.
+
+| Case | Expected result | Evidence layer | Status |
+|---|---|---|---|
+| Unreadable zine at backup | Left out and named; the rest saved; `omitted` in the file | repository integration | ✅ Green |
+| Poisoned photo shared by two zines | Both zines left out, reason `photo`; the photo's bytes never enter the archive | repository integration | ✅ Green |
+| Writer backstop after the pre-check | The incomplete private archive is removed, the entry's zines left out, the survivors rewritten | repository integration | ✅ Green |
+| All zines unreadable | No archive; `NothingSaved`; the destination discarded; no last-backup record | repository + transport + VM | ✅ Green |
+| Partial archive on an old reader | Restores what it holds, without the partial notice (ADR-122 Consequences) | `ignoreUnknownKeys` + frozen partial fixture (`LibraryBackupFixtureTest`) on this build; beta.4-r3 / beta.5 device check | 🟨 Current-build fixture green; old-build device check pending |
+| Disk full while staging a restore (R1) | "Not enough space" when the private disk is under the 64 KiB probe, else "Couldn't finish that restore"; never "damaged" | stager seam + repository integration | 🟨 Unit/integration green; device pending |
+| Cancel racing the restore commit (R2) | Cancel first: nothing committed, "Restore cancelled."; commit first: Cancel is a no-op | repository + VM | ✅ Green |
+| Room fails after a committed restore (R3) | A success with the lagging line; the shelf is re-read | repository + VM | ✅ Green |
+| Repeated restore of the same backup (ADR-121) | "Nothing new to add"; no project directory created | repository integration | ✅ Green (supersedes the dated row above) |
 
 ## Historical foundation verdict — 21 August
 
