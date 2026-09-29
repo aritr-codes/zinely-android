@@ -42,7 +42,8 @@ public data class ZineBackupWriteLimits(
         require(maximumDocumentBytes > 0L)
         require(maximumAssetBytes > 0L)
         require(maximumTotalBytes > 0L)
-        require(maximumProjects > 0)
+        // Also bounds `omitted` (ADR-122 §5): restore decodes at most MAX_BACKUP_PROJECTS of them, so never allow more.
+        require(maximumProjects in 1..MAX_BACKUP_PROJECTS)
         require(maximumAssets > 0)
         require(copyBufferBytes > 0)
     }
@@ -196,6 +197,11 @@ public class ZineLibraryBackupWriter(
         }
         if (manifest.projects.size > limits.maximumProjects || manifest.assets.size > limits.maximumAssets) {
             fail(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, "Backup contains too many projects or assets")
+        }
+        // ADR-122 §5: restore decodes at most MAX_BACKUP_PROJECTS omissions, so a backup listing more would be read back
+        // silently short. Refuse it here, before any output exists, rather than write a file that under-reports.
+        if (manifest.omitted.size > limits.maximumProjects) {
+            fail(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, "Backup leaves out too many zines to list them all")
         }
 
         val expectedDocuments = manifest.projects.mapTo(linkedSetOf()) { it.sourceProjectId }

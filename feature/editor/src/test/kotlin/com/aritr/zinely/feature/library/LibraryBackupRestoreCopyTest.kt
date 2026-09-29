@@ -208,12 +208,39 @@ class LibraryBackupRestoreCopyTest {
         )
     }
 
-    @Test fun `derived, not drawn - a newer zine reads as couldn't be opened then, reasons share one paragraph`() {
+    /** Owner ruling (g), Option 3: several reasons share one sentence that gives the total once (C1–C3 verbatim). */
+    @Test fun `several reasons - the total once, then a clause per reason`() {
+        fun notice(vararg omitted: LibraryOmission) =
+            restoreAddedCopy(RestoreAdded(3, omitted = omitted.toList())).paragraphs.single { it.startsWith("This backup") }
+
         assertEquals(
-            "This backup was saved without 2 zines that couldn’t be opened then: “Sunday market” and “Riso tests”. " +
-                "This backup was saved without 1 zine that had no readable name.",
+            "This backup was saved without 3 zines: “Sunday market” and “Riso tests”, which couldn’t be opened then, " +
+                "and “Moth Club Bulletin”, whose photo couldn’t be read then.",
+            notice(zine("Sunday market"), zine("Riso tests", Newer), zine("Moth Club Bulletin", Photo)),
+        )
+        assertEquals(
+            "This backup was saved without 3 zines: “Sunday market” and “Riso tests”, which couldn’t be opened then, " +
+                "and 1 with no readable name.",
+            notice(zine("Sunday market"), zine("Riso tests", Newer), zine(null, Photo)),
+        )
+        assertEquals(
+            "This backup was saved without 3 zines: “Moth Club Bulletin”, whose photo couldn’t be read then, " +
+                "and 2 with no readable names.",
+            notice(zine(null), zine(null, Newer), zine("Moth Club Bulletin", Photo)),
+        )
+        // The truncation convention holds inside a clause.
+        assertEquals(
+            "This backup was saved without 6 zines: “A”, “B”, “C” and 2 more, which couldn’t be opened then, " +
+                "and “Moth Club Bulletin”, whose photo couldn’t be read then.",
+            notice(zine("A"), zine("B"), zine("C"), zine("D"), zine("E"), zine("Moth Club Bulletin", Photo)),
+        )
+    }
+
+    @Test fun `derived, not drawn - a newer zine reads as couldn't be opened then`() {
+        assertEquals(
+            "This backup was saved without 2 zines that couldn’t be opened then: “Sunday market” and “Riso tests”.",
             restoreAddedCopy(
-                RestoreAdded(3, omitted = listOf(zine("Sunday market"), zine("Riso tests", Newer), zine(null, Photo))),
+                RestoreAdded(3, omitted = listOf(zine("Sunday market"), zine("Riso tests", Newer))),
             ).paragraphs.single { it.startsWith("This backup") },
         )
         // A reason with a name counts its unnamed zines into "and N more".

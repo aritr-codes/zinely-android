@@ -131,22 +131,30 @@ internal fun restoreAddedCopy(state: LibraryBackupRestoreUiState.RestoreAdded): 
 
 /**
  * One paragraph (N5 has room for one): "couldn't be opened then" (unreadable and newer; a newer-only notice isn't
- * drawn), then "whose photo couldn't be read then"; a reason with no readable name joins the unnamed sentence.
+ * drawn), then "whose photo couldn't be read then"; a reason with no readable name joins the unnamed group. One
+ * reason keeps its own sentence; several share one sentence that gives the total once (owner ruling (g), Option 3).
  */
 private fun savedWithoutNotice(omitted: List<LibraryOmission>): String? {
     val (photo, opened) = omitted.partition { it.reason == LibraryOmissionReason.Photo }
     var unnamed = 0
-    val sentences = buildList {
+    // Each reason as (its own sentence, its clause in a shared one).
+    val reasons = buildList {
         listOf(
-            opened to Copy.LibraryBackup::restoreSavedWithoutOpened,
-            photo to Copy.LibraryBackup::restoreSavedWithoutPhoto,
-        ).forEach { (group, sentence) ->
+            Triple(opened, Copy.LibraryBackup::restoreSavedWithoutOpened, Copy.LibraryBackup::restoreSavedWithoutOpenedClause),
+            Triple(photo, Copy.LibraryBackup::restoreSavedWithoutPhoto, Copy.LibraryBackup::restoreSavedWithoutPhotoClause),
+        ).forEach { (group, sentence, clause) ->
             val names = group.mapNotNull { it.title }
-            if (names.isEmpty()) unnamed += group.size else add(sentence(group.size, names))
+            if (names.isEmpty()) unnamed += group.size else add(sentence(group.size, names) to clause(group.size, names))
         }
-        if (unnamed > 0) add(Copy.LibraryBackup.restoreSavedWithoutUnnamed(unnamed))
+        if (unnamed > 0) {
+            add(Copy.LibraryBackup.restoreSavedWithoutUnnamed(unnamed) to Copy.LibraryBackup.restoreSavedWithoutUnnamedClause(unnamed))
+        }
     }
-    return sentences.takeIf { it.isNotEmpty() }?.joinToString(" ")
+    return when (reasons.size) {
+        0 -> null
+        1 -> reasons.single().first
+        else -> Copy.LibraryBackup.restoreSavedWithoutSeveral(omitted.size, reasons.map { it.second })
+    }
 }
 
 @Composable

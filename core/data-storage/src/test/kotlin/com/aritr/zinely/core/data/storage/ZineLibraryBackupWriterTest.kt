@@ -4,7 +4,9 @@ import com.aritr.zinely.core.data.asset.AssetEntry
 import com.aritr.zinely.core.data.asset.CURRENT_LIBRARY_BACKUP_VERSION
 import com.aritr.zinely.core.data.asset.LIBRARY_BACKUP_KIND
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_ARCHIVE_BYTES
+import com.aritr.zinely.core.data.asset.MAX_BACKUP_PROJECTS
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_TOTAL_BYTES
+import com.aritr.zinely.core.data.asset.ZineBackupOmission
 import com.aritr.zinely.core.data.asset.ZineBackupProjectEntry
 import com.aritr.zinely.core.data.asset.ZineLibraryBackupManifest
 import com.aritr.zinely.core.data.serialization.JsonDocumentSerializer
@@ -146,6 +148,51 @@ class ZineLibraryBackupWriterTest {
         assertEquals(ZineBackupWritingException.Reason.SOURCE_MISMATCH, error.reason)
         assertEquals(null, error.entryPath)
         assertFalse(Files.exists(destination))
+    }
+
+    @Test
+    fun `a backup may list up to 10,000 left-out zines and records every one`() = runBlocking {
+        val fixture = fixture(mapOf("project" to document()))
+        for (count in listOf(MAX_BACKUP_PROJECTS - 1, MAX_BACKUP_PROJECTS)) {
+            val omitted = List(count) { ZineBackupOmission("Zine $it", ZineBackupOmission.UNREADABLE) }
+            val destination = temp.resolve("left-out-$count.zine")
+
+            ZineLibraryBackupWriter().write(
+                fixture.manifest.copy(omitted = omitted),
+                fixture.documentPaths,
+                fixture.assetPaths,
+                destination,
+            )
+
+            ZineLibraryBackupStager().stage(destination, temp.resolve("staging-$count")).use { staged ->
+                assertEquals(omitted, staged.manifest.omitted, "$count left out")
+            }
+        }
+    }
+
+    @Test
+    fun `more than 10,000 left-out zines fails the whole backup before any output exists`() {
+        val fixture = fixture(mapOf("project" to document()))
+        val omitted = List(MAX_BACKUP_PROJECTS + 1) { ZineBackupOmission(null, ZineBackupOmission.PHOTO) }
+        val destination = temp.resolve("too-many-left-out.zine")
+
+        val error = assertThrows(ZineBackupWritingException::class.java) {
+            runBlocking {
+                ZineLibraryBackupWriter().write(
+                    fixture.manifest.copy(omitted = omitted),
+                    fixture.documentPaths,
+                    fixture.assetPaths,
+                    destination,
+                )
+            }
+        }
+
+        assertEquals(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, error.reason)
+        assertEquals(null, error.entryPath)
+        assertFalse(Files.exists(destination))
+        assertEquals(emptyList<Path>(), Files.list(temp).use { files -> files.filter { it.toString().endsWith(".zine") }.toList() })
+        // No injected limit can lift the bound past what restore decodes.
+        assertThrows(IllegalArgumentException::class.java) { ZineBackupWriteLimits(maximumProjects = MAX_BACKUP_PROJECTS + 1) }
     }
 
     @Test

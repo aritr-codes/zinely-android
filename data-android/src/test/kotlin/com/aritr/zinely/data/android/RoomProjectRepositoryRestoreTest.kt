@@ -15,6 +15,7 @@ import com.aritr.zinely.core.data.serialization.JsonDocumentSerializer
 import com.aritr.zinely.core.data.storage.AtomicFileStore
 import com.aritr.zinely.core.data.storage.FileSystemOps
 import com.aritr.zinely.core.data.storage.NioFileSystemOps
+import com.aritr.zinely.core.data.storage.ZineBackupWriteLimits
 import com.aritr.zinely.core.data.storage.ZineLibraryBackupStager
 import com.aritr.zinely.core.data.storage.ZineLibraryBackupWriter
 import com.aritr.zinely.core.model.ImageElement
@@ -350,6 +351,30 @@ class RoomProjectRepositoryRestoreTest {
 
         assertTrue("got $result", result.errorOrNull() is DataError.Io)
         assertFalse(Files.exists(archive))
+    }
+
+    /**
+     * ADR-122 §5: a backup may list as many left-out zines as the project limit and no more. Past it the whole backup
+     * fails as a limit and nothing is written, never a file that restore would read back short. The limit is injected
+     * small here; the writer tests cover the real 10,000 boundary.
+     */
+    @Test
+    fun `more left-out zines than a backup can list fails the whole backup as a limit and writes nothing`() = runTest {
+        val repository = repo(backupWriter = ZineLibraryBackupWriter(ZineBackupWriteLimits(maximumProjects = 2)))
+        saved(repository, "Fine")
+        overwriteDocument(saved(repository, "Broken 1"), "{ not a document")
+        overwriteDocument(saved(repository, "Broken 2"), "{ not a document")
+        val atTheLimit = root.resolve("out").resolve("two-left-out.zine")
+
+        assertEquals(2, repository.createLibraryBackup(atTheLimit).getOrNull()!!.omitted.size)
+
+        overwriteDocument(saved(repository, "Broken 3"), "{ not a document")
+        val overTheLimit = root.resolve("out").resolve("three-left-out.zine")
+
+        val result = repository.createLibraryBackup(overTheLimit)
+
+        assertTrue("got $result", result.errorOrNull() is DataError.LimitExceeded)
+        assertEquals(listOf(atTheLimit.fileName.toString()), Files.list(overTheLimit.parent).use { it.map { p -> p.fileName.toString() }.toList() })
     }
 
     @Test

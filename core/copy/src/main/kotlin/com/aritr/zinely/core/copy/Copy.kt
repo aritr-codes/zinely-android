@@ -1603,6 +1603,22 @@ public object Copy {
         public fun restoreSavedWithoutUnnamed(count: Int): String =
             "This backup was saved without ${zines(count)} that had no readable ${if (count == 1) "name" else "names"}."
 
+        /**
+         * More than one reason (owner ruling (g), Option 3): the total once, then one clause per reason, the last after
+         * ", and". A single reason keeps its own sentence above.
+         */
+        public fun restoreSavedWithoutSeveral(count: Int, clauses: List<String>): String =
+            "This backup was saved without ${zines(count)}: ${clauses.dropLast(1).joinToString(", ")}, and ${clauses.last()}."
+
+        public fun restoreSavedWithoutOpenedClause(count: Int, names: List<String>): String =
+            "${namedList(count, names)}, which couldn’t be opened then"
+
+        public fun restoreSavedWithoutPhotoClause(count: Int, names: List<String>): String =
+            "${namedList(count, names)}, whose ${if (count == 1) "photo" else "photos"} couldn’t be read then"
+
+        public fun restoreSavedWithoutUnnamedClause(count: Int): String =
+            "$count with no readable ${if (count == 1) "name" else "names"}"
+
         private fun zines(count: Int): String = if (count == 1) "1 zine" else "$count zines"
 
         private fun leftOutNames(count: Int, names: List<String>): String = when {

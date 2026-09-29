@@ -75,7 +75,8 @@ public data class ZineLibraryBackupManifest(
     val projects: List<ZineBackupProjectEntry>,
     val assets: List<AssetEntry> = emptyList(),
     /**
-     * The zines this backup was saved without (ADR-122 §5). Partial ⇔ non-empty; the count is its size. Additive and
+     * The zines this backup was saved without (ADR-122 §5). Partial ⇔ non-empty; the count is its size, at most
+     * [MAX_BACKUP_PROJECTS] (the writer refuses more). Additive and
      * defaulted, so `packageVersion` stays 2: an archive without the key is complete, and older builds ignore it.
      * Display-only and untrusted, so it is read leniently: a malformed value never makes a valid archive unrestorable.
      */
@@ -113,9 +114,9 @@ internal object LenientOmissionsSerializer : KSerializer<List<ZineBackupOmission
 
     override fun deserialize(decoder: Decoder): List<ZineBackupOmission> {
         val element = (decoder as? JsonDecoder)?.decodeJsonElement() ?: return delegate.deserialize(decoder)
-        // ponytail: a hostile 4 MiB manifest can list ~1M tiny entries; keep no more than a real backup could hold, so
-        // the display copies downstream stay bounded. The JSON tree itself is bounded by MAX_BACKUP_MANIFEST_BYTES, as
-        // for every other manifest field.
+        // A hostile 4 MiB manifest can list ~1M tiny entries; keep no more than a real backup can hold (the writer
+        // refuses more than MAX_BACKUP_PROJECTS, ADR-122 §5), so this never shortens a genuine list and the display
+        // copies downstream stay bounded. The JSON tree itself is bounded by MAX_BACKUP_MANIFEST_BYTES.
         return (element as? JsonArray)?.asSequence()?.take(MAX_BACKUP_PROJECTS)?.map { item ->
             val fields = item as? JsonObject
             ZineBackupOmission(

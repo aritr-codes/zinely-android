@@ -86,6 +86,18 @@ class ZineLibraryBackupManifestTest {
         assertEquals(MAX_BACKUP_PROJECTS, lenient.decodeFromString(ZineLibraryBackupManifest.serializer(), text).omitted.size)
     }
 
+    @Test
+    fun `the decode cap keeps every entry of the largest list the writer allows`() {
+        // ADR-122 §5: the writer refuses more than MAX_BACKUP_PROJECTS, so exactly that many must all come back.
+        val omitted = List(MAX_BACKUP_PROJECTS) { ZineBackupOmission("Zine $it", ZineBackupOmission.PHOTO) }
+        val encoded = writer.encodeToString(
+            ZineLibraryBackupManifest.serializer(),
+            sampleLibraryBackupManifest().copy(omitted = omitted),
+        )
+
+        assertEquals(omitted, lenient.decodeFromString(ZineLibraryBackupManifest.serializer(), encoded).omitted)
+    }
+
     /** The restore reader's configuration (`ZineLibraryBackupStager`): unknown keys are ignored. */
     private val lenient = Json { ignoreUnknownKeys = true }
 
