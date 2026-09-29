@@ -40,6 +40,17 @@ class DataStoreBackupRecordStoreTest {
     }
 
     @Test
+    fun `a partial backup's counts round-trip, and a later complete one doesn't inherit them`() = runTest {
+        val store = DataStoreBackupRecordStore(FakeDataStore())
+
+        store.recordBackup(BackupRecord(1_000L, "a.zine", savedCount = 5, totalCount = 6))
+        assertEquals(BackupRecord(1_000L, "a.zine", 5, 6), store.lastBackup.first())
+
+        store.recordBackup(BackupRecord(2_000L, "b.zine"))
+        assertEquals(BackupRecord(2_000L, "b.zine"), store.lastBackup.first())
+    }
+
+    @Test
     fun `an unreadable preferences file reads as none`() = runTest {
         val broken = object : DataStore<Preferences> {
             override val data: Flow<Preferences> = flow { throw IOException("corrupt") }

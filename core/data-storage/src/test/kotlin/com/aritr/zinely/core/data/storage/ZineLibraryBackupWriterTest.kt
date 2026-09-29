@@ -4,7 +4,9 @@ import com.aritr.zinely.core.data.asset.AssetEntry
 import com.aritr.zinely.core.data.asset.CURRENT_LIBRARY_BACKUP_VERSION
 import com.aritr.zinely.core.data.asset.LIBRARY_BACKUP_KIND
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_ARCHIVE_BYTES
+import com.aritr.zinely.core.data.asset.MAX_BACKUP_PROJECTS
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_TOTAL_BYTES
+import com.aritr.zinely.core.data.asset.ZineBackupOmission
 import com.aritr.zinely.core.data.asset.ZineBackupProjectEntry
 import com.aritr.zinely.core.data.asset.ZineLibraryBackupManifest
 import com.aritr.zinely.core.data.serialization.JsonDocumentSerializer
@@ -28,6 +30,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -103,6 +106,7 @@ class ZineLibraryBackupWriterTest {
         }
 
         assertEquals(ZineBackupWritingException.Reason.INTEGRITY_MISMATCH, error.reason)
+        assertEquals("projects/project/document.json", error.entryPath)
         assertFalse(Files.exists(destination))
     }
 
@@ -126,6 +130,7 @@ class ZineLibraryBackupWriterTest {
         }
 
         assertEquals(ZineBackupWritingException.Reason.INTEGRITY_MISMATCH, error.reason)
+        assertEquals("assets/$hash", error.entryPath)
         assertFalse(Files.exists(destination))
     }
 
@@ -141,7 +146,53 @@ class ZineLibraryBackupWriterTest {
         }
 
         assertEquals(ZineBackupWritingException.Reason.SOURCE_MISMATCH, error.reason)
+        assertEquals(null, error.entryPath)
         assertFalse(Files.exists(destination))
+    }
+
+    @Test
+    fun `a backup may list up to 10,000 left-out zines and records every one`() = runBlocking {
+        val fixture = fixture(mapOf("project" to document()))
+        for (count in listOf(MAX_BACKUP_PROJECTS - 1, MAX_BACKUP_PROJECTS)) {
+            val omitted = List(count) { ZineBackupOmission("Zine $it", ZineBackupOmission.UNREADABLE) }
+            val destination = temp.resolve("left-out-$count.zine")
+
+            ZineLibraryBackupWriter().write(
+                fixture.manifest.copy(omitted = omitted),
+                fixture.documentPaths,
+                fixture.assetPaths,
+                destination,
+            )
+
+            ZineLibraryBackupStager().stage(destination, temp.resolve("staging-$count")).use { staged ->
+                assertEquals(omitted, staged.manifest.omitted, "$count left out")
+            }
+        }
+    }
+
+    @Test
+    fun `more than 10,000 left-out zines fails the whole backup before any output exists`() {
+        val fixture = fixture(mapOf("project" to document()))
+        val omitted = List(MAX_BACKUP_PROJECTS + 1) { ZineBackupOmission(null, ZineBackupOmission.PHOTO) }
+        val destination = temp.resolve("too-many-left-out.zine")
+
+        val error = assertThrows(ZineBackupWritingException::class.java) {
+            runBlocking {
+                ZineLibraryBackupWriter().write(
+                    fixture.manifest.copy(omitted = omitted),
+                    fixture.documentPaths,
+                    fixture.assetPaths,
+                    destination,
+                )
+            }
+        }
+
+        assertEquals(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, error.reason)
+        assertEquals(null, error.entryPath)
+        assertFalse(Files.exists(destination))
+        assertEquals(emptyList<Path>(), Files.list(temp).use { files -> files.filter { it.toString().endsWith(".zine") }.toList() })
+        // No injected limit can lift the bound past what restore decodes.
+        assertThrows(IllegalArgumentException::class.java) { ZineBackupWriteLimits(maximumProjects = MAX_BACKUP_PROJECTS + 1) }
     }
 
     @Test
@@ -159,7 +210,69 @@ class ZineLibraryBackupWriterTest {
         }
 
         assertEquals(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, error.reason)
+        assertEquals("projects/project/document.json", error.entryPath)
         assertFalse(Files.exists(destination))
+    }
+
+    @Test
+    fun `a photo that can't be read is a read-side failure naming its entry`() {
+        val photo = "jpeg-master".encodeToByteArray()
+        val hash = sha256(photo)
+        val fixture = fixture(mapOf("project" to document(hash)), mapOf(hash to photo))
+        val unreadable = fixture.assetPaths.getValue(hash)
+        val writer = ZineLibraryBackupWriter(
+            openSource = { source ->
+                if (source == unreadable) throw IOException("I/O error") else Files.newInputStream(source)
+            },
+        )
+        val destination = temp.resolve("unreadable-photo.zine")
+
+        val error = assertThrows(ZineBackupWritingException::class.java) {
+            runBlocking { writer.write(fixture.manifest, fixture.documentPaths, fixture.assetPaths, destination) }
+        }
+
+        assertEquals(ZineBackupWritingException.Reason.IO_FAILURE, error.reason)
+        assertTrue(error.readSide)
+        assertEquals("assets/$hash", error.entryPath)
+        assertFalse(Files.exists(destination))
+    }
+
+    @Test
+    fun `a missing photo is unavailable and names its entry`() {
+        val photo = "jpeg-master".encodeToByteArray()
+        val hash = sha256(photo)
+        val fixture = fixture(mapOf("project" to document(hash)), mapOf(hash to photo))
+        Files.delete(fixture.assetPaths.getValue(hash))
+
+        val error = assertThrows(ZineBackupWritingException::class.java) {
+            runBlocking {
+                ZineLibraryBackupWriter().write(fixture.manifest, fixture.documentPaths, fixture.assetPaths, temp.resolve("x.zine"))
+            }
+        }
+
+        assertEquals(ZineBackupWritingException.Reason.SOURCE_UNAVAILABLE, error.reason)
+        assertEquals("assets/$hash", error.entryPath)
+    }
+
+    @Test
+    fun `a failure writing the private archive names no entry and is not read-side`() {
+        val fixture = fixture(mapOf("project" to document()))
+        val notADirectory = temp.resolve("occupied").also { Files.write(it, byteArrayOf(1)) }
+
+        val error = assertThrows(ZineBackupWritingException::class.java) {
+            runBlocking {
+                ZineLibraryBackupWriter().write(
+                    fixture.manifest,
+                    fixture.documentPaths,
+                    fixture.assetPaths,
+                    notADirectory.resolve("backup.zine"),
+                )
+            }
+        }
+
+        assertEquals(ZineBackupWritingException.Reason.IO_FAILURE, error.reason)
+        assertFalse(error.readSide)
+        assertEquals(null, error.entryPath)
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.aritr.zinely.data.android
 
 import android.net.Uri
+import com.aritr.zinely.core.data.asset.ZineBackupOmission
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import java.io.ByteArrayInputStream
@@ -428,11 +429,54 @@ class LibrarySafTransportTest {
         assertEquals(0, provider.deletes)
     }
 
+    @Test fun `restore hands the commit-start hook to the repository`() = runTest {
+        var handed: (() -> Boolean)? = null
+        val hook = { false }
+        val transport = transport(
+            streams = streams(input = { ByteArrayInputStream(byteArrayOf(1)) }),
+            onRestoreCommitStart = { handed = it },
+        )
+
+        transport.restoreFrom(uri, hook)
+
+        assertTrue(handed === hook)
+    }
+
+    @Test fun `a backup that saved no zine is nothing saved - the provider is never opened and the empty file goes`() = runTest {
+        val receipt = LibraryBackupReceipt(
+            projectCount = 0,
+            assetCount = 0,
+            archiveByteCount = 0,
+            totalCount = 2,
+            omitted = listOf(ZineBackupOmission("A", ZineBackupOmission.PHOTO), ZineBackupOmission(null, ZineBackupOmission.PHOTO)),
+        )
+        var opened = 0
+        val streams = streams(output = { opened++; ByteArrayOutputStream() }, size = 0L)
+        val transport = transport(streams = streams, backup = { DataResult.Success(receipt) })
+
+        val result = transport.backupTo(uri, OutcomeLatch())
+
+        assertEquals(LibraryBackupResult.NothingSaved(receipt), result)
+        assertEquals(0, opened)
+        assertEquals(1, streams.deletes)
+        assertTransferRootClean()
+    }
+
+    @Test fun `nothing saved never deletes a destination that already had bytes`() = runTest {
+        val streams = streams(size = 12L)
+        val transport = transport(streams = streams, backup = { DataResult.Success(LibraryBackupReceipt(0, 0, 0, totalCount = 1)) })
+
+        transport.backupTo(uri, OutcomeLatch())
+
+        assertEquals(0, streams.deletes)
+    }
+
     private fun transport(
         streams: SafStreams = streams(),
         restore: suspend (Path) -> DataResult<LibraryRestoreReceipt> = {
             DataResult.Success(LibraryRestoreReceipt(emptyList()))
         },
+        onRestoreCommitStart: (() -> Boolean) -> Unit = {},
         backup: suspend (Path) -> DataResult<LibraryBackupReceipt> = {
             DataResult.Failure(DataError.Io("unused"))
         },
@@ -441,7 +485,13 @@ class LibrarySafTransportTest {
         transferRoot = root,
         streams = streams,
         restoreRepository = object : LibraryRestoreRepository {
-            override suspend fun restoreLibrary(archive: Path): DataResult<LibraryRestoreReceipt> = restore(archive)
+            override suspend fun restoreLibrary(
+                archive: Path,
+                onCommitStart: () -> Boolean,
+            ): DataResult<LibraryRestoreReceipt> {
+                onRestoreCommitStart(onCommitStart)
+                return restore(archive)
+            }
         },
         backupRepository = object : LibraryBackupRepository {
             override suspend fun createLibraryBackup(destination: Path): DataResult<LibraryBackupReceipt> = backup(destination)

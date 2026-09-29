@@ -3,6 +3,7 @@ package com.aritr.zinely.data.android
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_ASSET_BYTES
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_DOCUMENT_BYTES
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_TOTAL_BYTES
+import com.aritr.zinely.core.data.asset.ZineBackupOmission
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.storage.ZineBackupWritingException
 import com.aritr.zinely.core.data.storage.ZineBackupWritingException.Reason
@@ -91,6 +92,26 @@ class LibraryBackupFailureTest {
     @Test fun `low free space that still holds the archive is an I-O failure, not out of space`() {
         val error = backupWriteError(writing(Reason.IO_FAILURE), documentBytes = listOf(10), assetBytes = emptyList()) { 100 }
         assertTrue(error is DataError.Io)
+    }
+
+    @Test fun `a failure reading a source is never out of space, however full the disk`() {
+        val read = ZineBackupWritingException(Reason.IO_FAILURE, "read", entryPath = "assets/x", readSide = true)
+        assertTrue(backupWriteError(read, documentBytes = listOf(10_000), assetBytes = emptyList()) { 0 } is DataError.Io)
+    }
+
+    @Test fun `restored omissions are clamped for display, never split inside a character`() {
+        val emoji = String(Character.toChars(0x1F4D6)) // one character, two chars
+        val title = "a".repeat(MAX_OMISSION_TITLE_CHARS - 1) + emoji
+        val clamped = clampedOmissions(listOf(ZineBackupOmission(title, "from_the_future")))
+
+        assertEquals(MAX_OMISSION_TITLE_CHARS - 1, clamped.single().title!!.length)
+        assertEquals(ZineBackupOmission.UNREADABLE, clamped.single().reason)
+    }
+
+    @Test fun `the restore free-space probe says full only under one copy buffer, and never when it can't answer`() {
+        assertTrue(isPrivateDiskFull { PRIVATE_DISK_PROBE_BYTES - 1 })
+        assertFalse(isPrivateDiskFull { PRIVATE_DISK_PROBE_BYTES })
+        assertFalse(isPrivateDiskFull { throw SecurityException() })
     }
 
     private fun writing(reason: Reason) = ZineBackupWritingException(reason, reason.name)

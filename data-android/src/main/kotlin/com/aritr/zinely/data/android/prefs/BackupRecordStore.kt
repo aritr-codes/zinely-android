@@ -2,10 +2,16 @@ package com.aritr.zinely.data.android.prefs
 
 import kotlinx.coroutines.flow.Flow
 
-/** The last whole-library backup this phone saved: when, and the file name if the provider reported one. */
+/**
+ * The last whole-library backup this phone saved: when, the file name if the provider reported one, and how many of
+ * how many zines it holds (ADR-122 §4; counts only — names would go stale). `null` counts are a record from before
+ * step 1b, read as complete. Partial ⇔ [savedCount] < [totalCount].
+ */
 public data class BackupRecord(
     val savedAtEpochMs: Long,
     val fileName: String?,
+    val savedCount: Int? = null,
+    val totalCount: Int? = null,
 )
 
 /**

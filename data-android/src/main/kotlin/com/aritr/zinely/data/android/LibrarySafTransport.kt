@@ -26,7 +26,11 @@ import kotlinx.coroutines.withContext
 
 /** Thin Android transport boundary between user-owned SAF documents and trusted private storage. */
 public interface LibrarySafTransport {
-    public suspend fun restoreFrom(source: Uri): DataResult<LibraryRestoreReceipt>
+    /** [onCommitStart] is passed to [LibraryRestoreRepository.restoreLibrary] (ADR-122 R2). */
+    public suspend fun restoreFrom(
+        source: Uri,
+        onCommitStart: () -> Boolean = { true },
+    ): DataResult<LibraryRestoreReceipt>
 
     /**
      * Builds the private archive, then copies it to [destination]. [latch] decides a Cancel that races
@@ -51,6 +55,12 @@ public sealed interface LibraryBackupResult {
 
     /** No backup was saved; the maker's state is chosen from [stage] and [error]. */
     public data class Failed(val stage: LibraryBackupStage, val error: DataError) : LibraryBackupResult
+
+    /**
+     * Every zine was left out (ADR-122 §4), so no archive was written and nothing was saved; [receipt] says why. Not a
+     * failure of Zinely's work, and never recorded as a backup.
+     */
+    public data class NothingSaved(val receipt: LibraryBackupReceipt) : LibraryBackupResult
 }
 
 internal interface SafStreams {
@@ -115,7 +125,10 @@ internal class ContentResolverLibrarySafTransport(
         io = io,
     )
 
-    override suspend fun restoreFrom(source: Uri): DataResult<LibraryRestoreReceipt> = withContext(io) {
+    override suspend fun restoreFrom(
+        source: Uri,
+        onCommitStart: () -> Boolean,
+    ): DataResult<LibraryRestoreReceipt> = withContext(io) {
         val archive = privateArchivePath()
         try {
             Files.createDirectories(transferRoot)
@@ -144,7 +157,7 @@ internal class ContentResolverLibrarySafTransport(
             } catch (failure: Exception) {
                 return@withContext classifyPrivateWriteFailure(archive, "couldn't copy this backup", failure)
             }
-            restoreRepository.restoreLibrary(archive)
+            restoreRepository.restoreLibrary(archive, onCommitStart)
         } finally {
             deletePrivateArchive(archive)
             deleteTransferRootIfEmpty()
@@ -177,6 +190,10 @@ internal class ContentResolverLibrarySafTransport(
             val receipt = when (val created = backupRepository.createLibraryBackup(archive)) {
                 is DataResult.Failure -> return@withContext privateFailure(latch, created.error)
                 is DataResult.Success -> created.value
+            }
+            if (receipt.projectCount == 0) {
+                throwIfCancelled(latch)
+                return@withContext LibraryBackupResult.NothingSaved(receipt)
             }
             // Zinely's own archive is opened first, and its reads are tagged, so a failure to read it is
             // never blamed on the maker's location.
@@ -286,12 +303,8 @@ internal class ContentResolverLibrarySafTransport(
     }
 
     private fun classifyPrivateWriteFailure(path: Path, message: String, cause: Throwable): DataResult.Failure {
-        val usable = try {
-            Files.getFileStore(path.parent).usableSpace
-        } catch (_: Exception) {
-            Long.MAX_VALUE
-        }
-        val error = if (usable < COPY_BUFFER_BYTES) DataError.OutOfSpace(message, cause) else DataError.Io(message, cause)
+        val full = isPrivateDiskFull { Files.getFileStore(path.parent).usableSpace }
+        val error = if (full) DataError.OutOfSpace(message, cause) else DataError.Io(message, cause)
         return DataResult.Failure(error)
     }
 
@@ -332,6 +345,19 @@ internal fun isOutOfSpace(failure: Throwable?): Boolean = generateSequence(failu
         "ENOSPC" in message || "No space left on device" in message ||
             (cause is ErrnoException && cause.errno == OsConstants.ENOSPC)
     }
+
+/**
+ * The restore side's free-space probe (ADR-122 R1): the private disk is full when less than one copy buffer is left.
+ * One helper, so the restore transport and the restore repository can't disagree. A probe that can't answer is not
+ * full. Backup never uses it: its private failures need the failure's own `ENOSPC` ([privateWriteError]).
+ */
+internal fun isPrivateDiskFull(usableBytes: () -> Long): Boolean = try {
+    usableBytes() < PRIVATE_DISK_PROBE_BYTES
+} catch (_: Exception) {
+    false
+}
+
+internal const val PRIVATE_DISK_PROBE_BYTES: Long = 64L * 1024L
 
 /**
  * A backup's private-disk failure outside the writer (ADR-120 §3, F1 "genuine out of space"). No payload size is

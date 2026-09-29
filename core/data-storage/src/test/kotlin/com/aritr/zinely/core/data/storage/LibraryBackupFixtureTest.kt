@@ -1,5 +1,6 @@
 package com.aritr.zinely.core.data.storage
 
+import com.aritr.zinely.core.data.asset.ZineBackupOmission
 import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.ImageElement
 import kotlinx.coroutines.runBlocking
@@ -44,6 +45,7 @@ class LibraryBackupFixtureTest {
             assertEquals(2, staged.manifest.packageVersion)
             assertEquals("library", staged.manifest.kind)
             assertEquals("0.9.0-beta.5", staged.manifest.appVersion)
+            assertEquals(emptyList<ZineBackupOmission>(), staged.manifest.omitted) // no key: a complete backup
             assertEquals(
                 listOf(
                     Triple("zine-v3", 3, DOC_V3),
@@ -73,12 +75,40 @@ class LibraryBackupFixtureTest {
         }
     }
 
+    /**
+     * `fixtures/library-backup-v2-partial.zine` (ADR-122 §5) was produced on the step 1b branch by the
+     * [ZineLibraryBackupWriter] from two of the zines above (`zine-v3`, `zine-v1`, with both photos), saved without
+     * three fictional zines: one unreadable, one unnamed with a bad photo, one newer. Frozen like its sibling.
+     */
+    @Test
+    fun `the frozen partial archive stages with its omissions`() = runBlocking {
+        val archive = Path.of(checkNotNull(javaClass.getResource("/fixtures/library-backup-v2-partial.zine")).toURI())
+        assertEquals(PARTIAL_ARCHIVE_SHA256, sha256(Files.readAllBytes(archive))) {
+            "library-backup-v2-partial.zine changed. Fixtures are frozen: add a new archive, never regenerate one."
+        }
+
+        ZineLibraryBackupStager().stage(archive, temp.resolve("staging")).use { staged ->
+            assertEquals(2, staged.manifest.packageVersion)
+            assertEquals(listOf(DOC_V3, DOC_V1), staged.projects.map { it.manifestEntry.documentSha256 })
+            assertEquals(setOf(PHOTO_A, PHOTO_B), staged.assets.keys)
+            assertEquals(
+                listOf(
+                    ZineBackupOmission("Sunday market", ZineBackupOmission.UNREADABLE),
+                    ZineBackupOmission(null, ZineBackupOmission.PHOTO),
+                    ZineBackupOmission("Riso tests", ZineBackupOmission.NEWER_VERSION),
+                ),
+                staged.manifest.omitted,
+            )
+        }
+    }
+
     private fun sha256(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256")
         .digest(bytes)
         .joinToString("") { "%02x".format(it) }
 
     private companion object {
         const val ARCHIVE_SHA256 = "fd14efcd1e146bf3dc6541ac8e9cb4d0ff43034bf811a7003edad25eb7542fe0"
+        const val PARTIAL_ARCHIVE_SHA256 = "b9dfabb2d792a328a503f03fabd248c25c2c482539a6790f3de75a0fb527ee27"
 
         /** The `:core:data` corpus files, pinned there by `DocumentFixtureCorpusTest`. */
         const val DOC_V1 = "b0e82a1a512ae724930f7b32d81213dca927f0e9f1b3233791e20618253da91e"

@@ -56,7 +56,8 @@ header lists every item and where it is drawn; this section records what the ame
 - **Unchanged:** the empty-shelf variants, restore option, complete `saved` / `restored` results, and the
   restore error branches (`damaged`, `newer`, `read`, `generic`).
 - **Known drift, not changed by 1a:** the frozen `saved` title "Your backup is saved" vs shipped "Backup
-  saved"; the restore `generic` retry label and the `newer` / `read` bodies vs shipped copy.
+  saved"; the restore `generic` retry label and the `newer` / `read` bodies vs shipped copy; the success sheets'
+  button, drawn `Done` (Amendment N too) and shipped "Got it" (`Copy.LibraryBackup.DONE = Common.GOT_IT`).
 
 **Backup-sheet polish · owner-approved and frozen 2026-09-27** (continuation of step 1a). The owner reopened
 1a after checking step 1's build on the Samsung SM-A176B (PR #81, unmerged). The chooser sheet (`#trustSheet`)
@@ -113,8 +114,9 @@ that aren't already on your shelf. It never replaces what's here."*
   revisited only if real testing shows it still misleads.
 - **Pass 2 question for the device check:** after a maker edits a zine, the restore adds the backup's copy.
   Check that *"the changed one is added too"* isn't read as the maker's edited zine being added again.
-- **Compose has not implemented Amendment N.** Until it does, the shipped app still adds a separate copy of
-  every zine, as the 2026-08-22 contract did. Older builds keep that behaviour permanently.
+- **Compose implements Amendment N with step 1b** (branch `fix/1x-step1b-backup-restore`, under review; see
+  [Implementation status](#implementation-status)). Until it ships, the released app still adds a separate copy
+  of every zine, as the 2026-08-22 contract did. Older builds keep that behaviour permanently.
 
 This document freezes the first production `.zine` backup/restore user flow. The repository and
 current V2.1 shelf were reviewed, the interactive HTML was critiqued on the Samsung SM_A176B, and
@@ -272,3 +274,18 @@ the large-text and platform accessibility checks passed. The reproducible eviden
 and last-backup line, the running backup body, and the backup-side failure states other than the 1b-only "none
 saved" and partial ones are implemented. The partial-backup, skip-and-list and restore-honesty states wait for
 step 1b. Step 1 was accepted on 2026-09-28 (device pass, owner design check; see ADR-120).
+
+**Amendment 1a, part 1b, and Amendment N (1.x step 1b, [ADR-122](../DECISIONS.md#adr-122) and
+[ADR-121](../DECISIONS.md#adr-121)) — implemented, under review, not accepted:** the "none saved" and partial
+backup states, the R1 restore space state, the R2 commit phase, the R3 lagging line, the restored-partial notice,
+N1's restore line and N2–N5. Part 1's interim "A zine here can't be opened" is retired unshipped. New goldens: the
+commit phase, a mixed-reason partial backup and "none saved" (light), and N5's longest result (light and dark). Derived
+wording the drawing does not show (unnamed and multi-zine plurals, a restored newer-only notice read as
+"couldn't be opened then") is listed for the owner in the step 1b PR. A restored backup missing zines for more than
+one reason says so in one sentence, the total once and then one clause per reason (owner ruling (g), Option 3,
+2026-09-29): *"This backup was saved without 3 zines: “Sunday market” and “Riso tests”, which couldn’t be opened
+then, and “Moth Club Bulletin”, whose photo couldn’t be read then."*; one reason keeps its own sentence. Device, SM-A176B, 2026-09-29: a controlled fixture (`step1b-multi-reason-check.zine`, a zine already on the shelf plus that list) restored as "Nothing new to add" with the sentence verbatim, one paragraph below the body; the shelf stayed at 43. The result sheets separate the frozen
+body / note / more paragraphs by the drawing's 8 px (`.work .sheet-copy{gap:8px}`; owner ruling (f), 2026-09-29),
+read by TalkBack as one stop. Device evidence (SM-A176B, Android 16, Samsung TalkBack 16.2.00.13,
+2026-09-29): 21 px (8 dp) between the paragraphs, and TalkBack's focus highlight covers both as one stop; the
+spoken wording itself has not been listened to.
