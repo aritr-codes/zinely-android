@@ -86,8 +86,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - One zine Zinely can't open, or a photo that fails its check, no longer stops the whole backup. The rest is saved,
   and the result says so: "5 of 6 zines saved", naming up to three of the zines left out, and why. The backup file
   lists them too, and the Backups sheet's last-backup line adds "— 5 of 6 zines." When no zine can be saved, no
-  file is kept and the sheet says "No zines could be saved". Restoring a partial backup says what it was saved
-  without; versions of Zinely before this one restore it without saying so
+  file is kept and the sheet says "No zines could be saved". A backup that would leave out more than 10,000 zines
+  is not saved at all, so a file never lists fewer than it left out. Restoring a partial backup says what it was
+  saved without; versions of Zinely before this one restore it without saying so
   ([ADR-122](docs/DECISIONS.md#adr-122)).
 - A restore now says what happened. A full phone while preparing it says "Not enough space", not "This backup
   looks damaged". Once zines start being added, Cancel goes away and the sheet says "This part can't be stopped.",

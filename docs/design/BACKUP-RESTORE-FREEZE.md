@@ -281,7 +281,10 @@ backup states, the R1 restore space state, the R2 commit phase, the R3 lagging l
 N1's restore line and N2–N5. Part 1's interim "A zine here can't be opened" is retired unshipped. New goldens: the
 commit phase, a mixed-reason partial backup and "none saved" (light), and N5's longest result (light and dark). Derived
 wording the drawing does not show (unnamed and multi-zine plurals, a restored newer-only notice read as
-"couldn't be opened then") is listed for the owner in the step 1b PR. The result sheets separate the frozen
+"couldn't be opened then") is listed for the owner in the step 1b PR. A restored backup missing zines for more than
+one reason says so in one sentence, the total once and then one clause per reason (owner ruling (g), Option 3,
+2026-09-29): *"This backup was saved without 3 zines: “Sunday market” and “Riso tests”, which couldn’t be opened
+then, and “Moth Club Bulletin”, whose photo couldn’t be read then."*; one reason keeps its own sentence. Device, SM-A176B, 2026-09-29: a controlled fixture (`step1b-multi-reason-check.zine`, a zine already on the shelf plus that list) restored as "Nothing new to add" with the sentence verbatim, one paragraph below the body; the shelf stayed at 43. The result sheets separate the frozen
 body / note / more paragraphs by the drawing's 8 px (`.work .sheet-copy{gap:8px}`; owner ruling (f), 2026-09-29),
 read by TalkBack as one stop. Device evidence (SM-A176B, Android 16, Samsung TalkBack 16.2.00.13,
 2026-09-29): 21 px (8 dp) between the paragraphs, and TalkBack's focus highlight covers both as one stop; the

@@ -14,7 +14,7 @@ the readiness audit and the D1 deep audit ([audit §5](ZINELY-1X-READINESS-AUDIT
 | Part | What | Readiness |
 |---|---|---|
 | **1** | "Last backup saved" fact, honest backup failures, no partial file left behind, no "Backup cancelled." after a complete file | ✅ **READY** — the one `backup-restore.html` amendment ([spec](#backup-restorehtml-amendment-specification)) was drawn, **owner-approved and re-frozen 2026-09-27** ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)). The **backup-sheet polish** (no note, equal action tiles, file name on its own line) was frozen later the same day. **Step 1 ✅ COMPLETE 2026-09-28** (PR #81, [ADR-120](../DECISIONS.md#adr-120) Accepted), polish included |
-| **1b** | Restore honesty (three defects) and skip-and-list backups — complete or explicitly partial, never silently partial | **READY AFTER** part 1 has merged (the amendment is already approved, 2026-09-27) **and** the ADR and product-law amendment are independently reviewed and landed in the implementation session, before any code (✅ landed 2026-09-28 as [ADR-122](../DECISIONS.md#adr-122), Proposed, and [`zinely-v1.md`](../zinely-v1.md) §5/§6; implementation ⏳ in progress), **and** [Part N](#part-n--restore-adds-whats-new) is frozen with its ADR (✅ done 2026-09-28, [ADR-121](../DECISIONS.md#adr-121)); owner ruling 2026-09-28: both change what a restore reports |
+| **1b** | Restore honesty (three defects) and skip-and-list backups — complete or explicitly partial, never silently partial | **READY AFTER** part 1 has merged (the amendment is already approved, 2026-09-27) **and** the ADR and product-law amendment are independently reviewed and landed in the implementation session, before any code (✅ landed 2026-09-28 as [ADR-122](../DECISIONS.md#adr-122), Proposed; accepted 2026-09-29, and [`zinely-v1.md`](../zinely-v1.md) §5/§6; implementation ⏳ in progress), **and** [Part N](#part-n--restore-adds-whats-new) is frozen with its ADR (✅ done 2026-09-28, [ADR-121](../DECISIONS.md#adr-121)); owner ruling 2026-09-28: both change what a restore reports |
 | **N** | Restore adds what's new: an identical zine is not added again, a changed version is added, nothing is replaced | ✅ **Design FROZEN 2026-09-28** ([ADR-121](../DECISIONS.md#adr-121), Accepted, design); implementation ⏳ built with 1b, under review (branch `fix/1x-step1b-backup-restore`) |
 | **2** | "Changing phones?" line | **BLOCKED BY** the physical cross-device restore pass |
 | **3** | Android device-to-device transfer | **BLOCKED BY** O1. Research leans to not doing it |
@@ -578,7 +578,7 @@ success the maker can trust, or as a failure?
 
 ## ADR — amendment to ADR-110
 
-The draft that stood here landed as [ADR-122](../DECISIONS.md#adr-122) (Proposed, 2026-09-28) in the step 1b
+The draft that stood here landed as [ADR-122](../DECISIONS.md#adr-122) (Proposed 2026-09-28, accepted 2026-09-29) in the step 1b
 implementation session, after independent review; the review corrected it in substance (the shelf-entry premise,
 the per-entry validator rules as skip points, a transient document read at the writer failing the whole backup, the
 `NothingSaved` carrier for 0 of M, and R1 without errno sniffing). Read the ADR, not this brief, for the decision.

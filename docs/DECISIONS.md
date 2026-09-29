@@ -12701,7 +12701,7 @@ Three challenges, honestly:
 
 ### One file owns the library — additive v2 `.zine` backup beside readable v1
 
-**Status:** Accepted · **Date:** 2026-08-21 · **Supersedes:** nothing · **Extends:** [ADR-009](#adr-009), [ADR-020](#adr-020), [ADR-022](#adr-022), [ADR-025](#adr-025) · **Amended by:** [ADR-121](#adr-121) (2026-09-28: §5 and the repeated-restore consequence; restore adds only zines not already on the shelf) · [ADR-122](#adr-122) (proposed 2026-09-28: the premise and the backup fail-closed clause; a backup is complete or explicitly partial)
+**Status:** Accepted · **Date:** 2026-08-21 · **Supersedes:** nothing · **Extends:** [ADR-009](#adr-009), [ADR-020](#adr-020), [ADR-022](#adr-022), [ADR-025](#adr-025) · **Amended by:** [ADR-121](#adr-121) (2026-09-28: §5 and the repeated-restore consequence; restore adds only zines not already on the shelf) · [ADR-122](#adr-122) (accepted 2026-09-29: the premise and the backup fail-closed clause; a backup is complete or explicitly partial)
 
 #### Context and decision
 
@@ -13492,7 +13492,8 @@ your shelf. It never replaces what's here."*
 
 ### A backup is complete or explicitly partial, never silently partial; a restore reports what happened
 
-**Status:** Proposed, 2026-09-28. Zinely 1.x step 1b ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)),
+**Status:** Accepted, 2026-09-29 (proposed 2026-09-28; accepted by the owner once reconciled with the
+implementation; see Review below). Zinely 1.x step 1b ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)),
 specified by [Brief 01](planning/BRIEF-01-VISIBLE-OWNERSHIP.md) part 1b (its ADR draft, landed here) and built together
 with [ADR-121](#adr-121)'s restore contract (Part N), whose receipt it shares. The states are the frozen
 [`backup-restore.html` amendment 1a](design/BACKUP-RESTORE-FREEZE.md) items 4–10 and Amendment N. Owner rulings: Q8
@@ -13564,12 +13565,22 @@ committed restore said "Couldn't read that file".
    shelf row.
 5. **Explicit in the file:** `ZineLibraryBackupManifest` gains the defaulted `omitted: List<ZineBackupOmission>`
    (`title: String?`, `reason`: `unreadable` · `newer_version` · `photo`; an unknown value reads as `unreadable`).
-   Partial ⇔ `omitted` non-empty; no id, path or bytes of a left-out zine enter the archive. Complete backups carry
-   `"omitted":[]`. **`packageVersion` stays 2**; older builds ignore the key (`ignoreUnknownKeys`, verified at
-   beta.4-r3 and beta.5). Restore decodes this one display-only field **leniently** — a malformed or wrongly typed
+   Partial ⇔ `omitted` non-empty; no id, path or bytes of a left-out zine enter the archive. The field is **additive
+   within document schema v3 and `packageVersion` 2**: **`packageVersion` stays 2**, and older builds ignore the key
+   (`ignoreUnknownKeys`, verified at beta.4-r3 and beta.5). An **absent** field means no omissions: the backup was
+   written before this decision. **`[]`** means a complete backup written by the current writer, which always writes
+   the key (`"omitted":[]`). Restore decodes this one display-only field **leniently** — a malformed or wrongly typed
    value is ignored, never a refusal — and clamps it for display (the titles of the first 50 entries, the rest
    counted; 120 characters per title; rendered as plain text). Restore's fail-closed validation of the zines
    themselves is unchanged.
+   **Bound (owner ruling, 2026-09-29, Option A):** the **writer refuses more than 10,000** `omitted` entries
+   (`MAX_BACKUP_PROJECTS`, the existing project limit); **exactly 10,000 is allowed**, within the manifest's 4 MiB
+   limit, which fails closed the same way. The check runs with the
+   writer's other count limits, before any output file exists, so exceeding the bound **fails closed**: the whole
+   backup fails as a library-wide limit (Decision 2, "Couldn't finish that backup"), and no file is written or
+   presented as a partial backup. **Restore defensively caps** the decoded list at the same 10,000, so it can never
+   truncate a legitimate backup. The cap is also the defensive bound against a hostile manifest listing more; the
+   manifest's 4 MiB limit bounds the JSON itself.
 6. **Exact closure is preserved** ([ADR-110](#adr-110) §4): the asset table is rebuilt from the saved zines only.
 7. **Restore is unchanged in kind:** staged, fail-closed, additive as amended by [ADR-121](#adr-121) (only zines not
    already on the shelf are added). A restore of a partial archive says what the backup was saved without, in
@@ -13653,3 +13664,18 @@ Recommendations applied:
 - `entries[k]` validator issues map to their zine or photo.
 - The newer-state trigger is flagged for owner confirmation.
 - The Brief's stop condition points here.
+
+**Acceptance (owner, 2026-09-29).** The owner ruled on the items left open by the implementation:
+
+- the restored-backup notice with several reasons is one sentence, the total once and then a clause per reason
+  (ruling (g), Option 3; wording in the [freeze record](design/BACKUP-RESTORE-FREEZE.md#implementation-status));
+- the `omitted` bound is enforced by the backup writer (Option A, Decision 5).
+
+§8 R1 gained its "Before staging" paragraph. The ADR was accepted once both matched the implementation.
+
+The implementation was reviewed by an independent Review Agent that did not write it: **GO WITH FIXES**.
+
+- ACCEPTED, and now recorded here: add this acceptance record.
+- ACCEPTED, now enforced in `ZineBackupWriteLimits`: stop an injected writer limit from rising above 10,000.
+- ACCEPTED, now noted in Decision 5: the 4 MiB manifest limit can bind before 10,000 entries do.
+- REJECTED, adding the owner's principle verbatim: Decision 1 already quotes it verbatim, across a line break.
