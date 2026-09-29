@@ -13581,6 +13581,12 @@ committed restore said "Couldn't read that file".
      can't disagree), else `DataError.Unknown`, which renders the existing "Couldn't finish that restore". No errno
      sniffing is added here: [ADR-036](#adr-036) §2 holds, and ADR-120's `ENOSPC` exception stays limited to the
      provider destination. Reading the archive keeps its mapping.
+     **Before staging**, inside the restore lock, the repository first recovers any interrupted earlier restore and
+     then reconciles the shelf index from the files. Either failing is `DataError.Io` inside the repository and is
+     handed on as `DataError.Unknown`, the retryable "Couldn't finish that restore". The maker's file has not been
+     read at that point, so this never says "Couldn't read that file" and never "This backup looks damaged"; no
+     free-space probe is taken there. A zine on the shelf that can't be indexed does not fail this step: it is
+     skipped, as on any shelf read.
    - **R2.** The repository calls a commit-start hook inside the lock immediately before the non-cancellable commit;
      the hook claims ADR-120's `OutcomeLatch` as done. If Cancel won first, nothing is committed and "Restore
      cancelled." is true. Once the hook wins, Cancel is a no-op: the running sheet drops its Cancel control (it
