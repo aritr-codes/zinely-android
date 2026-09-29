@@ -3,12 +3,17 @@ package com.aritr.zinely.data.android
 import com.aritr.zinely.core.data.asset.AssetEntry
 import com.aritr.zinely.core.data.asset.CURRENT_LIBRARY_BACKUP_VERSION
 import com.aritr.zinely.core.data.asset.LIBRARY_BACKUP_KIND
+import com.aritr.zinely.core.data.asset.MANIFEST_PATH
+import com.aritr.zinely.core.data.asset.ZineArchiveEntry
+import com.aritr.zinely.core.data.asset.ZineBackupOmission
 import com.aritr.zinely.core.data.asset.ZineBackupProjectEntry
 import com.aritr.zinely.core.data.asset.ZineLibraryBackupManifest
+import com.aritr.zinely.core.data.asset.ZineLibraryBackupValidator
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.DocumentRepository
 import com.aritr.zinely.core.data.repository.ProjectRepository
+import com.aritr.zinely.core.data.repository.errorOrNull
 import com.aritr.zinely.core.data.repository.ProjectShelfEntry
 import com.aritr.zinely.core.data.repository.ProjectSummary
 import com.aritr.zinely.core.data.repository.ProjectUnavailableReason
@@ -19,8 +24,11 @@ import com.aritr.zinely.core.data.storage.NioFileSystemOps
 import com.aritr.zinely.core.data.storage.PreparedLibraryRestore
 import com.aritr.zinely.core.data.storage.PreparedRestoreAsset
 import com.aritr.zinely.core.data.storage.PreparedRestoreProject
+import com.aritr.zinely.core.data.storage.RestoreMatcher
 import com.aritr.zinely.core.data.storage.RestoreProjectIdAllocator
+import com.aritr.zinely.core.data.storage.ShelfZine
 import com.aritr.zinely.core.data.storage.StagedZineLibraryBackup
+import com.aritr.zinely.core.data.storage.StagedZineProject
 import com.aritr.zinely.core.data.storage.ZineBackupStagingException
 import com.aritr.zinely.core.data.storage.ZineLibraryBackupStager
 import com.aritr.zinely.core.data.storage.ZineLibraryBackupWriter
@@ -39,6 +47,7 @@ import com.aritr.zinely.data.android.room.ProjectDao
 import com.aritr.zinely.data.android.room.ProjectEntity
 import java.io.IOException
 import java.io.BufferedInputStream
+import java.nio.charset.CharacterCodingException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
@@ -108,6 +117,10 @@ internal class RoomProjectRepository(
      * neighbour reaches it, which is the ruling stated as a signature.
      */
     private val random: Random = Random.Default,
+    private val backupWriter: ZineLibraryBackupWriter = ZineLibraryBackupWriter(),
+    /** Free bytes on the disk holding [path]; the restore's free-space probe (ADR-122 R1), a seam for tests. */
+    private val usableBytes: (Path) -> Long = { Files.getFileStore(it).usableSpace },
+    private val restoreStager: ZineLibraryBackupStager = ZineLibraryBackupStager(),
 ) : ProjectRepository, LibraryRestoreRepository, LibraryBackupRepository {
 
     private val libraryRoot = rootDir.toAbsolutePath().normalize()
@@ -119,8 +132,7 @@ internal class RoomProjectRepository(
         restoreWorkDir = restoreWorkDir,
         fs = fs,
     )
-    private val restoreStager = ZineLibraryBackupStager()
-    private val backupWriter = ZineLibraryBackupWriter()
+    private val backupJson = Json { encodeDefaults = true }
     private val mutex = Mutex()
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -312,14 +324,20 @@ internal class RoomProjectRepository(
      * Restore a fully validated v2 archive additively under the same writer ownership and repository
      * mutex as ordinary project mutations. No live path is touched until staging and preparation are
      * complete; once commit starts, commit plus Room reconciliation are non-cancellable.
+     *
+     * Only zines not already on the shelf are added (ADR-121); a restore that adds nothing succeeds before the
+     * commit step. Once the commit succeeds the result is a success even if Room lags (ADR-122 R3).
      */
-    override suspend fun restoreLibrary(archive: Path): DataResult<LibraryRestoreReceipt> = withContext(io) {
+    override suspend fun restoreLibrary(
+        archive: Path,
+        onCommitStart: () -> Boolean,
+    ): DataResult<LibraryRestoreReceipt> = withContext(io) {
         val lease = libraryWriterGate.tryAcquire()
             ?: return@withContext failure(DataError.Busy("the library has an active editor or restore"))
         lease.use {
             mutex.withLock {
                 when (val recovered = recoverInterruptedRestoreLocked()) {
-                    is DataResult.Failure -> return@withLock recovered
+                    is DataResult.Failure -> return@withLock failure(recovered.error.notTheBackupFile())
                     is DataResult.Success -> Unit
                 }
                 // Recovery can leave stale rows for project ids whose directories were just removed. A
@@ -327,7 +345,7 @@ internal class RoomProjectRepository(
                 // reused on-disk id could inherit stale Room metadata from the interrupted transaction.
                 reconciled = false
                 when (val indexed = reconcileLocked(requiredProjectIds = emptySet(), strictIo = true)) {
-                    is DataResult.Failure -> return@withLock indexed
+                    is DataResult.Failure -> return@withLock failure(indexed.error.notTheBackupFile())
                     is DataResult.Success -> Unit
                 }
 
@@ -336,60 +354,80 @@ internal class RoomProjectRepository(
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (invalid: ZineBackupStagingException) {
-                    if (invalid.reason == ZineBackupStagingException.Reason.FUTURE_VERSION) {
-                        return@withLock failure(
-                            DataError.SchemaTooNew(
+                    return@withLock failure(
+                        when (invalid.reason) {
+                            ZineBackupStagingException.Reason.FUTURE_VERSION -> DataError.SchemaTooNew(
                                 documentVersion = invalid.encounteredVersion ?: Int.MAX_VALUE,
                                 supportedVersion = invalid.supportedVersion ?: 0,
-                            ),
-                        )
-                    }
-                    return@withLock failure(DataError.Corrupt(invalid.message ?: "invalid backup", invalid))
+                            )
+                            ZineBackupStagingException.Reason.STAGING_WRITE_FAILED -> restoreWriteError(
+                                "couldn't write the staging copy of the backup",
+                                invalid,
+                                usableAtFailure = invalid.usableBytesAtFailure,
+                            )
+                            else -> DataError.Corrupt(invalid.message ?: "invalid backup", invalid)
+                        },
+                    )
                 } catch (failure: Exception) {
-                    return@withLock failure(DataError.Io("failed to stage library backup", failure))
+                    return@withLock failure(restoreWriteError("failed to stage library backup", failure))
                 }
 
                 staged.use { verified ->
+                    val omitted = clampedOmissions(verified.manifest.omitted)
                     val prepared = try {
-                        prepareRestore(verified)
+                        val match = RestoreMatcher.match(verified.projects, shelfForMatching())
+                        if (match.added.isEmpty()) {
+                            return@withLock DataResult.Success(
+                                LibraryRestoreReceipt(
+                                    projects = emptyList(),
+                                    alreadyHereCount = match.alreadyHereCount,
+                                    omitted = omitted,
+                                ),
+                            )
+                        }
+                        prepareRestore(verified, match.added).copy(alreadyHereCount = match.alreadyHereCount)
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (failure: Exception) {
-                        return@withLock failure(DataError.Io("failed to prepare library restore", failure))
+                        return@withLock failure(restoreWriteError("failed to prepare library restore", failure))
                     }
 
+                    // R2: the last moment a Cancel may win. Past it the restore can't be stopped and reports what it did.
+                    if (!onCommitStart()) throw CancellationException("restore cancelled before its commit")
                     withContext(NonCancellable) {
                         try {
                             restoreCommitter.commit(prepared.restore)
                         } catch (failure: Exception) {
-                            return@withContext failure(DataError.Io("failed to commit library restore", failure))
+                            // The committer rolled back: nothing on the shelf changed.
+                            return@withContext failure(restoreWriteError("failed to commit library restore", failure))
                         }
+                        // R3: the committed files are the truth. An index that hasn't caught up is reported, not failed.
                         reconciled = false
-                        when (
-                            val indexed = reconcileLocked(
-                                requiredProjectIds = prepared.ids.map { it.second }.toSet(),
-                                strictIo = true,
-                            )
-                        ) {
-                            is DataResult.Failure -> return@withContext indexed
-                            is DataResult.Success -> Unit
-                        }
+                        var shelfUpToDate = reconcileLocked(
+                            requiredProjectIds = prepared.ids.map { it.second }.toSet(),
+                            strictIo = true,
+                        ) is DataResult.Success
                         val restored = ArrayList<RestoredProject>(prepared.ids.size)
-                        for ((sourceId, localId) in prepared.ids) {
-                            val row = try {
-                                dao.findById(localId)
-                            } catch (failure: Exception) {
-                                return@withContext failure(
-                                    DataError.Io("failed to read restored project '$localId'", failure),
-                                )
+                        if (shelfUpToDate) {
+                            for ((sourceId, localId) in prepared.ids) {
+                                val summary = try {
+                                    dao.findById(localId)?.let(::toSummary)
+                                } catch (_: Exception) {
+                                    null
+                                }
+                                if (summary == null) shelfUpToDate = false else restored += RestoredProject(sourceId, summary)
                             }
-                            val summary = row?.let(::toSummary)
-                                ?: return@withContext failure(
-                                    DataError.Io("restored project '$localId' was not reconciled"),
-                                )
-                            restored += RestoredProject(sourceId, summary)
                         }
-                        DataResult.Success(LibraryRestoreReceipt(restored))
+                        if (!shelfUpToDate) reconciled = false
+                        DataResult.Success(
+                            LibraryRestoreReceipt(
+                                projects = restored,
+                                addedCount = prepared.ids.size,
+                                alreadyHereCount = prepared.alreadyHereCount,
+                                shelfUpToDate = shelfUpToDate,
+                                omitted = omitted,
+                            ),
+                        )
                     }
                 }
             }
@@ -397,9 +435,44 @@ internal class RoomProjectRepository(
     }
 
     /**
+     * ADR-122 R1: a failure writing Zinely's own restore copy, preparing it or committing it is the phone's storage, never
+     * the backup file. Out of space by the shared probe, else the generic restore failure ([DataError.Unknown]).
+     * [usableAtFailure] is the free space the stager measured before deleting its partial copy; probing now would count
+     * the space that copy just gave back.
+     */
+    private fun restoreWriteError(message: String, failure: Throwable, usableAtFailure: Long? = null): DataError =
+        if (isPrivateDiskFull { usableAtFailure ?: usableBytes(libraryRoot) }) {
+            DataError.OutOfSpace(message, failure)
+        } else {
+            DataError.Unknown(message, failure)
+        }
+
+    /**
+     * Before staging, the maker's file hasn't been read (the transport copied it privately), so a private recovery or
+     * index failure must not say "Couldn't read that file" ([DataError.Io]); it is the generic restore failure.
+     */
+    private fun DataError.notTheBackupFile(): DataError = if (this is DataError.Io) DataError.Unknown(message, cause) else this
+
+    /** ADR-121 §7: the shelf as its files say, never Room. A zine whose files can't be read matches nothing. */
+    private suspend fun shelfForMatching(): List<ShelfZine> = listProjectIds().map { id ->
+        val sha = paths.documentFile(id)?.let { file ->
+            try {
+                sha256(file)
+            } catch (_: IOException) {
+                null
+            }
+        }
+        ShelfZine(readMetaOrNull(id)?.title, sha) { (documents.load(id) as? DataResult.Success)?.value }
+    }
+
+    /**
      * Freeze files-as-truth under the same library-wide lease used by restore, then stream one
      * self-validating archive to a unique private destination. Room is reconciled first but is not
      * used as backup authority.
+     *
+     * Skip-and-list (ADR-122): a zine that can't be read, or that uses a photo that fails its check, is left out and
+     * listed, and the rest is saved. Only a failure that names no single zine or photo fails the whole backup. When
+     * every zine is left out nothing is written, and the receipt's `projectCount` is 0.
      */
     override suspend fun createLibraryBackup(destination: Path): DataResult<LibraryBackupReceipt> = withContext(io) {
         val lease = libraryWriterGate.tryAcquire()
@@ -419,110 +492,275 @@ internal class RoomProjectRepository(
                 val projectIds = listProjectIds().sorted()
                 if (projectIds.isEmpty()) return@withLock failure(DataError.NotFound("library"))
 
-                val documentSources = linkedMapOf<String, Path>()
-                val projectEntries = ArrayList<ZineBackupProjectEntry>(projectIds.size)
-                val referencedAssets = linkedSetOf<String>()
+                val kept = ArrayList<BackupCandidate>(projectIds.size)
+                val leftOut = ArrayList<LeftOutZine>()
+                suspend fun leaveOut(zines: List<BackupCandidate>, reason: String) {
+                    kept.removeAll(zines.toSet())
+                    zines.forEach { leftOut += leftOutZine(it.id, it.meta, reason, loadError = null) }
+                }
+                /** Leaves out every kept zine using [entryPath] (a document or a photo); returns how many. */
+                suspend fun leaveOutUsing(entryPath: String): Int {
+                    val hash = entryPath.removePrefix(ASSET_ENTRY_PREFIX).takeIf { entryPath.startsWith(ASSET_ENTRY_PREFIX) }
+                    val zines = kept.filter { if (hash != null) hash in it.entry.assetHashes else it.entry.documentPath == entryPath }
+                    leaveOut(zines, if (hash != null) ZineBackupOmission.PHOTO else ZineBackupOmission.UNREADABLE)
+                    return zines.size
+                }
+
                 for (id in projectIds) {
                     currentCoroutineContext().ensureActive()
                     val documentFile = paths.documentFile(id)
-                        ?: return@withLock failure(DataError.Corrupt("project '$id' has an unsafe path"))
                     val meta = readMetaOrNull(id)
-                        ?: return@withLock failure(DataError.Corrupt("project '$id' metadata is unreadable"))
+                    if (documentFile == null || meta == null) {
+                        // Loaded only to tell whether the maker can see this zine on the shelf.
+                        leftOut += leftOutZine(id, meta, ZineBackupOmission.UNREADABLE, documents.load(id).errorOrNull())
+                        continue
+                    }
                     val document = when (val loaded = documents.load(id)) {
-                        is DataResult.Failure -> return@withLock loaded
                         is DataResult.Success -> loaded.value
+                        is DataResult.Failure -> when (loaded.error) {
+                            is DataError.Corrupt, is DataError.Invalid -> {
+                                leftOut += leftOutZine(id, meta, ZineBackupOmission.UNREADABLE, loaded.error)
+                                continue
+                            }
+                            is DataError.SchemaTooNew -> {
+                                leftOut += leftOutZine(id, meta, ZineBackupOmission.NEWER_VERSION, loaded.error)
+                                continue
+                            }
+                            // Transient, or not this zine's fault: a retry may succeed, so nothing is left out.
+                            else -> return@withLock loaded
+                        }
                     }
                     val assetHashes = document.pages.asSequence()
                         .flatMap { it.elements.asSequence() }
                         .filterIsInstance<ImageElement>()
                         .mapTo(linkedSetOf()) { it.assetId }
-                    referencedAssets += assetHashes
                     val documentByteCount = try {
                         Files.size(documentFile)
                     } catch (failure: IOException) {
                         return@withLock failure(DataError.Io("couldn't read project '$id' for backup", failure))
                     }
-                    val rawSchemaVersion = try {
-                        json.parseToJsonElement(Files.readString(documentFile)).jsonObject["schemaVersion"]
-                            ?.jsonPrimitive?.intOrNull
-                    } catch (failure: Exception) {
-                        return@withLock failure(DataError.Corrupt("project '$id' document is malformed", failure))
-                    } ?: return@withLock failure(DataError.Corrupt("project '$id' has no document schema version"))
+                    val documentText = try {
+                        Files.readString(documentFile)
+                    } catch (malformed: CharacterCodingException) {
+                        null
+                    } catch (failure: IOException) {
+                        return@withLock failure(DataError.Io("couldn't read project '$id' for backup", failure))
+                    }
+                    val rawSchemaVersion = documentText?.let { text ->
+                        try {
+                            json.parseToJsonElement(text).jsonObject["schemaVersion"]?.jsonPrimitive?.intOrNull
+                        } catch (_: Exception) {
+                            null
+                        }
+                    }
+                    if (rawSchemaVersion == null) {
+                        // Malformed JSON or no schemaVersion in the primary file (the load may have come from its .bak).
+                        leftOut += leftOutZine(id, meta, ZineBackupOmission.UNREADABLE, loadError = null)
+                        continue
+                    }
                     val documentHash = try {
                         sha256(documentFile)
                     } catch (failure: IOException) {
                         return@withLock failure(DataError.Io("couldn't hash project '$id' for backup", failure))
                     }
-                    projectEntries += ZineBackupProjectEntry(
-                        sourceProjectId = id,
-                        title = meta.title,
-                        format = document.format,
-                        paperSize = document.paperSize,
-                        createdAtEpochMs = meta.createdAtEpochMs,
-                        updatedAtEpochMs = fileMtimeOrNull(documentFile) ?: clock(),
-                        documentSchemaVersion = rawSchemaVersion,
-                        documentPath = "projects/$id/document.json",
-                        documentSha256 = documentHash,
-                        documentByteCount = documentByteCount,
-                        assetHashes = assetHashes.toList(),
-                        coverSurface = meta.coverSurface,
-                        coverStamp = meta.coverStamp,
+                    kept += BackupCandidate(
+                        id = id,
+                        meta = meta,
+                        source = documentFile,
+                        entry = ZineBackupProjectEntry(
+                            sourceProjectId = id,
+                            title = meta.title,
+                            format = document.format,
+                            paperSize = document.paperSize,
+                            createdAtEpochMs = meta.createdAtEpochMs,
+                            updatedAtEpochMs = fileMtimeOrNull(documentFile) ?: clock(),
+                            documentSchemaVersion = rawSchemaVersion,
+                            documentPath = "projects/$id/document.json",
+                            documentSha256 = documentHash,
+                            documentByteCount = documentByteCount,
+                            assetHashes = assetHashes.toList(),
+                            coverSurface = meta.coverSurface,
+                            coverStamp = meta.coverStamp,
+                        ),
                     )
-                    documentSources[id] = documentFile
                 }
 
-                val assetSources = linkedMapOf<String, Path>()
-                val assetEntries = ArrayList<AssetEntry>(referencedAssets.size)
-                for (hash in referencedAssets.sorted()) {
+                // ADR-122 §3: every photo is checked before the archive is built; one that fails leaves out its zines.
+                val photos = HashMap<String, AssetEntry>()
+                for (hash in kept.flatMap { it.entry.assetHashes }.distinct().sorted()) {
                     currentCoroutineContext().ensureActive()
-                    val path = libraryRoot.resolve(ASSETS_DIRECTORY).resolve(hash)
-                    if (!Files.isRegularFile(path)) {
-                        return@withLock failure(DataError.Corrupt("project asset '$hash' is missing"))
-                    }
-                    val metadata = try {
-                        assetMetadataReader.read(path)
-                    } catch (failure: Exception) {
-                        return@withLock failure(DataError.Corrupt("project asset '$hash' is not a readable image", failure))
-                    }
-                    val byteCount = try {
-                        Files.size(path)
-                    } catch (failure: IOException) {
-                        return@withLock failure(DataError.Io("couldn't read project asset '$hash'", failure))
-                    }
-                    assetEntries += AssetEntry(hash, metadata.mimeType, metadata.widthPx, metadata.heightPx, byteCount)
-                    assetSources[hash] = path
+                    checkedPhoto(hash)?.let { photos[hash] = it }
                 }
+                leaveOut(kept.filter { zine -> zine.entry.assetHashes.any { it !in photos } }, ZineBackupOmission.PHOTO)
 
-                val manifest = ZineLibraryBackupManifest(
+                val createdAt = clock()
+                fun manifest() = ZineLibraryBackupManifest(
                     packageVersion = CURRENT_LIBRARY_BACKUP_VERSION,
                     kind = LIBRARY_BACKUP_KIND,
                     appVersion = appVersion.ifBlank { "unknown" },
-                    createdAtEpochMs = clock(),
-                    projects = projectEntries,
-                    assets = assetEntries,
+                    createdAtEpochMs = createdAt,
+                    projects = kept.map { it.entry },
+                    // Exact closure (ADR-110 §4): only the photos the saved zines use.
+                    assets = kept.flatMap { it.entry.assetHashes }.distinct().sorted().map(photos::getValue),
+                    omitted = leftOut.map { it.omission },
                 )
-                val archiveByteCount = try {
-                    backupWriter.write(manifest, documentSources, assetSources, destination)
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (invalid: ZineBackupWritingException) {
-                    val error = when (invalid.reason) {
-                        ZineBackupWritingException.Reason.IO_FAILURE,
-                        ZineBackupWritingException.Reason.DESTINATION_EXISTS,
-                        ZineBackupWritingException.Reason.SOURCE_UNAVAILABLE,
-                        -> DataError.Io("couldn't create the private library backup", invalid)
-                        else -> DataError.Corrupt("the local library could not be backed up safely", invalid)
+
+                // The package validator's per-zine and per-photo rules, run on the candidate by the validator the writer
+                // runs. An issue naming one zine or photo leaves it out; one naming neither fails the whole backup.
+                while (kept.isNotEmpty()) {
+                    val candidate = manifest()
+                    val errors = ZineLibraryBackupValidator().validate(candidate, declaredEntries(candidate)).errors
+                    if (errors.isEmpty()) break
+                    val named = errors.mapNotNull { entryNamedBy(it.path, candidate) }.distinct()
+                    if (named.isEmpty()) {
+                        val limit = errors.any { it.code in LIBRARY_LIMIT_CODES }
+                        val message = "backup manifest is invalid: ${errors.joinToString { it.code }}"
+                        return@withLock failure(if (limit) DataError.LimitExceeded(message) else DataError.Corrupt(message))
                     }
-                    return@withLock failure(error)
+                    named.forEach { leaveOutUsing(it) }
                 }
+
+                // Each pass either saves, fails the whole backup, or leaves out at least one zine: bounded by the zines.
+                while (kept.isNotEmpty()) {
+                    val manifest = manifest()
+                    val archiveByteCount = try {
+                        backupWriter.write(
+                            manifest,
+                            kept.associate { it.id to it.source },
+                            manifest.assets.associate { it.hash to libraryRoot.resolve(ASSETS_DIRECTORY).resolve(it.hash) },
+                            destination,
+                        )
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (failed: ZineBackupWritingException) {
+                        val wholeBackup = failure(
+                            backupWriteError(
+                                failed,
+                                documentBytes = manifest.projects.map { it.documentByteCount },
+                                assetBytes = manifest.assets.map { it.byteCount },
+                            ) { usableBytes(destination.parent) },
+                        )
+                        val entryPath = failed.entryPath?.takeIf { failed.leavesOutItsEntry() } ?: return@withLock wholeBackup
+                        // The archive is private until complete, so a rebuild never touches the maker's file.
+                        if (!privateArchiveGone(destination)) {
+                            return@withLock failure(DataError.Io("couldn't clear the private backup before rebuilding it"))
+                        }
+                        if (leaveOutUsing(entryPath) == 0) return@withLock wholeBackup
+                        continue
+                    }
+                    return@withLock DataResult.Success(
+                        LibraryBackupReceipt(
+                            projectCount = manifest.projects.size,
+                            assetCount = manifest.assets.size,
+                            archiveByteCount = archiveByteCount,
+                            totalCount = projectIds.size,
+                            omitted = manifest.omitted,
+                            offShelfReasons = leftOut.filterNot { it.onShelf }.mapTo(mutableSetOf()) { it.omission.reason },
+                        ),
+                    )
+                }
+                // 0 of M: nothing is written (ADR-122 §4).
                 DataResult.Success(
                     LibraryBackupReceipt(
-                        projectCount = projectEntries.size,
-                        assetCount = assetEntries.size,
-                        archiveByteCount = archiveByteCount,
+                        projectCount = 0,
+                        assetCount = 0,
+                        archiveByteCount = 0L,
+                        totalCount = projectIds.size,
+                        omitted = leftOut.map { it.omission },
+                        offShelfReasons = leftOut.filterNot { it.onShelf }.mapTo(mutableSetOf()) { it.omission.reason },
                     ),
                 )
             }
+        }
+    }
+
+    /**
+     * ADR-122 §4: a left-out zine is named from its readable `meta.json`, else its shelf row, else not at all.
+     * [loadError] is why its document didn't load, or `null` when it did: the shelf shows a zine that loads only
+     * through its row, and one that doesn't as unavailable unless the failure hides it ([unavailableShelfEntry]).
+     */
+    private suspend fun leftOutZine(id: String, meta: ProjectMeta?, reason: String, loadError: DataError?): LeftOutZine {
+        val row = try {
+            dao.findById(id)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
+        val onShelf = when (loadError) {
+            null -> row != null
+            is DataError.NotFound, is DataError.Busy, is DataError.OutOfSpace -> false
+            else -> true
+        }
+        return LeftOutZine(ZineBackupOmission(meta?.title ?: row?.title, reason), onShelf)
+    }
+
+    /** ADR-122 §3: present, a readable image, and bytes that hash to its name. An I/O failure is retried once. */
+    private suspend fun checkedPhoto(hash: String): AssetEntry? {
+        val path = libraryRoot.resolve(ASSETS_DIRECTORY).resolve(hash)
+        repeat(PHOTO_READ_ATTEMPTS) {
+            try {
+                if (!Files.isRegularFile(path)) return null
+                val metadata = assetMetadataReader.read(path)
+                val byteCount = Files.size(path)
+                return if (sha256(path) == hash) {
+                    AssetEntry(hash, metadata.mimeType, metadata.widthPx, metadata.heightPx, byteCount)
+                } else {
+                    null
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: IOException) {
+                // Retried once; a photo that stays unreadable is left out with its zines.
+            } catch (_: Exception) {
+                return null
+            }
+        }
+        return null
+    }
+
+    /** The entries the writer will declare for [manifest], in its order: manifest, documents, photos. */
+    private fun declaredEntries(manifest: ZineLibraryBackupManifest): List<ZineArchiveEntry> = buildList {
+        add(ZineArchiveEntry(MANIFEST_PATH, backupJson.encodeToString(ZineLibraryBackupManifest.serializer(), manifest).encodeToByteArray().size.toLong()))
+        manifest.projects.forEach { add(ZineArchiveEntry(it.documentPath, it.documentByteCount)) }
+        manifest.assets.forEach { add(ZineArchiveEntry(ASSET_ENTRY_PREFIX + it.hash, it.byteCount)) }
+    }
+
+    /** The document or photo entry a validator issue [path] names (`projects[i]`, `assets[j]`, `entries[k]`), if any. */
+    private fun entryNamedBy(path: String?, manifest: ZineLibraryBackupManifest): String? {
+        val match = VALIDATION_PATH.find(path ?: return null) ?: return null
+        val index = match.groupValues[2].toInt()
+        val projects = manifest.projects.map { it.documentPath }
+        val assets = manifest.assets.map { ASSET_ENTRY_PREFIX + it.hash }
+        return when (match.groupValues[1]) {
+            "projects" -> projects.getOrNull(index)
+            "assets" -> assets.getOrNull(index)
+            // entries[0] is the manifest itself, which names no zine.
+            else -> (projects + assets).getOrNull(index - 1)
+        }
+    }
+
+    /** Deletes the incomplete private archive before a rebuild and confirms it is gone. */
+    private fun privateArchiveGone(archive: Path): Boolean = try {
+        Files.deleteIfExists(archive)
+        !Files.exists(archive)
+    } catch (_: IOException) {
+        false
+    }
+
+    /**
+     * Which writer failures name one entry that can be left out (ADR-122 §3). A photo: a mismatch, its limit, a missing
+     * file or a failed read. A document: only a mismatch or its limit, since a failed read may pass on retry.
+     */
+    private fun ZineBackupWritingException.leavesOutItsEntry(): Boolean {
+        val photo = entryPath?.startsWith(ASSET_ENTRY_PREFIX) ?: return false
+        return when (reason) {
+            ZineBackupWritingException.Reason.INTEGRITY_MISMATCH,
+            ZineBackupWritingException.Reason.LIMIT_EXCEEDED,
+            -> true
+            ZineBackupWritingException.Reason.SOURCE_UNAVAILABLE -> photo
+            ZineBackupWritingException.Reason.IO_FAILURE -> photo && readSide
+            else -> false
         }
     }
 
@@ -538,19 +776,23 @@ internal class RoomProjectRepository(
 
     // ---- library restore -----------------------------------------------------------------------
 
-    private suspend fun prepareRestore(staged: StagedZineLibraryBackup): PreparedAndroidRestore {
+    /** Prepares [projects] — the staged zines this restore adds — beside the staging tree. */
+    private suspend fun prepareRestore(
+        staged: StagedZineLibraryBackup,
+        projects: List<StagedZineProject>,
+    ): PreparedAndroidRestore {
         val existingIds = listProjectIds().toSet()
         val localIds = RestoreProjectIdAllocator.allocate(
-            sourceProjectIds = staged.projects.map { it.manifestEntry.sourceProjectId },
+            sourceProjectIds = projects.map { it.manifestEntry.sourceProjectId },
             existingProjectIds = existingIds,
             mintId = newId,
         )
         val preparedProjectsRoot = staged.root.resolve(PREPARED_PROJECTS_DIRECTORY)
         Files.createDirectories(preparedProjectsRoot)
 
-        val preparedProjects = ArrayList<PreparedRestoreProject>(staged.projects.size)
-        val idPairs = ArrayList<Pair<String, String>>(staged.projects.size)
-        staged.projects.zip(localIds).forEach { (project, localId) ->
+        val preparedProjects = ArrayList<PreparedRestoreProject>(projects.size)
+        val idPairs = ArrayList<Pair<String, String>>(projects.size)
+        projects.zip(localIds).forEach { (project, localId) ->
             currentCoroutineContext().ensureActive()
             val entry = project.manifestEntry
             val projectDir = preparedProjectsRoot.resolve(localId)
@@ -577,7 +819,9 @@ internal class RoomProjectRepository(
             restore = PreparedLibraryRestore(
                 transactionId = UUID.randomUUID().toString(),
                 projects = preparedProjects,
-                assets = staged.assets.map { (hash, path) -> PreparedRestoreAsset(hash, path) },
+                // Exact closure: only the photos the added zines use.
+                assets = projects.flatMap { it.manifestEntry.assetHashes }.distinct()
+                    .map { hash -> PreparedRestoreAsset(hash, staged.assets.getValue(hash)) },
             ),
             ids = idPairs,
         )
@@ -855,8 +1099,9 @@ internal class RoomProjectRepository(
     ): ProjectShelfEntry? {
         val reason = when (error) {
             is DataError.SchemaTooNew -> ProjectUnavailableReason.NEWER_APP_REQUIRED
-            is DataError.Corrupt, is DataError.Invalid, is DataError.Io, is DataError.Unknown ->
-                ProjectUnavailableReason.CORRUPT
+            is DataError.Corrupt, is DataError.Invalid, is DataError.Io, is DataError.Unknown,
+            is DataError.LimitExceeded,
+            -> ProjectUnavailableReason.CORRUPT
             is DataError.NotFound, is DataError.Busy -> return null
             is DataError.OutOfSpace -> return null
         }
@@ -949,7 +1194,19 @@ internal class RoomProjectRepository(
     private data class PreparedAndroidRestore(
         val restore: PreparedLibraryRestore,
         val ids: List<Pair<String, String>>,
+        val alreadyHereCount: Int = 0,
     )
+
+    /** A zine that passed the project pass: its manifest entry and the document file the writer reads. */
+    private data class BackupCandidate(
+        val id: String,
+        val meta: ProjectMeta,
+        val source: Path,
+        val entry: ZineBackupProjectEntry,
+    )
+
+    /** A zine a backup left out, and whether the maker can find it on the shelf. */
+    private data class LeftOutZine(val omission: ZineBackupOmission, val onShelf: Boolean)
 
     private data class DocumentWirePeek(
         val schemaVersion: Int? = null,
@@ -962,6 +1219,12 @@ internal class RoomProjectRepository(
         const val ASSETS_DIRECTORY = "assets"
         const val RESTORE_WORK_DIRECTORY = ".library-restore"
         const val PREPARED_PROJECTS_DIRECTORY = "prepared-projects"
+        const val ASSET_ENTRY_PREFIX = "assets/"
+        const val PHOTO_READ_ATTEMPTS = 2
+        val VALIDATION_PATH = Regex("^(projects|assets|entries)\\[(\\d+)]")
+
+        /** Validator codes for a library-wide limit: deterministic, so "Got it" only (ADR-120 F1). */
+        val LIBRARY_LIMIT_CODES = setOf("projects.tooMany", "assets.tooMany", "archive.total.tooLarge", "archive.manifest.tooLarge")
     }
 
     private suspend fun sha256(path: Path): String {

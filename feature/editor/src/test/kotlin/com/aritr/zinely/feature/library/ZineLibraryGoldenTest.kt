@@ -84,6 +84,7 @@ class ZineLibraryGoldenTest {
                 state = state,
                 events = emptyFlow(),
                 backupRestoreState = null,
+                lastBackup = null,
                 onOpenZine = {},
                 onShareExport = {},
                 onStartZine = {},

@@ -8,12 +8,14 @@ on:
       - .github/workflows/pages.yml
       - app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp
       - docs/PRIVACY-POLICY.md
+      - tools/check-public-copy.cjs
   workflow_dispatch:
   pull_request:
     paths:
       - website/**
       - .github/workflows/pages.yml
       - docs/PRIVACY-POLICY.md
+      - tools/check-public-copy.cjs
 
 permissions:
   contents: read
@@ -32,11 +34,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check public copy and links
+        run: |
+          node tools/check-public-copy.cjs
+          node --check website/assets/site.js
+
       - name: Prepare site
         run: |
           mkdir -p _pages_source/assets _pages_source/privacy
           cp -R website/. _pages_source/
           cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp _pages_source/assets/logo.webp
+          rm -f _pages_source/privacy/index.html
           printf '%s\n' '---' 'layout: policy' 'permalink: /privacy/' '---' > _pages_source/privacy/index.md
           cat docs/PRIVACY-POLICY.md >> _pages_source/privacy/index.md
 

@@ -117,19 +117,21 @@ The canonical strings. Format: **preferred** — *(avoid: the generic-Android ve
 
 ### About Zinely (internal Colophon surface)
 
-The public website owns Zinely's origin story and longer product explanation. The in-app surface remains a
-compact utility because it holds the default-paper preference, bundled-font licences, offline/privacy
-assurance, and installed version. Error and recovery copy may still say work is safe when that fact is the
-answer to the current failure. `Colophon` remains the architectural small-press term, but it is not
-maker-facing copy: plain `About` gets the maker there, and `About Zinely` names the destination.
+The public website owns Zinely's longer product explanation. The in-app surface tells the shorter Aastra story,
+then holds the default-paper preference, offline/privacy assurance, a compact route to open-source notices, and
+the installed version. Error and recovery copy may still say work is safe when that fact is the answer to the
+current failure. `Colophon` remains the architectural small-press term, but it is not maker-facing copy: plain
+`About` gets the maker there, and `About Zinely` names the destination.
 
 - Shelf action: **"About"**
 - Title and pane title: **"About Zinely"**
-- Licence Back label: **"Back to About Zinely"**
+- Credits row: **"Licences & credits"** / **"Open-source notices"**
+- Credits introduction: **"Zinely uses a few open-source typefaces. Their licence notices live here."**
+- Credits Back label: **"Back to About Zinely"**
+- Licence Back label: **"Back to Licences & credits"**
 - Paper heading and explanation: **"Paper for new zines"** / **"We’ll suggest this paper when you start. You
   can always choose the other one."**
-- Font heading and roles: **"Fonts we use"** / **"Warm, handmade lettering"** / **"A little bookish flair"** /
-  **"Clear, everyday text"**
+- Typeface rows: **"Averia Sans Libre"** / **"Fraunces"** / **"Inter"**
 - Licence row and child labels: **"Read font licence"** / **"Font licence"**
 - Privacy heading and sentence: **"Your zines stay yours"** / **"Zinely works offline. Your zines stay on
   this device unless you choose to share or back them up."**

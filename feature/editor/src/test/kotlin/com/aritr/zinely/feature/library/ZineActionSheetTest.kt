@@ -165,6 +165,30 @@ class ZineActionSheetTest {
     }
 
     @Test
+    fun `the scrim is not an accessibility stop, and a tap on it still dismisses`() {
+        sheet(TARGET)
+        val scrim = composeRule.onNodeWithTag(ZineActionScrimTestTag).fetchSemanticsNode()
+        // ADR-119: the frozen `.scrim` is a plain div. With a click action it was an unlabelled full-screen
+        // button — the beta.5 known limitation. `ZSheet`'s scrim carries the same assertion.
+        assertTrue(
+            "the scrim must not advertise a click to a screen reader",
+            androidx.compose.ui.semantics.SemanticsActions.OnClick !in scrim.config,
+        )
+        // …and on the tree TalkBack reads: the platform node of the sheet's own Dialog window (the merged
+        // Compose tree is not the platform tree — CLAUDE.md, Device Verification).
+        val dialogRoot = composeViewIn(ShadowDialog.getLatestDialog()!!.window!!.decorView)!!
+        val provider = dialogRoot.accessibilityNodeProvider!!
+        val info = provider.createAccessibilityNodeInfo(scrim.id)
+        assertTrue(
+            "the platform must not offer the scrim as a clickable node",
+            info == null || (!info.isClickable &&
+                info.actionList.none { it.id == android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK }),
+        )
+        composeRule.onNodeWithTag(ZineActionScrimTestTag).performClick()
+        assertEquals("the tap still dismisses", 1, dismissals)
+    }
+
+    @Test
     fun `the system back dismisses the sheet`() {
         sheet(TARGET)
         // The frozen file's `aria-modal="true"` (`:171`) is a behaviour, and Escape is its browser half.
@@ -603,6 +627,15 @@ class ZineActionSheetTest {
     // ---------------------------------------------------------------------------------------------
     // Harness
     // ---------------------------------------------------------------------------------------------
+
+    private fun composeViewIn(v: android.view.View): android.view.View? =
+        if (v is androidx.compose.ui.platform.ViewRootForTest) {
+            v
+        } else {
+            (v as? android.view.ViewGroup)?.let { g ->
+                (0 until g.childCount).firstNotNullOfOrNull { composeViewIn(g.getChildAt(it)) }
+            }
+        }
 
     /** The real component, `Dialog` and all — for behaviour, dismissal and modality. */
     private fun sheet(target: ZineActionTarget?) {

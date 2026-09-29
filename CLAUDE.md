@@ -249,11 +249,13 @@ through a green suite and was caught only here ([ADR-058](docs/DECISIONS.md#adr-
 `ReframeControls.ZoomButton`). Dump the real tree and read the attributes:
 
 ```
-adb shell uiautomator dump /sdcard/ui.xml   # then check class / clickable / enabled / bounds per node
+adb exec-out uiautomator dump /dev/tty 2>/dev/null > ui-<screen>.xml   # then check class / clickable / enabled / bounds per node
 ```
 
-The recipe (and the environment traps that waste an hour) is in
-[docs/DEVICE-VERIFICATION.md](docs/DEVICE-VERIFICATION.md).
+This carries the tree back on stdout and leaves nothing on the device; check the byte count, since an empty
+capture is the one way it can fail. Don't dump to `/sdcard/…`: every such
+file stays in the phone's shared storage (479 had built up by 2026-09-27). The recipe (and the environment
+traps that waste an hour) is in [docs/DEVICE-VERIFICATION.md](docs/DEVICE-VERIFICATION.md).
 
 ---
 

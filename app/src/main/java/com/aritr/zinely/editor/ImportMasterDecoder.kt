@@ -3,11 +3,16 @@ package com.aritr.zinely.editor
 import android.content.ContentResolver
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Matrix
+import android.graphics.Paint
+import android.graphics.RectF
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import kotlin.math.roundToInt
 
 /** A decoded, normalised import-master: the JPEG [bytes] plus its pixel dimensions (for placement). */
 public data class MasterImage(val bytes: ByteArray, val widthPx: Int, val heightPx: Int) {
@@ -45,7 +50,7 @@ public class ImportMasterDecoder(private val contentResolver: ContentResolver) {
             var normalised: Bitmap? = null
             try {
                 val orientation = readOrientation(uri)
-                // normalise returns a NEW bitmap when orientation/scale apply, or the source if identity.
+                // normalise returns a NEW bitmap when orientation/scale/alpha apply, or the source if identity.
                 normalised = normalise(decoded, orientation)
                 val out = ByteArrayOutputStream()
                 // A false compress wrote nothing usable → treat as a decode failure, never a partial master.
@@ -94,7 +99,11 @@ public class ImportMasterDecoder(private val contentResolver: ContentResolver) {
     /**
      * Apply [orientation] (rotate + mirror) and a longest-edge ≤ [MAX_EDGE_PX] scale in **one** matrix,
      * so at most one extra bitmap is allocated. Returns the source unchanged only when the matrix is the
-     * identity (orientation normal AND already within the cap).
+     * identity (orientation normal AND already within the cap) and the source has no alpha.
+     *
+     * A source with alpha is drawn onto paper white in that same single allocation: the JPEG master has
+     * no alpha channel, and encoding a transparent pixel writes it as black — a transparent pixel is
+     * paper, not ink, the same source-over-white composite `Photocopier.lumaOf` applies.
      */
     private fun normalise(src: Bitmap, orientation: Int): Bitmap {
         val matrix = Matrix()
@@ -114,8 +123,23 @@ public class ImportMasterDecoder(private val contentResolver: ContentResolver) {
             val scale = MAX_EDGE_PX.toFloat() / longest
             matrix.postScale(scale, scale)
         }
-        return if (matrix.isIdentity) src
-        else Bitmap.createBitmap(src, 0, 0, src.width, src.height, matrix, true)
+        if (!src.hasAlpha()) {
+            return if (matrix.isIdentity) src
+            else Bitmap.createBitmap(src, 0, 0, src.width, src.height, matrix, true)
+        }
+        // Same output bounds as createBitmap(src, …, matrix, true): the mapped rect, rounded, moved to 0,0.
+        val bounds = RectF(0f, 0f, src.width.toFloat(), src.height.toFloat()).also { matrix.mapRect(it) }
+        matrix.postTranslate(-bounds.left, -bounds.top)
+        val paper = Bitmap.createBitmap(
+            bounds.width().roundToInt(),
+            bounds.height().roundToInt(),
+            Bitmap.Config.ARGB_8888,
+        )
+        Canvas(paper).apply {
+            drawColor(Color.WHITE)
+            drawBitmap(src, matrix, Paint(Paint.FILTER_BITMAP_FLAG))
+        }
+        return paper
     }
 
     /**

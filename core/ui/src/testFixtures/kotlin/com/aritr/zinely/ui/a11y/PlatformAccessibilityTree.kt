@@ -222,9 +222,11 @@ public data class PlatformA11yStop(
  * 1. **Child order here is the composition's declaration order, not a geometry-sorted order.** Compose
  *    publishes children in declaration order and expresses any *re-sorting* separately, through
  *    `AccessibilityNodeInfo.setTraversalBefore/setTraversalAfter` hints. On this host those hints are
- *    **`UNDEFINED` on every node of every surface probed** — so the sequence returned here is exactly what a
- *    service would follow, but it carries no evidence about how a device's TalkBack might additionally
- *    re-sort. A test that only asserted this sequence would prove the declaration order and nothing about the
+ *    **`UNDEFINED` on every node of every surface probed**, because Compose computes them only while
+ *    accessibility is enabled, which this host is not (forcing it on makes them appear; ADR-119) — so the
+ *    sequence returned here is exactly what a service would follow, but it carries no evidence about how a
+ *    device's TalkBack might additionally re-sort. A test that only asserted this sequence would prove the
+ *    declaration order and nothing about the
  *    *visual* order; that is why CI-31's assertion pairs the sequence with the geometry check over
  *    [PlatformA11yStop.boundsInScreen].
  * 2. **`getChildId` is reached by reflection.** `getChildCount()` is public but the per-index child *id*

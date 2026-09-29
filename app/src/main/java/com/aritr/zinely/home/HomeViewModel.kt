@@ -3,6 +3,7 @@ package com.aritr.zinely.home
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aritr.zinely.core.data.asset.ZineBackupOmission
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.ProjectShelfEntry
@@ -15,12 +16,21 @@ import com.aritr.zinely.data.android.prefs.PreferredPaperStore
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.core.model.newZineCoverRecipe
+import com.aritr.zinely.data.android.LibraryBackupReceipt
+import com.aritr.zinely.data.android.LibraryBackupResult
+import com.aritr.zinely.data.android.LibraryBackupStage
 import com.aritr.zinely.data.android.LibrarySafTransport
+import com.aritr.zinely.data.android.OutcomeLatch
+import com.aritr.zinely.data.android.prefs.BackupRecord
+import com.aritr.zinely.data.android.prefs.BackupRecordStore
 import com.aritr.zinely.feature.editor.HomeShelfEvent
 import com.aritr.zinely.feature.editor.HomeZineCard
 import com.aritr.zinely.feature.library.LibraryBackupRestoreFailureKind
 import com.aritr.zinely.feature.library.LibraryBackupRestoreMode
 import com.aritr.zinely.feature.library.LibraryBackupRestoreUiState
+import com.aritr.zinely.feature.library.LibraryLastBackup
+import com.aritr.zinely.feature.library.LibraryOmission
+import com.aritr.zinely.feature.library.LibraryOmissionReason
 import com.aritr.zinely.feature.library.LibraryZine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineStart
@@ -38,6 +48,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -97,6 +108,7 @@ internal class HomeViewModel @Inject constructor(
     private val librarySafTransport: LibrarySafTransport,
     private val preferredPaperStore: PreferredPaperStore,
     private val pendingDeleteStore: PendingDeleteStore,
+    private val backupRecordStore: BackupRecordStore,
 ) : ViewModel() {
 
     /** Ids hidden from the shelf while their undo window is open or a durable interrupted delete resumes. */
@@ -135,6 +147,12 @@ internal class HomeViewModel @Inject constructor(
     private var backupRestorePickerPending: Boolean = false
     private var backupRestoreCancellationRequested: Boolean = false
 
+    /**
+     * The running job's Cancel-vs-complete latch (ADR-120): a backup claims it when its file is complete, a restore
+     * when its commit starts (ADR-122 R2).
+     */
+    private var outcomeLatch: OutcomeLatch? = null
+
     init {
         val interruptedDeletes = pendingDeleteStore.pendingIds()
         if (interruptedDeletes.isNotEmpty()) {
@@ -160,6 +178,13 @@ internal class HomeViewModel @Inject constructor(
 
     val preferredPaper: StateFlow<PaperSize> = preferredPaperStore.preferredPaperSize
         .stateIn(viewModelScope, SharingStarted.Eagerly, PaperSize.A4)
+
+    /** The chooser's last-backup fact; null until a backup has been saved on this phone. */
+    val lastBackup: StateFlow<LibraryLastBackup?> = backupRecordStore.lastBackup
+        .map { record ->
+            record?.let { LibraryLastBackup(it.savedAtEpochMs, it.fileName, it.savedCount, it.totalCount) }
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun setPreferredPaper(paperSize: PaperSize) {
         viewModelScope.launch {
@@ -246,28 +271,86 @@ internal class HomeViewModel @Inject constructor(
     fun backupPicked(uri: Uri?) {
         backupRestorePickerPending = false
         if (uri == null) return
+        if (backupRestoreJob?.isActive == true) return
+        val latch = OutcomeLatch()
+        outcomeLatch = latch
         launchBackupRestore(LibraryBackupRestoreMode.Backup) {
-            when (val result = librarySafTransport.backupTo(uri)) {
-                is DataResult.Success -> LibraryBackupRestoreUiState.BackupSaved(
-                    projectCount = result.value.projectCount,
-                    assetCount = result.value.assetCount,
-                )
-                is DataResult.Failure -> LibraryBackupRestoreUiState.Failed(
+            when (val result = librarySafTransport.backupTo(uri, latch)) {
+                is LibraryBackupResult.Saved -> {
+                    // The only place the record is written: a saved backup, including one a late Cancel
+                    // lost to, and a partial one (with its counts). Failure, nothing saved, cancel, picker
+                    // cancel/failure and restore never reach here.
+                    val receipt = result.receipt
+                    recordSavedBackup(
+                        BackupRecord(
+                            savedAtEpochMs = System.currentTimeMillis(),
+                            fileName = result.fileName,
+                            savedCount = receipt.projectCount,
+                            totalCount = receipt.totalCount,
+                        ),
+                    )
+                    LibraryBackupRestoreUiState.BackupSaved(
+                        projectCount = receipt.projectCount,
+                        assetCount = receipt.assetCount,
+                        totalCount = receipt.totalCount,
+                        omitted = receipt.omitted.toUi(),
+                        offShelfReasons = receipt.offShelfReasons.mapTo(mutableSetOf(), ::toUiReason),
+                    )
+                }
+                is LibraryBackupResult.NothingSaved -> LibraryBackupRestoreUiState.Failed(
                     mode = LibraryBackupRestoreMode.Backup,
-                    kind = classifyBackupRestoreFailure(LibraryBackupRestoreMode.Backup, result.error),
+                    kind = nothingSavedKind(result.receipt),
+                )
+                is LibraryBackupResult.Failed -> LibraryBackupRestoreUiState.Failed(
+                    mode = LibraryBackupRestoreMode.Backup,
+                    kind = classifyBackupFailure(result),
                 )
             }
+        }
+    }
+
+    private suspend fun recordSavedBackup(record: BackupRecord) {
+        try {
+            backupRecordStore.recordBackup(record)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            // The file is saved whether or not this phone could note it; the saved state stays true.
         }
     }
 
     fun restorePicked(uri: Uri?) {
         backupRestorePickerPending = false
         if (uri == null) return
+        if (backupRestoreJob?.isActive == true) return
+        val latch = OutcomeLatch()
+        outcomeLatch = latch
+        // ADR-122 R2: called inside the repository's lock just before the non-cancellable commit. Winning the
+        // latch makes a later Cancel a no-op and drops Cancel from the sheet; losing it means Cancel came first,
+        // and the repository commits nothing.
+        val onCommitStart = {
+            latch.markDone().also { committing ->
+                if (committing) {
+                    _backupRestoreState.value = LibraryBackupRestoreUiState.Running(
+                        mode = LibraryBackupRestoreMode.Restore,
+                        cancellable = false,
+                    )
+                }
+            }
+        }
         launchBackupRestore(LibraryBackupRestoreMode.Restore) {
-            when (val result = librarySafTransport.restoreFrom(uri)) {
-                is DataResult.Success -> LibraryBackupRestoreUiState.RestoreAdded(
-                    restoredProjectCount = result.value.projects.size,
-                )
+            when (val result = librarySafTransport.restoreFrom(uri, onCommitStart)) {
+                is DataResult.Success -> {
+                    val receipt = result.value
+                    // R3: committed, but the shelf index lags. A fresh subscription reconciles it.
+                    if (!receipt.shelfUpToDate) retry()
+                    LibraryBackupRestoreUiState.RestoreAdded(
+                        restoredProjectCount = receipt.addedCount,
+                        alreadyHereCount = receipt.alreadyHereCount,
+                        shelfUpToDate = receipt.shelfUpToDate,
+                        omitted = receipt.omitted.toUi(),
+                    )
+                }
                 is DataResult.Failure -> LibraryBackupRestoreUiState.Failed(
                     mode = LibraryBackupRestoreMode.Restore,
                     kind = classifyBackupRestoreFailure(LibraryBackupRestoreMode.Restore, result.error),
@@ -285,10 +368,13 @@ internal class HomeViewModel @Inject constructor(
     }
 
     fun cancelBackupRestore() {
-        if (backupRestoreJob?.isActive == true) {
-            backupRestoreCancellationRequested = true
-            backupRestoreJob?.cancel()
-        }
+        if (backupRestoreJob?.isActive != true) return
+        // A backup whose file is already complete, or a restore whose commit has started, can't be cancelled: the
+        // latch was claimed as done, so this Cancel is a no-op and the real outcome follows (Brief 01 "the late
+        // Cancel", ADR-122 R2).
+        if (outcomeLatch?.requestCancel() == false) return
+        backupRestoreCancellationRequested = true
+        backupRestoreJob?.cancel()
     }
 
     fun dismissBackupRestoreSurface() {
@@ -460,17 +546,66 @@ internal class HomeViewModel @Inject constructor(
                 }
                 throw cancelled
             } finally {
-                backupRestoreCancellationRequested = false
-                backupRestoreJob = null
+                // Only this job's own state: a stale finish must never clear a newer backup's latch.
+                if (backupRestoreJob == null || backupRestoreJob === coroutineContext[Job]) {
+                    backupRestoreCancellationRequested = false
+                    backupRestoreJob = null
+                    outcomeLatch = null
+                }
             }
         }
     }
+
+    /**
+     * Owner ruling F1 (ADR-120): a whole backup failure is shown by **where** it failed, in this order —
+     * out of space anywhere; the chosen destination; then Zinely's own private archive. Busy is not a
+     * failure (F2). A leftover private-archive Corrupt / Invalid is "Couldn't finish that backup": a zine that
+     * can't be read is left out, not a failure (ADR-122 §2). Restore keeps [classifyBackupRestoreFailure].
+     */
+    private fun classifyBackupFailure(failure: LibraryBackupResult.Failed): LibraryBackupRestoreFailureKind =
+        when (val error = failure.error) {
+            is DataError.OutOfSpace -> LibraryBackupRestoreFailureKind.NotEnoughSpace
+            is DataError.Busy -> LibraryBackupRestoreFailureKind.Busy
+            else -> if (failure.stage == LibraryBackupStage.Destination) {
+                LibraryBackupRestoreFailureKind.SaveFailed
+            } else {
+                when (error) {
+                    is DataError.LimitExceeded -> LibraryBackupRestoreFailureKind.BackupLimitReached
+                    else -> LibraryBackupRestoreFailureKind.Generic
+                }
+            }
+        }
+
+    /**
+     * 0 of M saved (ADR-122 §4): "A zine here needs a newer Zinely" when every left-out zine is newer (flagged for
+     * owner confirmation), the photo wording when every one is a photo, else the general wording.
+     */
+    private fun nothingSavedKind(receipt: LibraryBackupReceipt): LibraryBackupRestoreFailureKind {
+        val reasons = receipt.omitted.map { ZineBackupOmission.normalizedReason(it.reason) }.toSet()
+        return when {
+            reasons == setOf(ZineBackupOmission.NEWER_VERSION) -> LibraryBackupRestoreFailureKind.BackupZineNewer
+            reasons == setOf(ZineBackupOmission.PHOTO) -> LibraryBackupRestoreFailureKind.BackupNoneSavedPhoto
+            receipt.omittedOffShelf -> LibraryBackupRestoreFailureKind.BackupNoneSavedOffShelf
+            else -> LibraryBackupRestoreFailureKind.BackupNoneSaved
+        }
+    }
+
+    private fun List<ZineBackupOmission>.toUi(): List<LibraryOmission> = map { omission ->
+        LibraryOmission(title = omission.title?.takeIf { it.isNotBlank() }, reason = toUiReason(omission.reason))
+    }
+
+    private fun toUiReason(reason: String?): LibraryOmissionReason =
+        when (ZineBackupOmission.normalizedReason(reason)) {
+            ZineBackupOmission.NEWER_VERSION -> LibraryOmissionReason.Newer
+            ZineBackupOmission.PHOTO -> LibraryOmissionReason.Photo
+            else -> LibraryOmissionReason.Unreadable
+        }
 
     private fun classifyBackupRestoreFailure(
         mode: LibraryBackupRestoreMode,
         error: DataError,
     ): LibraryBackupRestoreFailureKind = when (error) {
-        is DataError.Corrupt, is DataError.Invalid -> LibraryBackupRestoreFailureKind.Damaged
+        is DataError.Corrupt, is DataError.Invalid, is DataError.LimitExceeded -> LibraryBackupRestoreFailureKind.Damaged
         is DataError.SchemaTooNew -> LibraryBackupRestoreFailureKind.NewerAppNeeded
         is DataError.OutOfSpace -> LibraryBackupRestoreFailureKind.NotEnoughSpace
         is DataError.Busy -> LibraryBackupRestoreFailureKind.Busy

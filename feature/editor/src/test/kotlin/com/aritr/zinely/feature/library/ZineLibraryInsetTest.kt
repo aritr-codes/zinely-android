@@ -76,6 +76,7 @@ class ZineLibraryInsetTest {
                     state = LibraryShelfState.Loading,
                     events = emptyFlow(),
                     backupRestoreState = null,
+                    lastBackup = null,
                     onOpenZine = {},
                     onShareExport = {},
                     onStartZine = {},

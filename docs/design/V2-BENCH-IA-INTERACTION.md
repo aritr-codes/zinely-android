@@ -198,7 +198,8 @@ built to test. If either fails, fall back to the hardened bottom sheet.
 
 ### C.4 Accessibility model (inherits + extends what exists)
 Each element (incl. the new `DecorElement`) is a focusable node with role + label + `selected` state +
-rotated-AABB bounds, in reading-then-z traversal order; every manipulation has a stepped custom action;
+rotated-AABB bounds, in reading-then-z traversal order (*superseded by [ADR-119](../DECISIONS.md#adr-119): spatial
+reading order, ties by id, never by z*); every manipulation has a stepped custom action;
 edits announce **positionally** through a **Polite** live region ("Image placed, top of page 2"; Assertive
 only for "Page full") ([BR§5](V2-BENCH-RESEARCH.md)). Selection handles use a dual-tone/halo stroke to hold
 **3:1** over any user photo; text ≥ **4.5:1**, controls ≥ **3:1**, measured worst-case over the paper grain

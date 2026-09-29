@@ -618,9 +618,19 @@ class TokenDisciplineTest {
             }
             .toSet()
 
+    /**
+     * Only this checkout's own modules. Skips `build`, every dot-directory (`.git`, `.gradle`, `.claude`,
+     * agent worktrees under `.agents` …), and any nested directory carrying its own `settings.gradle.kts`
+     * — a second copy of the project (a scratch snapshot, a worktree) whose identically-named packages
+     * would otherwise be scanned as ours. On a checkout holding such copies the old walk read 1,132 files
+     * in ~119 s instead of the 233 tracked ones in under a second.
+     */
     private fun productionKotlinSources(repoRoot: File): Sequence<File> =
         repoRoot.walkTopDown()
-            .onEnter { dir -> dir.name != "build" && dir.name != ".git" && dir.name != ".claude" }
+            .onEnter { dir ->
+                dir == repoRoot || (!dir.name.startsWith(".") && dir.name != "build" &&
+                    !File(dir, "settings.gradle.kts").exists())
+            }
             .filter { it.isFile && it.extension == "kt" }
             .filter { file ->
                 // Only production sources: `.../src/main/...`. Normalise separators for Windows.

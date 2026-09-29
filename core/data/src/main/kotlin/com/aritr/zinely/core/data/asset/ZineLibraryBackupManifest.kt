@@ -2,7 +2,16 @@ package com.aritr.zinely.core.data.asset
 
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineFormat
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 /** The package version written by the all-project, user-held library backup. */
 public const val CURRENT_LIBRARY_BACKUP_VERSION: Int = 2
@@ -65,7 +74,61 @@ public data class ZineLibraryBackupManifest(
     val createdAtEpochMs: Long,
     val projects: List<ZineBackupProjectEntry>,
     val assets: List<AssetEntry> = emptyList(),
+    /**
+     * The zines this backup was saved without (ADR-122 §5). Partial ⇔ non-empty; the count is its size, at most
+     * [MAX_BACKUP_PROJECTS] (the writer refuses more). Additive and
+     * defaulted, so `packageVersion` stays 2: an archive without the key is complete, and older builds ignore it.
+     * Display-only and untrusted, so it is read leniently: a malformed value never makes a valid archive unrestorable.
+     */
+    @Serializable(with = LenientOmissionsSerializer::class)
+    val omitted: List<ZineBackupOmission> = emptyList(),
 )
+
+/** One zine left out of a backup: only what the maker was already told, never its id, path or bytes. */
+@Serializable
+public data class ZineBackupOmission(
+    val title: String? = null,
+    val reason: String,
+) {
+    public companion object {
+        public const val UNREADABLE: String = "unreadable"
+        public const val NEWER_VERSION: String = "newer_version"
+        public const val PHOTO: String = "photo"
+        private val KNOWN = setOf(UNREADABLE, NEWER_VERSION, PHOTO)
+
+        /** An unknown reason reads as [UNREADABLE], so a newer build can add reasons without a version change. */
+        public fun normalizedReason(reason: String?): String = reason?.takeIf { it in KNOWN } ?: UNREADABLE
+    }
+}
+
+/**
+ * Invariant: decoding `omitted` never throws. A non-array is no omissions; each array element counts as one left-out
+ * zine, keeping a title only when it is a string and a reason only when it is a known one. Encoding is plain.
+ */
+internal object LenientOmissionsSerializer : KSerializer<List<ZineBackupOmission>> {
+    private val delegate = ListSerializer(ZineBackupOmission.serializer())
+    override val descriptor: SerialDescriptor = delegate.descriptor
+
+    override fun serialize(encoder: Encoder, value: List<ZineBackupOmission>): Unit =
+        delegate.serialize(encoder, value)
+
+    override fun deserialize(decoder: Decoder): List<ZineBackupOmission> {
+        val element = (decoder as? JsonDecoder)?.decodeJsonElement() ?: return delegate.deserialize(decoder)
+        // A hostile 4 MiB manifest can list ~1M tiny entries; keep no more than a real backup can hold (the writer
+        // refuses more than MAX_BACKUP_PROJECTS, ADR-122 §5), so this never shortens a genuine list and the display
+        // copies downstream stay bounded. The JSON tree itself is bounded by MAX_BACKUP_MANIFEST_BYTES.
+        return (element as? JsonArray)?.asSequence()?.take(MAX_BACKUP_PROJECTS)?.map { item ->
+            val fields = item as? JsonObject
+            ZineBackupOmission(
+                title = fields?.stringOrNull("title"),
+                reason = ZineBackupOmission.normalizedReason(fields?.stringOrNull("reason")),
+            )
+        }?.toList().orEmpty()
+    }
+
+    private fun JsonObject.stringOrNull(key: String): String? =
+        (get(key) as? JsonPrimitive)?.takeIf { it.isString }?.content
+}
 
 /** One fully staged archive entry and its actual uncompressed byte count. */
 public data class ZineArchiveEntry(

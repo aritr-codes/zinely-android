@@ -4,6 +4,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.aritr.zinely.render.android.AssetBytesSource
 import com.aritr.zinely.render.android.ImageIntrinsics
+import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import org.junit.Assume.assumeTrue
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -136,4 +138,17 @@ private fun encodePhoto(widthPx: Int, heightPx: Int): ByteArray {
         .toByteArray()
     bitmap.recycle()
     return bytes
+}
+
+/**
+ * Wait until the Reframe controls are on screen. They compose only once the session's photo-readability
+ * read — on `Dispatchers.IO` inside the overlay/host — has landed, and `waitForIdle` does not wait for that
+ * dispatcher. Clicking a control straight after `waitForIdle` therefore raced the read: CI run 35106419110
+ * failed `whole_photo_commits_as_fit_over_the_full_crop` with "could not find node 'Whole photo'" on a
+ * commit that changed no code. Same polling idiom as `TypeBarTest.settleSize`.
+ */
+internal fun ComposeTestRule.awaitReframeControls() {
+    waitForIdle()
+    waitUntil(timeoutMillis = 5_000) { onAllNodesWithTag(ReframeControlsTestTag).fetchSemanticsNodes().isNotEmpty() }
+    waitForIdle()
 }

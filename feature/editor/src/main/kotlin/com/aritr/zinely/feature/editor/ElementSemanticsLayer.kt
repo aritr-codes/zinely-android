@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.EditorUiState
 import com.aritr.zinely.core.editor.Intent
+import com.aritr.zinely.core.editor.SpatialOrder
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.render.android.SelectionChromeGeometry
@@ -42,8 +43,10 @@ public const val ElementNodeTagPrefix: String = "element-node-"
  *
  * Nodes are placed by the element's **rotated axis-aligned bounds** (the bounding box of the four rotated
  * corners from [SelectionChromeGeometry.outlineDevicePx]); a node is at least 48dp on each side so the
- * touch/focus target meets WCAG 2.5.8 even for a tiny element. Document order = the elements list, so the
- * traversal order mirrors the back-to-front paint order.
+ * touch/focus target meets WCAG 2.5.8 even for a tiny element. The nodes are **declared** in
+ * [SpatialOrder]'s reading order (ZINELY-DESIGN-SYSTEM §4.5's canvas clause, ADR-119), and `traversalIndex`
+ * restates that same order — so child order and traversal order agree, and neither follows the paint order,
+ * which a restack or a spread changes without moving anything.
  *
  * Stateless: the host hoists [uiState] and [dispatch]. The visible [EditorContextBar] reuses the same
  * intents on the current selection.
@@ -81,10 +84,12 @@ public fun ElementSemanticsLayer(
     val density = LocalDensity.current
     val minSidePx = with(density) { 48.dp.toPx() }
 
-    // A traversal group so TalkBack walks the nodes in document (back-to-front) order via traversalIndex,
-    // rather than the nondeterministic order overlapping bounds would otherwise produce.
+    // A traversal group so TalkBack walks the nodes in reading order via traversalIndex, rather than the
+    // nondeterministic order overlapping bounds would otherwise produce. An unknown page size disables only
+    // the large-element guard (see [SpatialOrder.order]).
+    val readingOrder = SpatialOrder.order(page.elements, pageSizePt?.height ?: Double.POSITIVE_INFINITY)
     Box(modifier = modifier.semantics { isTraversalGroup = true }) {
-        page.elements.forEachIndexed { index, element ->
+        readingOrder.forEachIndexed { index, element ->
             val corners = SelectionChromeGeometry.outlineDevicePx(element.transform, screenPxPerPt, pageOffset)
             if (corners.size != 4) return@forEachIndexed
             val bounds = aabb(corners)

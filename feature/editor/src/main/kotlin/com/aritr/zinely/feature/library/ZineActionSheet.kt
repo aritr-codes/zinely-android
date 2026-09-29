@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
@@ -269,6 +270,10 @@ internal fun ZineActionScrim(onDismiss: () -> Unit, modifier: Modifier = Modifie
             .testTag(ZineActionScrimTestTag)
             .fillMaxSize()
             .background(ZinelyV21Scrim)
+            // The frozen `.scrim` is a plain div: never announced. Exposed, it was an unlabelled full-screen
+            // button (a beta.5 known limitation); Back (the Dialog) still dismisses. ADR-119, as `ZSheet`: the
+            // clear must come BEFORE `clickable` — placed after, it leaves the click.
+            .clearAndSetSemantics { }
             // `scrim.onclick = close`.
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },

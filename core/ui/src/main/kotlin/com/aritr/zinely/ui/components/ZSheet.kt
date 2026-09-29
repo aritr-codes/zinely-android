@@ -13,6 +13,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -38,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,6 +77,9 @@ import kotlin.math.roundToInt
 public const val ZSheetScrimTestTag: String = "zSheetScrim"
 public const val ZSheetSurfaceTestTag: String = "zSheetSurface"
 public const val ZSheetCloseTestTag: String = "zSheetClose"
+
+/** A `sub` holding this between paragraphs draws them [ZinelyV21Dimens.gapSm] apart instead of a blank line apart. */
+public const val ZSheetParagraphBreak: String = "\n\n"
 
 /**
  * The frozen `.dhead` close button — its action and the words a screen reader says for it.
@@ -172,6 +177,10 @@ public fun ZSheet(
                         .fillMaxSize()
                         .testTag(ZSheetScrimTestTag)
                         .background(ScrimFill)
+                        // The frozen `.scrim` is a plain div with an onclick: never announced. Exposed, it was an
+                        // unlabelled full-screen button TalkBack landed on first; Back (the Dialog) still
+                        // dismisses. The clear must come BEFORE `clickable` — placed after, it leaves the click.
+                        .clearAndSetSemantics { }
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
@@ -318,22 +327,32 @@ public fun ZSheetSurface(
         }
         // `.sh-sub{font-size:.78rem;color:var(--ink-soft);margin-top:var(--gap-hair);font-weight:500}`.
         if (sub != null) {
-            BasicText(
-                text = sub,
-                modifier = Modifier.padding(
-                    start = ZinelyV21Dimens.gapHair,
-                    end = ZinelyV21Dimens.gapHair,
-                    top = ZinelyV21Dimens.gapHair,
-                    bottom = ZinelyV21Dimens.gapMd,
-                ),
-                style = TextStyle(
-                    color = colors.inkSoft,
-                    fontFamily = ZinelyV21Fonts.Work,
-                    fontSize = SubSize,
-                    fontWeight = FontWeight.Medium,
-                    lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                ),
+            val subModifier = Modifier.padding(
+                start = ZinelyV21Dimens.gapHair,
+                end = ZinelyV21Dimens.gapHair,
+                top = ZinelyV21Dimens.gapHair,
+                bottom = ZinelyV21Dimens.gapMd,
             )
+            val subStyle = TextStyle(
+                color = colors.inkSoft,
+                fontFamily = ZinelyV21Fonts.Work,
+                fontSize = SubSize,
+                fontWeight = FontWeight.Medium,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+            )
+            val paragraphs = sub.split(ZSheetParagraphBreak)
+            if (paragraphs.size == 1) {
+                BasicText(text = sub, modifier = subModifier, style = subStyle)
+            } else {
+                // `backup-restore.html .work .sheet-copy{gap:8px}`: paragraphs sit gapSm apart, not a blank line
+                // apart. Merged, so TalkBack still reads them in order as one stop, as the single text did.
+                Column(
+                    modifier = subModifier.semantics(mergeDescendants = true) {},
+                    verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+                ) {
+                    paragraphs.forEach { BasicText(text = it, style = subStyle) }
+                }
+            }
         }
         content()
     }

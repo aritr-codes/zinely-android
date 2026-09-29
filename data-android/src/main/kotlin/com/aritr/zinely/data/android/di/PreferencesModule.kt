@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.aritr.zinely.data.android.prefs.BackupRecordStore
+import com.aritr.zinely.data.android.prefs.DataStoreBackupRecordStore
 import com.aritr.zinely.data.android.prefs.DataStoreEditorOnboardingStore
 import com.aritr.zinely.data.android.prefs.DataStorePreferredPaperStore
 import com.aritr.zinely.data.android.prefs.EditorOnboardingStore
@@ -60,4 +62,10 @@ internal object PreferencesModule {
     fun providePreferredPaperStore(
         dataStore: DataStore<Preferences>,
     ): PreferredPaperStore = DataStorePreferredPaperStore(dataStore)
+
+    @Provides
+    @Singleton
+    fun provideBackupRecordStore(
+        dataStore: DataStore<Preferences>,
+    ): BackupRecordStore = DataStoreBackupRecordStore(dataStore)
 }

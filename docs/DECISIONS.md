@@ -119,12 +119,19 @@
 | [ADR-107](#adr-107) | **A larger material library — grown inside the frozen four, searchable, composed by hand.** First admits a 16-supply expansion to 32, keeps the remaining ~19 candidates as a curated backlog, upholds the randomiser ban, withdraws app-authored composites, and ships search with growth. | Accepted |
 | [ADR-108](#adr-108) | ✅ **Hollow supplies — not as an axis; admissible one mark at a time.** Fill-only means a flag cannot *implement* hollow, only select a second authored outline. Rule [D-093](design/V2-SPEC-DEFECTS.md#d-093) first: the cheap end of the promise is the tile, not the catalogue | Proposed | **Accepted 2026-08-20**; R4 shipped as *generation* — the tile renders the authored outline, `BenchArtGlyphs` deleted.
 | [ADR-109](#adr-109) | **One photo across two pages — a spread is two ordinary images, not a new kind of thing.** An action writes two `ImageElement`s sharing one `assetId` with complementary crops: no element type, no schema bump, no imposition change, no draw command. The frozen confirmation explains that the complete join first appears in the printed and folded zine | Accepted |
-| [ADR-110](#adr-110) | **A v2 `.zine` is one whole-library backup, additive beside the v1 single-project package.** Files remain authoritative, assets remain content-addressed, and restore validates a staged archive before touching live storage. | Accepted |
+| [ADR-110](#adr-110) | **A v2 `.zine` is one whole-library backup, additive beside the v1 single-project package.** Files remain authoritative, assets remain content-addressed, and restore validates a staged archive before touching live storage. | Accepted; §5 amended by [ADR-121](#adr-121) |
 | [ADR-111](#adr-111) | **The supplied collage owns launcher identity; launch is a system-only transition with no delay or marketing screen.** | Accepted |
 | [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, implemented through one bundled, deterministic preview/export path.** Bundled Emoji2 with forced replacement owns the glyphs; system/OEM fallback remains forbidden. | Accepted |
 | [ADR-113](#adr-113) | **Flip is one mobile verb with two local-axis toggles for a single Photo or Art element.** Text and multi-selection are excluded; persistence requires an honest schema v3 rather than a lossy v2 additive field. | Accepted |
-| [ADR-114](#adr-114) | **Public story on the website; installed-app utility in About; fold replay remains an HTML experiment.** The site uses sanitized canonical mockups, a concise embedded accessibility statement, curated release notes, and a non-committal roadmap. | Accepted |
+| [ADR-114](#adr-114) | **Public story on the website; installed-app utility in About; fold replay remains an HTML experiment.** The site uses sanitized canonical mockups, a concise embedded accessibility statement, curated release notes, and a non-committal roadmap. | Accepted; §1 and §5 amended by [ADR-118](#adr-118) |
 | [ADR-115](#adr-115) | Remove the unavailable selected-text Font action until font choice exists. Owner-led decision, not a demonstrated usability improvement. | Accepted; implementation verification pending |
+| [ADR-116](#adr-116) | **Plain-language public updates and distinct About copy on both surfaces.** Retain technical documentation and accessibility requirements; app maker's note design frozen. | Accepted; native verification pending |
+| [ADR-117](#adr-117) | **Licence notices stay complete, but leave the main About narrative.** One compact row opens a child credits screen; font-role blurbs retire. | Accepted; owner ruling 2026-09-16 |
+| [ADR-118](#adr-118) | **The public website tells one product story and shows only shipped UI.** Self-hosted fonts, a truthful Bench render, a Download page, and one public status scheme (Available / In development / Planned / Exploring) by horizon. Amends ADR-114 §1 and §5. | Accepted 2026-09-24; owner-directed |
+| [ADR-119](#adr-119) | **On the Bench, TalkBack reads a page in spatial reading order, not stacking order; the zine action sheet's scrim is silent.** A §4.5 canvas clause; nodes declared in that order; `ZineActionScrim` gets `ZSheet`'s one-modifier fix. | Accepted 2026-09-26; 1.x step 2; owner TalkBack listen passed on SM-A176B |
+| [ADR-120](#adr-120) | **A backup says when it was last saved, and a failed backup says where it failed.** A last-backup record written only on a saved backup; two backup phases (private archive, then the chosen destination) classified by owner ruling F1; one Cancel-vs-complete latch; the destination discarded best-effort. Extends ADR-110; the step 1b boundary is explicit. | Accepted 2026-09-28 (proposed 2026-09-27); 1.x step 1; device passes and owner checks done |
+| [ADR-121](#adr-121) | **Restore adds zines that aren't already on the shelf and never replaces what's here.** A zine is already here when its title, format, paper size and content equal a shelf zine's, counted one for one; a changed zine is added; doubt adds. No format change. Amends ADR-110 §5. | Accepted (design) 2026-09-28; owner ruling; implemented with 1.x step 1b and accepted 2026-09-29 (PR #86, `1fd3c9e`) |
+| [ADR-122](#adr-122) | **A backup is complete or explicitly partial, never silently partial; a restore reports what happened.** Backup is skip-and-list (one photo never fails it); the manifest gains a defaulted, leniently read `omitted` list, `packageVersion` stays 2; restore staging-write failures aren't "damaged", Cancel is withdrawn once commit starts, and a committed restore is a success even if the shelf lags. Amends ADR-110. | Accepted 2026-09-29; 1.x step 1b (PR #86, `1fd3c9e`) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -426,7 +433,7 @@
 
 - **Decision — B, cap = 4096 px longest edge:**
   - **Why 4096:** it clears the 3508 px A4 full-bleed worst case (×1.17 margin) and gives real crop headroom — a 50 %-linear crop still yields 2048 px ≈ a full panel at 300 DPI / well above the 240 PPI "indistinguishable" floor. It is a power-of-two friendly to `inSampleSize`/GPU.
-  - **Import pipeline:** decode-bounds → `inSampleSize` → downscale to ≤ 4096 longest edge → **normalise EXIF orientation once** → re-encode (JPEG q ≈ 90 for photos; PNG/lossless when alpha/graphics) → store as the master; **the camera original is discarded** after the master is written.
+  - **Import pipeline:** decode-bounds → `inSampleSize` → downscale to ≤ 4096 longest edge → **normalise EXIF orientation once** → re-encode (JPEG q ≈ 90 for photos; PNG/lossless when alpha/graphics — *not implemented; see the 2026-09-23 amendment below*) → store as the master; **the camera original is discarded** after the master is written.
   - **Derivation:** edit/preview bitmaps are Coil-downsampled to the on-screen panel size (≈ hundreds of px, ~1 MB); export composites by sampling the master at the panel's exact target pixel box at 300 DPI — never the original, never the whole master at once where region decode suffices.
   - **Honest naming:** schema field and UX call it **import master / optimized import**; the import flow makes clear the full original is not retained, so re-crop/zoom/re-export expectations are correct.
 - **Cross-subsystem impact:**
@@ -438,6 +445,7 @@
 - **Edge case (noted):** a tiny photo blown up to a full-sheet full-bleed poster sits at ≈ 4096/3508 ≈ 300 PPI — fine; a user wanting a print *larger than a zine sheet* is capped. Acceptable for a Letter/A4 home-print MVP; revisit if larger formats enter scope (ROADMAP V2).
 - **Evidence:** 300 PPI is the print-quality target, 240 PPI the "indistinguishable" floor; proxy-and-master is standard in photo/video editing; Android large-bitmap decoding (`inSampleSize`, `BitmapRegionDecoder`) and EXIF normalisation are required to avoid OOM/rotation bugs. Landed in [RESEARCH R8](RESEARCH.md#r8-imported-image-fidelity--storage--verified--recommendation).
 - **Review (2026-06-19):** Codex — **ACCEPT** (first pass): "4096px is justified for the stated MVP … discarding the camera original is acceptable if the UI/schema honestly call the retained file an 'import master' … hashing post-downscale/EXIF master bytes is correct; non-deterministic re-encode reduces dedupe hits but does not break liveness." → **Accepted.**
+- **Amendment (2026-09-23): no PNG master; every master is JPEG.** The "PNG/lossless when alpha/graphics" branch of the import pipeline above was never built. [ADR-031 §4](#adr-031) chose a JPEG-q90-only master as a product call and listed a format-aware master as a rejected alternative. As of ADR-031's 2026-09-23 amendment, a source with transparency is flattened onto white before encoding. The rest of this ADR (one capped 4096 px master, original discarded, derive on demand) is unchanged. An alpha-preserving master remains future work and needs its own ADR, alongside the sticker/alpha decisions in [ROADMAP](ROADMAP.md).
 
 ## ADR-024 {#adr-024}
 **Minimum supported Android version = API 24 (Android 7.0). (Resolves [PRD Q1](PRD.md#13-open-questions).)**
@@ -595,6 +603,7 @@
 - **Review — Inc 2a implementation (2026-06-26):** Codex (high reasoning) reviewed the concrete `FileAssetStore` + `FileAssetBytesSource` code. Findings reconciled: **RF1 (accepted)** — dedupe/`contains`/`read` used `Files.exists`, which would accept a directory/symlink at `assets/<hex>` as a valid blob → switched all three to `Files.isRegularFile` (added a directory-squat regression test). **Rec (accepted)** — added a concurrent-identical-bytes store test, a write-failure temp-cleanup test (fake `FileSystemOps` throws), and full `FileAssetBytesSource` coverage (non-hex/traversal/missing/dir → null, existing → fresh independent streams). Implementing the concurrent test surfaced a real cross-platform issue: on the Windows dev JVM `ATOMIC_MOVE + REPLACE_EXISTING` into an extant target throws (POSIX/Android allows it) → `store()` now treats an `atomicReplace` `IOException` as **success when the target is already a complete regular-file blob** (a concurrent importer won the race; bytes are identical), closing the dedupe race on every platform. **Obs (for 2b):** wire `FileAssetStore` with the injected real `AndroidFileSystemOps` (true `Os.fsync` dir flush), not the `NioFileSystemOps` default. Tests green: 9 `FileAssetStoreTest` + 5 `FileAssetBytesSourceTest`. → **2a Accepted.**
 - **Review — Inc 2b implementation (2026-06-26):** Codex (high reasoning) reviewed the concrete decoder + picker + pipeline code. Findings reconciled: **RF1 (accepted)** — `PhotoPicker.await`'s `invokeOnCancellation` cleared `pending` unconditionally, so a cancelled pick A could wipe a newer pending B → identity-guarded (`if (pending === thisResumer)`); regression test added. **RF2 (accepted, real lifecycle bug)** — `unbind()` resuming the pending pick with `null` on *composition* disposal dropped a valid redelivered `Uri` on rotation/activity-recreation (the VM survives and `ActivityResultRegistry` redelivers); `unbind()` now clears **only** the launch hook and keeps the in-flight pick, with `viewModelScope` cancellation (firing `invokeOnCancellation`) handling real teardown — so no hang; test rewritten to assert rotation-survival. **RF3 (accepted)** — `ImportMasterDecoder` leaked the decoded `Bitmap` on post-decode exception paths and ignored `compress()`'s boolean → wrapped in `try/finally` with identity-aware `recycle()`, and a `false` compress is now a decode failure (never a partial master). **Rec (accepted)** — a throwing launch action now clears the exact pending + resumes `null` so the bridge can't be poisoned. Codex confirmed threading (pick on `Main.immediate`, decode/store on IO), `ImageElement(id="")` safe (reducer re-mints), Hilt bindings present, and the privacy invariant (JPEG re-encode drops EXIF/geotags). **Caveat:** the decoder, the pipeline, and the Compose `ActivityResult` binding are **not headless-testable** (Bitmap / picker) — unit tests cover only `PhotoPicker` (8) + `defaultImagePlacement` (3); the end-to-end pick→decode→store→render path needs a **device/instrumented smoke** before release. → **2b Accepted (pending device smoke).**
 - **Device smoke (2026-07-04, S7.0):** the pending smoke ran on hardware (SM-A176B, Android 16) and **failed exactly where the caveat warned** — every import returned "That image couldn't be added." Root cause (logcat: one `MediaProvider` open, then silence): `ImportMasterDecoder.readBounds` applied its null-guard to the *result* of an `inJustDecodeBounds` `BitmapFactory.decodeStream` — which is null **by contract** (it only fills `opts`) — so bounds reading failed for every image on every device (`…openInputStream(uri)?.use { decodeStream(…) } ?: return null`). Fixed by guarding the *stream* and reading dimensions from `opts`. The "not headless-testable" caveat above is **corrected**: Robolectric NATIVE (real Skia) + a shadow `ContentResolver` serving fresh streams per open covers the decoder headlessly — `ImportMasterDecoderTest` now locks the regression (valid image ⇒ master with source dimensions; EXIF consumed; corrupt/unopenable ⇒ null) — that suite is the **repo-verifiable proof**. The end-to-end on-device re-verification (pick → decode → store → element on page, SM-A176B/Android 16) is **external manual evidence from the S7.0 debugging session** (logcat + screencaps), not a repo artifact. → **2b device smoke CLOSED.**
+- **Amendment (2026-09-23): transparency now flattens onto white, as Consequences already stated.** The Consequences line above says a transparent graphic "flatten[s] on a white/opaque encode". The code did not do that. JPEG has no alpha, and a decoder hands back a transparent pixel as `0x00000000`, so every transparent pixel was encoded **black**, and a logo or sticker PNG imported as a black rectangle. `normalise` now composites any source with alpha onto white in the single allocation it already makes. This is the same source-over-white rule `Photocopier.lumaOf` applies. The decision is unchanged: the master is still JPEG q90, and **transparency is still not preserved**, so a cut-out placed over a photo shows a white box. Because the Bench, Read and Proof surfaces paint the cream V2.1 paper while export paper is white, a flattened logo also reads as a faint white rectangle on screen. The print is correct; this is a Known Limitation, not a defect of this fix. Photocopier photos and white-background JPEGs already behave the same way. A PNG-when-alpha master remains the deferred alternative. Proof: `ImportMasterDecoderTest` "decodeToMaster lays a transparent background onto paper white", which failed before the fix with its corner pixel at `#ff010000`. Rotated or scaled images with alpha have no test yet; the review re-derived that path's bounds math against AOSP `createBitmap`.
 
 ---
 
@@ -1385,9 +1394,9 @@ Repository reality (authoritative): `SheetComposer.writePdf/writePng(sheetPt, pa
 
 6. **`DownloadsWriter` — sole owner of the durable write and its uniqueness guarantee.** A `:app/export` `DownloadsWriter` performs the Downloads write and owns collision *resolution*: on **API 29+** it inserts into `MediaStore.Downloads` (relying on the platform's ` (N)` auto-dedup) and on **API 24–28** it writes via the File API to the public Downloads directory and applies `ExportNaming`'s suffix rule. **Invariant: the ≤28 suffix format is identical to MediaStore's ` (N)` convention**, so a collision yields the same visible name on both paths (pinned by a pure unit test). This preserves the [ADR-039](#adr-039) Decision 4 never-clobber guarantee for permanent copies.
 
-7. **Stream-ownership invariant.** Because `SheetComposer` never closes `out`, **each writer owns its own stream**: the transport path via `ZineExporter`'s existing `FileOutputStream(...).use{}`; `DownloadsWriter` opens and `use{}`-closes its own stream (`contentResolver.openOutputStream(...)` on 29+, `FileOutputStream` on ≤28), and on 29+ sets `IS_PENDING=0` after a successful write and deletes the pending row on failure so no half-file ever surfaces in Downloads.
+7. **Stream-ownership invariant.** Because `SheetComposer` never closes `out`, **each writer owns its own stream**: the transport path via `ZineExporter`'s existing `FileOutputStream(...).use{}`; `DownloadsWriter` opens and `use{}`-closes its own stream (`contentResolver.openOutputStream(...)` on 29+, `FileOutputStream` on ≤28), and on 29+ sets `IS_PENDING=0` after a successful write and deletes the pending row on failure so no half-file ever surfaces in Downloads. *(Amended 2026-09-23: the ≤28 path now also deletes its partial `File` on failure, best-effort, then rethrows. Before this, a failed render left a truncated `zine.pdf` behind and pushed the next save to `zine (1).pdf`.)*
 
-8. **Permission contract (explicit).** The manifest gains `<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>`. The Downloads write is **permission-free on API 29+** (MediaStore); on **API 24–28** the first save requests the runtime permission. This is a durable platform contract, recorded here as a decision, not a manifest afterthought.
+8. **Permission contract (explicit).** The manifest gains `<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>`. The Downloads write is **permission-free on API 29+** (MediaStore); on **API 24–28** the first save requests the runtime permission. This is a durable platform contract, recorded here as a decision, not a manifest afterthought. *(Amended 2026-09-23, beta.5: until this release nothing actually requested the permission. The manifest declared it, but no code asked, so every Save PDF on API 24–28 failed with the export error. The request now lives in the Proof host (`ZinelyNavHost` `ProofDestination`, gated by `needsLegacyStoragePermission`), never in `ExportViewModel` or `DownloadsWriter`. A grant continues that one save; a denial shows the existing error through `ExportViewModel.couldNotStart`; "Try again" asks again through the same gate. Not yet covered: after the user picks "Don't ask again", Android refuses at once and "Try again" has no visible effect, with no route to Settings. That needs an owner ruling on copy; it is recorded as a beta.5 Known Limitation. Proof: `SavePdfPermissionHostTest`.)*
 
 9. **Retire `ACTION_VIEW` for Save PDF; preserve Share and the Fold hand-off.** Save PDF switches from `ProofExportTarget.OPEN` to a new `SAVE`; `OPEN`/`ACTION_VIEW` had exactly one caller (Save PDF) and is retired (`openIntent` deleted, its sole call site removed), leaving `ProofExportTarget { SEND, SAVE }`. **Share is unchanged** — `SEND → ExportReady → ACTION_SEND` (system chooser). **The [ADR-041](#adr-041) Fold hand-off is preserved**: the `ExportSaved` branch still raises the post-export `saved` signal and surfaces the "Saved to Downloads" confirmation + "Fold now", so the payoff and never-silent guarantee survive the OPEN retirement.
 
@@ -12422,6 +12431,16 @@ right half → Crop(0.5,        0.5 − ch/2, 0.5 + cw/2,   0.5 + ch/2)
 
 Each result has aspect `pageAspect`; each is placed `Fit.FIT` over a full-page `Transform`.
 
+**Amendment (2026-09-23): a horizontally flipped source swaps the halves.** This table predates the
+flip in [ADR-113](#adr-113). That flip mirrors each half inside its own box *after* the crop picks the
+source region. So for a source with `flippedHorizontally = true`, the left page takes the **right**
+half and the right page takes the left, and the spread reads `[mirror(R) | mirror(L)]`, which is the
+whole photo mirrored. Both halves inherit the flip. A vertical flip does not change the split. The
+reducer (`MakeImageSpread`) and the fold-cue recogniser (`imageSpreadInnerEdge`) apply the same rule,
+and each has a test built from the reducer's own flipped output. Found by the pre-development
+stability pass. Keeping the flip was chosen over clearing it, because clearing it would discard what
+the maker saw and chose.
+
 🟦 **RECOMMENDATION — the action computes the two `Crop`s directly, not by driving `FramingDraft`.**
 `resolveCrop` is parameterised by *zoom and pan about the centre* (`FramingDraft.kt:96-105`), so
 "the left half of this photo" is reachable only by solving for a pan; writing the two rectangles is
@@ -12683,7 +12702,7 @@ Three challenges, honestly:
 
 ### One file owns the library — additive v2 `.zine` backup beside readable v1
 
-**Status:** Accepted · **Date:** 2026-08-21 · **Supersedes:** nothing · **Extends:** [ADR-009](#adr-009), [ADR-020](#adr-020), [ADR-022](#adr-022), [ADR-025](#adr-025)
+**Status:** Accepted · **Date:** 2026-08-21 · **Supersedes:** nothing · **Extends:** [ADR-009](#adr-009), [ADR-020](#adr-020), [ADR-022](#adr-022), [ADR-025](#adr-025) · **Amended by:** [ADR-121](#adr-121) (2026-09-28: §5 and the repeated-restore consequence; restore adds only zines not already on the shelf) · [ADR-122](#adr-122) (accepted 2026-09-29: the premise and the backup fail-closed clause; a backup is complete or explicitly partial)
 
 #### Context and decision
 
@@ -12920,6 +12939,12 @@ device passes; and independent review of the actual repository state.
 
 ### Put the public story on the website; keep installed-app utility in About
 
+**Partial supersession, 2026-09-12:** ADR-116 replaces the public standards-name requirement and the prohibition
+on an in-app story opening. Installed-app utilities, accessibility behavior, and the HTML-first acceptance gates remain.
+
+**Partial amendment, 2026-09-24:** [ADR-118](#adr-118) replaces §5's labels with Available / In development /
+Planned / Exploring and requires §1's renders to show only shipped UI. §2 to §4 stand.
+
 **Status:** Accepted — owner-approved 2026-09-09
 **Date:** 2026-09-09 — **Supersedes:** nothing — **Extends:** [ADR-008](#adr-008),
 [ADR-060](#adr-060), [ADR-099](#adr-099)
@@ -12981,3 +13006,705 @@ from automated semantics. The owner waived the cohort study, not these engineeri
 Independent review (2026-09-11): GO for code, tests, documentation, and pinned golden images after green CI on
 `c48960d`; overall merge NO-GO pending owner hands-on/TalkBack and rendered HTML/device parity/browser keyboard
 acceptance. No required implementation fix remains. Evidence and limitations are in the linked verification record.
+## ADR-116 {#adr-116}
+
+### Explain the product before explaining the engineering
+
+**Status:** Direction and app maker's-note design accepted by owner, 2026-09-12. Canonical About amended and frozen; native verification pending.
+**Partially supersedes:** ADR-114 items 2 and 3 only. All accessibility and installed-app utility requirements remain.
+
+The owner asked for plain-language public updates, benefits rather than accessibility acronyms, and a human story
+on both the website and in-app About screen. The owner reconfirmed the credit: Aastra, a two-person team.
+
+Story refinement, 2026-09-12: owner accepted the narrative copy direction for now. The proposal moves from the
+desire to make something physical, through the team's search and decision to build, to the reader's own booklet.
+The website uses a shorter ending because its hero and workflow already explain the product. Copy approval is
+not a rendered design freeze; the canonical prototype and Compose remain unchanged.
+
+Surface-specific refinement, 2026-09-12: owner approved keeping the website narrative and replacing the app's
+repeated story with a short maker's note, headed "A little about this little app". The website invites discovery;
+the installed app credits Aastra, explains the paper-book motivation and thanks the reader. Same voice, different
+copy. This supersedes the shared-story proposal above, not the pending rendered review and canonical freeze.
+
+Design freeze, 2026-09-12: after reviewing the separate app preview, the owner said "looks good. proceed".
+The approved note is promoted to `v21-colophon.html`; the experiment URL now wraps that canonical source without
+injecting duplicate content. Compose implementation is authorized. This approval does not claim automated browser
+acceptance, native pixel parity, golden verification or either physical-device acceptance pass.
+
+- Public labels are “What’s new” and “What’s next”; existing routes remain stable. Release history explains user
+  outcomes. Technical changelog and roadmap remain authoritative, with optional links from the public pages.
+- Public accessibility copy describes keyboard use, zoom and optional motion, with a contact route. WCAG remains
+  an engineering target in internal documentation, not a homepage headline or an unverified conformance claim.
+- Both About surfaces should explain what Zinely makes, who builds it, and why. The app gets a short opening,
+  not the whole landing page. Paper preference, licences, privacy and installed version stay in place.
+- The [app story preview](design/experiments/v21-about-story.html) now wraps the amended canonical About prototype.
+  The approved maker's note is implemented in Compose. Tests/goldens, device readings, parity and accessibility
+  acceptance still precede app delivery. Licence return retains the main list's scroll position and row focus.
+- Creative tools requested by the owner are reopened for evaluation, not added to a release commitment. The
+  [roadmap assessment](ROADMAP.md#creative-tools-assessment) owns their scope and relative effort.
+
+Removing an unsupported Font button does not rule out a future working font picker. PR #70 retains its own gates.
+
+Earlier source review, 2026-09-12: GO for website copy/docs after restoring distinct roadmap commitment categories.
+That review preceded the app freeze and does not certify the subsequent Compose implementation.
+
+## ADR-117 {#adr-117}
+
+### Keep the notices, lose the font showcase
+
+**Status:** Accepted by owner, 2026-09-16. Amends ADR-116 and the Colophon freeze only where they made three
+font cards prominent on the main About screen.
+
+The owner questioned why an About page should foreground the interface typefaces. The answer separates a legal
+distribution duty from a product-story choice: Zinely keeps each bundled copyright statement and complete SIL OFL
+text locally accessible, but it does not need to market those fonts or explain their visual roles.
+
+- Main About shows one compact `Licences & credits` button after the privacy promise and before version.
+- The child screen lists Averia Sans Libre, Fraunces and Inter. Each row opens the existing complete local notice.
+- `Fonts we use` and the three decorative role descriptions are retired.
+- Back and focus unwind one level at a time: licence → credits → About → Shelf.
+- The website does not add a font-attribution section. Its public story remains separate.
+
+This keeps compliance discoverable without interrupting the maker note, paper choice or privacy explanation.
+
+## ADR-118 {#adr-118}
+
+### One public story, and only shipped UI on the website
+
+**Status:** Accepted, 2026-09-24. Owner-directed: the website brief of 2026-09-24 set the story order, the four
+status labels and the horizon grouping, and asked for acceptance once the repository confirmed no new product
+choice was involved. It formalises rules already in force: the [privacy policy](PRIVACY-POLICY.md)'s
+no-third-party-fonts statement, ADR-114's fictional, non-committal public site, and OD-2's deferral of the shelf.
+Two independent reviews (public-claims truth; accessibility, UX and tests) returned GO WITH FIXES, and every
+Required Fix was applied before commit. **Amends:** [ADR-114](#adr-114) §1 and §5. **Keeps:** ADR-114 §2 to §4, [ADR-116](#adr-116)
+and [ADR-117](#adr-117) unchanged.
+
+#### Context
+
+An inspection of the live site against its source, the app and the docs found three contradictions: the homepage
+loaded Google Fonts while the [privacy policy](PRIVACY-POLICY.md) says the website uses no third-party fonts; the
+Bench demo and its render showed a *"Your shelf · 4 things kept"* tray that exists only in the frozen
+`docs/design/mockups/v21-bench.html`, not in the app; and `404.html` used relative paths, so it broke at any
+nested URL. The owner also asked for the product story to be told once, in the order a visitor asks it, with
+current features separated from direction.
+
+#### Decision
+
+1. **The website loads nothing from a third party.** Fonts are self-hosted from the app's own files by
+   `tools/build-web-fonts.py`: Averia Sans Libre is copied byte for byte (it carries Reserved Font Names, so a
+   subset or format change would be a renamed Modified Version, as
+   [ZINE-DIRECTION §16.5](design/ZINE-DIRECTION.md#165-the-fonts--two-verified-compliance-findings) records); Inter and Fraunces reserve no names and are Latin-subset
+   WOFF2. Each OFL text sits beside the files. No Fraunces italic is bundled, so the few italic demo notes use a
+   synthesized slant. The policy wording stays as it is, because it is now true.
+2. **The site shows only shipped UI** (amends ADR-114 §1). Renders still come from the canonical HTML prototypes,
+   but a prototype element that the app does not ship is hidden in the render and removed from the interactive
+   demo. `mockup-bench.webp` was re-rendered from `v21-bench.html` in headless Edge at 390 × 812, light theme,
+   with `#tray` hidden. The frozen prototype itself is unchanged. The tray is the H1 materials shelf, which owner ruling
+   OD-2 (2026-08-01) re-seated beyond Phase C, unscheduled ([ADR-089 §2.3](#adr-089)); the
+   [D-029 ruling of 2026-08-16](design/V2-SPEC-DEFECTS.md#d-029-ruling-2026-08-16) carries its open questions to
+   X2, the Supplies tray, which has no date. It is deferred, not dropped, so the freeze keeps it and the website
+   hides it until it ships.
+3. **Story order:** what it is → why paper → what you can make → Shelf → Bench → Proof (with a Today / Direction
+   table) → what is different (*imperfect surface, perfect mechanics*) → try it → where it is going → About.
+4. **One public status scheme** (amends ADR-114 §5): **Available** (in the download), **In development** (built or
+   being tested, not in the download), **Planned** (intended, no date) and **Exploring** (may never ship), grouped
+   by horizon (Foundation, Craft, Proof). The roadmap also lists what Zinely will not build, quoting only
+   [constitution §VI](zinely-constitution.md). There are still no dates or guarantees, and the website remains a
+   projection of [ROADMAP.md](ROADMAP.md#current-priorities). Research proposals stay off it until an ADR accepts them.
+5. **A Download page** (`/download/`) owns the install facts: version, date, Android 7.0+, size, SHA-256 (the
+   source checker verifies it against the release record), install steps, updating, moving phones through a
+   `.zine` backup, and the Google Play and iPhone status. It never names an unreleased build.
+6. **`404.html` uses root-absolute `/zinely-android/` paths**, which the source checker enforces.
+
+#### Consequences
+
+- The homepage no longer links the APK from the hero. The hero goes to the Download page and the download card
+  keeps a direct link for people who have installed an APK before.
+- Checks: `tools/check-public-copy.cjs` guards third-party loads, the unmodified Averia files, the licences, the
+  status labels, the checksum, and claims about unreleased builds, iOS or Play. `tools/check-website.cjs` fails on
+  any third-party request in every browser context, and on horizontal scroll or text escaping its container at
+  390 px and 320 px on every page, 404 included.
+- Moving phones is described as backup and restore only. The page says that restoring on a second phone has not
+  been tested yet ([torture matrix](reviews/2026-08-21-zine-backup-torture-matrix.md) row pending;
+  [ROADMAP.md](ROADMAP.md#current-priorities) follow-up). The Download page lists the published build's known
+  limits, including Save PDF failing on Android 7 to 9 in beta.4-r3 (Share still works).
+
+## ADR-119 {#adr-119}
+
+### Read the page in spatial order, and silence the action sheet's scrim
+
+**Status:** Accepted, 2026-09-26. Both device passes done the same day (see *Device evidence*); the listen was
+the owner's, and it is sighted proxy evidence ([OWNER-CHECKLIST §2.2](OWNER-CHECKLIST.md#22-the-talkback-listen-pass--device-verificationmd-31)).
+Zinely 1.x step 2 ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing),
+READY in §11 with no owner ruling outstanding), specified by
+[Brief 04](planning/BRIEF-04-READING-ORDER-AND-ALT-TEXT.md) part A1 and its scrim fix. **Amends:**
+[ZINELY-DESIGN-SYSTEM §4.5](ZINELY-DESIGN-SYSTEM.md#45-reading-order), which amends only by an ADR. **Keeps:**
+ADR-029 §6's accessible element mirror; only the order its nodes are declared in changes.
+
+#### Context
+
+Two shipped accessibility defects:
+
+1. **TalkBack read a Bench page in list order**, which is neither what is drawn on top nor the order anyone reads.
+   `ElementSemanticsLayer` walked `page.elements` with `traversalIndex = index`, while its comment claimed paint
+   order. Paint order sorts by `zIndex`. Restacking rewrites only `zIndex`, and Make-spread sends the source to the
+   back and appends the partner half with the lowest `zIndex`, so the order a listener heard was arbitrary and a
+   restack or a spread could scramble it. Z-order would be wrong for listeners anyway (Schaadhardt, Hiniker and
+   Wobbrock, CHI 2021, cited in Brief 04). §4.5 said the visual and accessibility orders are the same order, but not
+   what "visual order" means on a free canvas.
+2. **The zine action sheet's scrim was an unlabelled full-screen button** (a beta.5 known limitation).
+   `ZineActionScrim` lacked the fix `ZSheet`'s scrim already carries.
+
+#### Decision
+
+1. **§4.5 gains a canvas clause:** on a free canvas, visual order is spatial reading order, never stacking order.
+   The rule and its threshold are stated there, once
+   ([ZINELY-DESIGN-SYSTEM §4.5](ZINELY-DESIGN-SYSTEM.md#45-reading-order)); this ADR does not restate them. The
+   row rule is read as a pool: the highest *unread* piece opens each row, so a piece beside an earlier tall piece
+   joins that piece's row even when a later row has already opened.
+2. **`SpatialOrder`** (pure `core:editor`, `kotlin.math` only) implements it as a procedure, not a `Comparator`:
+   "shares a row" is intransitive, so a pairwise comparator would break `sortedWith`'s contract.
+3. **`ElementSemanticsLayer` declares its nodes in that order**, and `traversalIndex` restates it. The fix is
+   structural ([ZINELY-DESIGN-SYSTEM §11](ZINELY-DESIGN-SYSTEM.md) rule 6): child order and traversal order agree, and no override does the work. An unknown page
+   size (only non-production callers pass none) disables only the large-element guard.
+4. **`ZineActionScrim` gets `clearAndSetSemantics {}` before `clickable`**, as `ZSheet` does: no accessibility node;
+   a tap still dismisses, and Back still dismisses through the `Dialog`.
+
+#### Scope
+
+In: the order of the Bench's element nodes, and the one scrim. Out, unchanged: paint order, `page.elements`, every
+command, all copy and visuals (the nodes are semantics-only; the scrim keeps its fill), selection chrome and
+page-level nodes, programmatic focus (Brief 04 keeps it out of scope; the beta.5 `requestFocus` revert stands), the
+deprecated announce API, relative phrases (A2), named undo (A3) and alt text (B).
+
+#### Alternatives considered
+
+- **Paint order (back to front)**, which the old comment claimed. Rejected: it changes on every restack, and research
+  shows z-order misleads listeners.
+- **A `Comparator` with a row tolerance.** Rejected: intransitive, so `sortedWith` can throw.
+- **Rows with no large-element guard.** Rejected: a full-page photo or spread half opens a row spanning the page and
+  swallows everything else.
+- **A guard on width or area as well as height.** Rejected: a full-width banner is a heading and should read in its
+  row; only height makes a piece swallow rows.
+- **`traversalIndex` alone, keeping list declaration order.** Rejected by ZINELY-DESIGN-SYSTEM §11 rule 6: an override
+  that treats the symptom.
+
+#### Consequences
+
+- A restack or a spread no longer changes what TalkBack hears, and a full-page ground is read first.
+- **Supersedes** the "reading-then-z traversal order" of
+  [V2-BENCH-IA-INTERACTION §C.4](design/V2-BENCH-IA-INTERACTION.md): ties break by id, never by z.
+- Two columns whose tops do not line up interleave. Accepted and stated in the clause; relative phrases (A2) and the
+  maker's arrangement are the remedy.
+- **Evidence.** `SpatialOrderTest` (fixtures, and jqwik properties: a permutation, deterministic, blind to `zIndex`
+  and list order). `ElementReadingOrderTest` on the platform tree: declared order and `traversalIndex`, before and
+  after a restack and after a spread; all four of its tests fail against the old list-order wiring. **The Brief 04
+  spike worked:** with the shadow `AccessibilityManager` enabled *and* `forceAccessibilityForTesting(true)` (either
+  alone is not enough), Compose publishes `traversalBefore` hints, and the test asserts they chain the nodes in
+  reading order. The harness's "no hints" claim was a host artefact and is corrected in its KDoc.
+  `ZineActionSheetTest` asserts, on the platform tree of the sheet's own `Dialog` window, that the scrim offers no
+  click, and that a tap still dismisses. No golden changes. These
+  tests prove the tree, not where TalkBack goes; that is the device listen.
+- **Device evidence (2026-09-26).** The Step 0 fixture backup was restored (additively) on each device, and its page 4
+  used as the case: listed photo, caption, tape, while the tilted tape sits highest.
+  - *Pass 1, platform tree* (`uiautomator dump`): on the Samsung SM-A176B (Android 16, release-signed step-2 build) and
+    an API 36 emulator (debug build), the nodes were declared tape → photo → caption; unchanged after *Bring forward*
+    ×2 put the photo on top; photo → tape → caption after *Across fold*, with the partner half alone on page 5. The
+    zine action sheet had no full-screen or clickable scrim node on either device, and a tap on the dim and Back both
+    closed it.
+  - *TalkBack listen* (the owner, Samsung TalkBack 16.2.00.13, sighted): after the restack and the spread, forward
+    swipes from Preview read Photo → Torn tape → Text → the page strip → Undo, Redo, Add, Done; the reverse swipe read
+    the exact reverse; page 5 read only the photo; after undoing the spread, tape → photo → text; the action sheet
+    never landed on the dim, and Back closed it. Nothing surprised the listener (Pass 2).
+  - An emulator TalkBack walk was attempted and abandoned: injected key combinations did not move its focus.
+
+## ADR-120 {#adr-120}
+
+### A backup says when it was last saved, and a failed backup says where it failed
+
+**Status:** Accepted, 2026-09-28 (proposed 2026-09-27; acceptance record at the end). Zinely 1.x step 1 ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)),
+specified by [Brief 01](planning/BRIEF-01-VISIBLE-OWNERSHIP.md) part 1 and the re-frozen
+[`backup-restore.html` amendment 1a](design/BACKUP-RESTORE-FREEZE.md), with owner rulings F1 and F2
+([Brief 01](planning/BRIEF-01-VISIBLE-OWNERSHIP.md#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2)).
+**Extends:** [ADR-110](#adr-110) (the backup surface and its SAF transport) and [ADR-036](#adr-036) (the free-space
+probe). **Does not amend** ADR-110's fail-closed backup clause; that is step 1b's ADR.
+
+#### Context
+
+The shipped backup sheet said nothing about whether a backup existed, while its title claimed the zines were
+"kept safe". A failed backup read like a failed restore: a zine that couldn't be opened showed "This backup looks
+damaged"; any `DataError.Io` became "Couldn't save the backup there", whether the chosen location failed or
+Zinely's own private archive did; a library-wide limit reached the maker as "damaged". The picker's file stayed
+behind, empty or partial, after a failure. And a Cancel that landed after the provider had accepted the whole file
+said "Backup cancelled." about a saved backup (Brief 01, "Problem").
+
+#### Decision
+
+1. **The last-backup record.** A `BackupRecordStore` on the existing preferences `DataStore` holds the time a
+   backup was saved and the provider's display name when it reports one. It is written **only** when the
+   transport returns `Saved`, including a backup a late Cancel lost to. Failure, a Cancel that won, picker cancel,
+   picker failure and restore write nothing. It is device state: it never enters a document, `meta.json` or the
+   archive, and it stays in app-private storage excluded from transfer (ADR-030 §7). The chooser shows "No backup
+   saved yet" or "Last backup saved ‹medium date›", formatted at the UI edge in the device's locale and time zone,
+   never relative, with the provider's name (when reported) whole on its own line below (§7). An empty shelf shows
+   neither line.
+2. **Two phases, classified by where they failed (F1).** `LibrarySafTransport.backupTo` returns
+   `LibraryBackupResult.Saved(receipt, fileName)` or `Failed(stage, error)`. `stage` is `PrivateArchive`
+   (building, validating or cleaning up the private archive; the destination was never written) or `Destination`
+   (writing the completed archive to the chosen location). The Home view model maps, in order: `OutOfSpace` at
+   either stage → "Not enough space"; `Busy` → "Give Zinely a moment" (F2); any other `Destination` failure →
+   "Couldn't save the backup there"; then, for the private archive, `Corrupt`/`Invalid` → "A zine here can't be
+   opened" (part 1's interim), `SchemaTooNew` → "A zine here needs a newer Zinely", the new deterministic
+   `DataError.LimitExceeded` → "Couldn't finish that backup" with **Got it only**, and everything else →
+   "Couldn't finish that backup" with Try again. Restore's mapping is unchanged.
+3. **Writer failures on the private archive** are classified by a pure `backupWriteError`. A write-side
+   `IO_FAILURE` is `OutOfSpace` only when the private disk verifiably can't hold the archive's declared bytes (the
+   ADR-036 probe; a probe that can't answer never invents a full disk), else `Io`. `LIMIT_EXCEEDED` is
+   `LimitExceeded`. The writer's manifest validation enforces the document, photo and total size limits *before*
+   its own limit checks, so those arrive as `INVALID_MANIFEST`; declared sizes over any of the three are therefore
+   `LimitExceeded` whatever the reason says (review Required Fix — they were first reaching "A zine here can't be
+   opened"). `DESTINATION_EXISTS` and `SOURCE_UNAVAILABLE` are `Io`. Otherwise `INTEGRITY_MISMATCH`,
+   `INVALID_MANIFEST` and `SOURCE_MISMATCH` stay `Corrupt`, which part 1 shows as "A zine here can't be opened".
+   That is a deliberate part-1 choice following Brief 01's file table, not a claim that every private validation
+   failure is the zine's fault; F1 item 3's "Couldn't finish that backup" is the honest reading for some of them,
+   and 1b revisits the mapping when the writer names the entry. The provider's free space can't be probed, so a
+   destination failure is `OutOfSpace` only when the write itself says `ENOSPC` somewhere in its cause chain (how
+   `ExternalStorageProvider` reports a full disk — F1's "out of space *anywhere*"; review Required Fix), never
+   guessed. This departs from [ADR-036](#adr-036) §2's probe-not-errno rule on purpose and only here: a provider
+   destination has no filesystem Zinely can probe, so errno is the only evidence there is, and its absence still
+   means `Io`, never "no space". A failure reading Zinely's own archive during the copy is tagged and stays `PrivateArchive`, so it is
+   never blamed on the location. Outside the writer — preparing the private transfer directory — no payload size
+   is known, so there is no ADR-036 comparison to make: only the failure's own `ENOSPC` is `OutOfSpace`, and low
+   free space alone never is (PR #81 review; backup previously shared restore's `< 64 KiB free` heuristic, which
+   restore still uses unchanged). The `ENOSPC` test is shared with the destination exit and also accepts
+   java.nio's "No space left on device" reason, so that wording counts at the destination too.
+4. **One outcome latch per backup.** `OutcomeLatch` is claimed once, by whichever comes first: the transport,
+   right after the provider accepted the whole stream (`markDone`), or the maker's Cancel (`requestCancel`).
+   `cancelBackupRestore` cancels the job only when Cancel wins. If Cancel won, the transport throws
+   `CancellationException` even with every byte written, and the file is discarded, so "Backup cancelled." is
+   true. If the transport won, Cancel is a no-op: the result is `Saved`, the record is written, and the file is
+   never deleted. **Invariant:** once `requestCancel` has won, a late non-cancellation failure — typically the
+   provider's ordinary `IOException` as its stream is torn down — never becomes a `Destination` (or
+   `PrivateArchive`) failure: every failure leaves the transport through one of two exits, and both resolve as
+   cancellation while the latch reads `isCancelled` (PR #81 review).
+5. **Clean-up.** The private archive is removed as before, whatever the outcome. Unless the result is `Saved`,
+   the destination is discarded best-effort (`DocumentsContract.deleteDocument`): always once Zinely has opened
+   it for writing, and otherwise only while the provider reports it empty. A file the maker chose to replace is
+   never deleted for a failure that never touched it. A clean-up that fails never changes the outcome shown.
+6. **Copy** follows the frozen amendment: title "Keep your zines"; "The backup file holds the zines and photos
+   on this shelf. Keep a copy somewhere other than this phone."; "Choose where to keep the backup file.";
+   "Putting zines together in one file."; a failure no retry can fix offers only "Got it". The drift the
+   amendment records (the "saved" title; restore's `generic`, `newer` and `read` copy) is left as is.
+7. **Backup-sheet polish** (frozen 2026-09-27 in `backup-restore.html` after step 1's first device check;
+   [freeze record](design/BACKUP-RESTORE-FREEZE.md)). Visual only; behaviour and every other string unchanged:
+   - **Equal action tiles.** `KeepSafeOption` draws one tile for both actions, leaf-tint with an on-leaf glyph;
+     the tint is no longer a parameter, so the two cannot drift apart. Backup's old butter-tint tile was the
+     sheet surface in both themes and didn't show, so Restore read as primary.
+   - **No explanatory note** on either shelf, and no replacement. The two note strings are deleted.
+   - **Date and file name on separate lines.** `Copy.LibraryBackup.lastBackupSaved(date)` is the date line; the
+     file name is a second `Text`, whole, never shortened, with no "·". The two sit in one
+     `mergeDescendants` block, so TalkBack stops on them once, still before "Back up this shelf", and announces
+     the two texts in order with a pause between rather than as one run-on string.
+
+#### Boundary with step 1b
+
+Not in this decision: the manifest's `omitted` field, skip-and-list, any partial-backup state or partial
+last-backup line, restore honesty (R1–R3 and the restore latch), the writer's read-side/write-side split, the asset
+pre-hash and the backstop rebuild. So a photo that fails its check (`INTEGRITY_MISMATCH`, a missing or unreadable
+asset) still fails the whole backup, in part 1's backup words ("A zine here can't be opened"), and a per-entry
+`LIMIT_EXCEEDED` is still reported as a limit. Brief 01 schedules 1b in the same wave, so no release carries that
+interim; if one ever did, its notes must say so. The archive format, `packageVersion`, the writer, the stager, the
+committer and the transfer rules are untouched.
+
+#### Alternatives considered
+
+- **Keep `DataResult` and map every private-phase failure to `DataError.Unknown`.** Rejected: the phase would live
+  in a convention the view model has to trust, and the space and limit distinctions would be lost.
+- **Classify the limit from the writer exception carried as a `cause`.** Rejected: `cause` is for diagnostics
+  (ARCHITECTURE §9). A typed `DataError.LimitExceeded` says it where the classification happens.
+- **Delete the destination on every failure.** Rejected: before Zinely opens it, the chosen document may be an
+  older backup the maker picked to replace.
+- **Check the job's cancellation after the copy instead of a latch.** Rejected: a Cancel that lands after the
+  close is indistinguishable from one before (Brief 01, "the late Cancel").
+
+#### Consequences
+
+- The maker sees one true fact about their own backup, and a failure never blames the location for Zinely's own
+  work. A library-wide limit no longer offers a retry that can't help.
+- A failed backup no longer leaves an empty or partial file where the maker put it, where the provider allows
+  deletion. The copy never claims it was removed.
+- **Evidence.** `LibrarySafTransportTest`: both phases, a save with and without a name, clean-up by phase, a
+  failing clean-up, the transfer limit, a Cancel during the copy, a Cancel that won the latch after the last byte,
+  a late Cancel. `LibraryBackupFailureTest`: both latch interleavings and every writer reason.
+  `DataStoreBackupRecordStoreTest`. `HomeViewModelTest`: the record written only on a save, including the late
+  Cancel, and untouched by failure, picker cancel/failure and restore; the full F1 table.
+  `LibraryBackupRestoreSheetTest`: the frozen chooser and running copy, the last-backup line and its reading order,
+  retry only where it can help. The two chooser goldens change by design (title, body, save option, the new
+  line); no other golden changes. Polish (§7): `KeepSafeTileParityTest` reads both tiles' pixels in both themes
+  (equal, the leaf-tint token, and distinct from the sheet; it fails on the old butter tile);
+  `LibraryBackupRestoreSheetTest` covers the date and name as two texts in order, no "·", no note on either
+  shelf, and the no-name and no-backup forms. The two chooser goldens change again, by design.
+- Device passes on the SM-A176B: both passed on the pre-polish build (2026-09-27: Pass 1 by adb; the owner's
+  backup-completion check and TalkBack listen). The polish changed the sheet, so **both are owed again on the
+  polished build** before this ADR is Accepted.
+
+#### Review
+
+Pre-commit review by two independent Review Agents that did not write the change, with different lenses; both
+**GO WITH FIXES**. Every finding was reconciled against the working tree:
+
+- **Contract/copy/docs lens.** Copy matches the frozen HTML character for character; frozen HTML untouched.
+  *Required Fix* — the document, photo and total size limits reach the writer as `INVALID_MANIFEST` (its
+  manifest validation runs before its own limit checks), so a library over them read "A zine here can't be
+  opened": **ACCEPTED**, fixed in `backupWriteError` (§3) with a test per limit; the writer is untouched.
+  *Recommended* — the plan row claimed an open PR before one existed: **ACCEPTED**. The CHANGELOG described the
+  interim wording as shipped behaviour: **ACCEPTED**, marked interim. §3 implied F1 compliance for every
+  private validation failure: **ACCEPTED**, stated as a deliberate part-1 choice.
+- **Correctness/concurrency/1b lens.** Late-Cancel race, cleanup, record-only-on-save and the 1b boundary
+  verified correct. *Required Fix* — a full destination always read "Couldn't save the backup there", against
+  F1's "out of space anywhere": **ACCEPTED**, `ENOSPC` in the cause chain is `OutOfSpace` (§3), tested.
+  *Recommended* — a failure reading Zinely's own archive during the copy was blamed on the location:
+  **ACCEPTED**, the archive is opened before the destination and its reads are tagged, tested. A stale job's
+  `finally` could clear a newer backup's latch: **ACCEPTED**, the clean-up is guarded to the job's own state.
+  A single oversized photo reads as the library-wide limit: **ACCEPTED as a known part-1 gap**, owned by 1b.
+
+PR #81 owner review, two correctness fixes, both **ACCEPTED**: (1) a Cancel that won the latch could still
+surface as "Couldn't save the backup there" when the provider then threw an ordinary `IOException` — both
+failure exits now resolve as cancellation once Cancel has won (§4), with a test for each exit that fails
+without the guard; (2) a private failure was called "Not enough space" whenever free space was under 64 KiB,
+which proves nothing about the cause — backup now requires `ENOSPC` there (§3); the writer's required-bytes
+comparison is unchanged.
+
+#### Acceptance (2026-09-28)
+
+Accepted by the owner after the checks below. PR #81 was brought up to `main` (ADR-121) by a normal merge;
+no code changed in that merge.
+
+- **Automated.** Full local run with every task re-executed: 1,877 tests, 0 failures, 0 skipped, plus
+  `:app:lintDebug`, `:app:checkDependencyAllowlist` and the androidTest compiles. `grun gold`: 104 goldens
+  unchanged. PR #81's required CI checks green.
+- **Device, SM-A176B, Android 16**, release-signed build of the final code installed over the existing app
+  (no data cleared):
+  - A backup finished with "Backup saved"; the sheet then read "Last backup saved 28 Sept 2026" with the
+    provider's own name, "zinely-backup-2026-09-28 (2).zine", on its own line.
+  - Backing out of the picker was quiet, and the record did not change.
+  - Backup and Restore draw the same tile, and there is no note.
+  - The shelf kept all 32 zines, including "My zine".
+- **Owner design check** on the polished sheet: calmer and less cluttered, "it does"; Backup and Restore look
+  equal, "yes"; the last-backup information is easier to scan, "yes"; it still feels like Zinely, "yes";
+  nothing important lost with the note, "No". The owner gave no separate answer to "is it obvious when the
+  backup finished?" on this build; the backup-completion observation on the 2026-09-27 build passed.
+- **TalkBack.** The owner's listen passed on 2026-09-27, on the step 1 build before the polish (`e8e1d91`):
+  the last-backup line was announced before "Back up this shelf". The owner did not repeat the listen on the
+  polished build, because the polish did not change that order. **There is no owner listen of the polished
+  build.** Its evidence is the accessibility tree read on the device: the date and the file name are two
+  separate text elements under one parent, placed before "Back up this shelf"; the unit test asserts one
+  merged stop holding the two texts in that order.
+- **A7, TalkBack's opening focus, observed 2026-09-28 on the polished build** (SM-A176B, Android 16, Samsung
+  TalkBack). A7 asks where TalkBack focus lands when the sheet opens; the sheet moves input focus to its first
+  action. The 2026-09-27 listen did not answer it: it was started from the top of the sheet by instruction, so
+  it recorded reading order only. The 2026-09-28 check turned TalkBack on, then opened Backups fresh, with no
+  swipe. Initial focus landed on the body text, "The backup file holds the zines and photos on this shelf. Keep a copy somewhere other than this phone."
+  - **The risk A7 guards against is absent:** that text is above the last-backup line, so the last-backup line
+    is not skipped.
+  - **The original target was not met.** A7 first required opening focus on the last-backup information, and
+    focus did not land there (nor on the title "Keep your zines" or "Back up this shelf"). That original
+    criterion is not recorded as passed.
+  - **A7 criterion amended by the owner, 2026-09-28, after this observation:**
+    "When the Backups sheet opens with TalkBack enabled, initial accessibility focus must land within the sheet's meaningful informational content, and the last-backup information must remain in the subsequent reading/focus order before the primary Backup action."
+  - **Accepted under the amended criterion.** The evidence is this observation: fresh open, no swipe, focus on
+    the body text, last-backup line not skipped. It was read from the TalkBack focus highlight; the exact speech
+    was not captured. No code or implementation change was needed.
+- **Cancel during a running backup** could not be triggered by hand: this library backs up too fast. It stays
+  covered by the automated race tests (§4).
+
+## ADR-121 {#adr-121}
+
+### Restore adds what's new; it never replaces what's here
+
+**Status:** Accepted (design), 2026-09-28. The owner chose this contract, and the drawing is frozen:
+[`backup-restore.html`](design/mockups/backup-restore.html) Amendment N, recorded in
+[BACKUP-RESTORE-FREEZE.md](design/BACKUP-RESTORE-FREEZE.md). The implementation, its tests and both device
+passes are still owed; the spec is [Brief 01 Part N](planning/BRIEF-01-VISIBLE-OWNERSHIP.md#part-n--restore-adds-whats-new).
+**Amends:** [ADR-110](#adr-110) §5 and its consequence *"Repeated restores may create safe project duplicates;
+any future merge semantics need a new decision."* This is that decision.
+
+#### Context
+
+- ADR-110 made restore additive: an id that clashes gets a new one, so every restore adds every zine.
+- On 2026-09-28 the owner restored the same backup several times on the SM-A176B, and each restore added a
+  full set of copies.
+- Comparable apps that always add get steady duplicate complaints
+  ([Aegis #951](https://github.com/beemdevelopment/Aegis/issues/951),
+  [Joplin forum](https://discourse.joplinapp.org/t/importing-jex-while-file-system-sync-is-enabled-causes-duplicate-notes-no-id-collision-handling/48458)).
+- Zinely has no durable per-zine lineage. A re-minted id is not recorded, and Duplicate mints a fresh id with
+  no link to its source. So whether a zine is "the same" can only be decided by what the zine *is*.
+
+#### Decision
+
+The owner chose this restore contract on 2026-09-28 (option O1): *"Restore adds zines that aren't already on
+your shelf. It never replaces what's here."*
+
+1. **Already on the shelf** means the same **title** (exact), **format**, **paper size** and **content**.
+   - Content is the same when the raw document bytes match (SHA-256 against the backup's verified
+     `documentSha256`), or else when the decoded documents are equal.
+   - The id is never the test.
+   - The cover pair and the created and updated times are not compared.
+2. **Repeated restores leave identical zines alone.** Restoring the same backup again adds no zine that is
+   identical to one already on the shelf.
+3. **Matching counts one for one.** Each shelf zine accounts for at most one zine in the backup; surplus
+   identical zines in the backup are added.
+4. **Different content is added** alongside, whether the version is older or newer. If its id clashes, it gets
+   a new one.
+5. **Nothing is replaced.** ADR-110 §5's rule that the committer never overwrites is unchanged.
+6. **Doubt adds.** A zine is added unless the shelf zine can be shown to have the same content.
+   - Byte-identical files match at once.
+   - Otherwise the decoded content is compared.
+   - If equal content can't be shown (unequal, undecodable or unreadable), the zine is added. It is never
+     skipped silently.
+7. **Where it runs.** Matching runs before commit, inside the existing writer lease and repository mutex, and
+   reads the shelf's files, not Room. A restore that adds nothing returns success before the commit step,
+   whose non-empty guard stays.
+8. **What the maker sees.** The result reports how many were added and how many were already here, or
+   *"Nothing new to add"*. Each of these is a success; none is an error. There are no per-zine choices and no
+   confirmation after the file is chosen.
+9. **Duplicate** remains the one explicit way to put a second copy of a zine on the shelf.
+10. **No format change.**
+    - `packageVersion` stays 2.
+    - There is no new manifest, `meta.json` or document-schema field.
+    - There is no origin metadata. Version-aware messages were deferred by the owner, and they are the only
+      reason one would be needed.
+
+#### Consequences
+
+- **Older builds keep the old behaviour.** This is an application-level change in newer builds only. A build
+  without it, including every release up to `0.9.0-beta.5`, still adds a separate copy of every zine when it
+  restores the same file. Older builds do not gain this behaviour. Release notes must say so.
+- **Existing duplicates stay.** Nothing cleans up copies already on a shelf.
+- **Missing photos aren't repaired** by a restore that adds nothing, because it never commits.
+- **Editing and then reverting** a zine can leave float-level differences. The zine then counts as changed,
+  and it is added. That is the safe direction.
+- **Cost.** Restore hashes every shelf document, which is about the reading a backup does. It decodes a shelf
+  document only when its title, format and paper size match an entry in the backup but its bytes don't.
+- **Part 1b** designs its receipt and result copy together with this contract:
+  - its `addedCount` / `shelfUpToDate` sit beside the count of zines already here;
+  - a restore that adds nothing never enters 1b's commit phase;
+  - 1b's ADR draft item 7 references this ADR.
+- **Tests owed.** The tests listed in Brief 01 Part N. The
+  [torture matrix](reviews/2026-08-21-zine-backup-torture-matrix.md) row "Repeated restore of same backup" now
+  expects *nothing new to add*.
+
+#### Alternatives rejected
+
+- **Always add, with a confirmation:** it still duplicates.
+- **Match on id alone:** ids are re-minted on a clash, so the second restore still adds.
+- **Match on content alone, without the title:** it would merge a maker's identical zines that have different
+  titles.
+- **A saved history of restored archives:** it misses the same zine in a different backup, and wrongly refuses
+  after the maker deletes restored zines.
+- **Origin ids in `meta.json` and the manifest:** deferred by the owner.
+- **Per-zine Keep / Skip / Replace:** confusing at scale, and "Replace" breaks never-replace.
+
+#### Review
+
+- **Before the owner's ruling:** an independent review of the options returned GO WITH FIXES.
+  - Folding this into 1b's already-frozen amendment was impossible, so it became its own amendment.
+  - The empty-commit guard is named.
+  - A mid-restore choice was dropped, because it would have to hold the writer lease across a dialog.
+- **On the drawing and spec:** GO WITH FIXES. The fixes were three line numbers, the fields excluded from the
+  match, the identical-bytes precedence, and the decode-only-when-needed cost.
+- **Final pre-freeze review, after the owner's one copy refinement to N1:** GO.
+  - One recommended note was recorded, not applied: the Pass 2 check of "the changed one is added too".
+  - The owner's exact text stands.
+
+## ADR-122 {#adr-122}
+
+### A backup is complete or explicitly partial, never silently partial; a restore reports what happened
+
+**Status:** Accepted, 2026-09-29 (proposed 2026-09-28; accepted by the owner once reconciled with the
+implementation; see Review below). Zinely 1.x step 1b ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)),
+specified by [Brief 01](planning/BRIEF-01-VISIBLE-OWNERSHIP.md) part 1b (its ADR draft, landed here) and built together
+with [ADR-121](#adr-121)'s restore contract (Part N), whose receipt it shares. The states are the frozen
+[`backup-restore.html` amendment 1a](design/BACKUP-RESTORE-FREEZE.md) items 4–10 and Amendment N. Owner rulings: Q8
+(2026-09-26) and the supplementary photo ruling the same day
+([decision gate](planning/ZINELY-1X-DECISION-GATE.md#q8-the-next-release-and-the-backuprestore-defects)).
+**Amends:** [ADR-110](#adr-110) (the "all zines in one user-owned file" premise and the backup fail-closed clause).
+**Extends:** [ADR-042](#adr-042), [ADR-110](#adr-110), [ADR-120](#adr-120). Lands with the product-law amendment to
+[`zinely-v1.md`](zinely-v1.md) §5 (the backup row) and §6 (DoD 2), which outranks every ADR.
+
+#### Context
+
+ADR-110: *"V1 product law now requires **all zines in one user-owned file**"*, and backup production *"fails closed on
+unreadable metadata, missing assets, or poisoned bytes."* Fail-closed backup made one unreadable zine block every
+backup until the maker found and deleted it. That is not always possible: a zine whose only fault is a photo looks
+healthy on the shelf, and a zine with an unsafe path, a missing document, a transient load failure, or a document that
+loads but has no index row has no shelf entry at all (a corrupt or newer-version zine does show, as unavailable, since [ADR-042](#adr-042) §8). The protection against
+total loss is withdrawn by the very damage it exists for.
+
+Restore said three things that did not happen (Brief 01 R1–R3): a full disk while staging was "This backup looks
+damaged"; a Cancel during commit said "Restore cancelled." after the zines were on disk; a Room failure after a
+committed restore said "Couldn't read that file".
+
+#### Decision
+
+1. **Product rule** (owner, Q8): *"A backup may be complete or explicitly partial, but it must never be silently
+   partial."*
+2. **Backup is skip-and-list.** A zine that can't be read — unsafe path, unreadable `meta.json`, a document that fails
+   to load as corrupt, invalid or newer-version, malformed JSON or no `schemaVersion`, a manifest entry the package
+   validator refuses for that zine alone (document size, times, schema range) — or that uses a photo that fails its
+   check (Decision 3), is left out; the rest is saved.
+   **Still failing the whole backup**, shown by ADR-120's F1 classification:
+   - a transient **document** read: `documents.load` failing `Io` or `OutOfSpace`, an I/O failure sizing or hashing a
+     document, or a read-side I/O failure or unavailable source on a document entry at the writer;
+   - a write-side failure on the private archive;
+   - a library-wide limit (manifest size, entry count, total expansion);
+   - a private clean-up that can't remove an incomplete archive before a rewrite;
+   - anything else in Zinely's own backup process that names no single zine or photo — the lease, recovery and
+     reconcile that precede the scan, and a writer failure naming no entry. These are F1 item 3, "Couldn't finish that
+     backup"; a leftover private-archive `Corrupt` or `Invalid` goes there too, which retires ADR-120 §3's part-1
+     mapping to "A zine here can't be opened".
+
+   `Busy` (the lease, or a zine still being put away) keeps F2's "Give Zinely a moment": it is not a failure. **None of
+   these is a single photo.**
+3. **One photo never fails the whole backup** (owner, 2026-09-26). Each referenced photo is checked before the archive
+   is built: present, a readable image, and a streaming SHA-256 equal to its content-addressed name; an I/O failure
+   while sizing or hashing it is retried once. The package validator's per-photo rules (type, dimensions, byte count)
+   are applied to the candidate manifest before writing, by the same validator the writer runs: an issue whose path
+   names one zine (`projects[i]`) or one photo (`assets[j]`) leaves that zine, or every zine using that photo, out; an
+   issue naming an archive entry (`entries[k]`) maps to that entry's zine or photo. Validation reruns after each
+   removal, and only an issue that still names no zine or photo is library-wide. A photo that fails any check leaves out every zine that uses it, reason
+   `photo`. The writer's checks stay as a backstop: a `ZineBackupWritingException` now names the failing entry
+   (`entryPath`) and says whether an `IO_FAILURE` came from **reading** a source or **writing** the private archive
+   (`readSide`). When the writer fails on a named **photo** (integrity mismatch, per-entry limit, unavailable source,
+   read-side I/O), or on a named **document** by an integrity mismatch or a per-entry limit, the repository deletes
+   the incomplete private archive, confirms it is gone, leaves out every zine using that entry (photo → `photo`;
+   document → `unreadable`), rebuilds the manifest from the survivors and writes again. Each rebuild removes at least
+   one entry, so the loop is bounded by the number of distinct entries. The archive is private until complete, so the
+   maker's chosen file is never touched by a rebuild.
+4. **Explicit to the maker.** A backup that saves some zines is a success titled "N of M zines saved", naming each
+   left-out zine with a readable title (up to three, then "and N more"), one sentence per reason in the order couldn't
+   open · newer Zinely · couldn't read a photo. A left-out zine's name comes from its readable `meta.json`, else its
+   shelf row, else none (counted, not named). The last-backup line records the counts (device state, never in the
+   archive). **Zero of M is never saved:** the repository writes no archive and its receipt says so; the transport
+   returns a third `LibraryBackupResult`, `NothingSaved(totalCount, omitted)`, discards the destination as for any
+   unsaved result, and writes no record. The maker sees amendment 1a item 4, with "Got it" only: "A zine here needs a
+   newer Zinely" when every left-out zine is newer (a choice between frozen states that the freeze left without a
+   trigger; flagged for owner confirmation), "No zines could be saved" in its photo wording when every reason is
+   a photo, otherwise its general wording, adding "They may not appear on your shelf." when a left-out zine has no
+   shelf row.
+5. **Explicit in the file:** `ZineLibraryBackupManifest` gains the defaulted `omitted: List<ZineBackupOmission>`
+   (`title: String?`, `reason`: `unreadable` · `newer_version` · `photo`; an unknown value reads as `unreadable`).
+   Partial ⇔ `omitted` non-empty; no id, path or bytes of a left-out zine enter the archive. The field is **additive
+   within document schema v3 and `packageVersion` 2**: **`packageVersion` stays 2**, and older builds ignore the key
+   (`ignoreUnknownKeys`, verified at beta.4-r3 and beta.5). An **absent** field means no omissions: the backup was
+   written before this decision. **`[]`** means a complete backup written by the current writer, which always writes
+   the key (`"omitted":[]`). Restore decodes this one display-only field **leniently** — a malformed or wrongly typed
+   value is ignored, never a refusal — and clamps it for display (the titles of the first 50 entries, the rest
+   counted; 120 characters per title; rendered as plain text). Restore's fail-closed validation of the zines
+   themselves is unchanged.
+   **Bound (owner ruling, 2026-09-29, Option A):** the **writer refuses more than 10,000** `omitted` entries
+   (`MAX_BACKUP_PROJECTS`, the existing project limit); **exactly 10,000 is allowed**, within the manifest's 4 MiB
+   limit, which fails closed the same way. The check runs with the
+   writer's other count limits, before any output file exists, so exceeding the bound **fails closed**: the whole
+   backup fails as a library-wide limit (Decision 2, "Couldn't finish that backup"), and no file is written or
+   presented as a partial backup. **Restore defensively caps** the decoded list at the same 10,000, so it can never
+   truncate a legitimate backup. The cap is also the defensive bound against a hostile manifest listing more; the
+   manifest's 4 MiB limit bounds the JSON itself.
+6. **Exact closure is preserved** ([ADR-110](#adr-110) §4): the asset table is rebuilt from the saved zines only.
+7. **Restore is unchanged in kind:** staged, fail-closed, additive as amended by [ADR-121](#adr-121) (only zines not
+   already on the shelf are added). A restore of a partial archive says what the backup was saved without, in
+   ADR-121's N5 line order. A poisoned photo met **during restore** stays out of scope, as Q8 ruled.
+8. **Restore reports what happened.**
+   - **R1.** A failure to *write* the local staging copy is `ZineBackupStagingException.Reason.STAGING_WRITE_FAILED`,
+     never `MALFORMED_ARCHIVE`. It, and a failure preparing the restore, is `DataError.OutOfSpace` when the private
+     disk's free space is under the 64 KiB probe the restore transport already uses (one shared helper, so the two
+     can't disagree), else `DataError.Unknown`, which renders the existing "Couldn't finish that restore". No errno
+     sniffing is added here: [ADR-036](#adr-036) §2 holds, and ADR-120's `ENOSPC` exception stays limited to the
+     provider destination. Reading the archive keeps its mapping.
+     **Before staging**, inside the restore lock, the repository first recovers any interrupted earlier restore and
+     then reconciles the shelf index from the files. Either failing is `DataError.Io` inside the repository and is
+     handed on as `DataError.Unknown`, the retryable "Couldn't finish that restore". The maker's file has not been
+     read at that point, so this never says "Couldn't read that file" and never "This backup looks damaged"; no
+     free-space probe is taken there. A zine on the shelf that can't be indexed does not fail this step: it is
+     skipped, as on any shelf read.
+   - **R2.** The repository calls a commit-start hook inside the lock immediately before the non-cancellable commit;
+     the hook claims ADR-120's `OutcomeLatch` as done. If Cancel won first, nothing is committed and "Restore
+     cancelled." is true. Once the hook wins, Cancel is a no-op: the running sheet drops its Cancel control (it
+     leaves the tree), dismissing it or pressing Back does not cancel, and it says "Adding zines to your shelf." /
+     "This part can't be stopped."
+   - **R3.** Once commit succeeds the outcome is a success: `LibraryRestoreReceipt` carries `addedCount` (known without
+     Room), `alreadyHereCount` (ADR-121), `shelfUpToDate` and the archive's `omitted`. A post-commit index failure is
+     `shelfUpToDate = false` with the "They may take a moment to appear" line, and the shelf is re-read. A commit
+     failure stays a failure: the committer rolls back.
+
+ADR-110's premise sentence is read as: *V1 product law requires one user-owned file holding every zine Zinely can
+read, naming any it could not.* Its backup fail-closed clause (including "poisoned bytes") is superseded by Decisions
+2–6.
+
+#### Consequences
+
+- A damaged zine no longer blocks backups; the maker is told which zine and, when it's on the shelf, can act on it.
+- A partial archive restored on a build before this decision (beta.4-r3, beta.5) restores what it holds **without**
+  the partial notice. That is the one place the rule is weaker, and no new build can change it; the maker was told at
+  backup time and the last-backup line still says so on that phone. Release notes must say it.
+- The frozen v2 fixture stays byte-identical and green; a new frozen partial fixture joins it. The
+  [torture matrix](reviews/2026-08-21-zine-backup-torture-matrix.md) gains rows: unreadable zine at backup, poisoned
+  photo shared by two zines, writer backstop after the pre-check, all zines unreadable, partial archive on an old
+  reader.
+- Backup reads each photo twice (pre-hash, then copy), bounded by the existing limits; a backstop rewrite happens at
+  most once per failing entry.
+- Part 1's interim state ("A zine here can't be opened") is retired: no release carries it.
+
+#### Alternatives
+
+- **Keep fail-closed, add a delete-by-id remedy:** needs a UI for the zines with no shelf entry and a way to find a
+  zine whose only fault is a photo; still no backup meanwhile.
+- **`packageVersion` 3 for partial archives:** older builds refuse the whole file; rejected.
+- **Record partiality only on the phone:** lost with the phone — the case backups exist for; rejected.
+- **Put "partial" in the suggested file name:** the name is chosen in the picker before the scan runs; rejected.
+- **A new `DataError` for "nothing saved":** every exhaustive `when` over `DataError` would grow a backup-only case.
+  The transport's own result type is where saved and unsaved are already told apart, so `NothingSaved` lives there.
+- **Duplicate the validator's per-entry rules in the repository's pre-check:** two copies of one rule set drift; the
+  candidate manifest is checked by the validator the writer itself runs.
+
+#### Review
+
+**Before code (2026-09-28), an independent Review Agent that did not write the draft:** **GO WITH FIXES**, then
+**GO** on re-review. Every Required Fix was ACCEPTED:
+
+1. The premise said an unreadable zine is always invisible. Since ADR-042 §8 a corrupt or newer zine shows as
+   unavailable, so the Context now names the cases that really have no shelf entry.
+2. The writer's validator refused per-zine and per-photo manifest rules (photo type and dimensions; document size,
+   times and schema range) with no entry named, so one photo could still fail the whole backup. Those rules now run
+   on the candidate manifest, by path, as skip points (Decision 3).
+3. Decisions 2 and 3 disagreed on a document's read-side failure at the writer. It now fails the whole backup; only
+   a document's integrity mismatch or per-entry limit is rebuilt without it.
+4. 0 of M had no defined carrier. It is now `NothingSaved`, never `Saved`.
+5. The whole-backup list read as exhaustive but wasn't. It now covers the pre-scan failures and writer failures
+   that name no entry, and retires ADR-120 §3's part-1 mapping.
+6. The Brief still held the full draft. It is replaced by a pointer, and the plan lines are updated.
+
+Recommendations applied:
+
+- R1 uses the transport's probe only, with no errno sniffing.
+- Dismiss or Back does not cancel a commit.
+- The clamp wording is complete.
+- The product law says "reported — by name when it has one".
+- `entries[k]` validator issues map to their zine or photo.
+- The newer-state trigger is flagged for owner confirmation.
+- The Brief's stop condition points here.
+
+**Acceptance (owner, 2026-09-29).** The owner ruled on the items left open by the implementation:
+
+- the restored-backup notice with several reasons is one sentence, the total once and then a clause per reason
+  (ruling (g), Option 3; wording in the [freeze record](design/BACKUP-RESTORE-FREEZE.md#implementation-status));
+- the `omitted` bound is enforced by the backup writer (Option A, Decision 5).
+
+§8 R1 gained its "Before staging" paragraph. The ADR was accepted once both matched the implementation.
+
+The implementation was reviewed by an independent Review Agent that did not write it: **GO WITH FIXES**.
+
+- ACCEPTED, and now recorded here: add this acceptance record.
+- ACCEPTED, now enforced in `ZineBackupWriteLimits`: stop an injected writer limit from rising above 10,000.
+- ACCEPTED, now noted in Decision 5: the 4 MiB manifest limit can bind before 10,000 entries do.
+- REJECTED, adding the owner's principle verbatim: Decision 1 already quotes it verbatim, across a line break.

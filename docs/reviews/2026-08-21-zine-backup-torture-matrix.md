@@ -11,6 +11,11 @@ current shipping verdict. Repository integration and the production UI subsequen
 Those passes do not close second-device/API, provider failure, disk-full, or full-media/print stress
 coverage. Preserve those limitations; current priorities live in [ROADMAP.md](../ROADMAP.md#current-priorities).
 
+**28 September:** [ADR-121](../DECISIONS.md#adr-121) changes the expected result of the row "Repeated restore of
+same backup" from safe additive duplicates to *nothing new to add* (zines identical to ones already on the
+shelf are not added again; changed zines are). The row below is kept as the dated snapshot; the new
+expectation is untested until ADR-121 is implemented.
+
 This is the gate required by the V1 execution plan. A row is green only at the layer that can actually prove it. Pure structural tests cannot stand in for byte-level, transactional, SAF, or physical-device evidence.
 
 | Case | Expected result | Evidence layer | Status |
@@ -34,11 +39,29 @@ This is the gate required by the V1 execution plan. A row is green only at the l
 | Cancellation/process death during staging | Existing library unchanged; stale staging recoverable/cleanable | Android/device | 🟨 JVM cancellation cleanup green; process/device pending |
 | Failure during commit | All-or-nothing project visibility; Room rebuilds from files | JVM/Android integration | 🟨 Journal/rollback primitive green; repository lock, recovery wiring, and Room integration pending |
 | Existing project id collision | Restore mints a new local id; never overwrites | repository integration | 🟨 Pure allocator green; repository integration pending |
-| Repeated restore of same backup | Safe additive duplicates; assets deduplicate by verified hash | repository integration | 🟨 Pure id/allocation and verified-asset dedupe green; repository integration pending |
+| Repeated restore of same backup (**superseded by ADR-121**; see the step 1b rows below) | Safe additive duplicates; assets deduplicate by verified hash | repository integration | 🟨 Pure id/allocation and verified-asset dedupe green; repository integration pending |
 | Backup → uninstall/wipe → restore | All zines, text, photos, covers, timestamps, and print output survive | physical device | 🟨 Samsung clean reinstall pass: one real zine and committed text survived; media, cover, timestamp, and print-output parity still pending |
 | Restore onto a second device/API level | Same library and rendered/printed result | three-device gate incl. API 24 | ⬜ Pending |
 | SAF provider revokes/returns null/throws mid-stream | Calm retry/alternate exit; no partial restore | Android/device | ⬜ Pending |
 | Airplane mode full journey | No behavior change and no network dependency | physical device | ⬜ Pending |
+
+**1.x step 1b rows ([ADR-122](../DECISIONS.md#adr-122), [ADR-121](../DECISIONS.md#adr-121); added 2026-09-29, on branch
+`fix/1x-step1b-backup-restore`, not yet merged).** Evidence is `:data-android` Robolectric integration
+(`RoomProjectRepositoryRestoreTest`) unless named otherwise; device rows stay with the step 1b device pass.
+
+| Case | Expected result | Evidence layer | Status |
+|---|---|---|---|
+| Unreadable zine at backup | Left out and named; the rest saved; `omitted` in the file | repository integration | ✅ Green |
+| Poisoned photo shared by two zines | Both zines left out, reason `photo`; the photo's bytes never enter the archive | repository integration | ✅ Green |
+| Writer backstop after the pre-check | The incomplete private archive is removed, the entry's zines left out, the survivors rewritten | repository integration | ✅ Green |
+| More left-out zines than one backup can list (ADR-122 §5) | 10,000 left out is saved and every one listed; 10,001 fails the whole backup as a limit before any file exists; restore's 10,000 decode cap keeps all of a legitimate list | writer (`ZineLibraryBackupWriterTest`) + repository, with an injected limit + manifest decode | ✅ Green. Device, 2026-09-29, SM-A176B: a normal 43-zine backup on the capped writer saved "All 43 zines", `packageVersion` 2, `"omitted":[]` (the over-limit case is not recreated on the device) |
+| All zines unreadable | No archive; `NothingSaved`; the destination discarded; no last-backup record | repository + transport + VM | ✅ Green |
+| Partial archive on an old reader | Restores what it holds, without the partial notice (ADR-122 Consequences) | `ignoreUnknownKeys` + frozen partial fixture (`LibraryBackupFixtureTest`) on this build; beta.5 device check | ✅ Green — 2026-09-29, SM-A176B / Android 16, installed beta.5 release: the fixture restored as "2 zines added to your shelf" with no notice |
+| Disk full while staging a restore (R1) | "Not enough space" when the private disk is under the 64 KiB probe, else "Couldn't finish that restore"; never "damaged" | stager seam + repository integration | 🟨 Unit/integration green; device pending |
+| Cancel racing the restore commit (R2) | Cancel first: nothing committed, "Restore cancelled."; commit first: Cancel is a no-op | repository + VM | ✅ Green |
+| Room fails after a committed restore (R3) | A success with the lagging line; the shelf is re-read | repository + VM | ✅ Green |
+| A zine changed since the backup (ADR-121) | The backup's version is added alongside; the changed zine on the shelf is kept as it is | repository integration + device | ✅ Green. Device, 2026-09-29, SM-A176B: a one-zine controlled fixture (`Step 1b changed-version check`) restored, its cover text nudged up once on the phone, the same file restored again: "1 zine added to your shelf / What was already on this shelf stayed put."; shelf 42 → 43; the edited copy kept its moved text, the added copy has the original position |
+| Repeated restore of the same backup (ADR-121) | "Nothing new to add"; no project directory created | repository integration + device | ✅ Green (supersedes the dated row above). Device, 2026-09-29, SM-A176B, step 1b release build over beta.5 data: a fresh 41-zine backup restored as "Nothing new to add"; restoring the partial fixture again gave "Nothing new to add" plus its saved-without notice; the shelf stayed at 41 |
 
 ## Historical foundation verdict — 21 August
 

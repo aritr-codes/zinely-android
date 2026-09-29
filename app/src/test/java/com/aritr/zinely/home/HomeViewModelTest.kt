@@ -11,6 +11,18 @@ import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.data.android.LibraryBackupReceipt
+import com.aritr.zinely.data.android.LibraryBackupResult
+import com.aritr.zinely.data.android.LibraryBackupStage
+import com.aritr.zinely.data.android.OutcomeLatch
+import com.aritr.zinely.data.android.prefs.BackupRecord
+import com.aritr.zinely.data.android.prefs.BackupRecordStore
+import com.aritr.zinely.feature.library.LibraryLastBackup
+import com.aritr.zinely.feature.library.LibraryOmission
+import com.aritr.zinely.feature.library.LibraryOmissionReason
+import com.aritr.zinely.core.data.asset.ZineBackupOmission
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
 import com.aritr.zinely.data.android.LibraryRestoreReceipt
 import com.aritr.zinely.data.android.LibrarySafTransport
 import com.aritr.zinely.data.android.prefs.PreferredPaperStore
@@ -131,23 +143,52 @@ class HomeViewModelTest {
 
         var backupGate: CompletableDeferred<Unit>? = null
         var restoreGate: CompletableDeferred<Unit>? = null
-        var backupResult: DataResult<LibraryBackupReceipt> = DataResult.Success(
+        var backupResult: LibraryBackupResult = LibraryBackupResult.Saved(
             LibraryBackupReceipt(projectCount = 2, assetCount = 3, archiveByteCount = 1024L),
+            fileName = null,
         )
+
+        /** Suspends between the transport claiming the latch as done and returning (a late Cancel's window). */
+        var afterDoneGate: CompletableDeferred<Unit>? = null
         var restoreResult: DataResult<LibraryRestoreReceipt> = DataResult.Success(
             LibraryRestoreReceipt(projects = emptyList()),
         )
 
-        override suspend fun backupTo(destination: Uri): DataResult<LibraryBackupReceipt> {
+        /** Mirrors the real transport's contract: a saved result must first win the latch. */
+        override suspend fun backupTo(destination: Uri, latch: OutcomeLatch): LibraryBackupResult {
             backupDestinations += destination
             backupGate?.await()
-            return backupResult
+            val result = backupResult
+            if (result is LibraryBackupResult.Saved) {
+                if (!latch.markDone()) throw CancellationException("Cancel won the latch")
+                afterDoneGate?.await()
+            }
+            return result
         }
 
-        override suspend fun restoreFrom(source: Uri): DataResult<LibraryRestoreReceipt> {
+        /** Suspends between the commit-start hook winning and the result (the commit a Cancel can't stop). */
+        var commitGate: CompletableDeferred<Unit>? = null
+
+        /** Mirrors the repository (ADR-122 R2): a restore that adds zines calls the hook before committing. */
+        override suspend fun restoreFrom(source: Uri, onCommitStart: () -> Boolean): DataResult<LibraryRestoreReceipt> {
             restoreSources += source
             restoreGate?.await()
-            return restoreResult
+            val result = restoreResult
+            if (result is DataResult.Success && result.value.addedCount > 0) {
+                if (!onCommitStart()) throw CancellationException("Cancel won the latch")
+                withContext(NonCancellable) { commitGate?.await() }
+            }
+            return result
+        }
+    }
+
+    private class FakeBackupRecordStore : BackupRecordStore {
+        val records = mutableListOf<BackupRecord>()
+        private val last = MutableStateFlow<BackupRecord?>(null)
+        override val lastBackup: Flow<BackupRecord?> = last
+        override suspend fun recordBackup(record: BackupRecord) {
+            records += record
+            last.value = record
         }
     }
 
@@ -185,6 +226,7 @@ class HomeViewModelTest {
     private lateinit var transport: FakeLibrarySafTransport
     private lateinit var preferredPaperStore: FakePreferredPaperStore
     private lateinit var pendingDeleteStore: FakePendingDeleteStore
+    private lateinit var backupRecordStore: FakeBackupRecordStore
 
     @Before
     fun setUp() {
@@ -193,9 +235,10 @@ class HomeViewModelTest {
         transport = FakeLibrarySafTransport()
         preferredPaperStore = FakePreferredPaperStore()
         pendingDeleteStore = FakePendingDeleteStore()
+        backupRecordStore = FakeBackupRecordStore()
     }
 
-    private fun viewModel() = HomeViewModel(repository, transport, preferredPaperStore, pendingDeleteStore)
+    private fun viewModel() = HomeViewModel(repository, transport, preferredPaperStore, pendingDeleteStore, backupRecordStore)
 
     @After
     fun tearDown() {
@@ -1010,8 +1053,9 @@ class HomeViewModelTest {
     fun `successful backup reports what was saved`() = runTest {
         val viewModel = viewModel()
         val uri = Uri.parse("content://zinely-tests/backup")
-        transport.backupResult = DataResult.Success(
+        transport.backupResult = LibraryBackupResult.Saved(
             LibraryBackupReceipt(projectCount = 4, assetCount = 7, archiveByteCount = 4096L),
+            fileName = "zinely-backup-2026-09-12.zine",
         )
 
         viewModel.backupPicked(uri)
@@ -1071,9 +1115,9 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `backup IO failure is described as save failure`() = runTest {
+    fun `a destination failure is described as save failure`() = runTest {
         val viewModel = viewModel()
-        transport.backupResult = DataResult.Failure(DataError.Io("provider failed"))
+        transport.backupResult = LibraryBackupResult.Failed(LibraryBackupStage.Destination, DataError.Io("provider failed"))
 
         viewModel.backupPicked(Uri.parse("content://zinely-tests/unwritable"))
 
@@ -1084,6 +1128,354 @@ class HomeViewModelTest {
             ),
             viewModel.backupRestoreState.value,
         )
+    }
+
+    // --- 1.x step 1 (ADR-120): the last-backup record, F1 classification, the late Cancel ---
+
+    @Test
+    fun `a saved backup records today's date and the provider's file name`() = runTest {
+        val viewModel = viewModel()
+        transport.backupResult = LibraryBackupResult.Saved(
+            LibraryBackupReceipt(projectCount = 1, assetCount = 0, archiveByteCount = 10L),
+            fileName = "zinely-backup-2026-09-12.zine",
+        )
+        val before = System.currentTimeMillis()
+
+        viewModel.backupPicked(Uri.parse("content://zinely-tests/backup"))
+
+        val record = backupRecordStore.records.single()
+        assertTrue("saved at ${record.savedAtEpochMs}", record.savedAtEpochMs in before..System.currentTimeMillis())
+        assertEquals("zinely-backup-2026-09-12.zine", record.fileName)
+        assertEquals(LibraryLastBackup(record.savedAtEpochMs, record.fileName, 1, 1), viewModel.lastBackup.value)
+    }
+
+    @Test
+    fun `a saved backup whose provider reports no name records the date alone`() = runTest {
+        val viewModel = viewModel()
+        transport.backupResult = LibraryBackupResult.Saved(
+            LibraryBackupReceipt(projectCount = 1, assetCount = 0, archiveByteCount = 10L),
+            fileName = null,
+        )
+
+        viewModel.backupPicked(Uri.parse("content://zinely-tests/backup"))
+
+        assertEquals(null, backupRecordStore.records.single().fileName)
+        assertEquals(null, viewModel.lastBackup.value?.fileName)
+    }
+
+    @Test
+    fun `no saved backup leaves the last-backup fact empty`() = runTest {
+        assertEquals(null, viewModel().lastBackup.value)
+    }
+
+    @Test
+    fun `a failed backup, a picker cancel and a picker failure never advance the record`() = runTest {
+        val viewModel = viewModel()
+        transport.backupResult = LibraryBackupResult.Failed(LibraryBackupStage.PrivateArchive, DataError.Io("x"))
+
+        viewModel.backupPicked(Uri.parse("content://zinely-tests/fails"))
+        viewModel.dismissBackupRestoreSurface()
+        viewModel.backupPicked(null)
+        viewModel.backupRestorePickerFailed(LibraryBackupRestoreMode.Backup)
+
+        assertTrue(backupRecordStore.records.isEmpty())
+        assertEquals(null, viewModel.lastBackup.value)
+    }
+
+    @Test
+    fun `a restore never changes the last-backup record`() = runTest {
+        val viewModel = viewModel()
+        viewModel.backupPicked(Uri.parse("content://zinely-tests/backup"))
+        val recorded = viewModel.lastBackup.value
+
+        viewModel.dismissBackupRestoreSurface()
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/restore"))
+
+        assertTrue(viewModel.backupRestoreState.value is LibraryBackupRestoreUiState.RestoreAdded)
+        assertEquals(1, backupRecordStore.records.size)
+        assertEquals(recorded, viewModel.lastBackup.value)
+    }
+
+    @Test
+    fun `a Cancel before the file is complete says Backup cancelled and saves nothing`() = runTest {
+        val viewModel = viewModel()
+        transport.backupGate = CompletableDeferred()
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+
+        viewModel.backupPicked(Uri.parse("content://zinely-tests/slow-backup"))
+        viewModel.cancelBackupRestore()
+
+        assertEquals(null, viewModel.backupRestoreState.value)
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message("Backup cancelled.")), events)
+        assertTrue("no saved state and no record for a cancelled backup", backupRecordStore.records.isEmpty())
+        eventJob.cancel()
+    }
+
+    @Test
+    fun `a Cancel after the file is complete is a no-op and the backup is saved`() = runTest {
+        val viewModel = viewModel()
+        val afterDone = CompletableDeferred<Unit>()
+        transport.afterDoneGate = afterDone
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+
+        viewModel.backupPicked(Uri.parse("content://zinely-tests/complete"))
+        // The transport has claimed the latch as done and is still on its way back.
+        viewModel.cancelBackupRestore()
+        afterDone.complete(Unit)
+
+        assertEquals(
+            LibraryBackupRestoreUiState.BackupSaved(projectCount = 2, assetCount = 3),
+            viewModel.backupRestoreState.value,
+        )
+        assertEquals(1, backupRecordStore.records.size)
+        assertTrue("no Backup cancelled. after a complete file: $events", events.isEmpty())
+        eventJob.cancel()
+    }
+
+    @Test
+    fun `a failed backup is shown by where it failed (owner ruling F1)`() = runTest {
+        val private = LibraryBackupStage.PrivateArchive
+        val destination = LibraryBackupStage.Destination
+        val cases = listOf(
+            // 1. out of space, anywhere
+            LibraryBackupResult.Failed(private, DataError.OutOfSpace("full")) to LibraryBackupRestoreFailureKind.NotEnoughSpace,
+            LibraryBackupResult.Failed(destination, DataError.OutOfSpace("full")) to LibraryBackupRestoreFailureKind.NotEnoughSpace,
+            // 2. only the chosen destination is "couldn't save the backup there"
+            LibraryBackupResult.Failed(destination, DataError.Io("provider")) to LibraryBackupRestoreFailureKind.SaveFailed,
+            // 3. Zinely's own private work is "not finished", never the location
+            LibraryBackupResult.Failed(private, DataError.Io("private archive")) to LibraryBackupRestoreFailureKind.Generic,
+            LibraryBackupResult.Failed(private, DataError.NotFound("library")) to LibraryBackupRestoreFailureKind.Generic,
+            LibraryBackupResult.Failed(private, DataError.Unknown("?")) to LibraryBackupRestoreFailureKind.Generic,
+            LibraryBackupResult.Failed(private, DataError.LimitExceeded("too big")) to
+                LibraryBackupRestoreFailureKind.BackupLimitReached,
+            // ADR-122 §2: an unreadable zine is left out, not a failure, so a leftover Corrupt / Invalid is Zinely's
+            // own backup process "not finished" — never part 1's retired "A zine here can't be opened".
+            LibraryBackupResult.Failed(private, DataError.Corrupt("archive")) to LibraryBackupRestoreFailureKind.Generic,
+            LibraryBackupResult.Failed(private, DataError.Invalid(emptyList())) to LibraryBackupRestoreFailureKind.Generic,
+            LibraryBackupResult.Failed(private, DataError.SchemaTooNew(4, 3)) to LibraryBackupRestoreFailureKind.Generic,
+            // F2: busy is not a failure
+            LibraryBackupResult.Failed(private, DataError.Busy("editor open")) to LibraryBackupRestoreFailureKind.Busy,
+        )
+        val viewModel = viewModel()
+
+        cases.forEachIndexed { index, (result, expected) ->
+            transport.backupResult = result
+            viewModel.backupPicked(Uri.parse("content://zinely-tests/failure-$index"))
+            assertEquals(
+                "$result",
+                LibraryBackupRestoreUiState.Failed(mode = LibraryBackupRestoreMode.Backup, kind = expected),
+                viewModel.backupRestoreState.value,
+            )
+            viewModel.dismissBackupRestoreSurface()
+        }
+        assertTrue(backupRecordStore.records.isEmpty())
+    }
+
+    @Test
+    fun `only transient backup failures offer a retry`() {
+        assertTrue(LibraryBackupRestoreFailureKind.SaveFailed.retryable)
+        assertTrue(LibraryBackupRestoreFailureKind.Generic.retryable)
+        assertTrue(LibraryBackupRestoreFailureKind.NotEnoughSpace.retryable)
+        assertTrue(LibraryBackupRestoreFailureKind.Busy.retryable)
+        assertTrue(!LibraryBackupRestoreFailureKind.BackupLimitReached.retryable)
+        assertTrue(!LibraryBackupRestoreFailureKind.BackupNoneSaved.retryable)
+        assertTrue(!LibraryBackupRestoreFailureKind.BackupNoneSavedOffShelf.retryable)
+        assertTrue(!LibraryBackupRestoreFailureKind.BackupNoneSavedPhoto.retryable)
+        assertTrue(!LibraryBackupRestoreFailureKind.BackupZineNewer.retryable)
+    }
+
+    // --- 1.x step 1b (ADR-122, ADR-121): skip-and-list, nothing saved, what a restore did, R2 ---
+
+    @Test
+    fun `a partial backup is a saved success that names what it left out and records its counts`() = runTest {
+        val viewModel = viewModel()
+        transport.backupResult = LibraryBackupResult.Saved(
+            LibraryBackupReceipt(
+                projectCount = 5,
+                assetCount = 2,
+                archiveByteCount = 10L,
+                totalCount = 6,
+                omitted = listOf(
+                    ZineBackupOmission("Moth Club Bulletin", ZineBackupOmission.PHOTO),
+                    ZineBackupOmission(" ", ZineBackupOmission.UNREADABLE),
+                ),
+                offShelfReasons = setOf(ZineBackupOmission.UNREADABLE),
+            ),
+            fileName = "a.zine",
+        )
+
+        viewModel.backupPicked(Uri.parse("content://zinely-tests/partial"))
+
+        assertEquals(
+            LibraryBackupRestoreUiState.BackupSaved(
+                projectCount = 5,
+                assetCount = 2,
+                totalCount = 6,
+                omitted = listOf(
+                    LibraryOmission("Moth Club Bulletin", LibraryOmissionReason.Photo),
+                    LibraryOmission(null, LibraryOmissionReason.Unreadable), // a blank name is no name
+                ),
+                offShelfReasons = setOf(LibraryOmissionReason.Unreadable),
+            ),
+            viewModel.backupRestoreState.value,
+        )
+        val record = backupRecordStore.records.single()
+        assertEquals(5 to 6, record.savedCount to record.totalCount)
+        assertEquals(5 to 6, viewModel.lastBackup.value?.let { it.savedCount to it.totalCount })
+    }
+
+    @Test
+    fun `nothing saved is a no-retry failure in backup words and never advances the record`() = runTest {
+        fun nothing(offShelf: Boolean, vararg reasons: String) = LibraryBackupResult.NothingSaved(
+            LibraryBackupReceipt(
+                projectCount = 0,
+                assetCount = 0,
+                archiveByteCount = 0L,
+                totalCount = reasons.size,
+                omitted = reasons.map { ZineBackupOmission("z", it) },
+                offShelfReasons = if (offShelf) setOf(ZineBackupOmission.UNREADABLE) else emptySet(),
+            ),
+        )
+        val cases = listOf(
+            nothing(false, ZineBackupOmission.UNREADABLE) to LibraryBackupRestoreFailureKind.BackupNoneSaved,
+            nothing(true, ZineBackupOmission.UNREADABLE) to LibraryBackupRestoreFailureKind.BackupNoneSavedOffShelf,
+            nothing(false, ZineBackupOmission.PHOTO, ZineBackupOmission.PHOTO) to
+                LibraryBackupRestoreFailureKind.BackupNoneSavedPhoto,
+            nothing(false, ZineBackupOmission.NEWER_VERSION) to LibraryBackupRestoreFailureKind.BackupZineNewer,
+            // mixed reasons take the general wording
+            nothing(false, ZineBackupOmission.NEWER_VERSION, ZineBackupOmission.PHOTO) to
+                LibraryBackupRestoreFailureKind.BackupNoneSaved,
+        )
+        val viewModel = viewModel()
+
+        cases.forEachIndexed { index, (result, expected) ->
+            transport.backupResult = result
+            viewModel.backupPicked(Uri.parse("content://zinely-tests/nothing-$index"))
+            assertEquals(
+                "$result",
+                LibraryBackupRestoreUiState.Failed(LibraryBackupRestoreMode.Backup, expected),
+                viewModel.backupRestoreState.value,
+            )
+            assertTrue(!expected.retryable)
+            viewModel.dismissBackupRestoreSurface()
+        }
+        assertTrue(backupRecordStore.records.isEmpty())
+    }
+
+    @Test
+    fun `a restore reports what it added, what was already here and what the backup was saved without`() = runTest {
+        val viewModel = viewModel()
+        transport.restoreResult = DataResult.Success(
+            LibraryRestoreReceipt(
+                projects = listOf(RestoredProject("a", summary("a", "A", 0L)), RestoredProject("b", summary("b", "B", 0L))),
+                alreadyHereCount = 5,
+                omitted = listOf(ZineBackupOmission("Moth Club Bulletin", "from_the_future")),
+            ),
+        )
+
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/some-new"))
+
+        assertEquals(
+            LibraryBackupRestoreUiState.RestoreAdded(
+                restoredProjectCount = 2,
+                alreadyHereCount = 5,
+                omitted = listOf(LibraryOmission("Moth Club Bulletin", LibraryOmissionReason.Unreadable)),
+            ),
+            viewModel.backupRestoreState.value,
+        )
+    }
+
+    @Test
+    fun `nothing new to add is a success that never reaches the commit`() = runTest {
+        val viewModel = viewModel()
+        val states = mutableListOf<LibraryBackupRestoreUiState?>()
+        val stateJob = launch(Dispatchers.Main) { viewModel.backupRestoreState.collect { states += it } }
+        transport.restoreResult = DataResult.Success(
+            LibraryRestoreReceipt(projects = emptyList(), alreadyHereCount = 7),
+        )
+
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/nothing-new"))
+
+        assertEquals(
+            LibraryBackupRestoreUiState.RestoreAdded(restoredProjectCount = 0, alreadyHereCount = 7),
+            viewModel.backupRestoreState.value,
+        )
+        assertTrue("never the commit phase: $states", states.none { it is LibraryBackupRestoreUiState.Running && !it.cancellable })
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a committed restore whose shelf lags is a success and the shelf is read again`() = runTest {
+        val viewModel = viewModel()
+        val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val before = repository.observeCollections
+        transport.restoreResult = DataResult.Success(
+            LibraryRestoreReceipt(
+                projects = listOf(RestoredProject("a", summary("a", "A", 0L))),
+                shelfUpToDate = false,
+            ),
+        )
+
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/lagging"))
+
+        assertEquals(
+            LibraryBackupRestoreUiState.RestoreAdded(restoredProjectCount = 1, shelfUpToDate = false),
+            viewModel.backupRestoreState.value,
+        )
+        assertEquals(before + 1, repository.observeCollections)
+        job.cancel()
+    }
+
+    @Test
+    fun `once the commit starts Cancel is a no-op and the real outcome follows (R2)`() = runTest {
+        val viewModel = viewModel()
+        val commit = CompletableDeferred<Unit>()
+        transport.commitGate = commit
+        transport.restoreResult = DataResult.Success(
+            LibraryRestoreReceipt(projects = listOf(RestoredProject("a", summary("a", "A", 0L)))),
+        )
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/committing"))
+        assertEquals(
+            LibraryBackupRestoreUiState.Running(LibraryBackupRestoreMode.Restore, cancellable = false),
+            viewModel.backupRestoreState.value,
+        )
+
+        viewModel.cancelBackupRestore()
+        commit.complete(Unit)
+
+        assertEquals(
+            LibraryBackupRestoreUiState.RestoreAdded(restoredProjectCount = 1),
+            viewModel.backupRestoreState.value,
+        )
+        assertTrue("no Restore cancelled. after the commit started: $events", events.isEmpty())
+        eventJob.cancel()
+    }
+
+    @Test
+    fun `a Cancel before the commit starts says Restore cancelled and commits nothing (R2)`() = runTest {
+        val viewModel = viewModel()
+        transport.restoreGate = CompletableDeferred()
+        transport.restoreResult = DataResult.Success(
+            LibraryRestoreReceipt(projects = listOf(RestoredProject("a", summary("a", "A", 0L)))),
+        )
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/checking"))
+        assertEquals(
+            LibraryBackupRestoreUiState.Running(LibraryBackupRestoreMode.Restore),
+            viewModel.backupRestoreState.value,
+        )
+        viewModel.cancelBackupRestore()
+
+        assertEquals(null, viewModel.backupRestoreState.value)
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message("Restore cancelled.")), events)
+        eventJob.cancel()
     }
 
     @Test

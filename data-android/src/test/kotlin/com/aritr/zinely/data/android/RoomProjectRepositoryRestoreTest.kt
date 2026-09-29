@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.aritr.zinely.core.data.asset.AssetEntry
 import com.aritr.zinely.core.data.asset.CURRENT_LIBRARY_BACKUP_VERSION
 import com.aritr.zinely.core.data.asset.LIBRARY_BACKUP_KIND
+import com.aritr.zinely.core.data.asset.ZineBackupOmission
 import com.aritr.zinely.core.data.asset.ZineBackupProjectEntry
 import com.aritr.zinely.core.data.asset.ZineLibraryBackupManifest
 import com.aritr.zinely.core.data.repository.DataError
@@ -14,7 +15,9 @@ import com.aritr.zinely.core.data.serialization.JsonDocumentSerializer
 import com.aritr.zinely.core.data.storage.AtomicFileStore
 import com.aritr.zinely.core.data.storage.FileSystemOps
 import com.aritr.zinely.core.data.storage.NioFileSystemOps
+import com.aritr.zinely.core.data.storage.ZineBackupWriteLimits
 import com.aritr.zinely.core.data.storage.ZineLibraryBackupStager
+import com.aritr.zinely.core.data.storage.ZineLibraryBackupWriter
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
@@ -25,6 +28,7 @@ import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.data.android.room.ProjectDao
 import com.aritr.zinely.data.android.room.ProjectEntity
 import com.aritr.zinely.data.android.room.ZinelyDatabase
+import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -38,6 +42,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.runTest
+import kotlin.streams.toList
 import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -86,6 +91,9 @@ class RoomProjectRepositoryRestoreTest {
         assetMetadataReader: LibraryAssetMetadataReader = LibraryAssetMetadataReader {
             LibraryAssetMetadata("image/jpeg", 32, 32)
         },
+        backupWriter: ZineLibraryBackupWriter = ZineLibraryBackupWriter(),
+        usableBytes: (Path) -> Long = { Long.MAX_VALUE },
+        restoreStager: ZineLibraryBackupStager = ZineLibraryBackupStager(),
     ): RoomProjectRepository = RoomProjectRepository(
         rootDir = root,
         dao = dao,
@@ -98,6 +106,9 @@ class RoomProjectRepositoryRestoreTest {
         newId = { "p${nextId++}" },
         appVersion = "test-version",
         assetMetadataReader = assetMetadataReader,
+        backupWriter = backupWriter,
+        usableBytes = usableBytes,
+        restoreStager = restoreStager,
     )
 
     @Test
@@ -137,7 +148,7 @@ class RoomProjectRepositoryRestoreTest {
     }
 
     @Test
-    fun `backup rejects poisoned local asset bytes and removes incomplete archive`() = runTest {
+    fun `a library whose only zine has a poisoned photo saves nothing and writes no file`() = runTest {
         val repository = repo()
         val project = repository.createProject("Poisoned", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER).getOrNull()!!
         val declaredHash = sha256("expected".encodeToByteArray())
@@ -146,11 +157,450 @@ class RoomProjectRepositoryRestoreTest {
         assertTrue(documents.save(project.id, document(declaredHash)).getOrNull() != null)
         val archive = root.resolve("poisoned.zine")
 
-        val result = repository.createLibraryBackup(archive)
+        val receipt = repository.createLibraryBackup(archive).getOrNull()!!
 
-        assertTrue(result.errorOrNull() is DataError.Corrupt)
+        assertEquals(0, receipt.projectCount)
+        assertEquals(1, receipt.totalCount)
+        assertEquals(listOf(ZineBackupOmission("Poisoned", ZineBackupOmission.PHOTO)), receipt.omitted)
         assertFalse(Files.exists(archive))
     }
+
+    // ---- ADR-122: skip-and-list backups ------------------------------------------------------------
+
+    @Test
+    fun `one poisoned photo leaves out only its zine, and the archive says so`() = runTest {
+        val repository = repo()
+        val good = saved(repository, "Good", photo("good-photo"))
+        saved(repository, "Poisoned", poisonedPhoto())
+        val archive = root.resolve("partial.zine")
+
+        val receipt = repository.createLibraryBackup(archive).getOrNull()!!
+
+        assertEquals(1, receipt.projectCount)
+        assertEquals(2, receipt.totalCount)
+        assertEquals(listOf(ZineBackupOmission("Poisoned", ZineBackupOmission.PHOTO)), receipt.omitted)
+        assertFalse(receipt.omittedOffShelf)
+        ZineLibraryBackupStager().stage(archive, root.resolve("verify")).use { staged ->
+            assertEquals(listOf(good), staged.projects.map { it.manifestEntry.sourceProjectId })
+            assertEquals(setOf(sha256("good-photo".encodeToByteArray())), staged.assets.keys) // exact closure
+            assertEquals(receipt.omitted, staged.manifest.omitted)
+        }
+    }
+
+    @Test
+    fun `a poisoned photo shared by two zines leaves out both, each named`() = runTest {
+        val repository = repo()
+        val shared = poisonedPhoto()
+        saved(repository, "Moth Club Bulletin", shared)
+        saved(repository, "Riso tests", shared)
+        saved(repository, "Healthy")
+
+        val archive = root.resolve("shared.zine")
+
+        val receipt = repository.createLibraryBackup(archive).getOrNull()!!
+
+        assertEquals(1, receipt.projectCount)
+        assertEquals(
+            setOf("Moth Club Bulletin", "Riso tests"),
+            receipt.omitted.map { it.title }.toSet(),
+        )
+        assertTrue(receipt.omitted.all { it.reason == ZineBackupOmission.PHOTO })
+        ZineLibraryBackupStager().stage(archive, root.resolve("verify")).use { staged ->
+            assertTrue("the poisoned photo never enters the archive", staged.assets.isEmpty())
+        }
+    }
+
+    @Test
+    fun `a photo that changes after its check is left out by the writer backstop and the archive rebuilt`() = runTest {
+        val changing = photo("changes-under-us")
+        val writer = ZineLibraryBackupWriter(
+            openSource = { source ->
+                if (source.fileName.toString() == changing) ByteArrayInputStream("tampered".encodeToByteArray())
+                else Files.newInputStream(source)
+            },
+        )
+        val repository = repo(backupWriter = writer)
+        val kept = saved(repository, "Kept")
+        saved(repository, "Changed", changing)
+        val archive = root.resolve("out").resolve("backstop.zine")
+
+        val receipt = repository.createLibraryBackup(archive).getOrNull()!!
+
+        assertEquals(listOf(ZineBackupOmission("Changed", ZineBackupOmission.PHOTO)), receipt.omitted)
+        assertEquals(listOf(archive.fileName.toString()), Files.list(archive.parent).use { it.map { p -> p.fileName.toString() }.toList() })
+        ZineLibraryBackupStager().stage(archive, root.resolve("verify")).use { staged ->
+            assertEquals(listOf(kept), staged.projects.map { it.manifestEntry.sourceProjectId })
+            assertTrue(staged.assets.isEmpty())
+        }
+    }
+
+    @Test
+    fun `a photo read that fails once is retried, and one that keeps failing is left out`() = runTest {
+        var failures = 1
+        val flaky = LibraryAssetMetadataReader {
+            if (failures-- > 0) throw IOException("I/O error") else LibraryAssetMetadata("image/jpeg", 32, 32)
+        }
+        val repository = repo(assetMetadataReader = flaky)
+        saved(repository, "Flaky", photo("flaky"))
+
+        assertEquals(1, repository.createLibraryBackup(root.resolve("once.zine")).getOrNull()!!.projectCount)
+
+        failures = 2
+        val twice = repository.createLibraryBackup(root.resolve("twice.zine")).getOrNull()!!
+        assertEquals(listOf(ZineBackupOmission("Flaky", ZineBackupOmission.PHOTO)), twice.omitted)
+    }
+
+    @Test
+    fun `a photo the package validator refuses leaves out its zine`() = runTest {
+        val repository = repo(
+            assetMetadataReader = { path ->
+                if (path.fileName.toString() == sha256("huge".encodeToByteArray())) LibraryAssetMetadata("image/jpeg", 9_000, 32)
+                else LibraryAssetMetadata("image/png", 32, 32)
+            },
+        )
+        saved(repository, "Too big", photo("huge"))
+        saved(repository, "Not a jpeg", photo("png"))
+        saved(repository, "Fine")
+
+        val receipt = repository.createLibraryBackup(root.resolve("validated.zine")).getOrNull()!!
+
+        assertEquals(1, receipt.projectCount)
+        assertEquals(setOf("Too big", "Not a jpeg"), receipt.omitted.map { it.title }.toSet())
+        assertTrue(receipt.omitted.all { it.reason == ZineBackupOmission.PHOTO })
+    }
+
+    @Test
+    fun `a zine the package validator refuses is left out as unreadable`() = runTest {
+        val repository = repo()
+        val odd = saved(repository, "Odd times")
+        Files.write(
+            root.resolve("projects/$odd/meta.json"),
+            Json.encodeToString(ProjectMeta.serializer(), ProjectMeta(title = "Odd times", createdAtEpochMs = -5L)).encodeToByteArray(),
+        )
+        saved(repository, "Fine")
+
+        val receipt = repository.createLibraryBackup(root.resolve("times.zine")).getOrNull()!!
+
+        assertEquals(listOf(ZineBackupOmission("Odd times", ZineBackupOmission.UNREADABLE)), receipt.omitted)
+    }
+
+    @Test
+    fun `unreadable, newer and nameless zines are left out with their reasons and names`() = runTest {
+        val repository = repo()
+        val broken = saved(repository, "Broken")
+        val newer = saved(repository, "From the future")
+        val nameless = saved(repository, "Lost its name")
+        saved(repository, "Fine")
+        overwriteDocument(broken, "{ not a document")
+        overwriteDocument(newer, "{\"schemaVersion\":99,\"format\":\"single_sheet_8\",\"paperSize\":\"letter\",\"pages\":[]}")
+        Files.write(root.resolve("projects/$nameless/meta.json"), "not json".encodeToByteArray())
+
+        val receipt = repository.createLibraryBackup(root.resolve("mixed.zine")).getOrNull()!!
+
+        assertEquals(1, receipt.projectCount)
+        assertEquals(
+            setOf(
+                ZineBackupOmission("Broken", ZineBackupOmission.UNREADABLE),
+                ZineBackupOmission("From the future", ZineBackupOmission.NEWER_VERSION),
+                // No readable meta.json: named from its shelf row (ADR-122 §4).
+                ZineBackupOmission("Lost its name", ZineBackupOmission.UNREADABLE),
+            ),
+            receipt.omitted.toSet(),
+        )
+        assertFalse(receipt.omittedOffShelf) // corrupt and newer zines show as unavailable; the nameless one has a row
+    }
+
+    @Test
+    fun `a left-out zine with no shelf row is flagged off the shelf`() = runTest {
+        val seed = repo()
+        val hidden = saved(seed, "Hidden", poisonedPhoto())
+        db.projectDao().deleteById(hidden)
+        val repository = repo(dao = NoRowDao(db.projectDao(), hidden))
+
+        val receipt = repository.createLibraryBackup(root.resolve("hidden.zine")).getOrNull()!!
+
+        assertEquals(listOf(ZineBackupOmission("Hidden", ZineBackupOmission.PHOTO)), receipt.omitted)
+        assertEquals(setOf(ZineBackupOmission.PHOTO), receipt.offShelfReasons)
+    }
+
+    @Test
+    fun `a failure writing the private archive fails the whole backup and leaves nothing out`() = runTest {
+        val repository = repo()
+        saved(repository, "Fine")
+        val notADirectory = root.resolve("occupied").also { Files.write(it, byteArrayOf(1)) }
+
+        val result = repository.createLibraryBackup(notADirectory.resolve("backup.zine"))
+
+        assertTrue(result.errorOrNull() is DataError.Io)
+    }
+
+    /** ADR-122 §2: a transient document read is not one bad zine; leaving it out would make the backup silently partial. */
+    @Test
+    fun `a document the writer can't read fails the whole backup and leaves nothing out`() = runTest {
+        val writer = ZineLibraryBackupWriter(
+            openSource = { source ->
+                if (source.fileName.toString() == "document.json") throw IOException("read failed") else Files.newInputStream(source)
+            },
+        )
+        val repository = repo(backupWriter = writer)
+        saved(repository, "One")
+        saved(repository, "Two")
+        val archive = root.resolve("out").resolve("read-fails.zine")
+
+        val result = repository.createLibraryBackup(archive)
+
+        assertTrue("got $result", result.errorOrNull() is DataError.Io)
+        assertFalse(Files.exists(archive))
+    }
+
+    /**
+     * ADR-122 §5: a backup may list as many left-out zines as the project limit and no more. Past it the whole backup
+     * fails as a limit and nothing is written, never a file that restore would read back short. The limit is injected
+     * small here; the writer tests cover the real 10,000 boundary.
+     */
+    @Test
+    fun `more left-out zines than a backup can list fails the whole backup as a limit and writes nothing`() = runTest {
+        val repository = repo(backupWriter = ZineLibraryBackupWriter(ZineBackupWriteLimits(maximumProjects = 2)))
+        saved(repository, "Fine")
+        overwriteDocument(saved(repository, "Broken 1"), "{ not a document")
+        overwriteDocument(saved(repository, "Broken 2"), "{ not a document")
+        val atTheLimit = root.resolve("out").resolve("two-left-out.zine")
+
+        assertEquals(2, repository.createLibraryBackup(atTheLimit).getOrNull()!!.omitted.size)
+
+        overwriteDocument(saved(repository, "Broken 3"), "{ not a document")
+        val overTheLimit = root.resolve("out").resolve("three-left-out.zine")
+
+        val result = repository.createLibraryBackup(overTheLimit)
+
+        assertTrue("got $result", result.errorOrNull() is DataError.LimitExceeded)
+        assertEquals(listOf(atTheLimit.fileName.toString()), Files.list(overTheLimit.parent).use { it.map { p -> p.fileName.toString() }.toList() })
+    }
+
+    @Test
+    fun `a changed document the writer catches is rebuilt without it`() = runTest {
+        var tampered = false
+        val writer = ZineLibraryBackupWriter(
+            openSource = { source ->
+                if (!tampered && source.toString().contains("changing")) {
+                    tampered = true
+                    ByteArrayInputStream("{}".encodeToByteArray())
+                } else {
+                    Files.newInputStream(source)
+                }
+            },
+        )
+        documents.save("changing", document())
+        Files.write(root.resolve("projects/changing/meta.json"), Json.encodeToString(ProjectMeta.serializer(), ProjectMeta("Changing", 1L)).encodeToByteArray())
+        val repository = repo(backupWriter = writer)
+        saved(repository, "Steady")
+
+        val receipt = repository.createLibraryBackup(root.resolve("doc.zine")).getOrNull()!!
+
+        assertEquals(listOf(ZineBackupOmission("Changing", ZineBackupOmission.UNREADABLE)), receipt.omitted)
+        assertEquals(1, receipt.projectCount)
+    }
+
+    // ---- ADR-122 R1-R3 and ADR-121: restore reports what happened -----------------------------------
+
+    @Test
+    fun `a full disk while staging is out of space, never a damaged backup`() = runTest {
+        Files.write(root.resolve(".library-restore"), byteArrayOf(1)) // staging can't be created here
+        val archive = writeArchive(projects = listOf(BackupProjectFixture("a", "A", 1L, 2L, document())))
+
+        val full = repo(usableBytes = { 1_024L }).restoreLibrary(archive).errorOrNull()
+        val notFull = repo(usableBytes = { Long.MAX_VALUE }).restoreLibrary(archive).errorOrNull()
+
+        assertTrue("got $full", full is DataError.OutOfSpace)
+        assertTrue("got $notFull", notFull is DataError.Unknown)
+    }
+
+    /**
+     * ADR-122 R1, review RF-1: the disk fills mid-copy. The stager deletes its partial copy before the repository sees
+     * the failure, so a probe then would read the freed space; the stager's own measurement, taken first, decides.
+     */
+    @Test
+    fun `a disk that fills mid-copy is out of space although clean-up freed the space`() = runTest {
+        val archive = writeArchive(projects = listOf(BackupProjectFixture("a", "A", 1L, 2L, document())))
+        fun fillsUp(usableAtFailure: Long) = ZineLibraryBackupStager(
+            openStagingFile = { target ->
+                object : java.io.OutputStream() {
+                    init { Files.createFile(target) }
+                    override fun write(b: Int): Unit = throw IOException("No space left on device")
+                    override fun write(b: ByteArray, off: Int, len: Int): Unit = throw IOException("No space left on device")
+                }
+            },
+            usableSpace = { usableAtFailure },
+        )
+
+        // After clean-up the disk has room again: only the measurement at the failure can tell.
+        val full = repo(usableBytes = { Long.MAX_VALUE }, restoreStager = fillsUp(1_024L)).restoreLibrary(archive).errorOrNull()
+        val notFull = repo(usableBytes = { 1_024L }, restoreStager = fillsUp(Long.MAX_VALUE)).restoreLibrary(archive).errorOrNull()
+
+        assertTrue("got $full", full is DataError.OutOfSpace)
+        assertTrue("got $notFull", notFull is DataError.Unknown)
+        assertTrue("nothing written", !Files.exists(root.resolve("projects")) || projectDirectories().isEmpty())
+    }
+
+    @Test
+    fun `a Cancel that wins before the commit starts adds nothing`() = runTest {
+        val archive = writeArchive(projects = listOf(BackupProjectFixture("incoming", "Incoming", 1L, 2L, document())))
+
+        val thrown = runCatching { repo().restoreLibrary(archive) { false } }.exceptionOrNull()
+
+        assertTrue("got $thrown", thrown is kotlinx.coroutines.CancellationException)
+        assertFalse(Files.exists(root.resolve("projects/incoming")))
+        assertNull(db.projectDao().findById("incoming"))
+    }
+
+    @Test
+    fun `once the commit starts the restore reports what it added`() = runTest {
+        val archive = writeArchive(projects = listOf(BackupProjectFixture("incoming", "Incoming", 1L, 2L, document())))
+        var hookCalls = 0
+
+        val receipt = repo().restoreLibrary(archive) { hookCalls++; true }.getOrNull()!!
+
+        assertEquals(1, hookCalls)
+        assertEquals(1, receipt.addedCount)
+        assertTrue(receipt.shelfUpToDate)
+    }
+
+    @Test
+    fun `the same backup restored twice adds nothing the second time and never commits`() = runTest {
+        val archive = writeArchive(
+            projects = listOf(
+                BackupProjectFixture("a", "Poems", 1L, 2L, document()),
+                BackupProjectFixture("b", "Maps", 1L, 2L, document(sha256("x".encodeToByteArray())).copy(paperSize = PaperSize.A4)),
+            ),
+            assets = mapOf(sha256("x".encodeToByteArray()) to "x".encodeToByteArray()),
+        )
+        assertEquals(2, repo().restoreLibrary(archive).getOrNull()!!.addedCount)
+        val before = projectDirectories()
+        var hookCalls = 0
+
+        val second = repo().restoreLibrary(archive) { hookCalls++; true }.getOrNull()!!
+
+        assertEquals(0, second.addedCount)
+        assertEquals(2, second.alreadyHereCount)
+        assertTrue(second.shelfUpToDate)
+        assertEquals(0, hookCalls)
+        assertEquals(before, projectDirectories())
+        assertEquals(2, db.projectDao().ids().size)
+        assertFalse(Files.exists(root.resolve(".library-restore/pending-library-restore.v1")))
+    }
+
+    @Test
+    fun `a mixed archive adds only what is new, and a changed version with a clashing id gets a new id`() = runTest {
+        val repository = repo()
+        val poems = repository.createProject("Poems", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER).getOrNull()!!.id
+        val edited = document(sha256("new".encodeToByteArray()))
+        val archive = writeArchive(
+            projects = listOf(
+                BackupProjectFixture(poems, "Poems", 1L, 2L, document(sha256("new".encodeToByteArray()))), // changed
+                BackupProjectFixture("maps", "Maps", 1L, 2L, document()), // new
+            ),
+            assets = mapOf(sha256("new".encodeToByteArray()) to "new".encodeToByteArray()),
+        )
+        // The shelf copy of "Poems" is the blank document: a changed version.
+        assertTrue(documents.load(poems).getOrNull() != edited)
+
+        val receipt = repository.restoreLibrary(archive).getOrNull()!!
+
+        assertEquals(2, receipt.addedCount)
+        assertEquals(0, receipt.alreadyHereCount)
+        val poemsCopy = receipt.projects.single { it.sourceProjectId == poems }.project.id
+        assertTrue(poemsCopy != poems)
+        assertEquals(edited, documents.load(poemsCopy).getOrNull())
+    }
+
+    @Test
+    fun `equal content in older bytes is already here`() = runTest {
+        documents.save("poems", document())
+        Files.write(root.resolve("projects/poems/meta.json"), Json.encodeToString(ProjectMeta.serializer(), ProjectMeta("Poems", 1L)).encodeToByteArray())
+        // Same content, different bytes: reordered keys and whitespace.
+        val archive = writeArchive(
+            projects = listOf(BackupProjectFixture("other-id", "Poems", 1L, 2L, document())),
+            documentText = { text -> " " + text },
+        )
+
+        val receipt = repo().restoreLibrary(archive).getOrNull()!!
+
+        assertEquals(0, receipt.addedCount)
+        assertEquals(1, receipt.alreadyHereCount)
+    }
+
+    @Test
+    fun `an unreadable shelf zine never absorbs a match`() = runTest {
+        // Same title, readable meta.json, a Room row, but a document that can't be decoded and bytes that differ:
+        // matching must add (doubt adds), never treat it as the backup's zine.
+        val repository = repo()
+        val shelf = saved(repository, "My zine")
+        overwriteDocument(shelf, "{ not a document")
+        val archive = writeArchive(projects = listOf(BackupProjectFixture("b", "My zine", 1L, 2L, document())))
+
+        val receipt = repository.restoreLibrary(archive).getOrNull()!!
+
+        assertEquals(1, receipt.addedCount)
+        assertEquals(0, receipt.alreadyHereCount)
+    }
+
+    @Test
+    fun `a partial archive's omissions come back clamped, and a malformed list is ignored`() = runTest {
+        val long = "x".repeat(300)
+        val archive = writeArchive(
+            projects = listOf(BackupProjectFixture("a", "A", 1L, 2L, document())),
+            omitted = List(60) { ZineBackupOmission(if (it == 0) long else "Zine $it", ZineBackupOmission.PHOTO) },
+        )
+
+        val receipt = repo().restoreLibrary(archive).getOrNull()!!
+
+        assertEquals(60, receipt.omitted.size)
+        assertEquals(MAX_OMISSION_TITLE_CHARS, receipt.omitted.first().title!!.length)
+        assertEquals("Zine 49", receipt.omitted[49].title)
+        assertNull(receipt.omitted[50].title)
+
+        val malformed = writeArchive(
+            projects = listOf(BackupProjectFixture("b", "B", 1L, 2L, document())),
+            manifestText = { it.dropLast(1) + ",\"omitted\":5}" },
+        )
+        val restored = repo().restoreLibrary(malformed).getOrNull()!!
+        assertEquals(1, restored.addedCount)
+        assertTrue(restored.omitted.isEmpty())
+    }
+
+    private suspend fun saved(repository: RoomProjectRepository, title: String, photoHash: String? = null): String {
+        val id = repository.createProject(title, ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER).getOrNull()!!.id
+        assertTrue(documents.save(id, document(photoHash)).getOrNull() != null)
+        return id
+    }
+
+    /** A photo file whose bytes hash to its name; returns the hash. */
+    private fun photo(content: String): String {
+        val bytes = content.encodeToByteArray()
+        val hash = sha256(bytes)
+        Files.createDirectories(root.resolve("assets"))
+        Files.write(root.resolve("assets").resolve(hash), bytes)
+        return hash
+    }
+
+    /** A photo file whose bytes do not hash to its name. */
+    private fun poisonedPhoto(): String {
+        val hash = sha256("expected".encodeToByteArray())
+        Files.createDirectories(root.resolve("assets"))
+        Files.write(root.resolve("assets").resolve(hash), "different".encodeToByteArray())
+        return hash
+    }
+
+    /** Replaces a zine's document and removes any backup copy, so the load can't recover it. */
+    private fun overwriteDocument(id: String, text: String) {
+        val dir = root.resolve("projects").resolve(id)
+        Files.list(dir).use { files -> files.filter { it.fileName.toString().startsWith("document.json.") }.toList() }
+            .forEach(Files::delete)
+        Files.write(dir.resolve("document.json"), text.encodeToByteArray())
+    }
+
+    private fun projectDirectories(): Set<String> =
+        Files.list(root.resolve("projects")).use { dirs -> dirs.map { it.fileName.toString() }.toList().toSet() }
 
     @Test
     fun `successful restore remaps a colliding id, preserves timestamps, and deduplicates a shared asset`() = runTest {
@@ -343,9 +793,12 @@ class RoomProjectRepositoryRestoreTest {
         )
         val failingDao = FailFirstUpsertProjectDao(db.projectDao())
 
-        val failed = repo(dao = failingDao).restoreLibrary(archive)
+        val lagging = repo(dao = failingDao).restoreLibrary(archive).getOrNull()!!
 
-        assertTrue(failed.errorOrNull() is DataError.Io)
+        // R3: the zine is committed, so the restore succeeded; only the shelf index lags.
+        assertEquals(1, lagging.addedCount)
+        assertFalse(lagging.shelfUpToDate)
+        assertTrue(lagging.projects.isEmpty())
         assertTrue(Files.isRegularFile(documentFile("recoverable")))
         assertTrue(Files.isRegularFile(root.resolve("projects/recoverable/meta.json")))
 
@@ -382,9 +835,14 @@ class RoomProjectRepositoryRestoreTest {
         assets: Map<String, ByteArray> = emptyMap(),
         omittedEntries: Set<String> = emptySet(),
         packageVersion: Int = CURRENT_LIBRARY_BACKUP_VERSION,
+        omitted: List<ZineBackupOmission> = emptyList(),
+        manifestText: (String) -> String = { it },
+        documentText: (String) -> String = { it },
     ): Path {
         val serializer = JsonDocumentSerializer()
-        val documentsById = projects.associate { it.sourceProjectId to serializer.serialize(it.document).encodeToByteArray() }
+        val documentsById = projects.associate {
+            it.sourceProjectId to documentText(serializer.serialize(it.document)).encodeToByteArray()
+        }
         val manifest = ZineLibraryBackupManifest(
             packageVersion = packageVersion,
             kind = LIBRARY_BACKUP_KIND,
@@ -411,11 +869,12 @@ class RoomProjectRepositoryRestoreTest {
                 )
             },
             assets = assets.map { (hash, bytes) -> AssetEntry(hash, "image/jpeg", 32, 32, bytes.size.toLong()) },
+            omitted = omitted,
         )
-        val archive = Files.createTempFile(root, "restore-", ".zine")
+        val archive = Files.createTempFile(tmp.newFolder().toPath(), "restore-", ".zine")
         val entries = linkedMapOf<String, ByteArray>()
         entries["manifest.json"] =
-            Json.encodeToString(ZineLibraryBackupManifest.serializer(), manifest).encodeToByteArray()
+            manifestText(Json.encodeToString(ZineLibraryBackupManifest.serializer(), manifest)).encodeToByteArray()
         entries.putAll(documentsById.mapKeys { (id, _) -> "projects/$id/document.json" })
         entries.putAll(assets.mapKeys { (hash, _) -> "assets/$hash" })
         ZipOutputStream(Files.newOutputStream(archive, StandardOpenOption.WRITE)).use { zip ->
@@ -457,6 +916,14 @@ class RoomProjectRepositoryRestoreTest {
         val coverSurface: String? = null,
         val coverStamp: String? = null,
     )
+
+    /** A shelf index that never holds a row for [hiddenId]: the zine exists only on disk. */
+    private class NoRowDao(private val delegate: ProjectDao, private val hiddenId: String) : ProjectDao by delegate {
+        override suspend fun findById(id: String): ProjectEntity? = if (id == hiddenId) null else delegate.findById(id)
+        override suspend fun upsert(project: ProjectEntity) {
+            if (project.id == hiddenId) throw IOException("injected: never indexed") else delegate.upsert(project)
+        }
+    }
 
     private class FailFirstUpsertProjectDao(
         private val delegate: ProjectDao,

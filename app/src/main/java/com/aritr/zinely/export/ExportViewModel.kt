@@ -97,9 +97,20 @@ internal class ExportViewModel @Inject constructor(
                     destination,
                 )
             } catch (e: Exception) {
-                ExportUiState.Error("Couldn’t make your file just now. Please try again.", destination)
+                ExportUiState.Error(COULD_NOT_MAKE_FILE, destination)
             }
         }
+    }
+
+    /**
+     * The host could not start a delivery to [destination] at all. Today that means Android 7–9 refused
+     * Save PDF's storage permission (ADR-054 §8), but the VM doesn't need to know why. It shows the same
+     * recoverable error a failed export shows, so "Try again" behaves the same, and like [export] it never
+     * interrupts a render in flight.
+     */
+    fun couldNotStart(destination: ExportDestination) {
+        if (_state.value is ExportUiState.Working) return
+        _state.value = ExportUiState.Error(COULD_NOT_MAKE_FILE, destination)
     }
 
     /**
@@ -126,4 +137,8 @@ internal class ExportViewModel @Inject constructor(
     // whose only documentation was a warning not to call it, which is a trap for the next reader rather
     // than an API. The error pane offers "Try again" and nothing else; if a real dismiss affordance is ever
     // designed, it comes back with a caller.
+
+    private companion object {
+        const val COULD_NOT_MAKE_FILE = "Couldn’t make your file just now. Please try again."
+    }
 }

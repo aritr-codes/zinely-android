@@ -95,7 +95,7 @@ class RoomProjectRepositoryRestoreInstrumentedTest {
         val destination = createDownloadsDocument("zinely-transport-${System.nanoTime()}.zine")
 
         try {
-            val backup = transport.backupTo(destination).getOrNull()!!
+            val backup = (transport.backupTo(destination, OutcomeLatch()) as LibraryBackupResult.Saved).receipt
             val restore = transport.restoreFrom(destination).getOrNull()!!
 
             assertEquals(1, backup.projectCount)

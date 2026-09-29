@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Rebuilt the public website story around Shelf, Bench and Proof, told in the order a visitor asks: what it is, why
+  paper, what you can make, how it works, what is different, how to try it and where it is going. Added a Download
+  page with install steps, backup and phone-move advice, the published SHA-256, and honest Google Play and iPhone
+  status. The roadmap now uses one scheme (Available, In development, Planned, Exploring) by horizon, and the public
+  changelog tells the app's story back to its early builds ([ADR-118](docs/DECISIONS.md#adr-118)).
+  No Android behavior, download or release artifact changed.
 - Added an HTML-only A/B experiment for evaluating removal of the unavailable selected-text Font action. It leaves
   the canonical design and Android app unchanged; first-time comparison evidence and an owner decision remain gates.
 - Added full Reframe photo-overlay golden coverage for centred Fill, representative panned/zoomed framing,
@@ -30,6 +36,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Restoring a backup adds only the zines that aren't already on your shelf. A zine with the same title, format,
+  paper size and content isn't added again; one that has changed since the backup is added alongside, and nothing
+  on the shelf is replaced. The result says how many were already here, or "Nothing new to add"
+  ([ADR-121](docs/DECISIONS.md#adr-121)).
+- The public website now offers 0.9.0-beta.5 as the current download: version, size, versionCode 10, the APK
+  link and its published SHA-256 on the Download page; a beta.5 entry in What's new with its known limitations;
+  a short "New in 0.9.0-beta.5" note on the homepage; and the roadmap moves beta.5 to Available. Google Play
+  and iPhone stay shown as unavailable. No Android behavior or release artifact changed.
+- Rewrote public update pages in plain language, refreshed their status, and moved homepage accessibility copy
+  from standard names to practical benefits, and expanded the Aastra origin story. No download, legal text or
+  release artifact changed.
+- Reopened creative tools for a scoped feasibility assessment, not a release commitment: fonts, Art, frames,
+  photo transparency, shaped cutouts and crop improvements. The roadmap separates their relative effort.
 - Removed the unavailable selected-text Font action under owner-approved ADR-115 / frozen Bench A24.
   Edit, Size, Ink, Duplicate and Delete retain their behavior and blank-text guards. This is an owner-led
   simplification, not a measured usability result; verification is pending and the public APK is unchanged.
@@ -42,9 +61,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Evaluated the proposed long-press element menu and retained the visible selected-element toolbar, contextual
   guidance and accessibility actions. No app behavior or published APK changed; a post-fix first-time task round
   demonstrating repeated discoverability failure remains the threshold for reconsidering another menu.
-- Reframe now reads image dimensions and decodes its display bitmap together off the main thread. Large masters
-  use a preview capped at 2048 px on the longest edge while crop, Flip, commit, preview and export geometry retain
-  the master's full intrinsic dimensions. This is a repository change only; no published APK contains it yet.
 - Refined the website fold guide into a deliberate one-step-at-a-time paper desk, with pause/replay,
   static checkpoints, keyboard controls, stable instruction space, and all-steps/print/no-JS fallback.
 - Linked the owner-published Google feedback form, retained email for screenshots, and introduced Aastra
@@ -56,18 +72,97 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reconciled the roadmap against current code, issues and releases: distinguish the conditional Google Play
   publication plan and approved Reframe investigation from uncommitted app improvements; keep completed
   website work in the public changelog. No Android behavior or public APK changes in this website slice.
-
 - Replaced the standalone website Accessibility page with a short accessibility statement and contact route
   in the home-page About section. Accessibility remains a site-wide implementation requirement rather than a
   primary navigation destination.
-- Simplified the in-app About surface by removing the duplicated product story. It still provides the
-  default-paper preference, bundled-font licences, offline/privacy assurance, and installed app version.
 
 ### Fixed
+
+- The Backups sheet now says when a backup was last saved on this phone, with the file's name when the storage
+  app gives one, on its own line under the date, or that none has been saved yet. It no longer calls the zines
+  "kept safe" or promises every zine before a backup has run. Back up and Restore now look like equal choices, and
+  the note that only repeated them is gone ([ADR-120](docs/DECISIONS.md#adr-120)).
+- A backup that fails now says where it failed. "Couldn't save the backup there" is shown only when the chosen
+  location refused the file, and a problem inside Zinely says "Couldn't finish that backup", never restore's "This
+  backup looks damaged". A failure that trying again can't fix offers only "Got it". After a failed or cancelled
+  backup, Zinely tries to remove the empty or unfinished file it was saving to ([ADR-120](docs/DECISIONS.md#adr-120)).
+- One zine Zinely can't open, or a photo that fails its check, no longer stops the whole backup. The rest is saved,
+  and the result says so: "5 of 6 zines saved", naming up to three of the zines left out, and why. The backup file
+  lists them too, and the Backups sheet's last-backup line adds "— 5 of 6 zines." When no zine can be saved, no
+  file is kept and the sheet says "No zines could be saved". A backup that would leave out more than 10,000 zines
+  is not saved at all, so a file never lists fewer than it left out. Restoring a partial backup says what it was
+  saved without; versions of Zinely before this one restore it without saying so
+  ([ADR-122](docs/DECISIONS.md#adr-122)).
+- A restore now says what happened. A full phone while preparing it says "Not enough space", not "This backup
+  looks damaged". Once zines start being added, Cancel goes away and the sheet says "This part can't be stopped.",
+  so "Restore cancelled." is only ever shown when nothing was added. If the zines were added but the shelf hasn't
+  caught up yet, it's a success that says they may take a moment to appear, not "Couldn't read that file"
+  ([ADR-122](docs/DECISIONS.md#adr-122)).
+- Pressing Cancel just as a backup finishes no longer says "Backup cancelled." about a file that was saved
+  ([ADR-120](docs/DECISIONS.md#adr-120)).
+- With TalkBack, the Bench now reads a page from top to bottom and left to right, whatever is stacked on top.
+  A full-page photo or a spread half is read first. Moving something to the front or back, or making a spread,
+  no longer changes the order ([ADR-119](docs/DECISIONS.md#adr-119)).
+- With TalkBack, the dimmed area behind the zine actions sheet is no longer read as an unlabelled button. Tapping
+  it or pressing Back still closes the sheet ([ADR-119](docs/DECISIONS.md#adr-119)).
+- The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
+  privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
+  the files.
+- The website's Bench demo and screenshot no longer show a "Your shelf · 4 things kept" tray that the app does not
+  have. The screenshot was re-rendered from the frozen prototype with only that tray hidden.
+- The website's not-found page now finds its styles and links at any URL depth.
 
 - Restored the Reframe accessibility regression that proves a measurable but undisplayable photo keeps every
   adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
   than stream-consumer ordering, eliminating the CI race tracked by issue #57.
+
+## [0.9.0-beta.5] — 2026-09-23 — Steadier editing and saving
+
+This maintenance release carries `versionCode 10`. It installs over earlier release-signed beta builds
+without uninstalling, and it does not change the saved-document or backup format. It is published as an
+APK only.
+
+### Changed
+
+- **About** now opens with a short note from Aastra, the two people behind Zinely, in place of the earlier
+  tagline and introduction. The font licence notices moved behind one **Licences & credits** row, a tap
+  away. Your default paper, the offline promise and the app version stay on the main About screen.
+- Reframe opens a large photo more smoothly. The photo now loads off the main thread, and the on-screen
+  preview is capped at 2048 px on its longest edge. Crop, Flip and the printed result still use the
+  full-size photo.
+
+### Fixed
+
+- On Android 7–9, **Save PDF** now asks for storage access until you allow it. Before, it never asked, so every
+  save on those versions failed with "Couldn’t make the PDF". If you decline, Zinely shows that same message
+  and saves nothing; **Share** never needs this access. Android 10 and later are unchanged.
+- On Android 7–9, a Save PDF that fails part-way no longer leaves an empty or broken file in Downloads.
+- Sending a mirrored photo across the fold now puts each half on the correct page. Before, both halves were
+  mirrored in place, so the printed spread broke at the fold. The fold warning stays hidden for a matched
+  pair and comes back if you later flip only one half.
+- An Undo that jumps to another page no longer keeps something selected from the page you left. Before, the
+  element's actions stayed on screen and did nothing.
+- A picture with a see-through background, such as a logo or sticker PNG, now comes in on white. Before, the
+  see-through parts turned black.
+- A move or resize that ends exactly where it started no longer wipes Redo or adds an empty Undo step.
+- With TalkBack on, the dimmed area behind most sheets, such as **Start a zine** and **Backups**, is no longer
+  read out as an unlabelled button, so TalkBack starts inside the sheet. Close a sheet with Back, as before.
+  The zine actions sheet on the shelf still has this unlabelled area.
+
+### Known limitations
+
+- Transparency in imported pictures isn't kept: the see-through parts are flattened onto white when the
+  picture comes in. Exports and prints are right, because the paper is white. On the cream editor page,
+  though, a transparent logo shows as a faint white rectangle, and placed over a photo it shows a white box.
+  Keeping transparency is future work.
+- On Android 7–9, if you decline storage access and ask Android not to ask again, Save PDF keeps showing
+  "Couldn’t make the PDF" until you allow storage for Zinely in the phone's settings. Share still works.
+- With TalkBack on, **About**, **Licences & credits** and a font licence open with TalkBack on the Back
+  button, and going Back returns TalkBack to the top of the previous screen rather than to the row or button
+  that opened it. Everything stays reachable by swiping.
+- Replaced and deleted photo assets are retained; app storage is not reclaimed yet.
+- Font choice remains unavailable. Unsupported print scripts are kept and warned about but do not print.
+- Zinely saves the PDF; printing happens in the phone's PDF or print app.
 
 ## [0.9.0-beta.4-r3] — 2026-08-31 — Readable dark-mode confirmations
 

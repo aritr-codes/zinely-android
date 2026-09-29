@@ -10,6 +10,12 @@ them. If anything here could be closed by an implementer, that is a bug in this 
 
 **Last swept:** 2026-08-18 · **89 open items** · ⛔ **5 of them are merge blockers** (§below)
 
+> **2026-09-25 (1.x plan, proposal):** 1.x owner rows added to §1.5 and §3 (developer verification), two
+> existing rows reframed, and the `Mirror` row flagged as likely stale. ⚠ **The 89 above was already stale:**
+> counting open `☐` table rows and `- ☐` bullets gives **70 at `5f7707a` and 81 after this change**. That
+> method may miss items written in other shapes (§2.1–§2.2), so the header is left for a full sweep rather
+> than replaced with a number nobody re-derived section by section.
+
 > ⚠ **The count read 70 and the file held 80.** Corrected 2026-08-18 by counting the rows rather than
 > trusting the header — which is how it drifted: each new row incremented a number nobody re-derived.
 > This is an index of work owed to the owner, so an undercount is the failure mode that matters. The
@@ -79,9 +85,11 @@ has real-device evidence (5/5, SM-A176B / Android 16, 2026-08-25), all sixteen f
 and D-083/D-103 are closed. The owner completed the first-person TalkBack listen pass and physical print/fold
 checks on 2026-08-25; beta-cohort photocopier feedback remains ongoing evidence rather than a release gate.
 
-⚠ **Also true and not about this branch:** local `main` is **46 commits ahead of `origin/main` and
-diverged** — `git pull --ff-only` fails. *"Merge to main"* currently means merging into a `main` nobody
-else has seen.
+~~⚠ **Also true and not about this branch:** local `main` is **46 commits ahead of `origin/main` and
+diverged** — `git pull --ff-only` fails.~~ ✅ **No longer true (checked 2026-09-23):** local `main` and
+`origin/main` are the same commit (`72e620e`, PR #73's merge), and `git merge --ff-only origin/main`
+succeeds. Whether the 45 local-only commits described above were integrated or dropped was not
+re-verified here.
 
 ---
 
@@ -190,14 +198,31 @@ The whole milestone is **Not started** ([ROADMAP.md](ROADMAP.md)) and is the dec
 
 ### 1.5 Product & design authorship
 
+> The [1.x decision gate](planning/ZINELY-1X-DECISION-GATE.md) reduces the 1.x plan's O1–O15 to eight questions with evidence and framing (it reframes O12, notes that O7's removal is already approved, and adds the tap-through scope, the D5 stretch policy, the D3 "Actual size" question and the next-release shape). Read it before answering any 1.x row below; record each answer in the row's linked record.
+
 | ☐ | Item | Where | Note |
 |---|---|---|---|
 | ☐ | **Author or commission the four remaining hand-drawn supply outlines** | [SUPPLIES-SPEC.md](design/SUPPLIES-SPEC.md) | ⚠ Was twelve; eight were authored 2026-08-18 and needed no house style at all. **Only three need a hand** — `tape.torn` · `paper.strip` · `paper.underline` all need the same authored *tear*, so they are one commission, not three. `fix.clip` is not a style problem: a paper clip is a **wire** object and the renderer is fill-only, so it must be drawn as the closed ribbon around the wire. `outlineOf()` returns `null` for each. Blocks S5 and S9 |
-| ☐ | Choose the bundled font set (which OFL families) — Q3 | [PRD.md §13](PRD.md) | Blocks typography |
+| ☑ | ~~Choose the bundled font set (which OFL families) — Q3~~ **Ruled 2026-09-26** ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)): document voices Book = Fraunces, Plain = Inter; Hand deferred | [PRD.md §13](PRD.md) · [1.x plan O8](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#9-owner-decisions-needed-before-implementation) | Blocks typography. ZINE-DIRECTION X6 names three voices; confirming them is plan O8 |
 | ☐ | Settle brand / visual identity direction — Q4 | [PRD.md §13](PRD.md) | Blocks UI theme |
 | ☐ | Decide V2.1 prototypes for Read · Fold · first-run | [V21-SPEC.md](design/V21-SPEC.md) | Three surfaces, no frozen artifact |
 | ☐ | Is `+ Add` suppressed while a card's green `Done` shows? — OD-14 | [BETA-UX-REVIEW.md](BETA-UX-REVIEW.md) | Never ruled; recorded as owed |
-| ☐ | **Does the maker get a `Mirror` verb, and when?** | [Intent.kt:40](../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/Intent.kt#L40) | `DecorElement.mirrored` **exists in the model and is unreachable from the UI** — zero callers. **Nine of the sixteen supplies are asymmetric**, so a torn tape or corner fix cannot be flipped. The frozen decor verb set is Replace/Ink/Delete, so adding a fourth verb is an amendment, not an implementation. The code calls it *"a maker verb that arrives later"* — this is the item that decides when "later" is |
+| ☐ | ⚠ **Likely stale (found 2026-09-25, verify and strike):** [ADR-113](DECISIONS.md#adr-113) Flip already toggles `mirrored` for Art (`EditorReducer.kt:212`, `FlipTray.kt:333`), and the KDoc at `Intent.kt:52-53` is stale too. Original row: **Does the maker get a `Mirror` verb, and when?** | [Intent.kt:40](../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/Intent.kt#L40) | `DecorElement.mirrored` **exists in the model and is unreachable from the UI** — zero callers. **Nine of the sixteen supplies are asymmetric**, so a torn tape or corner fix cannot be flipped. The frozen decor verb set is Replace/Ink/Delete, so adding a fourth verb is an amendment, not an implementation. The code calls it *"a maker verb that arrives later"* — this is the item that decides when "later" is |
+| ☐ | **Run the one-time paid-pack trial, or ratify free-forever: decide by about 30 Aug to 9 Sep 2027** | [constitution §VII](zinely-constitution.md#vii-the-feature-tribunal) · [research §26](research/ZINELY-FUTURE-PRODUCT-RESEARCH.md#26-foundational-decisions-to-make-now) | The Tribunal sets the trigger: *"decide within one year of the first bundled-supplies release"*, and not deciding ratifies free-forever. Supplies landed in `e8f2145` (2026-08-17); the first build after it is beta.3 (2026-08-30) and the first public one is `v0.9.0-beta.4-r3` (tagged 2026-09-09). Which one counts as "release" is yours to say (beta.2, 2026-08-16, is an earlier and weaker candidate: supplies in the file format, none on a page). Internal only: the website shows no pricing |
+| ☐ | **1.x plan (proposal, 2026-09-25) — starters** (O2): build a sample zine / prompt library, or keep "templates DO NOT BUILD"? | [1.x plan §9](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#9-owner-decisions-needed-before-implementation) · [constitution Art. 7](zinely-constitution.md#article-7--the-maker-makes-it) | Tribunal KEEP vs ZINE-/BETA-DIRECTION DO NOT BUILD — two authoritative records conflict. If built, Article 7's bright line applies |
+| ☐ | **1.x plan — ink lift** (O3): promote from EXPERIMENTAL to Planned, or leave | [1.x plan §9](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#9-owner-decisions-needed-before-implementation) | Only after an asset-model ADR and GC (plan F5) |
+| ☐ | **1.x plan — PR #70** (O7): removal **already approved** as a design judgment ([ROADMAP](ROADMAP.md#in-development--built-or-being-tested-not-in-the-public-download)); what remains is acceptance work (hands-on TalkBack, rendered HTML parity), not a ruling ([gate](planning/ZINELY-1X-DECISION-GATE.md#already-recorded--not-questions)) | [1.x plan §9](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#9-owner-decisions-needed-before-implementation) | Sequencing of Direction D2 |
+| ◐ | **1.x plan — tap-through scope** — **Ruled 2026-09-26:** the six holed pieces, outline hit test, crop marks excluded. Still owed: approve the drawn `v21-bench.html` behaviour note (step 4) | [decision gate Q3](planning/ZINELY-1X-DECISION-GATE.md#q3-tap-through-hit-testing-how-far-it-reaches) | Plan step 4; D5 |
+| ◐ | **1.x plan — next release and restore honesty** — **Ruled 2026-09-26:** wave 1 on v3 before v4; restore-honesty fixes in step 1b; late "Backup cancelled." in step 1; skip-and-list in wave 1 (never silently partial; ADR-110 amendment). **Step 1a approved and re-frozen 2026-09-27:** the drawn `backup-restore.html` amendment, with rulings F1 (a whole-backup failure is shown by *where* it failed) and F2 (busy is not a failure) ([freeze record](design/BACKUP-RESTORE-FREEZE.md)). **Backup-sheet polish approved and frozen 2026-09-27**, after the owner checked step 1 on the Samsung: the note is removed on both shelves, Backup and Restore have equal icon tiles, and the file name has its own line under the date (visual only; PR #81 implements it before merging). Still owed: the release | [decision gate Q8](planning/ZINELY-1X-DECISION-GATE.md#q8-the-next-release-and-the-backuprestore-defects) | Plan steps 1b and 6–8 |
+| ◐ | **1.x plan — frames** (O9) — **Direction ruled 2026-09-26:** two hand-cut frames, no nine-slice, resize decided per piece, after step 4. **Still owed: the two frames' names, visuals, set membership and order (your visual approval); a landing-size override only if a frame needs one.** Backlog supplies beyond frames stay unselected. Originally: which of ~19 backlog supplies and which frames ship; who authors outlines; **and the stretch policy** ([D-100](design/V2-SPEC-DEFECTS.md)) — [decision gate Q6](planning/ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch) | [1.x plan §9](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#9-owner-decisions-needed-before-implementation) · [ADR-107](DECISIONS.md#adr-107) | Direction D5 |
+| ☑ | **1.x plan — are `v21-typebar` / `v21-reframe` frozen?** (O10) — **Ruled 2026-09-26** ([gate Q4](planning/ZINELY-1X-DECISION-GATE.md#q4-typebar--reframe-specs-o10)): freeze TypeBar after its correction, freeze Reframe as shipped (plan step Q4-F) | [1.x plan §9](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#9-owner-decisions-needed-before-implementation) · [V21-SPEC](design/V21-SPEC.md) | File headers say "proposal, not frozen"; ZINE-DIRECTION N2 is a to-do ("Freeze …"), not a frozen claim |
+| ◐ | **Ruled 2026-09-26** ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)): scope ruling — a document voice is not a UI typeface; Book + Plain; no bump. **Still owed: the Fraunces minimum print size after a printed page.** Originally: **1.x plan — which typefaces may set zine text** (O12, reframed): does V2-CONSTITUTION §III govern zine text or only the UI? If zine text: Hand for short text only, amend §III, two voices (which two), or a different imperfect face | [decision gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8) · [V2-CONSTITUTION](design/V2-CONSTITUTION.md) | §III names "the maker's own short strings" and "zine body" but ends "No fourth UI typeface"; *"The imperfect face never sets running text"* is binding either way. Blocks D2 |
+| ◐ | **1.x plan — print guidance** — **Ruled 2026-09-26** ([gate Q7](planning/ZINELY-1X-DECISION-GATE.md#q7-print-o13--d3-stage-2)): design result-based guidance now, ship after the print study; "100 %" only where the print app offers scale. **Still owed after the [study](planning/STUDY-PRINT-AND-FOLD-PROTOCOL.md):** (O13 + D3 stage 2) guidance only, or a static test page too; a per-device reach profile or one global margin; may the app promise "Actual size" on Android? | [decision gate Q7](planning/ZINELY-1X-DECISION-GATE.md#q7-print-o13--d3-stage-2) | Decide after the physical print study. Any inset change amends `v21-bench`, ADR-012 and the keep-clear rulings |
+| ◐ | **1.x plan — fold-study order** (O14) — **Ruled 2026-09-26** ([gate Q5](planning/ZINELY-1X-DECISION-GATE.md#q5-fold-study-before-creative-work-o14)): run it now with the print study; no longer a gate on D2/D5; you may reprioritise if it finds a fundamental failure. Still owed: run the sessions ([protocol](planning/STUDY-PRINT-AND-FOLD-PROTOCOL.md)) | [decision gate Q5](planning/ZINELY-1X-DECISION-GATE.md#q5-fold-study-before-creative-work-o14) · [ROADMAP](ROADMAP.md#exploring--recommended-next-decisions-in-order) | The ROADMAP says that gate is not reordered without owner approval |
+| ☑ | ~~**Step 1 — A7: amend the criterion or fix?**~~ **Ruled 2026-09-28: option 1, amend the criterion; no focus fix.** A7 now requires opening focus within the sheet's meaningful informational content, with the last-backup information still before the Backup action. It is accepted on the observed body-text opening (the last-backup line is not skipped). The original last-backup-first target was not met | [ADR-120](DECISIONS.md#adr-120) · [freeze record](design/BACKUP-RESTORE-FREEZE.md) | Step 1 is merged; the ruling decides only the record |
+| ☑ | ~~**Review the proposed restore amendment "Part N"**~~ **Approved and frozen 2026-09-28** with one copy refinement to N1; [ADR-121](DECISIONS.md#adr-121). Still owed later: both device passes when it is implemented (Pass 2 checks the reading of "the changed one is added too") | [Brief 01 Part N](planning/BRIEF-01-VISIBLE-OWNERSHIP.md#part-n--restore-adds-whats-new) · [backup-restore.html](design/mockups/backup-restore.html) | Implemented with step 1b; accepted 2026-09-29 (PR #86) |
+| ☑ | ~~**Step 1b — confirm the wording the drawing doesn't show, and accept the step.**~~ **Accepted by the owner 2026-09-29 after implementation, device and CI validation; merged (PR #86, `1fd3c9e`). Step 1b is complete.** **Ruled 2026-09-29:** (a), (b), (c), (d), (e) and (h) accepted as implemented; (f) parity required, now implemented (8 px); (g) first rejected, then **Option 3 accepted** (the total once, then one clause per reason, e.g. "This backup was saved without 3 zines: “Sunday market” and “Riso tests”, which couldn’t be opened then, and “Moth Club Bulletin”, whose photo couldn’t be read then."; implemented). The `omitted` cap: **Option A accepted** (the backup writer refuses more than 10,000 left-out zines, exactly 10,000 allowed; restore keeps its 10,000 decode cap; implemented). **[ADR-122](DECISIONS.md#adr-122) accepted 2026-09-29** once reconciled with the implementation. The Pass 2 changed-version device check passed (SM-A176B, 2026-09-29; [torture matrix](reviews/2026-08-21-zine-backup-torture-matrix.md)). Follow-ups outside step 1b, not blockers: chooser-row TalkBack semantics; the saved-without notice naming no one past the first 50 display entries; the generic restore retry label “Try another backup” on a phone-side failure. The items as asked: (a) "A zine here needs a newer Zinely" as the nothing-saved state when every left-out zine is newer; (b) derived plurals and unnamed forms (e.g. "They have no readable names.", "1 zine was made by a newer Zinely…"); (c) a restored backup's newer-version zine reading as "couldn't be opened then"; (d) a partial last-backup line keeping the file name under it; (e) "Some of these aren't on your shelf." for a single zine; (f) the result sheets' blank-line paragraph gap vs the drawing's 8 px; (g) a restored backup missing zines for several reasons, joined as repeated "This backup was saved without …" sentences in one paragraph; (h) nothing saved, every reason a photo and a zine off the shelf: the photo wording wins and "They may not appear on your shelf." is dropped. Done 2026-09-29: [ADR-122](DECISIONS.md#adr-122) accepted with the [`zinely-v1.md`](zinely-v1.md) §5/§6 amendment that cites it, and the Pass 2 device reading, including "the changed one is added too", passed. | [ADR-122](DECISIONS.md#adr-122) · [freeze record](design/BACKUP-RESTORE-FREEZE.md#implementation-status) · PR #86 | Step 1b accepted and merged |
+| ☐ | **Phone migration: should Android's phone-to-phone transfer carry the Shelf?** | [research §18.2](research/ZINELY-FUTURE-PRODUCT-RESEARCH.md#182-the-device-transfer-finding-needs-an-owner-ruling) · [`data_extraction_rules.xml`](../app/src/main/res/xml/data_extraction_rules.xml) | Today every domain is excluded from cloud backup *and* device transfer, so a new phone starts with an empty Shelf unless the maker restores a `.zine` backup. Changing that is a privacy-invariant (ADR-030) decision. Restoring a backup on a second phone is also still untested; the Download page says so. Research (2026-09-25): on Android 12+ `allowBackup="false"` does not stop device transfer, and Google's transfer skips side-loaded apps ([D1 audit](planning/ZINELY-1X-READINESS-AUDIT.md#5-d1-audit--last-backed-up--changing-phones); O1, [can wait](planning/ZINELY-1X-DECISION-GATE.md#decisions-that-can-wait)) |
 
 ---
 
@@ -240,6 +265,7 @@ expose `stateDescription`** — so no dump I take substitutes for an ear.
 | ☑ | Does `Copier` speak its On/Off state? | **OWNER-CONFIRMED 2026-08-25** — first-person TalkBack pass completed with no blocking issue reported |
 | ☑ | Is an import landing mid-transition announced at all? | **OWNER-CONFIRMED 2026-08-25** — first-person TalkBack pass completed with no blocking issue reported |
 | ☑ | Do the opener and two ink swatches speak `Ink`, `Spot ink`, and `Neutral ink`? | **OWNER-CONFIRMED 2026-08-25** — manual confirmation complements the platform-tree regression coverage for [D-083](design/V2-SPEC-DEFECTS.md#d-083) |
+| ☑ | **Step 2 ([ADR-119](DECISIONS.md#adr-119)):** on a real phone, does swiping through a Bench page go top to bottom, left to right — and stay the same after *Bring to front / Send to back* and after *Make spread* (the spread photo read first)? Does TalkBack skip the dimmed area behind the zine actions sheet, and do a tap there and Back still close it? | **OWNER-CONFIRMED 2026-09-26** on SM-A176B (TalkBack 16.2.00.13): photo → tape → text after restack and spread, reverse swipe the exact reverse, the scrim never focused, Back closes. Sighted listen: proxy evidence ([ADR-119](DECISIONS.md#adr-119)) |
 | ☑ | Does a supply's **`Change ink`** custom action work under real TalkBack? | **OWNER-CONFIRMED 2026-08-25** — manual confirmation complements the regression coverage for [D-091](design/V2-SPEC-DEFECTS.md#d-091) |
 
 ### 2.3 The print pass — [`DEVICE-VERIFICATION.md` §3.2](DEVICE-VERIFICATION.md)
@@ -261,28 +287,61 @@ expose `stateDescription`** — so no dump I take substitutes for an ear.
 
 ## 3. Release & credentials
 
-### ☐ R-1 — Back up the keystore *(do this first)*
+### ☑ `0.9.0-beta.5` — the maintenance release (APK only)
+
+Scope, per the owner's 2026-09-23 decisions: stability fixes (PR #73), the Android 7–9 Save PDF permission
+request ([ADR-054 §8](DECISIONS.md#adr-054) amendment), the About maker's note with Licences & credits
+([ADR-116](DECISIONS.md#adr-116)/[ADR-117](DECISIONS.md#adr-117)), and the off-main-thread Reframe load.
+No AAB, no Play submission. PR #70 (Font removal) is **not** in it. Release notes:
+[CHANGELOG `0.9.0-beta.5`](../CHANGELOG.md).
+
+| ☐ | Gate | Note |
+|---|---|---|
+| ☑ | PR #73 stability fixes merged | `72e620e`, CI run `35858746779` green on `main` |
+| ☑ | Save PDF permission request merged | Merged to `main` with the release through PR #74; independent review GO |
+| ☑ | **Rule on "Don't ask again"** for the Android 7–9 storage prompt | **Ruled 2026-09-25: stays a Known Limitation for beta.5** (no copy or Settings change). The Android 9 run confirmed it: after "Don't ask again", Try again shows no dialog and stays on "Couldn’t make the PDF" |
+| ☑ | Android 7–9 Save PDF on an emulator or device | **Passed 2026-09-24 on an Android 9 (API 28) emulator**: first Save asks; Deny → error, no file; Try again asks again; Allow → exactly one valid A4 PDF; Share never asks. No physical Android 7–9 phone was used. Evidence in the [tester package](releases/0.9.0-beta.5.md) |
+| ☑ | Samsung Pass 1 | **Run 2026-09-24; re-checked 2026-09-25 on the final APK** (`d957f1f`): install over the previous build keeps data; About → credits → licence → Back chain; Start a zine sheet under TalkBack; Save PDF; Share. The TalkBack focus item is a Known Limitation (row below). Nothing was printed on paper; Backups was opened, not exercised |
+| ☑ | Samsung Pass 2 — *your* first-time reading | **Owner: PASS, 2026-09-25** — nothing confusing. (The agent reading of 2026-09-24 is in the tester package.) |
+| ☑ | TalkBack listen | **Owner: PASS, 2026-09-25**, on the Samsung: About, Licences & credits, licence, Save PDF and Share behave as intended; entry and return focus is the documented Known Limitation |
+| ☑ | **Rule on the TalkBack focus finding** | **Ruled 2026-09-25: Known Limitation.** A fix (`596d52d`) moved Compose focus but Samsung TalkBack did not follow it on the device, so it was removed (`d957f1f`). The unlabelled sheet backdrop found on the same pass is fixed |
+| ☑ | R-1 keystore backup (below) | **Owner: done and verified, 2026-09-25** |
+| ☑ | **"Proceed with the beta.5 release"** | **Given 2026-09-25.** Tag `v0.9.0-beta.5` on the PR #74 merge commit and a GitHub pre-release with the APK. No AAB, no Play. The website download, changelog and roadmap pages move to beta.5 in the website workflow, after the release exists |
+
+### ☑ R-1 — Back up the keystore *(done 2026-09-25, owner-verified)*
 [`RELEASING.md`](RELEASING.md) — *"No agent, script, or CI job can do this or verify it was done."* The
 passwords exist only in `keystore.properties` on this machine; they were generated in a shell and never
 printed. Nothing in the repo or build output would reveal the backup is missing.
 
-- ☐ Copy `zinely-release.jks` + `keystore.properties` to **two independently-failing** places
-- ☐ Verify with `keytool -list -v … -alias zinely`
+- ☑ Copy `zinely-release.jks` + `keystore.properties` to **two independently-failing** places
+- ☑ Verify with `keytool -list -v … -alias zinely`
+
+### ◐ Android developer verification *(ruled 2026-09-26 — [gate Q1](planning/ZINELY-1X-DECISION-GATE.md#q1-developer-verification-o15))*
+*Corrected 2026-09-26:* the phase starting **30 Sep 2026** covers installs from named app stores in Brazil,
+Indonesia, Singapore and Thailand — **not** side-loaded GitHub APKs (Google's FAQ, updated 15 Jul 2026). The
+**global phase in 2027** (month unpublished) covers side-loaded apps too, so it is GitHub's real deadline.
+Registration proves **package name + signing-key ownership**. Route chosen: **Play Console**, because Zinely
+plans both outside-Play (GitHub) and Play distribution; no separate Android Developer Console account.
+
+- ☑ Registered as an individual Google Play Console developer (owner, 2026-09-26)
+- ☐ Finish the address verification — administrative; does not block GitHub distribution
+- ☐ Register `com.aritr.zinely` with the existing release-key fingerprint before the 2027 global phase; re-check Google's date before each release
+- ☐ Do **not** modify signing configuration; the existing signing identity must stay compatible with Play
 
 ### ☐ Play Store path *(only if production is the goal)*
 
 | ☐ | Item | Note |
 |---|---|---|
-| ☐ | Create + identity-verify a Play Console account | $25, **1–3 business days**. *"The only step that can miss a ship date on its own"* |
-| ☐ | Start the 12-testers-for-14-continuous-days closed test | Real humans, wall-clock gated |
-| ☐ | Enrol in Play App Signing at first upload | **One-time irreversible** console choice |
+| ◐ | Create + identity-verify a Play Console account | Individual account created (owner, 2026-09-26); address verification pending. *"The only step that can miss a ship date on its own"* |
+| ☐ | Start the 12-testers-for-14-continuous-days closed test | **Required for a new personal account** before production access (owner, 2026-09-26): at least 12 testers continuously opted in for 14 days. Real humans, wall-clock gated; part of future launch planning |
+| ☐ | Enrol in Play App Signing at first upload | **One-time irreversible** console choice. ⚠ Decide first whether GitHub beta users must be able to update from Play in place: that only works if Play signs with the *existing* Zinely release key (upload it as the app signing key). A Google-generated key makes Play builds unable to update the side-loaded app, so moving means uninstalling, which deletes the library unless the maker has a backup. [RELEASING §4.2](RELEASING.md#42-the-artifact) currently assumes a Google-held signing key (and its `versionCode 3` note predates beta.4-r3, which is versionCode 9). |
 | ☐ | Complete data-safety form, content rating, target-audience declarations | Legal attestations signed by a person; answers pre-drafted |
 | ☐ | Produce the feature graphic (1024×500) | *"The one asset with no source in this repository"* |
 | ☐ | Take store screenshots on a real device from a release build | — |
-| ☐ | Host the privacy policy at a public URL | Needs an account/domain you control |
+| ☑ | ~~Host the privacy policy at a public URL~~ | Done 2026-09-09 through GitHub Pages ([RELEASING §4.6](RELEASING.md#46-what-is-still-owed-before-submitting)) |
 
-### ☐ Repository state
-- ☐ Local `main` is **46 commits ahead of `origin/main`** and diverged (`git pull --ff-only` fails). Pre-existing work of yours; I have left it untouched and will keep leaving it untouched.
+### ☑ Repository state
+- ☑ ~~Local `main` is **46 commits ahead of `origin/main`** and diverged (`git pull --ff-only` fails).~~ Checked 2026-09-23: local `main` equals `origin/main` (`72e620e`).
 
 ---
 

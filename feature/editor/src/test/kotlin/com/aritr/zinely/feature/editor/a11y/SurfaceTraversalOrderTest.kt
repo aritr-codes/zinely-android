@@ -92,7 +92,9 @@ import org.robolectric.annotation.GraphicsMode
  *
  * - The platform tree publishes children in the composition's **declaration** order and sets **no**
  *   `traversalBefore` / `traversalAfter` re-sorting hints on any node of any surface below (measured, not
- *   assumed — every hint read back `UNDEFINED`). So the sequence asserted is the sequence a service walking
+ *   assumed — every hint read back `UNDEFINED`). ⚠ That is an artefact of this host, not of the app: Compose
+ *   computes the hints only while accessibility is enabled, and here it is not. With it forced on, the hints
+ *   do appear ([ElementReadingOrderTest], ADR-119). So the sequence asserted is the sequence a service walking
  *   this tree would follow, and it is *also* the declaration order. **A sequence assertion alone would
  *   therefore be a declaration-order snapshot, not a reading-order proof** — hence the second assertion.
  * - `getChildId` is a hidden framework method reached by reflection. It resolves under Robolectric; on a

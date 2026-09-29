@@ -2,44 +2,62 @@
 
 > **The single source of truth for phasing.** *Every roadmap change is reflected here.* Scope detail per phase lives in [PRD.md](PRD.md); the "how" in [ARCHITECTURE.md](ARCHITECTURE.md); rationale in [DECISIONS.md](DECISIONS.md). No dates are committed yet — phases are ordered, not scheduled.
 
-- **Current priorities reviewed:** 2026-09-10. Earlier phase plans below are historical context, not a list of
+- **Current priorities reviewed:** 2026-09-12. Earlier phase plans below are historical context, not a list of
   promised or still-missing features. Use this current section for next-work decisions.
 
 <a id="current-priorities"></a>
 ## Current priorities
 
-**Planned** means an accepted intention to deliver. **Exploring** means a proposal or investigation, not a
-commitment. **Completed** work belongs in [CHANGELOG.md](../CHANGELOG.md), with public APK changes kept separate
+**In development** means built or under test but not in the public download. **Planned** means an accepted
+intention to deliver. **Exploring** means a proposal or investigation, not a commitment. **Completed** work belongs in [CHANGELOG.md](../CHANGELOG.md), with public APK changes kept separate
 from repository-only changes and website updates. No new app feature is committed for the next release yet.
+The public website projects this list with four labels (Available, In development, Planned, Exploring) grouped by
+horizon ([ADR-118](DECISIONS.md#adr-118)).
 
 Reframe loading and the deterministic accessibility regression were completed through
 [PR #64](https://github.com/aritr-codes/zinely-android/pull/64). The repository change does not alter the public
 beta.4-r3 APK; measurements and evidence remain in the
 [release-gap review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-10-reframe-loading-follow-up).
 
+**Released 2026-09-25:** beta.5 and the About maker's note are in the public download
+([0.9.0-beta.5](../CHANGELOG.md#090-beta5--2026-09-23--steadier-editing-and-saving), tag `v0.9.0-beta.5`,
+GitHub pre-release, APK only). No next tester build is scheduled by date yet.
+
+**Owner rulings, 2026-09-26** ([1.x decision gate](planning/ZINELY-1X-DECISION-GATE.md)): the next tester build
+is planned as a *wave-1* release on the current document format, before any schema change, carrying the 1.x
+plan's backup-honesty, accessibility and tap-through steps ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)).
+This is an internal sequencing decision, not a public promise; nothing moves to *In development* here until it
+is built.
+
+### In development — built or being tested, not in the public download
+
+- **Unavailable Font control removal:** owner approved removal as a design judgment ([ADR-115](DECISIONS.md#adr-115); Bench A24). [PR #70](https://github.com/aritr-codes/zinely-android/pull/70)
+  contains the implementation and green automated checks; it remains draft pending hands-on/TalkBack and rendered
+  HTML parity acceptance ([evidence](reviews/2026-09-10-font-control-removal-experiment.md)). No published APK change. Removing the dead action does not reject future font choice.
+
 ### Planned
 
 - **Google Play publication**, after owner account verification, mandatory testing and store review. Account
   verification remains blocked; the signed GitHub beta and public policy already exist. This is a distribution
-  task, not a reason to rebuild or overwrite beta.4-r3. [Release authority](RELEASING.md#3-beta-distribution-side-load).
-
-### Current implementation
-
-**Unavailable Font control:** owner approved removal as a design judgment under [ADR-115](DECISIONS.md#adr-115),
-waiving the cohort study and superseding only OD-9's Font-presence requirement. Bench A24 is frozen before
-Compose. Implementation verification is in progress; no measured usability benefit or published APK change is
-claimed. [Evidence and remaining gates](reviews/2026-09-10-font-control-removal-experiment.md).
+  task, not a reason to rebuild or overwrite beta.5. [Release authority](RELEASING.md#3-beta-distribution-side-load).
 
 ### Exploring — recommended next decisions, in order
 
 1. **Fold clarity:** observe first-time makers using the existing app guide and the ten-step website guide with
    paper. Record cut mistakes, hesitation and completion without coaching. Change diagrams or add motion only
    if evidence identifies an improvement. The website guide is shipped; native replay is not.
+2. **Creative tools:** owner reopened fonts, graphics/stickers, frames, photo transparency, shaped cutouts and crop
+   improvements for evaluation on 2026-09-12. See the assessment below. No feature or delivery date is committed.
 
 ### Engineering follow-ups — not extra public feature promises
 
 - Add a blocked-loader regression proving a cancelled or superseded Reframe load cannot publish stale state,
   if this boundary changes again. Preserve the raw measurement and trace-hash record in the release-gap review.
+- About maker's note: HTML/Compose pixel parity for About and its pages is recorded as **not verified** in the
+  [beta.5 release notes](releases/0.9.0-beta.5.md#not-verified), and [ADR-116](DECISIONS.md#adr-116) still reads
+  "native verification pending". Run the parity check and update ADR-116's status; the focus-return gate became a
+  Known Limitation by owner ruling.
+- Save PDF on a real Android 7–9 phone: beta.5's storage-permission path was verified on an Android 9 emulator only.
 - Verify backup/restore on a second Android/API environment and realistic interrupted/low-storage providers.
   Treat this as coverage expansion, not a claim that the accepted Samsung recovery path is broken. Do not fill,
   wipe or uninstall the owner's device to manufacture a test condition.
@@ -57,8 +75,39 @@ changelog, not in the feature backlog. No app feedback screen or SDK is planned.
 
 **Parked, not next:** Art cold-entry precomposition (latest trace did not justify a safe local change), image
 garbage collection (import/undo/recovery safety prerequisites), shelf search/sort (owner previously removed them;
-needs real-library evidence), extra fonts/formats, new menus and catalogue expansion. These can be reconsidered
+needs real-library evidence), extra formats and new menus. Fonts and catalogue expansion are reopened for evaluation
+above, not scheduled for delivery. Other parked work can be reconsidered
 when a concrete user problem warrants it; the app is not declared final.
+
+<a id="creative-tools-assessment"></a>
+### Creative tools assessment (2026-09-12)
+
+**Recommendation, not an estimate or release promise.** Relative effort includes design, implementation, saved-file
+compatibility, undo, accessibility and matching print output. No calendar estimate until a specific tool is frozen.
+
+| Capability | Existing foundation and missing work | Relative effort |
+|---|---|---|
+| Curated document fonts | `TextStyle.fontFamily`, `DocumentFontRegistry` and `BundledFontResolver` already exist. Only Inter is registered for zine content; app-interface fonts are a different set. Add curated font assets/styles, a picker, reducer patch/undo, glyph/fallback checks, and identical editing/preview/PDF layout. | Medium |
+| More authored graphics and stickers | `DecorElement`, `SupplyCatalog`, Add Art, ink and transforms exist. A small pack of single-colour authored marks can reuse them. Imported or multicolour stickers need separate import/tint/alpha and ownership decisions. | Small to medium for a curated pack; higher for a general sticker system |
+| Frames | An independent decorative frame can reuse an Art outline. A frame attached to a photo must resize/crop/duplicate/undo as one unit and survive save/export. Those are different features. | Small to medium for decorative overlays; medium to large for attached frames |
+| Photo transparency | No per-image opacity field exists in `ImageElement` or `DrawImage`. Add a validated saved value, slider/undo semantics and consistent image paint in preview and PDF, including interaction with Copier. Existing source-image alpha is not a user opacity control. | Medium |
+| Circle, oval or rounded photo cutouts | `Crop` and command clips are rectangular. Add non-destructive mask metadata, selection/hit-test behavior, shape-aware rendering and preserved original photo bytes. Platform path clipping exists, but the app document/render contract must carry it. | Medium to large |
+| Freehand snipping or automatic background removal | Freehand needs a path editor, simplification, accessible alternatives, mask storage and edge-quality tests. Automatic removal is a separate on-device inference, model-size and quality investigation, not an extension of the crop slider. | Large; investigate separately |
+| Better cropping | Reframe already supports rectangular framing. First identify the missing task: aspect presets/reset/straightening/handles have different costs. Preserve photo transforms and undo rather than replacing the whole editor. | Small to medium for focused improvements; large for a new crop model |
+
+**Recommended first creative slice:** a small, visibly distinct set of bundled fonts with a real picker, followed by
+a curated Art pack and decorative frames. Evaluate transparency next, preset shape cutouts after that, and leave
+freehand/automatic cutting for a separate design effort. This recommendation does not reorder the retained release,
+fold-study or acceptance gates without owner approval.
+
+> **Owner rulings, 2026-09-26** ([decision gate](planning/ZINELY-1X-DECISION-GATE.md)): the fold-clarity study
+> runs now but **no longer gates** fonts or frames (Q5); fonts start as **two named voices** — Book (Fraunces)
+> and Plain (Inter), with Hand (Averia) deferred (Q2); frames start as **two** hand-cut pieces
+> whose names and look await the owner's visual approval (Q6).
+
+All new features must preserve old zines and the rule that the preview matches what prints. Unknown-font fallback
+must not silently become layout loss. *(For document voices, qualified by the owner on 2026-09-26, [gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8): no schema bump; an older build keeps and restores the content and may draw an unknown voice as Inter, which is documented and tested as a layout change, not data loss.)* Photo-opacity exploration does not overturn the deliberate no-opacity rule
+for authored Art in `SUPPLIES-SPEC`. Sources and API boundary notes: [RESEARCH R20](RESEARCH.md#r20-creative-tools-feasibility-12-september-2026).
 
 ## Historical phase context
 
@@ -292,6 +341,9 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-09-26 | **Owner rulings on the 1.x plan recorded** in the [decision gate](planning/ZINELY-1X-DECISION-GATE.md): next tester build planned as a wave-1 release on the current format; fold study runs now and no longer gates fonts or frames; first fonts = two named voices (Book, Plain); first frames = two; unknown-font fallback for document voices qualified. No public-label change. | [1.x plan](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md) |
+| 2026-09-25 | **beta.5 released** (tag `v0.9.0-beta.5`, merge `32da280`): the next-beta and About maker's note items leave In development; About pixel parity and real-phone Android 7–9 Save PDF checks become engineering follow-ups. The public website now offers beta.5. No scope change. | [ADR-116](DECISIONS.md#adr-116) · [ADR-118](DECISIONS.md#adr-118) |
+| 2026-09-24 | Current priorities gain an **In development** group (next beta, Font-control removal, About maker's note), moved out of Exploring, so the public website's four labels project this list rather than inventing statuses. No scope change. | [ADR-118](DECISIONS.md#adr-118) |
 | 2026-09-09 | Reconciled current priorities against code, issues, releases and website: one conditional publication plan, four explicit explorations, scoped engineering follow-ups; historical phases retained but no longer presented as today's promises. | [Current-state review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-09-current-state-review) |
 | 2026-08-26 | **September emoji printing and X9 spreads implemented.** X9 follows the frozen A19 ruling as two ordinary image elements with complementary crops. Emoji uses bundled Emoji2 with forced replacement through `SharedTextLayout`; the Samsung raster/PDF corpus passed at 10/24/48 pt, with a measured 9.42-MiB release-APK cost accepted for offline determinism. | [ADR-109](DECISIONS.md#adr-109) · [ADR-112](DECISIONS.md#adr-112) |
 | 2026-08-26 | **Public launch set for 2026-09-11.** The remaining runway is explicitly stabilisation-first: feature freeze on 2026-09-04, release-candidate verification before stakeholder acceptance, and no broad feature expansion. The stakeholder pass is classified against current source so discoverability reports are not misimplemented as missing editor capabilities. | [Stakeholder feedback review](reviews/2026-08-26-stakeholder-feedback.md) · [D-080](design/V2-SPEC-DEFECTS.md#d-080) · [D-107](design/V2-SPEC-DEFECTS.md#d-107) |

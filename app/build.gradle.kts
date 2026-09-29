@@ -30,7 +30,9 @@ plugins {
 // a lossless WebP projection of the unchanged launcher artwork. It adds no product behavior.
 // "0.9.0-beta.4-r3" = the accessibility maintenance revision that restores readable editor
 // confirmation-snackbar contrast in dark mode. It changes no document, storage, or render behavior.
-val zinelyVersionName = "0.9.0-beta.4-r3"
+// "0.9.0-beta.5" = the maintenance release: stability fixes, the Android 7–9 Save PDF permission
+// request, the About maker's note with Licences & credits, and the off-main-thread Reframe photo read.
+val zinelyVersionName = "0.9.0-beta.5"
 
 // Release signing (beta). Credentials live in an untracked `keystore.properties` at the repo root,
 // or in ZINELY_KEYSTORE_* environment variables — never in git. See docs/RELEASING.md.
@@ -110,10 +112,11 @@ android {
         // device, so shipping the real beta under 2 would be an install that silently refuses to
         // update. 3 is the artifact actually distributed as 0.9.0-beta.1, 4 is 0.9.0-beta.2, 5 is
         // 0.9.0-beta.3, 6 is 0.9.0-beta.4, 7 is beta.4-r1, 8 is the packaging-only beta.4-r2,
-        // and 9 is the dark-mode snackbar contrast maintenance revision beta.4-r3.
+        // 9 is the dark-mode snackbar contrast maintenance revision beta.4-r3, and 10 is the
+        // beta.5 maintenance release.
         // These bumps are not bookkeeping: Android uses the code to decide whether an APK can update
         // an installed tester build.
-        versionCode = 9
+        versionCode = 10
         versionName = zinelyVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -208,6 +211,60 @@ if (releaseSigning == null) {
                 )
             }
         }
+    }
+}
+
+// Privacy invariant, library half (1.x plan §4 F4). PrivacyManifestTest proves no INTERNET permission,
+// so nothing can open a socket; this guards the *libraries* (CLAUDE.md privacy invariant): it walks the
+// whole resolved release graph, transitive dependencies included, and fails on any module group that is
+// not on the reviewed list below, or that is on the denied list. An entry covers its group and subgroups.
+// Widening the list is never quiet: a new group needs review, and a networking, analytics or billing
+// library (Play Billing included) needs an ADR first. Run in CI: `./gradlew :app:checkDependencyAllowlist`.
+// ponytail: groups, not artifacts. `androidx` and `org.jetbrains` are admitted wholesale because their
+// subgroups churn on every BOM bump, which leaves a known limit: AndroidX *does* publish network- and
+// ad-shaped libraries, so those subgroups are denied explicitly. A new such subgroup must be added to
+// deniedGroups when it appears; pin exact subgroups instead if this list ever stops being enough.
+tasks.register("checkDependencyAllowlist") {
+    val allowedGroups = listOf(
+        "androidx",
+        "com.google.code.findbugs", // jsr305 annotations
+        "com.google.dagger", // Hilt
+        "com.google.guava", // listenablefuture, via AndroidX
+        "com.squareup.okio", // file I/O for DataStore; not a network client
+        "jakarta.inject",
+        "javax.inject",
+        "org.jetbrains", // Kotlin stdlib, coroutines, serialization, annotations
+        "org.jspecify",
+    )
+    val deniedGroups = listOf(
+        "androidx.ads", // advertising ID
+        "androidx.media3", // ships HTTP data sources
+        "androidx.privacysandbox", // ad services
+        "androidx.webkit", // WebView content loading
+    )
+    val releaseGraph = configurations.named("releaseRuntimeClasspath")
+        .flatMap { it.incoming.resolutionResult.rootComponent }
+    doLast {
+        val seen = HashSet<org.gradle.api.artifacts.component.ComponentIdentifier>()
+        val pending = ArrayDeque(listOf(releaseGraph.get()))
+        val groups = sortedSetOf<String>()
+        while (pending.isNotEmpty()) {
+            val component = pending.removeFirst()
+            if (!seen.add(component.id)) continue
+            (component.id as? org.gradle.api.artifacts.component.ModuleComponentIdentifier)?.let { groups += it.group }
+            component.dependencies
+                .filterIsInstance<org.gradle.api.artifacts.result.ResolvedDependencyResult>()
+                .forEach { pending += it.selected }
+        }
+        fun List<String>.covers(group: String) = any { group == it || group.startsWith("$it.") }
+        val unexpected = groups.filter { deniedGroups.covers(it) || !allowedGroups.covers(it) }
+        check(unexpected.isEmpty()) {
+            "zinely: release dependencies denied by, or outside, the privacy allow-list: $unexpected\n" +
+                "No networking or analytics library may ship (PRD §5). A reviewed, harmless library is " +
+                "added to allowedGroups in app/build.gradle.kts; anything network-, analytics- or " +
+                "billing-shaped needs an ADR first."
+        }
+        logger.lifecycle("zinely: ${groups.size} release dependency groups, all on the privacy allow-list.")
     }
 }
 

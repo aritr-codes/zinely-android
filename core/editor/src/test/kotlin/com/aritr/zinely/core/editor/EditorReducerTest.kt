@@ -69,6 +69,24 @@ class EditorReducerTest {
     }
 
     @Test
+    fun `CommitTransform that ends where it began closes the session without an undo step`() {
+        // Given one undone edit waiting on the redo stack
+        val start = modelOf(txt("a"))
+        val placed = EditorReducer.reduce(start, Intent.PlaceText(Transform(20.0, 20.0, 30.0, 10.0), "hi")).model
+        val undone = EditorReducer.reduce(placed, Intent.Undo).model
+        val begun = EditorReducer.reduce(undone, Intent.BeginTransform(setOf("a"))).model
+        val token = (begun.interaction as Interaction.Transforming).token
+
+        // When a drag returns the element exactly to where it started
+        val r = EditorReducer.reduce(begun, Intent.CommitTransform(mapOf("a" to txt("a").transform), token))
+
+        // Then nothing is recorded, nothing is saved, and Redo survives
+        assertTrue(r.model.interaction is Interaction.Idle)
+        assertEquals(undone.history, r.model.history)
+        assertTrue(r.effects.none { it is Effect.Autosave })
+    }
+
+    @Test
     fun `CommitTransform with a stale token is a no-op`() {
         val begun = EditorReducer.reduce(modelOf(txt("a")), Intent.BeginTransform(setOf("a"))).model
         val r = EditorReducer.reduce(begun, Intent.CommitTransform(mapOf("a" to Transform(1.0, 1.0, 1.0, 1.0)), token = 999_999))

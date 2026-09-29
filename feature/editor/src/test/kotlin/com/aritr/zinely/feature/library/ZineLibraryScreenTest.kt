@@ -1,5 +1,8 @@
 package com.aritr.zinely.feature.library
 
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.performScrollToNode
+
 import android.graphics.Bitmap
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
@@ -241,15 +244,35 @@ class ZineLibraryScreenTest {
     }
 
     @Test
+    fun `the sheet scrim is not an accessibility stop but a tap still dismisses`() {
+        content(zines(2))
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).performClick()
+        composeRule.waitForIdle()
+
+        val scrim = composeRule.onNodeWithTag(ZSheetScrimTestTag).fetchSemanticsNode()
+        assertTrue(
+            "the frozen scrim is a plain div; exposed it is an unlabelled full-screen button",
+            androidx.compose.ui.semantics.SemanticsActions.OnClick !in scrim.config,
+        )
+        composeRule.onNodeWithTag(ZSheetScrimTestTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(KeepSafeSheetTestTag).assertDoesNotExist()
+    }
+
+    @Test
     fun `Colophon can set preferred paper and returns to the shelf action`() {
         content(zines(2))
         val colophonActionTag = zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)
 
         composeRule.onNodeWithTag(colophonActionTag).performClick()
+        composeRule.onNodeWithTag(ColophonScreenTestTag)
+            .performScrollToNode(hasTestTag(ColophonPaperGroupTestTag))
         composeRule.onNodeWithTag(ColophonPaperGroupTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(colophonPaperTestTag(PaperSize.LETTER)).performClick()
         assertEquals("the preferred-paper callback was not wired from Colophon", PaperSize.LETTER, preferredPaperChanges.lastOrNull())
 
+        composeRule.onNodeWithTag(ColophonScreenTestTag)
+            .performScrollToNode(hasTestTag(ColophonBackTestTag))
         composeRule.onNodeWithTag(ColophonBackTestTag).performClick()
         composeRule.onNodeWithTag(colophonActionTag).assertIsDisplayed()
     }
@@ -589,6 +612,7 @@ class ZineLibraryScreenTest {
                 state = shelfState,
                 events = events.receiveAsFlow(),
                 backupRestoreState = null,
+                lastBackup = null,
                 onOpenZine = { opened += it },
                 onShareExport = { shared += it },
                 onStartZine = { started += it },

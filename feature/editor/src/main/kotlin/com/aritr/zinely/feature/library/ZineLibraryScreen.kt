@@ -187,6 +187,7 @@ public fun ZineLibraryScreen(
     state: LibraryShelfState,
     events: Flow<HomeShelfEvent>,
     backupRestoreState: LibraryBackupRestoreUiState?,
+    lastBackup: LibraryLastBackup?,
     onOpenZine: (String) -> Unit,
     onShareExport: (String) -> Unit,
     onStartZine: (PaperSize) -> Unit,
@@ -454,6 +455,7 @@ public fun ZineLibraryScreen(
     KeepSafeSheet(
         visible = openSheet is LibrarySheet.KeepSafe,
         canBackup = zines.isNotEmpty(),
+        lastBackup = lastBackup,
         onDismiss = { openSheet = null },
         onHidden = {
             if (backupRestoreState == null && restoreBackupActionFocus) {

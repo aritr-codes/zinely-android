@@ -7,7 +7,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.Density
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.ui.theme.LocalZinelyMotion
@@ -45,7 +48,17 @@ class ColophonGoldenTest {
     @Test
     fun `the frozen colophon max-font-scale dark`() = viewport("max_font_scale_dark", dark = true, fontScale = 1.8f)
 
-    private fun viewport(name: String, dark: Boolean, fontScale: Float = 1f) {
+    @Test
+    fun `the frozen credits light`() = viewport("credits_light", dark = false, showCredits = true)
+
+    @Test
+    fun `the frozen credits dark`() = viewport("credits_dark", dark = true, showCredits = true)
+
+    @Test
+    fun `the frozen credits max-font-scale light`() =
+        viewport("credits_max_font_scale_light", dark = false, fontScale = 1.8f, showCredits = true)
+
+    private fun viewport(name: String, dark: Boolean, fontScale: Float = 1f, showCredits: Boolean = false) {
         composeRule.setContent {
             val base = LocalDensity.current
             CompositionLocalProvider(
@@ -64,6 +77,12 @@ class ColophonGoldenTest {
             }
         }
         composeRule.waitForIdle()
+        if (showCredits) {
+            composeRule.onNodeWithTag(ColophonScreenTestTag)
+                .performScrollToNode(hasTestTag(ColophonCreditsRowTestTag))
+            composeRule.onNodeWithTag(ColophonCreditsRowTestTag).performClick()
+            composeRule.waitForIdle()
+        }
         composeRule.onNodeWithTag(ColophonScreenTestTag)
             .captureRoboImage("$GOLDEN_DIR/colophon_$name.png", aa())
     }

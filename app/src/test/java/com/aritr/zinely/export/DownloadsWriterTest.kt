@@ -73,6 +73,30 @@ class DownloadsWriterTest {
         assertEquals("hello", file.readText())
     }
 
+    /**
+     * The render runs inside `body`, after the Downloads file already exists — so an `OutOfMemoryError` on
+     * the ~33 MB sheet (the case ExportViewModel explicitly handles) must not leave a 0-byte or truncated
+     * "zine.pdf" in the user's Downloads, nor push the next save to "zine (1).pdf".
+     */
+    @Test
+    @Config(sdk = [26])
+    fun legacyWrite_failureLeavesNoPartialFileBehind() {
+        val writer = writer()
+        val failure = runCatching {
+            writer.write("My Zine", "pdf", "application/pdf") { out ->
+                out.write("half".toByteArray())
+                throw OutOfMemoryError("sheet too big")
+            }
+        }.exceptionOrNull()
+
+        assertTrue("the original failure propagates", failure is OutOfMemoryError)
+        @Suppress("DEPRECATION")
+        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        assertFalse("no partial file left in Downloads", File(dir, "My Zine.pdf").exists())
+        val retry = writer.write("My Zine", "pdf", "application/pdf") { it.write("whole".toByteArray()) }
+        assertEquals("a retry takes the clean name", "My Zine.pdf", retry.displayName)
+    }
+
     @Test
     @Config(sdk = [26])
     fun legacyWrite_secondSaveGetsNonDestructiveCollisionSuffix() {

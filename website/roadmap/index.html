@@ -4,64 +4,111 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#E9E29B">
-  <meta name="description" content="A concise, non-committal view of planned and exploratory work for Zinely.">
+  <meta name="description" content="What Zinely does today, what we are building, and what is still a maybe.">
   <link rel="canonical" href="https://aritr-codes.github.io/zinely-android/roadmap/">
-  <title>Roadmap — Zinely</title>
+  <title>What’s next | Zinely</title>
   <link rel="icon" href="../assets/logo.webp" type="image/webp">
   <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="../assets/roadmap.css">
 </head>
-<body>
+<body class="roadmap-page">
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <a class="brand" href="../" aria-label="Zinely home">
       <img src="../assets/logo.webp" width="48" height="48" alt=""><span>Zinely</span>
     </a>
     <nav aria-label="Primary navigation">
-      <a href="../#see-zinely">See Zinely</a>
-      <a href="../#how-it-works">How it works</a>
+      <a href="../#see-zinely">Take a look</a>
       <a href="../#fold-guide">Fold guide</a>
+      <a href="./" aria-current="page">What’s next</a>
+      <a href="../download/">Download</a>
     </nav>
   </header>
 
   <main id="main" class="policy-layout roadmap-layout">
-    <article class="policy">
-      <p class="eyebrow">Roadmap</p>
-      <h1>What comes next.</h1>
-      <p class="policy-intro">A short list of what we intend to do and what we are still considering. Planned means we intend to deliver it; Exploring means no decision to build it yet. There are no promised release dates.</p>
-      <p class="policy-date"><strong>Last reviewed:</strong> 9 September 2026</p>
+    <article class="policy roadmap-board">
+      <header class="roadmap-heading">
+        <div>
+          <p class="eyebrow">Our to-make list</p>
+          <h1>What comes next.</h1>
+          <p class="policy-intro">Here’s what Zinely does today, what we’re building, and what’s still a maybe. No release dates until we can stand behind them.</p>
+        </div>
+        <p class="policy-date roadmap-date"><span aria-hidden="true">Filed</span><strong>Last updated:</strong> <time datetime="2026-09-25">25 September 2026</time></p>
+      </header>
 
-      <div class="roadmap-groups">
-        <section class="roadmap-group planned" aria-labelledby="planned-title">
-          <p class="status-label">Planned</p>
-          <h2 id="planned-title">Measure, then improve</h2>
-          <ul>
-            <li><strong>Investigate Reframe loading and restore its regression test.</strong> Measure cold and repeated photo opening, and make the unavailable-photo accessibility test reliable. A speedup is not promised.</li>
-            <li>Publish on Google Play after developer-account verification, required testing, and store review. Account verification is currently blocked; the <a href="../#download-title">GitHub beta download</a> is available now.</li>
+      <section class="roadmap-key" aria-labelledby="key-title">
+        <h2 id="key-title">How to read this</h2>
+        <dl>
+          <div><dt><span class="status-chip available">Available</span></dt><dd>In the download today.</dd></div>
+          <div><dt><span class="status-chip development">In development</span></dt><dd>Being built or tested. Not in the download yet.</dd></div>
+          <div><dt><span class="status-chip planned">Planned</span></dt><dd>We intend to do it. No date.</dd></div>
+          <div><dt><span class="status-chip exploring">Exploring</span></dt><dd>We’re looking into it. It may never ship.</dd></div>
+        </dl>
+      </section>
+
+      <div class="roadmap-groups" aria-label="Zinely roadmap press board">
+        <section class="roadmap-group foundation" aria-labelledby="foundation-title">
+          <span class="roadmap-pin" aria-hidden="true"></span>
+          <p class="press-zone">Foundation</p>
+          <p class="status-label">Getting Zinely, keeping your work</p>
+          <h2 id="foundation-title">The ground under the desk</h2>
+          <ul class="roadmap-items">
+            <li><span class="status-chip available">Available</span> Works offline with no account. Back up your whole shelf to a file and restore it later.</li>
+            <li><span class="status-chip available">Available</span> <strong>0.9.0-beta.5, steadier editing and saving.</strong> A round of fixes, plus a short note from the two of us in the app’s About screen. <a href="../changelog/#beta-5">See what changed</a>.</li>
+            <li><span class="status-chip planned">Planned</span> Zinely on Google Play. Account approval, testing, and store review still have to happen. Until then, <a href="../download/">download the Android beta here</a>.</li>
           </ul>
-          <p>No additional app feature is committed for the next release yet.</p>
         </section>
 
-        <section class="roadmap-group exploring" aria-labelledby="exploring-title">
-          <p class="status-label">Exploring</p>
-          <h2 id="exploring-title">Small improvements worth testing</h2>
-          <ul>
-            <li><strong>Remove the unavailable Font button.</strong> Test hiding the disabled Font action until font choice is supported.</li>
-            <li><strong>Make the in-app fold guide clearer.</strong> Test the illustrated website guide with first-time makers before deciding whether the app needs new diagrams or optional motion.</li>
+        <section class="roadmap-group craft" aria-labelledby="craft-title">
+          <span class="roadmap-pin" aria-hidden="true"></span>
+          <p class="press-zone">Craft</p>
+          <p class="status-label">Making the pages</p>
+          <h2 id="craft-title">On the bench</h2>
+          <ul class="roadmap-items">
+            <li><span class="status-chip available">Available</span> Photos, words, and Art. Reframe, flip, copy, the photocopier look, undo and redo.</li>
+            <li><span class="status-chip development">In development</span> <strong>A tidier text toolbar.</strong> We’re checking a version without the Font button, because it doesn’t let you choose a font yet. This is still being tested, not in the download.</li>
+            <li><span class="status-chip exploring">Exploring</span> Font choices, more Art, frames, see-through photos, and new ways to crop or cut out photos. These are ideas under consideration, not announced features.</li>
+          </ul>
+        </section>
+
+        <section class="roadmap-group proof" aria-labelledby="proof-title">
+          <span class="roadmap-pin" aria-hidden="true"></span>
+          <p class="press-zone">Proof</p>
+          <p class="status-label">Reading, printing, folding</p>
+          <h2 id="proof-title">From screen to paper</h2>
+          <ul class="roadmap-items">
+            <li><span class="status-chip available">Available</span> Read the finished zine page by page. Share a print-ready A4 or US Letter PDF, or save it to Downloads (on Android 7 to 9, Zinely asks for storage access first). Follow the fold guide in the app or <a href="../#fold-guide">on this site</a>.</li>
+            <li><span class="status-chip exploring">Exploring</span> <strong>Fewer “wait, which way?” moments.</strong> We want to watch first-time makers use the fold guide with real paper, then improve the steps that make them pause.</li>
           </ul>
         </section>
       </div>
 
-      <p class="notice">Already shipped? See the <a href="../changelog/">changelog</a>. Have a different priority? <a href="https://forms.gle/7ejUVJBdUaYoDytu6">Suggest an improvement</a> through our optional Google Form, or <a href="mailto:aritr.g06@gmail.com">email us</a>. <a href="../privacy/#feedback-and-email">How we handle feedback</a>.</p>
-      <p>The <a href="https://github.com/aritr-codes/zinely-android/blob/main/docs/ROADMAP.md#current-priorities">development roadmap</a> records the evidence and technical follow-ups.</p>
+      <section class="roadmap-never" aria-labelledby="never-title">
+        <h2 id="never-title">Not on our list</h2>
+        <p>Some things are off the table on purpose, so you never have to wonder:</p>
+        <ul>
+          <li>Accounts, logins, or profiles.</li>
+          <li>Feeds, followers, likes, or comments.</li>
+          <li>Push notifications, streaks, or guilt.</li>
+          <li>Ads, analytics, or tracking.</li>
+          <li>AI that writes or designs your zine for you.</li>
+          <li>Anything that needs our servers to keep your work.</li>
+        </ul>
+      </section>
+
+      <div class="roadmap-desk-note">
+        <p class="notice">Looking for changes you can already use? See <a href="../changelog/">what’s new</a>. Missing something that would help you make a zine? <a href="https://forms.gle/7ejUVJBdUaYoDytu6">Tell us</a> through our optional Google Form. <a href="../privacy/#feedback-and-email">How we handle feedback</a>.</p>
+        <p>Curious about the nuts and bolts? The <a href="https://github.com/aritr-codes/zinely-android/blob/main/docs/ROADMAP.md#current-priorities">developer notes</a> keep the longer list.</p>
+      </div>
     </article>
   </main>
 
   <footer>
-    <p><strong>Zinely</strong> — physical media instead of social media.</p>
+    <p><strong>Zinely.</strong> Physical media instead of social media.</p>
     <nav aria-label="Footer navigation">
       <a href="../#about">About</a><a href="../#accessibility">Accessibility</a>
-      <a href="../changelog/">Changelog</a><a href="./" aria-current="page">Roadmap</a>
-      <a href="../privacy/">Privacy</a><a href="https://forms.gle/7ejUVJBdUaYoDytu6">Share feedback</a><a href="mailto:aritr.g06@gmail.com">Email us</a>
+      <a href="../changelog/">What’s new</a><a href="./" aria-current="page">What’s next</a>
+      <a href="../download/">Download</a><a href="../privacy/">Privacy</a><a href="https://forms.gle/7ejUVJBdUaYoDytu6">Share feedback</a><a href="mailto:aritr.g06@gmail.com">Email us</a>
       <a href="https://github.com/aritr-codes/zinely-android">GitHub</a>
     </nav>
   </footer>

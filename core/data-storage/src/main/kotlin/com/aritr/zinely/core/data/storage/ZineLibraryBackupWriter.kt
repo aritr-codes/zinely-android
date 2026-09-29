@@ -17,6 +17,7 @@ import kotlinx.serialization.json.Json
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.IOException
+import java.io.InputStream
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -41,17 +42,27 @@ public data class ZineBackupWriteLimits(
         require(maximumDocumentBytes > 0L)
         require(maximumAssetBytes > 0L)
         require(maximumTotalBytes > 0L)
-        require(maximumProjects > 0)
+        // Also bounds `omitted` (ADR-122 §5): restore decodes at most MAX_BACKUP_PROJECTS of them, so never allow more.
+        require(maximumProjects in 1..MAX_BACKUP_PROJECTS)
         require(maximumAssets > 0)
         require(copyBufferBytes > 0)
     }
 }
 
-/** A stable failure family for invalid local inputs or an incomplete backup write. */
+/**
+ * A stable failure family for invalid local inputs or an incomplete backup write.
+ *
+ * [entryPath] names the one archive entry (`projects/<id>/document.json` or `assets/<hash>`) a failure belongs to, or
+ * is `null` when it belongs to none (the manifest, a library-wide limit, the destination). [readSide] is `true` only
+ * for an [Reason.IO_FAILURE] raised while *reading* that entry's source; `false` means the private archive itself
+ * failed to be written. ADR-122 §3 rebuilds without a named entry and fails the whole backup otherwise.
+ */
 public class ZineBackupWritingException(
     public val reason: Reason,
     message: String,
     cause: Throwable? = null,
+    public val entryPath: String? = null,
+    public val readSide: Boolean = false,
 ) : Exception(message, cause) {
     public enum class Reason {
         INVALID_MANIFEST,
@@ -77,6 +88,8 @@ public class ZineBackupWritingException(
 public class ZineLibraryBackupWriter(
     private val limits: ZineBackupWriteLimits = ZineBackupWriteLimits(),
     private val json: Json = Json { encodeDefaults = true },
+    /** Opens one source for reading; a test seam for a photo that changes or can't be read mid-backup. */
+    private val openSource: (Path) -> InputStream = { Files.newInputStream(it) },
 ) {
     public suspend fun write(
         manifest: ZineLibraryBackupManifest,
@@ -127,6 +140,7 @@ public class ZineLibraryBackupWriter(
                             fail(
                                 ZineBackupWritingException.Reason.INTEGRITY_MISMATCH,
                                 "Document '${project.documentPath}' does not match its declared byte count and SHA-256",
+                                project.documentPath,
                             )
                         }
                         expandedBytes = checkedAdd(expandedBytes, written.byteCount)
@@ -135,12 +149,13 @@ public class ZineLibraryBackupWriter(
 
                     for (asset in manifest.assets) {
                         currentCoroutineContext().ensureActive()
-                        val archivePath = "assets/${asset.hash}"
+                        val archivePath = assetPath(asset.hash)
                         val written = writeFile(zip, archivePath, assetsSnapshot.getValue(asset.hash), limits.maximumAssetBytes)
                         if (written.byteCount != asset.byteCount || written.sha256 != asset.hash) {
                             fail(
                                 ZineBackupWritingException.Reason.INTEGRITY_MISMATCH,
                                 "Asset '$archivePath' does not match its declared byte count and SHA-256",
+                                archivePath,
                             )
                         }
                         expandedBytes = checkedAdd(expandedBytes, written.byteCount)
@@ -183,6 +198,11 @@ public class ZineLibraryBackupWriter(
         if (manifest.projects.size > limits.maximumProjects || manifest.assets.size > limits.maximumAssets) {
             fail(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, "Backup contains too many projects or assets")
         }
+        // ADR-122 §5: restore decodes at most MAX_BACKUP_PROJECTS omissions, so a backup listing more would be read back
+        // silently short. Refuse it here, before any output exists, rather than write a file that under-reports.
+        if (manifest.omitted.size > limits.maximumProjects) {
+            fail(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, "Backup leaves out too many zines to list them all")
+        }
 
         val expectedDocuments = manifest.projects.mapTo(linkedSetOf()) { it.sourceProjectId }
         val expectedAssets = manifest.assets.mapTo(linkedSetOf()) { it.hash }
@@ -196,7 +216,7 @@ public class ZineLibraryBackupWriter(
         val declaredEntries = buildList {
             add(ZineArchiveEntry(MANIFEST_PATH, manifestBytes.size.toLong()))
             manifest.projects.forEach { add(ZineArchiveEntry(it.documentPath, it.documentByteCount)) }
-            manifest.assets.forEach { add(ZineArchiveEntry("assets/${it.hash}", it.byteCount)) }
+            manifest.assets.forEach { add(ZineArchiveEntry(assetPath(it.hash), it.byteCount)) }
         }
         val validation = ZineLibraryBackupValidator().validate(manifest, declaredEntries)
         if (!validation.isValid) {
@@ -206,11 +226,14 @@ public class ZineLibraryBackupWriter(
             )
         }
 
-        (projectDocuments.values + assets.values).forEach { source ->
+        val sources = manifest.projects.map { it.documentPath to projectDocuments.getValue(it.sourceProjectId) } +
+            manifest.assets.map { assetPath(it.hash) to assets.getValue(it.hash) }
+        sources.forEach { (entryPath, source) ->
             if (!Files.isRegularFile(source)) {
                 fail(
                     ZineBackupWritingException.Reason.SOURCE_UNAVAILABLE,
-                    "Backup source file is unavailable",
+                    "Backup source '$entryPath' is unavailable",
+                    entryPath,
                 )
             }
         }
@@ -218,13 +241,13 @@ public class ZineLibraryBackupWriter(
         var declaredTotal = manifestBytes.size.toLong()
         manifest.projects.forEach { project ->
             if (project.documentByteCount > limits.maximumDocumentBytes) {
-                fail(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, "A document exceeds the write limit")
+                fail(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, "A document exceeds the write limit", project.documentPath)
             }
             declaredTotal = checkedAdd(declaredTotal, project.documentByteCount)
         }
         manifest.assets.forEach { asset ->
             if (asset.byteCount > limits.maximumAssetBytes) {
-                fail(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, "An asset exceeds the write limit")
+                fail(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, "An asset exceeds the write limit", assetPath(asset.hash))
             }
             declaredTotal = checkedAdd(declaredTotal, asset.byteCount)
         }
@@ -237,24 +260,31 @@ public class ZineLibraryBackupWriter(
         val buffer = ByteArray(limits.copyBufferBytes)
         var count = 0L
         try {
-            BufferedInputStream(Files.newInputStream(source), limits.copyBufferBytes).use { input ->
+            val input = readSource(name) { BufferedInputStream(openSource(source), limits.copyBufferBytes) }
+            try {
                 while (true) {
                     currentCoroutineContext().ensureActive()
-                    val read = input.read(buffer)
+                    val read = readSource(name) { input.read(buffer) }
                     if (read < 0) break
                     count = checkedAdd(count, read.toLong())
                     if (count > entryLimit) {
-                        fail(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, "Backup entry '$name' exceeds its limit")
+                        fail(ZineBackupWritingException.Reason.LIMIT_EXCEEDED, "Backup entry '$name' exceeds its limit", name)
                     }
                     digest.update(buffer, 0, read)
                     zip.write(buffer, 0, read)
+                }
+            } finally {
+                try {
+                    input.close()
+                } catch (_: IOException) {
+                    // Closing a source is not writing the archive; every byte that mattered was already read.
                 }
             }
         } finally {
             zip.closeEntry()
         }
         if (count <= 0L) {
-            fail(ZineBackupWritingException.Reason.INTEGRITY_MISMATCH, "Backup entry '$name' is empty")
+            fail(ZineBackupWritingException.Reason.INTEGRITY_MISMATCH, "Backup entry '$name' is empty", name)
         }
         return WrittenEntry(count, digest.digest().toHex())
     }
@@ -300,7 +330,22 @@ public class ZineLibraryBackupWriter(
     private data class WrittenEntry(val byteCount: Long, val sha256: String)
 
     private companion object {
-        fun fail(reason: ZineBackupWritingException.Reason, message: String): Nothing =
-            throw ZineBackupWritingException(reason, message)
+        fun fail(reason: ZineBackupWritingException.Reason, message: String, entryPath: String? = null): Nothing =
+            throw ZineBackupWritingException(reason, message, entryPath = entryPath)
+
+        fun assetPath(hash: String): String = "assets/$hash"
+
+        /** A failure opening or reading [entryPath]'s source, as opposed to writing the archive. */
+        inline fun <T> readSource(entryPath: String, block: () -> T): T = try {
+            block()
+        } catch (failure: IOException) {
+            throw ZineBackupWritingException(
+                ZineBackupWritingException.Reason.IO_FAILURE,
+                "Backup source '$entryPath' could not be read",
+                failure,
+                entryPath = entryPath,
+                readSide = true,
+            )
+        }
     }
 }
