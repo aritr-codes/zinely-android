@@ -235,7 +235,10 @@ was restored afterwards.
 - **What the owner reported.** With authored text selected at font scale 1.0:
   - swiping right from Edit gave **Edit → Size → Ink → Duplicate → Delete**, with no Font item;
   - swiping left from Delete gave **Delete → Duplicate → Ink → Size → Edit**;
-  - a blank text element was announced as **"Selected, empty text, button."**
+  - a blank text element was announced as **"Selected, empty text, button."** That is the element's own
+    announcement. The owner did not report the bar's disabled Size/Ink/Duplicate wording for it, so that
+    wording is not owner-listened. TalkBack may reach a selected blank box that adb taps could not (see
+    Blank text above); that route was not explored.
 - **The owner's verdict:** "These are working as intended."
 - **Not listened to.** The 1.8 traversal and Add > Text under TalkBack. The owner accepted the implementation
   without them, and they rest on the platform-tree checks above.

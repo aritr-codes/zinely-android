@@ -13032,17 +13032,19 @@ The decision above is unchanged; this records how the implementation was verifie
   disposable text. The typing row's Ink and Done are unchanged. Add > Text is present and creates a text box.
 - **Owner TalkBack listen.** Samsung TalkBack 16.2.00.13, font scale 1.0, authored text selected. Swiping
   right gave Edit, Size, Ink, Duplicate, Delete, with no Font stop. Swiping left gave Delete, Duplicate,
-  Ink, Size, Edit. A blank box was announced as "Selected, empty text, button". The owner confirmed these
-  work as intended.
+  Ink, Size, Edit. A blank box was announced as "Selected, empty text, button". That is the element's own
+  announcement; the owner did not report the bar's disabled Size/Ink/Duplicate wording. The owner confirmed
+  these work as intended.
 - **Limits the owner accepted.**
   - The TalkBack traversal at font scale 1.8 and Add > Text under TalkBack were not listened to. They rest
     on the structural checks above.
-  - A selected blank text box could not be reached on the device: blank, whitespace-only and erased text
-    are all removed on Done. The disabled Size, Ink and Duplicate state, with "Type something first", is
-    verified by the automated tests only.
+  - A selected blank text box could not be reached on the device with adb taps: blank, whitespace-only and
+    erased text are all removed on Done. The disabled Size, Ink and Duplicate state, with "Type something
+    first", is verified by the automated tests only.
 
 Full evidence is in the [verification record](reviews/2026-09-10-font-control-removal-experiment.md#settlement-on-current-main-2026-09-29).
 Merging PR #70 remains the owner's call.
+
 ## ADR-116 {#adr-116}
 
 ### Explain the product before explaining the engineering
