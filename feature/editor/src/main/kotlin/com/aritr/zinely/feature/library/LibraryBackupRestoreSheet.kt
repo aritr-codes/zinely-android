@@ -42,6 +42,7 @@ import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.components.ZPrimaryButton
 import com.aritr.zinely.ui.components.ZPrimaryButtonMetrics
 import com.aritr.zinely.ui.components.ZSheet
+import com.aritr.zinely.ui.components.ZSheetParagraphBreak
 import com.aritr.zinely.ui.components.ZStampButton
 import com.aritr.zinely.ui.components.zinelyV21Frame
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
@@ -381,9 +382,8 @@ private fun SuccessSheet(
         onDismiss = onDismiss,
         onShown = doneFocus::requestFocus,
         title = copy.title,
-        // The frozen body / note / more paragraphs, a blank line apart, in one subtitle so TalkBack reads them in
-        // order as one stop.
-        sub = copy.paragraphs.joinToString("\n\n"),
+        // The frozen body / note / more paragraphs, drawn 8dp apart and read by TalkBack in order as one stop.
+        sub = copy.paragraphs.joinToString(ZSheetParagraphBreak),
         modifier = Modifier.testTag(BackupRestoreSuccessSheetTestTag).verticalScroll(rememberScrollState()),
     ) {
         Mark("✓", colors.paper, colors.leaf, colors.onLeaf)

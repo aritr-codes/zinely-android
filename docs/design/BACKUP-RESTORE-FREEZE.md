@@ -281,5 +281,6 @@ backup states, the R1 restore space state, the R2 commit phase, the R3 lagging l
 N1's restore line and N2–N5. Part 1's interim "A zine here can't be opened" is retired unshipped. New goldens: the
 commit phase, a mixed-reason partial backup and "none saved" (light), and N5's longest result (light and dark). Derived
 wording the drawing does not show (unnamed and multi-zine plurals, a restored newer-only notice read as
-"couldn't be opened then") is listed for the owner in the step 1b PR. Parity note: the result sheets separate
-the frozen body / note / more paragraphs with a blank line, looser than the drawing's 8 px gap.
+"couldn't be opened then") is listed for the owner in the step 1b PR. The result sheets separate the frozen
+body / note / more paragraphs by the drawing's 8 px (`.work .sheet-copy{gap:8px}`; owner ruling (f), 2026-09-29),
+read by TalkBack as one stop.

@@ -517,10 +517,10 @@ class LibraryBackupRestoreSheetTest {
         )
 
         composeRule.onNodeWithText("4 of 6 zines saved").assertIsDisplayed()
-        composeRule.onNodeWithText(
-            "Zinely couldn’t open 1 zine, so it isn’t in this backup: “Letters home”.\n\n" +
-                "Zinely couldn’t read a photo in 1 zine, so that zine isn’t in this backup: “Moth Club Bulletin”.",
-        ).assertIsDisplayed()
+        assertParagraphs(
+            "Zinely couldn’t open 1 zine, so it isn’t in this backup: “Letters home”.",
+            "Zinely couldn’t read a photo in 1 zine, so that zine isn’t in this backup: “Moth Club Bulletin”.",
+        )
         composeRule.onNodeWithText("✓").assertIsDisplayed()
         composeRule.onNodeWithTag(BackupRestoreDoneTestTag).assertIsDisplayed()
     }
@@ -530,9 +530,10 @@ class LibraryBackupRestoreSheetTest {
         stateSheet(LibraryBackupRestoreUiState.RestoreAdded(restoredProjectCount = 2, alreadyHereCount = 5))
 
         composeRule.onNodeWithText("2 zines added to your shelf").assertIsDisplayed()
-        composeRule.onNodeWithText(
-            "The other 5 were already here, so they weren’t added again.\n\nWhat was already on this shelf stayed put.",
-        ).assertIsDisplayed()
+        assertParagraphs(
+            "The other 5 were already here, so they weren’t added again.",
+            "What was already on this shelf stayed put.",
+        )
     }
 
     @Test
@@ -589,6 +590,22 @@ class LibraryBackupRestoreSheetTest {
 
     private fun mediumDate(epochMs: Long): String =
         java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(java.util.Date(epochMs))
+
+    /**
+     * Owner ruling (f): the result paragraphs sit the frozen 8px apart (`.work .sheet-copy{gap:8px}`), not a blank line
+     * apart, and TalkBack still reads them in order as one stop.
+     */
+    private fun assertParagraphs(vararg paragraphs: String) {
+        val nodes = paragraphs.map {
+            composeRule.onNodeWithText(it, useUnmergedTree = true).assertIsDisplayed().fetchSemanticsNode()
+        }
+        nodes.zipWithNext { above, below ->
+            val gapDp = (below.boundsInRoot.top - above.boundsInRoot.bottom) / composeRule.density.density
+            assertEquals("gap between paragraphs, dp", 8f, gapDp, 0.5f)
+        }
+        val stop = composeRule.onNode(hasText(paragraphs.first())).fetchSemanticsNode()
+        assertEquals(paragraphs.toList(), stop.config[SemanticsProperties.Text].map { it.text })
+    }
 
     private fun stateSheet(
         state: LibraryBackupRestoreUiState,
