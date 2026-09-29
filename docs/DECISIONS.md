@@ -124,7 +124,7 @@
 | [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, implemented through one bundled, deterministic preview/export path.** Bundled Emoji2 with forced replacement owns the glyphs; system/OEM fallback remains forbidden. | Accepted |
 | [ADR-113](#adr-113) | **Flip is one mobile verb with two local-axis toggles for a single Photo or Art element.** Text and multi-selection are excluded; persistence requires an honest schema v3 rather than a lossy v2 additive field. | Accepted |
 | [ADR-114](#adr-114) | **Public story on the website; installed-app utility in About; fold replay remains an HTML experiment.** The site uses sanitized canonical mockups, a concise embedded accessibility statement, curated release notes, and a non-committal roadmap. | Accepted; §1 and §5 amended by [ADR-118](#adr-118) |
-| [ADR-115](#adr-115) | Remove the unavailable selected-text Font action until font choice exists. Owner-led decision, not a demonstrated usability improvement. | Accepted; implementation verification pending |
+| [ADR-115](#adr-115) | Remove the unavailable selected-text Font action until font choice exists. Owner-led decision, not a demonstrated usability improvement. | Accepted 2026-09-29 (owner decision 2026-09-11; implementation accepted after device, TalkBack and HTML-parity verification) |
 | [ADR-116](#adr-116) | **Plain-language public updates and distinct About copy on both surfaces.** Retain technical documentation and accessibility requirements; app maker's note design frozen. | Accepted; native verification pending |
 | [ADR-117](#adr-117) | **Licence notices stay complete, but leave the main About narrative.** One compact row opens a child credits screen; font-role blurbs retire. | Accepted; owner ruling 2026-09-16 |
 | [ADR-118](#adr-118) | **The public website tells one product story and shows only shipped UI.** Self-hosted fonts, a truthful Bench render, a Download page, and one public status scheme (Available / In development / Planned / Exploring) by horizon. Amends ADR-114 §1 and §5. | Accepted 2026-09-24; owner-directed |
@@ -12982,7 +12982,8 @@ benefit is established.
 
 ### Do not offer a Font action before font choice exists
 
-**Status:** Accepted by owner, 2026-09-11; implementation acceptance remains subject to verification.
+**Status:** Accepted, 2026-09-29. The owner accepted the decision on 2026-09-11 and the implementation on
+2026-09-29; see [Acceptance](#adr-115-acceptance) below.
 **Supersedes:** only the selected-text Font-presence requirement of OD-9 and its carry-forward in ADR-092.
 
 After reviewing the HTML A/B prototype and saying it looked good, the owner explicitly approved proceeding with
@@ -13006,6 +13007,42 @@ from automated semantics. The owner waived the cohort study, not these engineeri
 Independent review (2026-09-11): GO for code, tests, documentation, and pinned golden images after green CI on
 `c48960d`; overall merge NO-GO pending owner hands-on/TalkBack and rendered HTML/device parity/browser keyboard
 acceptance. No required implementation fix remains. Evidence and limitations are in the linked verification record.
+
+#### Acceptance (2026-09-29) {#adr-115-acceptance}
+
+Accepted by the owner on 2026-09-29. The final selected-text bar is **Edit, Size, Ink, Duplicate, Delete**.
+The decision above is unchanged; this records how the implementation was verified on current `main`.
+
+- **Updated head.** `origin/main` (`b5c6d55`) was merged into the branch with a normal merge commit,
+  `aad2084`. There was no rebase, so `88e9413`, `173e85f` and `c48960d` above remain the provenance they cite.
+  An independent review of the merge resolution returned GO with no required fix.
+- **Tests and goldens on `aad2084`.** The full local suite ran 2,390 tests with 0 failures and 0 skipped,
+  including the focused `BenchContextBarTest`, `BenchContextBarPlatformA11yTest` and `BenchTextGoldenTest`.
+  `:app:lintDebug`, `:app:checkDependencyAllowlist` and `:app:assembleRelease` passed. All three
+  `verifyRoborazziDebug` tasks passed with `--rerun-tasks`, and no golden was re-recorded.
+- **CI on `aad2084`.** Both jobs of run 36546365541 passed, including the golden-verify step.
+- **Rendered HTML parity.** The frozen Bench, with A24, was rendered in Microsoft Edge in light and dark. With
+  text selected the bar is exactly the five actions above: the pre-A24 list minus Font. Photo and Art are
+  unchanged. Order, labels, pill centring, spacing and the Delete tint match the device and the goldens. One
+  difference predates this ADR: the HTML draws stroke icons, while the Compose bar uses filled Material icons.
+- **Browser keyboard check.** Tab through the HTML bar gives five stops with no Font, and Shift+Tab reverses.
+- **Device action checks.** The device was the SM-A176B on Android 16. The QA build came from `aad2084`, under
+  a separate application ID; the release install was not touched. The platform tree shows five enabled
+  buttons and no Font node, at font scale 1.0 and at 1.8 (nothing clipped). Each action worked once on
+  disposable text. The typing row's Ink and Done are unchanged. Add > Text is present and creates a text box.
+- **Owner TalkBack listen.** Samsung TalkBack 16.2.00.13, font scale 1.0, authored text selected. Swiping
+  right gave Edit, Size, Ink, Duplicate, Delete, with no Font stop. Swiping left gave Delete, Duplicate,
+  Ink, Size, Edit. A blank box was announced as "Selected, empty text, button". The owner confirmed these
+  work as intended.
+- **Limits the owner accepted.**
+  - The TalkBack traversal at font scale 1.8 and Add > Text under TalkBack were not listened to. They rest
+    on the structural checks above.
+  - A selected blank text box could not be reached on the device: blank, whitespace-only and erased text
+    are all removed on Done. The disabled Size, Ink and Duplicate state, with "Type something first", is
+    verified by the automated tests only.
+
+Full evidence is in the [verification record](reviews/2026-09-10-font-control-removal-experiment.md#settlement-on-current-main-2026-09-29).
+Merging PR #70 remains the owner's call.
 ## ADR-116 {#adr-116}
 
 ### Explain the product before explaining the engineering

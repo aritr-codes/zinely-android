@@ -142,3 +142,111 @@ Final independent review: GO for code, tests, documentation, and pinned images; 
 Overall merge NO-GO pending owner hands-on/TalkBack and rendered HTML/device parity/browser keyboard acceptance.
 The local lint-engine crash and unfinished duplicate local golden run do not replace or negate the equivalent green
 pinned-CI checks. PR #70 stays draft and unmerged. Next step is owner acceptance, not another product change.
+
+## Settlement on current main (2026-09-29)
+
+The owner accepted the implementation on 2026-09-29; see [ADR-115 Acceptance](../DECISIONS.md#adr-115-acceptance).
+This section records the evidence behind that acceptance. It supersedes the pending-gate lines above; those
+lines are kept as the 2026-09-11 record.
+
+### Merging main
+
+The branch head `f68e9c5` was 79 commits behind `origin/main` (`b5c6d55`). Main was merged in with a normal
+merge commit, `aad2084`, not rebased.
+
+- **Conflicts.** Only `CHANGELOG.md` and `DECISIONS.md` conflicted, and both were append-only. Every line from
+  main was kept. ADR-115 was inserted between ADR-114 and ADR-116.
+- **Carried in the same commit.** These are main housekeeping, not PR #70's work:
+  - The ADR-121 and ADR-122 index-row status cells were corrected to match what the repository records.
+  - The ROADMAP section the branch had added duplicated main's "In development" entry, so it was dropped.
+- **Scope.** Against main, the PR still touches only its own 15 files. Main had not changed
+  `BenchContextBar.kt`, `EditorScreen.kt`, `Copy.kt`, `v21-bench.html` or the toolbar tests.
+- **Review.** An independent review of the merge returned GO with no required fix. It left one follow-up for
+  main: the ADR-121 body still says the implementation is owed, which predates this merge.
+
+### Automated checks on `aad2084`
+
+- **Before the run.** `git status --porcelain` was empty, both before and after the run.
+- **Full local suite.** 2,390 tests, 0 failures, 0 errors, 0 skipped, run with
+  `tools/grun.sh test :app:lintDebug :app:checkDependencyAllowlist :app:assembleRelease`.
+  - `:feature:editor` ran 1,024 of them.
+  - Lint, the dependency allow-list and the release build passed.
+- **Goldens.** `tools/grun.sh gold` (`--rerun-tasks`) passed for all three modules, and no image was re-recorded.
+- **CI.** [Run 36546365541](https://github.com/aritr-codes/zinely-android/actions/runs/36546365541) passed
+  both jobs, including the Roborazzi verify step.
+
+### Rendered HTML parity and keyboard
+
+The canonical `v21-bench.html`, with A24, was opened from disk in Microsoft Edge, driven by Playwright. The
+first text element was clicked.
+
+- **Actions.** In light and dark, `#ctx` held exactly Edit, Size, Ink, Duplicate, Delete, all with icons.
+  `toolsForBeforeA24('text')` returned the same list with Font in second place.
+- **Other kinds.** A24 leaves the Photo and Art lists unchanged.
+- **Geometry.** The bar is centred on the phone: centre 450 = 450. The five controls are each 50 x 47 CSS px
+  with 1 px gaps. Delete carries the danger colour: `rgb(169,48,61)` in light, `rgb(255,156,164)` in dark.
+- **Script errors.** None.
+- **Keyboard.** Tab from the selected text reaches Edit, Size, Ink, Duplicate, Delete, then leaves the bar.
+  That is five stops, with no Font. Shift+Tab from Delete runs Duplicate, Ink, Size, Edit.
+- **Against the device.** Compared with the device screenshot in dark and the committed light and dark goldens:
+  - Order, labels, pill shape and centring, even spacing and the Delete tint correspond.
+  - The icons differ: the HTML draws stroke icons, while Compose uses Material filled icons. The Compose bar
+    already used `Icons.Filled.*` at `ad86586`, so this predates A24 and is not a PR #70 divergence.
+
+### Device
+
+The device was the SM-A176B on Android 16 (serial `RZCYA1VBQ2H`).
+
+- **QA build.**
+  - `:app:assembleDebug` from `aad2084`, with a local-only init script that sets the application ID to
+    `com.aritr.zinely.fontqa` through `androidComponents.onVariants`.
+  - The first attempt set the ID through the DSL, which the build script then overrode. That APK still had the
+    release ID. It was caught by reading the package with `aapt` and deleted before any install.
+  - The installed APK is package `com.aritr.zinely.fontqa`, with provider authorities under the same prefix.
+    Its version label is `0.9.0-beta.5` (versionCode 10). SHA-256 is
+    `79f82827cd520907189cfa2b7b516826f3d19b201e5fc5c1461cc2395ae7afe0`.
+  - The release install `com.aritr.zinely` (beta.5) kept `lastUpdateTime 2026-09-29 12:09:04` throughout.
+- **Platform tree with authored text selected.** Exactly five `android.widget.Button` nodes, enabled and
+  clickable: Edit, Size, Ink, Duplicate, Delete. No node's text or content description contains "font". The
+  same held at system font scale 1.8: all five on screen, the smallest target 131 x 165 px, no label clipped.
+- **Actions, once each, on disposable QA text:**
+  - Duplicate made a second text node.
+  - Size opened the type panel, and Larger moved the copy from 14 to 16 pt.
+  - Ink changed the copy from Forest to Brick.
+  - Edit opened inline editing. The typing row was unchanged: Ink, "Align, size & more after Done", Done.
+    It committed "QATiny paper test PR70".
+  - Delete removed only the copy.
+  - Undo and Redo then left the page with only its original text.
+- **Add > Text.** The sheet lists "Text. Type words onto the page" with its unchanged `A` icon, and it
+  creates a text box in edit mode.
+- **Blank text.** No way was found to leave a blank text box selected on this build:
+  - a new empty box, and one holding only spaces, are removed on Done;
+  - an existing text erased to nothing is removed on Done;
+  - tapping a blank box in edit mode reopens the editor.
+
+  The disabled Size, Ink and Duplicate state, with "Type something first", therefore rests on
+  `BenchContextBarTest` and `BenchContextBarPlatformA11yTest`.
+
+### Owner TalkBack listen
+
+Samsung TalkBack 16.2.00.13, turned on over adb. The device's original setting was accessibility off, and it
+was restored afterwards.
+
+- **What the owner reported.** With authored text selected at font scale 1.0:
+  - swiping right from Edit gave **Edit → Size → Ink → Duplicate → Delete**, with no Font item;
+  - swiping left from Delete gave **Delete → Duplicate → Ink → Size → Edit**;
+  - a blank text element was announced as **"Selected, empty text, button."**
+- **The owner's verdict:** "These are working as intended."
+- **Not listened to.** The 1.8 traversal and Add > Text under TalkBack. The owner accepted the implementation
+  without them, and they rest on the platform-tree checks above.
+- **Font scale afterwards.** It read 0.9, set by the owner, so it was left as found.
+
+### Local artefacts
+
+These are under the session scratchpad and are not committed:
+
+- `html-ctx-text-{light,dark}.png` and `html-phone-text-{light,dark}.png`, with `probe.json`;
+- `dev/04-selected.png` (device, dark), with `dev/*.xml` platform dumps for each step;
+- `dev/26-scale-sel.png` (font scale 1.8).
+
+PR #70 is now ready for the owner's final review. It is not merged, and merging is the owner's call.

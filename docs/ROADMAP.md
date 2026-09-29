@@ -32,8 +32,9 @@ is built.
 ### In development — built or being tested, not in the public download
 
 - **Unavailable Font control removal:** owner approved removal as a design judgment ([ADR-115](DECISIONS.md#adr-115); Bench A24). [PR #70](https://github.com/aritr-codes/zinely-android/pull/70)
-  contains the implementation and green automated checks; it remains draft pending hands-on/TalkBack and rendered
-  HTML parity acceptance ([evidence](reviews/2026-09-10-font-control-removal-experiment.md)). No published APK change. Removing the dead action does not reject future font choice.
+  contains the implementation. The owner accepted it on 2026-09-29, after CI, rendered HTML parity, device
+  checks and a TalkBack listen ([evidence](reviews/2026-09-10-font-control-removal-experiment.md#settlement-on-current-main-2026-09-29)).
+  It awaits the owner's merge. No published APK change. Removing the dead action does not reject future font choice.
 
 ### Planned
 
@@ -341,6 +342,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-09-29 | **Unavailable Font control removal accepted** (PR #70, on `aad2084` after merging main). The "In development" entry now reads accepted and awaiting merge; no public-label or APK change. | [ADR-115](DECISIONS.md#adr-115) |
 | 2026-09-26 | **Owner rulings on the 1.x plan recorded** in the [decision gate](planning/ZINELY-1X-DECISION-GATE.md): next tester build planned as a wave-1 release on the current format; fold study runs now and no longer gates fonts or frames; first fonts = two named voices (Book, Plain); first frames = two; unknown-font fallback for document voices qualified. No public-label change. | [1.x plan](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md) |
 | 2026-09-25 | **beta.5 released** (tag `v0.9.0-beta.5`, merge `32da280`): the next-beta and About maker's note items leave In development; About pixel parity and real-phone Android 7–9 Save PDF checks become engineering follow-ups. The public website now offers beta.5. No scope change. | [ADR-116](DECISIONS.md#adr-116) · [ADR-118](DECISIONS.md#adr-118) |
 | 2026-09-24 | Current priorities gain an **In development** group (next beta, Font-control removal, About maker's note), moved out of Exploring, so the public website's four labels project this list rather than inventing statuses. No scope change. | [ADR-118](DECISIONS.md#adr-118) |
