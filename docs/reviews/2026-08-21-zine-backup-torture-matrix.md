@@ -55,11 +55,11 @@ This is the gate required by the V1 execution plan. A row is green only at the l
 | Poisoned photo shared by two zines | Both zines left out, reason `photo`; the photo's bytes never enter the archive | repository integration | ✅ Green |
 | Writer backstop after the pre-check | The incomplete private archive is removed, the entry's zines left out, the survivors rewritten | repository integration | ✅ Green |
 | All zines unreadable | No archive; `NothingSaved`; the destination discarded; no last-backup record | repository + transport + VM | ✅ Green |
-| Partial archive on an old reader | Restores what it holds, without the partial notice (ADR-122 Consequences) | `ignoreUnknownKeys` + frozen partial fixture (`LibraryBackupFixtureTest`) on this build; beta.4-r3 / beta.5 device check | 🟨 Current-build fixture green; old-build device check pending |
+| Partial archive on an old reader | Restores what it holds, without the partial notice (ADR-122 Consequences) | `ignoreUnknownKeys` + frozen partial fixture (`LibraryBackupFixtureTest`) on this build; beta.5 device check | ✅ Green — 2026-09-29, SM-A176B / Android 16, installed beta.5 release: the fixture restored as "2 zines added to your shelf" with no notice |
 | Disk full while staging a restore (R1) | "Not enough space" when the private disk is under the 64 KiB probe, else "Couldn't finish that restore"; never "damaged" | stager seam + repository integration | 🟨 Unit/integration green; device pending |
 | Cancel racing the restore commit (R2) | Cancel first: nothing committed, "Restore cancelled."; commit first: Cancel is a no-op | repository + VM | ✅ Green |
 | Room fails after a committed restore (R3) | A success with the lagging line; the shelf is re-read | repository + VM | ✅ Green |
-| Repeated restore of the same backup (ADR-121) | "Nothing new to add"; no project directory created | repository integration | ✅ Green (supersedes the dated row above) |
+| Repeated restore of the same backup (ADR-121) | "Nothing new to add"; no project directory created | repository integration + device | ✅ Green (supersedes the dated row above). Device, 2026-09-29, SM-A176B, step 1b release build over beta.5 data: a fresh 41-zine backup restored as "Nothing new to add"; restoring the partial fixture again gave "Nothing new to add" plus its saved-without notice; the shelf stayed at 41 |
 
 ## Historical foundation verdict — 21 August
 
