@@ -8,6 +8,7 @@ import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -16,7 +17,7 @@ import java.nio.file.Path
 class RestoreMatcherTest {
 
     @Test
-    fun `multiplicity counts one shelf zine for one backup zine`() {
+    fun `multiplicity counts one shelf zine for one backup zine`(): Unit = runBlocking {
         val poems = backup("a", "Poems")
         fun shelf(n: Int) = List(n) { shelfCopyOf(poems) }
 
@@ -27,7 +28,7 @@ class RestoreMatcherTest {
     }
 
     @Test
-    fun `an empty shelf or another phone adds everything`() {
+    fun `an empty shelf or another phone adds everything`(): Unit = runBlocking {
         val zines = listOf(backup("a", "Poems"), backup("b", "Maps", text = "north"))
 
         assertCounts(added = 2, here = 0, RestoreMatcher.match(zines, emptyList()))
@@ -35,7 +36,7 @@ class RestoreMatcherTest {
     }
 
     @Test
-    fun `the same backup restored twice adds nothing new the second time`() {
+    fun `the same backup restored twice adds nothing new the second time`(): Unit = runBlocking {
         val zines = listOf(backup("a", "Poems"), backup("b", "Maps", text = "north"))
         val first = RestoreMatcher.match(zines, emptyList())
         val shelfAfterFirst = first.added.map(::shelfCopyOf)
@@ -44,7 +45,7 @@ class RestoreMatcherTest {
     }
 
     @Test
-    fun `a changed version is added beside the identical one`() {
+    fun `a changed version is added beside the identical one`(): Unit = runBlocking {
         val original = backup("a", "Poems", text = "v1")
         val changed = backup("b", "Poems", text = "v2")
 
@@ -55,21 +56,21 @@ class RestoreMatcherTest {
     }
 
     @Test
-    fun `a zine edited on the shelf since the backup is added`() {
+    fun `a zine edited on the shelf since the backup is added`(): Unit = runBlocking {
         val poems = backup("a", "Poems", text = "before")
 
         assertCounts(added = 1, here = 0, RestoreMatcher.match(listOf(poems), listOf(shelf("Poems", document("after")))))
     }
 
     @Test
-    fun `a renamed zine is added`() {
+    fun `a renamed zine is added`(): Unit = runBlocking {
         val poems = backup("a", "Poems")
 
         assertCounts(added = 1, here = 0, RestoreMatcher.match(listOf(poems), listOf(shelf("Poems ", poems.document, poems.manifestEntry.documentSha256))))
     }
 
     @Test
-    fun `equal content in older bytes is already here`() {
+    fun `equal content in older bytes is already here`(): Unit = runBlocking {
         val poems = backup("a", "Poems")
         val olderBytes = shelf("Poems", poems.document, sha = "f".repeat(64))
 
@@ -78,7 +79,7 @@ class RestoreMatcherTest {
 
     /** `ZineFormat` has one value today, so only the paper half of the key can differ. */
     @Test
-    fun `a different paper size is added`() {
+    fun `a different paper size is added`(): Unit = runBlocking {
         val poems = backup("a", "Poems")
         val a4 = poems.document.copy(paperSize = PaperSize.A4)
 
@@ -86,7 +87,7 @@ class RestoreMatcherTest {
     }
 
     @Test
-    fun `doubt adds - undecodable or unreadable shelf zines match nothing unless bytes are identical`() {
+    fun `doubt adds - undecodable or unreadable shelf zines match nothing unless bytes are identical`(): Unit = runBlocking {
         val poems = backup("a", "Poems")
 
         val undecodable = ShelfZine("Poems", "e".repeat(64)) { null }
@@ -101,7 +102,7 @@ class RestoreMatcherTest {
     }
 
     @Test
-    fun `added zines keep manifest order`() {
+    fun `added zines keep manifest order`(): Unit = runBlocking {
         val zines = listOf(backup("c", "C", text = "3"), backup("a", "A", text = "1"), backup("b", "B", text = "2"))
 
         val match = RestoreMatcher.match(zines, listOf(shelfCopyOf(zines[1])))
@@ -110,7 +111,7 @@ class RestoreMatcherTest {
     }
 
     @Test
-    fun `a shelf zine is decoded only when its title matches and its bytes don't`() {
+    fun `a shelf zine is decoded only when its title matches and its bytes don't`(): Unit = runBlocking {
         val poems = backup("a", "Poems")
         var decodes = 0
         fun counting(title: String, sha: String) = ShelfZine(title, sha) { decodes++; poems.document }

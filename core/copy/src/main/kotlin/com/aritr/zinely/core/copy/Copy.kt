@@ -1502,8 +1502,10 @@ public object Copy {
         public const val SAVE_ACTION: String = "Back up this shelf"
         public const val SAVE_BODY: String = "Choose where to keep the backup file."
         public const val RESTORE_ACTION: String = "Restore a backup"
+        // Amendment N1 (ADR-121): a zine already on the shelf isn't added again; a changed one is added alongside.
         public const val RESTORE_BODY: String =
-            "Add zines from a Zinely backup. What’s here stays here; a matching zine returns as a separate copy."
+            "Add zines from a Zinely backup. Zines already on this shelf aren’t added again. " +
+                "If a zine has changed since the backup, the changed one is added too."
         public const val EMPTY_RESTORE_BODY: String = "Choose a Zinely backup to add its zines to this shelf."
 
         public const val BACKUP_RUNNING_TITLE: String = "Saving your backup"
@@ -1513,6 +1515,9 @@ public object Copy {
         public const val RESTORE_RUNNING_BODY: String = "Checking the backup before anything changes."
         public const val RESTORE_RUNNING_HINT: String =
             "Nothing on this shelf changes until the backup passes its checks."
+        // ADR-122 R2: once the commit starts, the check-phase body is false and the restore can't be stopped.
+        public const val RESTORE_COMMIT_BODY: String = "Adding zines to your shelf."
+        public const val RESTORE_COMMIT_HINT: String = "This part can’t be stopped."
         public const val RUNNING_STATE_DESCRIPTION: String = "Working"
 
         public const val RESTORE_SUCCESS_BODY: String = "What was already on this shelf stayed put."
@@ -1530,17 +1535,101 @@ public object Copy {
         public const val ERROR_BUSY_TITLE: String = "Give Zinely a moment"
         public const val ERROR_BUSY_BODY: String = "A zine is still being put away. Try again shortly."
 
-        // Backup failures in backup words (amendment 1a item 4), never restore's "damaged" / "newer" copy.
-        // UNREADABLE is part 1's interim state: step 1b replaces the abort with skip-and-list.
-        public const val BACKUP_ZINE_UNREADABLE_TITLE: String = "A zine here can’t be opened"
-        public const val BACKUP_ZINE_UNREADABLE_BODY: String = "No backup was saved. It may not appear on your shelf."
+        // Backup failures in backup words (amendment 1a item 4), never restore's "damaged" / "newer" copy. Part 1's
+        // interim "A zine here can't be opened" is retired by skip-and-list (ADR-122); no release carried it.
+        public const val BACKUP_NONE_TITLE: String = "No zines could be saved"
+        public const val BACKUP_NONE_BODY: String =
+            "Zinely couldn’t read the zines on this phone, so no backup was saved."
+        public const val BACKUP_NONE_OFF_SHELF_BODY: String = "$BACKUP_NONE_BODY They may not appear on your shelf."
+        public const val BACKUP_NONE_PHOTO_BODY: String =
+            "Zinely couldn’t read the photos in the zines on this phone, so no backup was saved."
         public const val BACKUP_ZINE_NEWER_TITLE: String = "A zine here needs a newer Zinely"
         public const val BACKUP_ZINE_NEWER_BODY: String = "Update Zinely, then back up."
+
+        // A partial backup is a success that names what it left out (amendment 1a items 5 and 10): one sentence per
+        // reason, up to three names then "and N more"; a zine with no readable name is counted, not named. Plurals
+        // the drawing doesn't show are derived from the singular it does.
+        public fun backupPartialTitle(savedCount: Int, totalCount: Int): String =
+            "$savedCount of $totalCount zines saved"
+
+        public fun backupCouldntOpen(count: Int, names: List<String>): String =
+            "Zinely couldn’t open ${zines(count)}, so ${if (count == 1) "it isn’t" else "they aren’t"} in this " +
+                "backup${leftOutNames(count, names)}"
+
+        public fun backupNewer(count: Int, names: List<String>): String {
+            val who = if (names.isEmpty()) zines(count) else namedList(count, names)
+            val was = if (count == 1) "was" else "were"
+            val isnt = if (count == 1) "it isn’t" else "they aren’t"
+            return "$who $was made by a newer Zinely, so $isnt in this backup. Update Zinely, then back up again."
+        }
+
+        public fun backupCouldntReadPhoto(count: Int, names: List<String>): String =
+            "Zinely couldn’t read a photo in ${zines(count)}, so " +
+                "${if (count == 1) "that zine isn’t" else "those zines aren’t"} in this backup${leftOutNames(count, names)}"
+
+        /**
+         * Closes the sentence of a reason with a left-out zine that has no shelf row. Drawn for several zines; used for
+         * one zine too, which the drawing doesn't show (owner check, step 1b).
+         */
+        public const val BACKUP_SOME_OFF_SHELF: String = "Some of these aren’t on your shelf."
+
+        // Restore results (ADR-121 Amendment N, ADR-122 R3), in N5's line order: title → already here → what the
+        // backup was saved without → lagging or "stayed put".
+        public fun restoreAlreadyHere(count: Int): String =
+            if (count == 1) {
+                "The other zine was already here, so it wasn’t added again."
+            } else {
+                "The other $count were already here, so they weren’t added again."
+            }
+
+        public const val RESTORE_NOTHING_NEW_TITLE: String = "Nothing new to add"
+        public fun restoreNothingNewBody(count: Int): String =
+            if (count == 1) {
+                "The zine from this backup is already on your shelf."
+            } else {
+                "The zines from this backup are already on your shelf."
+            }
+
+        public const val RESTORE_LAGGING: String =
+            "They may take a moment to appear. If they don’t, close Zinely and open it again."
+
+        public fun restoreSavedWithoutOpened(count: Int, names: List<String>): String =
+            "This backup was saved without ${zines(count)} that couldn’t be opened then: ${namedList(count, names)}."
+
+        public fun restoreSavedWithoutPhoto(count: Int, names: List<String>): String =
+            "This backup was saved without ${zines(count)} whose ${if (count == 1) "photo" else "photos"} " +
+                "couldn’t be read then: ${namedList(count, names)}."
+
+        public fun restoreSavedWithoutUnnamed(count: Int): String =
+            "This backup was saved without ${zines(count)} that had no readable ${if (count == 1) "name" else "names"}."
+
+        private fun zines(count: Int): String = if (count == 1) "1 zine" else "$count zines"
+
+        private fun leftOutNames(count: Int, names: List<String>): String = when {
+            names.isNotEmpty() -> ": ${namedList(count, names)}."
+            count == 1 -> ". It has no readable name."
+            else -> ". They have no readable names."
+        }
+
+        /** “A”, “B”, “C” and 2 more — up to three names; [count] past them (named or not) is "more". */
+        private fun namedList(count: Int, names: List<String>): String {
+            val shown = names.take(MAX_NAMED).map { "“$it”" }
+            val more = count - shown.size
+            return when {
+                more > 0 -> "${shown.joinToString(", ")} and $more more"
+                shown.size == 1 -> shown.single()
+                else -> "${shown.dropLast(1).joinToString(", ")} and ${shown.last()}"
+            }
+        }
+
+        private const val MAX_NAMED: Int = 3
 
         // The last-backup fact (amendment 1a item 1): a date in the device's medium format, never relative. The
         // provider's file name is its own line under this one, whole, with no separator (backup-sheet polish).
         public const val NO_BACKUP_YET: String = "No backup saved yet"
         public fun lastBackupSaved(date: String): String = "Last backup saved $date"
+        public fun lastBackupSavedPartial(date: String, savedCount: Int, totalCount: Int): String =
+            "Last backup saved $date — $savedCount of $totalCount zines."
         public const val CANCEL: String = "Cancel"
         public const val DONE: String = Common.GOT_IT
         public const val GOT_IT: String = Common.GOT_IT

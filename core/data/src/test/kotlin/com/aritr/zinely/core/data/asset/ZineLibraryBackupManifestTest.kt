@@ -78,6 +78,14 @@ class ZineLibraryBackupManifestTest {
         }
     }
 
+    @Test
+    fun `a hostile omitted list is cut to what a real backup could hold`() {
+        val base = json.encodeToString(ZineLibraryBackupManifest.serializer(), sampleLibraryBackupManifest())
+        val text = base.dropLast(1) + ",\"omitted\":[" + List(MAX_BACKUP_PROJECTS + 5) { "1" }.joinToString(",") + "]}"
+
+        assertEquals(MAX_BACKUP_PROJECTS, lenient.decodeFromString(ZineLibraryBackupManifest.serializer(), text).omitted.size)
+    }
+
     /** The restore reader's configuration (`ZineLibraryBackupStager`): unknown keys are ignored. */
     private val lenient = Json { ignoreUnknownKeys = true }
 

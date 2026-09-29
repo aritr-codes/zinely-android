@@ -86,6 +86,61 @@ class LibraryBackupRestoreGoldenTest {
         ),
     )
 
+    // --- 1.x step 1b: the states amendment 1a and Amendment N added (backup-restore.html) ---
+
+    @Test
+    fun `restore commit phase light`() = state(
+        name = "running_commit_light",
+        dark = false,
+        tag = BackupRestoreRunningSheetTestTag,
+        value = LibraryBackupRestoreUiState.Running(LibraryBackupRestoreMode.Restore, cancellable = false),
+    )
+
+    @Test
+    fun `partial backup mixed reasons light`() = state(
+        name = "partial_mixed_light",
+        dark = false,
+        tag = BackupRestoreSuccessSheetTestTag,
+        value = LibraryBackupRestoreUiState.BackupSaved(
+            projectCount = 4,
+            assetCount = 2,
+            totalCount = 6,
+            omitted = listOf(
+                LibraryOmission("Letters home", LibraryOmissionReason.Unreadable),
+                LibraryOmission("Moth Club Bulletin", LibraryOmissionReason.Photo),
+            ),
+        ),
+    )
+
+    @Test
+    fun `restore some new from a partial backup light`() = someNewPartial(dark = false)
+
+    @Test
+    fun `restore some new from a partial backup dark`() = someNewPartial(dark = true)
+
+    @Test
+    fun `nothing saved light`() = state(
+        name = "none_saved_light",
+        dark = false,
+        tag = BackupRestoreErrorSheetTestTag,
+        value = LibraryBackupRestoreUiState.Failed(
+            LibraryBackupRestoreMode.Backup,
+            LibraryBackupRestoreFailureKind.BackupNoneSaved,
+        ),
+    )
+
+    /** Amendment N's `n-some-new-partial`: the longest result, all three paragraphs in N5's order. */
+    private fun someNewPartial(dark: Boolean) = state(
+        name = "some_new_partial_${theme(dark)}",
+        dark = dark,
+        tag = BackupRestoreSuccessSheetTestTag,
+        value = LibraryBackupRestoreUiState.RestoreAdded(
+            restoredProjectCount = 2,
+            alreadyHereCount = 5,
+            omitted = listOf(LibraryOmission("Moth Club Bulletin", LibraryOmissionReason.Unreadable)),
+        ),
+    )
+
     private fun chooser(dark: Boolean) {
         setContent(dark) {
             KeepSafeSheet(

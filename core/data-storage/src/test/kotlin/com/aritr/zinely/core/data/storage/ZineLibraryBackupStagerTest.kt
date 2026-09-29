@@ -114,6 +114,35 @@ class ZineLibraryBackupStagerTest {
         assertNoStagingChildren()
     }
 
+    /** ADR-122 R1: probed after clean-up, the space the failed copy used reads as free again, hiding a full disk. */
+    @Test
+    fun `a full disk is measured before the partial staging copy is deleted`() {
+        val archive = writeArchive(fixture(mapOf("one" to document())))
+        var partialCopyPresentAtProbe: Boolean? = null
+        val fullDisk = ZineLibraryBackupStager(
+            openStagingFile = { target ->
+                object : OutputStream() {
+                    init { Files.createFile(target) }
+                    override fun write(b: Int): Unit = throw IOException("No space left on device")
+                    override fun write(b: ByteArray, off: Int, len: Int): Unit = throw IOException("No space left on device")
+                }
+            },
+            usableSpace = { stagingRoot ->
+                partialCopyPresentAtProbe = Files.walk(stagingRoot).use { paths -> paths.anyMatch(Files::isRegularFile) }
+                512L
+            },
+        )
+
+        val failure = assertThrows(ZineBackupStagingException::class.java) {
+            runBlocking { fullDisk.stage(archive, temp.resolve("stage")) }
+        }
+
+        assertEquals(ZineBackupStagingException.Reason.STAGING_WRITE_FAILED, failure.reason)
+        assertEquals(512L, failure.usableBytesAtFailure)
+        assertEquals(true, partialCopyPresentAtProbe)
+        assertNoStagingChildren()
+    }
+
     @Test
     fun `a staging directory that can't be created is a staging write failure`() {
         val archive = writeArchive(fixture(mapOf("one" to document())))

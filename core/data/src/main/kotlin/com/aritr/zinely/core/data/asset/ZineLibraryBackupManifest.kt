@@ -113,13 +113,16 @@ internal object LenientOmissionsSerializer : KSerializer<List<ZineBackupOmission
 
     override fun deserialize(decoder: Decoder): List<ZineBackupOmission> {
         val element = (decoder as? JsonDecoder)?.decodeJsonElement() ?: return delegate.deserialize(decoder)
-        return (element as? JsonArray)?.map { item ->
+        // ponytail: a hostile 4 MiB manifest can list ~1M tiny entries; keep no more than a real backup could hold, so
+        // the display copies downstream stay bounded. The JSON tree itself is bounded by MAX_BACKUP_MANIFEST_BYTES, as
+        // for every other manifest field.
+        return (element as? JsonArray)?.asSequence()?.take(MAX_BACKUP_PROJECTS)?.map { item ->
             val fields = item as? JsonObject
             ZineBackupOmission(
                 title = fields?.stringOrNull("title"),
                 reason = ZineBackupOmission.normalizedReason(fields?.stringOrNull("reason")),
             )
-        }.orEmpty()
+        }?.toList().orEmpty()
     }
 
     private fun JsonObject.stringOrNull(key: String): String? =

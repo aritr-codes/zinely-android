@@ -114,7 +114,7 @@ class LibraryBackupRestoreSheetTest {
             onCancel = { cancellations++ },
         )
 
-        composeRule.runOnUiThread { ShadowDialog.getLatestDialog()?.onBackPressed() }
+        composeRule.runOnUiThread { checkNotNull(ShadowDialog.getLatestDialog()).onBackPressed() }
         composeRule.waitForIdle()
 
         assertEquals(1, cancellations)
@@ -416,8 +416,16 @@ class LibraryBackupRestoreSheetTest {
         listOf(
             LibraryBackupRestoreFailureKind.BackupLimitReached to
                 ("Couldn’t finish that backup" to "Nothing about the zines on this shelf was changed."),
-            LibraryBackupRestoreFailureKind.BackupZineUnreadable to
-                ("A zine here can’t be opened" to "No backup was saved. It may not appear on your shelf."),
+            LibraryBackupRestoreFailureKind.BackupNoneSaved to
+                ("No zines could be saved" to "Zinely couldn’t read the zines on this phone, so no backup was saved."),
+            LibraryBackupRestoreFailureKind.BackupNoneSavedOffShelf to (
+                "No zines could be saved" to
+                    "Zinely couldn’t read the zines on this phone, so no backup was saved. They may not appear on your shelf."
+                ),
+            LibraryBackupRestoreFailureKind.BackupNoneSavedPhoto to (
+                "No zines could be saved" to
+                    "Zinely couldn’t read the photos in the zines on this phone, so no backup was saved."
+                ),
             LibraryBackupRestoreFailureKind.BackupZineNewer to
                 ("A zine here needs a newer Zinely" to "Update Zinely, then back up."),
         ).let { cases ->
@@ -442,6 +450,117 @@ class LibraryBackupRestoreSheetTest {
                 dismissals = 0
             }
         }
+    }
+
+    // --- 1.x step 1b (ADR-122 R2 / R3, ADR-121 Amendment N) ---
+
+    @Test
+    fun `once a restore commits, Cancel leaves the tree and Back does nothing (R2)`() {
+        var cancellations = 0
+        stateSheet(
+            LibraryBackupRestoreUiState.Running(LibraryBackupRestoreMode.Restore, cancellable = false),
+            onCancel = { cancellations++ },
+        )
+
+        composeRule.onNodeWithText(Copy.LibraryBackup.RESTORE_RUNNING_TITLE).assertIsDisplayed()
+        composeRule.onNodeWithText("Adding zines to your shelf.").assertIsDisplayed()
+        composeRule.onNodeWithText("This part can’t be stopped.").assertIsDisplayed()
+        composeRule.onNodeWithText(Copy.LibraryBackup.RESTORE_RUNNING_BODY).assertDoesNotExist()
+        composeRule.onNodeWithTag(BackupRestoreCancelTestTag).assertDoesNotExist()
+
+        composeRule.runOnUiThread { checkNotNull(ShadowDialog.getLatestDialog()).onBackPressed() }
+        composeRule.waitForIdle()
+        assertEquals(0, cancellations)
+    }
+
+    @Test
+    fun `when the commit starts mid-sheet, Cancel leaves and the new hint is announced`() {
+        val state = mutableStateOf<LibraryBackupRestoreUiState?>(
+            LibraryBackupRestoreUiState.Running(LibraryBackupRestoreMode.Restore),
+        )
+        setContent { LibraryBackupRestoreStateSheet(state.value, onDismiss = {}, onCancel = {}, onRetry = {}) }
+        composeRule.onNodeWithTag(BackupRestoreCancelTestTag).assertIsDisplayed()
+
+        state.value = LibraryBackupRestoreUiState.Running(LibraryBackupRestoreMode.Restore, cancellable = false)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(BackupRestoreCancelTestTag).assertDoesNotExist()
+        composeRule.onNodeWithText("This part can’t be stopped.")
+            .assertIsDisplayed()
+            .assert(
+                androidx.compose.ui.test.SemanticsMatcher.expectValue(
+                    SemanticsProperties.LiveRegion,
+                    androidx.compose.ui.semantics.LiveRegionMode.Polite,
+                ),
+            )
+    }
+
+    @Test
+    fun `a running backup keeps its Cancel whatever the flag says`() {
+        stateSheet(LibraryBackupRestoreUiState.Running(LibraryBackupRestoreMode.Backup, cancellable = false))
+
+        composeRule.onNodeWithTag(BackupRestoreCancelTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a partial backup is a success titled N of M that names what it left out`() {
+        stateSheet(
+            LibraryBackupRestoreUiState.BackupSaved(
+                projectCount = 4,
+                assetCount = 1,
+                totalCount = 6,
+                omitted = listOf(
+                    LibraryOmission("Letters home", LibraryOmissionReason.Unreadable),
+                    LibraryOmission("Moth Club Bulletin", LibraryOmissionReason.Photo),
+                ),
+            ),
+        )
+
+        composeRule.onNodeWithText("4 of 6 zines saved").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Zinely couldn’t open 1 zine, so it isn’t in this backup: “Letters home”.\n\n" +
+                "Zinely couldn’t read a photo in 1 zine, so that zine isn’t in this backup: “Moth Club Bulletin”.",
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText("✓").assertIsDisplayed()
+        composeRule.onNodeWithTag(BackupRestoreDoneTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a restore that adds some says what was already here, then stayed put (N3)`() {
+        stateSheet(LibraryBackupRestoreUiState.RestoreAdded(restoredProjectCount = 2, alreadyHereCount = 5))
+
+        composeRule.onNodeWithText("2 zines added to your shelf").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "The other 5 were already here, so they weren’t added again.\n\nWhat was already on this shelf stayed put.",
+        ).assertIsDisplayed()
+    }
+
+    @Test
+    fun `nothing new is a success with Done, not an error (N4)`() {
+        stateSheet(LibraryBackupRestoreUiState.RestoreAdded(restoredProjectCount = 0, alreadyHereCount = 7))
+
+        composeRule.onNodeWithText("Nothing new to add").assertIsDisplayed()
+        composeRule.onNodeWithText("The zines from this backup are already on your shelf.").assertIsDisplayed()
+        composeRule.onNodeWithTag(BackupRestoreSuccessSheetTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BackupRestoreRetryTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the chooser's restore line says a zine already here isn't added again (N1)`() {
+        chooser(lastBackup = null)
+
+        composeRule.onNodeWithText(
+            "Add zines from a Zinely backup. Zines already on this shelf aren’t added again. " +
+                "If a zine has changed since the backup, the changed one is added too.",
+            useUnmergedTree = true,
+        ).assertExists()
+    }
+
+    @Test
+    fun `a partial last backup says how many of how many it holds`() {
+        chooser(LibraryLastBackup(savedAtEpochMs = SAVED_AT, fileName = null, savedCount = 5, totalCount = 6))
+
+        composeRule.onNodeWithText("— 5 of 6 zines.", substring = true).assertExists()
     }
 
     private fun assertNoTextBetween(top: androidx.compose.ui.unit.Dp, bottom: androidx.compose.ui.unit.Dp) {

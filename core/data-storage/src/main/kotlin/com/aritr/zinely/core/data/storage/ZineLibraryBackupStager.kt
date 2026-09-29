@@ -53,13 +53,19 @@ public data class ZineArchiveLimits(
     }
 }
 
-/** A stable failure family for hostile, corrupt, incompatible, or invalid backup input. */
+/**
+ * A stable failure family for hostile, corrupt, incompatible, or invalid backup input. [usableBytesAtFailure] is the
+ * staging disk's free space measured when a [Reason.STAGING_WRITE_FAILED] write failed, **before** the partial staging
+ * tree was deleted (ADR-122 R1): measured after, the space the failed restore used reads as free again. Null when it
+ * wasn't measured or couldn't be.
+ */
 public class ZineBackupStagingException(
     public val reason: Reason,
     message: String,
     cause: Throwable? = null,
     public val encounteredVersion: Int? = null,
     public val supportedVersion: Int? = null,
+    public val usableBytesAtFailure: Long? = null,
 ) : Exception(message, cause) {
     public enum class Reason {
         MALFORMED_ARCHIVE,
@@ -114,6 +120,8 @@ public class ZineLibraryBackupStager(
     private val openStagingFile: (Path) -> OutputStream = { target ->
         Files.newOutputStream(target, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
     },
+    /** The staging disk's free space; measured only when a staging write fails. A test seam. */
+    private val usableSpace: (Path) -> Long = { Files.getFileStore(it).usableSpace },
 ) {
     public suspend fun stage(archive: Path, stagingParent: Path): StagedZineLibraryBackup {
         currentCoroutineContext().ensureActive()
@@ -128,8 +136,13 @@ public class ZineLibraryBackupStager(
             deleteTree(stagingRoot)
             throw cancelled
         } catch (known: ZineBackupStagingException) {
+            val measured = if (known.reason == ZineBackupStagingException.Reason.STAGING_WRITE_FAILED) {
+                known.withUsableBytes(stagingRoot)
+            } else {
+                known
+            }
             deleteTree(stagingRoot)
-            throw known
+            throw measured
         } catch (failure: ZipException) {
             deleteTree(stagingRoot)
             throw ZineBackupStagingException(
@@ -159,6 +172,16 @@ public class ZineLibraryBackupStager(
                 failure,
             )
         }
+    }
+
+    /** Measures free space while the partial staging tree still holds it; any probe failure measures nothing. */
+    private fun ZineBackupStagingException.withUsableBytes(stagingRoot: Path): ZineBackupStagingException {
+        val usable = try {
+            usableSpace(stagingRoot)
+        } catch (_: Exception) {
+            return this
+        }
+        return ZineBackupStagingException(reason, message.orEmpty(), cause, encounteredVersion, supportedVersion, usable)
     }
 
     private fun checkedArchiveSize(archive: Path): Long {
