@@ -124,13 +124,14 @@
 | [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, implemented through one bundled, deterministic preview/export path.** Bundled Emoji2 with forced replacement owns the glyphs; system/OEM fallback remains forbidden. | Accepted |
 | [ADR-113](#adr-113) | **Flip is one mobile verb with two local-axis toggles for a single Photo or Art element.** Text and multi-selection are excluded; persistence requires an honest schema v3 rather than a lossy v2 additive field. | Accepted |
 | [ADR-114](#adr-114) | **Public story on the website; installed-app utility in About; fold replay remains an HTML experiment.** The site uses sanitized canonical mockups, a concise embedded accessibility statement, curated release notes, and a non-committal roadmap. | Accepted; §1 and §5 amended by [ADR-118](#adr-118) |
+| [ADR-115](#adr-115) | Remove the unavailable selected-text Font action until font choice exists. Owner-led decision, not a demonstrated usability improvement. | Accepted 2026-09-29 (owner decision 2026-09-11; implementation accepted after device, TalkBack and HTML-parity verification) |
 | [ADR-116](#adr-116) | **Plain-language public updates and distinct About copy on both surfaces.** Retain technical documentation and accessibility requirements; app maker's note design frozen. | Accepted; native verification pending |
 | [ADR-117](#adr-117) | **Licence notices stay complete, but leave the main About narrative.** One compact row opens a child credits screen; font-role blurbs retire. | Accepted; owner ruling 2026-09-16 |
 | [ADR-118](#adr-118) | **The public website tells one product story and shows only shipped UI.** Self-hosted fonts, a truthful Bench render, a Download page, and one public status scheme (Available / In development / Planned / Exploring) by horizon. Amends ADR-114 §1 and §5. | Accepted 2026-09-24; owner-directed |
 | [ADR-119](#adr-119) | **On the Bench, TalkBack reads a page in spatial reading order, not stacking order; the zine action sheet's scrim is silent.** A §4.5 canvas clause; nodes declared in that order; `ZineActionScrim` gets `ZSheet`'s one-modifier fix. | Accepted 2026-09-26; 1.x step 2; owner TalkBack listen passed on SM-A176B |
 | [ADR-120](#adr-120) | **A backup says when it was last saved, and a failed backup says where it failed.** A last-backup record written only on a saved backup; two backup phases (private archive, then the chosen destination) classified by owner ruling F1; one Cancel-vs-complete latch; the destination discarded best-effort. Extends ADR-110; the step 1b boundary is explicit. | Accepted 2026-09-28 (proposed 2026-09-27); 1.x step 1; device passes and owner checks done |
-| [ADR-121](#adr-121) | **Restore adds zines that aren't already on the shelf and never replaces what's here.** A zine is already here when its title, format, paper size and content equal a shelf zine's, counted one for one; a changed zine is added; doubt adds. No format change. Amends ADR-110 §5. | Accepted (design) 2026-09-28; owner ruling; implementation and device passes pending |
-| [ADR-122](#adr-122) | **A backup is complete or explicitly partial, never silently partial; a restore reports what happened.** Backup is skip-and-list (one photo never fails it); the manifest gains a defaulted, leniently read `omitted` list, `packageVersion` stays 2; restore staging-write failures aren't "damaged", Cancel is withdrawn once commit starts, and a committed restore is a success even if the shelf lags. Amends ADR-110. | Proposed 2026-09-28; 1.x step 1b |
+| [ADR-121](#adr-121) | **Restore adds zines that aren't already on the shelf and never replaces what's here.** A zine is already here when its title, format, paper size and content equal a shelf zine's, counted one for one; a changed zine is added; doubt adds. No format change. Amends ADR-110 §5. | Accepted (design) 2026-09-28; owner ruling; implemented with 1.x step 1b and accepted 2026-09-29 (PR #86, `1fd3c9e`) |
+| [ADR-122](#adr-122) | **A backup is complete or explicitly partial, never silently partial; a restore reports what happened.** Backup is skip-and-list (one photo never fails it); the manifest gains a defaulted, leniently read `omitted` list, `packageVersion` stays 2; restore staging-write failures aren't "damaged", Cancel is withdrawn once commit starts, and a committed restore is a success even if the shelf lags. Amends ADR-110. | Accepted 2026-09-29; 1.x step 1b (PR #86, `1fd3c9e`) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -12976,6 +12977,80 @@ available to keyboard, touch, and screen-reader users without hidden state. Keep
 avoids creating a new Settings or Licences route, while removing its duplicated story makes the surface more
 direct. Deferring Compose replay prevents a prototype from becoming eight new animated states before its
 benefit is established.
+
+## ADR-115 {#adr-115}
+
+### Do not offer a Font action before font choice exists
+
+**Status:** Accepted, 2026-09-29. The owner accepted the decision on 2026-09-11 and the implementation on
+2026-09-29; see [Acceptance](#adr-115-acceptance) below.
+**Supersedes:** only the selected-text Font-presence requirement of OD-9 and its carry-forward in ADR-092.
+
+After reviewing the HTML A/B prototype and saying it looked good, the owner explicitly approved proceeding with
+removal as a design judgment. The proposed 16-person comparison requirement is waived for this decision. There is
+no first-time cohort result, measured discoverability gain, or claim that owner feedback proves usability.
+
+The frozen Bench A24 selected-text order is **Edit, Size, Ink, Duplicate, Delete**. Remove only Font. Preserve
+the shared Text/Add icon, the typing-row Ink/Done behavior, all five handlers, blank-text guards, touch floors,
+spacing, and the existing large-text overflow behavior. No font selection, renderer, model, persistence, export,
+undo, Photo or Art behavior is added or changed. Reintroducing Font requires a working capability and a new freeze.
+
+HTML is amended and frozen before Compose. The historical A/B wrapper remains inspectable by reconstructing its
+old disabled Font control in condition A; it is no longer an unresolved decision gate. See the
+[experiment and verification record](reviews/2026-09-10-font-control-removal-experiment.md).
+
+Before merge: ordered/absent-control and blank-text regressions, live action dispatch, narrow/large-text layout,
+platform accessibility checks, explicit golden verification, safe device installation, HTML/device comparison,
+independent review, and the two device readings required by CLAUDE.md. A human TalkBack reading remains distinct
+from automated semantics. The owner waived the cohort study, not these engineering acceptance checks.
+
+Independent review (2026-09-11): GO for code, tests, documentation, and pinned golden images after green CI on
+`c48960d`; overall merge NO-GO pending owner hands-on/TalkBack and rendered HTML/device parity/browser keyboard
+acceptance. No required implementation fix remains. Evidence and limitations are in the linked verification record.
+
+#### Acceptance (2026-09-29) {#adr-115-acceptance}
+
+Accepted by the owner on 2026-09-29. The final selected-text bar is **Edit, Size, Ink, Duplicate, Delete**.
+The decision above is unchanged; this records how the implementation was verified on current `main`.
+
+- **Updated head.** `origin/main` (`b5c6d55`) was merged into the branch with a normal merge commit,
+  `aad2084`. There was no rebase, so `88e9413`, `173e85f` and `c48960d` above remain the provenance they cite.
+  An independent review of the merge resolution returned GO with no required fix.
+- **Tests and goldens on `aad2084`.** The full local suite ran 2,390 tests with 0 failures and 0 skipped,
+  including the focused `BenchContextBarTest`, `BenchContextBarPlatformA11yTest` and `BenchTextGoldenTest`.
+  `:app:lintDebug`, `:app:checkDependencyAllowlist` and `:app:assembleRelease` passed. All three
+  `verifyRoborazziDebug` tasks passed with `--rerun-tasks`, and no golden was re-recorded.
+- **CI on `aad2084`.** Both jobs of run 36546365541 passed, including the golden-verify step.
+- **Rendered HTML parity.** The frozen Bench, with A24, was rendered in Microsoft Edge in light and dark. With
+  text selected the bar is exactly the five actions above: the pre-A24 list minus Font. Photo and Art are
+  unchanged. Order, labels, pill centring, spacing and the Delete tint match the device and the goldens. One
+  difference predates this ADR: the HTML draws stroke icons, while the Compose bar uses filled Material icons.
+- **Browser keyboard check.** Tab through the HTML bar gives five stops with no Font, and Shift+Tab reverses.
+- **Device action checks.** The device was the SM-A176B on Android 16. The QA build came from `aad2084`, under
+  a separate application ID; the release install was not touched. The platform tree shows five enabled
+  buttons and no Font node, at font scale 1.0 and at 1.8 (nothing clipped). Each action worked once on
+  disposable text. The typing row's Ink and Done are unchanged. Add > Text is present and creates a text box.
+- **Owner TalkBack listen at font scale 1.0 (2026-09-29).** Samsung TalkBack 16.2.00.13, authored text selected. Swiping
+  right gave Edit, Size, Ink, Duplicate, Delete, with no Font stop. Swiping left gave Delete, Duplicate,
+  Ink, Size, Edit. A blank box was announced as "Selected, empty text, button". That is the element's own
+  announcement; the owner did not report the bar's disabled Size/Ink/Duplicate wording. The owner confirmed
+  these work as intended.
+- **Follow-up owner TalkBack listen at font scale 1.8 (2026-09-29).** Same device and TalkBack version, QA
+  build from the final head `bdd5990` (byte-identical to the `aad2084` build; the commits between them are
+  docs only). Swiping right gave Edit, Size, Ink, Duplicate, Delete. Swiping left gave exactly the reverse:
+  Delete, Duplicate, Ink, Size, Edit. There was no Font stop and no extra control, and nothing was clipped
+  or unreachable.
+- **Owner Add > Text listen at font scale 1.8 (2026-09-30).** Same build. The "Add to your page" sheet
+  heading read "Add to your page", and the Text option was announced as
+  "Text. Type words onto the page button. Double tap to activate". Add > Text remained reachable, and choosing
+  it still creates a text box. Removing the selected-text Font action did not affect it.
+- **Limit the owner accepted.**
+  - A selected blank text box could not be reached on the device with adb taps: blank, whitespace-only and
+    erased text are all removed on Done. The disabled Size, Ink and Duplicate state, with "Type something
+    first", is verified by the automated tests only.
+
+Full evidence is in the [verification record](reviews/2026-09-10-font-control-removal-experiment.md#settlement-on-current-main-2026-09-29).
+Merging PR #70 remains the owner's call.
 
 ## ADR-116 {#adr-116}
 

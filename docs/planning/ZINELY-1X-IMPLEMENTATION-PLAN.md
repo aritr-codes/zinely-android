@@ -360,7 +360,8 @@ sequencing, not a ruling). The draft branch `editor/remove-unavailable-font`
 forks from `ad86586`, before beta.5, and changes `v21-bench.html`, `EditorScreen.kt` and `DECISIONS.md`
 (ADR-115). Steps 3 and 4 amend the same frozen file, and step 3 changes `EditorScreen.kt`. Merging or closing
 PR #70 first (after its TalkBack and HTML-parity acceptance) avoids two open amendments to one frozen spec and
-an ADR-number collision. ✅ The branch no longer merges cleanly into `main` (conflicts in `CHANGELOG.md` and `DECISIONS.md`), so it needs a rebase first. If it can't be settled by then, step 3 rebases onto whichever lands first.
+an ADR-number collision. ✅ 2026-09-29: `main` was merged into the branch (`aad2084`, no rebase), and the owner
+accepted the implementation ([ADR-115 Acceptance](../DECISIONS.md#adr-115-acceptance)). The owner's merge settles it.
 
 **Runs in parallel (people, not code), approved to start now** — one combined
 [print and fold study protocol](STUDY-PRINT-AND-FOLD-PROTOCOL.md):
@@ -491,7 +492,7 @@ task; Q1 fixed its constraint: the existing signing identity must stay compatibl
 | O4 | **Tray / X2 timing** | schedule X2 (answer D-029 Q1–Q3) or keep unscheduled | Clippings tray | [checklist §1.1 D-029](../OWNER-CHECKLIST.md#11-v2-spec-defects--designv2-spec-defectsmd) · OD-2 |
 | O5 | **Paid-pack clock** | which build is the "first bundled-supplies release" (beta.2 / beta.3 / r3), and run, reshape or retire the IAP trial; not deciding ratifies free-forever | nothing in 1.x technically (F4 if run); the clock runs out ~Aug–Sep 2027 | [checklist §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship) |
 | O6 | **Play signing** | upload the existing release key as the app signing key (side-loaded users can update) vs a Google-generated key (they must reinstall and restore) | Play publication, the ROADMAP's only *Planned* item; irreversible, so decide with O15 ([gate](ZINELY-1X-DECISION-GATE.md#decisions-that-can-wait)) | [checklist §3 Play path](../OWNER-CHECKLIST.md#3-release--credentials) |
-| O7 | **PR #70** | **Already approved** as a design judgment (ROADMAP In development); remaining is acceptance work (rebase, hands-on TalkBack, rendered HTML parity), not a decision | Steps 3 and 4 (owner, 2026-09-26); step 8 (planning review) | [checklist §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship) · ROADMAP In development |
+| O7 | **PR #70** | **Already approved** as a design judgment (ROADMAP In development). ✅ **Acceptance done 2026-09-29** (main merged in, hands-on TalkBack, rendered HTML parity); the merge is the owner's | Steps 3 and 4 (owner, 2026-09-26); step 8 (planning review) | [checklist §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship) · ROADMAP In development |
 | O8 | **Font set** | ✅ **Ruled 2026-09-26 (Q2):** Book = Fraunces, Plain = Inter; Hand (Averia) deferred. Originally: confirm ZINE-DIRECTION's three voices | D2 | [checklist §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship) (existing Q3 row) |
 | O9 | **Art backlog selection** | which of the ~19 researched supplies (and which frames) ship, and who authors the outlines | D5 | [checklist §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship) · ADR-107 R1 |
 | O10 | **Typebar/Reframe freeze status** | ✅ **Ruled 2026-09-26 (Q4):** freeze TypeBar after its correction; freeze Reframe as shipped (step Q4-F). N2 was a to-do, not a conflict | D2's HTML amendment route | [checklist §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship) · V21-SPEC |
@@ -534,7 +535,7 @@ restore-honesty defects** ([Q8](ZINELY-1X-DECISION-GATE.md#q8-the-next-release-a
 | **1 · D1 part 1** | ✅ **COMPLETE** (2026-09-28, PR #81; [ADR-120](../DECISIONS.md#adr-120) Accepted) | Device pass, owner design check and the owner's TalkBack listen (reading order, on the pre-polish build) done. **A7**, TalkBack's opening focus: criterion **amended by the owner 2026-09-28** after the device observation (focus opens within the meaningful informational content, with the last-backup line still before "Back up this shelf"), and **accepted under it**: focus opens on the body text above the last-backup line. The original last-backup-first target was not met ([ADR-120](../DECISIONS.md#adr-120) acceptance record) |
 | **N · restore adds what's new** (amendment, before 1b) | ✅ **Design FROZEN 2026-09-28** ([ADR-121](../DECISIONS.md#adr-121), Accepted, design); implementation ⏳ built with 1b, under review | Spec and tests in [Brief 01 Part N](BRIEF-01-VISIBLE-OWNERSHIP.md#part-n--restore-adds-whats-new). Its code shares 1b's restore receipt, so building it with 1b is the natural fit; the owner authorises the session |
 | **1b · restore honesty + skip-and-list** | ✅ **COMPLETE** (2026-09-29, PR #86, merge `1fd3c9e`; built with Part N; [ADR-122](../DECISIONS.md#adr-122) Accepted). Accepted by the owner after the full suite (2,384 tests), lint, the dependency allow-list, `assembleRelease`, the golden check, green CI and both device passes on SM-A176B, with owner items (a)–(h) resolved. Follow-ups outside 1b, not blockers: chooser-row TalkBack semantics; the saved-without notice naming no one past the first 50 display entries; the generic restore retry label “Try another backup” on a phone-side failure | 1a approved; its ADR reviewed and landed in-session ([ADR-122](../DECISIONS.md#adr-122), Proposed 2026-09-28, accepted 2026-09-29); [Part N](BRIEF-01-VISIBLE-OWNERSHIP.md#part-n--restore-adds-whats-new) frozen with [ADR-121](../DECISIONS.md#adr-121) (✅ 2026-09-28) |
-| **PR #70 acceptance** | ⏳ acceptance work | Rebase onto `main`, hands-on TalkBack, rendered HTML parity; then merge or close. Untouched by planning |
+| **PR #70 acceptance** | ✅ **ACCEPTED 2026-09-29**; ⏳ owner merge | `main` merged in (`aad2084`), CI green, goldens verified, rendered HTML parity and keyboard, device checks, owner TalkBack listen ([ADR-115 Acceptance](../DECISIONS.md#adr-115-acceptance)). Settled when the owner merges |
 | **3 · D4-A3 named undo** | ⏳ | PR #70 settled; the `v21-bench.html` undo-snack amendment approved |
 | **4 · tap-through hit test** | ⏳ | PR #70 settled; its ADR (draft in Brief 05); the `v21-bench.html` behaviour note approved |
 | **5 · D3 stage 1 print guidance** | ⛔ blocked | The print study, part A; then the `v21-proof.html` amendment approved. Brief 03 is rewritten after the study |
@@ -583,13 +584,14 @@ rulings):
 6. **Two-phone cross-device restore pass** — gates D1 part 2. ⚠ Its procedure is **incomplete** (phones and
    builds, transfer route, a pass rule, the debug build that `run-as` byte checks need, where results are
    recorded); complete it before the pass.
-7. **PR #70 hands-on TalkBack + HTML parity** — acceptance, not research.
+7. ~~**PR #70 hands-on TalkBack + HTML parity** — acceptance, not research.~~ ✅ Done 2026-09-29.
 8. Before cutting wave 1: re-read Google's verification page for the 2027 global date.
 
 ## Change log
 
 | Date | Change |
 |---|---|
+| 2026-09-29 | **PR #70 accepted, not yet merged.** `main` was merged into `editor/remove-unavailable-font` (`aad2084`, no rebase). The owner accepted the implementation after CI, goldens, rendered HTML parity, device checks and a TalkBack listen ([ADR-115](../DECISIONS.md#adr-115-acceptance)). Step 3 is **not** ready: PR #70 settles on the owner's merge, and the `v21-bench.html` undo-snack amendment is still outstanding. |
 | 2026-09-29 | **Step 1b complete.** PR #86 (merge `1fd3c9e`) implements 1b with Part N; the owner accepted it after implementation, device and CI validation, and [ADR-122](../DECISIONS.md#adr-122) is Accepted with owner items (a)–(h) resolved. The implementation-status table and the §11 row are marked complete. Three follow-ups stay outside 1b and are not blockers. No later step changed. |
 | 2026-09-28 | **A7 criterion amended** (owner ruling, option 1): opening focus must land within the sheet's meaningful informational content, with the last-backup information still before the Backup action. Accepted under it on the observed body-text opening; no code change. The original last-backup-first target was not met. |
 | 2026-09-28 | **Step 1 record corrected:** A7 (TalkBack's opening focus) was not answered by the 2026-09-27 listen, which recorded reading order from the top of the sheet. Observed on the polished build the same day: focus opens on the body text above the last-backup line (not skipped), not on the last-backup line (intended target not achieved). §11 row 1 records it. No status changed. |

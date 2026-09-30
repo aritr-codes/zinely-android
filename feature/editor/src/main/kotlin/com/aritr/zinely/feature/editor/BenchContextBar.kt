@@ -36,7 +36,6 @@ import androidx.compose.material.icons.filled.Flip
 import androidx.compose.material.icons.filled.Grain
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material.icons.filled.ViewWeek
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -93,11 +92,8 @@ internal enum class BenchVerbKind { TEXT, PHOTO, DECOR }
  * it, but may name the selected object when two element kinds expose the same visible word; the icon
  * above it remains decorative, exactly as in the freeze, where the `<span>` carries the word.
  *
- * [enabled] is `false` only for **Font**, which the freeze draws and the product cannot honour:
- * [OD-9](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling) ruled that the frozen
- * Bench specifies *the editing surface, not the whole application flow*, so a control it draws is kept
- * drawn and invents nothing. A disabled control is the honest rendering of that: it is visible, it is
- * announced, and it does not promise a tap that goes nowhere.
+ * [enabled] is false for actions unavailable on the current selection, such as styling blank text.
+ * ADR-115 / frozen Bench A24 removes the unsupported Font action rather than exposing a dead control.
  */
 internal data class BenchVerb(
     val label: String,
@@ -108,9 +104,8 @@ internal data class BenchVerb(
     /**
      * Why this verb is disabled, announced as its **state** rather than folded into its name.
      *
-     * `stateDescription`, not `contentDescription`: the verb's name is `Font`, and it stays `Font` — a
-     * label that reads "Font, not available yet" is a *different control's* name and would break every
-     * copy test that asserts the verb set. State is the axis that changes; the name is not.
+     * Use `stateDescription`, not `contentDescription`: Size stays Size when blank text prevents styling.
+     * State is the axis that changes; the name is not.
      *
      * Null for an enabled verb, and null is meaningful: a verb with no reason is either live or disabled
      * for something the user cannot act on, and inventing a sentence for that would be noise.
@@ -141,12 +136,8 @@ internal fun benchContextVerbs(
 ): List<BenchVerb> = when (kind) {
     BenchVerbKind.TEXT -> listOf(
         BenchVerb(Copy.BenchVerbs.EDIT, Icons.Filled.Edit),
-        BenchVerb(
-            Copy.BenchVerbs.FONT, Icons.Filled.TextFields, enabled = false,
-            unavailableBecause = Copy.BenchVerbs.NOT_YET,
-        ),
         // [styleable] is false for a still-blank box, which the reducer refuses to style (ADR-055) — so
-        // these two are drawn and inert there, exactly as `Font` is, under the same OD-9 class. Found by
+        // these two remain drawn and inert for that selection. Found by
         // review, not by a test: with them live, tapping either on a blank box set `typeBarOpen`, which
         // hid this bar (its own `!typeBarOpen` term) while the Type bar declined to appear (its
         // `styleTarget != null` term) — and the reset effect is keyed on `styleTarget?.id`, still null,
@@ -177,7 +168,7 @@ internal fun benchContextVerbs(
         // (`v21-bench.html:690`) exactly as CLAUDE.md's HTML-first rule requires — never the reverse.
         // (Was cited as :674, which is the *text* list; corrected by review after counting the lines.)
         // It is live: the whole feature is one boolean on the selected photo, so there is nothing left
-        // to invent ([ADR-106]). Font is the remaining drawn-and-inert verb.
+        // to invent ([ADR-106]).
         BenchVerb(Copy.BenchVerbs.COPIER, Icons.Filled.Grain, checked = copierOn),
         // D-038 is now complete: the existing picker effect carries this photo's id to the existing
         // reducer-owned ReplaceImage command, so framing and every other property remain untouched.
@@ -492,7 +483,7 @@ private fun BenchVerbButton(
                 contentDescription = verb.spokenLabel
                 role = Role.Button
                 // `clearAndSetSemantics` wipes everything the button published, INCLUDING the disabled
-                // state - so without this line Font is announced as an ordinary button that simply does
+                // state - so without this line an unavailable action is announced as an ordinary button that does
                 // nothing when tapped. That is precisely the ADR-058 ReframeControls.ZoomButton defect,
                 // reproduced here by the same mechanism and caught by the same assertion.
                 //
@@ -524,7 +515,7 @@ private fun BenchVerbButton(
                     }
                 } else {
                     disabled()
-                    // OD-9 keeps the control drawn; this says WHY it is dim. State, not name.
+                    // Blank-text guards keep the action drawn; this says WHY it is dim. State, not name.
                     verb.unavailableBecause?.let { stateDescription = it }
                 }
             }

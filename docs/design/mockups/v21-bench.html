@@ -2253,3 +2253,15 @@ survives greyscale, glare, and low-colour perception.
   font:700 .72rem/1 var(--sans)
 }
 </style>
+
+<!-- A24 · 2026-09-11 · DESIGN FROZEN by owner, ADR-115.
+     Remove only the unavailable selected-text Font action. Final order:
+     Edit / Size / Ink / Duplicate / Delete. Keep ICON.font for Add > Text.
+     Owner-led simplification after prototype review, not a measured A/B outcome.
+     A21 spacing, touch floors and all live handlers are unchanged. -->
+<script>
+var toolsForBeforeA24=toolsFor;
+toolsFor=function(kind){
+  return toolsForBeforeA24(kind).filter(tool=>kind!=='text'||tool[0]!=='Font');
+};
+</script>

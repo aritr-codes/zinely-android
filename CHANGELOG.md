@@ -49,6 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   release artifact changed.
 - Reopened creative tools for a scoped feasibility assessment, not a release commitment: fonts, Art, frames,
   photo transparency, shaped cutouts and crop improvements. The roadmap separates their relative effort.
+- Removed the unavailable selected-text Font action under owner-approved ADR-115 / frozen Bench A24.
+  Edit, Size, Ink, Duplicate and Delete retain their behavior and blank-text guards. This is an owner-led
+  simplification, not a measured usability result. It was verified on a device, including an owner TalkBack
+  listen, and accepted by the owner; the public APK is unchanged.
 - Gave the public homepage a more tactile paper presentation and stronger independent voice, with an interactive
   print-order comparison, optional zine ideas, folding progress, and small native-disclosure surprises. All work
   without essential hover or motion; product claims, download links, and Android behavior remain unchanged.

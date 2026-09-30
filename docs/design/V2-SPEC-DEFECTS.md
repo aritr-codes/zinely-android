@@ -2841,6 +2841,10 @@ This is [D-025](#d-025)'s shape one surface along: *the frozen file is a prototy
 
 #### The ruling — owner, 2026-08-01 (OD-9) {#d-031-ruling}
 
+**Partial supersession, 2026-09-11:** [ADR-115](../DECISIONS.md#adr-115) removes only the unavailable
+selected-text Font action through frozen Bench A24. The historical ruling below is retained; its other
+requirements remain in force.
+
 > The frozen Bench intentionally specifies the **editing surface, not the complete application flow.**
 >
 > - **Font and Size are contextual editing affordances only.** They shall remain **visually present** in Phase C where specified. They shall **not invent functionality** beyond what the repository already supports.

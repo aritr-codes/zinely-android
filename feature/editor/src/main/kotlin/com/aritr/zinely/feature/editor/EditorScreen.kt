@@ -581,7 +581,7 @@ public fun EditorScreen(
     // The owner's ruling keeps BOTH bars (OD-11, ADR-029 §6) and forbids showing the same action twice at
     // the same moment, resolving it by **assigning responsibilities**:
     //
-    //   the frozen `.ctx` bar  →  the ELEMENT verbs   (Edit · Font · Size · Ink · Delete · Reframe · Replace)
+    //   the frozen `.ctx` bar  →  the ELEMENT verbs   (per-kind lists in benchContextVerbs; A24/ADR-115)
     //   EditorContextBar       →  the TRANSFORM verbs (move ×4 · scale ×2 · rotate ×2 · order ×2)
     //
     // which is the split ADR-029 §6 already justifies: the transform bar exists because *drag* has no
@@ -1787,7 +1787,7 @@ public fun EditorScreen(
                                 is DecorElement -> artSheetFor = BenchArtPurpose.Replace(ctxElement.id)
                                 else -> Unit
                             }
-                            // Font ships disabled and never arrives here (ADR-092 §1(c)).
+                            // Only the selected kind's live verbs arrive here (A24/ADR-115).
                             else -> Unit
                         }
                     },
