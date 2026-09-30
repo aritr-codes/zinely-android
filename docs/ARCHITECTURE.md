@@ -394,6 +394,8 @@ stateDiagram-v2
 
 The drag preview is transient state (`activeGesture`) — never undoable, never persisted. Only the committed command enters history and the document.
 
+**Undo and redo name what they did** ([ADR-123](DECISIONS.md#adr-123)). Each step emits one `Effect.HistoryStepped` carrying a label derived from the command (nothing is stored in history). `EditorStore` sends every other effect to the ViewModel's effect runner, but words this one against the step's own model and hands the line to `EditorScreen`, whose Bench snack is its only speaker.
+
 ### 7.0 Element ids cross the persistence boundary
 
 The reducer is the **single allocator of element ids**, minting `el-<n>` from `EditorModel.nextToken` — the same monotonic counter that issues session tokens, which is how the reducer stays pure without a clock or RNG. `nextToken` is reducer state; `ZineDocument` is what gets saved. **The counter must therefore be seeded from the document it is about to edit** (`EditorModel.firstFreeToken`), because "the counter only ever advances" guarantees uniqueness *within* a session and nothing at all *across* one. Seeding at construction is what makes the reducer's no-collision claim true; a constant seed made every reopen mint an id the document already held.

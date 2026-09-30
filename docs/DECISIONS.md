@@ -13802,7 +13802,7 @@ that moves the maker to another page says so in the same line.
    against the model the step produced) and emits the line on `historyLines`; the snack is screen state, and the
    effect runner lives in the ViewModel and ignores the effect. `EditorScreen` raises the existing `BenchSnack` in its
    one slot: that line, no button, the frozen 3200 ms dwell. Its polite live region is the
-   only thing that speaks the step.
+   only speaker of the line (the status strip's "Saved" chip still speaks after every autosave; see Scope).
 5. **Keyed per step.** The snack is keyed by a step counter, not by its text, so an identical repeat is a new node
    that enters from hidden. `BenchSnack` now starts each instance at hidden (`Animatable(0f)` in place of
    `animateFloatAsState`). The geometry, motion spec, dwell and colours are unchanged.
@@ -13837,7 +13837,7 @@ region, which speaks on every autosave, an undo's included, as it did before.
   size, no longer records an undo step, as `CommitTransform` already did; otherwise its undo would say "moved back".
 - An Undo or Redo during a soft delete's 200 ms fade cancels the delete and the element comes back whole (before, the
   bar's Undo could leave it half-faded).
-- **Evidence (JVM):** `EditLabelTest` (every command a Bench control raises, via the real intents, plus every D4
+- **Evidence (JVM):** `EditLabelTest` (every command a Bench control raises, mostly through the real intents, plus every D4
   boundary: exactly and just over 2% and 2°, shrink, reverse and wrap-around turns, precedence, several elements);
   `HistorySteppedTest` (exactly one effect per step and none on an empty stack, `isRedo`, `landedOnPage` after the
   step, Across fold from the partner page, identical repeats, history round trip, page commands silent);
@@ -13846,3 +13846,12 @@ region, which speaks on every autosave, an undo's included, as it did before.
   snack, the page clause, a repeat on a new node, the 3200 ms dwell); `NamedUndoSnackGoldenTest` (undo, redo, page
   clause, Across fold, the longest line, light and dark, and the longest at font scale 2 on 360 dp, asserting the
   line stays inside the pill). These show the tree, not what TalkBack says. That is the owner's listen.
+- **Open risk, a device gate before the owner's listen.** Keying the snack per step means every undo reaches the
+  platform as a live-region node that *appears*, not one whose text changes. This ADR log already records
+  (Proof `.done`, the ADR-051/052 section on the retired snackbar) that Compose may send only a subtree change for a
+  new node, which TalkBack may not read aloud. No device record shows the shipped delete snack, which appears the
+  same way, being spoken either. Device Pass 1 therefore checks first that an undo is spoken at all, then that a repeat
+  is. **Decided fallback if it is silent:** keep one live-region node composed while the snack stands and change its
+  text, with the repeat case carried by the per-step key; if a repeat is then silent, speak the line once through
+  the existing `Announcer` drain *instead of* the live region (still one speaker), which re-speaks identical text.
+  Either fallback is a revision of this ADR, not a silent change.
