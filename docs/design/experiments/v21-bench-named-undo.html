@@ -1,0 +1,207 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Named undo review</title>
+
+<!--
+  REVIEW PAGE for v21-bench.html A26 (FROZEN 2026-09-30 on the owner's rulings; PR #88) — 1.x plan step 3,
+  Brief 04 A3, gate 3.
+
+  Every phone below is the real v21-bench.html, staged with its `?a26=` review stages; nothing here
+  redraws the snack. The words and the D4 worked examples are read from the prototype itself
+  (`a26.table()`, `a26.d4`), so this page cannot disagree with it.
+-->
+<style>
+:root{--bg:#FFF6E8;--fg:#27270F;--soft:#6A452F;--line:rgba(39,39,15,.18);--card:#F2DEBC;--mark:#555A1B}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#242312;--fg:#FFF9DB;--soft:#DAD7A0;--line:rgba(255,249,219,.18);--card:#1C1712;--mark:#BBCA6F}}
+:root[data-theme="dark"]{--bg:#242312;--fg:#FFF9DB;--soft:#DAD7A0;--line:rgba(255,249,219,.18);--card:#1C1712;--mark:#BBCA6F}
+*{box-sizing:border-box}
+body{margin:0;padding:24px 16px 64px;background:var(--bg);color:var(--fg);font:15px/1.5 Inter,system-ui,sans-serif}
+main{max-width:1180px;margin:0 auto}
+h1{font:700 1.7rem/1.2 Georgia,serif;margin:0 0 6px}
+h2{font:700 1.25rem/1.25 Georgia,serif;margin:40px 0 8px;padding-top:16px;border-top:1.5px solid var(--line)}
+h3{font-size:1rem;margin:22px 0 6px}
+p,li{max-width:78ch}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--mark);color:var(--bg);font:700 .72rem Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase}
+.muted{color:var(--soft);font-size:.9rem}
+table{border-collapse:collapse;width:100%;margin:8px 0 4px;font-size:.9rem}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
+q{quotes:"“" "”";font-weight:600}
+.scroll{overflow-x:auto}
+.frames{display:flex;flex-wrap:wrap;gap:20px 18px;margin:12px 0}
+figure{margin:0;max-width:100%}
+.crop{max-width:100%;overflow-x:auto;overflow-y:hidden;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.crop iframe{display:block;border:0;height:812px}
+figcaption{margin-top:6px;font-size:.8rem;color:var(--soft);max-width:390px}
+figcaption b{color:var(--fg)}
+code{font-size:.85em}
+</style>
+
+<main>
+<p><span class="badge">frozen · owner rulings 2026-09-30</span></p>
+<h1>Named undo — the undo snack amendment (A26)</h1>
+<p>Step 3 of the 1.x plan (Brief 04 A3, gate 3). After an undo, the Bench’s existing support-paper snack says
+what came back; after a redo, what was redone — and the page, when either takes you to another page. One snack,
+no button, spoken once. The owner ruled the four decisions and the Across-fold words on PR #88; this page shows the
+frozen design for the owner’s final look before the PR merges. Implementation is a separate session.
+Base <code>origin/main</code> <code>a6eb16b</code>, branch <code>design/step3-undo-snack</code>.</p>
+<p class="muted">Every phone below is the real <a href="../mockups/v21-bench.html">v21-bench.html</a> staged by its
+<code>?a26=</code> review stages; each shows the lower half of the phone at 1:1. In the live prototype, delete, flip and
+duplicate really undo with their named line: select something, act, then press the snack’s Undo or the bar’s Undo.
+Undo after Add Art or Across fold shows the words but reverts nothing, as the frozen prototype already did; ink is not
+demonstrated live. The prototype undo is one level deep and its Redo stays drawn disabled, so redo lines are staged
+in the same snack.</p>
+
+<h2>Decision record</h2>
+<div class="scroll"><table>
+<thead><tr><th>Decision</th><th>Ruling</th><th>What it means</th></tr></thead>
+<tbody>
+<tr><td><b>D1</b> Duplicate vs Add</td><td><b>1a</b></td><td>Both say the physical result: <q>Photo taken off</q>. No command words (“Copy”, “Place”) reach the maker.</td></tr>
+<tr><td><b>D2</b> Reframe</td><td><b>2a</b></td><td><q>Framing put back</q>. A return to the default look is never called a reset because it looks like one; only a genuine Reset could ever use reset words, and A26 gives it none.</td></tr>
+<tr><td><b>D3</b> Redo</td><td><b>3a</b></td><td>Redo raises the same snack through the same live region — no second speaker, no button, no separate component. Its words name the act redone in forward words (<q>Photo added</q>), never the undo sentence repeated.</td></tr>
+<tr><td><b>D4</b> One Transform, several changes</td><td><b>4c</b></td><td>Size changed by <b>more than 2%</b> → resized; otherwise turn <b>more than 2°</b> → turned; otherwise → moved. At or below either tolerance a change is an incidental slip. Size first when both are meaningful.</td></tr>
+<tr><td>Across fold</td><td>—</td><td>Undo says <q>Photo back on one page</q>.</td></tr>
+</tbody></table></div>
+<p><b>For your final look — derived, not ruled word for word.</b> The redo words beyond your example <q>Photo added</q>
+(<q>Photo removed</q>, <q>Photo moved</q>, <q>Stacking changed</q>, <q>Copier added</q>, <q>Left-right flip removed</q> … the
+full column in §A) apply your rulings; confirm them before PR #88 merges. (D4’s measurement definitions below: approved
+by you as written, 2026-09-30.) One
+choice to check: Across fold’s redo reuses its frozen forward line <q>Photo runs across pages 2 &amp; 3</q>, while the
+other redos use thing-first forward words rather than their frozen forward snacks (“Removed · …”, “Flipped …”,
+“Duplicated”, “Placed on the page”).</p>
+<h3>D4 worked examples, computed by the prototype’s rule</h3>
+<p class="muted">Size change is the larger relative change of width or height; turn is the smaller angle between the old and
+new rotation; both relative to the state before the change; with several things selected, the largest change of any of them. Both comparisons are strict “more than”.</p>
+<div class="scroll"><table id="d4"><thead><tr><th>Size change</th><th>Turn</th><th>Undo says</th><th>Redo says</th></tr></thead><tbody></tbody></table></div>
+
+<h2>What stays exactly as frozen</h2>
+<ul>
+  <li>The snack itself: pill, support-paper ground, ink border, <code>.79rem</code> type, the −0.6° tilt, 88px above the
+    phone bottom (A8: 12px above a live context bar), the 180ms entrance, the 3200ms dwell. Nothing is restyled.</li>
+  <li>One slot. A new line replaces the last; there is never a second snack or a second speaker.</li>
+  <li>Undo is a snack, not a dialogue. An undo or redo snack carries <b>no button</b>.</li>
+  <li>Forward snacks (“Removed · …”, “Duplicated”, “Flipped …”, “Placed on the page”) are unchanged and keep their Undo.</li>
+  <li>No schema change, no persisted label; History and <code>committing()</code> unchanged.</li>
+</ul>
+<p>What changed: the pre-A26 post-undo lines — “Put back” after a delete (<code>:810</code>) and after a flip
+(<code>:1068</code>), and “Duplicate undone” (<code>:2216</code>) — stay in the file as history, and A26 says a named
+line instead. Before A26 an undo after a placement, a spread or an ink also said “Put back”, which put nothing back.</p>
+
+<h2>A · The words</h2>
+<p>Paper words: the thing, then what happened to it. No coordinates, no command names, never the bare word “Undo”.
+The thing is <q>Text</q>, <q>Photo</q>, <q>Art piece</q>, or <q>3 things</q> when one act held several. Undo says what
+came back (<q>put back</q>, <q>taken off</q>, <q>… back</q>); redo says the act again in forward words
+(<q>removed</q>, <q>added</q>, <q>moved</q>, <q>changed</q> …).</p>
+<div class="scroll"><table id="words"><thead><tr><th>The act</th><th>Named from the command’s diff</th><th>Undo says</th><th>Redo says</th></tr></thead><tbody></tbody></table></div>
+<h3>Rules that come with the table</h3>
+<ul>
+  <li><b>Page clause (your rule, 2026-09-30).</b> <q>, page N</q> is added only when the undo or redo itself lands the
+    maker on a different page <i>and</i> the words don’t already say that page. The Bench goes there, clears the
+    selection, and the same line gains it: <q>Photo put back, page 3</q>, <q>Top-bottom flip taken off, page 8</q>,
+    <q>Photo back on one page, page 2</q>. A line that names its pages never gains one: <q>Photo runs across pages 2
+    &amp; 3</q>, never “…pages 2 &amp; 3, page 8”. No page change, no suffix. One line, one snack, one announcement; it
+    replaces today’s hard-coded “Changed page N”. A comma, not “·”, so the spoken line is the seen line.</li>
+  <li><b>Toggles name the state that came back:</b> undoing Copier-on says <q>Copier taken off</q>; undoing Copier-off
+    says <q>Copier put back</q>. Their redos name the state redone: <q>Copier added</q> / <q>Copier removed</q>. Flips
+    likewise, per axis.</li>
+  <li><b>Words before style.</b> One text edit that changed both the words and the style says <q>Words put back</q>.</li>
+  <li><b>Add Text is two undo steps.</b> The first undo says <q>Words taken off</q> (the box stays, empty), the next
+    <q>Empty box taken off</q>. Redo walks back: <q>Empty box added</q>, then <q>Words added</q>.</li>
+  <li><b>Replace on an Art piece</b> also refits its box; the swap outranks the refit (<q>Art piece swapped back</q>).</li>
+  <li><b>Across fold</b> redone says its frozen forward line, <q>Photo runs across pages 2 &amp; 3</q>, which names its
+    pages and so takes no page clause.</li>
+  <li><b>Restacking:</b> an adjacent restack swaps two ranks, so “forward” and “back” are the same diff; one
+    direction-free line fits. This rules the decision gate’s “restack direction” item.</li>
+  <li><b>Nothing left to undo or redo:</b> no new snack.</li>
+  <li><b>Repeats:</b> each undo or redo is a new snack instance (keyed per step), so a second identical line is meant to
+    be spoken again. Whether TalkBack re-speaks it is checked on device, per Brief 04.</li>
+  <li><b>Names:</b> things are named by kind, never by the maker’s words, so the “and N more” list convention
+    (<code>backup-restore.html</code>) is untouched.</li>
+  <li>Not covered: adding or deleting a page. No Bench control does either.</li>
+  <li><code>VOICE.md</code>’s “Undone. You can redo it.” is superseded by this table (updated in the same change).</li>
+</ul>
+
+<h2>B · Undo and redo, side by side</h2>
+<p>The same snack for both directions; only the words differ.</p>
+<div class="frames" id="f-pairs"></div>
+<h2>C · The snack, simple undo (live)</h2>
+<div class="frames" id="f-simple"></div>
+<h2>D · 360 dp</h2>
+<div class="frames" id="f-360"></div>
+<h2>E · 200% text, longest lines</h2>
+<p>Measured over every undo and redo line in §A, each with and without <q>, page 8</q>, at 360 dp: the widest are
+<q>Top-bottom flip taken off, page 8</q> (undo) and <q>Top-bottom flip removed, page 8</q> (redo), 197px at 100%, with
+<q>Photo back on one page, page 8</q> at 194px. At 100% every line fits one line. At 200% the longest wrap to two lines
+inside the same pill: nothing clipped, type not reduced, the snack still clear of the bar. <i>text=2 scales the root
+font-size — a web approximation of Android font scale 2.0, as the A24 experiment used; the device pass is the real
+check.</i> Observation: at two lines the frozen pill’s round ends sit close to the first and last glyphs — frozen
+geometry A25’s two-line refusal shares, left unchanged here.</p>
+<div class="frames" id="f-200"></div>
+<h2>F · Page-changing undo and redo</h2>
+<p>The photo was deleted on page 3; the maker went to page 6 and pressed Undo. The Bench returns to page 3 and says so in
+the same line — no second snack, no separate announcement. A redo that jumps page works the same way. Across fold, both
+from page 8: the undo lands on page 2 and gains the suffix; the redo’s words already name pages 2 &amp; 3, so it gains
+none.</p>
+<div class="frames" id="f-page"></div>
+<h2>G · Repeated identical undo</h2>
+<p>Two undos that name the same thing are two snack instances: the text node is replaced and the frozen entrance
+restarts from hidden (live prototype: undo twice), so the second is meant to be spoken again — whether TalkBack
+re-speaks it is checked on device. The frames read the prototype’s step counter.</p>
+<div class="frames" id="f-repeat"></div>
+</main>
+
+<script>
+const B='../mockups/v21-bench.html?';
+const frame=(host,q,cap,{w=390,h=432}={})=>{
+  const f=document.createElement('figure');
+  f.innerHTML=`<div class="crop" style="width:${w+2}px;height:${h}px"><iframe title="${cap.replace(/<[^>]+>/g,'')}" style="width:${w}px;margin-top:${h-812}px" src="${B+q}&w=${w}"></iframe></div><figcaption>${cap}</figcaption>`;
+  document.getElementById(host).appendChild(f);
+  return f.querySelector('iframe');
+};
+const say=(line,extra='')=>'a26=say&line='+encodeURIComponent(line)+extra;
+const dark='&theme=dark';
+
+[['Add','Photo taken off','Photo added',''],['Delete','Photo put back','Photo removed',''],
+ ['Across fold','Photo back on one page','Photo runs across pages 2 & 3',''],['Across fold','Photo back on one page','Photo runs across pages 2 & 3',dark]]
+  .forEach(([act,u,r,t])=>{
+    frame('f-pairs',say(u,t),`<b>Undo</b> · ${act}${t?' · dark':''}`,{w:360});
+    frame('f-pairs',say(r,t),`<b>Redo</b> · ${act}${t?' · dark':''}`,{w:360});
+  });
+frame('f-simple','a26=simple','<b>Light</b> · delete a photo, then Undo');
+frame('f-simple','a26=simple'+dark,'<b>Dark</b> · the same');
+frame('f-360','a26=simple','<b>360 dp</b> · light',{w:360});
+frame('f-360','a26=page'+dark,'<b>360 dp</b> · dark · with the page clause',{w:360});
+frame('f-360','a26=longest','<b>360 dp</b> · longest undo line, 100% text',{w:360});
+const big={w:360,h:460};
+frame('f-200','a26=longest&text=2','<b>200% · undo</b> · light (live)',big);
+frame('f-200','a26=longest&text=2'+dark,'<b>200% · undo</b> · dark (live)',big);
+frame('f-200',say('Top-bottom flip removed, page 8','&text=2&page=8'),'<b>200% · redo</b> · light',big);
+frame('f-200',say('Top-bottom flip removed, page 8','&text=2&page=8'+dark),'<b>200% · redo</b> · dark',big);
+frame('f-200',say('Photo back on one page, page 2','&text=2&page=2'),'<b>200% · Across fold undo</b> · light',big);
+frame('f-200',say('Photo back on one page, page 2','&text=2&page=2'+dark),'<b>200% · Across fold undo</b> · dark',big);
+frame('f-200',say('Photo runs across pages 2 & 3','&text=2&page=2'),'<b>200% · Across fold redo</b> · light',big);
+frame('f-page','a26=page','<b>Undo</b> · light · landed on page 3');
+frame('f-page','a26=page'+dark,'<b>Undo</b> · dark · the same');
+frame('f-page',say('Photo removed, page 3'),'<b>Redo</b> · light · landed on page 3');
+frame('f-page',say('Photo back on one page, page 2','&page=2'),'<b>Across fold undo</b> · light · from page 8, landed on page 2');
+frame('f-page',say('Photo runs across pages 2 & 3','&page=2'+dark),'<b>Across fold redo</b> · dark · from page 8: no suffix');
+const onStaged=new Map();
+addEventListener('message',e=>{const f=onStaged.get(e.source); if(f&&e.data&&e.data.a26) f(e.data.a26);});
+for(const n of [1,2]){
+  const i=frame('f-repeat',say('Photo moved back','&repeat='+n),'<b>Undo '+n+'</b> · <span>…</span>',{w:360});
+  onStaged.set(i.contentWindow,d=>{i.closest('figure').querySelector('span').textContent='snack instance '+d.step;});
+}
+
+// §A and the D4 examples are read from the prototype, so this page cannot disagree with it.
+const src=document.createElement('iframe'); src.hidden=true;
+document.body.appendChild(src);
+onStaged.set(src.contentWindow,d=>{
+  const qs=ls=>ls.map(l=>`<q>${l}</q>`).join(' · ');
+  document.querySelector('#words tbody').innerHTML=d.table.map(r=>
+    `<tr><td>${r.act}</td><td><code>${r.source}</code></td><td>${qs(r.undo)}</td><td>${qs(r.redo)}</td></tr>`).join('');
+  document.querySelector('#d4 tbody').innerHTML=d.d4.map(x=>
+    `<tr><td>${+(x.size*100).toFixed(1)}%</td><td>${x.turn}°</td><td><q>Photo ${x.word} back</q></td><td><q>Photo ${x.word}</q></td></tr>`).join('');
+});
+src.src=B+'a26=none';
+</script>

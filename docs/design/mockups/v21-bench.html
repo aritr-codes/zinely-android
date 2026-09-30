@@ -2265,3 +2265,211 @@ toolsFor=function(kind){
   return toolsForBeforeA24(kind).filter(tool=>kind!=='text'||tool[0]!=='Font');
 };
 </script>
+
+<!-- ===========================================================================
+A26 · 2026-09-30 · FROZEN (owner rulings on PR #88, 1.x plan step 3, Brief 04 A3, gate 3).
+Named undo: after an undo the snack says what came back; after a redo, what was redone.
+Frozen as design only; the Compose implementation and its ADR are a separate session.
+
+HISTORY, NOT REWRITTEN.  Before A26 the Bench had three post-undo lines, left untouched
+above as the record of that behaviour: `toast('Put back',false)` after a delete (:810)
+and after a flip (:1068), and `toast('Duplicate undone',false)` (:2216).  Undo after a
+placement, an Across-fold spread or an ink also reached :810 and said "Put back" with
+nothing put back.  This block intercepts those three calls and says the A26 line
+instead, so every `v21-bench.html:NNN` citation above stays valid.
+
+WHAT DOES NOT CHANGE.  The support-paper snack itself: geometry, `.79rem` type, colour,
+border, -0.6deg tilt, the 88px anchor and A8's stacking above a live context bar, the
+180ms entrance and the 3200ms dwell.  It stays ONE slot: a new line replaces the last.
+Undo stays a snack, not a dialogue.  No button: an undo or redo snack never offers Undo
+or Redo.  No schema change and no persisted label; History and committing() unchanged.
+
+OWNER RULINGS (2026-09-30).
+  D1 = 1a  Duplicate and Add say the same physical result: "Photo taken off".  No command
+           words ("Copy", "Place") reach the maker.
+  D2 = 2a  Undoing a Reframe says "Framing put back".  A return to the default look is
+           never called a reset because it looks like one; only a genuine Reset action
+           could ever use reset words, and A26 gives it none.
+  D3 = 3a  Redo raises the same snack through the same single live region: no second
+           speaker, no button, no separate component.  Its words name the act redone in
+           forward words (`redo` in ROWS), never the undo sentence repeated.
+  D4 = 4c  (the copy decision, not the 1.x milestone D4)  One Transform that changed
+           several properties is named by this rule:
+             1. size changed by more than 2%     -> resized
+             2. otherwise, turn more than 2deg   -> turned
+             3. otherwise                        -> moved
+           At or below 2% / 2deg a change is an incidental slip (handle resizes move the
+           centre; two-finger gestures pick up stray zoom and turn).  Size change is the
+           larger relative change of width or height; turn is the smaller angle between
+           the old and new rotation; both relative to the state before the change.  With
+           several things selected, the largest change of any of them.  Comparisons are
+           strict `>` against the two constants (`d4` below).
+  Across fold: undo says "Photo back on one page".
+  Restack direction (decision gate): an adjacent restack swaps two ranks, so one
+  direction-free line, "Stacking put back", fits either.
+  The D4 measurement definitions above: approved by the owner as written (2026-09-30).
+DERIVED FOR THE OWNER'S FINAL LOOK (not ruled word for word).  The redo words beyond the
+owner's example "Photo added" apply the rulings; the owner confirms them before PR #88
+merges.  Across fold's redo reuses its frozen forward line, while the other redos use
+thing-first forward words rather than their forward snacks.
+
+THE WORDS.  Short (at most six words), paper words, no coordinates, no command names,
+never the bare word "Undo".  The line names the thing, then what happened to it:
+  thing   Text · Photo · Art piece · "N things" when an act held two or more
+  undo    "put back" (it returns) · "taken off" (it leaves the page) · "moved back" ·
+          "resized back" · "turned back" · "swapped back"
+  redo    the forward pair: "removed" · "added" · "moved" · "resized" · "turned" ·
+          "swapped" · "changed"
+The full table is `ROWS` below (`a26.table()`); the review page renders it
+(docs/design/experiments/v21-bench-named-undo.html).  Things are named by kind, never by
+the maker's words, so the "and N more" list convention (backup-restore.html) is untouched.
+  · a text edit that changed both words and style says "Words put back" (words first);
+  · Add Text is two steps (place an empty box, then type).  Undo: "Words taken off", then
+    "Empty box taken off".  Redo, in reverse: "Empty box added", then "Words added";
+  · a toggle names the state that came back ("Copier taken off" / "Copier put back");
+    its redo names the state redone ("Copier added" / "Copier removed");
+  · Replace on an Art piece also refits its box; the swap outranks the refit;
+  · Across fold redone says its frozen forward line, "Photo runs across pages 2 & 3",
+    which names its pages and so takes no page clause.
+VOICE.md's "Undone. You can redo it." is superseded by this table (VOICE.md, same change).
+
+THE PAGE CLAUSE (owner rule, 2026-09-30).  The ", page N" suffix is used when the undo or
+redo itself lands the maker on a different page AND that landing page is not already
+expressed by the action wording.  The Bench goes there, clears the selection, and the SAME
+line gains the suffix: "Photo put back, page 3", "Top-bottom flip taken off, page 8",
+"Photo back on one page, page 2".  A line that already names its pages never gains one:
+"Photo runs across pages 2 & 3" stays exactly that, never "…pages 2 & 3, page 8".  With no
+page change there is no suffix.  One line, one snack, one announcement; it replaces the
+hard-coded "Changed page N".
+
+ONE SPEAKER, EVERY TIME.  The snack's message is a polite live region (role="status" on a
+wrapper round the text only, as `BenchSnack.kt` puts its polite region on the message and
+not the action).  Each undo or redo is a new instance: the text node is replaced and the
+frozen entrance is restarted from hidden, even when a snack is already up, so a second
+identical undo is visibly and structurally a new snack.  Whether TalkBack re-speaks it is
+checked on device (Brief 04).  No new motion: it is the existing 180ms transition,
+restarted.  Nothing left to undo (or redo): no new snack.  (In the product Undo is
+disabled by then; the prototype's always-live bar Undo also hides the showing snack, as
+the frozen :810 handler does.)
+
+LIVE PROTOTYPE LIMITS.  The prototype undo is one level deep and its Redo stays drawn
+disabled, as frozen; redo lines are shown through the review stage `say`, in the same
+snack.  Only delete, flip and duplicate really revert.  Undo after Add Art or Across fold
+shows the words but reverts nothing, as the frozen prototype already did; an ink (a
+no-button snack) is not demonstrated live.  Pages are never added or deleted from any
+Bench control, so page undo has no line here.
+
+REVIEW STAGES (prototype only).  `?a26=<stage>&theme=light|dark&w=390|360&text=1|2`
+stages one state and holds it.  text=2 scales the root font-size: a web approximation of
+Android font scale 2.0, as the A24 experiment used.
+=========================================================================== -->
+<script>
+const a26=(()=>{
+  const NOUN={text:'Text',photo:'Photo',decor:'Art piece'};
+  const thing=(kind,count)=>count>1?count+' things':NOUN[kind];
+  // [act, where the words come from in the command's own diff, undo line, redo line, example arguments]
+  const KINDS=[['text'],['photo'],['decor']];
+  const ROWS=[
+    ['Delete (the verb, or a text box left empty)', 'DeleteCommand',         (k,n)=>thing(k,n)+' put back',     (k,n)=>thing(k,n)+' removed', [...KINDS,['photo',3]]],
+    ['Add Text, Photo or Art, or Duplicate (D1 = 1a)','PlaceCommand',        (k,n)=>thing(k,n)+' taken off',    (k,n)=>thing(k,n)+' added',   [...KINDS,['photo',3]]],
+    ['Move (drag, or Nudge)',                       'Transform: position',   (k,n)=>thing(k,n)+' moved back',   (k,n)=>thing(k,n)+' moved',   [...KINDS,['photo',3]]],
+    ['Resize (a handle, a pinch, or Scale)',        'Transform: size > 2%',  (k,n)=>thing(k,n)+' resized back', (k,n)=>thing(k,n)+' resized', [...KINDS,['photo',3]]],
+    ['Turn (the arrows, or Rotate)',                'Transform: turn > 2°',  (k,n)=>thing(k,n)+' turned back',  (k,n)=>thing(k,n)+' turned',  [...KINDS,['photo',3]]],
+    ['Bring forward / send back',                   'ReorderCommand',        ()=>'Stacking put back',           ()=>'Stacking changed',       [[]]],
+    ['Type or change words',                        'EditText: text',        ()=>'Words put back',              ()=>'Words changed',          [[]]],
+    ['Size, ink, align, bold or italic of text',    'EditText: style',       ()=>'Text style put back',         ()=>'Text style changed',     [[]]],
+    ['Replace a photo / an Art piece',              'EditImage: assetId · EditDecor: supply', k=>thing(k)+' swapped back', k=>thing(k)+' swapped', [['photo'],['decor']]],
+    ['Copier on / off',                             'EditImage: copier',     on=>on?'Copier taken off':'Copier put back', on=>on?'Copier added':'Copier removed', [[true],[false]]],
+    ['Flip on / off, per axis',                     'EditImage · EditDecor: flip', (on,axis)=>axis+' flip '+(on?'taken off':'put back'), (on,axis)=>axis+' flip '+(on?'added':'removed'),
+                                                    [[true,'Left-right'],[false,'Left-right'],[true,'Top-bottom'],[false,'Top-bottom']]],
+    ['Ink on an Art piece',                         'EditDecor: ink',        ()=>'Ink put back',                ()=>'Ink changed',            [[]]],
+    ['Across fold',                                 'MakeImageSpread',       ()=>'Photo back on one page',      ()=>'Photo runs across pages 2 & 3', [[]]],
+    ['Type into a box that had no words (Add Text)','EditText: text, from empty', ()=>'Words taken off',        ()=>'Words added',            [[]]],
+    ['Add Text, box still empty',                   'PlaceCommand of an empty text box', ()=>'Empty box taken off', ()=>'Empty box added',   [[]]],
+    ['Reframe (Done)',                              'EditImage: crop · fit', ()=>'Framing put back',            ()=>'Framing changed',        [[]]],
+  ];
+  const table=()=>ROWS.map(([act,source,undo,redo,ex])=>({act,source,undo:ex.map(a=>undo(...a)),redo:ex.map(a=>redo(...a))}));
+  const line=i=>ROWS[i][2];
+  // The page clause: only when the step changed page, and only if the words don't already name a page.
+  const landing=(text,page,moved)=>moved&&!/\bpages? \d/.test(text)?text+', page '+page:text;
+  // D4 = 4c.  size: the larger relative change of width or height; turn: degrees, shortest way round.
+  // Signed or not: a shrink and a counter-clockwise turn count by their magnitude.
+  const SLIP={size:0.02,turn:2};
+  const d4=(size,turn)=>Math.abs(size)>SLIP.size?'resized':Math.abs(turn)>SLIP.turn?'turned':'moved';
+
+  // The frozen forward lines this prototype raises -> the line their undo will say.
+  const FORWARD=[
+    [/^Removed · /,                                    ()=>line(0)(bin&&bin.node?bin.node.dataset.kind:'photo')],
+    [/^Placed on the page$/,                           ()=>line(1)('decor')],
+    [/^Duplicated$/,                                   ()=>line(1)(bin&&bin.duplicate?bin.duplicate.dataset.kind:'photo')],
+    [/^Flipped (left to right|top to bottom)$/,        m=>line(10)(true, m[1]==='left to right'?'Left-right':'Top-bottom')],
+    [/^Flip removed · (left to right|top to bottom)$/, m=>line(10)(false,m[1]==='left to right'?'Left-right':'Top-bottom')],
+    [/^Photo runs across pages/,                       ()=>line(12)()],
+  ];
+
+  // The message alone is the live region, as in BenchSnack.kt: a persistent wrapper, because the
+  // text node inside it is replaced on every undo.  The Undo action stays outside it.
+  const snack=$('snack'), voice=document.createElement('span');
+  voice.setAttribute('role','status'); voice.setAttribute('aria-live','polite');
+  $('snackText').before(voice); voice.appendChild($('snackText'));
+  // A22 re-points the snack's Undo at a flip for good; every other act gets the ordinary handler back.
+  const undoOrdinary=$('undoSnack').onclick;
+  let pending=null, step=0;
+
+  function show(text){
+    // A new instance, keyed per step: a fresh text node, and the frozen entrance restarted from hidden.
+    snack.style.transition='none'; snack.classList.remove('show'); void snack.offsetWidth; snack.style.transition='';
+    const old=$('snackText'), fresh=old.cloneNode(false); old.replaceWith(fresh);
+    snack.dataset.step=++step;
+    toastBeforeA26(text,false);
+  }
+  function undone(){
+    const p=pending; pending=null;
+    if(!p) return;                                    // nothing left to undo: no snack
+    let text=p.text;
+    const moved=p.page!==cur;
+    if(moved){ goPage(p.page); deselect(); }
+    text=landing(text,p.page,moved);
+    show(text);
+  }
+  const toastBeforeA26=toast;
+  toast=function(msg,undoable){
+    if(msg==='Put back'||msg==='Duplicate undone') return undone();
+    if(undoable) $('undoSnack').onclick=undoOrdinary;  // a flip re-points it again just after this
+    // The frozen `bin` is only set by a delete or a duplicate; any other undoable act drops it, so
+    // an undo never reverts an earlier act while naming this one.
+    if(undoable && !/^(Removed · |Duplicated$)/.test(msg)) bin=null;
+    toastBeforeA26(msg,undoable);
+    if(!undoable) return;                              // only an act the snack can undo is recorded
+    pending=null;
+    for(const [re,f] of FORWARD){ const m=msg.match(re); if(m){ pending={text:f(m),page:cur}; break; } }
+  };
+  return {table,show,d4,landing};
+})();
+
+/* ---- review stages (prototype only; no product meaning) ---- */
+(()=>{
+  const q=new URLSearchParams(location.search), stage=q.get('a26');
+  if(stage===null) return;
+  const w=q.get('w')==='360'?360:390, t=q.get('text')==='2'?2:1;
+  R.dataset.gallery='true';
+  R.dataset.theme=q.get('theme')==='dark'?'dark':'light';
+  R.style.fontSize=(t*100)+'%';
+  const st=document.createElement('style');
+  st.textContent=`:root[data-gallery="true"] body{width:${w}px}.phone{width:${w}px}`;
+  document.head.appendChild(st);
+  const undo=()=>$('undoBtn').click();
+  const flip=axis=>{selectByKind('photo');openFlip();document.querySelector(`.flip-choice[data-axis="${axis}"]`).click();};
+  ({
+    simple(){ selectByKind('photo'); del(); undo(); },
+    page(){ selectByKind('photo'); del(); goPage(6); undo(); },
+    longest(){ goPage(8); flip('y'); goPage(2); undo(); },
+    say(){ goPage(+q.get('page')||3); for(let i=0;i<(+q.get('repeat')||1);i++) a26.show(q.get('line')||''); },
+    none(){ goPage(+q.get('page')||3); },
+  }[stage]||(()=>{}))();
+  clearTimeout(tt);                                   // hold the state for review
+  // The review page reads the words and the step counter from here (postMessage works from file://).
+  const d4=[[0.01,1],[0.02,2],[0.021,0],[0.015,2.5],[0.05,10],[-0.5,0],[0,-10],[0,0]].map(([size,turn])=>({size,turn,word:a26.d4(size,turn)}));
+  if(parent!==window) parent.postMessage({a26:{table:a26.table(),d4,step:$('snack').dataset.step||'',line:$('snackText').textContent}},'*');
+})();
+</script>

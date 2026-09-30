@@ -154,7 +154,16 @@ current failure. `Colophon` remains the architectural small-press term, but it i
 
 ### Undo & recovery
 
-- Undo confirmation (transient, optional): **"Undone. You can redo it."**
+- Undo and redo confirmation: *superseded 2026-09-30* — ~~"Undone. You can redo it."~~ and the Bench's
+  generic **"Put back"** are replaced by **named undo** (`v21-bench.html` A26, owner-frozen; the full table
+  lives there). The one support-paper snack, no button, spoken once, names the thing and what happened to it:
+  - **undo** says what came back: **"Photo put back"** · **"Photo taken off"** · **"Photo moved back"** ·
+    **"Framing put back"** · **"Photo back on one page"**;
+  - **redo** says the act again in forward words, never the undo sentence: **"Photo added"** ·
+    **"Photo removed"** · **"Photo moved"**;
+  - when the undo or redo lands on another page that the words don't already name, the page joins the same
+    line: **"Photo put back, page 3"**; a line that names its pages never gains one
+    (**"Photo runs across pages 2 & 3"**).
 - Deleting an element (gentle, undoable): **"Removed — undo?"** *(action, not a modal)*
 - Nothing destructive needs a scary dialog; if a true confirm is ever required:
   - Title: **"Delete this page?"** / body: **"The photos and words on it will go too."** /
