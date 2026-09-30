@@ -134,6 +134,19 @@ class EditLabelTest {
     }
 
     @Test
+    fun `art flips taken off say so`() {
+        val flipped = art.copy(mirrored = true, flippedVertically = true)
+        assertEquals(EditVerb.FLIP_LEFT_RIGHT_OFF, labelAfter(model(flipped), Intent.ToggleFlip("art", FlipAxis.HORIZONTAL))!!.verb)
+        assertEquals(EditVerb.FLIP_TOP_BOTTOM_OFF, labelAfter(model(flipped), Intent.ToggleFlip("art", FlipAxis.VERTICAL))!!.verb)
+    }
+
+    @Test
+    fun `a transform of several names the kind and counts them`() {
+        val twoWords = model(text, text.copy(id = "text2")).copy(selection = setOf("text", "text2"))
+        assertEquals(EditLabel(EditVerb.MOVE, EditKind.TEXT, count = 2), labelAfter(twoWords, Intent.Nudge(PtPoint(3.0, 0.0))))
+    }
+
+    @Test
     fun `replacing an art piece with the same supply is still a swap, never ink`() {
         // Replace refits the box even when the maker picks the piece it already is (Review R1).
         val same = labelAfter(model(art), Intent.ReplaceSupply("art", art.supplyId, box.copy(widthPt = 90.0)))

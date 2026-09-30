@@ -26,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -156,6 +157,52 @@ class NamedUndoSnackTest {
         composeRule.mainClock.advanceTimeBy(2800L)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
+        composeRule.mainClock.advanceTimeBy(800L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun an_undo_snack_rises_in_from_below_like_the_delete_snack() {
+        // The step keys a fresh BenchSnack whose progress starts at 0, so it must still play A26's entrance
+        // (the frozen 8dp rise) rather than appear already at rest.
+        val store = store()
+        setScreen(store)
+        place(store)
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onNodeWithTag(BenchBarUndoTag).performClick()
+        repeat(4) {
+            if (composeRule.onAllNodesWithTag(BenchSnackTestTag).fetchSemanticsNodes().isEmpty()) {
+                composeRule.mainClock.advanceTimeByFrame()
+                composeRule.waitForIdle()
+            }
+        }
+        val entering = composeRule.onNodeWithTag(BenchSnackTestTag).fetchSemanticsNode().boundsInRoot
+        composeRule.mainClock.advanceTimeBy(BenchSnackMillis + 200L)
+        composeRule.waitForIdle()
+        val resting = composeRule.onNodeWithTag(BenchSnackTestTag).fetchSemanticsNode().boundsInRoot
+
+        val rise = entering.top - resting.top
+        val eightDp = with(composeRule.density) { 8.dp.toPx() }
+        assertTrue("the snack must enter from below: entering=$entering resting=$resting", rise > eightDp / 2)
+        assertTrue("...and by no more than the frozen 8dp: $rise", rise <= eightDp + 0.5f)
+    }
+
+    @Test
+    fun a_redo_soon_after_an_undo_gets_its_own_full_window() {
+        // The undo's hide timer must not take the redo's line down early.
+        val store = store()
+        setScreen(store)
+        place(store)
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        press(BenchBarUndoTag)
+        composeRule.mainClock.advanceTimeBy(2000L)
+        press(BenchBarRedoTag)
+        composeRule.mainClock.advanceTimeBy(2800L)
+        composeRule.waitForIdle()
+        assertEquals(1, speakers("Text added").size)
         composeRule.mainClock.advanceTimeBy(800L)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
