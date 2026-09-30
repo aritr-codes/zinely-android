@@ -240,9 +240,37 @@ was restored afterwards.
     wording is not owner-listened. TalkBack may reach a selected blank box that adb taps could not (see
     Blank text above); that route was not explored.
 - **The owner's verdict:** "These are working as intended."
-- **Not listened to.** The 1.8 traversal and Add > Text under TalkBack. The owner accepted the implementation
-  without them, and they rest on the platform-tree checks above.
+- **Not listened to in this first listen.** The 1.8 traversal and Add > Text under TalkBack. The owner accepted
+  the implementation without them at the time. Both were listened to afterwards; see the follow-up below.
 - **Font scale afterwards.** It read 0.9, set by the owner, so it was left as found.
+
+### Follow-up TalkBack listens at font scale 1.8 (2026-09-29 and 2026-09-30)
+
+These close the two checks the first listen left out. The device was the same SM-A176B on Android 16, with
+Samsung TalkBack 16.2.00.13. The QA build `com.aritr.zinely.fontqa` was rebuilt from the final PR head
+`bdd5990`. Every task was up to date and the APK's SHA-256 matched the `aad2084` build
+(`79f82827…`), because the commits in between are docs only. The release install kept
+`lastUpdateTime 2026-09-29 12:09:04`. Font scale was 1.8 and TalkBack was on.
+
+- **Authored-text traversal, 2026-09-29.** With "QATiny paper test" selected, the owner reported:
+  - swiping right gave **Edit → Size → Ink → Duplicate → Delete**;
+  - swiping left gave **Delete → Duplicate → Ink → Size → Edit**, the exact reverse;
+  - there was no Font stop and no extra control, and nothing was clipped or unreachable.
+- **An unclear first attempt at Add > Text, 2026-09-29.** The owner reported "not selected text". The screen
+  then showed the Add sheet closed, with an empty text box open for editing, so the words most likely came
+  from a text element on the page, not from the sheet. It was not counted, and the check was repeated.
+- **Add > Text, 2026-09-30.** The Add sheet was opened before TalkBack was turned on, so the listen began
+  inside it. The owner reported:
+  - the heading was read as "Add to your page";
+  - the Text option was announced as **"Text. Type words onto the page button. Double tap to activate"**;
+  - the Photo and Art options followed, each read with its description.
+
+  Add > Text remained reachable, and choosing it still creates a text box: the owner heard the new box
+  announced as "Selected, empty text, button" on 2026-09-29. Removing the selected-text Font action did
+  not remove, rename or otherwise affect Add > Text.
+
+Afterwards font scale was set to 1.0 and TalkBack turned off. Accessibility was restored to off with no
+services. Stay-awake was left at 15.
 
 ### Local artefacts
 

@@ -13030,14 +13030,21 @@ The decision above is unchanged; this records how the implementation was verifie
   a separate application ID; the release install was not touched. The platform tree shows five enabled
   buttons and no Font node, at font scale 1.0 and at 1.8 (nothing clipped). Each action worked once on
   disposable text. The typing row's Ink and Done are unchanged. Add > Text is present and creates a text box.
-- **Owner TalkBack listen.** Samsung TalkBack 16.2.00.13, font scale 1.0, authored text selected. Swiping
+- **Owner TalkBack listen at font scale 1.0 (2026-09-29).** Samsung TalkBack 16.2.00.13, authored text selected. Swiping
   right gave Edit, Size, Ink, Duplicate, Delete, with no Font stop. Swiping left gave Delete, Duplicate,
   Ink, Size, Edit. A blank box was announced as "Selected, empty text, button". That is the element's own
   announcement; the owner did not report the bar's disabled Size/Ink/Duplicate wording. The owner confirmed
   these work as intended.
-- **Limits the owner accepted.**
-  - The TalkBack traversal at font scale 1.8 and Add > Text under TalkBack were not listened to. They rest
-    on the structural checks above.
+- **Follow-up owner TalkBack listen at font scale 1.8 (2026-09-29).** Same device and TalkBack version, QA
+  build from the final head `bdd5990` (byte-identical to the `aad2084` build; the commits between them are
+  docs only). Swiping right gave Edit, Size, Ink, Duplicate, Delete. Swiping left gave exactly the reverse:
+  Delete, Duplicate, Ink, Size, Edit. There was no Font stop and no extra control, and nothing was clipped
+  or unreachable.
+- **Owner Add > Text listen at font scale 1.8 (2026-09-30).** Same build. The "Add to your page" sheet
+  heading read "Add to your page", and the Text option was announced as
+  "Text. Type words onto the page button. Double tap to activate". Add > Text remained reachable, and choosing
+  it still creates a text box. Removing the selected-text Font action did not affect it.
+- **Limit the owner accepted.**
   - A selected blank text box could not be reached on the device with adb taps: blank, whitespace-only and
     erased text are all removed on Done. The disabled Size, Ink and Duplicate state, with "Type something
     first", is verified by the automated tests only.
