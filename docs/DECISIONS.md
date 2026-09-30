@@ -13844,8 +13844,8 @@ region, which speaks on every autosave, an undo's included, as it did before.
   `UndoSnackLineTest` (every A26 row in both directions as literals, no redo equal to its undo, the page clause);
   `NamedUndoSnackTest` on the semantics tree (one live-region node carries the whole line, no button, redo in the same
   snack, the page clause, a repeat on a new node, the 3200 ms dwell); `NamedUndoSnackGoldenTest` (undo, redo, page
-  clause, Across fold, the longest line, light and dark, and the longest at font scale 2 on 360 dp, asserting the
-  line stays inside the pill). These show the tree, not what TalkBack says. That is the owner's listen.
+  clause, Across fold, the longest line, light and dark, and the longest at font scale 2 on 360 dp, where the
+  PNG shows the line wrapping inside the pill). These show the tree, not what TalkBack says. That is the owner's listen.
 - **Open risk, a device gate before the owner's listen.** Keying the snack per step means every undo reaches the
   platform as a live-region node that *appears*, not one whose text changes. This ADR log already records
   (Proof `.done`, the ADR-051/052 section on the retired snackbar) that Compose may send only a subtree change for a

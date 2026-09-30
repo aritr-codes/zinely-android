@@ -160,8 +160,9 @@ internal class EditorViewModel @Inject constructor(
 
     /**
      * A UI-originated a11y announcement (WCAG 4.1.3) — the Reframe surface's position/zoom/fit/commit lines
-     * (ADR-053, IF3). Routed through the SAME channel the reducer's [com.aritr.zinely.feature.editor.Announcer]
-     * uses, so every editor announcement reaches TalkBack via the one `announceForAccessibility` drain; the
+     * (ADR-053, IF3). Routed through the SAME channel the effect runner's [com.aritr.zinely.feature.editor.Announcer]
+     * uses, so these announcements reach TalkBack via the one `announceForAccessibility` drain (undo speaks
+     * through its Bench snack instead, ADR-123); the
      * platform re-announces even identical consecutive text, so a repeated nudge is never silent.
      */
     fun announce(text: String) {

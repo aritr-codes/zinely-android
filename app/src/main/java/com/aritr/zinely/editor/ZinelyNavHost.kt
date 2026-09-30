@@ -1005,7 +1005,7 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
                 reframeCoachSeen = reframeCoachSeen,
                 onReframeCoachSeen = viewModel::markReframeCoachSeen,
                 // Reframe a11y announcements (ADR-053 IF3) ride the same announceForAccessibility drain as
-                // the reducer's selection/undo lines (bound at line ~302).
+                // the effect runner's image-pick failure (bound at line ~302); undo speaks through its snack.
                 onReframeAnnounce = viewModel::announce,
                 onStyleAnnounce = viewModel::announce,
                 // The autosave-event stream (ADR-034): each emission raises the transient "Saved ✨"

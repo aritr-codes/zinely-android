@@ -8,8 +8,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.Density
@@ -18,7 +16,6 @@ import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -66,14 +63,9 @@ class NamedUndoSnackGoldenTest {
         composeRule.mainClock.advanceTimeBy(BenchSnackMillis + 100L)
         composeRule.waitForIdle()
 
-        // No button, and the whole line inside the pill: a clipped or hidden line is the 2x failure A26 rules out.
+        // No button. Whether the whole line sits inside the pill is the PNG's job: the text wraps (weight 1, no
+        // maxLines), and a semantics-bounds check cannot see a clip, because `boundsInRoot` is itself clipped.
         composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
-        val pill = composeRule.onNodeWithTag(BenchSnackTestTag).fetchSemanticsNode().boundsInRoot
-        val text = composeRule.onNode(
-            SemanticsMatcher.expectValue(SemanticsProperties.ContentDescription, listOf(line)),
-            useUnmergedTree = true,
-        ).fetchSemanticsNode().boundsInRoot
-        assertTrue("the line overflows the pill ($name): $text in $pill", pill.contains(text.topLeft) && pill.contains(text.bottomRight))
 
         val full = composeRule.activity.window.decorView.rasterizeToBitmap()
         cropToBounds(full, composeRule.onNodeWithTag(HOST_TAG).fetchSemanticsNode().boundsInRoot)

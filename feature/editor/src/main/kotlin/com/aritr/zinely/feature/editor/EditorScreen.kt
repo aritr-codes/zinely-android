@@ -288,7 +288,7 @@ public fun EditorScreen(
     var reframeAdjusted by remember { mutableStateOf(false) }
     // The Reframe screen-reader announcements (bench `#rfLive` / `rfSay`): every discrete adjustment, fit
     // change, and session end speaks (WCAG 4.1.3). Routed through [onReframeAnnounce] to the host's
-    // `announceForAccessibility` drain — the SAME channel the reducer's selection/undo announcements use.
+    // `announceForAccessibility` drain — the SAME channel text style and the image-pick failure use.
     // The platform re-announces even identical consecutive text (so a repeated ← nudge is never silent,
     // Review finding #1) and leaves no lingering live-region node to become a stale focus stop (#2).
     val latestAnnounce by rememberUpdatedState(onReframeAnnounce)
@@ -772,7 +772,7 @@ public fun EditorScreen(
         if (styleTarget != null) runCatching { editorKeyFocus.requestFocus() }
     }
     // Style announcements ride the host's existing announceForAccessibility drain — the same channel
-    // Reframe and the reducer's selection/undo announcements use (no second live-region mechanism).
+    // Reframe and the image-pick failure use (no second live-region mechanism). Undo speaks through its snack.
     val latestStyleAnnounce by rememberUpdatedState(onStyleAnnounce)
     val sayStyle = { msg: String -> latestStyleAnnounce(msg) }
     val styleBuzz = rememberStyleBuzz()
