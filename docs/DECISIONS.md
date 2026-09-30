@@ -132,6 +132,7 @@
 | [ADR-120](#adr-120) | **A backup says when it was last saved, and a failed backup says where it failed.** A last-backup record written only on a saved backup; two backup phases (private archive, then the chosen destination) classified by owner ruling F1; one Cancel-vs-complete latch; the destination discarded best-effort. Extends ADR-110; the step 1b boundary is explicit. | Accepted 2026-09-28 (proposed 2026-09-27); 1.x step 1; device passes and owner checks done |
 | [ADR-121](#adr-121) | **Restore adds zines that aren't already on the shelf and never replaces what's here.** A zine is already here when its title, format, paper size and content equal a shelf zine's, counted one for one; a changed zine is added; doubt adds. No format change. Amends ADR-110 §5. | Accepted (design) 2026-09-28; owner ruling; implemented with 1.x step 1b and accepted 2026-09-29 (PR #86, `1fd3c9e`) |
 | [ADR-122](#adr-122) | **A backup is complete or explicitly partial, never silently partial; a restore reports what happened.** Backup is skip-and-list (one photo never fails it); the manifest gains a defaulted, leniently read `omitted` list, `packageVersion` stays 2; restore staging-write failures aren't "damaged", Cancel is withdrawn once commit starts, and a committed restore is a success even if the shelf lags. Amends ADR-110. | Accepted 2026-09-29; 1.x step 1b (PR #86, `1fd3c9e`) |
+| [ADR-123](#adr-123) | **Undo and redo say what they did, in the one Bench snack.** A pure `editLabel` derived from each command's memento (no History change, nothing persisted); `Effect.HistoryStepped` replaces "Changed page N"; one snack keyed per step, one live region; the page clause and the 2% / 2° transform rule. Words owned by frozen `v21-bench.html` A26. | Proposed 2026-09-30; 1.x step 3; awaiting review, device passes and the owner's TalkBack listens |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -13754,3 +13755,88 @@ The implementation was reviewed by an independent Review Agent that did not writ
 - ACCEPTED, now enforced in `ZineBackupWriteLimits`: stop an injected writer limit from rising above 10,000.
 - ACCEPTED, now noted in Decision 5: the 4 MiB manifest limit can bind before 10,000 entries do.
 - REJECTED, adding the owner's principle verbatim: Decision 1 already quotes it verbatim, across a line break.
+
+## ADR-123 {#adr-123}
+
+### Undo and redo say what they did, in the one Bench snack
+
+**Status:** Proposed, 2026-09-30. Implemented on `fix/1x-step3-named-undo`; it becomes Accepted only after review, CI,
+both device passes and the owner's TalkBack listens at normal and 2× text. Zinely 1.x step 3
+([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing), READY in §11), specified by
+[Brief 04](planning/BRIEF-04-READING-ORDER-AND-ALT-TEXT.md) part A3. **The design is the frozen
+[`v21-bench.html`](design/mockups/v21-bench.html) A26** (owner rulings D1–D4, 2026-09-30, PR #88). A26 owns every word
+and the page-clause rule; this ADR records how the product derives and delivers them, and does not restate the table.
+**Extends:** [ADR-005](#adr-005) (MVI; commands and history), [ADR-094](#adr-094) (the Bench snack).
+
+#### Context
+
+After an undo the maker was told nothing, unless the step changed page, when TalkBack alone heard a hard-coded
+English "Changed page N" (`Effect.Announce`). An undo on another page, or with nothing visible, was a guess. A26 froze
+the fix: one snack names what came back ("Photo put back"), a redo names what was redone ("Photo removed"), and a step
+that moves the maker to another page says so in the same line.
+
+#### Decision
+
+1. **Labels are derived, never stored.** A pure `Command.editLabel(doc): EditLabel?` in `core:editor` (`EditLabel.kt`)
+   returns `EditLabel(verb, kind, count)` from the command's own memento; `doc` is the document before the step, read
+   only to find a Transform's element kind. `History`, `committing()` and its call sites, every command and the
+   document schema are unchanged. `EditVerb` has one value per A26 row; toggles carry the state the command set
+   (`COPIER_ON`, `FLIP_TOP_BOTTOM_OFF`, …), and Add Text's two steps are `PLACE` of `EditKind.EMPTY_BOX` and
+   `WORDS_FROM_EMPTY`. Rules that are not visible in A26's table:
+   - `EditImageCommand`: asset → swap, else copier, else a flip axis, else framing. A reframe that returns to the
+     default look and a Reset are both framing (D2 = 2a).
+   - `EditDecorCommand`: supply → swap (the swap outranks its refit), else a flip axis, else ink.
+   - `EditTextCommand`: words when the text changed (from blank → `WORDS_FROM_EMPTY`), otherwise text style.
+   - Duplicate and Add are both `PlaceCommand` and share a label (D1 = 1a).
+   - Page add/delete have no Bench control and A26 gives them no line, so `editLabel` returns `null` and the step is
+     silent, as it was before.
+2. **Transform precedence (D4 = 4c)** is `transformVerb`: over every element in the step, size change past 2% resizes;
+   otherwise a turn past 2° turns; otherwise it moved. Size is the larger relative change of width or height against
+   the pre-action box, and turn is the shorter way round. Both are magnitudes, and both comparisons are strict `>`.
+3. **One effect.** `stepHistory` emits `Effect.HistoryStepped(label, isRedo, landedOnPage)` after the autosave.
+   `landedOnPage` is the page index the model ends on when the step changed page, else `null`: post-step state,
+   never where the command started. `Effect.Announce` had no other emitter and is removed. The `Announcer` drain
+   stays for Reframe, text style and the import summary.
+4. **One speaker.** `EditorStore` routes `HistoryStepped` to `historySteps` (the snack is screen state; the effect
+   runner lives in the ViewModel and ignores it). `EditorScreen` raises the existing `BenchSnack` in its one slot:
+   the line from `Copy.Undo` via `undoSnackLine`, no button, the frozen 3200 ms dwell. Its polite live region is the
+   only thing that speaks the step.
+5. **Keyed per step.** The snack is keyed by a step counter, not by its text, so an identical repeat is a new node
+   that enters from hidden. `BenchSnack` now starts each instance at hidden (`Animatable(0f)` in place of
+   `animateFloatAsState`). The geometry, motion spec, dwell and colours are unchanged.
+6. **The page clause** is `", page N"`, only when `landedOnPage` is set. Across fold's redo is the frozen forward line
+   `Copy.Spread.success`, which names its pages and never takes the clause. Its pages come from the post-step current
+   page, which is always the spread's source page because `stepHistory` goes to the page the command edited.
+
+#### Scope
+
+In: the labels, the effect, the snack line and its keying, `Copy.Undo`. Out, unchanged: `History`, `committing()`,
+persistence and schema (no label is persisted), the snack's frozen geometry, relative phrases (A2), alt text (B), the
+deprecated `announceForAccessibility` drain used by Reframe, style and import, and the status strip's "Saved" live
+region, which speaks on every autosave, an undo's included, as it did before.
+
+#### Alternatives considered
+
+- **Store a label on each command or in `History`.** Rejected: A26 and the audit rule out any History change, and the
+  memento already says what changed.
+- **Keep `Effect.Announce` beside the snack.** Rejected: two speakers for one event (readiness audit §4).
+- **Route the step through `EditorEffectRunner`.** Rejected: the runner is built in the ViewModel and cannot reach the
+  screen's snack state without a new ViewModel flow and NavHost parameter; the store already reaches the screen.
+- **Key the snack by its text.** Rejected: a live region does not re-announce an unchanged node, so a repeat would be silent.
+- **Classify a Transform by its largest single property, or by the class name.** Rejected by D4 = 4c: a handle resize
+  moves the centre, and two fingers pick up stray turn and zoom.
+
+#### Consequences
+
+- The snack's `Undo` after a delete now leads to the named line ("Text put back") in the same slot, where before the
+  snack simply left. It still offers no second Undo.
+- `BenchSnack` now enters from hidden even when first composed visible.
+- **Evidence (JVM):** `EditLabelTest` (every command a Bench control raises, via the real intents, plus every D4
+  boundary: exactly and just over 2% and 2°, shrink, reverse and wrap-around turns, precedence, several elements);
+  `HistorySteppedTest` (exactly one effect per step and none on an empty stack, `isRedo`, `landedOnPage` after the
+  step, Across fold from the partner page, identical repeats, history round trip, page commands silent);
+  `UndoSnackLineTest` (every A26 row in both directions as literals, no redo equal to its undo, the page clause);
+  `NamedUndoSnackTest` on the semantics tree (one live-region node carries the whole line, no button, redo in the same
+  snack, the page clause, a repeat on a new node, the 3200 ms dwell); `NamedUndoSnackGoldenTest` (undo, redo, page
+  clause, Across fold, the longest line, light and dark, and the longest at font scale 2 on 360 dp, asserting the
+  line stays inside the pill). These show the tree, not what TalkBack says. That is the owner's listen.
