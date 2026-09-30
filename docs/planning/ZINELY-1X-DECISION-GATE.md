@@ -243,9 +243,9 @@ These are still **owner** decisions. They are just not needed yet.
 | O3 | Ink lift | Gates only D6-(4), after an asset-model ADR | After that ADR |
 | O4 | Tray / X2 (D-029) | Gates only the Clippings tray | If the tray is proposed |
 | O11 | Page count (D-030) | Gates 16-page zines only | Not in 1.x |
-| — | **Accessibility product calls in D4** — whether *Redo* is spoken as well as *Undo*, and whether decorative Art is skipped in Read | Needed during D4 part A3 and part B; a TalkBack listen informs them | Before those sessions |
+| — | **Accessibility product calls in D4** — whether decorative Art is skipped in Read. *(Whether Redo is spoken as well as Undo: ruled 2026-09-30, yes, through the same snack — `v21-bench.html` A26)* | Needed during D4 part A3 and part B; a TalkBack listen informs them | Before those sessions |
 | — | D4 wording: "Photo: <description>" or the description alone; replacing the deprecated announce API app-wide | Copy and scope choices | During D4 |
-| — | Named-undo wording for *duplicate*, *reset framing* and restack direction | Copy choices; see [Brief 04](BRIEF-04-READING-ORDER-AND-ALT-TEXT.md) | During that session |
+| ✅ | ~~Named-undo wording for *duplicate*, *reset framing* and restack direction~~ **Ruled 2026-09-30** (PR #88), frozen in `v21-bench.html` A26 | Copy choices; see [Brief 04](BRIEF-04-READING-ORDER-AND-ALT-TEXT.md) | Done |
 | — | F6 portability denylist: now (its own small session), or later | Optional guard; step 0 shipped without it (PR #75) ([plan §4](ZINELY-1X-IMPLEMENTATION-PLAN.md#4-foundations--only-what-the-repository-actually-needs)) | Any time |
 | — | Ratify "imperfect surface, perfect mechanics" (research proposal D13) as a product principle | Already used as a lens; ratifying changes no work | Any time |
 
@@ -253,6 +253,7 @@ These are still **owner** decisions. They are just not needed yet.
 
 | Date | Change |
 |---|---|
+| 2026-09-30 | Named-undo copy ruled by the owner on PR #88 and frozen in `v21-bench.html` A26: duplicate, reset framing and restack direction; Redo is spoken, through the same snack. Decorative Art in Read stays open. |
 | 2026-09-26 | **Supplementary Q8 ruling recorded** (after the final planning audit): a single poisoned or unreadable photo is skip-and-list, never a whole-backup failure. Replaces the 🟦 owner-to-confirm bullet; defect 5's restore half stays out. |
 | 2026-09-26 | **Owner rulings Q1–Q8 recorded**; the file becomes the ruling record. Corrections: Q1's 30 Sep 2026 framing (named stores in four countries, not GitHub APKs; global phase 2027); registration = package name + signing-key ownership; Averia measured at 12 of 128 Latin Extended-A letters; the N2 "conflict" was a misreading (N2 is a to-do); Q8's defect list now names the three restore-honesty defects instead of "the first three", and the poisoned-photo wording distinguishes restore ("Couldn't read that file") from backup ("This backup looks damaged"). Base `0aa7a7d`. |
 | 2026-09-26 | Base moved to `eb75cf7` (Step 0 merged). F6 row: step 0 shipped without it. Steps-not-blocked line names 1b (Q8 + spec) and PR #70 before step 3. Questions unchanged. |
