@@ -2307,10 +2307,11 @@ OWNER RULINGS (2026-09-30).
   Across fold: undo says "Photo back on one page".
   Restack direction (decision gate): an adjacent restack swaps two ranks, so one
   direction-free line, "Stacking put back", fits either.
+  The D4 measurement definitions above: approved by the owner as written (2026-09-30).
 DERIVED FOR THE OWNER'S FINAL LOOK (not ruled word for word).  The redo words beyond the
-owner's example "Photo added", and the D4 measurement definitions above, apply the rulings;
-the owner confirms them before PR #88 merges.  Across fold's redo reuses its frozen forward
-line, while the other redos use thing-first forward words rather than their forward snacks.
+owner's example "Photo added" apply the rulings; the owner confirms them before PR #88
+merges.  Across fold's redo reuses its frozen forward line, while the other redos use
+thing-first forward words rather than their forward snacks.
 
 THE WORDS.  Short (at most six words), paper words, no coordinates, no command names,
 never the bare word "Undo".  The line names the thing, then what happened to it:
@@ -2332,9 +2333,14 @@ the maker's words, so the "and N more" list convention (backup-restore.html) is 
     which names its pages and so takes no page clause.
 VOICE.md's "Undone. You can redo it." is superseded by this table (VOICE.md, same change).
 
-THE PAGE CLAUSE.  When an undo or redo lands on another page, the Bench goes there,
-clears the selection, and the SAME line gains ", page N": "Photo put back, page 3".  One
-line, one snack, one announcement; it replaces the hard-coded "Changed page N".
+THE PAGE CLAUSE (owner rule, 2026-09-30).  The ", page N" suffix is used when the undo or
+redo itself lands the maker on a different page AND that landing page is not already
+expressed by the action wording.  The Bench goes there, clears the selection, and the SAME
+line gains the suffix: "Photo put back, page 3", "Top-bottom flip taken off, page 8",
+"Photo back on one page, page 2".  A line that already names its pages never gains one:
+"Photo runs across pages 2 & 3" stays exactly that, never "…pages 2 & 3, page 8".  With no
+page change there is no suffix.  One line, one snack, one announcement; it replaces the
+hard-coded "Changed page N".
 
 ONE SPEAKER, EVERY TIME.  The snack's message is a polite live region (role="status" on a
 wrapper round the text only, as `BenchSnack.kt` puts its polite region on the message and
@@ -2384,7 +2390,8 @@ const a26=(()=>{
   ];
   const table=()=>ROWS.map(([act,source,undo,redo,ex])=>({act,source,undo:ex.map(a=>undo(...a)),redo:ex.map(a=>redo(...a))}));
   const line=i=>ROWS[i][2];
-  const pageClause=n=>', page '+n;
+  // The page clause: only when the step changed page, and only if the words don't already name a page.
+  const landing=(text,page,moved)=>moved&&!/\bpages? \d/.test(text)?text+', page '+page:text;
   // D4 = 4c.  size: the larger relative change of width or height; turn: degrees, shortest way round.
   // Signed or not: a shrink and a counter-clockwise turn count by their magnitude.
   const SLIP={size:0.02,turn:2};
@@ -2420,7 +2427,9 @@ const a26=(()=>{
     const p=pending; pending=null;
     if(!p) return;                                    // nothing left to undo: no snack
     let text=p.text;
-    if(p.page!==cur){ goPage(p.page); deselect(); text+=pageClause(p.page); }
+    const moved=p.page!==cur;
+    if(moved){ goPage(p.page); deselect(); }
+    text=landing(text,p.page,moved);
     show(text);
   }
   const toastBeforeA26=toast;
@@ -2435,7 +2444,7 @@ const a26=(()=>{
     pending=null;
     for(const [re,f] of FORWARD){ const m=msg.match(re); if(m){ pending={text:f(m),page:cur}; break; } }
   };
-  return {table,show,d4};
+  return {table,show,d4,landing};
 })();
 
 /* ---- review stages (prototype only; no product meaning) ---- */

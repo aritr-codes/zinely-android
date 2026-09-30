@@ -65,7 +65,8 @@ in the same snack.</p>
 </tbody></table></div>
 <p><b>For your final look — derived, not ruled word for word.</b> The redo words beyond your example <q>Photo added</q>
 (<q>Photo removed</q>, <q>Photo moved</q>, <q>Stacking changed</q>, <q>Copier added</q>, <q>Left-right flip removed</q> … the
-full column in §A) and D4’s measurement definitions below apply your rulings; confirm them before PR #88 merges. One
+full column in §A) apply your rulings; confirm them before PR #88 merges. (D4’s measurement definitions below: approved
+by you as written, 2026-09-30.) One
 choice to check: Across fold’s redo reuses its frozen forward line <q>Photo runs across pages 2 &amp; 3</q>, while the
 other redos use thing-first forward words rather than their frozen forward snacks (“Removed · …”, “Flipped …”,
 “Duplicated”, “Placed on the page”).</p>
@@ -95,8 +96,11 @@ came back (<q>put back</q>, <q>taken off</q>, <q>… back</q>); redo says the ac
 <div class="scroll"><table id="words"><thead><tr><th>The act</th><th>Named from the command’s diff</th><th>Undo says</th><th>Redo says</th></tr></thead><tbody></tbody></table></div>
 <h3>Rules that come with the table</h3>
 <ul>
-  <li><b>Page clause.</b> When an undo or redo lands on another page, the Bench goes there, clears the selection, and
-    the same line gains <q>, page N</q>: <q>Photo put back, page 3</q>. One line, one snack, one announcement; it
+  <li><b>Page clause (your rule, 2026-09-30).</b> <q>, page N</q> is added only when the undo or redo itself lands the
+    maker on a different page <i>and</i> the words don’t already say that page. The Bench goes there, clears the
+    selection, and the same line gains it: <q>Photo put back, page 3</q>, <q>Top-bottom flip taken off, page 8</q>,
+    <q>Photo back on one page, page 2</q>. A line that names its pages never gains one: <q>Photo runs across pages 2
+    &amp; 3</q>, never “…pages 2 &amp; 3, page 8”. No page change, no suffix. One line, one snack, one announcement; it
     replaces today’s hard-coded “Changed page N”. A comma, not “·”, so the spoken line is the seen line.</li>
   <li><b>Toggles name the state that came back:</b> undoing Copier-on says <q>Copier taken off</q>; undoing Copier-off
     says <q>Copier put back</q>. Their redos name the state redone: <q>Copier added</q> / <q>Copier removed</q>. Flips
@@ -136,7 +140,9 @@ geometry A25’s two-line refusal shares, left unchanged here.</p>
 <div class="frames" id="f-200"></div>
 <h2>F · Page-changing undo and redo</h2>
 <p>The photo was deleted on page 3; the maker went to page 6 and pressed Undo. The Bench returns to page 3 and says so in
-the same line — no second snack, no separate announcement. A redo that jumps page works the same way.</p>
+the same line — no second snack, no separate announcement. A redo that jumps page works the same way. Across fold, both
+from page 8: the undo lands on page 2 and gains the suffix; the redo’s words already name pages 2 &amp; 3, so it gains
+none.</p>
 <div class="frames" id="f-page"></div>
 <h2>G · Repeated identical undo</h2>
 <p>Two undos that name the same thing are two snack instances: the text node is replaced and the frozen entrance
@@ -178,6 +184,8 @@ frame('f-200',say('Photo runs across pages 2 & 3','&text=2&page=2'),'<b>200% · 
 frame('f-page','a26=page','<b>Undo</b> · light · landed on page 3');
 frame('f-page','a26=page'+dark,'<b>Undo</b> · dark · the same');
 frame('f-page',say('Photo removed, page 3'),'<b>Redo</b> · light · landed on page 3');
+frame('f-page',say('Photo back on one page, page 2','&page=2'),'<b>Across fold undo</b> · light · from page 8, landed on page 2');
+frame('f-page',say('Photo runs across pages 2 & 3','&page=2'+dark),'<b>Across fold redo</b> · dark · from page 8: no suffix');
 const onStaged=new Map();
 addEventListener('message',e=>{const f=onStaged.get(e.source); if(f&&e.data&&e.data.a26) f(e.data.a26);});
 for(const n of [1,2]){

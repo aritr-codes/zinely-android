@@ -161,7 +161,9 @@ current failure. `Colophon` remains the architectural small-press term, but it i
     **"Framing put back"** · **"Photo back on one page"**;
   - **redo** says the act again in forward words, never the undo sentence: **"Photo added"** ·
     **"Photo removed"** · **"Photo moved"**;
-  - a page change joins the same line: **"Photo put back, page 3"**.
+  - when the undo or redo lands on another page that the words don't already name, the page joins the same
+    line: **"Photo put back, page 3"**; a line that names its pages never gains one
+    (**"Photo runs across pages 2 & 3"**).
 - Deleting an element (gentle, undoable): **"Removed — undo?"** *(action, not a modal)*
 - Nothing destructive needs a scary dialog; if a true confirm is ever required:
   - Title: **"Delete this page?"** / body: **"The photos and words on it will go too."** /
