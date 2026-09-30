@@ -191,13 +191,18 @@ row tops interleaves them. A2's relative phrases and the maker's own arrangement
     with children **declared** in reading order. `traversalIndex` only restates that order.
 - **A3: amend `v21-bench.html` first.**
   - ✅ The frozen prototype already has a post-undo snack: `toast('Put back',false)`, with no button. It shows after the
-    snack's or the bar's Undo, for deletes only (`:808-812`, `toast` `:801`, markup `:619`).
+    snack's or the bar's Undo (`:808-812`, `toast` `:801`, markup `:619`). *Corrected 2026-09-30:* not for deletes only —
+    A22 reuses "Put back" after a flip (`:1068`), A21 says "Duplicate undone" (`:2216`), and an undo after a placement,
+    an Across-fold spread or an ink also reaches `:810` and says "Put back".
   - ✅ Compose never built it: the bar's Undo hides the snack (`EditorScreen.kt:2048-2056`), and no Kotlin file contains
     "Put back". That is a latent parity gap.
   - The amendment extends the state to every undo, replaces "Put back" with the named copy, and adds a gallery state for
     the page-changing variant.
   - Replacing words inside a frozen state is a copy change, so the owner approves the amended HTML.
   - The amendment draws the undo snack at 360 dp **and at 200 % text**, with the longest label plus the page clause.
+  - **Draft (2026-09-30): `v21-bench.html` A26, proposed and not frozen**, branch `design/step3-undo-snack`. Its
+    [review page](../design/experiments/v21-bench-named-undo.html) holds the recommended words and the options for the
+    open decisions below; the owner's approval there is gate 3.
 - **B: a Describe verb** on the image and decor bars, amending `toolsFor()` (`:694`).
   - The amendment must show Describe at 360 dp and at 200 % text.
   - Read semantics get their own amendment, starting from the `v21-proof.html:634` divergence.
@@ -473,6 +478,7 @@ Stop and ask if any of the following happens:
 
 | Date | Change |
 |---|---|
+| 2026-09-30 | A3's gate-3 amendment drafted as `v21-bench.html` A26 (proposed, not frozen) with an owner review page; the frozen post-undo inventory corrected (three lines, not deletes only). Readiness unchanged. Base `a6eb16b`. |
 | 2026-09-26 | Owner rulings recorded (decision gate): no D4 scope change; A3 now also waits for PR #70 to be settled; B's wave-1 release approved as a v3 release before v4; ADR numbering note widened (steps 1b and 4 add ADRs too). Base `0aa7a7d`. |
 | 2026-09-26 | Base moved to `eb75cf7`: Step 0 merged (PR #75), so the F3 fixtures are done and no longer a B blocker. No scope change. |
 | 2026-09-25 | Folded readiness-audit corrections: command-derived undo labels, with no `History`/`committing()` change (P1, §4 F2); the duplicate and reset-framing ambiguities, with minimal options; one speaker, keyed per step; "Changed page N" moved into `Copy`; the row-rule collapse guard; the spread partner as a second cause of divergence; the `uiautomator` limits, the Robolectric `UNDEFINED` artefact and the spike; the `ZineActionScrim` fix bundled; Read speaks nothing, so B needs a Read design; A2 unaudited; the automatable/device-only table; the v4 whole-backup consequence and `explicitNulls`; the deprecated announce API; readiness per part. Added the product audit, the research, the frozen "Put back" state and the `v21-proof.html:634` divergence. Base moved to `5f7707a`, lines re-verified. |
