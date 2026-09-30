@@ -92,8 +92,9 @@ public fun Command.editLabel(doc: ZineDocument): EditLabel? = when (this) {
         before.flippedVertically != after.flippedVertically -> EditLabel(
             if (after.flippedVertically) EditVerb.FLIP_TOP_BOTTOM_ON else EditVerb.FLIP_TOP_BOTTOM_OFF, null,
         )
-        // Ink is the only other field an EditDecorCommand is raised for (`inkSupply`).
-        else -> EditLabel(EditVerb.INK, null)
+        before.ink != after.ink -> EditLabel(EditVerb.INK, null)
+        // Only Replace changes the box: picking the same supply again still refits it. The act was a swap.
+        else -> EditLabel(EditVerb.SWAP, EditKind.ART)
     }
     is MakeImageSpreadCommand -> EditLabel(EditVerb.SPREAD, EditKind.PHOTO)
     is AddPageCommand, is DeletePageCommand -> null

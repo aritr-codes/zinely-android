@@ -134,6 +134,20 @@ class EditLabelTest {
     }
 
     @Test
+    fun `replacing an art piece with the same supply is still a swap, never ink`() {
+        // Replace refits the box even when the maker picks the piece it already is (Review R1).
+        val same = labelAfter(model(art), Intent.ReplaceSupply("art", art.supplyId, box.copy(widthPt = 90.0)))
+        assertEquals(EditLabel(EditVerb.SWAP, EditKind.ART), same)
+    }
+
+    @Test
+    fun `a twin that changes nothing records no step to mislabel`() {
+        // Make smaller at the minimum size used to commit a no-op labelled "moved" (Review I3).
+        val selected = EditorReducer.reduce(model(photo), Intent.Select("photo")).model
+        assertEquals(selected.history, EditorReducer.reduce(selected, Intent.RotateBy(0.0)).model.history)
+    }
+
+    @Test
     fun `across fold is a spread of a photo`() {
         val spread = labelAfter(model(photo), Intent.MakeImageSpread("photo", 1.5, PtSize(105.0, 148.0)))
         assertEquals(EditLabel(EditVerb.SPREAD, EditKind.PHOTO), spread)

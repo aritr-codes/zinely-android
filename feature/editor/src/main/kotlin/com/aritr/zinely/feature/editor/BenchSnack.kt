@@ -317,8 +317,9 @@ internal fun benchDeletedMessage(label: String): String = Copy.Snack.deleted(lab
  * in forward words. When the step moved the maker to another page the same line gains ", page N", unless it
  * already names its pages (Across fold redone).
  *
- * [currentPageIndex] is the page after the step. For Across fold that is always its source page, because
- * `stepHistory` goes to the page a command edited, so the redo line can name the pair from it.
+ * [currentPageIndex] is the page the step's own model ends on ([EditorStore] passes it as it reduces). For
+ * Across fold that is always its source page, because `stepHistory` goes to the page a command edited, so the
+ * redo line can name the pair from it; a spread exists only on the eight pages that pair covers.
  */
 internal fun undoSnackLine(step: Effect.HistoryStepped, currentPageIndex: Int): String {
     val (verb, kind, count) = step.label
@@ -352,7 +353,7 @@ internal fun undoSnackLine(step: Effect.HistoryStepped, currentPageIndex: Int): 
         EditVerb.FRAMING -> if (undo) u.FRAMING_PUT_BACK else u.FRAMING_CHANGED
         EditVerb.SPREAD -> if (undo) u.SPREAD_PUT_BACK else {
             // Names its own pages, so it never takes the page clause.
-            val (left, right) = checkNotNull(imageSpreadPageNumbers(currentPageIndex)) { "Across fold redone off its pair" }
+            val (left, right) = checkNotNull(imageSpreadPageNumbers(currentPageIndex))
             return Copy.Spread.success(left, right)
         }
     }

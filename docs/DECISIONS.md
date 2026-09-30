@@ -13785,7 +13785,8 @@ that moves the maker to another page says so in the same line.
    `WORDS_FROM_EMPTY`. Rules that are not visible in A26's table:
    - `EditImageCommand`: asset → swap, else copier, else a flip axis, else framing. A reframe that returns to the
      default look and a Reset are both framing (D2 = 2a).
-   - `EditDecorCommand`: supply → swap (the swap outranks its refit), else a flip axis, else ink.
+   - `EditDecorCommand`: supply → swap (the swap outranks its refit), else a flip axis, else ink, else swap: only
+     Replace changes the box, and it refits even when the maker picks the same piece again.
    - `EditTextCommand`: words when the text changed (from blank → `WORDS_FROM_EMPTY`), otherwise text style.
    - Duplicate and Add are both `PlaceCommand` and share a label (D1 = 1a).
    - Page add/delete have no Bench control and A26 gives them no line, so `editLabel` returns `null` and the step is
@@ -13797,16 +13798,17 @@ that moves the maker to another page says so in the same line.
    `landedOnPage` is the page index the model ends on when the step changed page, else `null`: post-step state,
    never where the command started. `Effect.Announce` had no other emitter and is removed. The `Announcer` drain
    stays for Reframe, text style and the import summary.
-4. **One speaker.** `EditorStore` routes `HistoryStepped` to `historySteps` (the snack is screen state; the effect
-   runner lives in the ViewModel and ignores it). `EditorScreen` raises the existing `BenchSnack` in its one slot:
-   the line from `Copy.Undo` via `undoSnackLine`, no button, the frozen 3200 ms dwell. Its polite live region is the
+4. **One speaker.** `EditorStore` words each `HistoryStepped` as it reduces (`undoSnackLine`, from `Copy.Undo`,
+   against the model the step produced) and emits the line on `historyLines`; the snack is screen state, and the
+   effect runner lives in the ViewModel and ignores the effect. `EditorScreen` raises the existing `BenchSnack` in its
+   one slot: that line, no button, the frozen 3200 ms dwell. Its polite live region is the
    only thing that speaks the step.
 5. **Keyed per step.** The snack is keyed by a step counter, not by its text, so an identical repeat is a new node
    that enters from hidden. `BenchSnack` now starts each instance at hidden (`Animatable(0f)` in place of
    `animateFloatAsState`). The geometry, motion spec, dwell and colours are unchanged.
 6. **The page clause** is `", page N"`, only when `landedOnPage` is set. Across fold's redo is the frozen forward line
-   `Copy.Spread.success`, which names its pages and never takes the clause. Its pages come from the post-step current
-   page, which is always the spread's source page because `stepHistory` goes to the page the command edited.
+   `Copy.Spread.success`, which names its pages and never takes the clause. Its pages come from the step's own
+   post-step page, which is always the spread's source page because `stepHistory` goes to the page the command edited.
 
 #### Scope
 
@@ -13831,6 +13833,10 @@ region, which speaks on every autosave, an undo's included, as it did before.
 - The snack's `Undo` after a delete now leads to the named line ("Text put back") in the same slot, where before the
   snack simply left. It still offers no second Undo.
 - `BenchSnack` now enters from hidden even when first composed visible.
+- An accessibility twin (Nudge, Make bigger/smaller, Rotate) that changes nothing, e.g. Make smaller at the minimum
+  size, no longer records an undo step, as `CommitTransform` already did; otherwise its undo would say "moved back".
+- An Undo or Redo during a soft delete's 200 ms fade cancels the delete and the element comes back whole (before, the
+  bar's Undo could leave it half-faded).
 - **Evidence (JVM):** `EditLabelTest` (every command a Bench control raises, via the real intents, plus every D4
   boundary: exactly and just over 2% and 2°, shrink, reverse and wrap-around turns, precedence, several elements);
   `HistorySteppedTest` (exactly one effect per step and none on an empty stack, `isRedo`, `landedOnPage` after the

@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
  * truth — the reducer's [EditorModel] — and exposes a history-free [EditorUiState] to Compose. It is a
  * thin shell over the **pure** [EditorReducer]: every [Intent] folds synchronously into a new model, and
  * the resulting [Effect]s are handed to an [EditorEffectRunner] (autosave / image decode), except
- * [Effect.HistoryStepped], which goes to [historySteps].
+ * [Effect.HistoryStepped], which becomes one line on [historyLines].
  *
  * **Threading & re-entrancy (Codex D1).** [dispatch] is **main-thread-only by contract** (the UI and the
  * gesture layer always call it on the main thread), which keeps the model free of cross-thread mutation.
@@ -49,14 +49,16 @@ public class EditorStore(
     /** The history-free projection Compose collects (`collectAsStateWithLifecycle`). */
     public val uiState: StateFlow<EditorUiState> = _uiState.asStateFlow()
 
-    private val _historySteps = MutableSharedFlow<Effect.HistoryStepped>(extraBufferCapacity = 8)
+    private val _historyLines = MutableSharedFlow<String>(extraBufferCapacity = 8)
 
     /**
-     * Each undo or redo, for the Bench snack to name ([ADR-123](../../../../../../../../docs/DECISIONS.md#adr-123)).
+     * The Bench snack's line for each undo or redo ([ADR-123](../../../../../../../../docs/DECISIONS.md#adr-123)),
+     * worded here, against the model the step produced, so a later intent cannot change which page it names.
      * Routed here rather than through [EditorEffectRunner] because the snack is screen state and the runner
-     * lives in the ViewModel. Replay-free: the screen whose Undo raised the step is the one collecting.
+     * lives in the ViewModel. One emission per step, never conflated; replay-free, because the screen whose
+     * Undo raised the step is the one collecting.
      */
-    public val historySteps: SharedFlow<Effect.HistoryStepped> = _historySteps.asSharedFlow()
+    public val historyLines: SharedFlow<String> = _historyLines.asSharedFlow()
 
     private val mailbox = ArrayDeque<Intent>()
     private var draining = false
@@ -92,8 +94,11 @@ public class EditorStore(
                     if (effect is Effect.Autosave) check(effect.document === reduction.model.document) {
                         "Autosave effect document is not the freshly-reduced document"
                     }
-                    if (effect is Effect.HistoryStepped) _historySteps.tryEmit(effect)
-                    else effectRunner.run(effect, postDispatch)
+                    if (effect is Effect.HistoryStepped) {
+                        _historyLines.tryEmit(undoSnackLine(effect, reduction.model.currentPageIndex))
+                    } else {
+                        effectRunner.run(effect, postDispatch)
+                    }
                 }
             }
         } finally {

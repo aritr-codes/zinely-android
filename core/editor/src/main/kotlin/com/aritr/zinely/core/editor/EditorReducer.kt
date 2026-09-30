@@ -576,6 +576,8 @@ public object EditorReducer {
         val before = transformsOf(model, model.selection)
         if (before.isEmpty()) return Reduction(model)
         val after = before.mapValues { f(it.value) }
+        // A twin that changes nothing (Make smaller at the minimum size) is no step, as in CommitTransform.
+        if (after == before) return Reduction(model)
         return committing(model, TransformCommand(model.currentPageIndex, before, after))
     }
 

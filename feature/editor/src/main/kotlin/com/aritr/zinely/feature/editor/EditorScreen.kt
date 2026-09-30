@@ -358,9 +358,9 @@ public fun EditorScreen(
     // snack (a new live-region node, entering from hidden) rather than an unchanged one already read out.
     var snackStep by remember { mutableIntStateOf(0) }
     LaunchedEffect(store) {
-        store.historySteps.collect { step ->
+        store.historyLines.collect { line ->
             deleteJob[0]?.cancel()
-            snackMessage = undoSnackLine(step, store.uiState.value.currentPageIndex)
+            snackMessage = line
             snackAction = null
             snackStep++
             snackVisible = true
@@ -387,12 +387,17 @@ public fun EditorScreen(
             deleteJob[0]?.cancel()
             deleteJob[0] = c4Scope.launch {
                 deletingId = id
-                animate(0f, 1f, animationSpec = tween(deleteFadeMillis)) { v, _ ->
-                    deleteProgress = v
+                try {
+                    animate(0f, 1f, animationSpec = tween(deleteFadeMillis)) { v, _ ->
+                        deleteProgress = v
+                    }
+                    dispatch(Intent.Delete(ids))
+                } finally {
+                    // An Undo or Redo inside the fade cancels this job before the delete lands; the element
+                    // must come back whole rather than stay half-faded.
+                    deletingId = null
+                    deleteProgress = 0f
                 }
-                dispatch(Intent.Delete(ids))
-                deletingId = null
-                deleteProgress = 0f
                 snackMessage = benchDeletedMessage(label)
                 snackAction = UndoActionLabel
                 snackVisible = true
