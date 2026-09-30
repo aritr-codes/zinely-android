@@ -1,6 +1,6 @@
 package com.aritr.zinely.feature.editor
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,7 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +33,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.editor.EditKind
+import com.aritr.zinely.core.editor.EditVerb
+import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Colors
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
@@ -195,13 +199,14 @@ internal fun BenchSnack(
     modifier: Modifier = Modifier,
     bottomClearance: Dp = 0.dp,
 ) {
-    val progress by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        // Still routed through the V2 motion object: V2.1 changed the duration, not the arrival, and this
-        // is where the reduced-motion downgrade lives ([ADR-075]). Same call [BenchStyleRow] makes.
-        animationSpec = ZinelyTheme.v2Motion.standard(BenchSnackMillis),
-        label = "bench-snack",
-    )
+    // Still routed through the V2 motion object: V2.1 changed the duration, not the arrival, and this
+    // is where the reduced-motion downgrade lives ([ADR-075]). Same call [BenchStyleRow] makes.
+    val spec = ZinelyTheme.v2Motion.standard<Float>(BenchSnackMillis)
+    // Every instance starts hidden, so a new one keyed in over a snack still standing (A26: each undo is a
+    // new snack) runs the frozen entrance from the start instead of appearing already at rest.
+    val animatable = remember { Animatable(0f) }
+    LaunchedEffect(visible) { animatable.animateTo(if (visible) 1f else 0f, spec) }
+    val progress = animatable.value
     if (progress <= 0f) return
     val riseDp = BenchSnackEnterOffset * (1f - progress)
     val rise = with(LocalDensity.current) { riseDp.toPx() }
@@ -305,3 +310,51 @@ internal fun benchDeleteLabel(pages: List<com.aritr.zinely.core.model.Page>, id:
  * freeze's, and it is kept: the line is a sentence about something that happened, not a label.
  */
 internal fun benchDeletedMessage(label: String): String = Copy.Snack.deleted(label)
+
+/**
+ * The one line the snack says after an undo or redo (frozen `v21-bench.html` A26,
+ * [ADR-123](../../../../../../../../docs/DECISIONS.md#adr-123)). Undo says what came back; redo says the act
+ * in forward words. When the step moved the maker to another page the same line gains ", page N", unless it
+ * already names its pages (Across fold redone).
+ *
+ * [currentPageIndex] is the page after the step. For Across fold that is always its source page, because
+ * `stepHistory` goes to the page a command edited, so the redo line can name the pair from it.
+ */
+internal fun undoSnackLine(step: Effect.HistoryStepped, currentPageIndex: Int): String {
+    val (verb, kind, count) = step.label
+    val undo = !step.isRedo
+    val u = Copy.Undo
+    val thing = if (count > 1) u.things(count) else when (kind) {
+        EditKind.TEXT -> u.TEXT
+        EditKind.PHOTO -> u.PHOTO
+        EditKind.ART -> u.ART_PIECE
+        EditKind.EMPTY_BOX -> u.EMPTY_BOX
+        null -> ""
+    }
+    val line = when (verb) {
+        EditVerb.DELETE -> if (undo) u.putBack(thing) else u.removed(thing)
+        EditVerb.PLACE -> if (undo) u.takenOff(thing) else u.added(thing)
+        EditVerb.MOVE -> if (undo) u.movedBack(thing) else u.moved(thing)
+        EditVerb.RESIZE -> if (undo) u.resizedBack(thing) else u.resized(thing)
+        EditVerb.TURN -> if (undo) u.turnedBack(thing) else u.turned(thing)
+        EditVerb.SWAP -> if (undo) u.swappedBack(thing) else u.swapped(thing)
+        EditVerb.RESTACK -> if (undo) u.STACKING_PUT_BACK else u.STACKING_CHANGED
+        EditVerb.WORDS -> if (undo) u.WORDS_PUT_BACK else u.WORDS_CHANGED
+        EditVerb.WORDS_FROM_EMPTY -> if (undo) u.WORDS_TAKEN_OFF else u.WORDS_ADDED
+        EditVerb.TEXT_STYLE -> if (undo) u.TEXT_STYLE_PUT_BACK else u.TEXT_STYLE_CHANGED
+        EditVerb.COPIER_ON -> if (undo) u.COPIER_TAKEN_OFF else u.COPIER_ADDED
+        EditVerb.COPIER_OFF -> if (undo) u.COPIER_PUT_BACK else u.COPIER_REMOVED
+        EditVerb.FLIP_LEFT_RIGHT_ON -> if (undo) u.flipTakenOff(u.LEFT_RIGHT) else u.flipAdded(u.LEFT_RIGHT)
+        EditVerb.FLIP_LEFT_RIGHT_OFF -> if (undo) u.flipPutBack(u.LEFT_RIGHT) else u.flipRemoved(u.LEFT_RIGHT)
+        EditVerb.FLIP_TOP_BOTTOM_ON -> if (undo) u.flipTakenOff(u.TOP_BOTTOM) else u.flipAdded(u.TOP_BOTTOM)
+        EditVerb.FLIP_TOP_BOTTOM_OFF -> if (undo) u.flipPutBack(u.TOP_BOTTOM) else u.flipRemoved(u.TOP_BOTTOM)
+        EditVerb.INK -> if (undo) u.INK_PUT_BACK else u.INK_CHANGED
+        EditVerb.FRAMING -> if (undo) u.FRAMING_PUT_BACK else u.FRAMING_CHANGED
+        EditVerb.SPREAD -> if (undo) u.SPREAD_PUT_BACK else {
+            // Names its own pages, so it never takes the page clause.
+            val (left, right) = checkNotNull(imageSpreadPageNumbers(currentPageIndex)) { "Across fold redone off its pair" }
+            return Copy.Spread.success(left, right)
+        }
+    }
+    return step.landedOnPage?.let { u.onPage(line, it + 1) } ?: line
+}

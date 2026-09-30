@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.editor
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -626,7 +627,11 @@ class BenchC4Test {
         composeRule.mainClock.advanceTimeBy(BenchSnackMillis + 100L)
         composeRule.waitForIdle()
         assertEquals(1, store.uiState.value.document.pages[0].elements.size)
-        composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
+        // A26 (ADR-123): the delete snack does not just leave; the same slot names what came back, and it
+        // offers no second Undo, so a second press cannot take back whatever preceded the delete.
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
+        composeRule.onAllNodesWithContentDescription("Text put back").assertCountEquals(1)
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
     }
 
     @Test

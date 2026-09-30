@@ -8,8 +8,11 @@ import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.toUiState
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -17,7 +20,8 @@ import kotlinx.coroutines.launch
  * The feature-layer MVI store (spike §1/§2, §10.3 — Codex-reconciled). It owns the single source of
  * truth — the reducer's [EditorModel] — and exposes a history-free [EditorUiState] to Compose. It is a
  * thin shell over the **pure** [EditorReducer]: every [Intent] folds synchronously into a new model, and
- * the resulting [Effect]s are handed to an [EditorEffectRunner] (autosave / image decode / a11y announce).
+ * the resulting [Effect]s are handed to an [EditorEffectRunner] (autosave / image decode), except
+ * [Effect.HistoryStepped], which goes to [historySteps].
  *
  * **Threading & re-entrancy (Codex D1).** [dispatch] is **main-thread-only by contract** (the UI and the
  * gesture layer always call it on the main thread), which keeps the model free of cross-thread mutation.
@@ -44,6 +48,15 @@ public class EditorStore(
 
     /** The history-free projection Compose collects (`collectAsStateWithLifecycle`). */
     public val uiState: StateFlow<EditorUiState> = _uiState.asStateFlow()
+
+    private val _historySteps = MutableSharedFlow<Effect.HistoryStepped>(extraBufferCapacity = 8)
+
+    /**
+     * Each undo or redo, for the Bench snack to name ([ADR-123](../../../../../../../../docs/DECISIONS.md#adr-123)).
+     * Routed here rather than through [EditorEffectRunner] because the snack is screen state and the runner
+     * lives in the ViewModel. Replay-free: the screen whose Undo raised the step is the one collecting.
+     */
+    public val historySteps: SharedFlow<Effect.HistoryStepped> = _historySteps.asSharedFlow()
 
     private val mailbox = ArrayDeque<Intent>()
     private var draining = false
@@ -79,7 +92,8 @@ public class EditorStore(
                     if (effect is Effect.Autosave) check(effect.document === reduction.model.document) {
                         "Autosave effect document is not the freshly-reduced document"
                     }
-                    effectRunner.run(effect, postDispatch)
+                    if (effect is Effect.HistoryStepped) _historySteps.tryEmit(effect)
+                    else effectRunner.run(effect, postDispatch)
                 }
             }
         } finally {

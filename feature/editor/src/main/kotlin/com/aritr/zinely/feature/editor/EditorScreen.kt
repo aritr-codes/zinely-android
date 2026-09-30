@@ -20,6 +20,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -351,6 +352,24 @@ public fun EditorScreen(
     // coroutine to clear `snackVisible` out from under the second, which is how a snackbar ends up
     // dismissing itself 200ms after it appears.
     val deleteJob = remember { arrayOfNulls<Job>(1) }
+
+    // ADR-123 / A26: each undo or redo raises this same snack with its named line: no button, one slot, one
+    // live region, and nothing else speaks. Keyed per step, not per line, so an identical repeat is a new
+    // snack (a new live-region node, entering from hidden) rather than an unchanged one already read out.
+    var snackStep by remember { mutableIntStateOf(0) }
+    LaunchedEffect(store) {
+        store.historySteps.collect { step ->
+            deleteJob[0]?.cancel()
+            snackMessage = undoSnackLine(step, store.uiState.value.currentPageIndex)
+            snackAction = null
+            snackStep++
+            snackVisible = true
+            deleteJob[0] = c4Scope.launch {
+                delay(BenchSnackDeleteMillis)
+                snackVisible = false
+            }
+        }
+    }
 
     // Frozen `del()` (`v2-bench.html:620-629`), in the order the freeze performs it: fade, then
     // remove, then say so. Row 4.13 asserts the three together because any one alone reads as a
@@ -1941,27 +1960,29 @@ public fun EditorScreen(
                 // light `ink` (#27270F) with the inherited dark `surfaceSoft` (#46352E), only 1.31:1. The
                 // room pair is #FFF9DB on #46352E, 10.96:1. An explicit parameter makes that boundary
                 // immune to future CompositionLocal nesting changes.
-                BenchSnack(
-                    visible = snackVisible,
-                    message = snackMessage,
-                    // Null for the ink snack (row 4.15 / C6): the frozen `applyInk` hides the button.
-                    actionLabel = snackAction,
-                    onAction = {
-                        deleteJob[0]?.cancel()
-                        snackVisible = false
-                        dispatch(Intent.Undo)
-                    },
-                    colors = roomColors21,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                    // D-089 / frozen Bench A8: placement raises both surfaces. Keep Undo and the newly
-                    // selected element's verbs reachable by stacking the snack one complete bar footprint
-                    // above the shared floor; its own 12dp inset becomes the required clear gap.
-                    bottomClearance = if (ctxVisible) {
-                        contextBarHeight + BenchSnackStackRotationAllowance
-                    } else {
-                        0.dp
-                    },
-                )
+                key(snackStep) {
+                    BenchSnack(
+                        visible = snackVisible,
+                        message = snackMessage,
+                        // Null for the ink snack (row 4.15 / C6): the frozen `applyInk` hides the button.
+                        actionLabel = snackAction,
+                        onAction = {
+                            deleteJob[0]?.cancel()
+                            snackVisible = false
+                            dispatch(Intent.Undo)
+                        },
+                        colors = roomColors21,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        // D-089 / frozen Bench A8: placement raises both surfaces. Keep Undo and the newly
+                        // selected element's verbs reachable by stacking the snack one complete bar footprint
+                        // above the shared floor; its own 12dp inset becomes the required clear gap.
+                        bottomClearance = if (ctxVisible) {
+                            contextBarHeight + BenchSnackStackRotationAllowance
+                        } else {
+                            0.dp
+                        },
+                    )
+                }
 
             }
         }

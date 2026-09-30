@@ -1,5 +1,8 @@
 package com.aritr.zinely.feature.editor
 
+import com.aritr.zinely.core.editor.EditKind
+import com.aritr.zinely.core.editor.EditLabel
+import com.aritr.zinely.core.editor.EditVerb
 import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.model.ImageElement
@@ -62,11 +65,12 @@ class DefaultEditorEffectRunnerTest {
     }
 
     @Test
-    fun announceEffect_reachesAnnouncer() = runTest(dispatcher) {
+    fun historyStep_isNeverSpokenByTheAnnouncer() = runTest(dispatcher) {
+        // ADR-123: the snack's live region is the one speaker for an undo; a second channel would say it twice.
         val said = mutableListOf<String>()
         val r = runner(this, UnavailableImagePipeline, announcer = { said += it })
-        r.run(Effect.Announce("Selected text"), dispatch = {})
-        assertEquals(listOf("Selected text"), said)
+        r.run(Effect.HistoryStepped(EditLabel(EditVerb.DELETE, EditKind.PHOTO), isRedo = false, landedOnPage = 2), dispatch = {})
+        assertEquals(emptyList<String>(), said)
     }
 
     @Test

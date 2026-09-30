@@ -15,7 +15,7 @@ import com.aritr.zinely.core.model.Transform
 
 /**
  * The pure MVI reducer (ADR-029 §2). `reduce(model, intent)` is total, synchronous, and side-effect-free:
- * I/O is **returned** as [Effect]s (autosave, image decode, a11y announce), never performed. Determinism is
+ * I/O is **returned** as [Effect]s (autosave, image decode, the undo/redo snack), never performed. Determinism is
  * preserved without a clock/RNG — element ids and session tokens both draw from [EditorModel.nextToken].
  *
  * ### How [com.aritr.zinely.core.model.DecorElement] routes through here (ADR-105 / SUPPLIES-SPEC §2)
@@ -588,7 +588,8 @@ public object EditorReducer {
         } else {
             History(undo = model.history.undo.dropLast(1), redo = model.history.redo + cmd)
         }
-        // Document-global undo/redo: if the command touched another page, navigate there + announce (Codex obs).
+        // Document-global undo/redo: if the command touched another page, navigate there, and the step's one
+        // snack names that page (ADR-123, A26's page clause).
         val target = cmd.touchedPageIndex()?.coerceIn(0, doc.pages.lastIndex)
         val nav = target != null && target != model.currentPageIndex
         // Undoing a page delete restores the selection that page carried (Codex required-fix #8).
@@ -613,9 +614,11 @@ public object EditorReducer {
             selection = selection,
             currentPageIndex = if (nav) target!! else model.currentPageIndex.coerceIn(0, doc.pages.lastIndex),
         )
+        // Labelled from the document before this step, in either direction (ADR-123).
+        val label = cmd.editLabel(model.document)
         val effects = buildList {
             add(Effect.Autosave(doc))
-            if (nav) add(Effect.Announce("Changed page ${target!! + 1}"))
+            if (label != null) add(Effect.HistoryStepped(label, isRedo = redo, landedOnPage = if (nav) target else null))
         }
         return Reduction(next, effects)
     }
