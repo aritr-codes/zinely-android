@@ -661,6 +661,61 @@ public object Copy {
         public const val TOP_BOTTOM_FLIP_REMOVED: String = "Top-bottom flip removed"
     }
 
+    /**
+     * Named undo and redo (frozen `v21-bench.html` A26, ADR-123): the one line the Bench snack says after a
+     * history step. The thing, then what happened to it; undo says what came back, redo says the act in
+     * forward words, never the undo sentence again. The table itself is A26's `ROWS`.
+     */
+    public object Undo {
+        public const val TEXT: String = "Text"
+        public const val PHOTO: String = "Photo"
+        public const val ART_PIECE: String = "Art piece"
+        public const val EMPTY_BOX: String = "Empty box"
+        public fun things(count: Int): String = "$count things"
+
+        public fun putBack(thing: String): String = "$thing put back"
+        public fun removed(thing: String): String = "$thing removed"
+        public fun takenOff(thing: String): String = "$thing taken off"
+        public fun added(thing: String): String = "$thing added"
+        public fun movedBack(thing: String): String = "$thing moved back"
+        public fun moved(thing: String): String = "$thing moved"
+        public fun resizedBack(thing: String): String = "$thing resized back"
+        public fun resized(thing: String): String = "$thing resized"
+        public fun turnedBack(thing: String): String = "$thing turned back"
+        public fun turned(thing: String): String = "$thing turned"
+        public fun swappedBack(thing: String): String = "$thing swapped back"
+        public fun swapped(thing: String): String = "$thing swapped"
+
+        public const val STACKING_PUT_BACK: String = "Stacking put back"
+        public const val STACKING_CHANGED: String = "Stacking changed"
+        public const val WORDS_PUT_BACK: String = "Words put back"
+        public const val WORDS_CHANGED: String = "Words changed"
+        public const val WORDS_TAKEN_OFF: String = "Words taken off"
+        public const val WORDS_ADDED: String = "Words added"
+        public const val TEXT_STYLE_PUT_BACK: String = "Text style put back"
+        public const val TEXT_STYLE_CHANGED: String = "Text style changed"
+        public const val COPIER_TAKEN_OFF: String = "Copier taken off"
+        public const val COPIER_PUT_BACK: String = "Copier put back"
+        public const val COPIER_ADDED: String = "Copier added"
+        public const val COPIER_REMOVED: String = "Copier removed"
+        public const val LEFT_RIGHT: String = "Left-right"
+        public const val TOP_BOTTOM: String = "Top-bottom"
+        public fun flipTakenOff(axis: String): String = "$axis flip taken off"
+        public fun flipPutBack(axis: String): String = "$axis flip put back"
+        public fun flipAdded(axis: String): String = "$axis flip added"
+        public fun flipRemoved(axis: String): String = "$axis flip removed"
+        public const val INK_PUT_BACK: String = "Ink put back"
+        public const val INK_CHANGED: String = "Ink changed"
+
+        /** Across fold undone. Its redo is the frozen forward line, [Spread.success], which names its pages. */
+        public const val SPREAD_PUT_BACK: String = "Photo back on one page"
+        public const val FRAMING_PUT_BACK: String = "Framing put back"
+        public const val FRAMING_CHANGED: String = "Framing changed"
+
+        /** A26's page clause: only when the step moved the maker to another page, which replaces "Changed page N". */
+        public fun onPage(line: String, pageNumber: Int): String = "$line, page $pageNumber"
+    }
+
     /** Editor canvas surface — reframe announcements, the whole-photo inert line, the Preview action. */
     public object Editor {
         /**

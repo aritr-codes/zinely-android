@@ -132,6 +132,7 @@
 | [ADR-120](#adr-120) | **A backup says when it was last saved, and a failed backup says where it failed.** A last-backup record written only on a saved backup; two backup phases (private archive, then the chosen destination) classified by owner ruling F1; one Cancel-vs-complete latch; the destination discarded best-effort. Extends ADR-110; the step 1b boundary is explicit. | Accepted 2026-09-28 (proposed 2026-09-27); 1.x step 1; device passes and owner checks done |
 | [ADR-121](#adr-121) | **Restore adds zines that aren't already on the shelf and never replaces what's here.** A zine is already here when its title, format, paper size and content equal a shelf zine's, counted one for one; a changed zine is added; doubt adds. No format change. Amends ADR-110 §5. | Accepted (design) 2026-09-28; owner ruling; implemented with 1.x step 1b and accepted 2026-09-29 (PR #86, `1fd3c9e`) |
 | [ADR-122](#adr-122) | **A backup is complete or explicitly partial, never silently partial; a restore reports what happened.** Backup is skip-and-list (one photo never fails it); the manifest gains a defaulted, leniently read `omitted` list, `packageVersion` stays 2; restore staging-write failures aren't "damaged", Cancel is withdrawn once commit starts, and a committed restore is a success even if the shelf lags. Amends ADR-110. | Accepted 2026-09-29; 1.x step 1b (PR #86, `1fd3c9e`) |
+| [ADR-123](#adr-123) | **Undo and redo say what they did, in the one Bench snack.** A pure `editLabel` derived from each command's memento (no History change, nothing persisted); `Effect.HistoryStepped` replaces "Changed page N"; one snack counted per step, shown in the snack and spoken once through the announcement drain; the page clause and the 2% / 2° transform rule. Words owned by frozen `v21-bench.html` A26. | Accepted 2026-10-01 (proposed 2026-09-30, revised twice 2026-10-01); 1.x step 3 (PR #90). **Accepted with documented device-verification limitations:** the owner waived the full two-pass device matrix, several A26 rows and the 2× listen were not heard, and TalkBack may say an identical repeat once |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -13754,3 +13755,355 @@ The implementation was reviewed by an independent Review Agent that did not writ
 - ACCEPTED, now enforced in `ZineBackupWriteLimits`: stop an injected writer limit from rising above 10,000.
 - ACCEPTED, now noted in Decision 5: the 4 MiB manifest limit can bind before 10,000 entries do.
 - REJECTED, adding the owner's principle verbatim: Decision 1 already quotes it verbatim, across a line break.
+
+## ADR-123 {#adr-123}
+
+### Undo and redo say what they did, in the one Bench snack
+
+**Status:** Accepted, 2026-10-01 (proposed 2026-09-30; **revised twice on 2026-10-01**: after the first device gate
+failed (Decision 5), and again after the post-fix gate heard a line once but not its repeat (Decision 4); both are in
+*Device record and revision* below). **Accepted by the owner with documented device-verification limitations:** the
+owner heard the twice-revised build at normal text, closed the TalkBack investigation, and explicitly waived the
+remaining device-verification passes. What was and was not verified is in *Acceptance* at the end; nothing unverified
+is claimed. Implemented on `fix/1x-step3-named-undo` (PR #90). Zinely 1.x step 3
+([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing), COMPLETE in §11), specified by
+[Brief 04](planning/BRIEF-04-READING-ORDER-AND-ALT-TEXT.md) part A3. **The design is the frozen
+[`v21-bench.html`](design/mockups/v21-bench.html) A26** (owner rulings D1–D4, 2026-09-30, PR #88). A26 owns every word
+and the page-clause rule; this ADR records how the product derives and delivers them, and does not restate the table.
+**Extends:** [ADR-005](#adr-005) (MVI; commands and history), [ADR-094](#adr-094) (the Bench snack).
+
+#### Context
+
+After an undo the maker was told nothing, unless the step changed page, when TalkBack alone heard a hard-coded
+English "Changed page N" (`Effect.Announce`). An undo on another page, or with nothing visible, was a guess. A26 froze
+the fix: one snack names what came back ("Photo put back"), a redo names what was redone ("Photo removed"), and a step
+that moves the maker to another page says so in the same line.
+
+#### Decision
+
+1. **Labels are derived, never stored.** A pure `Command.editLabel(doc): EditLabel?` in `core:editor` (`EditLabel.kt`)
+   returns `EditLabel(verb, kind, count)` from the command's own memento; `doc` is the document before the step, read
+   only to find a Transform's element kind. `History`, `committing()` and its call sites, every command and the
+   document schema are unchanged. `EditVerb` has one value per A26 row; toggles carry the state the command set
+   (`COPIER_ON`, `FLIP_TOP_BOTTOM_OFF`, …), and Add Text's two steps are `PLACE` of `EditKind.EMPTY_BOX` and
+   `WORDS_FROM_EMPTY`. Rules that are not visible in A26's table:
+   - `EditImageCommand`: asset → swap, else copier, else a flip axis, else framing. A reframe that returns to the
+     default look and a Reset are both framing (D2 = 2a).
+   - `EditDecorCommand`: supply → swap (the swap outranks its refit), else a flip axis, else ink, else swap: only
+     Replace changes the box, and it refits even when the maker picks the same piece again.
+   - `EditTextCommand`: words when the text changed (from blank → `WORDS_FROM_EMPTY`), otherwise text style.
+   - Duplicate and Add are both `PlaceCommand` and share a label (D1 = 1a).
+   - Page add/delete have no Bench control and A26 gives them no line, so `editLabel` returns `null` and the step is
+     silent, as it was before.
+2. **Transform precedence (D4 = 4c)** is `transformVerb`: over every element in the step, size change past 2% resizes;
+   otherwise a turn past 2° turns; otherwise it moved. Size is the larger relative change of width or height against
+   the pre-action box, and turn is the shorter way round. Both are magnitudes, and both comparisons are strict `>`.
+3. **One effect.** `stepHistory` emits `Effect.HistoryStepped(label, isRedo, landedOnPage)` after the autosave.
+   `landedOnPage` is the page index the model ends on when the step changed page, else `null`: post-step state,
+   never where the command started. `Effect.Announce` had no other emitter and is removed. The announcement drain
+   (the runner's `Announcer` and `EditorViewModel.announce`, one channel) stays for Reframe, text style and the import
+   summary, and since the second revision it also speaks this line (Decision 4); the line reaches it from the screen,
+   not as an effect.
+4. **One speaker.** `EditorStore` words each `HistoryStepped` as it reduces (`undoSnackLine`, from `Copy.Undo`,
+   against the model the step produced) and emits the line on `historyLines`; the snack is screen state, and the
+   effect runner lives in the ViewModel and ignores the effect. `EditorScreen` raises the existing `BenchSnack` in its
+   one slot: that line, no button, the frozen 3200 ms dwell.
+   **The line is spoken once, through the host's existing `announceForAccessibility` drain (revised 2026-10-01,
+   second fallback).** `EditorScreen` hands each line to `onHistoryAnnounce` as it raises the snack, and the app binds
+   that to the same `EditorViewModel.announce` Reframe and text style use. For such a line the snack is told not to
+   speak (`BenchSnack(announce = false)`): its live-region node carries no description, and the pill itself carries
+   the words as a merged node, which the platform reports as screen-reader focusable and not a live region.
+   Owner-heard 2026-10-01: touching the snack after an undo reads the line. Every other snack (delete, placed, duplicated, flip, ink,
+   the refusals) is still spoken by the snack's live region and never touches the drain. So each event has exactly
+   one speaker (the status strip's "Saved" chip still speaks after every autosave; see Scope).
+   *As first built and as first revised*, the snack's polite live region was the only speaker of the line.
+5. **Counted per step; one standing live-region node (revised 2026-10-01).** The snack's message is one live-region node, and
+   it stays composed while the snack is down: one pixel that draws nothing and has no description. It is not made
+   transparent, because Compose marks a node under a zero-alpha layer hidden from the platform. Raising a forward
+   snack's line gives that node its description; lowering the snack removes it, so the next line is always a change. A
+   step counter, not the text, marks each undo or redo. It restarts the frozen entrance from hidden
+   (`remember(step) { Animatable(0f) }`) and never rebuilds the node. The first revision also put one trailing space
+   on odd steps' descriptions so that an identical repeat was still a change; the device did not speak the repeat, and
+   the second revision removed the marker when undo and redo lines left the live region (Decision 4). The geometry, motion spec, dwell, colours and every word are unchanged.
+   *As first built* the snack was composed only while visible and `EditorScreen` wrapped it in `key(step)`, so every
+   line arrived on a new node. That build failed on device; see *Device record and revision*.
+6. **The page clause** is `", page N"`, only when `landedOnPage` is set. Across fold's redo is the frozen forward line
+   `Copy.Spread.success`, which names its pages and never takes the clause. Its pages come from the step's own
+   post-step page, which is always the spread's source page because `stepHistory` goes to the page the command edited.
+
+#### Scope
+
+In: the labels, the effect, the snack line, its keying and how it is spoken, `Copy.Undo`. Out, unchanged: `History`, `committing()`,
+persistence and schema (no label is persisted), the snack's frozen geometry, relative phrases (A2), alt text (B), the
+deprecated `announceForAccessibility` drain itself (Reframe, style and import use it as before; undo and redo lines
+are a new caller, not a change to it), and the status strip's "Saved" live
+region, which speaks on every autosave, an undo's included, as it did before.
+
+#### Alternatives considered
+
+- **Store a label on each command or in `History`.** Rejected: A26 and the audit rule out any History change, and the
+  memento already says what changed.
+- **Keep `Effect.Announce` beside the snack.** Rejected: two speakers for one event (readiness audit §4).
+- **Route the step through `EditorEffectRunner`.** Rejected: the runner is built in the ViewModel and cannot reach the
+  screen's snack state without a new ViewModel flow and NavHost parameter; the store already reaches the screen.
+  The second revision did add a NavHost parameter, for speech only. The runner still is not the speaker: it gets the
+  effect, not the line, which the store words against the step's own model.
+- **Key the snack by its text.** Rejected: a live region does not re-announce an unchanged node, so a repeat would be silent.
+- **Rebuild the snack per step** (the first build). Rejected by the device: a node that appears holding its line is not read.
+- **Hide the standing node with zero alpha, at any size** (revision; the first cut did this). Rejected: Compose
+  marks a transparent node hidden, so the platform is told it is not visible to the user and not important at the
+  moment its line is announced.
+- **Keep the standing node at the pill's full size, drawing nothing** (revision). Rejected: a visible live-region
+  node counts as covering what is under it, so it would take page elements beneath the snack's slot out of the
+  platform tree for good. One pixel covers one pixel.
+- **Leave an empty description on the standing node** (revision; the first cut did this). Rejected: Compose treats
+  any description, even `""`, as something to say, which makes the pixel a TalkBack focus stop.
+- **A separate, always-present invisible speaker beside the pill** (revision). Rejected: a second accessibility
+  component, and the visible message would then be either unreadable by touch or a second node saying the same line.
+- **Blank the description for a moment between two identical lines** (revision). Rejected: whether the platform
+  sees the blank would depend on when Compose next compares the tree.
+- **Keep the live region and mark a repeat with a trailing space** (first revision). Rejected by the device: the
+  second identical line was not spoken.
+- **Use the drain only for a repeat or a page-changing step, and the live region otherwise** (second revision).
+  Rejected: two ways to speak one kind of line, chosen by comparing each line with the last, and the page-change case
+  showed the live region can lose a line that is not a repeat.
+- **Speak through both, and let TalkBack drop the duplicate** (second revision). Rejected: two speakers for one event.
+- **Stop the page strip reading its tab when an undo changes page** (second revision). Rejected here: that readout is
+  how every page change is heard, and changing it is not this ADR's surface.
+- **Classify a Transform by its largest single property, or by the class name.** Rejected by D4 = 4c: a handle resize
+  moves the centre, and two fingers pick up stray turn and zoom.
+
+#### Consequences
+
+- The snack's `Undo` after a delete now leads to the named line ("Text put back") in the same slot, where before the
+  snack simply left. It still offers no second Undo.
+- `BenchSnack` now enters from hidden even when first composed visible.
+- An accessibility twin (Nudge, Make bigger/smaller, Rotate) that changes nothing, e.g. Make smaller at the minimum
+  size, no longer records an undo step, as `CommitTransform` already did; otherwise its undo would say "moved back".
+- An Undo or Redo during a soft delete's 200 ms fade cancels the delete and the element comes back whole (before, the
+  bar's Undo could leave it half-faded).
+- **Evidence (JVM):** `EditLabelTest` (every command a Bench control raises, mostly through the real intents, plus every D4
+  boundary: exactly and just over 2% and 2°, shrink, reverse and wrap-around turns, precedence, several elements);
+  `HistorySteppedTest` (exactly one effect per step and none on an empty stack, `isRedo`, `landedOnPage` after the
+  step, Across fold from the partner page, identical repeats, history round trip, page commands silent);
+  `UndoSnackLineTest` (every A26 row in both directions as literals, no redo equal to its undo, the page clause);
+  `NamedUndoSnackTest` on the semantics tree (one snack, no button, redo in the same snack, the page clause, the
+  3200 ms dwell; the standing node is in the tree before any snack, one pixel with no description, and its platform
+  `AccessibilityNodeInfo` is visible to the user, a polite live region and not focusable; it is never replaced; the
+  delete line lands on it and the Undo action is its sibling; second revision: every undo and redo line, an identical
+  repeat and a page-clause line included, is handed to the drain exactly once, the live-region node carries no
+  description for it, the pill carries the words, and a forward snack straight after an undo is spoken by the live
+  region again) and at the platform boundary (the `AccessibilityEvent`s Compose sends: the delete line is one
+  `CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION` event from the live-region node carrying the words, and three undos send
+  none from that node while the drain receives all three; the pill's platform node for an undo line is
+  screen-reader focusable and not a live region, its merged description is the line, and its child is still polite
+  and undescribed; with the snack
+  left speaking for undo lines as well, eight of the eleven tests that existed before the pill test failed); `NamedUndoSnackGoldenTest` (undo, redo, page
+  clause, Across fold, the longest line, light and dark, and the longest at font scale 2 on 360 dp, where the
+  PNG shows the line wrapping inside the pill). These show the tree and what the drain is handed, not what TalkBack says. That is the owner's listen.
+- **The risk this ADR carried as Proposed.** Keying the snack per step meant every undo reached the platform as a
+  live-region node that *appears*, not one whose text changes, and this log already recorded (Proof `.done`, the
+  ADR-051/052 section on the retired snackbar) that Compose may send only a subtree change for a new node. The
+  fallback was decided in advance: keep one live-region node composed and change its text, with the repeat case
+  carried by the per-step count; if a repeat is then silent, speak the line once through the existing `Announcer`
+  drain *instead of* the live region (still one speaker). Either fallback is a revision of this ADR, not a silent change.
+
+#### Device record and revision (2026-10-01)
+
+- **First gate, first build: FAILED. Owner-confirmed, 2026-09-30.** SM-A176B, Android 16, TalkBack 16.2.00.13, text
+  scale 1.0, QA build `com.aritr.zinely.undoqa` at `ed4b527`. One Art piece on page 1: Delete, then the bar's Undo.
+  The snack was visible both times. The owner heard only the focus readouts, "Delete button, double tap to activate"
+  and "Undo Button double tap to activate". The delete snack was not spoken. The named line ("Art piece put back") was
+  spoken zero times. The gate stopped there, so nothing else was tested on that build.
+- **Cause: not established.** ✅ What is known: the snack made a new node on both paths (`BenchSnack` composed
+  nothing while hidden, so the delete snack and every first line appeared whole, and `key(step)` rebuilt it for every
+  undo and redo), and Compose never sends a description change for a node with no previous copy
+  (`AndroidComposeViewAccessibilityDelegateCompat.sendSemanticsPropertyChangeEvents`, ui 1.10.4). A new node gets
+  subtree changes only: one from its parent, and one sourced at the node itself when it is first laid out.
+  🟨 The working reading is that TalkBack 16.2 on this phone does not read a live region out on a subtree change.
+  The independent review found that the public TalkBack source would read the second of those events, so this
+  reading may be wrong, and something else (speech cut off by a focus readout, a TalkBack setting) may be the cause.
+  The fallback was decided before the cause was known and is applied as decided; the post-fix gate tests it.
+- **Revision applied: the first fallback, in the shared mechanism.** Decision 5 as it now reads. The fix is in
+  `BenchSnack`, so every line it shows takes the same path: undo, redo, and the delete, placed, duplicated, flip, ink
+  and refusal snacks. None of those was reworded, restyled or retimed. A26's "each undo or redo is a new instance"
+  still holds for what is seen (the entrance restarts from hidden); the prototype's own live region is likewise a
+  persistent wrapper whose text is replaced.
+- **Post-fix gate, first revision: PARTLY PASSED. Owner-heard, 2026-10-01.** Same phone, Android, TalkBack and text
+  scale; QA build `com.aritr.zinely.undoqa` at `a77ec5d` (sha256 `17a032d6…eab3f0`). The owner's words:
+  - Delete one Art piece: "Art deleted. Saved".
+  - The bar's Undo: "Art piece put back. Saved".
+  - Redo, then Undo again: "works as expected".
+  - The same undo line twice in a row ("Art piece taken off"): "Only said once".
+  - An undo and a redo that changed page: "page 1 of 8 front cover" both times. That is the page strip's own tab
+    being selected. The named line with ", page 1" was not heard.
+  So a single line is now spoken, and the delete snack with it. An identical repeat is not, and a page-changing step
+  loses its line. The first fallback is not enough.
+- **Why a single line now speaks is still not established.** The "Saved" chip was not changed, is still composed
+  only while it shows, and was heard at this gate where it was not at the first. So something other than the
+  standing node may explain the first gate's silence. A control listen on the old `ed4b527` build would settle it and
+  has not been run.
+- **Second revision applied: the second fallback** (Decision 4 as it now reads). Undo and redo lines are spoken
+  through the drain *instead of* the live region, for every such line and not only repeats. The drain was expected
+  to speak a repeat because `announceForAccessibility` was believed to re-speak identical text, as Reframe's
+  repeated nudges rely on. The listen below did not bear that out for a quick repeat. The standing node stays for the forward snacks,
+  which the gate heard.
+- **Not covered.** A snack that is not an undo or redo does not advance the step count, so the same forward line
+  raised again while it still stands (two deletes of the same kind inside 3200 ms) is not a change and is not
+  re-announced. It was silent before this revision as well.
+- **Scope's "Saved" claim is unproven.** Scope says the status strip's "Saved" chip speaks on every autosave. The
+  chip is also composed only while it shows, and at the first gate the owner heard nothing after the delete's
+  autosave. It is left as it is here; it is not this ADR's surface.
+- **Risks carried into the listen on the second revision.** Each is marked settled or standing against the listen
+  recorded after this list.
+  - *Spoken twice.* **Settled for the cases heard:** delete, the bar's Undo and Redo were each heard once. Not heard
+    at the post-fix gate for the delete snack or a single undo either. On the second revision
+    an undo line is announced while the pill gains a description; the pill is not a live region, so that should be
+    silent.
+  - *Page change.* **Settled in part:** the named line was heard. On a step that changes page the page strip still
+    reads its tab; whether that readout was heard as well, and in which order, was not reported. If it is cut off, this ADR
+    needs a third revision; it is not solved by wording.
+  - *Focus on the snack.* **Standing.** If TalkBack focus is resting on the pill when the next undo line arrives, TalkBack may read
+    the pill's changed description as well as the announcement.
+  - *The drain itself is unheard on this phone.* **Settled:** the control (one Reframe nudge or one text-style
+    change) was heard. `announceForAccessibility` is still deprecated from API 36.
+  - *The snack's own Undo.* **Standing, a follow-up by the owner's ruling.** After a delete, the snack's Undo is the focused node and it disappears as the named line
+    is announced. TalkBack moving focus may cut the announcement. Both gates used the bar's Undo.
+  - *Dropped while not resumed.* **Standing.** The drain is collected only while the editor is RESUMED. A step taken in the moment
+    it is not (the transition back from Proof) shows its snack and is not spoken, and is never spoken late. The live
+    region had no such window.
+  - *The binding is not under test.* **Standing for the JVM; the listen exercised it.** `EditorScreen` tests prove
+    the line reaches `onHistoryAnnounce` once. Nothing tests that the app binds it (`ZinelyNavHost`, one line); with
+    it unbound an undo would be shown and not spoken, and every JVM test would pass.
+  - *If the page-changing line is still lost.* **Not needed:** the line was heard. The candidate third revision, not decided: on a step that changes
+    page only, hand the line to the drain after the page strip's selection has been reported, not with it. It is
+    recorded so a failed listen starts from a proposal and not from nothing.
+  - *The pixel covered.* **Standing.** The standing node leaves the platform tree if a visible node drawn later covers the
+    canvas's bottom-centre pixel, and the next line then arrives on a "new" node again. The flip tray and the ink
+    popover do not reach it and sheets are separate windows; the keyboard stack, the style row and the page grid
+    were not checked, and no test holds this.
+- **Listen on the second revision: owner-heard, 2026-10-01.** Same phone, Android and TalkBack; text scale 1.0; QA
+  build `com.aritr.zinely.undoqa` at `a6807c2` (sha256 `b9019dd6…3d04a0f`). The owner's words:
+  - An undo and a redo that changed page: "Text put back, page 1" and "Art peice taken off, page 1" (as typed).
+    The named line with its page is now heard. Whether the page strip's "page 1 of 8" was heard as well was not
+    reported.
+  - Delete, the bar's Undo, Redo: "yes each line is heard once". Nothing was reported heard twice.
+  - Touching the snack after an undo: "it does" read the line.
+  - The control on the same drain, a Reframe nudge or a text-style change (which of the two was not recorded):
+    "it does" speak.
+  - The same undo twice in a row: "only one time. am i doing it too fast?"
+- **The identical repeat.** The second of two identical undo lines was not spoken. The pace was not recorded: the
+  owner asked whether they were too fast, and that it matters is a guess. ✅ The app
+  hands the line to the drain both times (`NamedUndoSnackTest`: an identical repeat reaches `onHistoryAnnounce`
+  twice; the ViewModel's channel does not de-duplicate). 🟨 So the drop is on the platform's side, most likely
+  TalkBack skipping an announcement equal to one it is still speaking or has queued. That reading is not verified:
+  a slow repeat, pressed after the first line had finished, was proposed and not run, and no one observed the two
+  hand-offs on the device itself.
+- **Owner's ruling, 2026-10-01.** The TalkBack investigation stops here. The identical repeat is treated as a known
+  TalkBack and platform limitation unless an automated test shows an app-side fault. The snack's own Undo is a
+  follow-up check and does not block Step 3. The slow-against-fast repeat check and the 2× TalkBack listen are not
+  to be run now; they are documented below, not scheduled. The ruling did not speak to CI or to the two
+  device-verification passes. Nothing was merged at that point, and this ADR stayed Proposed until the owner
+  accepted it later the same day (*Acceptance*).
+- **Verified on device, by the owner's ear, at text scale 1.0:** the delete snack is spoken (both
+  listens); an undo and a redo are each spoken once, with no line heard twice; a step that changes page speaks its
+  named line with the page clause; the snack can be read by touch after an undo; the drain speaks on this phone.
+- **Not verified on device, and not claimed:**
+  - an identical repeat spoken twice at any pace (it was spoken once at the pace used; a slow one was not tried);
+  - on a step that changes page, whether the page strip's "page N of 8" is heard beside the named line, in which
+    order, and whether the named line is heard only once (the owner gave the words heard, not a count);
+  - any TalkBack listen at 2× text (the 2× layout is held only by the JVM golden at font scale 2 on 360 dp);
+  - the snack's own Undo after a delete (both listens used the bar's Undo);
+  - Across fold undone and redone, a Reframe undone, a Transform undone, Add Text's two steps;
+  - that "Changed page N" and a bare "Put back" are never heard (they have no emitter; no one listened for them);
+  - whether "Saved" after every undo is heard as a second voice (not ruled; a follow-up, not scheduled);
+  - why the first gate was silent (the control listen on the old `ed4b527` build was not run);
+  - either device-verification pass as such on `a6807c2`. A platform-tree dump was taken on `a77ec5d` only, and no
+    separate first-time-user pass was made; the owner's listen is the device evidence.
+  `adb shell uiautomator events` was tried at the post-fix gate as a Pass 1 record and was not reliable on this
+  phone (output lost, two events for a whole session); it is not evidence either way.
+- **Follow-ups, documented and not scheduled; none is a blocker by the owner's ruling:** the snack's own Undo
+  listen; a slow identical repeat, if the limitation is ever revisited; the 2× TalkBack listen; the unlistened A26
+  rows above; the page strip's co-readout on a page change; the "Saved" second-voice ruling; the risks above marked
+  standing. [ADR-053](#adr-053)'s claim that a repeated identical Reframe nudge is never silent rests on the same
+  behaviour of the same drain and has not been heard on this phone either; it is now in doubt and is not re-examined
+  here.
+- **Not covered by that ruling, and closed at acceptance:** CI was green on `ac8504d`, and the owner explicitly
+  waived the two device-verification passes on the final build (*Acceptance*). They were waived, not run.
+- **Review of the owner's-ruling record (2026-10-01): GO WITH FIXES**, by an independent Review Agent checking the
+  record against the owner's words; it ran no tests. All accepted: the gate had dropped CI and the two device passes
+  as if the ruling waived them (restored as still open); "each once" had been written for the page-changing step,
+  which the owner did not say; a ViewModel KDoc still stated a repeat as spoken; the page strip's co-readout was
+  missing from the not-verified list; "quick" was an inference about pace; the risk list is now marked settled or
+  standing; and Brief 04's criterion 12 is marked not met.
+- **Review of the second revision (2026-10-01): GO WITH FIXES**, by an independent Review Agent reading the diff and
+  the Compose source; it ran no tests. No defect found in the one-speaker mechanism, and no forward snack that the
+  words-and-no-button match would silence today. Reconciled:
+  - ACCEPTED: the pill for an undo line was described but, having a child, not screen-reader focusable, so "read by
+    touch" was unproven and weaker than before. The pill now merges its descendants and a platform-node test holds it.
+  - ACCEPTED: five stale statements that the snack's live region is the only speaker (two KDocs, a test comment,
+    Brief 04, and a ViewModel KDoc that stated the repeat as fact).
+  - ACCEPTED as records, not code: the drain is unheard on this phone, the snack's own Undo, the not-resumed drop,
+    the untested binding, and a candidate third revision for the page-changing step. All are in the open risks above.
+  - ACCEPTED: two wording nits (which channel Reframe uses; the runner alternative's rationale).
+  - REJECTED: naming the local fix branch here. The PR's branch is `fix/1x-step3-named-undo`, which is where the
+    commits are pushed.
+- **Review of the first revision (2026-10-01): GO WITH FIXES**, by an independent Review Agent reading the code and the
+  Compose 1.10.4 and TalkBack sources. No code defect was found in the mechanism. Reconciled:
+  - ACCEPTED: the cause was overclaimed as verified; it is now recorded as not established, with both event paths.
+  - ACCEPTED: the rejection of "full size, zero alpha" rested on a false premise (a transparent node covers
+    nothing). Following that through changed the code: the standing node is no longer transparent, and it has no
+    description while down.
+  - ACCEPTED: an unused import, and two inaccurate sentences here (the test tag, the 100 ms loop).
+  - RECORDED, not fixed: the three open risks above, which only a device can settle.
+  - REJECTED: one full-size chain with a conditional test tag, relying on zero alpha. It keeps the node hidden from
+    the platform, which is the state this revision removes.
+
+#### Acceptance (2026-10-01)
+
+**Accepted by the owner on 2026-10-01, with documented device-verification limitations.** The owner explicitly
+waived the remaining full Step 3 device-verification passes and ruled that no more time goes to TalkBack edge cases
+now. This is the record of what the acceptance rests on.
+
+- **What was built, in order.**
+  1. The original delivery, a live-region snack that was a new node for every line, was silent on the reference
+     device (`ed4b527`, 2026-09-30).
+  2. The first revision keeps one persistent live-region node and changes its description. Single lines were then
+     spoken; an identical repeat and a page-changing step's line were not (`a77ec5d`).
+  3. The final implementation keeps that node for the forward snacks (delete and the rest) and speaks every undo and
+     redo line through the existing announcement drain (`Announcer` / `EditorViewModel.announce`) instead. The snack
+     still shows the line, with its live region silent for it.
+
+  Exactly one speaker is used for each event: the live region for a forward snack, the drain for an undo or redo.
+- **Owner-confirmed on the reference device** (SM-A176B, Android 16, TalkBack 16.2.00.13, text scale 1.0, QA build at
+  `a6807c2`): a named undo is spoken; a named redo is spoken; an undo and a redo that change page speak their named
+  line with the page clause; no line was heard twice; the snack is visible; touching the snack after an undo reads
+  the line; the Reframe or text-style control on the same drain is spoken. A delete was heard on `a77ec5d` ("Art deleted. Saved") and
+  again in the delete, Undo, Redo sequence on `a6807c2`.
+- **Not verified on the final build. None of this is claimed as passed:**
+  - the full formal two-pass device matrix, and the exact formal device acceptance sequence (waived by the owner,
+    not run);
+  - Add Text's two-step undo on device;
+  - Across fold on device;
+  - Reframe and Transform undone on device;
+  - an identical announcement repeated after a slow pause;
+  - the snack's own Undo speech after a delete;
+  - TalkBack speech at 2× text;
+  - whether "Saved" is spoken on its own after every event;
+  - the further items in *Not verified on device* above (the page strip's co-readout on a page change, that
+    "Changed page N" and a bare "Put back" are never heard, and why the first gate was silent).
+- **Known limitation.** A repeated identical undo or redo line may be spoken only once. TalkBack or the platform may
+  suppress it; the cause is not verified. It is recorded as a TalkBack and platform limitation and not an app-side
+  blocker, because the app hands both events to the announcement path (`NamedUndoSnackTest`, and no de-duplication on
+  that path).
+- **Automated evidence.** On `a6807c2`: 282 suites, 2,445 tests, none failed or skipped; lint; the dependency
+  allow-list; a release build; and the golden check run with `--rerun-tasks`, with no golden changed or re-recorded.
+  Later commits on the PR change comments, one test name and documents only. CI was green on `ac8504d`, the PR head
+  before this acceptance record; the merge waits for CI on the record itself.
+- **Follow-ups** are the list under *Device record and revision*. They are documented, not scheduled, and the frozen
+  A26 copy and design are untouched.
+- **Review.** Each revision, the owner's-ruling record and this acceptance section were checked by an independent
+  Review Agent: four reviews, each GO WITH FIXES. The first three are reconciled above. The fourth, of this section,
+  found no overclaim and no hidden limitation; its fixes, all accepted, were a stale "READY", the CI claim pinned to
+  a commit, the delete snack attributed to both builds, and the "Saved" ruling worded as not ruled. The acceptance
+  itself is the owner's decision.

@@ -87,7 +87,8 @@ public object UnavailableImagePipeline : ImagePickDecodePipeline {
  *  - [Effect.PickAndDecodeImage] → launch the [ImagePickDecodePipeline] on [io], then on success dispatch
  *    [Intent.CommitAddImage] for Add or [Intent.ReplaceImage] for a targeted replacement, on failure
  *    announce, on cancel do nothing;
- *  - [Effect.Announce] → [Announcer.announce].
+ *  - [Effect.HistoryStepped] never reaches here: [EditorStore] hands its line to the screen (ADR-123), which shows it
+ *    in the Bench snack and speaks it once through the host's announcement callback, not through this runner.
  *
  * Background results ([io] pipeline) are routed back to the main thread before touching the store or the
  * a11y announcer: the follow-up [Intent.CommitAddImage] goes through the supplied (main-confined)
@@ -111,7 +112,7 @@ public class DefaultEditorEffectRunner(
                 autosave.markDirty()
                 savedSignal.onSaved()
             }
-            is Effect.Announce -> announcer.announce(effect.text)
+            is Effect.HistoryStepped -> Unit
             is Effect.PickAndDecodeImage -> launchImagePick(effect.replacingId, dispatch)
         }
     }

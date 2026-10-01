@@ -906,7 +906,7 @@ private fun ImportReportSink(viewModel: EditorViewModel) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // Drain the VM's announcement channel to TalkBack. Bound to the View (composable-only), so it
-    // lives here, not in the VM. Conflated buffer in the VM tolerates a brief subscriber gap.
+    // lives here, not in the VM. A line emitted while this is not RESUMED is dropped, never spoken late.
     val view = LocalView.current
     LaunchedEffect(view, lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -1005,9 +1005,11 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
                 reframeCoachSeen = reframeCoachSeen,
                 onReframeCoachSeen = viewModel::markReframeCoachSeen,
                 // Reframe a11y announcements (ADR-053 IF3) ride the same announceForAccessibility drain as
-                // the reducer's selection/undo lines (bound at line ~302).
+                // the effect runner's image-pick failure (bound at line ~302).
                 onReframeAnnounce = viewModel::announce,
                 onStyleAnnounce = viewModel::announce,
+                // ADR-123, second fallback: undo and redo lines are spoken through the same drain.
+                onHistoryAnnounce = viewModel::announce,
                 // The autosave-event stream (ADR-034): each emission raises the transient "Saved ✨"
                 // reassurance in the host. Hot SharedFlow, collected inside EditorScreen.
                 savedSignals = viewModel.saved,

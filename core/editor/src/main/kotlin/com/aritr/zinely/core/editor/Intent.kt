@@ -239,8 +239,16 @@ public sealed interface Effect {
      */
     public data class PickAndDecodeImage(val replacingId: String? = null) : Effect
 
-    /** An accessibility live-region announcement (e.g. selection / off-page undo). */
-    public data class Announce(val text: String) : Effect
+    /**
+     * One undo or redo happened ([ADR-123](../../../../../../../../docs/DECISIONS.md#adr-123)). The host
+     * raises the Bench snack with its one line and speaks that line once, through its announcement drain
+     * and not the snack's live region, so there is one speaker. Emitted once per step, never conflated: an
+     * identical repeat is a second event, and the host hands it to the drain again.
+     *
+     * @property landedOnPage the page index the step moved the maker to, or `null` if it stayed put. Read
+     *   from the model after the step, never from where the command started.
+     */
+    public data class HistoryStepped(val label: EditLabel, val isRedo: Boolean, val landedOnPage: Int?) : Effect
 }
 
 /** The result of one reduction: the next model plus any side effects to run. */

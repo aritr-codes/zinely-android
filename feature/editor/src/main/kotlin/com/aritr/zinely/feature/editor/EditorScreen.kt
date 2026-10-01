@@ -180,6 +180,9 @@ internal val LocalReframePhotoLoader = staticCompositionLocalOf { ProductionRefr
  * @param onStyleAnnounce speaks a discrete Type-bar style change (FR-3, [ADR-055](../DECISIONS.md#adr-055),
  *   WCAG 4.1.3). Same contract and same host drain as [onReframeAnnounce] — a separate parameter only so
  *   the two surfaces stay independently testable. Defaults to a no-op (previews/tests).
+ * @param onHistoryAnnounce speaks the one line an undo or redo says ([ADR-123](../DECISIONS.md#adr-123),
+ *   second fallback). Same host drain as [onReframeAnnounce]; the snack shows the same line without speaking
+ *   it. Defaults to a no-op (previews/tests).
  * @param onPreview invoked by the "Preview" entry point to open the unified Proof surface (M5,
  *   [ADR-051](../DECISIONS.md#adr-051) — the reader's-booklet PreviewScreen it once opened is retired,
  *   superseded by the imposed-sheet-first Proof). `null` (the default) hides the affordance entirely, so a
@@ -197,6 +200,7 @@ public fun EditorScreen(
     onReframeCoachSeen: () -> Unit = {},
     onReframeAnnounce: (String) -> Unit = {},
     onStyleAnnounce: (String) -> Unit = {},
+    onHistoryAnnounce: (String) -> Unit = {},
     savedSignals: Flow<Unit> = emptyFlow(),
     saveError: SaveErrorKind? = null,
     onDismissSaveError: () -> Unit = {},
@@ -287,7 +291,7 @@ public fun EditorScreen(
     var reframeAdjusted by remember { mutableStateOf(false) }
     // The Reframe screen-reader announcements (bench `#rfLive` / `rfSay`): every discrete adjustment, fit
     // change, and session end speaks (WCAG 4.1.3). Routed through [onReframeAnnounce] to the host's
-    // `announceForAccessibility` drain — the SAME channel the reducer's selection/undo announcements use.
+    // `announceForAccessibility` drain — the SAME channel text style and the image-pick failure use.
     // The platform re-announces even identical consecutive text (so a repeated ← nudge is never silent,
     // Review finding #1) and leaves no lingering live-region node to become a stale focus stop (#2).
     val latestAnnounce by rememberUpdatedState(onReframeAnnounce)
@@ -352,6 +356,34 @@ public fun EditorScreen(
     // dismissing itself 200ms after it appears.
     val deleteJob = remember { arrayOfNulls<Job>(1) }
 
+    // ADR-123 / A26: each undo or redo raises this same snack with its named line: no button, one slot.
+    // Counted per step, not per line, so an identical repeat still enters from hidden.
+    //
+    // One speaker, and for these lines it is the host's `announceForAccessibility` drain, not the snack's
+    // live region (ADR-123, second fallback). On device TalkBack read a live region's line once and stayed
+    // silent on an identical repeat, and lost the line to the page strip's own readout when the step
+    // changed page. The drain is handed every line, an identical repeat included; on device TalkBack still said
+    // an identical repeat once, which the owner ruled a platform limitation. The snack is told which line
+    // not to speak.
+    var snackStep by remember { mutableIntStateOf(0) }
+    var historyLine by remember { mutableStateOf<String?>(null) }
+    val latestHistoryAnnounce by rememberUpdatedState(onHistoryAnnounce)
+    LaunchedEffect(store) {
+        store.historyLines.collect { line ->
+            deleteJob[0]?.cancel()
+            snackMessage = line
+            historyLine = line
+            snackAction = null
+            snackStep++
+            snackVisible = true
+            latestHistoryAnnounce(line)
+            deleteJob[0] = c4Scope.launch {
+                delay(BenchSnackDeleteMillis)
+                snackVisible = false
+            }
+        }
+    }
+
     // Frozen `del()` (`v2-bench.html:620-629`), in the order the freeze performs it: fade, then
     // remove, then say so. Row 4.13 asserts the three together because any one alone reads as a
     // different interaction - a fade with no snack is a disappearance, a snack with no fade is a
@@ -368,12 +400,17 @@ public fun EditorScreen(
             deleteJob[0]?.cancel()
             deleteJob[0] = c4Scope.launch {
                 deletingId = id
-                animate(0f, 1f, animationSpec = tween(deleteFadeMillis)) { v, _ ->
-                    deleteProgress = v
+                try {
+                    animate(0f, 1f, animationSpec = tween(deleteFadeMillis)) { v, _ ->
+                        deleteProgress = v
+                    }
+                    dispatch(Intent.Delete(ids))
+                } finally {
+                    // An Undo or Redo inside the fade cancels this job before the delete lands; the element
+                    // must come back whole rather than stay half-faded.
+                    deletingId = null
+                    deleteProgress = 0f
                 }
-                dispatch(Intent.Delete(ids))
-                deletingId = null
-                deleteProgress = 0f
                 snackMessage = benchDeletedMessage(label)
                 snackAction = UndoActionLabel
                 snackVisible = true
@@ -748,7 +785,7 @@ public fun EditorScreen(
         if (styleTarget != null) runCatching { editorKeyFocus.requestFocus() }
     }
     // Style announcements ride the host's existing announceForAccessibility drain — the same channel
-    // Reframe and the reducer's selection/undo announcements use (no second live-region mechanism).
+    // Reframe and the image-pick failure use (no second live-region mechanism). Undo and redo use it too ([onHistoryAnnounce]).
     val latestStyleAnnounce by rememberUpdatedState(onStyleAnnounce)
     val sayStyle = { msg: String -> latestStyleAnnounce(msg) }
     val styleBuzz = rememberStyleBuzz()
@@ -1961,6 +1998,13 @@ public fun EditorScreen(
                     } else {
                         0.dp
                     },
+                    step = snackStep,
+                    // An undo or redo line was already spoken through the drain; every other snack speaks
+                    // for itself. ponytail: matched by its words and its missing button, so a buttonless
+                    // forward snack worded exactly like the last undo line would stay quiet. None is today
+                    // (the one shared line, Across fold's, carries Undo going forward); if one ever is,
+                    // carry a flag beside snackMessage instead.
+                    announce = !(snackAction == null && snackMessage == historyLine),
                 )
 
             }

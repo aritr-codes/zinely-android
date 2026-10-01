@@ -217,7 +217,7 @@ internal fun nearestSizeIndex(sizePt: Double): Int {
  * @param element the selected text box — the authoritative style the controls display.
  * @param dispatch forwards an [Intent] into the store.
  * @param onAnnounce speaks a discrete style change (WCAG 4.1.3), routed to the host's
- *   `announceForAccessibility` drain — the same channel Reframe and the reducer's announcements use.
+ *   `announceForAccessibility` drain — the same channel Reframe and the image-pick failure use.
  * @param onPreview publishes the in-flight style of a settling size burst (`null` when nothing is
  *   pending) for the host to hand the canvas. Always cleared on dispose — a stale override would
  *   outlive the bar and paint a size the document never took.
