@@ -906,7 +906,7 @@ private fun ImportReportSink(viewModel: EditorViewModel) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // Drain the VM's announcement channel to TalkBack. Bound to the View (composable-only), so it
-    // lives here, not in the VM. Conflated buffer in the VM tolerates a brief subscriber gap.
+    // lives here, not in the VM. A line emitted while this is not RESUMED is dropped, never spoken late.
     val view = LocalView.current
     LaunchedEffect(view, lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {

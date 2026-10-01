@@ -66,7 +66,7 @@ class DefaultEditorEffectRunnerTest {
 
     @Test
     fun historyStep_isNeverSpokenByTheAnnouncer() = runTest(dispatcher) {
-        // ADR-123: the snack's live region is the one speaker for an undo; a second channel would say it twice.
+        // ADR-123: the screen speaks an undo line once through the host drain; the runner must not say it too.
         val said = mutableListOf<String>()
         val r = runner(this, UnavailableImagePipeline, announcer = { said += it })
         r.run(Effect.HistoryStepped(EditLabel(EditVerb.DELETE, EditKind.PHOTO), isRedo = false, landedOnPage = 2), dispatch = {})

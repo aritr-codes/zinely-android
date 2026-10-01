@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityManager
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
@@ -129,6 +130,43 @@ class NamedUndoSnackTest {
         shadowOf(manager).setTouchExplorationEnabled(true)
     }
 
+    /** The platform's own node for a semantics id: what TalkBack reads, not what Compose's test tree says. */
+    private fun platformNode(id: Int): AccessibilityNodeInfo {
+        val content = composeRule.activity.findViewById<ViewGroup>(android.R.id.content)
+        val composeView = (content.getChildAt(0) as ViewGroup).getChildAt(0)
+        return checkNotNull(composeView.accessibilityNodeProvider.createAccessibilityNodeInfo(id))
+    }
+
+    @Test
+    fun an_undo_line_is_on_a_pill_talkback_can_land_on_and_not_on_a_live_region() {
+        // The line is spoken by the drain, so the pill must be readable by touch without being a second
+        // speaker: focusable for a screen reader and not a live region. Its child stays the standing live
+        // region with nothing to say. Compose hands a merging parent's own description to the platform on a
+        // child node it makes for the purpose, so the words are checked on the merged tree, which is what
+        // a screen reader puts together when it lands on the pill.
+        turnAccessibilityOn()
+        val store = store()
+        setScreen(store)
+        place(store)
+        composeRule.waitForIdle()
+        // With accessibility on Compose is never idle, so a free-running clock would run out the dwell.
+        composeRule.mainClock.autoAdvance = false
+        press(BenchBarUndoTag)
+
+        val pill = platformNode(composeRule.onNodeWithTag(BenchSnackTestTag, useUnmergedTree = true).fetchSemanticsNode().id)
+        assertEquals(
+            listOf("Text taken off"),
+            composeRule.onNodeWithTag(BenchSnackTestTag).fetchSemanticsNode().config
+                .getOrNull(SemanticsProperties.ContentDescription),
+        )
+        assertTrue("a finger or a swipe must be able to land on the pill", pill.isScreenReaderFocusable)
+        assertEquals("the pill must not speak for itself", View.ACCESSIBILITY_LIVE_REGION_NONE, pill.liveRegion)
+        val child = platformNode(voice().id)
+        assertEquals(View.ACCESSIBILITY_LIVE_REGION_POLITE, child.liveRegion)
+        assertEquals(null, child.contentDescription)
+        assertTrue(!child.isScreenReaderFocusable)
+    }
+
     @Test
     fun the_voice_is_in_the_tree_before_any_snack_and_says_nothing() {
         turnAccessibilityOn()
@@ -141,9 +179,7 @@ class NamedUndoSnackTest {
         composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
 
         // The platform's own node, which is what TalkBack reads. A zero alpha would hide it here.
-        val content = composeRule.activity.findViewById<ViewGroup>(android.R.id.content)
-        val composeView = (content.getChildAt(0) as ViewGroup).getChildAt(0)
-        val info = checkNotNull(composeView.accessibilityNodeProvider.createAccessibilityNodeInfo(voice().id))
+        val info = platformNode(voice().id)
         assertTrue("the standing node must be visible to the user", info.isVisibleToUser)
         assertEquals(View.ACCESSIBILITY_LIVE_REGION_POLITE, info.liveRegion)
         assertEquals(null, info.contentDescription)

@@ -13798,9 +13798,10 @@ that moves the maker to another page says so in the same line.
    the pre-action box, and turn is the shorter way round. Both are magnitudes, and both comparisons are strict `>`.
 3. **One effect.** `stepHistory` emits `Effect.HistoryStepped(label, isRedo, landedOnPage)` after the autosave.
    `landedOnPage` is the page index the model ends on when the step changed page, else `null`: post-step state,
-   never where the command started. `Effect.Announce` had no other emitter and is removed. The `Announcer` drain
-   stays for Reframe, text style and the import summary, and since the second revision it also speaks this line
-   (Decision 4); the line reaches it from the screen, not as an effect.
+   never where the command started. `Effect.Announce` had no other emitter and is removed. The announcement drain
+   (the runner's `Announcer` and `EditorViewModel.announce`, one channel) stays for Reframe, text style and the import
+   summary, and since the second revision it also speaks this line (Decision 4); the line reaches it from the screen,
+   not as an effect.
 4. **One speaker.** `EditorStore` words each `HistoryStepped` as it reduces (`undoSnackLine`, from `Copy.Undo`,
    against the model the step produced) and emits the line on `historyLines`; the snack is screen state, and the
    effect runner lives in the ViewModel and ignores the effect. `EditorScreen` raises the existing `BenchSnack` in its
@@ -13809,7 +13810,8 @@ that moves the maker to another page says so in the same line.
    second fallback).** `EditorScreen` hands each line to `onHistoryAnnounce` as it raises the snack, and the app binds
    that to the same `EditorViewModel.announce` Reframe and text style use. For such a line the snack is told not to
    speak (`BenchSnack(announce = false)`): its live-region node carries no description, and the pill itself carries
-   the words, so a finger on the snack still reads them. Every other snack (delete, placed, duplicated, flip, ink,
+   the words as a merged node, which the platform reports as screen-reader focusable and not a live region.
+   🟨 That a finger on the snack then reads the line is expected, not yet tried on device. Every other snack (delete, placed, duplicated, flip, ink,
    the refusals) is still spoken by the snack's live region and never touches the drain. So each event has exactly
    one speaker (the status strip's "Saved" chip still speaks after every autosave; see Scope).
    *As first built and as first revised*, the snack's polite live region was the only speaker of the line.
@@ -13842,6 +13844,8 @@ region, which speaks on every autosave, an undo's included, as it did before.
 - **Keep `Effect.Announce` beside the snack.** Rejected: two speakers for one event (readiness audit §4).
 - **Route the step through `EditorEffectRunner`.** Rejected: the runner is built in the ViewModel and cannot reach the
   screen's snack state without a new ViewModel flow and NavHost parameter; the store already reaches the screen.
+  The second revision did add a NavHost parameter, for speech only. The runner still is not the speaker: it gets the
+  effect, not the line, which the store words against the step's own model.
 - **Key the snack by its text.** Rejected: a live region does not re-announce an unchanged node, so a repeat would be silent.
 - **Rebuild the snack per step** (the first build). Rejected by the device: a node that appears holding its line is not read.
 - **Hide the standing node with zero alpha, at any size** (revision; the first cut did this). Rejected: Compose
@@ -13889,8 +13893,10 @@ region, which speaks on every autosave, an undo's included, as it did before.
   description for it, the pill carries the words, and a forward snack straight after an undo is spoken by the live
   region again) and at the platform boundary (the `AccessibilityEvent`s Compose sends: the delete line is one
   `CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION` event from the live-region node carrying the words, and three undos send
-  none from that node while the drain receives all three; with the snack left speaking for undo lines as well, eight
-  of the eleven tests fail); `NamedUndoSnackGoldenTest` (undo, redo, page
+  none from that node while the drain receives all three; the pill's platform node for an undo line is
+  screen-reader focusable and not a live region, its merged description is the line, and its child is still polite
+  and undescribed; with the snack
+  left speaking for undo lines as well, eight of the eleven tests that existed before the pill test failed); `NamedUndoSnackGoldenTest` (undo, redo, page
   clause, Across fold, the longest line, light and dark, and the longest at font scale 2 on 360 dp, where the
   PNG shows the line wrapping inside the pill). These show the tree and what the drain is handed, not what TalkBack says. That is the owner's listen.
 - **The risk this ADR carried as Proposed.** Keying the snack per step meant every undo reached the platform as a
@@ -13954,6 +13960,20 @@ region, which speaks on every autosave, an undo's included, as it did before.
     needs a third revision; it is not solved by wording.
   - *Focus on the snack.* If TalkBack focus is resting on the pill when the next undo line arrives, TalkBack may read
     the pill's changed description as well as the announcement.
+  - *The drain itself is unheard on this phone.* No Reframe or text-style announcement has been listened to here,
+    and `announceForAccessibility` is deprecated from API 36. The listen includes one of them as a control, so that
+    "undo not spoken" can be told apart from "nothing on the drain is spoken".
+  - *The snack's own Undo.* After a delete, the snack's Undo is the focused node and it disappears as the named line
+    is announced. TalkBack moving focus may cut the announcement. Both gates used the bar's Undo.
+  - *Dropped while not resumed.* The drain is collected only while the editor is RESUMED. A step taken in the moment
+    it is not (the transition back from Proof) shows its snack and is not spoken, and is never spoken late. The live
+    region had no such window.
+  - *The binding is not under test.* `EditorScreen` tests prove the line reaches `onHistoryAnnounce` once. Nothing
+    tests that the app binds it (`ZinelyNavHost`, one line); with it unbound an undo would be shown and not spoken,
+    and every JVM test would pass. The device listen is what covers it.
+  - *If the page-changing line is still lost.* The candidate third revision, not decided: on a step that changes
+    page only, hand the line to the drain after the page strip's selection has been reported, not with it. It is
+    recorded so a failed listen starts from a proposal and not from nothing.
   - *The pixel covered.* The standing node leaves the platform tree if a visible node drawn later covers the
     canvas's bottom-centre pixel, and the next line then arrives on a "new" node again. The flip tray and the ink
     popover do not reach it and sheets are separate windows; the keyboard stack, the style row and the page grid
@@ -13962,6 +13982,18 @@ region, which speaks on every autosave, an undo's included, as it did before.
   Not heard on any build: 2× text, Across fold, Reframe, Transform, Add Text's two steps. This ADR stays Proposed.
   `adb shell uiautomator events` was tried at the post-fix gate as a Pass 1 record and was not reliable on this
   phone (output lost, two events for a whole session); it is not evidence either way.
+- **Review of the second revision (2026-10-01): GO WITH FIXES**, by an independent Review Agent reading the diff and
+  the Compose source; it ran no tests. No defect found in the one-speaker mechanism, and no forward snack that the
+  words-and-no-button match would silence today. Reconciled:
+  - ACCEPTED: the pill for an undo line was described but, having a child, not screen-reader focusable, so "read by
+    touch" was unproven and weaker than before. The pill now merges its descendants and a platform-node test holds it.
+  - ACCEPTED: five stale statements that the snack's live region is the only speaker (two KDocs, a test comment,
+    Brief 04, and a ViewModel KDoc that stated the repeat as fact).
+  - ACCEPTED as records, not code: the drain is unheard on this phone, the snack's own Undo, the not-resumed drop,
+    the untested binding, and a candidate third revision for the page-changing step. All are in the open risks above.
+  - ACCEPTED: two wording nits (which channel Reframe uses; the runner alternative's rationale).
+  - REJECTED: naming the local fix branch here. The PR's branch is `fix/1x-step3-named-undo`, which is where the
+    commits are pushed.
 - **Review of the first revision (2026-10-01): GO WITH FIXES**, by an independent Review Agent reading the code and the
   Compose 1.10.4 and TalkBack sources. No code defect was found in the mechanism. Reconciled:
   - ACCEPTED: the cause was overclaimed as verified; it is now recorded as not established, with both event paths.

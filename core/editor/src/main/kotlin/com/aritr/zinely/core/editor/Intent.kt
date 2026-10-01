@@ -241,9 +241,9 @@ public sealed interface Effect {
 
     /**
      * One undo or redo happened ([ADR-123](../../../../../../../../docs/DECISIONS.md#adr-123)). The host
-     * raises the Bench snack with its one line; that snack's polite live region is the only speaker, so
-     * there is no parallel announcement. Emitted once per step, never conflated: an identical repeat is a
-     * second event, and the host keys its snack per step so it is spoken again.
+     * raises the Bench snack with its one line and speaks that line once, through its announcement drain
+     * and not the snack's live region, so there is one speaker. Emitted once per step, never conflated: an
+     * identical repeat is a second event, and the host hands it to the drain again.
      *
      * @property landedOnPage the page index the step moved the maker to, or `null` if it stayed put. Read
      *   from the model after the step, never from where the command started.

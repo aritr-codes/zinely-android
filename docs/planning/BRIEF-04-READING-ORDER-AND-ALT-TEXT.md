@@ -267,7 +267,8 @@ row tops interleaves them. A2's relative phrases and the maker's own arrangement
 - *Observation:* an adjacent restack swaps two ranks (`ZOrder.kt:39-43`), so "A forward" and "B back" are the same diff.
   The kind-free "Undid: stacking change" fits every reorder. → **Ruled** 2026-09-30: one direction-free line (A26).
 - **One speaker.**
-  - The snack's polite live region (`BenchSnack.kt:238-242`) is the only speaker.
+  - The snack's polite live region (`BenchSnack.kt:238-242`) is the only speaker. *Superseded 2026-10-01: the one
+    speaker is now the announcement drain ([ADR-123](../DECISIONS.md#adr-123), Decision 4); see the note below.*
   - The reducer replaces `Effect.Announce("Changed page N")` with a typed `Effect.HistoryStepped(label, isRedo, landedOnPage)`.
     There is no parallel `Effect.Announce`.
   - The effect is routed to the snack slot. Today the runner handles only Autosave, Announce and the picker

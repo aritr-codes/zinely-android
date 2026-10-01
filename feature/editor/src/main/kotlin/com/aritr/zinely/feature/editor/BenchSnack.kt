@@ -198,7 +198,7 @@ public const val BenchSnackInkMillis: Long = 1600L
  *   rebuilds the message node.
  * @param announce `false` when the caller has already spoken this line another way (an undo or redo line,
  *   [ADR-123](../../../../../../../../docs/DECISIONS.md#adr-123)). The live region then stays silent and the
- *   pill itself carries the words, so they can still be read by touch.
+ *   pill itself carries the words as a node a screen reader can land on.
  */
 @Composable
 internal fun BenchSnack(
@@ -253,8 +253,15 @@ internal fun BenchSnack(
                 }
                 .testTag(BenchSnackTestTag)
                 // A line spoken elsewhere is described on the pill, which is not a live region, so a
-                // change here says nothing but a finger on the snack still reads it.
-                .then(if (visible && !announce) Modifier.semantics { contentDescription = message } else Modifier)
+                // change here says nothing. Merging makes the pill a node TalkBack can land on; without it
+                // Compose marks a described node that has a child as not screen-reader focusable.
+                .then(
+                    if (visible && !announce) {
+                        Modifier.semantics(mergeDescendants = true) { contentDescription = message }
+                    } else {
+                        Modifier
+                    },
+                )
                 .clip(BenchSnackShape)
                 .background(colors.surfaceSoft)
                 // A transient confirmation is a warm support scrap: ordinary ink and border on surfaceSoft.

@@ -163,7 +163,7 @@ internal class EditorViewModel @Inject constructor(
      * (ADR-053, IF3), text style, and the line an undo or redo says (ADR-123, second fallback). Routed through
      * the SAME channel the effect runner's [com.aritr.zinely.feature.editor.Announcer] uses, so these
      * announcements reach TalkBack via the one `announceForAccessibility` drain; the
-     * platform re-announces even identical consecutive text, so a repeated nudge or undo is never silent.
+     * platform re-announces even identical consecutive text, so a repeated nudge is never silent; a repeated undo relies on the same behaviour.
      */
     fun announce(text: String) {
         _announcements.tryEmit(text)
