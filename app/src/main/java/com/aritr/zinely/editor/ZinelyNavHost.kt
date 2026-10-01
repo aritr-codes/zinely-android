@@ -1005,9 +1005,11 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
                 reframeCoachSeen = reframeCoachSeen,
                 onReframeCoachSeen = viewModel::markReframeCoachSeen,
                 // Reframe a11y announcements (ADR-053 IF3) ride the same announceForAccessibility drain as
-                // the effect runner's image-pick failure (bound at line ~302); undo speaks through its snack.
+                // the effect runner's image-pick failure (bound at line ~302).
                 onReframeAnnounce = viewModel::announce,
                 onStyleAnnounce = viewModel::announce,
+                // ADR-123, second fallback: undo and redo lines are spoken through the same drain.
+                onHistoryAnnounce = viewModel::announce,
                 // The autosave-event stream (ADR-034): each emission raises the transient "Saved ✨"
                 // reassurance in the host. Hot SharedFlow, collected inside EditorScreen.
                 savedSignals = viewModel.saved,

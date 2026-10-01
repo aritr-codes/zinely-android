@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
@@ -193,8 +194,11 @@ public const val BenchSnackInkMillis: Long = 1600L
  * @param bottomClearance extra space reserved below the snack when another bottom-anchored surface is
  *   present. D-089 uses the context bar's complete footprint, leaving this component's own 12dp inset as
  *   the frozen gap between their painted bounds.
- * @param step the caller's count of undo/redo lines. A new value restarts the entrance from hidden and marks
- *   the spoken line as a new one ([benchSnackSpoken]); it never rebuilds the message node.
+ * @param step the caller's count of undo/redo lines. A new value restarts the entrance from hidden; it never
+ *   rebuilds the message node.
+ * @param announce `false` when the caller has already spoken this line another way (an undo or redo line,
+ *   [ADR-123](../../../../../../../../docs/DECISIONS.md#adr-123)). The live region then stays silent and the
+ *   pill itself carries the words, so they can still be read by touch.
  */
 @Composable
 internal fun BenchSnack(
@@ -206,6 +210,7 @@ internal fun BenchSnack(
     modifier: Modifier = Modifier,
     bottomClearance: Dp = 0.dp,
     step: Int = 0,
+    announce: Boolean = true,
 ) {
     // Still routed through the V2 motion object: V2.1 changed the duration, not the arrival, and this
     // is where the reduced-motion downgrade lives ([ADR-075]). Same call [BenchStyleRow] makes.
@@ -247,6 +252,9 @@ internal fun BenchSnack(
                     rotationZ = BenchSnackRotationDeg
                 }
                 .testTag(BenchSnackTestTag)
+                // A line spoken elsewhere is described on the pill, which is not a live region, so a
+                // change here says nothing but a finger on the snack still reads it.
+                .then(if (visible && !announce) Modifier.semantics { contentDescription = message } else Modifier)
                 .clip(BenchSnackShape)
                 .background(colors.surfaceSoft)
                 // A transient confirmation is a warm support scrap: ordinary ink and border on surfaceSoft.
@@ -256,7 +264,6 @@ internal fun BenchSnack(
         horizontalArrangement = Arrangement.spacedBy(BenchSnackGap, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val spoken = benchSnackSpoken(visible, message, step)
         Text(
             text = message,
             color = colors.ink,
@@ -272,7 +279,8 @@ internal fun BenchSnack(
                     liveRegion = LiveRegionMode.Polite
                     // Absent, not empty, while the snack is down: Compose treats any description, even "",
                     // as something to say, which would make this invisible pixel a TalkBack focus stop.
-                    if (spoken != null) contentDescription = spoken
+                    // Absent too for a line the caller has already spoken, or it would be said twice.
+                    if (visible && announce) contentDescription = message
                 },
         )
         // Undo takes a deletion back — the one Bench action whose window closes on its own, so the
@@ -306,18 +314,6 @@ internal fun BenchSnack(
             )
         }
     }
-}
-
-/**
- * What the snack's one live-region node says ([ADR-123](../../../../../../../../docs/DECISIONS.md#adr-123),
- * revised). No description at all while the snack is down, so the next line is always a change the platform
- * reports. An odd [step] carries one trailing space: a line identical to the one still standing is otherwise
- * no change at all, and a live region stays silent on an unchanged node. The space is not pronounced.
- */
-internal fun benchSnackSpoken(visible: Boolean, message: String, step: Int): String? = when {
-    !visible -> null
-    step % 2 == 0 -> message
-    else -> "$message "
 }
 
 /**

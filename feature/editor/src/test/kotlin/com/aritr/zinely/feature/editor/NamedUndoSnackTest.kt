@@ -32,7 +32,6 @@ import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -42,9 +41,10 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * ADR-123 on the semantics tree: an undo or redo raises the one Bench snack, its message is the one
- * live-region node that carries the line, it has no button, and that node is never replaced: every line,
- * the delete snack's and an identical repeat included, reaches it as a change to its description.
+ * ADR-123 on the semantics tree and at the platform boundary. The snack's message is one live-region node
+ * that is never replaced; a forward snack (the delete) reaches it as a description added to it. An undo or
+ * redo raises the same snack with no button, but its line is spoken once through the host's announcement
+ * drain, an identical repeat included, and the live region stays silent for it.
  *
  * Structural only. It shows what the platform is handed, not what TalkBack says; that is the owner's listen.
  */
@@ -56,6 +56,9 @@ class NamedUndoSnackTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     private val effects = mutableListOf<Effect>()
+
+    /** What the host's announcement drain was asked to speak, in order. */
+    private val announced = mutableListOf<String>()
 
     private fun store(): EditorStore = EditorStore(
         EditorModel(
@@ -76,7 +79,14 @@ class NamedUndoSnackTest {
 
     private fun setScreen(store: EditorStore) {
         composeRule.setContent {
-            ZinelyTheme { EditorScreen(store = store, pageSizePt = PtSize(100.0, 100.0), modifier = Modifier.size(360.dp, 720.dp)) }
+            ZinelyTheme {
+                EditorScreen(
+                    store = store,
+                    pageSizePt = PtSize(100.0, 100.0),
+                    modifier = Modifier.size(360.dp, 720.dp),
+                    onHistoryAnnounce = { announced += it },
+                )
+            }
         }
         composeRule.waitForIdle()
     }
@@ -89,12 +99,18 @@ class NamedUndoSnackTest {
         composeRule.waitForIdle()
     }
 
-    /** Every live-region node on screen that says [line]. A repeat's trailing space is not part of the words. */
+    private fun described(line: String) =
+        SemanticsMatcher.expectValue(SemanticsProperties.ContentDescription, listOf(line))
+
+    /** Every live-region node on screen that says [line]. */
     private fun speakers(line: String) = composeRule.onAllNodes(
-        SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion) and
-            SemanticsMatcher("says \"$line\"") {
-                it.config.getOrNull(SemanticsProperties.ContentDescription)?.singleOrNull()?.trimEnd() == line
-            },
+        SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion) and described(line),
+        useUnmergedTree = true,
+    ).fetchSemanticsNodes()
+
+    /** Every node that carries [line] for a finger without being a live region: the pill, for an undo line. */
+    private fun shown(line: String) = composeRule.onAllNodes(
+        SemanticsMatcher.keyNotDefined(SemanticsProperties.LiveRegion) and described(line),
         useUnmergedTree = true,
     ).fetchSemanticsNodes()
 
@@ -135,9 +151,7 @@ class NamedUndoSnackTest {
     }
 
     @Test
-    fun one_node_says_the_delete_the_undo_and_the_redo_and_is_never_replaced() {
-        // The first device gate: a live-region node that appears already holding its line is not read out.
-        // Every line must reach the node that was there before it, as a change to its description.
+    fun the_delete_speaks_on_the_standing_node_and_undo_and_redo_through_the_drain() {
         val store = store()
         setScreen(store)
         val node = voice().id
@@ -145,50 +159,83 @@ class NamedUndoSnackTest {
         composeRule.waitForIdle()
         composeRule.mainClock.autoAdvance = false
 
+        // A forward snack: the live region says it, on the node that was already there. The drain is not used.
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").performClick()
         composeRule.mainClock.advanceTimeBy(BenchDeleteFadeMillis + BenchSnackMillis + 100L)
         composeRule.waitForIdle()
         assertEquals("the delete snack keeps its words", "Text deleted.", said())
         assertEquals(node, voice().id)
         assertEquals(1, speakers("Text deleted.").size)
+        assertEquals(0, shown("Text deleted.").size)
+        assertEquals(emptyList<String>(), announced)
         // Its Undo is a sibling of the message, outside the live region.
         val action = composeRule.onNodeWithTag(BenchSnackActionTestTag, useUnmergedTree = true).fetchSemanticsNode()
         assertTrue(!action.config.contains(SemanticsProperties.LiveRegion))
         assertEquals(voice().parent?.id, action.parent?.id)
         assertTrue(voice().children.isEmpty())
 
+        // An undo: the drain says it once, the live region says nothing, and the pill still carries the words.
         press(BenchBarUndoTag)
-        assertEquals("Text put back", said()?.trimEnd())
+        assertEquals(listOf("Text put back"), announced)
+        assertEquals("the live region must not say it as well", null, said())
+        assertEquals(
+            composeRule.onNodeWithTag(BenchSnackTestTag, useUnmergedTree = true).fetchSemanticsNode().id,
+            shown("Text put back").single().id,
+        )
         assertEquals(node, voice().id)
-        assertEquals(1, speakers("Text put back").size)
-        assertEquals(0, speakers("Text deleted.").size)
 
         press(BenchBarRedoTag)
-        assertEquals("Text removed", said()?.trimEnd())
+        assertEquals(listOf("Text put back", "Text removed"), announced)
+        assertEquals(null, said())
+        assertEquals(1, shown("Text removed").size)
         assertEquals(node, voice().id)
 
         composeRule.mainClock.advanceTimeBy(BenchSnackDeleteMillis + BenchSnackMillis + 100L)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
-        assertEquals("down again, it says nothing, so the next line is a change", null, said())
+        assertEquals(null, said())
+        assertEquals(0, shown("Text removed").size)
         assertEquals(node, voice().id)
-        assertEquals("nothing else announces any of it", emptyList<Effect>(), effects.filterNot { it is Effect.Autosave })
+        assertEquals("no effect announces any of it", emptyList<Effect>(), effects.filterNot { it is Effect.Autosave })
     }
 
     @Test
-    fun the_platform_is_told_each_line_as_a_change_to_the_description() {
-        // What TalkBack is actually sent. Compose reports a description that changes on a node it already knew
-        // as CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION carrying the words. A node that appears holding its words
-        // never gets that event, only subtree changes; that build was silent at the first device gate.
+    fun a_forward_snack_right_after_an_undo_speaks_for_itself_again() {
+        // An undo line is quiet in the live region; the next forward snack must not inherit that.
+        val store = store()
+        setScreen(store)
+        place(store)
+        place(store)
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        press(BenchBarUndoTag)
+        assertEquals(null, said())
+
+        store.dispatch(Intent.Select(store.uiState.value.document.pages[0].elements.single().id))
+        composeRule.mainClock.advanceTimeBy(200L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").performClick()
+        composeRule.mainClock.advanceTimeBy(BenchDeleteFadeMillis + BenchSnackMillis + 100L)
+        composeRule.waitForIdle()
+        assertEquals("Text deleted.", said())
+        assertEquals(listOf("Text taken off"), announced)
+    }
+
+    @Test
+    fun the_platform_hears_the_delete_from_the_live_region_and_each_undo_from_the_drain_only() {
+        // What TalkBack is actually sent. Compose reports a description added to a node it already knew as
+        // CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION carrying the words. For an undo line that event must not
+        // come from the live region, or the line would be spoken twice.
         turnAccessibilityOn()
-        val described = mutableListOf<String>()
+        val fromVoice = mutableListOf<String>()
         composeRule.activity.findViewById<View>(android.R.id.content).accessibilityDelegate =
             object : View.AccessibilityDelegate() {
                 override fun onRequestSendAccessibilityEvent(host: ViewGroup, child: View, event: AccessibilityEvent): Boolean {
                     if (event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED &&
-                        event.contentChangeTypes == AccessibilityEvent.CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION
+                        event.contentChangeTypes == AccessibilityEvent.CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION &&
+                        shadowOf(event).virtualDescendantId == voice().id
                     ) {
-                        described += event.contentDescription?.toString().orEmpty()
+                        fromVoice += event.contentDescription?.toString().orEmpty()
                     }
                     return true
                 }
@@ -207,36 +254,27 @@ class NamedUndoSnackTest {
             }
         }
         settle()
-        described.clear()
+        fromVoice.clear()
 
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").performClick()
         composeRule.mainClock.advanceTimeBy(BenchDeleteFadeMillis + 50L)
         settle()
-        assertEquals("the delete snack", listOf("Text deleted."), described.filter { it.isNotBlank() })
+        assertEquals("the delete snack, from the live region", listOf("Text deleted."), fromVoice.filter { it.isNotBlank() })
+        assertEquals(emptyList<String>(), announced)
 
-        described.clear()
+        fromVoice.clear()
         press(BenchBarUndoTag)
         settle()
         press(BenchBarUndoTag)
         settle()
         press(BenchBarUndoTag)
         settle()
+        assertEquals("the live region says no undo line", emptyList<String>(), fromVoice.filter { it.isNotBlank() })
         assertEquals(
-            "three undos, the last two the same words, each told to the platform once",
+            "three undos, the last two the same words, each spoken once through the drain",
             listOf("Text put back", "Text taken off", "Text taken off"),
-            described.filter { it.isNotBlank() }.map { it.trimEnd() },
+            announced,
         )
-    }
-
-    @Test
-    fun a_spoken_line_always_differs_from_the_one_before_it() {
-        val line = "Text taken off"
-        assertEquals(null, benchSnackSpoken(visible = false, message = line, step = 3))
-        for (step in 0..5) {
-            val now = benchSnackSpoken(visible = true, message = line, step = step)
-            assertEquals(line, now?.trimEnd())
-            assertNotEquals(now, benchSnackSpoken(visible = true, message = line, step = step + 1))
-        }
     }
 
     @Test
@@ -249,9 +287,11 @@ class NamedUndoSnackTest {
 
         composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
         assertEquals(1, composeRule.onAllNodesWithTag(BenchSnackTestTag).fetchSemanticsNodes().size)
-        assertEquals("one live region carries the whole line", 1, speakers("Text taken off").size)
+        assertEquals("one speaker: the drain, once", listOf("Text taken off"), announced)
+        assertEquals("...and not the live region as well", null, said())
+        assertEquals("the pill still carries the whole line", 1, shown("Text taken off").size)
         composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
-        assertEquals("nothing else announces it", emptyList<Effect>(), effects.filterNot { it is Effect.Autosave })
+        assertEquals("no effect announces it", emptyList<Effect>(), effects.filterNot { it is Effect.Autosave })
     }
 
     @Test
@@ -263,8 +303,10 @@ class NamedUndoSnackTest {
         press(BenchBarUndoTag)
         press(BenchBarRedoTag)
 
-        assertEquals(1, speakers("Text added").size)
-        assertEquals(0, speakers("Text taken off").size)
+        assertEquals(listOf("Text taken off", "Text added"), announced)
+        assertEquals(null, said())
+        assertEquals(1, shown("Text added").size)
+        assertEquals(0, shown("Text taken off").size)
         assertEquals(1, composeRule.onAllNodesWithTag(BenchSnackTestTag).fetchSemanticsNodes().size)
         composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
     }
@@ -279,25 +321,27 @@ class NamedUndoSnackTest {
         press(BenchBarUndoTag)
 
         assertEquals(0, store.uiState.value.currentPageIndex)
-        assertEquals(1, speakers("Text taken off, page 1").size)
-        assertEquals(0, speakers("Text taken off").size)
+        assertEquals("the page rides in the one spoken line", listOf("Text taken off, page 1"), announced)
+        assertEquals(null, said())
+        assertEquals(1, shown("Text taken off, page 1").size)
     }
 
     @Test
-    fun an_identical_repeat_is_a_new_update_on_the_same_node() {
+    fun an_identical_repeat_is_spoken_again() {
+        // The device gate: TalkBack read a live region's line once and stayed silent on the same line again.
         val store = store()
         setScreen(store)
         place(store)
         place(store)
         composeRule.waitForIdle()
+        val node = voice().id
 
         press(BenchBarUndoTag)
-        val first = speakers("Text taken off").single().id
-        val firstSaid = said()
         press(BenchBarUndoTag)
-        val second = speakers("Text taken off").single().id
-        assertEquals("the node is kept: a new one is not read out", first, second)
-        assertNotEquals("the same words must still be a change, or a live region stays silent", firstSaid, said())
+        assertEquals(listOf("Text taken off", "Text taken off"), announced)
+        assertEquals(1, shown("Text taken off").size)
+        assertEquals(null, said())
+        assertEquals(node, voice().id)
     }
 
     @Test
@@ -356,7 +400,7 @@ class NamedUndoSnackTest {
         press(BenchBarRedoTag)
         composeRule.mainClock.advanceTimeBy(2800L)
         composeRule.waitForIdle()
-        assertEquals(1, speakers("Text added").size)
+        assertEquals(1, shown("Text added").size)
         composeRule.mainClock.advanceTimeBy(800L)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
