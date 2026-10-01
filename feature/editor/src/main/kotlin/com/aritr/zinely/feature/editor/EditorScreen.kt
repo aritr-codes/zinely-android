@@ -362,7 +362,9 @@ public fun EditorScreen(
     // One speaker, and for these lines it is the host's `announceForAccessibility` drain, not the snack's
     // live region (ADR-123, second fallback). On device TalkBack read a live region's line once and stayed
     // silent on an identical repeat, and lost the line to the page strip's own readout when the step
-    // changed page. The drain re-speaks identical text. The snack is told which line not to speak.
+    // changed page. The drain is handed every line, an identical repeat included; on device TalkBack still said
+    // an identical repeat once, which the owner ruled a platform limitation. The snack is told which line
+    // not to speak.
     var snackStep by remember { mutableIntStateOf(0) }
     var historyLine by remember { mutableStateOf<String?>(null) }
     val latestHistoryAnnounce by rememberUpdatedState(onHistoryAnnounce)

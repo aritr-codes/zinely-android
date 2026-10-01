@@ -162,8 +162,9 @@ internal class EditorViewModel @Inject constructor(
      * A UI-originated a11y announcement (WCAG 4.1.3) — the Reframe surface's position/zoom/fit/commit lines
      * (ADR-053, IF3), text style, and the line an undo or redo says (ADR-123, second fallback). Routed through
      * the SAME channel the effect runner's [com.aritr.zinely.feature.editor.Announcer] uses, so these
-     * announcements reach TalkBack via the one `announceForAccessibility` drain; the
-     * platform re-announces even identical consecutive text, so a repeated nudge is never silent; a repeated undo relies on the same behaviour.
+     * announcements reach TalkBack via the one `announceForAccessibility` drain. Identical
+     * consecutive text is handed over again each time; whether TalkBack speaks it again is not verified, and on
+     * device an identical undo line was said once (ADR-123, a known limitation).
      */
     fun announce(text: String) {
         _announcements.tryEmit(text)

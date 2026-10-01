@@ -278,7 +278,8 @@ row tops interleaves them. A2's relative phrases and the maker's own arrangement
   whether TalkBack re-speaks the rebuilt node is checked on device. *Checked 2026-09-30: it does not speak a rebuilt
   node at all. Checked again 2026-10-01 on one standing node: a line is spoken, an identical repeat is not.
   [ADR-123](../DECISIONS.md#adr-123) (second revision) speaks undo and redo lines through the announcement drain
-  instead.*
+  instead. Heard 2026-10-01: lines are spoken, but an identical repeat was still said once. The owner ruled that a
+  TalkBack limitation, so "repeats must speak" is not met for that case.*
 - **Copy.**
   - A new `Copy.Undo` holds every word, including the page sentence, so "Changed page N" leaves the reducer.
   - ✅ `core:copy` has no project dependencies. `feature:editor` maps `EditLabel` to `Copy.Undo`, as `benchDeletedMessage`
@@ -432,7 +433,8 @@ the §4.5 canvas clause.
 9. Every command type yields a label, and no label is false.
 10. Each undo emits exactly one `HistoryStepped`, and no parallel `Announce`.
 11. "Changed page N" lives in `Copy.Undo`.
-12. On device, undo is spoken once, and a repeated identical undo is spoken again. Pass 2 finds rapid undo not chatty.
+12. On device, undo is spoken once, and a repeated identical undo is spoken again. *(2026-10-01: the first half was
+    heard; the second was not met, and the owner ruled it a TalkBack limitation, [ADR-123](../DECISIONS.md#adr-123).)* Pass 2 finds rapid undo not chatty.
 13. `History` and `committing()` are unchanged.
 
 **A2**

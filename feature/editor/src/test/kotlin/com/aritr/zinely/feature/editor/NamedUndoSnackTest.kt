@@ -307,7 +307,7 @@ class NamedUndoSnackTest {
         settle()
         assertEquals("the live region says no undo line", emptyList<String>(), fromVoice.filter { it.isNotBlank() })
         assertEquals(
-            "three undos, the last two the same words, each spoken once through the drain",
+            "three undos, the last two the same words, each handed to the drain once",
             listOf("Text put back", "Text taken off", "Text taken off"),
             announced,
         )
@@ -363,8 +363,8 @@ class NamedUndoSnackTest {
     }
 
     @Test
-    fun an_identical_repeat_is_spoken_again() {
-        // The device gate: TalkBack read a live region's line once and stayed silent on the same line again.
+    fun an_identical_repeat_is_handed_to_the_drain_again() {
+        // The app's half only. On device TalkBack said an identical repeat once (ADR-123, known limitation).
         val store = store()
         setScreen(store)
         place(store)
