@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +47,9 @@ public const val BenchSnackTestTag: String = "bench-snack"
 
 /** Test tag on its one action (`.snack button`). */
 public const val BenchSnackActionTestTag: String = "bench-snack-action"
+
+/** Test tag on the message, the snack's one live-region node. It stays in the tree while the snack is down. */
+public const val BenchSnackVoiceTestTag: String = "bench-snack-voice"
 
 /** Frozen `.snack{left:14px;right:14px}` (`v21-bench.html:450`) — unchanged from V2. */
 internal val BenchSnackInsetH = 14.dp
@@ -188,6 +192,8 @@ public const val BenchSnackInkMillis: Long = 1600L
  * @param bottomClearance extra space reserved below the snack when another bottom-anchored surface is
  *   present. D-089 uses the context bar's complete footprint, leaving this component's own 12dp inset as
  *   the frozen gap between their painted bounds.
+ * @param step the caller's count of undo/redo lines. A new value restarts the entrance from hidden and marks
+ *   the spoken line as a new one ([benchSnackSpoken]); it never rebuilds the message node.
  */
 @Composable
 internal fun BenchSnack(
@@ -198,39 +204,53 @@ internal fun BenchSnack(
     colors: ZinelyV21Colors,
     modifier: Modifier = Modifier,
     bottomClearance: Dp = 0.dp,
+    step: Int = 0,
 ) {
     // Still routed through the V2 motion object: V2.1 changed the duration, not the arrival, and this
     // is where the reduced-motion downgrade lives ([ADR-075]). Same call [BenchStyleRow] makes.
     val spec = ZinelyTheme.v2Motion.standard<Float>(BenchSnackMillis)
-    // Every instance starts hidden, so a new one keyed in over a snack still standing (A26: each undo is a
-    // new snack) runs the frozen entrance from the start instead of appearing already at rest.
-    val animatable = remember { Animatable(0f) }
-    LaunchedEffect(visible) { animatable.animateTo(if (visible) 1f else 0f, spec) }
+    // Each step starts hidden, so a line raised over a snack still standing (A26: each undo is a new snack)
+    // runs the frozen entrance from the start instead of appearing already at rest. Only the animation is
+    // keyed by the step; the nodes below are not, see the hidden branch.
+    val animatable = remember(step) { Animatable(0f) }
+    LaunchedEffect(animatable, visible) { animatable.animateTo(if (visible) 1f else 0f, spec) }
     val progress = animatable.value
-    if (progress <= 0f) return
+    val hidden = progress <= 0f
     val riseDp = BenchSnackEnterOffset * (1f - progress)
-    val rise = with(LocalDensity.current) { riseDp.toPx() }
+    val density = LocalDensity.current
+    val rise = with(density) { riseDp.toPx() }
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = BenchSnackInsetH)
-            .padding(bottom = BenchSnackInsetBottom + bottomClearance)
-            .graphicsLayer {
-                alpha = progress
-                translationY = rise
-                // The tilt is in BOTH the rest and the shown rule, so it is not animated: the scrap of
-                // paper is lying crooked on the desk the whole time, it does not straighten as it lands.
-                rotationZ = BenchSnackRotationDeg
-            }
-            .testTag(BenchSnackTestTag)
-            .clip(BenchSnackShape)
-            .background(colors.surfaceSoft)
-            // A transient confirmation is a warm support scrap: ordinary ink and border on surfaceSoft.
-            .border(BenchSnackBorder, colors.ink, BenchSnackShape)
-            .padding(BenchSnackPadding),
+        modifier = if (hidden) {
+            // ADR-123 revision: the message node below stays in the tree while the snack is down. TalkBack
+            // speaks a polite live region when an existing node's description changes; a node that appears
+            // already holding its line reaches the platform as a subtree change and is not read out (the
+            // first device gate: neither the named undo nor the delete snack was spoken). One invisible
+            // pixel, so it paints nothing and hides nothing beneath it from the accessibility tree, and no
+            // test tag, so the snack still does not exist for a test while it is down.
+            modifier.size(with(density) { 1.toDp() }).graphicsLayer { alpha = 0f }
+        } else {
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = BenchSnackInsetH)
+                .padding(bottom = BenchSnackInsetBottom + bottomClearance)
+                .graphicsLayer {
+                    alpha = progress
+                    translationY = rise
+                    // The tilt is in BOTH the rest and the shown rule, so it is not animated: the scrap of
+                    // paper is lying crooked on the desk the whole time, it does not straighten as it lands.
+                    rotationZ = BenchSnackRotationDeg
+                }
+                .testTag(BenchSnackTestTag)
+                .clip(BenchSnackShape)
+                .background(colors.surfaceSoft)
+                // A transient confirmation is a warm support scrap: ordinary ink and border on surfaceSoft.
+                .border(BenchSnackBorder, colors.ink, BenchSnackShape)
+                .padding(BenchSnackPadding)
+        },
         horizontalArrangement = Arrangement.spacedBy(BenchSnackGap, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        val spoken = benchSnackSpoken(visible, message, step)
         Text(
             text = message,
             color = colors.ink,
@@ -239,17 +259,18 @@ internal fun BenchSnack(
             lineHeight = ZinelyV21Fonts.InheritedLineHeight,
             modifier = Modifier
                 .weight(1f)
+                .testTag(BenchSnackVoiceTestTag)
                 // The message is the whole point of the surface appearing, so it announces itself. Polite,
                 // not assertive: a deletion the user just performed is a confirmation, not an alarm.
                 .clearAndSetSemantics {
                     liveRegion = LiveRegionMode.Polite
-                    contentDescription = message
+                    contentDescription = spoken
                 },
         )
         // Undo takes a deletion back — the one Bench action whose window closes on its own, so the
         // hand is told it landed before the surface disappears.
         val act = benchTap(action = onAction)
-        if (actionLabel != null) {
+        if (actionLabel != null && !hidden) {
             Text(
                 text = actionLabel,
                 // `paper`, underlined — see the class note. `butter` here is the retired exception.
@@ -277,6 +298,18 @@ internal fun BenchSnack(
             )
         }
     }
+}
+
+/**
+ * What the snack's one live-region node says ([ADR-123](../../../../../../../../docs/DECISIONS.md#adr-123),
+ * revised). Nothing while the snack is down, so the next line is always a change the platform reports. An odd
+ * [step] carries one trailing space: a line identical to the one still standing is otherwise no change at
+ * all, and a live region stays silent on an unchanged node. The space is not pronounced.
+ */
+internal fun benchSnackSpoken(visible: Boolean, message: String, step: Int): String = when {
+    !visible -> ""
+    step % 2 == 0 -> message
+    else -> "$message "
 }
 
 /**

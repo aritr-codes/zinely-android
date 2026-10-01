@@ -630,7 +630,8 @@ class BenchC4Test {
         // A26 (ADR-123): the delete snack does not just leave; the same slot names what came back, and it
         // offers no second Undo, so a second press cannot take back whatever preceded the delete.
         composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
-        composeRule.onAllNodesWithContentDescription("Text put back").assertCountEquals(1)
+        // Substring: a history line may carry the trailing space that marks a repeat (`benchSnackSpoken`).
+        composeRule.onAllNodesWithContentDescription("Text put back", substring = true).assertCountEquals(1)
         composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
     }
 

@@ -354,8 +354,8 @@ public fun EditorScreen(
     val deleteJob = remember { arrayOfNulls<Job>(1) }
 
     // ADR-123 / A26: each undo or redo raises this same snack with its named line: no button, one slot, one
-    // live region, and nothing else speaks. Keyed per step, not per line, so an identical repeat is a new
-    // snack (a new live-region node, entering from hidden) rather than an unchanged one already read out.
+    // live region, and nothing else speaks. Counted per step, not per line, so an identical repeat still
+    // enters from hidden and still reaches the one standing live-region node as a change (ADR-123, revised).
     var snackStep by remember { mutableIntStateOf(0) }
     LaunchedEffect(store) {
         store.historyLines.collect { line ->
@@ -1965,29 +1965,28 @@ public fun EditorScreen(
                 // light `ink` (#27270F) with the inherited dark `surfaceSoft` (#46352E), only 1.31:1. The
                 // room pair is #FFF9DB on #46352E, 10.96:1. An explicit parameter makes that boundary
                 // immune to future CompositionLocal nesting changes.
-                key(snackStep) {
-                    BenchSnack(
-                        visible = snackVisible,
-                        message = snackMessage,
-                        // Null for the ink snack (row 4.15 / C6): the frozen `applyInk` hides the button.
-                        actionLabel = snackAction,
-                        onAction = {
-                            deleteJob[0]?.cancel()
-                            snackVisible = false
-                            dispatch(Intent.Undo)
-                        },
-                        colors = roomColors21,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                        // D-089 / frozen Bench A8: placement raises both surfaces. Keep Undo and the newly
-                        // selected element's verbs reachable by stacking the snack one complete bar footprint
-                        // above the shared floor; its own 12dp inset becomes the required clear gap.
-                        bottomClearance = if (ctxVisible) {
-                            contextBarHeight + BenchSnackStackRotationAllowance
-                        } else {
-                            0.dp
-                        },
-                    )
-                }
+                BenchSnack(
+                    visible = snackVisible,
+                    message = snackMessage,
+                    // Null for the ink snack (row 4.15 / C6): the frozen `applyInk` hides the button.
+                    actionLabel = snackAction,
+                    onAction = {
+                        deleteJob[0]?.cancel()
+                        snackVisible = false
+                        dispatch(Intent.Undo)
+                    },
+                    colors = roomColors21,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    // D-089 / frozen Bench A8: placement raises both surfaces. Keep Undo and the newly
+                    // selected element's verbs reachable by stacking the snack one complete bar footprint
+                    // above the shared floor; its own 12dp inset becomes the required clear gap.
+                    bottomClearance = if (ctxVisible) {
+                        contextBarHeight + BenchSnackStackRotationAllowance
+                    } else {
+                        0.dp
+                    },
+                    step = snackStep,
+                )
 
             }
         }
