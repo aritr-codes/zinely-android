@@ -132,7 +132,7 @@
 | [ADR-120](#adr-120) | **A backup says when it was last saved, and a failed backup says where it failed.** A last-backup record written only on a saved backup; two backup phases (private archive, then the chosen destination) classified by owner ruling F1; one Cancel-vs-complete latch; the destination discarded best-effort. Extends ADR-110; the step 1b boundary is explicit. | Accepted 2026-09-28 (proposed 2026-09-27); 1.x step 1; device passes and owner checks done |
 | [ADR-121](#adr-121) | **Restore adds zines that aren't already on the shelf and never replaces what's here.** A zine is already here when its title, format, paper size and content equal a shelf zine's, counted one for one; a changed zine is added; doubt adds. No format change. Amends ADR-110 §5. | Accepted (design) 2026-09-28; owner ruling; implemented with 1.x step 1b and accepted 2026-09-29 (PR #86, `1fd3c9e`) |
 | [ADR-122](#adr-122) | **A backup is complete or explicitly partial, never silently partial; a restore reports what happened.** Backup is skip-and-list (one photo never fails it); the manifest gains a defaulted, leniently read `omitted` list, `packageVersion` stays 2; restore staging-write failures aren't "damaged", Cancel is withdrawn once commit starts, and a committed restore is a success even if the shelf lags. Amends ADR-110. | Accepted 2026-09-29; 1.x step 1b (PR #86, `1fd3c9e`) |
-| [ADR-123](#adr-123) | **Undo and redo say what they did, in the one Bench snack.** A pure `editLabel` derived from each command's memento (no History change, nothing persisted); `Effect.HistoryStepped` replaces "Changed page N"; one snack counted per step, shown in the snack and spoken once through the announcement drain; the page clause and the 2% / 2° transform rule. Words owned by frozen `v21-bench.html` A26. | Proposed 2026-09-30, revised twice 2026-10-01 (first device gate failed: not spoken; live-region fallback heard once but silent on a repeat and on a page change; drain fallback heard by the owner for single and page-changing lines; an identical repeat was still said once, ruled a TalkBack limitation); 1.x step 3; the 2× TalkBack listen, the snack's own Undo and both device-verification passes on the final build were not run; awaiting green CI and the owner's acceptance, which must either run or waive those passes |
+| [ADR-123](#adr-123) | **Undo and redo say what they did, in the one Bench snack.** A pure `editLabel` derived from each command's memento (no History change, nothing persisted); `Effect.HistoryStepped` replaces "Changed page N"; one snack counted per step, shown in the snack and spoken once through the announcement drain; the page clause and the 2% / 2° transform rule. Words owned by frozen `v21-bench.html` A26. | Accepted 2026-10-01 (proposed 2026-09-30, revised twice 2026-10-01); 1.x step 3 (PR #90). **Accepted with documented device-verification limitations:** the owner waived the full two-pass device matrix, several A26 rows and the 2× listen were not heard, and TalkBack may say an identical repeat once |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -13760,14 +13760,13 @@ The implementation was reviewed by an independent Review Agent that did not writ
 
 ### Undo and redo say what they did, in the one Bench snack
 
-**Status:** Proposed, 2026-09-30; **revised twice on 2026-10-01**: after the first device gate failed (Decision 5),
-and again after the post-fix gate heard a line once but not its repeat (Decision 4). Both are in *Device record and
-revision* below. Implemented on `fix/1x-step3-named-undo`; the owner heard the twice-revised build at normal
-text on 2026-10-01 and then closed the TalkBack investigation (*Owner's ruling* below), so the 2× listen and the
-cases under *Not verified on device* were not run. It is not Accepted here. Acceptance is the owner's call and still
-needs green CI on the final head; the two device-verification passes were not run as such on the final build, and the
-ruling did not waive them, so accepting means either running them or waiving them in so many words. Zinely 1.x step 3
-([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing), READY in §11), specified by
+**Status:** Accepted, 2026-10-01 (proposed 2026-09-30; **revised twice on 2026-10-01**: after the first device gate
+failed (Decision 5), and again after the post-fix gate heard a line once but not its repeat (Decision 4); both are in
+*Device record and revision* below). **Accepted by the owner with documented device-verification limitations:** the
+owner heard the twice-revised build at normal text, closed the TalkBack investigation, and explicitly waived the
+remaining device-verification passes. What was and was not verified is in *Acceptance* at the end; nothing unverified
+is claimed. Implemented on `fix/1x-step3-named-undo` (PR #90). Zinely 1.x step 3
+([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing), COMPLETE in §11), specified by
 [Brief 04](planning/BRIEF-04-READING-ORDER-AND-ALT-TEXT.md) part A3. **The design is the frozen
 [`v21-bench.html`](design/mockups/v21-bench.html) A26** (owner rulings D1–D4, 2026-09-30, PR #88). A26 owns every word
 and the page-clause rule; this ADR records how the product derives and delivers them, and does not restate the table.
@@ -14004,9 +14003,10 @@ region, which speaks on every autosave, an undo's included, as it did before.
   TalkBack and platform limitation unless an automated test shows an app-side fault. The snack's own Undo is a
   follow-up check and does not block Step 3. The slow-against-fast repeat check and the 2× TalkBack listen are not
   to be run now; they are documented below, not scheduled. The ruling did not speak to CI or to the two
-  device-verification passes. Nothing is merged, and this ADR stays Proposed until the owner accepts it.
-- **Verified on device, by the owner's ear, at text scale 1.0:** the delete snack is spoken (first revision's
-  listen); an undo and a redo are each spoken once, with no line heard twice; a step that changes page speaks its
+  device-verification passes. Nothing was merged at that point, and this ADR stayed Proposed until the owner
+  accepted it later the same day (*Acceptance*).
+- **Verified on device, by the owner's ear, at text scale 1.0:** the delete snack is spoken (both
+  listens); an undo and a redo are each spoken once, with no line heard twice; a step that changes page speaks its
   named line with the page clause; the snack can be read by touch after an undo; the drain speaks on this phone.
 - **Not verified on device, and not claimed:**
   - an identical repeat spoken twice at any pace (it was spoken once at the pace used; a slow one was not tried);
@@ -14016,7 +14016,7 @@ region, which speaks on every autosave, an undo's included, as it did before.
   - the snack's own Undo after a delete (both listens used the bar's Undo);
   - Across fold undone and redone, a Reframe undone, a Transform undone, Add Text's two steps;
   - that "Changed page N" and a bare "Put back" are never heard (they have no emitter; no one listened for them);
-  - whether "Saved" after every undo is heard as a second voice (the owner's ruling on this is still open);
+  - whether "Saved" after every undo is heard as a second voice (not ruled; a follow-up, not scheduled);
   - why the first gate was silent (the control listen on the old `ed4b527` build was not run);
   - either device-verification pass as such on `a6807c2`. A platform-tree dump was taken on `a77ec5d` only, and no
     separate first-time-user pass was made; the owner's listen is the device evidence.
@@ -14028,9 +14028,9 @@ region, which speaks on every autosave, an undo's included, as it did before.
   standing. [ADR-053](#adr-053)'s claim that a repeated identical Reframe nudge is never silent rests on the same
   behaviour of the same drain and has not been heard on this phone either; it is now in doubt and is not re-examined
   here.
-- **Not covered by the ruling, so still open before acceptance:** green CI on the final head, and the two
-  device-verification passes on `a6807c2`, which the owner either runs or waives explicitly.
-- **Review of this acceptance record (2026-10-01): GO WITH FIXES**, by an independent Review Agent checking the
+- **Not covered by that ruling, and closed at acceptance:** CI was green on `ac8504d`, and the owner explicitly
+  waived the two device-verification passes on the final build (*Acceptance*). They were waived, not run.
+- **Review of the owner's-ruling record (2026-10-01): GO WITH FIXES**, by an independent Review Agent checking the
   record against the owner's words; it ran no tests. All accepted: the gate had dropped CI and the two device passes
   as if the ruling waived them (restored as still open); "each once" had been written for the page-changing step,
   which the owner did not say; a ViewModel KDoc still stated a repeat as spoken; the page strip's co-readout was
@@ -14058,3 +14058,52 @@ region, which speaks on every autosave, an undo's included, as it did before.
   - RECORDED, not fixed: the three open risks above, which only a device can settle.
   - REJECTED: one full-size chain with a conditional test tag, relying on zero alpha. It keeps the node hidden from
     the platform, which is the state this revision removes.
+
+#### Acceptance (2026-10-01)
+
+**Accepted by the owner on 2026-10-01, with documented device-verification limitations.** The owner explicitly
+waived the remaining full Step 3 device-verification passes and ruled that no more time goes to TalkBack edge cases
+now. This is the record of what the acceptance rests on.
+
+- **What was built, in order.**
+  1. The original delivery, a live-region snack that was a new node for every line, was silent on the reference
+     device (`ed4b527`, 2026-09-30).
+  2. The first revision keeps one persistent live-region node and changes its description. Single lines were then
+     spoken; an identical repeat and a page-changing step's line were not (`a77ec5d`).
+  3. The final implementation keeps that node for the forward snacks (delete and the rest) and speaks every undo and
+     redo line through the existing announcement drain (`Announcer` / `EditorViewModel.announce`) instead. The snack
+     still shows the line, with its live region silent for it.
+
+  Exactly one speaker is used for each event: the live region for a forward snack, the drain for an undo or redo.
+- **Owner-confirmed on the reference device** (SM-A176B, Android 16, TalkBack 16.2.00.13, text scale 1.0, QA build at
+  `a6807c2`): a named undo is spoken; a named redo is spoken; an undo and a redo that change page speak their named
+  line with the page clause; no line was heard twice; the snack is visible; touching the snack after an undo reads
+  the line; the Reframe or text-style control on the same drain is spoken. A delete was heard on `a77ec5d` ("Art deleted. Saved") and
+  again in the delete, Undo, Redo sequence on `a6807c2`.
+- **Not verified on the final build. None of this is claimed as passed:**
+  - the full formal two-pass device matrix, and the exact formal device acceptance sequence (waived by the owner,
+    not run);
+  - Add Text's two-step undo on device;
+  - Across fold on device;
+  - Reframe and Transform undone on device;
+  - an identical announcement repeated after a slow pause;
+  - the snack's own Undo speech after a delete;
+  - TalkBack speech at 2× text;
+  - whether "Saved" is spoken on its own after every event;
+  - the further items in *Not verified on device* above (the page strip's co-readout on a page change, that
+    "Changed page N" and a bare "Put back" are never heard, and why the first gate was silent).
+- **Known limitation.** A repeated identical undo or redo line may be spoken only once. TalkBack or the platform may
+  suppress it; the cause is not verified. It is recorded as a TalkBack and platform limitation and not an app-side
+  blocker, because the app hands both events to the announcement path (`NamedUndoSnackTest`, and no de-duplication on
+  that path).
+- **Automated evidence.** On `a6807c2`: 282 suites, 2,445 tests, none failed or skipped; lint; the dependency
+  allow-list; a release build; and the golden check run with `--rerun-tasks`, with no golden changed or re-recorded.
+  Later commits on the PR change comments, one test name and documents only. CI was green on `ac8504d`, the PR head
+  before this acceptance record; the merge waits for CI on the record itself.
+- **Follow-ups** are the list under *Device record and revision*. They are documented, not scheduled, and the frozen
+  A26 copy and design are untouched.
+- **Review.** Each revision, the owner's-ruling record and this acceptance section were checked by an independent
+  Review Agent: four reviews, each GO WITH FIXES. The first three are reconciled above. The fourth, of this section,
+  found no overclaim and no hidden limitation; its fixes, all accepted, were a stale "READY", the CI claim pinned to
+  a commit, the delete snack attributed to both builds, and the "Saved" ruling worded as not ruled. The acceptance
+  itself is the owner's decision.
