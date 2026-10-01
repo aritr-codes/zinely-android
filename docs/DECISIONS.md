@@ -13805,8 +13805,9 @@ that moves the maker to another page says so in the same line.
    one slot: that line, no button, the frozen 3200 ms dwell. Its polite live region is the
    only speaker of the line (the status strip's "Saved" chip still speaks after every autosave; see Scope).
 5. **Counted per step, on one standing node (revised 2026-10-01).** The snack's message is one live-region node, and
-   it stays composed while the snack is down: one invisible pixel with an empty description and no test tag. Raising
-   a line changes that node's description; lowering the snack empties it, so the next line is always a change. A
+   it stays composed while the snack is down: one pixel that draws nothing and has no description. It is not made
+   transparent, because Compose marks a node under a zero-alpha layer hidden from the platform. Raising a line gives
+   that node its description; lowering the snack removes it, so the next line is always a change. A
    step counter, not the text, marks each undo or redo. It restarts the frozen entrance from hidden
    (`remember(step) { Animatable(0f) }`), and on odd steps the description carries one trailing space
    (`benchSnackSpoken`), so a line identical to the one still standing is still a change. The counter never rebuilds
@@ -13833,12 +13834,18 @@ region, which speaks on every autosave, an undo's included, as it did before.
   screen's snack state without a new ViewModel flow and NavHost parameter; the store already reaches the screen.
 - **Key the snack by its text.** Rejected: a live region does not re-announce an unchanged node, so a repeat would be silent.
 - **Rebuild the snack per step** (the first build). Rejected by the device: a node that appears holding its line is not read.
-- **Keep the hidden pill at full size and zero alpha** (revision). Rejected: a live-region node counts as covering what
-  is under it, so it would take page elements beneath the snack's slot out of the platform tree for good.
+- **Hide the standing node with zero alpha, at any size** (revision; the first cut did this). Rejected: Compose
+  marks a transparent node hidden, so the platform is told it is not visible to the user and not important at the
+  moment its line is announced.
+- **Keep the standing node at the pill's full size, drawing nothing** (revision). Rejected: a visible live-region
+  node counts as covering what is under it, so it would take page elements beneath the snack's slot out of the
+  platform tree for good. One pixel covers one pixel.
+- **Leave an empty description on the standing node** (revision; the first cut did this). Rejected: Compose treats
+  any description, even `""`, as something to say, which makes the pixel a TalkBack focus stop.
 - **A separate, always-present invisible speaker beside the pill** (revision). Rejected: a second accessibility
   component, and the visible message would then be either unreadable by touch or a second node saying the same line.
-- **Blank the description for a moment between two identical lines** (revision). Rejected: Compose batches
-  accessibility events on a 100 ms loop, so whether the blank is seen would depend on timing.
+- **Blank the description for a moment between two identical lines** (revision). Rejected: whether the platform
+  sees the blank would depend on when Compose next compares the tree.
 - **Classify a Transform by its largest single property, or by the class name.** Rejected by D4 = 4c: a handle resize
   moves the centre, and two fingers pick up stray turn and zoom.
 
@@ -13857,8 +13864,9 @@ region, which speaks on every autosave, an undo's included, as it did before.
   step, Across fold from the partner page, identical repeats, history round trip, page commands silent);
   `UndoSnackLineTest` (every A26 row in both directions as literals, no redo equal to its undo, the page clause);
   `NamedUndoSnackTest` on the semantics tree (one live-region node carries the whole line, no button, redo in the same
-  snack, the page clause, the 3200 ms dwell; revised: the node is in the tree before any snack, one pixel and silent,
-  the delete, undo and redo lines all land on that same node, a repeat is a different description on it, and the Undo
+  snack, the page clause, the 3200 ms dwell; revised: the node is in the tree before any snack, one pixel with no
+  description, and its platform `AccessibilityNodeInfo` is visible to the user, a polite live region and not
+  focusable; the delete, undo and redo lines all land on that same node, a repeat is a different description on it, and the Undo
   action is its sibling) and at the platform boundary (the `AccessibilityEvent`s Compose sends: each line, the delete
   snack's and two identical undos included, is one `CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION` event carrying the
   words; with the first build's lifecycle restored that test receives none); `NamedUndoSnackGoldenTest` (undo, redo, page
@@ -13878,13 +13886,15 @@ region, which speaks on every autosave, an undo's included, as it did before.
   The snack was visible both times. The owner heard only the focus readouts, "Delete button, double tap to activate"
   and "Undo Button double tap to activate". The delete snack was not spoken. The named line ("Art piece put back") was
   spoken zero times. The gate stopped there, so nothing else was tested on that build.
-- **Cause.** ✅ Compose reports a changed description only for a node that was already in the tree
-  (`AndroidComposeViewAccessibilityDelegateCompat.sendSemanticsPropertyChangeEvents` skips a node with no previous
-  copy; read on `androidx-main`, the project is on ui 1.10.4). A new node produces a subtree change sent from an
-  ancestor, and no ancestor of the message is a live region. The snack made a new node on both paths: `BenchSnack`
-  composed nothing while hidden, so the delete snack and every first line appeared whole, and `key(step)` rebuilt it
-  for every undo and redo. 🟨 That TalkBack does not read such a subtree change is inferred from the owner's listen,
-  not from TalkBack's source.
+- **Cause: not established.** ✅ What is known: the snack made a new node on both paths (`BenchSnack` composed
+  nothing while hidden, so the delete snack and every first line appeared whole, and `key(step)` rebuilt it for every
+  undo and redo), and Compose never sends a description change for a node with no previous copy
+  (`AndroidComposeViewAccessibilityDelegateCompat.sendSemanticsPropertyChangeEvents`, ui 1.10.4). A new node gets
+  subtree changes only: one from its parent, and one sourced at the node itself when it is first laid out.
+  🟨 The working reading is that TalkBack 16.2 on this phone does not read a live region out on a subtree change.
+  The independent review found that the public TalkBack source would read the second of those events, so this
+  reading may be wrong, and something else (speech cut off by a focus readout, a TalkBack setting) may be the cause.
+  The fallback was decided before the cause was known and is applied as decided; the post-fix gate tests it.
 - **Revision applied: the first fallback, in the shared mechanism.** Decision 5 as it now reads. The fix is in
   `BenchSnack`, so every line it shows takes the same path: undo, redo, and the delete, placed, duplicated, flip, ink
   and refusal snacks. None of those was reworded, restyled or retimed. A26's "each undo or redo is a new instance"
@@ -13899,5 +13909,27 @@ region, which speaks on every autosave, an undo's included, as it did before.
 - **Scope's "Saved" claim is unproven.** Scope says the status strip's "Saved" chip speaks on every autosave. The
   chip is also composed only while it shows, and at the first gate the owner heard nothing after the delete's
   autosave. It is left as it is here; it is not this ADR's surface.
+- **Open risks for the post-fix gate.**
+  - *Spoken twice.* Raising a line resizes the standing node from one pixel to the pill, which sends a subtree change
+    from the same node just after the description change. If TalkBack reads both, the line is heard twice.
+  - *Repeat dropped by a TalkBack setting.* With one standing node, TalkBack's handling of frequent changes to the
+    same node now applies to repeats.
+  - *The pixel covered.* The standing node leaves the platform tree if a visible node drawn later covers the
+    canvas's bottom-centre pixel, and the next line then arrives on a "new" node again. The flip tray and the ink
+    popover do not reach it and sheets are separate windows; the keyboard stack, the style row and the page grid
+    were not checked, and no test holds this.
 - **Post-fix device gate: not yet run.** No phone was attached on 2026-10-01. Nothing in this revision is
-  device-verified or owner-heard. This ADR stays Proposed.
+  device-verified or owner-heard. This ADR stays Proposed. Because the cause is not established, Pass 1 first
+  records, with TalkBack off, the events the app sends for one delete then Undo (`adb shell uiautomator events`),
+  so that a silent listen can be told apart from an event that was never sent. A silent result does not by itself
+  select the second fallback: it is reported first.
+- **Review of the revision (2026-10-01): GO WITH FIXES**, by an independent Review Agent reading the code and the
+  Compose 1.10.4 and TalkBack sources. No code defect was found in the mechanism. Reconciled:
+  - ACCEPTED: the cause was overclaimed as verified; it is now recorded as not established, with both event paths.
+  - ACCEPTED: the rejection of "full size, zero alpha" rested on a false premise (a transparent node covers
+    nothing). Following that through changed the code: the standing node is no longer transparent, and it has no
+    description while down.
+  - ACCEPTED: an unused import, and two inaccurate sentences here (the test tag, the 100 ms loop).
+  - RECORDED, not fixed: the three open risks above, which only a device can settle.
+  - REJECTED: one full-size chain with a conditional test tag, relying on zero alpha. It keeps the node hidden from
+    the platform, which is the state this revision removes.
