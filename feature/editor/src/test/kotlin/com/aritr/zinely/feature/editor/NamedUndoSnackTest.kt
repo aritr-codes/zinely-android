@@ -102,18 +102,36 @@ class NamedUndoSnackTest {
     private fun voice() = composeRule.onAllNodesWithTag(BenchSnackVoiceTestTag, useUnmergedTree = true)
         .fetchSemanticsNodes().single()
 
-    /** Exactly what the platform is handed as that node's description. */
-    private fun said(): String = voice().config[SemanticsProperties.ContentDescription].single()
+    /** Exactly what that node's description is; null while it has none. */
+    private fun said(): String? = voice().config.getOrNull(SemanticsProperties.ContentDescription)?.single()
+
+    /** Report accessibility as on, as with TalkBack running: Compose builds node infos and sends events only then. */
+    private fun turnAccessibilityOn() {
+        val manager = composeRule.activity.getSystemService(AccessibilityManager::class.java)
+        shadowOf(manager).setEnabled(true)
+        shadowOf(manager).setEnabledAccessibilityServiceList(listOf(AccessibilityServiceInfo()))
+        shadowOf(manager).setTouchExplorationEnabled(true)
+    }
 
     @Test
     fun the_voice_is_in_the_tree_before_any_snack_and_says_nothing() {
+        turnAccessibilityOn()
         setScreen(store())
 
         assertTrue(voice().config.contains(SemanticsProperties.LiveRegion))
-        assertEquals("", said())
-        assertTrue("one pixel, so it covers nothing beneath it", voice().boundsInRoot.let { it.width <= 1f && it.height <= 1f })
+        assertEquals("no description at all: even an empty one is a TalkBack focus stop", null, said())
+        assertTrue("one pixel, so it covers almost nothing beneath it", voice().boundsInRoot.let { it.width <= 1f && it.height <= 1f })
         assertTrue("...but not empty, or the platform tree drops it", !voice().boundsInRoot.isEmpty)
         composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
+
+        // The platform's own node, which is what TalkBack reads. A zero alpha would hide it here.
+        val content = composeRule.activity.findViewById<ViewGroup>(android.R.id.content)
+        val composeView = (content.getChildAt(0) as ViewGroup).getChildAt(0)
+        val info = checkNotNull(composeView.accessibilityNodeProvider.createAccessibilityNodeInfo(voice().id))
+        assertTrue("the standing node must be visible to the user", info.isVisibleToUser)
+        assertEquals(View.ACCESSIBILITY_LIVE_REGION_POLITE, info.liveRegion)
+        assertEquals(null, info.contentDescription)
+        assertTrue("and no one can land on it", !info.isScreenReaderFocusable && !info.isFocusable)
     }
 
     @Test
@@ -140,32 +158,29 @@ class NamedUndoSnackTest {
         assertTrue(voice().children.isEmpty())
 
         press(BenchBarUndoTag)
-        assertEquals("Text put back", said().trimEnd())
+        assertEquals("Text put back", said()?.trimEnd())
         assertEquals(node, voice().id)
         assertEquals(1, speakers("Text put back").size)
         assertEquals(0, speakers("Text deleted.").size)
 
         press(BenchBarRedoTag)
-        assertEquals("Text removed", said().trimEnd())
+        assertEquals("Text removed", said()?.trimEnd())
         assertEquals(node, voice().id)
 
         composeRule.mainClock.advanceTimeBy(BenchSnackDeleteMillis + BenchSnackMillis + 100L)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
-        assertEquals("down again, it says nothing, so the next line is a change", "", said())
+        assertEquals("down again, it says nothing, so the next line is a change", null, said())
         assertEquals(node, voice().id)
         assertEquals("nothing else announces any of it", emptyList<Effect>(), effects.filterNot { it is Effect.Autosave })
     }
 
     @Test
     fun the_platform_is_told_each_line_as_a_change_to_the_description() {
-        // What TalkBack is actually sent. Compose reports a changed description on a node it already knew as
-        // CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION carrying the words; a node that appears holding its words
-        // gets only a subtree change from an ancestor, which is what the first device gate heard as silence.
-        val manager = composeRule.activity.getSystemService(AccessibilityManager::class.java)
-        shadowOf(manager).setEnabled(true)
-        shadowOf(manager).setEnabledAccessibilityServiceList(listOf(AccessibilityServiceInfo()))
-        shadowOf(manager).setTouchExplorationEnabled(true)
+        // What TalkBack is actually sent. Compose reports a description that changes on a node it already knew
+        // as CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION carrying the words. A node that appears holding its words
+        // never gets that event, only subtree changes; that build was silent at the first device gate.
+        turnAccessibilityOn()
         val described = mutableListOf<String>()
         composeRule.activity.findViewById<View>(android.R.id.content).accessibilityDelegate =
             object : View.AccessibilityDelegate() {
@@ -185,7 +200,7 @@ class NamedUndoSnackTest {
         composeRule.waitForIdle()
         composeRule.mainClock.autoAdvance = false
         fun settle() {
-            // Compose batches accessibility events on a 100 ms loop.
+            // Long enough for Compose's accessibility checks, some of which ride a 100 ms loop.
             repeat(4) {
                 composeRule.mainClock.advanceTimeBy(150L)
                 composeRule.waitForIdle()
@@ -216,10 +231,10 @@ class NamedUndoSnackTest {
     @Test
     fun a_spoken_line_always_differs_from_the_one_before_it() {
         val line = "Text taken off"
-        assertEquals("", benchSnackSpoken(visible = false, message = line, step = 3))
+        assertEquals(null, benchSnackSpoken(visible = false, message = line, step = 3))
         for (step in 0..5) {
             val now = benchSnackSpoken(visible = true, message = line, step = step)
-            assertEquals(line, now.trimEnd())
+            assertEquals(line, now?.trimEnd())
             assertNotEquals(now, benchSnackSpoken(visible = true, message = line, step = step + 1))
         }
     }

@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -221,13 +222,18 @@ internal fun BenchSnack(
     val rise = with(density) { riseDp.toPx() }
     Row(
         modifier = if (hidden) {
-            // ADR-123 revision: the message node below stays in the tree while the snack is down. TalkBack
-            // speaks a polite live region when an existing node's description changes; a node that appears
-            // already holding its line reaches the platform as a subtree change and is not read out (the
-            // first device gate: neither the named undo nor the delete snack was spoken). One invisible
-            // pixel, so it paints nothing and hides nothing beneath it from the accessibility tree, and no
-            // test tag, so the snack still does not exist for a test while it is down.
-            modifier.size(with(density) { 1.toDp() }).graphicsLayer { alpha = 0f }
+            // ADR-123 revision: the message node below stays in the tree while the snack is down, so each
+            // line reaches the platform as a description added to a node it already knows. A node that
+            // appears already holding its line was not read out at the first device gate (neither the named
+            // undo nor the delete snack was spoken).
+            //
+            // One pixel that draws nothing, and deliberately NOT a zero alpha: Compose marks a transparent
+            // node hidden (not visible to the user, not important), and the line would then be announced
+            // from a node the platform was just told to ignore. One pixel because a visible live region
+            // counts as covering what is under it; at full size it would take the page elements beneath
+            // the snack's slot out of the accessibility tree. No test tag, so the snack still does not
+            // exist for a test while it is down.
+            modifier.size(with(density) { 1.toDp() }).drawWithContent { }
         } else {
             modifier
                 .fillMaxWidth()
@@ -264,7 +270,9 @@ internal fun BenchSnack(
                 // not assertive: a deletion the user just performed is a confirmation, not an alarm.
                 .clearAndSetSemantics {
                     liveRegion = LiveRegionMode.Polite
-                    contentDescription = spoken
+                    // Absent, not empty, while the snack is down: Compose treats any description, even "",
+                    // as something to say, which would make this invisible pixel a TalkBack focus stop.
+                    if (spoken != null) contentDescription = spoken
                 },
         )
         // Undo takes a deletion back — the one Bench action whose window closes on its own, so the
@@ -302,12 +310,12 @@ internal fun BenchSnack(
 
 /**
  * What the snack's one live-region node says ([ADR-123](../../../../../../../../docs/DECISIONS.md#adr-123),
- * revised). Nothing while the snack is down, so the next line is always a change the platform reports. An odd
- * [step] carries one trailing space: a line identical to the one still standing is otherwise no change at
- * all, and a live region stays silent on an unchanged node. The space is not pronounced.
+ * revised). No description at all while the snack is down, so the next line is always a change the platform
+ * reports. An odd [step] carries one trailing space: a line identical to the one still standing is otherwise
+ * no change at all, and a live region stays silent on an unchanged node. The space is not pronounced.
  */
-internal fun benchSnackSpoken(visible: Boolean, message: String, step: Int): String = when {
-    !visible -> ""
+internal fun benchSnackSpoken(visible: Boolean, message: String, step: Int): String? = when {
+    !visible -> null
     step % 2 == 0 -> message
     else -> "$message "
 }
