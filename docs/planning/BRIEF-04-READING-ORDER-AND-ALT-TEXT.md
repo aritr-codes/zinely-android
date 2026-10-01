@@ -275,7 +275,9 @@ row tops interleaves them. A2's relative phrases and the maker's own arrangement
   - Delete `Effect.Announce` once nothing emits it.
 - **Repeats must speak.** A live region does not re-announce identical text. So the snack is **keyed per step** (a counter);
   whether TalkBack re-speaks the rebuilt node is checked on device. *Checked 2026-09-30: it does not speak a rebuilt
-  node at all. [ADR-123](../DECISIONS.md#adr-123) (revised) keeps one node and counts steps on it.*
+  node at all. Checked again 2026-10-01 on one standing node: a line is spoken, an identical repeat is not.
+  [ADR-123](../DECISIONS.md#adr-123) (second revision) speaks undo and redo lines through the announcement drain
+  instead.*
 - **Copy.**
   - A new `Copy.Undo` holds every word, including the page sentence, so "Changed page N" leaves the reducer.
   - ✅ `core:copy` has no project dependencies. `feature:editor` maps `EditLabel` to `Copy.Undo`, as `benchDeletedMessage`
