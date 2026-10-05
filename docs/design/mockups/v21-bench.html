@@ -476,8 +476,8 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
    `fill:none;stroke:currentColor;stroke-width:1.7`.  That is what drew sixteen HOLLOW tiles for a
    catalogue that contains no hollow mark, and it is the single line D-093 is about: the drawer
    promised an outline and the page delivered a fill.  A tile is now the MARK, filled, with the
-   even-odd rule the renderer itself uses -- so a hole in the tile is a hole in the supply
-   (`paper.window`, `fix.corner`, `mark.registration`) and nothing else is. */
+   even-odd rule the renderer itself uses -- so a hole in the tile is a hole in the supply (`paper.window`,
+   `paper.hole`, `shape.ring`, `fix.grommet`, `fix.corner`, `mark.registration`) and nothing else is. */
 .tile svg{width:60%;height:60%;fill:currentColor;fill-rule:evenodd;stroke:none}
 /* A supply nobody has drawn yet has no mark to show, so the tile says so in words instead of
    miming one (A7 / D-086).  The dim treatment stays exactly as it was; the word is added beside
@@ -2473,3 +2473,44 @@ const a26=(()=>{
   if(parent!==window) parent.postMessage({a26:{table:a26.table(),d4,step:$('snack').dataset.step||'',line:$('snackText').textContent}},'*');
 })();
 </script>
+
+<!-- ===========================================================================
+A27 · 2026-10-05 · PROPOSED, NOT FROZEN (awaits the owner's approval; 1.x plan step 4,
+decision gate Q3 ruled 2026-09-26, ADR-124 Proposed).
+Taps pass through the empty part of six holed pieces.
+
+BEHAVIOUR ONLY.  No pixel, no rule and no handler of this file changes.  This prototype lays
+its elements out in a column (`.content`, :263), so no piece ever lies over a photo here and
+the behaviour below cannot be shown without building a stacking canvas the Bench design does
+not otherwise need.  The rule is therefore stated in words, and verified on the device.
+
+THE RULE.  On six pieces --
+
+    paper.window   paper.hole   shape.ring   fix.grommet   fix.corner   mark.registration
+
+-- the piece is its drawn ink, not its box:
+
+  1. A tap on the ink selects the piece.
+  2. A tap on the empty part of it (the hole, or the bare paper inside its box) reaches
+     whatever lies underneath: a photo, words, or another piece.  Double-tapping a photo
+     through a hole opens Reframe; double-tapping words through a hole edits them.
+  3. If something is under the finger exactly, it wins.  Only when nothing is does a small
+     tolerance (8dp) around the ink catch a fingertip that landed just off it.  If two
+     such pieces are both within reach, the upper one is picked, not the nearer one.
+  4. If nothing at all is underneath, the piece is selected by its box, as before.  On blank
+     paper the one difference is (3): a tap within 8dp of the ink now picks that piece up.
+
+Every other piece keeps its whole box -- crop marks included, by the owner's ruling.  Words
+and photos are unchanged.  Screen-reader selection is unchanged: each element is still one
+node, placed by its box.
+
+KNOWN LIMIT, STATED RATHER THAN HIDDEN.  Over a photo, a piece's band is exactly as wide as
+it is drawn: the tolerance cannot widen it, because the photo is under the finger and (3)
+says the photo wins.  Whether that makes a thin frame hard to pick back up is a device
+question (Pass 2).  If it does, the remedy is a new owner ruling, not a quiet change here.
+
+A7's COUNT IS SUPERSEDED, NOT REWRITTEN.  A7 (:1430-1433) says `paper.window`, `fix.corner`
+and `mark.registration` "are the three marks that have one".  That was true of A7's sixteen
+and is left as the record.  The shipped cabinet has the six above.  The live comment on
+`.tile svg` (:479-480) is corrected in place, within its own two lines, to name all six.
+=========================================================================== -->

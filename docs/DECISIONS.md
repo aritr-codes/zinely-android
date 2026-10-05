@@ -133,6 +133,7 @@
 | [ADR-121](#adr-121) | **Restore adds zines that aren't already on the shelf and never replaces what's here.** A zine is already here when its title, format, paper size and content equal a shelf zine's, counted one for one; a changed zine is added; doubt adds. No format change. Amends ADR-110 §5. | Accepted (design) 2026-09-28; owner ruling; implemented with 1.x step 1b and accepted 2026-09-29 (PR #86, `1fd3c9e`) |
 | [ADR-122](#adr-122) | **A backup is complete or explicitly partial, never silently partial; a restore reports what happened.** Backup is skip-and-list (one photo never fails it); the manifest gains a defaulted, leniently read `omitted` list, `packageVersion` stays 2; restore staging-write failures aren't "damaged", Cancel is withdrawn once commit starts, and a committed restore is a success even if the shelf lags. Amends ADR-110. | Accepted 2026-09-29; 1.x step 1b (PR #86, `1fd3c9e`) |
 | [ADR-123](#adr-123) | **Undo and redo say what they did, in the one Bench snack.** A pure `editLabel` derived from each command's memento (no History change, nothing persisted); `Effect.HistoryStepped` replaces "Changed page N"; one snack counted per step, shown in the snack and spoken once through the announcement drain; the page clause and the 2% / 2° transform rule. Words owned by frozen `v21-bench.html` A26. | Accepted 2026-10-01 (proposed 2026-09-30, revised twice 2026-10-01); 1.x step 3 (PR #90). **Accepted with documented device-verification limitations:** the owner waived the full two-pass device matrix, several A26 rows and the 2× listen were not heard, and TalkBack may say an identical repeat once |
+| [ADR-124](#adr-124) | **Taps pass through the empty part of six holed Art pieces.** For `paper.window`, `paper.hole`, `shape.ring`, `fix.grommet`, `fix.corner` and `mark.registration` the hit area is the drawn ink, read from the outline the renderer draws; resolution is drawn → near (within 8 dp of the ink, yes or no; topmost wins) → box, topmost-first; every other element keeps its box; `core:editor` gains a dependency on `core:render`. Semantics, schema and pixels unchanged | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -14107,3 +14108,327 @@ now. This is the record of what the acceptance rests on.
   found no overclaim and no hidden limitation; its fixes, all accepted, were a stale "READY", the CI claim pinned to
   a commit, the delete snack attributed to both builds, and the "Saved" ruling worded as not ruled. The acceptance
   itself is the owner's decision.
+
+---
+
+## ADR-124 {#adr-124}
+
+### Taps pass through the empty part of six holed Art pieces
+
+**Status:** Proposed, 2026-10-05. **Not accepted, and nothing is implemented.** Written in the step 4 readiness
+session on `origin/main` @ `a20df76`; it becomes Accepted only on the owner's approval of this contract and of the
+[`v21-bench.html`](design/mockups/v21-bench.html) A27 behaviour note, which is itself **proposed, not frozen**. Zinely
+1.x step 4 ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)), scope ruled by the owner on 2026-09-26
+([decision gate Q3](planning/ZINELY-1X-DECISION-GATE.md#q3-tap-through-hit-testing-how-far-it-reaches)), researched in
+[Brief 05](planning/BRIEF-05-MATERIALS-FRAMES.md). This ADR replaces the draft that brief carried; where the two
+differ, this governs (*Differences from the Brief 05 draft*, below).
+**Extends:** [ADR-029](#adr-029) (§5.4, the pure hit test), [ADR-053](#adr-053) (§4, the double-tap seam).
+**Amends:** the statement that `:core:editor` depends only on `:core:model` (`core/editor/build.gradle.kts:10`).
+
+#### Context
+
+Six Art pieces ship with a part of their box that is deliberately empty: a hole, or bare paper between thin marks.
+The hit test does not know. `HitTest.topmostAt` (`core/editor/.../HitTest.kt:21-36`) rotates the tap into each
+element's frame, tests it against the box, and takes the topmost by `(zIndex, listIndex)`. So a window frame laid
+over a photo owns every tap inside its box: the photo under the hole cannot be selected, double-tap cannot open
+Reframe on it, and words under it cannot be edited. The only ways through are Send backward and TalkBack. All four
+tap paths share the defect because all four call `topmostAt`: `SelectAt` (`EditorReducer.kt:56`), `BeginEditTextAt`
+(`:120`), `DoubleTapAt` (`:137`) and `benchTapIntent` (`EditorGestures.kt:49`).
+
+The shape that is drawn already exists as data. `SupplyCatalog.outlineOf` (`core/render/.../SupplyCatalog.kt:547`)
+returns a `SupplyOutline`: closed subpaths of lines and cubics in the unit square, filled even-odd
+(`SupplyOutline.kt:17-34`). `SceneRenderer` places it with `localToPage · scale(w, h) · mirrorX? · mirrorY?`
+(`SceneRenderer.kt:97-107,138-147`). No production code tests a point against an outline today. A test already
+does: `SupplyOutlineFillTest.kt:44-90` flattens each cubic into 64 chords and casts an even-odd ray (`isInked`), and
+probes the ring's hole, the corner's pocket and the registration arms with it.
+
+`:core:editor` cannot see that outline: its build script says it depends only on `:core:model`
+(`core/editor/build.gradle.kts:10,18`).
+
+#### Decision
+
+**1. Scope: exactly six pieces, named in one explicit set.**
+
+| Supply | Name | Why a box is wrong for it |
+|---|---|---|
+| `paper.window` | Window frame | A square with a square removed (`SupplyCatalog.kt:252-262`); the hole is 72 % of each side, and the piece exists to show what is under it |
+| `paper.hole` | Torn hole | A torn patch with a torn hole in it (`:490-497`) |
+| `shape.ring` | Ring | A disc with a disc removed (`:503-505`); the hole is 7/12 of the diameter |
+| `fix.grommet` | Eyelet | The same geometry as the ring (`:412-414`); an eyelet sits on top of something by definition |
+| `fix.corner` | Photo corner | A triangle with its pocket cut out (`:284-287`); half its box is not ink at all, and it is placed on a photo's corner |
+| `mark.registration` | Registration cross | Four thin arms and a thin annulus (`:162-169`); almost all of its box is bare paper |
+
+The set lives in `:core:render`, beside the outlines. It is a list, not a rule: a piece is in scope because it is
+named, not because its outline has a second subpath. A later piece (a D5 frame) joins by being added in a reviewed
+change.
+
+**Excluded, and unchanged:** `mark.crop` (ruled out by name, Q3) and the other 25 supplies, including the five other
+pieces made of separate parts (`mark.halftone`, `fix.stitch`, `mark.bar`, `mark.scan`, `mark.perf`); every text box;
+every photo, including the letterbox bars of a `Fit.FIT` photo; and a supply id this build does not know. All of
+these keep the box, exactly as today.
+
+**2. Hit area.** An in-scope piece's hit area is its **ink**: the even-odd interior of its outline, placed as the
+renderer places it. Every other element's hit area is its rotated box.
+
+**3. Resolution: drawn, then near, then box.** Three passes over the page's elements, each topmost-first by
+`(zIndex, listIndex)` descending, which is the order `HitTest` uses today and the reverse of the renderer's draw
+order. The first pass that finds an element answers.
+
+1. **Drawn.** The topmost element whose hit area contains the point.
+2. **Near.** Only if pass 1 found nothing and the tolerance is positive. It considers **only the six in-scope
+   pieces**, in the same topmost-first order as pass 1, and returns the **first** one whose drawn ink is within the
+   tolerance of the point. **Distance does not rank candidates**: it is a yes-or-no test per piece, and stacking
+   order decides between pieces that pass it.
+3. **Box.** Only if pass 2 found nothing: the topmost element whose box contains the point. This is today's test,
+   and it is why a holed piece on blank paper stays selectable through its hole.
+
+If all three find nothing, the tap hits nothing, and `SelectAt` clears the selection as it does today.
+
+The order between the passes and inside pass 2 is fixed (owner clarification, 2026-10-05):
+
+1. An exact hit (a pass 1, "drawn" hit) always wins over a near one.
+2. Within pass 2, stacking order wins over distance.
+3. A near hit can never displace an exact hit on another element.
+4. A near hit can never make a holed piece beat a photo, a text box or an ordinary piece that contains the tap.
+5. If several in-scope pieces are within the tolerance, the topmost one wins, however much closer a lower one is.
+6. If none is within the tolerance, the tap falls through to the box pass.
+
+| The tap lands… | Result |
+|---|---|
+| on an in-scope piece's ink, nothing above it there | that piece (pass 1) |
+| in a hole, or in the box but off the ink, with a photo, words or another piece under that point | **the element underneath** (pass 1). The holed piece is not chosen merely because the point is inside its box |
+| in a hole with only blank paper under it | an in-scope piece: the topmost one whose ink is within the tolerance (pass 2), otherwise the topmost one whose box holds the point (pass 3) |
+| just off the ink, within the tolerance, nothing else containing the point | the piece (pass 2), even where the point is just outside its box |
+| just off the ink, within the tolerance, but inside a photo or text box | the photo or text (pass 1). **An exact hit always beats a near one** |
+| outside the tolerance and outside every box | nothing; the selection clears |
+| near the ink of two in-scope pieces, contained by nothing: the upper one's ink 7 dp away, the lower one's 2 dp away | **the upper piece** (pass 2). Stacking order decides, not distance |
+| where two elements both contain the point exactly | the upper one, by `(zIndex, listIndex)` |
+| in the holes of two stacked holed pieces, with a photo under both | the photo |
+| on the lower holed piece's ink, seen through the upper one's hole | the lower piece |
+
+**4. Geometry source: the outline the renderer draws, and nothing else.** No mask, no bitmap sampling, no second
+table of hit shapes. The test reads `SupplyCatalog.outlineOf`, so a drawn hole and a hit hole cannot disagree unless
+the maths below is wrong, and tests pin the maths.
+
+- *Into the unit square* — the exact inverse of the render fold. Subtract the box centre and un-rotate, as
+  `HitTest.contains` does now; then `u = (lx + w/2) / w`, `v = (ly + h/2) / h`; then `u → 1 − u` if `mirrored` and
+  `v → 1 − v` if `flippedVertically` (the two mirrors commute).
+- *Inside?* Even-odd ray casting across **all** subpaths together, cubics flattened into 64 chords each. This is
+  the `isInked` helper `SupplyOutlineFillTest` already has. The implementation **promotes that helper to `main`** and
+  points the existing test at it; it does not write a second copy. At 64 chords the worst in-scope curve (a quarter
+  of the radius-0.5 circle) strays about 0.00004 of the box from its chords, so no separate error-bound test is
+  added.
+- A subpath's closing edge, from its last point back to its start, is implicit in the data
+  (`SupplyCatalog.kt:598-599`) and is an edge for both the ray cast and the distance.
+- A piece with zero, negative or non-finite width or height is treated as out of scope: the function returns `null`
+  and the piece is tested by its box in pass 1, as today. A piece for which the function returns `null` is never
+  a pass 2 candidate.
+
+**5. Near is a distance threshold, not a sample.** A point is near a piece when the shortest distance from it to the piece's
+flattened boundary, **measured in page points**, is at most the tolerance. The distance is taken in the element's
+own frame after scaling the chords by `(w, h)`: rotation and mirroring preserve distance, and scaling first is what
+keeps the tolerance round on a piece stretched to a non-square box.
+
+**6. Tolerance: 8 dp.** The value was delegated by Q3 and recommended by Brief 05, whose reasoning this adopts
+unchanged: under exact-first the tolerance decides only taps that nothing contains, so its job is to forgive a
+fingertip that lands just off a thin band over blank paper, and every dp of it is blank paper that no longer clears
+the selection. The gesture layer converts it (`8.dp.toPx() / screenPxPerPt`, both in scope where tap and long-press
+are dispatched, `EditorGestures.kt:135-136`) and passes it as `tolerancePt` on **`SelectAt` only**, which hands it to
+`HitTest.topmostAt`; both default to `0.0`. `benchTapIntent` takes it only to put it on the `SelectAt` it returns.
+`DoubleTapAt` does not carry it, because it could change nothing there: passes 2 and 3 can only ever return an
+in-scope piece (any other element whose box holds the point is found in pass 1), and double-tap on a piece is a
+no-op. It is a constant in dp, unlike `LiveSnap.SNAP_THRESHOLD_PX` (8 device px), because it stands for a fingertip
+and not for a pixel distance.
+
+**7. Module seam.** `:core:editor` gains `implementation(project(":core:render"))`, and uses **one** function from
+it: given a supply id, a point in the element's un-rotated frame, the box size and the two flips, it returns the
+distance in points from the point to the ink (`0.0` when the point is on the ink), or `null` when the supply is not
+in scope or has no outline here. `null` means "use the box". The function, the in-scope set and the flattening live
+in `:core:render`, pure Kotlin, `kotlin.math` only. `:core:render` must never depend on `:core:editor`.
+
+**8. Unchanged.** The semantics tree (`ElementSemanticsLayer` places nodes by box and selects by id, not by point),
+the reducer's command set, undo, the document schema, and every pixel. Dragging is unchanged: a drag moves the
+selection as it stood at touch-down (`EditorGestures.kt:146`). `DoubleTapAt` keeps its type switch: through a hole
+onto a photo it opens Reframe; on a piece's ink it stays the deliberate no-op of `EditorReducer.kt:141-145`.
+
+#### Why the existing behaviour is preserved
+
+- On a page with **no in-scope piece**, pass 1 is today's test and passes 2 and 3 can add nothing, so the result is
+  identical for every point. A property test pins this against the present implementation.
+- On any page, with the tolerance at zero, the result differs from today's **only when today's answer is an in-scope
+  piece**, and a tap that selected something today still selects something (pass 3). Both are property-tested.
+- Passes 2 and 3 can only return an in-scope piece, so no text box, photo or out-of-scope piece ever loses or gains
+  a tap through them.
+- The tolerance adds two outcomes, both for a tap that nothing contains exactly and that lies within 8 dp of an
+  in-scope piece's ink: where the tap used to clear the selection, it now selects that piece; and where it used to
+  select the topmost in-scope piece by its box, it now selects the topmost one whose ink is near, which may be a
+  different piece (a ring seen through a larger window's hole, on blank paper).
+
+#### Performance
+
+Hit testing runs once or twice per tap, long-press or double-tap (`benchTapIntent`, then the reducer), never per
+frame and never during a drag. The largest in-scope outline (the registration cross) flattens to 528 chords. This
+is reasoned, not measured: it is simple arithmetic on a few hundred chords per in-scope piece, on a tap. No cache,
+no spatial index and no precomputed flattening are proposed. If a profile ever shows otherwise, flatten once per
+supply id; nothing here would need to change shape.
+
+#### Why the dependency, and not something else
+
+- **Nothing forbids it, and there is no cycle.** ARCHITECTURE's layer rule restricts `core:imposition` and
+  `core:render` to `core:model` (`ARCHITECTURE.md:60`); it says nothing of `core:editor`. `core:render` depends on
+  `core:model` only, plus `core:copy` for tests (`core/render/build.gradle.kts:19,25`). The only "ONLY `:core:model`"
+  statement is the build-script comment this ADR amends. Both modules are pure JVM and already run in the same CI
+  lane (`.github/workflows/ci.yml:44`).
+- **It makes "drawn hole = hit hole" true by construction.** The hit test reads the catalogue the replayer draws.
+- **It is the smaller change.** `EditorReducer` is an `object` called as `reduce(model, intent)`; a lookup would
+  have to be threaded through `reduce`, the store and every reducer test, or put into `EditorModel`, which is data.
+- **Cost accepted:** `core:editor` compiles against the render core. It is `implementation`, not `api`, and the
+  review rule is that `core:editor` calls the one function in Decision 7 and nothing else from `core:render`.
+
+#### Alternatives considered
+
+- *Inject an outline lookup into the reducer.* Rejected: a second caller or a test could pass a lookup that
+  disagrees with the catalogue, which is the divergence this ADR exists to prevent; and it is the larger change.
+- *Move outlines or containment into `core:model`.* Rejected: outlines are render content, and widening
+  `core:model` is what [ADR-029](#adr-029) declined for `inverse()`.
+- *Alpha or bitmap sampling of the drawn piece.* Rejected: it needs a rasteriser in the hit path, binds selection
+  to one platform's antialiasing, and is a second representation of a shape the catalogue already holds exactly.
+- *Android `Path` / `Region` containment.* Rejected for the hit path for the same reason; used once, as a test
+  oracle.
+- *All 32 supplies by outline.* Rejected by the owner (Q3): thin pieces become harder to grab, and the gaps in a
+  non-holed piece are not holes a maker cut.
+- *Infer scope from the outline (any piece with an inner subpath).* Rejected: the registration cross and the photo
+  corner are in scope for different reasons than a ring, crop marks are out by ruling, and a rule that guesses
+  would move a future piece into scope without anyone deciding it.
+- *Near as eight sample points on a circle (the Brief 05 draft).* Rejected: see the next section.
+- *A larger tolerance (about 24 dp) that competes with exact hits.* Rejected in Brief 05: at fit zoom it exceeds
+  the default hole radius of the eyelet and the registration cross, so their holes would stop passing taps through.
+- *A "pick the layer under the tap" menu.* Deferred. It is the escape hatch if device Pass 2 finds a piece that
+  cannot be reached.
+
+#### Differences from the Brief 05 draft
+
+1. **Near is the exact distance to the boundary, not eight samples on a circle.** Sampling has gaps on thin ink.
+   With a 4.8 pt radius, the samples sit 0, 3.4 and 4.8 pt from the tap along a band's normal, so a band thinner
+   than the gaps between them can be missed by a tap right beside it and caught by one further away. The
+   registration cross's arms are 0.07 of its box, so this bites once the cross is sized below about 49 pt; its
+   default is about 34 pt. The distance is the same loop over the same chords, costs less than eight containment
+   tests, and has no gaps.
+2. **One function crosses the seam, not three things** (lookup, set and containment). It is narrower than the
+   brief's stop condition, not wider.
+3. **`tolerancePt` goes on one intent, not three.** Only `SelectAt` can observe it (Decision 6). `DoubleTapAt` and
+   `BeginEditTextAt` still pass through holes, because they call `topmostAt`; they have no near pass, and need
+   none. `BeginEditTextAt` has no production caller in any case (`Intent.kt:114`).
+4. **The containment code is the existing test helper, promoted**, with its 64 chords, instead of new code at 16
+   chords with an error-bound test.
+
+#### Consequences and limitations
+
+- A tap in the hole of each of the six pieces reaches the photo, words or piece underneath. Over blank paper the
+  six behave as today, except for the two tolerance outcomes above.
+- **A thin band over a photo is no easier to grab than its drawn width.** The photo contains the tap exactly, and
+  exact beats near. At the default landing size the window frame's band is about 13 pt wide on an A4 eighth-page
+  (0.14 of a 95 pt box; 🟨 estimated, to be measured on the device). If Pass 2 shows makers cannot get a frame back
+  once a photo is under it, the remedies are a near hit that competes **with exact hits** by stacking order, or a
+  layer menu. **Either is a new
+  owner ruling**, not an implementer's adjustment.
+- A tap just outside an in-scope piece on blank paper now selects it instead of clearing the selection.
+- A maker who taps the bare paper between a registration cross's arms, over a photo, now gets the photo. That is
+  the ruling, and it is the behaviour most likely to surprise; Pass 2 looks at it by name.
+- TalkBack, Switch Access and keyboard selection are untouched, and stay box-based.
+- Nothing is persisted, so there is no schema or older-build question.
+- No golden is expected to move. A golden that moves is a defect, not a re-record.
+- Documentation that changes **with the implementation**, not before it: ARCHITECTURE (the `core:editor →
+  core:render` edge and the direction rule under *Layer rules*), the build-script header, the comment at
+  `FramingMathTest.kt:57`, and CHANGELOG.
+
+#### Tests
+
+No screenshot or golden test is added: nothing is drawn differently, and the behaviour is a pure function.
+
+*`:core:render`, JVM (the distance function):*
+1. For each of the six, a point on the ink returns `0.0` and a point at the centre of the hole or gap returns a
+   positive distance.
+2. Each in-scope id has an outline; the in-scope set is exactly the six; `mark.crop`, an out-of-scope id and an
+   unknown id return `null`.
+   The probes include the window's left band and the corner at `u < 0.16`, which fail if a subpath's closing edge
+   is left out; a top-band probe would pass without it.
+3. Boundary cases are deterministic: a point on a vertex, on a horizontal edge, on the box edge, and at each corner
+   of the unit square; zero and non-finite sizes return `null`.
+4. Distance is measured in points: for a ring on a 2:1 box, a point 3 pt off the ink along either axis returns 3 pt
+   (within 0.01 pt).
+5. Thin ink has no gaps: for a registration arm at its default size, every point from 0 to the tolerance off the
+   arm is within it, and every point beyond is not. (This is the case sampling fails.)
+6. `SupplyOutlineFillTest` stays green against the promoted helper, unchanged in what it asserts.
+
+*`:core:editor`, JVM (`HitTestTest`, plus properties with the jqwik this module already has):*
+7. Each of the six over a photo: tap on the ink → the piece; tap in the hole or gap → the photo.
+8. Each of the six over blank paper: tap in the hole → the piece.
+9. Tolerance: just off the ink over blank paper, inside the tolerance → the piece; beyond it and outside the box →
+   nothing.
+   - **9a. Exact beats near.** A holed piece's ink is within the tolerance of the tap, and another element actually
+     contains the tap. Expected: the containing element. Run three times, with a photo, a text box and an ordinary
+     (out-of-scope) piece as the containing element, and each time with the holed piece **above** it in the stack.
+   - **9b. Stacked near: stacking order beats distance.** Two in-scope pieces, neither containing the tap and
+     nothing else under it; the upper one's ink is 7 dp from the tap and the lower one's is 2 dp, with the
+     tolerance at 8 dp. Expected: the **upper** piece. A second case moves the upper piece's ink to 9 dp:
+     expected the lower piece, because the upper one is no longer a candidate.
+   - In `HitTestTest` the distances in 9, 9a and 9b are **page points**: `tolerancePt = 8.0`, with ink at 7.0, 2.0
+     and 9.0 pt. `HitTest` knows nothing of dp; converting 8 dp to points is the gesture layer's job alone
+     (Decision 6).
+10. Order: two holed pieces over a photo, tap in both holes → the photo; tap on the lower piece's ink through the
+    upper one's hole → the lower piece. A ring inside a larger window's hole on blank paper, tap just off the
+    ring: tolerance zero → the window (box), tolerance on → the ring.
+11. A rotated, a mirrored and a vertically flipped photo corner over a photo. The corner is asymmetric and its
+    pocket is off-centre, so a wrong rotation sign or a missing or doubled flip fails. (A window cannot show any of
+    these.)
+12. `mark.crop` over a photo, tap in its centre → `mark.crop`. An unknown supply id → its box.
+13. Property (the hit hole is the drawn hole): for a photo corner at a random rotation, both flips and a non-square
+    box, take known unit points on the ink, in the pocket and in the empty half; push each through the transform
+    `SceneRenderer.buildScene` actually emits for that element; `topmostAt` at the resulting page point answers the
+    corner for the ink and the photo beneath for the other two.
+14. Property, at tolerance zero **and** at a positive tolerance: the answer differs from the present box-only
+    implementation only when the present answer is an in-scope piece or `null`; whenever it differs the new answer
+    is an in-scope piece or the element beneath; and it is never `null` where the present answer is not. A page
+    with no in-scope piece is the special case in which the two always agree.
+
+*Reducer and gesture decision, JVM:*
+15. `DoubleTapAt` through a window's hole onto a photo opens Reframe; onto words, the text session; on the band, no
+    change.
+16. `benchTapIntent` through a hole onto words that are already selected returns `BeginEditText`; otherwise it
+    returns a `SelectAt` carrying the tolerance it was given.
+17. `SelectAt` in a hole over a photo selects the photo; a second `SelectAt` on the band selects the window.
+18. The long-press path dispatches `SelectAt` with the same non-zero tolerance as the tap path (one assertion in
+    the existing long-press test, `EditorGesturesTest`).
+
+No Robolectric parity test against `android.graphics.Path` is added (the Brief 05 draft had one). That the
+even-odd rule reaches the Android backend is already pinned by `SupplyOutlineRingTest`, and tests 1 and 13 pin the
+hit test against known geometry and against the renderer's own transform.
+
+*Whole build:* the full unit suite, lint, `:app:checkDependencyAllowlist`, and `bash tools/grun.sh gold` to confirm
+that no golden moved.
+
+*Device, both passes (CLAUDE.md).* Tap delivery cannot be driven in Robolectric (`EditorGestures.kt:42-45`), so it
+is verified here. **Pass 1:** each of the six over a photo, single tap and double tap through the hole; the band
+still selects the piece; each of the six on blank paper; a rotated and a flipped piece; `mark.crop` unchanged; the
+band's width and the zoom recorded; `uiautomator dump` before and after shows the same element nodes. **Pass 2:**
+does a first-time maker expect the tap to go through, can they get the frame back, and does the registration
+cross's bare paper surprise them?
+
+#### Review
+
+- **2026-10-05, the proposed contract: GO WITH FIXES**, by an independent Review Agent reading the repository, not
+  this text. It confirmed the inverse fold against `SceneRenderer`, the preservation claims for out-of-scope
+  elements, the module seam and the line-for-line state of `v21-bench.html`. All six required fixes were accepted
+  and are in the text above: the tolerance has two new outcomes, not one; the fold property is asserted through
+  `topmostAt`, since only a distance crosses the seam; the containment helper already exists in a test and is
+  promoted rather than rewritten; "as before" in the owner-facing note was overclaimed; the tolerance belongs on
+  `SelectAt` alone; and a stale plan line. Of its recommendations, the trimmed test list, the closing-edge probes
+  and the long-press assertion were accepted; removing `tolerancePt`'s default was not, because every existing test
+  that builds `SelectAt(point)` would change for no gain, and the long-press assertion covers the risk it named.
+- **2026-10-05, after the owner's clarification of pass 2** (stacking order, never distance, decides between near
+  pieces; tests 9a and 9b added): a second independent review returned **GO WITH FIXES**. Both required fixes were
+  accepted: the A27 note now states the rule, and the tests state their distances in page points. Its wording
+  recommendations were accepted except moving the closing-edge sentence, which was left where it is. Its re-check
+  of the corrected text returned **GO**, with no remaining design ambiguity.
+- The implementation is reviewed independently before merge; that outcome is recorded here.

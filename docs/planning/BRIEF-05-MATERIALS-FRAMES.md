@@ -13,7 +13,7 @@ Base: `origin/main` @ `0aa7a7d`. Revised 2026-09-26 for the owner's rulings; cod
 **Outline hit test (step 4):**
 
 1. **Owner — approve the `v21-bench.html` amendment** ([specification below](#v21-benchhtml-amendment-specification)). The box hit test is inherited behaviour, so changing it is an **interaction change**, and interaction changes after freeze update the HTML first (CLAUDE.md, *DESIGN FREEZE*). No Compose or core code before approval.
-2. **Work — PR #70 settled.** It amends the same `v21-bench.html` (and holds ADR-115). Amending the file on top of an open PR invites a line-shifting conflict in a file whose citations are line numbers.
+2. **Work — PR #70 settled** (✅ merged, `a6eb16b`). It amends the same `v21-bench.html` (and holds ADR-115). Amending the file on top of an open PR invites a line-shifting conflict in a file whose citations are line numbers.
 3. **Work — the [ADR draft](#adr-draft--outline-hit-testing-for-holed-supplies) recorded** in `DECISIONS.md` under the next free number at implementation time, and independently reviewed.
 
 **D5 frames (step 9):**
@@ -181,6 +181,8 @@ Constraints only; the frames themselves are the owner's (Gate 4).
 Every other supply keeps today's free stretch unless the implementation session finds a reason, recorded in D-100. The lock touches `TransformMath`/`ResizeHandle` plus a per-supply set; it is its own small session (or the first commit of step 9), with a `v21-bench.html` behaviour note (Gate 7).
 
 ## ADR draft — outline hit testing for holed supplies
+
+> **Superseded as the working text, 2026-10-05.** The decision is now recorded as [ADR-124](../DECISIONS.md#adr-124) (Proposed). Where this draft and ADR-124 differ, ADR-124 governs; it lists the differences (near-hit by exact distance instead of eight samples, one function across the module seam, the tolerance on two intents). The draft below is kept as the record of the research. The amendment specified in the next section is drawn as `v21-bench.html` A27 (proposed, not frozen).
 
 > **ADR-NNN (next free at implementation time) — outline hit testing for holed supplies.** Status: *Draft*, to be recorded in `DECISIONS.md` by the step-4 session. Step 2 (reading order) claims the next free number first; ADR-115 is reserved on PR #70's branch.
 
@@ -359,6 +361,7 @@ None. Supplies are content, tinted with the existing maker inks. New outlines mu
 
 | Date | Change |
 |---|---|
+| 2026-10-05 | Step 4 readiness session on `a20df76`: the ADR draft is recorded as [ADR-124](../DECISIONS.md#adr-124) (Proposed) and the amendment is drawn as `v21-bench.html` A27 (proposed, not frozen). Code facts re-verified; PR #70 is merged, so gate 2 is met. Nothing implemented. |
 | 2026-09-26 | Final planning audit fixes: the print study's output is guidance, not a gate on step 4 or 9; gate 4 re-sourced (visuals by Q6; set membership, drawn names and order by ADR-107 R1a, `DECISIONS.md:11485-11486`; R1a gives outline authoring to the implementer; search tags are not in R1a and are reviewed in the set amendment); landing-size ownership aligned with gate Q6 (family default delegated; per-supply override the owner's); ADR draft now also names the `FramingMathTest.kt:57` comment beside the build-script header. |
 | 2026-09-26 | Owner rulings Q3/Q5/Q6 applied. Hit test: scope fixed to the six holed pieces (crop marks excluded; a geometric crop region noted as unapproved future work); exact → near → box resolution; tolerance re-derived — under exact-first it cannot help a band over a photo, so 🟦 8 dp replaces ≈ 24 dp; TalkBack stays on boxes (`ElementSemanticsLayer.kt:88`). Added the ADR draft (module seam 🟦 `core:editor` → `core:render`, containment math, tests, no golden changes) and the `v21-bench.html` amendment specification (append-only log entry; the stale three-piece lists at `:479-481`/`:1431-1432` become six). Frames: two, hand-cut, no nine-slice, "Frame A / Frame B" pending the owner's visual approval; per-piece resize list as a 🟦 recommendation to be finalised in D-100. Gates: O14 and the fold study removed (evidence for Proof only); PR #70 must be settled before step 4. Base `0aa7a7d`; render-fold citation corrected to `:138-146`. |
 | 2026-09-25 | After both reviews: readiness split by part (the hit test is not blocked by O9/O14); the hit test is an interaction change whose scope the owner rules in Q3 (holed pieces only vs all 32 supplies), with the HTML note first; exact hit beats a tolerance near-hit so small holes pass taps through; "six more" non-holed pieces (was "seven"); instant-photo example removed (§IV); ROADMAP anchor and build-script line fixed. |
