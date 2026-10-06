@@ -14455,9 +14455,13 @@ cross's bare paper surprise them?
   piece from blank paper. Pass 1 now asks the box before the ink. Ink lies inside its box, so nothing a finger
   can reach changes; the sample is kept as a unit test. This one-line change was made after the review and the
   device passes above, and was checked by the suite alone.
+- **Owner, 2026-10-06, by hand on SM-A176B, the beta.6 release APK:** a window frame over a photo. A tap through the
+  hole selected the photo; a tap on the band selected the frame; a double-tap through the hole opened Reframe; on
+  blank paper a tap in the hole selected the frame. Each worked first try and the band was easy to hit. Dragging
+  the selected frame by its band **resized** it and did not move it. The owner also asked whether a double-tap
+  should close Reframe as well as open it; that is a Reframe design question, recorded and not acted on here.
 - **Still owed before this ADR can be Accepted** (tracked in [OWNER-CHECKLIST](OWNER-CHECKLIST.md)): the owner's
-  TalkBack listen (deferred by the owner on 2026-10-06, not waived); the owner's finger-based first-time-user
-  pass, including whether a thin frame can be picked back up over a photo; and the freeze of A27. Two
+  TalkBack listen (deferred by the owner on 2026-10-06, not waived) and the freeze of A27. Two
   observations from the device are recorded for those passes and changed nothing here: a selected thin piece
   dragged from its band resizes, because the resize handles sit on the box edge; and a second tap on small
   selected words can be swallowed by a handle's touch target, with or without a holed piece on the page.

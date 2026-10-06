@@ -302,7 +302,7 @@ Evidence: [tester package](releases/0.9.0-beta.6.md).
 | ☑ | **Allow the install over beta.5 on your phone** | **Done 2026-10-06** after you reported the shelf backed up. Installed with no uninstall; install date and shelf kept |
 | ☑ | Smoke pass on this exact APK after the install | **Passed 2026-10-06** ([record](releases/0.9.0-beta.6.md#verification)). Shelf intact; tap-through (hole, band, blank paper, double-tap onto words); back up then restore the same file; named undo and redo; no Font button; Save PDF. Recorded in the tester package |
 | ☐ | Release PR's CI green | The branch is pushed only when the candidate is ready for you |
-| ☐ | **Your finger pass on tap-through** | Tap a photo through a window frame; pick the frame back up by its band. Also owed for [ADR-124](DECISIONS.md#adr-124) |
+| ☑ | **Your finger pass on tap-through** | **Done 2026-10-06 on the release APK:** every tap did what was expected, first try. Dragging the selected frame by its band resized it (a Known Limitation in the changelog). Your question, whether a double-tap should also close Reframe, is recorded in [ADR-124](DECISIONS.md#adr-124) Review as an open design question |
 | ☐ | TalkBack listen on tap-through | Deferred by you on 2026-10-06, not waived. Ships as "not verified" unless you listen first |
 | ☐ | **"Proceed with the beta.6 release"** | Then: merge the release PR, tag `v0.9.0-beta.6` on the merge commit, GitHub pre-release with the APK. Only after the tag: the website, `tools/check-public-copy.cjs`, the ROADMAP "Released" line and the "not yet in the download" wording move to beta.6 |
 
