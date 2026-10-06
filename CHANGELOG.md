@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Taps now pass through the empty part of six holed Art pieces (window frame, torn hole, ring, eyelet, photo
+  corner, registration cross): a tap in the hole reaches the photo, words or piece underneath, and a tap on the
+  drawn ink still selects the piece. On blank paper a tap within 8 dp of one of these pieces' ink picks it up.
+  Every other piece, crop marks included, keeps its whole box, and screen-reader selection is unchanged
+  ([ADR-124](docs/DECISIONS.md#adr-124), Proposed). Not in a published build yet.
 - Rebuilt the public website story around Shelf, Bench and Proof, told in the order a visitor asks: what it is, why
   paper, what you can make, how it works, what is different, how to try it and where it is going. Added a Download
   page with install steps, backup and phone-move advice, the published SHA-256, and honest Google Play and iPhone

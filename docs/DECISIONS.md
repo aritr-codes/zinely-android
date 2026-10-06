@@ -14115,7 +14115,10 @@ now. This is the record of what the acceptance rests on.
 
 ### Taps pass through the empty part of six holed Art pieces
 
-**Status:** Proposed, 2026-10-05. **Not accepted, and nothing is implemented.** Written in the step 4 readiness
+**Status:** Proposed, 2026-10-05. **Not accepted.** Implemented on 2026-10-06 (branch
+`feat/1x-step4-tap-through`) and merged on the owner's instruction with acceptance evidence still owed; what is
+owed is listed under *Review*. The file and line references in *Context* and *Decision* describe `origin/main` @
+`847b973`, the tree before the implementation, and are left as that record. Written in the step 4 readiness
 session on `origin/main` @ `a20df76`; it becomes Accepted only on the owner's approval of this contract and of the
 [`v21-bench.html`](design/mockups/v21-bench.html) A27 behaviour note, which is itself **proposed, not frozen**. Zinely
 1.x step 4 ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)), scope ruled by the owner on 2026-09-26
@@ -14431,4 +14434,30 @@ cross's bare paper surprise them?
   accepted: the A27 note now states the rule, and the tests state their distances in page points. Its wording
   recommendations were accepted except moving the closing-edge sentence, which was left where it is. Its re-check
   of the corrected text returned **GO**, with no remaining design ambiguity.
-- The implementation is reviewed independently before merge; that outcome is recorded here.
+- **2026-10-06, the implementation: GO**, by an independent Review Agent reading the working tree, with no
+  required fix. Four recommendations were accepted and applied before the final run: a tolerance that is not
+  finite means no near pass (a zero preview scale would otherwise turn every miss into a hit on the topmost holed
+  piece; this guard is the one behaviour Decision 3 does not spell out); the long-press test asserts two intents
+  before comparing them; the closing-edge probes were strengthened and a distance-to-closing-edge test added; a
+  tautological assertion was removed. Evidence on that tree: the full unit suite (2,480 tests), `:app:lintDebug`,
+  `:app:checkDependencyAllowlist`, and `bash tools/grun.sh gold` with no golden moved.
+  `:feature:editor:lintDebug` reports three `StateFlowValueCalledInComposition` errors in
+  `ElementSemanticsLayerTest.kt` and `ResizeHandlesTest.kt`; neither file is touched here and CI does not run
+  that task.
+- **2026-10-06, device, SM-A176B (Android 16), a side-by-side debug package.** Scripted taps at computed pixels,
+  selection read from the platform accessibility tree: each of the six over a photo and on blank paper, near
+  inside and outside 8 dp, exact beats near, stacked near, a rotated, a mirrored and a flipped photo corner,
+  crop marks and a staple by their box, long-press, and double-tap through a hole onto a photo and onto words.
+  All as specified. Drag, undo, redo, text editing and Reframe behaved as before.
+- **2026-10-06, CI on the pull request** failed property 14 on a random sample the local runs had not drawn: a
+  window turned 180 degrees, tapped on its exact box corner. The box test rejected the point by one rounding
+  step while the ink test, computed apart, rounded it back onto the band, so a tap with no tolerance gained a
+  piece from blank paper. Pass 1 now asks the box before the ink. Ink lies inside its box, so nothing a finger
+  can reach changes; the sample is kept as a unit test. This one-line change was made after the review and the
+  device passes above, and was checked by the suite alone.
+- **Still owed before this ADR can be Accepted** (tracked in [OWNER-CHECKLIST](OWNER-CHECKLIST.md)): the owner's
+  TalkBack listen (deferred by the owner on 2026-10-06, not waived); the owner's finger-based first-time-user
+  pass, including whether a thin frame can be picked back up over a photo; and the freeze of A27. Two
+  observations from the device are recorded for those passes and changed nothing here: a selected thin piece
+  dragged from its band resizes, because the resize handles sit on the box edge; and a second tap on small
+  selected words can be swallowed by a handle's touch target, with or without a holed piece on the page.

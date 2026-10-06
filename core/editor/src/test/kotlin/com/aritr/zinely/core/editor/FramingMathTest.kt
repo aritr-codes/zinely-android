@@ -54,7 +54,8 @@ class FramingMathTest {
     @Test
     fun `property - every clamped crop satisfies the computeImageBlit precondition`() {
         // The renderer (ADR-027 computeImageBlit) requires 0 <= left < right <= 1 and 0 <= top < bottom <= 1.
-        // :core:editor depends only on :core:model, so we assert that invariant directly here.
+        // :core:editor takes exactly one function from :core:render (the drawn-ink distance, ADR-124) and
+        // computeImageBlit is not it, so we assert that invariant directly here.
         for (c in tricky) {
             val k = FramingMath.clampCrop(c)
             assertTrue(k.left in 0.0..1.0 && k.right in 0.0..1.0 && k.left < k.right, "horiz invalid: $c ⇒ $k")

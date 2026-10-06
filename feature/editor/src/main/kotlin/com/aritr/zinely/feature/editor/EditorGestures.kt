@@ -13,6 +13,7 @@ import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.dp
 import kotlin.math.PI
 import kotlin.math.abs
 import com.aritr.zinely.core.editor.EditorUiState
@@ -44,14 +45,21 @@ import com.aritr.zinely.render.android.ExportScale
  * is why the shipped editor has never had a tap-to-select unit test. The **decision** is fully testable
  * here; the **delivery** is a device-verification item, which is where gesture behaviour is verified anyway.
  */
-internal fun benchTapIntent(state: EditorUiState, pt: PtPoint): Intent {
+internal fun benchTapIntent(state: EditorUiState, pt: PtPoint, tolerancePt: Double = 0.0): Intent {
     val page = state.document.pages[state.currentPageIndex]
     val hit = HitTest.topmostAt(page, pt)
     val reselectedText = hit != null &&
         state.selection == setOf(hit) &&
         page.elements.firstOrNull { it.id == hit } is TextElement
-    return if (reselectedText) Intent.BeginEditText(hit!!) else Intent.SelectAt(pt)
+    return if (reselectedText) Intent.BeginEditText(hit!!) else Intent.SelectAt(pt, tolerancePt)
 }
+
+/**
+ * How far off a holed piece's ink a fingertip may land and still pick it up, when nothing is under the
+ * finger exactly ([ADR-124](../../../../../../../../docs/DECISIONS.md#adr-124) §6). In dp, not device
+ * px like `LiveSnap.SNAP_THRESHOLD_PX`, because it stands for a fingertip and not for a pixel distance.
+ */
+internal val TapInkTolerance = 8.dp
 
 /**
  * The S4 editor gesture layer (ADR-029 §5). Translates raw Compose pointer input over the page into the
@@ -110,6 +118,8 @@ public fun Modifier.editorTransformGestures(
 
     return this
         .pointerInput(screenPxPerPt, pageOffset) {
+            // ADR-124 §6: the one place dp becomes page points. `:core:editor` never sees a dp.
+            val tolerancePt = (TapInkTolerance.toPx() / screenPxPerPt).toDouble()
             detectTapGestures(
                 // D-037 (owner ruling, 2026-08-02): selection is a **transient** editing state, dismissed by
                 // tapping anywhere outside it. One intent covers every clause of that ruling, because
@@ -132,8 +142,8 @@ public fun Modifier.editorTransformGestures(
                 // duplicated selection logic the comment above refuses. It asks one further question the
                 // reducer cannot answer for it: *was this already selected before the tap*, which is state
                 // the reduction destroys by selecting.
-                onTap = { pos -> dispatch(benchTapIntent(currentState(), toPage(pos))) },
-                onLongPress = { pos -> dispatch(Intent.SelectAt(toPage(pos))) },
+                onTap = { pos -> dispatch(benchTapIntent(currentState(), toPage(pos), tolerancePt)) },
+                onLongPress = { pos -> dispatch(Intent.SelectAt(toPage(pos), tolerancePt)) },
                 onDoubleTap = { pos -> onDoubleTap(toPage(pos)) },
             )
         }

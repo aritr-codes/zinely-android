@@ -1,6 +1,5 @@
 package com.aritr.zinely.core.render
 
-import com.aritr.zinely.core.model.PtPoint
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -40,55 +39,9 @@ import org.junit.jupiter.api.Test
  */
 class SupplyOutlineFillTest {
 
-    private companion object {
-        /** Cubic flattening steps. 64 keeps the worst chord error well under a probe's clearance. */
-        const val FLATTEN = 64
-    }
-
-    /** Every subpath as a closed polygon, cubics flattened. Closure back to `start` is implicit. */
-    private fun SupplyOutline.polygons(): List<List<PtPoint>> = subpaths.map { sub ->
-        val pts = mutableListOf(sub.start)
-        var from = sub.start
-        for (seg in sub.segments) {
-            when (seg) {
-                is Segment.LineTo -> pts += seg.to
-                is Segment.CubicTo -> {
-                    for (i in 1..FLATTEN) {
-                        val t = i.toDouble() / FLATTEN
-                        val u = 1.0 - t
-                        pts += PtPoint(
-                            u * u * u * from.x + 3 * u * u * t * seg.c1.x + 3 * u * t * t * seg.c2.x + t * t * t * seg.to.x,
-                            u * u * u * from.y + 3 * u * u * t * seg.c1.y + 3 * u * t * t * seg.c2.y + t * t * t * seg.to.y,
-                        )
-                    }
-                }
-            }
-            from = seg.to
-        }
-        pts
-    }
-
-    /**
-     * Is ([x], [y]) inked, under the **even-odd** rule §4.1 rule 3 specifies?
-     *
-     * A horizontal ray cast to `+x`, counting crossings across every subpath at once — which is what makes
-     * this even-odd rather than per-subpath containment, and therefore the only version of the question
-     * that can catch a cancelling overlap.
-     */
-    private fun SupplyOutline.isInked(x: Double, y: Double): Boolean {
-        var crossings = 0
-        for (poly in polygons()) {
-            for (i in poly.indices) {
-                val a = poly[i]
-                val b = poly[(i + 1) % poly.size]
-                if ((a.y <= y && b.y > y) || (b.y <= y && a.y > y)) {
-                    val t = (y - a.y) / (b.y - a.y)
-                    if (a.x + t * (b.x - a.x) > x) crossings++
-                }
-            }
-        }
-        return crossings % 2 == 1
-    }
+    // The flattening and the even-odd ray cast this file probes with (`polygons`, `isInked`) are the
+    // production ones in `SupplyInk.kt` — promoted from here by ADR-124 so that the hit test and these
+    // probes cannot hold two opinions of the same outline.
 
     private fun outline(id: String): SupplyOutline =
         requireNotNull(SupplyCatalog.outlineOf(id)) { "$id has no authored outline — this test is about the authored ones" }

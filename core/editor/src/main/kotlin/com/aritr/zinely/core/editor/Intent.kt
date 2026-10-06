@@ -18,7 +18,11 @@ public enum class FlipAxis { HORIZONTAL, VERTICAL }
 public sealed interface Intent {
     // — selection —
     public data class Select(val id: String?) : Intent
-    public data class SelectAt(val pagePoint: PtPoint) : Intent
+    /**
+     * Select the topmost element at [pagePoint]; a miss clears the selection. [tolerancePt] is the
+     * near-ink reach of ADR-124, in page points — the gesture layer converts its 8 dp; `0.0` is none.
+     */
+    public data class SelectAt(val pagePoint: PtPoint, val tolerancePt: Double = 0.0) : Intent
     public data object ClearSelection : Intent
 
     // — placement / content —

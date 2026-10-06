@@ -173,6 +173,16 @@ class EditorGesturesTest {
         // (100,100) px at 2 px/pt, zero offset → (50,50) pt.
         assertEquals(50.0, selectAt.pagePoint.x, 1e-6)
         assertEquals(50.0, selectAt.pagePoint.y, 1e-6)
+
+        // ADR-124 §6: a long-press reaches for a holed piece's ink exactly as far as a tap does — 8 dp,
+        // converted to page points here and nowhere else — and never with the default of zero.
+        val eightDpInPt = with(composeRule.density) { TapInkTolerance.toPx() } / pxPerPt
+        assertTrue(eightDpInPt > 0f)
+        assertEquals(eightDpInPt.toDouble(), selectAt.tolerancePt, 1e-6)
+        singleTap(Offset(100f, 100f))
+        // Two intents, or the comparison below would be the long-press compared with itself.
+        assertEquals(2, h.intents.size)
+        assertEquals(selectAt, h.intents.last())
     }
 
     @Test
