@@ -8,7 +8,7 @@
 <a id="current-priorities"></a>
 ## Current priorities
 
-**In development** means built or under test but not in the public download. **Planned** means an accepted
+**In development** means started (being designed, built or tested) and not in the public download; each entry says which stage it is at ([ADR-118](DECISIONS.md#adr-118), amended 2026-10-06). **Planned** means an accepted
 intention to deliver. **Exploring** means a proposal or investigation, not a commitment. **Completed** work belongs in [CHANGELOG.md](../CHANGELOG.md), with public APK changes kept separate
 from repository-only changes and website updates. Work listed as In development is merged on `main` and in no
 published APK.
@@ -32,9 +32,18 @@ Those steps shipped in beta.6 on 2026-10-06.
 
 ### In development — built or being tested, not in the public download
 
-Nothing at present. The wave-1 work (backup and restore honesty, TalkBack reading order, named undo,
-tap-through and the Font control removal) shipped in beta.6 on 2026-10-06 and is recorded in
-[CHANGELOG.md](../CHANGELOG.md#090-beta6--2026-10-06--backups-that-tell-you-what-happened). Tap-through shipped
+Both entries are at the **design stage**: nothing is built, and neither has a frozen HTML specification or an
+ADR yet. They are listed here on the owner's 2026-10-06 instruction because they are the work starting next.
+
+- **Shelf folders:** user-created folders to organise zines on the Shelf (owner request 2026-09-27, repeated
+  2026-10-06). Not designed. It likely touches the shelf model and the backup archive, and it needs an ADR because
+  the frozen Shelf has no grouping today.
+- **Document voices, Book and Plain:** two named typefaces for a zine's words, Book (Fraunces) and Plain (Inter)
+  ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); plan step 8). Still waits on the Brief 02
+  rewrite, the measured Fraunces faces, the owner's minimum print size and the typebar freeze.
+
+The wave-1 work shipped in beta.6 on 2026-10-06
+([CHANGELOG.md](../CHANGELOG.md#090-beta6--2026-10-06--backups-that-tell-you-what-happened)). Tap-through shipped
 **not accepted**: [ADR-124](DECISIONS.md#adr-124) stays Proposed until the owner's TalkBack listen and the A27
 freeze.
 
@@ -43,12 +52,6 @@ freeze.
 Owner-stated intentions to deliver. None has a date, and "Planned" here does not mean designed: each still needs
 its HTML specification frozen and an ADR before any Compose work.
 
-- **Shelf folders:** user-created folders to organise zines on the Shelf (owner request 2026-09-27, repeated
-  2026-10-06). Not designed and not sequenced. It likely touches the shelf model and the backup archive, and it
-  needs an ADR because the frozen Shelf has no grouping today.
-- **Document voices, Book and Plain:** two named typefaces for a zine's words, Book (Fraunces) and Plain (Inter)
-  ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); plan step 8). Blocked on the Brief 02
-  rewrite, the measured Fraunces faces, the owner's minimum print size and the typebar freeze.
 - **Two hand-cut frames:** plan step 9; waits for the owner's visual approval of the two pieces.
 - **Print guidance:** help at the print step so a sheet comes out at the right size (plan step 5). Still gated
   on the print study; one successful print by a user, reported by the owner, is recorded in the plan as
@@ -365,6 +368,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-06 | **Shelf folders and document voices move to In development** on the owner's instruction, as the work starting next; both are at the design stage with nothing built. The label's definition widens to "started" ([ADR-118](DECISIONS.md#adr-118) amendment). The public pages say there is nothing to try yet. | [ADR-118](DECISIONS.md#adr-118) |
 | 2026-10-06 | **beta.6 released** (tag `v0.9.0-beta.6`, merge `41b4399`): the wave-1 items leave In development; the public website offers beta.6. Tap-through ships with [ADR-124](DECISIONS.md#adr-124) still Proposed. No scope change. | [tester package](releases/0.9.0-beta.6.md) |
 | 2026-10-06 | **Current priorities brought up to date.** *In development* now lists what is merged on `main` and in no APK: backup and restore honesty, TalkBack reading order, named undo, tap-through (merged, not accepted) and the Font control removal (PR #70 merged). *Planned* gains the owner-stated features: Shelf folders, document voices Book and Plain, two frames, print guidance, photo descriptions, page backgrounds and more paper sizes; fonts and frames leave *Exploring*. The public roadmap page projects the same list. No date is committed. | [ADR-118](DECISIONS.md#adr-118) · [1.x plan](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md) |
 | 2026-09-29 | **Unavailable Font control removal accepted** (PR #70, on `aad2084` after merging main). The "In development" entry now reads accepted and awaiting merge; no public-label or APK change. | [ADR-115](DECISIONS.md#adr-115) |

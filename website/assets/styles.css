@@ -982,6 +982,9 @@ summary:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; bord
 .press-status tbody th { font-family: "Trebuchet MS", ui-rounded, sans-serif; font-size: 1.1rem; white-space: nowrap; }
 .press-status-note { color: var(--ink-soft); }
 .status-chip { display: inline-block; margin: 2px 4px 2px 0; padding: 1px 8px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--paper); color: var(--ink); font-size: 0.7rem; font-weight: 850; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+/* One status per line: a chip never starts in the middle of the previous status's sentence. */
+.status-line { display: block; }
+.status-line + .status-line { margin-top: 8px; }
 .status-chip.available { background: var(--primary); }
 .status-chip.development { background: #f6b22c; }
 .status-chip.planned { background: var(--surface-soft); }

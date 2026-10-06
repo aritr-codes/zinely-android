@@ -164,8 +164,9 @@ assert.match(sitemap, /zinely-android\/download\//);
 for (const [name, html] of [['home', home], ['changelog', notes], ['download', download], ['roadmap', roadmap]]) {
   assert.doesNotMatch(html, /beta\.7|App Store|available on (?:Google )?Play/i, `${name}: no unreleased build, iOS or Play claim`);
 }
-// Nothing is In development after beta.6; the label's meaning stays in the page's key.
-assert.match(roadmap, /Being built or tested\. Not in the download yet\./);
+// In development items must say they cannot be tried yet.
+assert.match(roadmap, /designing, building or testing\. Not in the download yet\./);
+for (const [, item] of roadmap.matchAll(/<li><span class="status-chip development">In development<\/span>([\s\S]*?)<\/li>/g)) assert.match(item, /nothing to try yet/, 'In development item says it is not in the download');
 assert.match(roadmap, /not announced features/);
 for (const [status, label] of [['available', 'Available'], ['development', 'In development'], ['planned', 'Planned'], ['exploring', 'Exploring']]) {
   assert.ok(roadmap.includes(`class="status-chip ${status}">${label}</span>`), `Keep commitment levels distinct: ${label}`);
