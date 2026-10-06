@@ -290,6 +290,22 @@ expose `stateDescription`** — so no dump I take substitutes for an ear.
 
 ## 3. Release & credentials
 
+### ☐ `0.9.0-beta.6` — the wave-1 release (APK only)
+
+Scope, per the 2026-09-26 rulings and your 2026-10-06 instruction: 1.x steps 1, 1b, 2, 3 and 4 plus the Font
+button removal, on the unchanged document format. Step 4 ships **merged, not accepted**. No AAB, no Play.
+Evidence: [tester package](releases/0.9.0-beta.6.md).
+
+| ☐ | Gate | Note |
+|---|---|---|
+| ☑ | Version, changelog, suite, goldens, signed APK | Built 2026-10-06 from `1d7bea1`: 2,481 tests, goldens verified, release key confirmed; on a rebuild, packaging and signing were `UP-TO-DATE` |
+| ☑ | **Allow the install over beta.5 on your phone** | **Done 2026-10-06** after you reported the shelf backed up. Installed with no uninstall; install date and shelf kept |
+| ☑ | Smoke pass on this exact APK after the install | **Passed 2026-10-06** ([record](releases/0.9.0-beta.6.md#verification)). Shelf intact; tap-through (hole, band, blank paper, double-tap onto words); back up then restore the same file; named undo and redo; no Font button; Save PDF. Recorded in the tester package |
+| ☐ | Release PR's CI green | The branch is pushed only when the candidate is ready for you |
+| ☑ | **Your finger pass on tap-through** | **Done 2026-10-06 on the release APK:** every tap did what was expected, first try. Dragging the selected frame by its band resized it (a Known Limitation in the changelog). Your question, whether a double-tap should also close Reframe, is recorded in [ADR-124](DECISIONS.md#adr-124) Review as an open design question |
+| ☐ | TalkBack listen on tap-through | Deferred by you on 2026-10-06, not waived. Ships as "not verified" unless you listen first |
+| ☑ | **"Proceed with the beta.6 release"** | **Given 2026-10-06.** Then: merge the release PR, tag `v0.9.0-beta.6` on the merge commit, GitHub pre-release with the APK. Only after the tag: the website, `tools/check-public-copy.cjs`, the ROADMAP "Released" line and the "not yet in the download" wording move to beta.6 |
+
 ### ☑ `0.9.0-beta.5` — the maintenance release (APK only)
 
 Scope, per the owner's 2026-09-23 decisions: stability fixes (PR #73), the Android 7–9 Save PDF permission

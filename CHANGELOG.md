@@ -20,14 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reaching through frames, named undo, TalkBack reading order, the tidier text toolbar) and what is planned:
   folders on the Shelf, a second typeface, two frames, page backgrounds, photo descriptions, help at the printer and
   more paper sizes. No date is given for any of it, and no Android behavior or download changed.
-- Undo and redo now say what they did: a short line on the Bench names the change, and TalkBack speaks it.
-  Accepted with documented device-verification limitations; an identical line repeated straight away is
-  spoken only once ([ADR-123](docs/DECISIONS.md#adr-123)). Not in a published build yet.
-- Taps now pass through the empty part of six holed Art pieces (window frame, torn hole, ring, eyelet, photo
-  corner, registration cross): a tap in the hole reaches the photo, words or piece underneath, and a tap on the
-  drawn ink still selects the piece. On blank paper a tap within 8 dp of one of these pieces' ink picks it up.
-  Every other piece, crop marks included, keeps its whole box, and screen-reader selection is unchanged
-  ([ADR-124](docs/DECISIONS.md#adr-124), Proposed). Not in a published build yet.
 - Rebuilt the public website story around Shelf, Bench and Proof, told in the order a visitor asks: what it is, why
   paper, what you can make, how it works, what is different, how to try it and where it is going. Added a Download
   page with install steps, backup and phone-move advice, the published SHA-256, and honest Google Play and iPhone
@@ -48,10 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Restoring a backup adds only the zines that aren't already on your shelf. A zine with the same title, format,
-  paper size and content isn't added again; one that has changed since the backup is added alongside, and nothing
-  on the shelf is replaced. The result says how many were already here, or "Nothing new to add"
-  ([ADR-121](docs/DECISIONS.md#adr-121)).
 - The public website now offers 0.9.0-beta.5 as the current download: version, size, versionCode 10, the APK
   link and its published SHA-256 on the Download page; a beta.5 entry in What's new with its known limitations;
   a short "New in 0.9.0-beta.5" note on the homepage; and the roadmap moves beta.5 to Available. Google Play
@@ -61,10 +49,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   release artifact changed.
 - Reopened creative tools for a scoped feasibility assessment, not a release commitment: fonts, Art, frames,
   photo transparency, shaped cutouts and crop improvements. The roadmap separates their relative effort.
-- Removed the unavailable selected-text Font action under owner-approved ADR-115 / frozen Bench A24.
-  Edit, Size, Ink, Duplicate and Delete retain their behavior and blank-text guards. This is an owner-led
-  simplification, not a measured usability result. It was verified on a device, including an owner TalkBack
-  listen, and accepted by the owner; the public APK is unchanged.
 - Gave the public homepage a more tactile paper presentation and stronger independent voice, with an interactive
   print-order comparison, optional zine ideas, folding progress, and small native-disclosure surprises. All work
   without essential hover or motion; product claims, download links, and Android behavior remain unchanged.
@@ -88,6 +72,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced the standalone website Accessibility page with a short accessibility statement and contact route
   in the home-page About section. Accessibility remains a site-wide implementation requirement rather than a
   primary navigation destination.
+
+### Fixed
+
+- The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
+  privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
+  the files.
+- The website's Bench demo and screenshot no longer show a "Your shelf · 4 things kept" tray that the app does not
+  have. The screenshot was re-rendered from the frozen prototype with only that tray hidden.
+- The website's not-found page now finds its styles and links at any URL depth.
+
+- Restored the Reframe accessibility regression that proves a measurable but undisplayable photo keeps every
+  adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
+  than stream-consumer ordering, eliminating the CI race tracked by issue #57.
+
+## [0.9.0-beta.6] — 2026-10-06 — Backups that tell you what happened
+
+This release carries `versionCode 11`. It installs over earlier release-signed beta builds without
+uninstalling, and it does not change the saved-document format. A backup file can now list zines it had to
+leave out; earlier versions restore such a file without mentioning them. It is published as an APK only.
+
+### Added
+
+- Undo and redo now say what they did: a short line on the Bench names the change, and TalkBack speaks it.
+  A repeated identical line may be spoken only once ([ADR-123](docs/DECISIONS.md#adr-123)).
+- Taps now pass through the empty part of six holed Art pieces (window frame, torn hole, ring, eyelet, photo
+  corner, registration cross): a tap in the hole reaches the photo, words or piece underneath, and a tap on the
+  drawn ink still selects the piece. On blank paper a tap within 8 dp of one of these pieces' ink picks it up.
+  Every other piece, crop marks included, keeps its whole box, and the code that screen readers select
+  through was not touched ([ADR-124](docs/DECISIONS.md#adr-124), not yet accepted).
+
+### Changed
+
+- Restoring a backup adds only the zines that aren't already on your shelf. A zine with the same title, format,
+  paper size and content isn't added again; one that has changed since the backup is added alongside, and nothing
+  on the shelf is replaced. The result says how many were already here, or "Nothing new to add"
+  ([ADR-121](docs/DECISIONS.md#adr-121)).
+- The Font button is gone from the selected-words toolbar, because it did not let you choose a font. Edit,
+  Size, Ink, Duplicate and Delete work as before. This is a simplification, not a measured usability result,
+  and it does not rule out font choice later ([ADR-115](docs/DECISIONS.md#adr-115)).
 
 ### Fixed
 
@@ -118,16 +141,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   no longer changes the order ([ADR-119](docs/DECISIONS.md#adr-119)).
 - With TalkBack, the dimmed area behind the zine actions sheet is no longer read as an unlabelled button. Tapping
   it or pressing Back still closes the sheet ([ADR-119](docs/DECISIONS.md#adr-119)).
-- The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
-  privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
-  the files.
-- The website's Bench demo and screenshot no longer show a "Your shelf · 4 things kept" tray that the app does not
-  have. The screenshot was re-rendered from the frozen prototype with only that tray hidden.
-- The website's not-found page now finds its styles and links at any URL depth.
 
-- Restored the Reframe accessibility regression that proves a measurable but undisplayable photo keeps every
-  adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
-  than stream-consumer ordering, eliminating the CI race tracked by issue #57.
+### Known limitations
+
+- Tapping through a holed piece was checked with scripted taps on one phone. It has not yet been checked by
+  ear with TalkBack; the accessibility tree was unchanged in a device dump.
+- A holed piece that sits over a photo is picked up by its drawn ink, or within a small distance of it. A very
+  thin frame can take a careful tap. Once selected, dragging from its edge resizes it; drag from the middle of
+  the selection to move it.
+- A second tap on small selected words can land on a resize handle and not open the words for editing.
+  Double-tap the words, or use **Edit**.
+- With TalkBack, a repeated identical undo or redo line may be spoken only once.
+- A backup saved by this version that left zines out is restored by earlier versions without saying so.
+- Transparency in imported pictures isn't kept: the see-through parts are flattened onto white when the
+  picture comes in. Exports and prints are right, because the paper is white. On the cream editor page,
+  though, a transparent logo shows as a faint white rectangle, and placed over a photo it shows a white box.
+- On Android 7–9, if you decline storage access and ask Android not to ask again, Save PDF keeps showing
+  "Couldn’t make the PDF" until you allow storage for Zinely in the phone's settings. Share still works.
+- With TalkBack on, **About**, **Licences & credits** and a font licence open with TalkBack on the Back
+  button, and going Back returns TalkBack to the top of the previous screen.
+- Replaced and deleted photo assets are retained; app storage is not reclaimed yet.
+- Font choice remains unavailable. Unsupported print scripts are kept and warned about but do not print.
+- Zinely saves the PDF; printing happens in the phone's PDF or print app.
 
 ## [0.9.0-beta.5] — 2026-09-23 — Steadier editing and saving
 

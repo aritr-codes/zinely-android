@@ -32,7 +32,10 @@ plugins {
 // confirmation-snackbar contrast in dark mode. It changes no document, storage, or render behavior.
 // "0.9.0-beta.5" = the maintenance release: stability fixes, the Android 7–9 Save PDF permission
 // request, the About maker's note with Licences & credits, and the off-main-thread Reframe photo read.
-val zinelyVersionName = "0.9.0-beta.5"
+// "0.9.0-beta.6" = the 1.x wave-1 release on the unchanged document format: backup and restore
+// honesty, TalkBack reading order on the Bench, named undo, tap-through for holed pieces, and the
+// removal of the unavailable Font action.
+val zinelyVersionName = "0.9.0-beta.6"
 
 // Release signing (beta). Credentials live in an untracked `keystore.properties` at the repo root,
 // or in ZINELY_KEYSTORE_* environment variables — never in git. See docs/RELEASING.md.
@@ -116,7 +119,7 @@ android {
         // beta.5 maintenance release.
         // These bumps are not bookkeeping: Android uses the code to decide whether an APK can update
         // an installed tester build.
-        versionCode = 10
+        versionCode = 11
         versionName = zinelyVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
