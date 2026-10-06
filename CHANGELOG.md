@@ -99,8 +99,8 @@ leave out; earlier versions restore such a file without mentioning them. It is p
 - Taps now pass through the empty part of six holed Art pieces (window frame, torn hole, ring, eyelet, photo
   corner, registration cross): a tap in the hole reaches the photo, words or piece underneath, and a tap on the
   drawn ink still selects the piece. On blank paper a tap within 8 dp of one of these pieces' ink picks it up.
-  Every other piece, crop marks included, keeps its whole box, and screen-reader selection is unchanged
-  ([ADR-124](docs/DECISIONS.md#adr-124)).
+  Every other piece, crop marks included, keeps its whole box, and the code that screen readers select
+  through was not touched ([ADR-124](docs/DECISIONS.md#adr-124), not yet accepted).
 
 ### Changed
 
@@ -145,7 +145,7 @@ leave out; earlier versions restore such a file without mentioning them. It is p
 ### Known limitations
 
 - Tapping through a holed piece was checked with scripted taps on one phone. It has not yet been checked by
-  ear with TalkBack; screen-reader selection was not changed by it.
+  ear with TalkBack; the accessibility tree was unchanged in a device dump.
 - A holed piece that sits over a photo is picked up by its drawn ink, or within a small distance of it. A very
   thin frame can take a careful tap. Once selected, dragging from its edge resizes it; drag from the middle of
   the selection to move it.
@@ -154,7 +154,8 @@ leave out; earlier versions restore such a file without mentioning them. It is p
 - With TalkBack, a repeated identical undo or redo line may be spoken only once.
 - A backup saved by this version that left zines out is restored by earlier versions without saying so.
 - Transparency in imported pictures isn't kept: the see-through parts are flattened onto white when the
-  picture comes in. Exports and prints are right, because the paper is white.
+  picture comes in. Exports and prints are right, because the paper is white. On the cream editor page,
+  though, a transparent logo shows as a faint white rectangle, and placed over a photo it shows a white box.
 - On Android 7–9, if you decline storage access and ask Android not to ask again, Save PDF keeps showing
   "Couldn’t make the PDF" until you allow storage for Zinely in the phone's settings. Share still works.
 - With TalkBack on, **About**, **Licences & credits** and a font licence open with TalkBack on the Back
