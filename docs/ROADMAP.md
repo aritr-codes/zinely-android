@@ -10,8 +10,8 @@
 
 **In development** means built or under test but not in the public download. **Planned** means an accepted
 intention to deliver. **Exploring** means a proposal or investigation, not a commitment. **Completed** work belongs in [CHANGELOG.md](../CHANGELOG.md), with public APK changes kept separate
-from repository-only changes and website updates. Work listed as In development is merged on `main` and is
-meant for the wave-1 tester build; that build has no date.
+from repository-only changes and website updates. Work listed as In development is merged on `main` and in no
+published APK.
 The public website projects this list with four labels (Available, In development, Planned, Exploring) grouped by
 horizon ([ADR-118](DECISIONS.md#adr-118)).
 
@@ -20,36 +20,23 @@ Reframe loading and the deterministic accessibility regression were completed th
 beta.4-r3 APK; measurements and evidence remain in the
 [release-gap review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-10-reframe-loading-follow-up).
 
-**Released 2026-09-25:** beta.5 and the About maker's note are in the public download
-([0.9.0-beta.5](../CHANGELOG.md#090-beta5--2026-09-23--steadier-editing-and-saving), tag `v0.9.0-beta.5`,
-GitHub pre-release, APK only). No next tester build is scheduled by date yet.
+**Released 2026-10-06:** beta.6, the wave-1 release, is the public download
+([0.9.0-beta.6](../CHANGELOG.md#090-beta6--2026-10-06--backups-that-tell-you-what-happened), tag `v0.9.0-beta.6`,
+GitHub pre-release, APK only; [tester package](releases/0.9.0-beta.6.md)). It follows beta.5 (2026-09-25). No
+next tester build is scheduled by date yet.
 
 **Owner rulings, 2026-09-26** ([1.x decision gate](planning/ZINELY-1X-DECISION-GATE.md)): the next tester build
 is planned as a *wave-1* release on the current document format, before any schema change, carrying the 1.x
 plan's backup-honesty, accessibility and tap-through steps ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)).
-This is an internal sequencing decision, not a public promise. Those steps are now built and listed under
-*In development* below.
+Those steps shipped in beta.6 on 2026-10-06.
 
 ### In development — built or being tested, not in the public download
 
-All of these are merged on `main` and in no published APK. Detail is in [CHANGELOG.md](../CHANGELOG.md) under
-*Unreleased*; status per step is in the [1.x plan §11](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#11-implementation-readiness-after-owner-decisions).
-
-- **Backups that say what happened:** the Backups sheet says when the shelf was last backed up; a failed backup
-  says where it failed; one zine that can't be read no longer stops the rest, and the result names what was left
-  out; a restore adds only the zines that aren't already on the shelf
-  ([ADR-120](DECISIONS.md#adr-120), [ADR-121](DECISIONS.md#adr-121), [ADR-122](DECISIONS.md#adr-122)).
-- **TalkBack reading order on the Bench:** a page reads top to bottom, whatever is stacked on top
-  ([ADR-119](DECISIONS.md#adr-119)).
-- **Named undo:** the Bench says what undo and redo did ([ADR-123](DECISIONS.md#adr-123), accepted with
-  documented device-verification limitations).
-- **Tap-through for holed pieces:** a tap in the empty part of a window frame, ring, eyelet, torn hole, photo
-  corner or registration cross reaches what is underneath. Implemented and merged 2026-10-06, **not accepted**:
-  [ADR-124](DECISIONS.md#adr-124) stays Proposed until the owner's TalkBack listen, finger pass and the A27
-  freeze.
-- **Unavailable Font control removed:** [ADR-115](DECISIONS.md#adr-115), Bench A24;
-  [PR #70](https://github.com/aritr-codes/zinely-android/pull/70) merged 2026-09-30. Removing the dead action
-  does not reject future font choice; see *Document voices* below.
+Nothing at present. The wave-1 work (backup and restore honesty, TalkBack reading order, named undo,
+tap-through and the Font control removal) shipped in beta.6 on 2026-10-06 and is recorded in
+[CHANGELOG.md](../CHANGELOG.md#090-beta6--2026-10-06--backups-that-tell-you-what-happened). Tap-through shipped
+**not accepted**: [ADR-124](DECISIONS.md#adr-124) stays Proposed until the owner's TalkBack listen and the A27
+freeze.
 
 ### Planned
 
@@ -75,7 +62,7 @@ its HTML specification frozen and an ADR before any Compose work.
   [ADR-016](DECISIONS.md#adr-016) question on closed versus open paper specifications comes first.
 - **Google Play publication**, after owner account verification, mandatory testing and store review. Account
   verification remains blocked; the signed GitHub beta and public policy already exist. This is a distribution
-  task, not a reason to rebuild or overwrite beta.5. [Release authority](RELEASING.md#3-beta-distribution-side-load).
+  task, not a reason to rebuild or overwrite the current beta. [Release authority](RELEASING.md#3-beta-distribution-side-load).
 
 ### Exploring — recommended next decisions, in order
 
@@ -378,6 +365,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-06 | **beta.6 released** (tag `v0.9.0-beta.6`, merge `41b4399`): the wave-1 items leave In development; the public website offers beta.6. Tap-through ships with [ADR-124](DECISIONS.md#adr-124) still Proposed. No scope change. | [tester package](releases/0.9.0-beta.6.md) |
 | 2026-10-06 | **Current priorities brought up to date.** *In development* now lists what is merged on `main` and in no APK: backup and restore honesty, TalkBack reading order, named undo, tap-through (merged, not accepted) and the Font control removal (PR #70 merged). *Planned* gains the owner-stated features: Shelf folders, document voices Book and Plain, two frames, print guidance, photo descriptions, page backgrounds and more paper sizes; fonts and frames leave *Exploring*. The public roadmap page projects the same list. No date is committed. | [ADR-118](DECISIONS.md#adr-118) · [1.x plan](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md) |
 | 2026-09-29 | **Unavailable Font control removal accepted** (PR #70, on `aad2084` after merging main). The "In development" entry now reads accepted and awaiting merge; no public-label or APK change. | [ADR-115](DECISIONS.md#adr-115) |
 | 2026-09-26 | **Owner rulings on the 1.x plan recorded** in the [decision gate](planning/ZINELY-1X-DECISION-GATE.md): next tester build planned as a wave-1 release on the current format; fold study runs now and no longer gates fonts or frames; first fonts = two named voices (Book, Plain); first frames = two; unknown-font fallback for document voices qualified. No public-label change. | [1.x plan](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md) |

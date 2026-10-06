@@ -37,12 +37,13 @@
       <section class="journal-status" aria-labelledby="status-title">
         <h2 id="status-title">Where things stand</h2>
         <dl>
-          <div><dt>In the download</dt><dd><a href="../download/">0.9.0-beta.5</a>, the public beta released on 25 September 2026.</dd></div>
+          <div><dt>In the download</dt><dd><a href="../download/">0.9.0-beta.6</a>, the public beta released on 6 October 2026.</dd></div>
           <div><dt>Still in development</dt><dd>Changes that are not in any download yet live in the <a href="https://github.com/aritr-codes/zinely-android/blob/main/CHANGELOG.md">developer changelog</a>.</dd></div>
         </dl>
       </section>
 
       <nav class="journal-index" aria-label="Jump to an update">
+        <a href="#beta-6"><span>Public beta</span><strong>beta.6</strong></a>
         <a href="#beta-5"><span>Public beta</span><strong>beta.5</strong></a>
         <a href="#beta-4-r3"><span>Public beta</span><strong>r3</strong></a>
         <a href="#beta-4-r2"><span>Tester build</span><strong>r2</strong></a>
@@ -57,6 +58,44 @@
 
       <div class="journal-timeline">
 
+      <section class="release-entry journal-entry public-release" id="beta-6">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">Public beta release</p>
+          <p class="release-date">Published <time datetime="2026-10-06">6 October 2026</time></p>
+        </header>
+        <h2>0.9.0-beta.6</h2>
+        <p class="release-theme">Backups that tell you what happened</p>
+        <p>Released and in the <a href="../download/">download</a> now. It installs over earlier betas and keeps your zines. Your saved zines open exactly as before.</p>
+        <h3>Added</h3>
+        <ul>
+          <li>Undo and redo say what they did. A short line names the change, like “Words taken off”.</li>
+          <li>You can reach through a frame. Tap the photo or words showing through a window frame, ring, eyelet, torn hole, photo corner or registration cross, and you get what’s underneath. Tap the drawn part to pick up the piece itself.</li>
+        </ul>
+        <h3>Changed</h3>
+        <ul>
+          <li>Restoring a backup adds only the zines that aren’t already on your shelf. Nothing on the shelf is replaced, and a zine you changed since the backup is added alongside.</li>
+          <li>The Font button is gone from the words toolbar, because it didn’t let you choose a font.</li>
+        </ul>
+        <h3>Fixed</h3>
+        <ul>
+          <li>The Backups sheet says when you last backed up on this phone, or that you haven’t yet. It no longer says your zines are “kept safe” before a backup has run.</li>
+          <li>A backup that fails says where it failed, and Zinely tries to remove the unfinished file.</li>
+          <li>One zine that can’t be read no longer stops the whole backup. The rest is saved, and the result names what was left out.</li>
+          <li>A restore says what happened: “Not enough space” when the phone is full, and no “cancelled” message once zines have been added.</li>
+          <li>With TalkBack, a page on the Bench reads from top to bottom and left to right, whatever is stacked on top.</li>
+          <li>With TalkBack, the dimmed area behind the zine actions sheet is no longer read out as a button.</li>
+        </ul>
+        <h3>Known limitations</h3>
+        <ul>
+          <li>Tapping through a frame has not been checked by ear with TalkBack yet. A thin frame over a photo can take a careful tap, and dragging a selected frame from its edge resizes it.</li>
+          <li>With TalkBack, an undo line that repeats may be spoken only once.</li>
+          <li>Earlier versions restore a backup that left zines out without saying so.</li>
+          <li>See-through pictures still come in on white. You cannot choose a font yet. Printing happens in another app.</li>
+        </ul>
+        <p>All of them are listed on the <a href="../download/#known-limits">download page</a>.</p>
+      </section>
+
       <section class="release-entry journal-entry public-release" id="beta-5">
         <span class="journal-pin" aria-hidden="true"></span>
         <header class="release-heading">
@@ -65,7 +104,7 @@
         </header>
         <h2>0.9.0-beta.5</h2>
         <p class="release-theme">Steadier editing and saving</p>
-        <p>Released and in the <a href="../download/">download</a> now. It installs over earlier betas and keeps your zines. Your saved zines and backups work exactly as before.</p>
+        <p>The previous public beta. It installs over earlier betas and keeps your zines. Your saved zines and backups work exactly as before.</p>
         <h3>Changed</h3>
         <ul>
           <li>The About screen opens with a short note from Aastra, the two of us who make Zinely. Font credits now sit one tap away under <strong>Licences &amp; credits</strong>.</li>
@@ -88,7 +127,6 @@
           <li>With TalkBack, About and its credits pages open on the Back button, and going back lands at the top of the previous screen. Everything is still reachable by swiping. The zine actions sheet still has the unlabelled dimmed area.</li>
           <li>Replaced and deleted photos still take up space. You cannot choose a font yet. Scripts Zinely cannot print yet are kept but do not print. Printing happens in another app.</li>
         </ul>
-        <p>All of them are listed on the <a href="../download/#known-limits">download page</a>.</p>
       </section>
 
       <section class="release-entry journal-entry public-release" id="beta-4-r3">
