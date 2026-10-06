@@ -299,8 +299,8 @@ Evidence: [tester package](releases/0.9.0-beta.6.md).
 | ☐ | Gate | Note |
 |---|---|---|
 | ☑ | Version, changelog, suite, goldens, signed APK | Built 2026-10-06 from `1d7bea1`: 2,481 tests, goldens verified, release key confirmed; on a rebuild, packaging and signing were `UP-TO-DATE` |
-| ☐ | **Allow the install over beta.5 on your phone** | The release APK updates your own Zinely (`com.aritr.zinely`). It was not installed without your say-so. Back up your shelf first |
-| ☐ | Smoke pass on this exact APK after the install | Shelf intact; tap-through (hole, band, blank paper, double-tap onto words); back up then restore the same file; named undo and redo; no Font button; Save PDF. Recorded in the tester package |
+| ☑ | **Allow the install over beta.5 on your phone** | **Done 2026-10-06** after you reported the shelf backed up. Installed with no uninstall; install date and shelf kept |
+| ☑ | Smoke pass on this exact APK after the install | **Passed 2026-10-06** ([record](releases/0.9.0-beta.6.md#verification)). Shelf intact; tap-through (hole, band, blank paper, double-tap onto words); back up then restore the same file; named undo and redo; no Font button; Save PDF. Recorded in the tester package |
 | ☐ | Release PR's CI green | The branch is pushed only when the candidate is ready for you |
 | ☐ | **Your finger pass on tap-through** | Tap a photo through a window frame; pick the frame back up by its band. Also owed for [ADR-124](DECISIONS.md#adr-124) |
 | ☐ | TalkBack listen on tap-through | Deferred by you on 2026-10-06, not waived. Ships as "not verified" unless you listen first |
