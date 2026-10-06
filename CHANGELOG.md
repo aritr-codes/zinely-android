@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The public roadmap page now lists what is built but not yet in the download (clearer backups and restore,
+  reaching through frames, named undo, TalkBack reading order, the tidier text toolbar) and what is planned:
+  folders on the Shelf, a second typeface, two frames, page backgrounds, photo descriptions, help at the printer and
+  more paper sizes. No date is given for any of it, and no Android behavior or download changed.
+- Undo and redo now say what they did: a short line on the Bench names the change, and TalkBack speaks it.
+  Accepted with documented device-verification limitations; an identical line repeated straight away is
+  spoken only once ([ADR-123](docs/DECISIONS.md#adr-123)). Not in a published build yet.
 - Taps now pass through the empty part of six holed Art pieces (window frame, torn hole, ring, eyelet, photo
   corner, registration cross): a tap in the hole reaches the photo, words or piece underneath, and a tap on the
   drawn ink still selects the piece. On blank paper a tap within 8 dp of one of these pieces' ink picks it up.
