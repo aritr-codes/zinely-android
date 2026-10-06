@@ -287,6 +287,7 @@ expose `stateDescription`** — so no dump I take substitutes for an ear.
 |---|---|---|
 | ☑ | **Run the PDF-surface hole test on hardware** | **CLOSED 2026-08-25.** `PdfSurfaceParityInstrumentedTest` passed 5/5 on SM-A176B / Android 16, including the shared supply-outline replay path. It remains a hardware gate because `PdfDocument` does not run under Robolectric |
 | ☐ | Two-pass device verification for every V2.1 surface as it lands | Reference device SM-A176B |
+| ☐ | **Android 7 look at the interface's Fraunces Medium, only if a screen starts using it** (added 2026-10-06) | A font-file reading says `fraunces_medium.ttf` may show wonky h, m, n, s and a wide `&` on Android 7.0 and 7.1. Not seen on a device. No release screen draws the file today, so nothing is owed now; the check comes due with the first screen that does. An API 24 emulator is enough. See [`DEVICE-VERIFICATION.md` §3.3](DEVICE-VERIFICATION.md#33-a-known-risk-on-android-7-the-interfaces-fraunces-medium) |
 
 ---
 

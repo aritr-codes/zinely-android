@@ -152,6 +152,34 @@ is the failure that would not show on a screen at all? A "too coarse" answer re-
 [D-082](design/V2-SPEC-DEFECTS.md#d-082-rulings) Q1, which was affirmed only *provisionally* and on screen
 evidence.
 
+### 3.3 A known risk on Android 7: the interface's Fraunces Medium
+
+**Found by reading a font file on 2026-10-06. Not seen on any device. No screen a maker sees uses the file
+today, so nothing is owed yet.**
+
+`core/ui/src/main/res/font/fraunces_medium.ttf` (instanced by Zinely, [ADR-073](DECISIONS.md#adr-073)) may draw
+the wrong letterforms on Android 7.0 and 7.1 (API 24 and 25).
+
+- ✅ **Read from the file.** Its character map points 26 characters (`&`, h, m, n, s and their accented forms)
+  at Fraunces's "wonky" set (leaning h, m and n; alternate forms of s and `&`), and relies on a font feature
+  named `rvrn` to swap in the plain shapes. That `&` is 1942 units wide; the file's own plain `&` is 1508.
+  The regular and semibold cuts map the plain shapes directly and carry no `rvrn`.
+- 🟨 **Assumed, not tested.** Android 7's text shaper is older than `rvrn` support (HarfBuzz gained it in
+  1.4.0; the Android 7.1 source tree carries 1.2.6). If so, text set in this file shows the wonky letters
+  there. A line with `&` runs wider, by about a fifth of an em for each one. Without `&` the width barely
+  moves (h, m and n are each 8 units of 2000 narrower), so the tell is the letter shapes.
+- ✅ **Who uses the file (read 2026-10-06).** Only `ZinelyV2Fonts.Voice`
+  (`core/ui/.../theme/ZinelyV2Typography.kt:101-105`), and the only code that draws with that family is the
+  debug type catalog (`core/ui/src/debug/.../ZinelyV2Catalog.kt:165-167`). The Proof's page numbers ask for
+  Medium (`ProofSheet.kt:229`, `:369`) but from the older family, which holds the semibold cut alone. So the
+  file ships in the APK and no release screen draws it. A debug build's catalog (`voice-500`) on an API 24
+  emulator would settle the assumption today; that has not been done.
+- **The check, owed before any release screen draws Fraunces at weight 500.** On an API 24 or 25 emulator or
+  phone, and on the reference device, screenshot that screen with text containing h, m, n, s and `&`. Compare
+  the letter shapes, and the width of a line that holds an `&`. Record the device, the build and both
+  screenshots.
+- **If it fails.** That is a defect in the file, for a fix under ADR-073. Nothing was changed on finding it.
+
 ---
 
 ## 4. Reading app-private files
