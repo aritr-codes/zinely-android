@@ -121,6 +121,11 @@ the resulting sequence and per-step readiness are in the [plan §5 and §11](ZIN
   than being resolved silently ("as shipped" was ruled for Reframe only); and the questions `v21-typebar.html`
   itself records as the owner's (how the panel closes, the "Coral" name) plus its Teal contrast failure, which
   stay open under the frozen header (scope line in [plan step Q4-F](ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)).
+- **Done 2026-10-06:** both files carry "❄️ DESIGN FROZEN — 2026-10-06". The TypeBar correction was already in
+  the file. The check against shipped code (read from code; no device) found TypeBar divergences beyond the
+  recorded correction, which are reported and not resolved, and Reframe points that freezing as shipped does
+  not settle. Each list is at the top of its file; the owner's rows are in
+  [OWNER-CHECKLIST §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship).
 
 ## Q5. Fold study before creative work (O14)
 
@@ -253,6 +258,7 @@ These are still **owner** decisions. They are just not needed yet.
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | Q4 carried out (plan step Q4-F): `v21-typebar.html` and `v21-reframe.html` frozen; the divergences found are listed in each file and returned to the owner. |
 | 2026-09-30 | Named-undo copy ruled by the owner on PR #88 and frozen in `v21-bench.html` A26: duplicate, reset framing and restack direction; Redo is spoken, through the same snack. Decorative Art in Read stays open. |
 | 2026-09-26 | **Supplementary Q8 ruling recorded** (after the final planning audit): a single poisoned or unreadable photo is skip-and-list, never a whole-backup failure. Replaces the 🟦 owner-to-confirm bullet; defect 5's restore half stays out. |
 | 2026-09-26 | **Owner rulings Q1–Q8 recorded**; the file becomes the ruling record. Corrections: Q1's 30 Sep 2026 framing (named stores in four countries, not GitHub APKs; global phase 2027); registration = package name + signing-key ownership; Averia measured at 12 of 128 Latin Extended-A letters; the N2 "conflict" was a misreading (N2 is a to-do); Q8's defect list now names the three restore-honesty defects instead of "the first three", and the poisoned-photo wording distinguishes restore ("Couldn't read that file") from backup ("This backup looks damaged"). Base `0aa7a7d`. |

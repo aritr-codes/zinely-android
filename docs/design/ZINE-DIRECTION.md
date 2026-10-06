@@ -713,8 +713,8 @@ The line alphabet · the tilt law · the stamped-label rule · the four motion c
 | # | Work | Depends on | Evidence |
 |---|---|---|---|
 | N1 | Measure `inkFaint` contrast on `bench` — clears AA by 0.04 on `paper`, unmeasured on `bench` | — | ✅ gap known |
-| N2 | **Freeze `v21-typebar.html` + `v21-reframe.html`** | — | ✅ |
-| N3 | TypeBar + BenchSnack take the existing island opt-out; delete the thirds grid from `ReframeOverlay` | N1, N2 | ✅ |
+| N2 | **Freeze `v21-typebar.html` + `v21-reframe.html`** — **done 2026-10-06** on the owner's [Q4 ruling](../planning/ZINELY-1X-DECISION-GATE.md#q4-typebar--reframe-specs-o10); what stays open is listed at the top of each file | — | ✅ |
+| N3 | TypeBar + BenchSnack take the existing island opt-out; delete the thirds grid from `ReframeOverlay` — *2026-10-06: the grid is still drawn; the frozen `v21-reframe.html` (block C1) returns keep-or-delete to the owner, so do not delete it on this row alone* | N1, N2 | ✅ |
 | N4 | **Unclip both z-order buttons on `EditorContextBar`**, 48dp targets. Both exist — this is not "add send-backward" | — | ✅ |
 | N5 | **Ink pots to ≥48dp** | — | ✅ measured |
 | N6 | **Terminology consolidation** — one name per concept | — | ✅ |
