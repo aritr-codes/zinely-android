@@ -43,7 +43,7 @@ editing-surface change, and the control's shape inside the type bar.
 | 4 | **Minimum print size for Book** | ⛔ Not ruled. [Procedure A](#procedure-a-the-printed-book-page) is written; the page is not printed | before a session starts | owner |
 | 5 | **Type-bar amendment**: the Voice row drawn in `v21-typebar.html`, reviewed, owner-approved, frozen again | ⛔ Not drawn. [UI/UX proposal](#uiux-proposal) is the input | before a session starts | a design session, then the owner |
 | 6 | **Older-build fallback test** run and recorded | ⛔ Not run. [Procedure B](#procedure-b-the-older-build-fallback-test) is written. It needs a build that can set Book, so it cannot run earlier | inside the session, before merge | implementer, with an emulator or a second phone |
-| 7 | [ADR-126](../DECISIONS.md#adr-126) accepted | ⛔ To be drafted as *Proposed* on this branch. It must cover what [its section below](#what-the-adr-must-cover) lists | accepted before merge | implementer drafts, owner accepts |
+| 7 | [ADR-126](../DECISIONS.md#adr-126) accepted | ⛔ Drafted as *Proposed* on this branch (2026-10-06); not accepted. It covers what [the section below](#what-the-adr-must-cover) lists, except the two figures that only the session can measure | accepted before merge | implementer drafts, owner accepts |
 
 **Order.** First print the page and rule the size (4); it needs nothing from the drawing. Then draw the
 Voice row (5), always including how a choice looks when it cannot be used, because the script rule needs
@@ -196,9 +196,12 @@ So Book cannot set Greek or Cyrillic at all.
 - A separate guard checks the font files. `FontCoverage.requiredCodePoints()`
   (`render-android/.../FontCoverage.kt:61-72`) demands the Latin, Greek and Russian alphabets of **every**
   registered family, in all four faces. Registering Fraunces fails it.
-- A typeface loaded from an asset has no fallback Zinely controls. A missing glyph is drawn from whatever font
-  the phone has, so the same zine could print differently from two phones. (A controlled fallback needs an
-  Android 10 API; Zinely supports Android 7.)
+- ⚠️ **What is drawn for a character the face lacks is not established.** [ADR-070](../DECISIONS.md#adr-070)
+  records a blank box, with no system fallback. 🟨 This brief assumes instead that Android fills the gap from
+  a font on the phone, so the same zine could print differently from two phones. Neither was tested for this
+  brief; Procedure B check 11 and the device pass settle it. Where the text below says "a phone font", read
+  "a phone font or a blank box". (A fallback Zinely controls needs an Android 10 API; Zinely supports
+  Android 7.)
 
 🟦 **The rule.**
 1. **Each voice declares the scripts it sets.** Plain: Latin, Greek, Cyrillic, as today. Book: Latin only.
@@ -385,7 +388,9 @@ those words **and** say that lines can be missing from the page and the PDF on a
 Gate 7's ADR ([ADR-126](../DECISIONS.md#adr-126)) records, at least:
 - that it supersedes [ADR-055](../DECISIONS.md#adr-055)'s exclusion of font choice and its decision 7 ("styled
   text renders in Inter", "`fontFamily` is never written by the editor") together with the sentences in its
-  decisions 3 and 5 that repeat it, and nothing else in ADR-055;
+  architecture section and exclusion list that repeat it; and ADR-055's "font bundling" exclusion, for the
+  four Book faces alone;
+- that it extends [ADR-057](../DECISIONS.md#adr-057) (the font registry and the font-file guard);
 - how it stands to [ADR-098](../DECISIONS.md#adr-098) §2.3, which says Fraunces becomes a document family
   only through the open owner decision OD-30. ⚠️ Gate Q2 ruled Book = Fraunces directly. OD-30 itself (nine
   selectors in the design files) is still open in the OWNER-CHECKLIST; the ADR says so and does not close it;
