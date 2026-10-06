@@ -53,7 +53,7 @@ public object EditorReducer {
         // — selection (no document mutation ⇒ no autosave) —
         is Intent.Select -> Reduction(model.copy(selection = setOfNotNull(intent.id)))
         is Intent.SelectAt -> {
-            val hit = HitTest.topmostAt(currentPage(model), intent.pagePoint)
+            val hit = HitTest.topmostAt(currentPage(model), intent.pagePoint, intent.tolerancePt)
             Reduction(model.copy(selection = setOfNotNull(hit)))
         }
         Intent.ClearSelection -> Reduction(model.copy(selection = emptySet()))

@@ -58,6 +58,7 @@ flowchart TD
 **Layer rules**
 - Presentation depends on domain; domain depends on `core:model` + repository *interfaces*; data implements interfaces.
 - `core:*` never imports Android. `core:imposition` and `core:render` depend only on `core:model`.
+- `core:editor` depends on `core:model`, and on `core:render` for **one** function: the distance from a point to a holed piece's drawn ink, so the hit test reads the outline the renderer draws ([ADR-124](DECISIONS.md#adr-124)). The edge runs one way: `core:render` never depends on `core:editor`.
 - Errors are remapped to domain types at the repository boundary; use cases return `Result<T>` (see §9).
 
 ## 2. Module & package structure
