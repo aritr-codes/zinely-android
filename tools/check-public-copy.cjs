@@ -148,7 +148,7 @@ assert.doesNotMatch(home, /WCAG/);
 assert.match(home, /id="accessibility"/);
 assert.match(home, /reduced-motion setting/);
 for (const html of [home, download]) assert.match(html, /releases\/download\/v0\.9\.0-beta\.6\/zinely-0\.9\.0-beta\.6-release\.apk/);
-for (const html of [home, download, notes]) assert.doesNotMatch(html, /releases\/download\/v0\.9\.0-beta\.[45]\//, 'No superseded APK is offered as the download');
+for (const html of [home, download, notes]) assert.doesNotMatch(html, /releases\/download\/v0\.9\.0-beta\.[1-5](?!\d)/, 'No superseded APK is offered as the download');
 assert.match(releaseNotes, /\| `versionCode` \| 11 \|/);
 assert.match(download, /Android version code 11/, 'Download page states the released versionCode');
 const sha = releaseNotes.match(/SHA-256 \| `([0-9a-f]{64})`/)[1];
@@ -158,6 +158,7 @@ assert.match(download, /Google Play<\/dt><dd>Not yet\./);
 assert.match(download, /There is no iPhone version/);
 assert.match(download, /id="known-limits"[\s\S]*On Android 7, 8 and 9, Save PDF asks for storage access[\s\S]*not yet on a real Android 7, 8 or 9 phone/, 'Download page states the published Save PDF limit and its test coverage');
 assert.match(download, /id="known-limits"[\s\S]*TalkBack/, 'Download page keeps the TalkBack focus limitation');
+assert.match(download, /not yet checked it by ear with TalkBack/, 'Tap-through TalkBack listen is still owed');
 assert.doesNotMatch(notes, /TalkBack focus (?:is )?fixed|fixed TalkBack focus/i, 'Never claim the TalkBack focus limitation is fixed');
 assert.match(sitemap, /zinely-android\/download\//);
 for (const [name, html] of [['home', home], ['changelog', notes], ['download', download], ['roadmap', roadmap]]) {
