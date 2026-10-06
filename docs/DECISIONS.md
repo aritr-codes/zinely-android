@@ -134,6 +134,7 @@
 | [ADR-122](#adr-122) | **A backup is complete or explicitly partial, never silently partial; a restore reports what happened.** Backup is skip-and-list (one photo never fails it); the manifest gains a defaulted, leniently read `omitted` list, `packageVersion` stays 2; restore staging-write failures aren't "damaged", Cancel is withdrawn once commit starts, and a committed restore is a success even if the shelf lags. Amends ADR-110. | Accepted 2026-09-29; 1.x step 1b (PR #86, `1fd3c9e`) |
 | [ADR-123](#adr-123) | **Undo and redo say what they did, in the one Bench snack.** A pure `editLabel` derived from each command's memento (no History change, nothing persisted); `Effect.HistoryStepped` replaces "Changed page N"; one snack counted per step, shown in the snack and spoken once through the announcement drain; the page clause and the 2% / 2° transform rule. Words owned by frozen `v21-bench.html` A26. | Accepted 2026-10-01 (proposed 2026-09-30, revised twice 2026-10-01); 1.x step 3 (PR #90). **Accepted with documented device-verification limitations:** the owner waived the full two-pass device matrix, several A26 rows and the 2× listen were not heard, and TalkBack may say an identical repeat once |
 | [ADR-124](#adr-124) | **Taps pass through the empty part of six holed Art pieces.** For `paper.window`, `paper.hole`, `shape.ring`, `fix.grommet`, `fix.corner` and `mark.registration` the hit area is the drawn ink, read from the outline the renderer draws; resolution is drawn → near (within 8 dp of the ink, yes or no; topmost wins) → box, topmost-first; every other element keeps its box; `core:editor` gains a dependency on `core:render`. Semantics, schema and pixels unchanged | Proposed |
+| [ADR-125](#adr-125) | **Folders on the Shelf: one level, a zine in one place, and a folder is only the name its zines carry.** Every folder action is a row in a sheet, nothing is dragged; a folder is drawn as a banded pile of its zines' own covers and exists only while it holds a zine; taking the zines out puts them back on My Shelf. Stored as a defaulted `folder` name in `meta.json`, mirrored in the Room index and carried by a defaulted backup-manifest field; `packageVersion` stays 2, no document-schema change, older builds restore every zine to My Shelf. ADR-081 ruling 2 (no search, no sort) stands. | Proposed 2026-10-06; **not accepted**; thirteen owner rulings and the `v21-library.html` A28 freeze owed; nothing built |
 | [ADR-126](#adr-126) | **Two document voices, Book (Fraunces) and Plain (Inter), with no change to the saved format.** `fontFamily` carries the voice; an unknown family is drawn as Inter and kept, so an older build re-wraps and may cut off a Book text but loses nothing; four unmodified upstream static faces; each voice declares its scripts (Book has no Greek or Cyrillic); the editing surface draws the document's own faces; the control is a Voice row amended into the frozen type bar. Supersedes two of ADR-055's exclusions: font choice, and font bundling for the four Book faces alone | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
@@ -14471,6 +14472,291 @@ cross's bare paper surprise them?
   observations from the device are recorded for those passes and changed nothing here: a selected thin piece
   dragged from its band resizes, because the resize handles sit on the box edge; and a second tap on small
   selected words can be swallowed by a handle's touch target, with or without a holed piece on the page.
+
+## ADR-125 {#adr-125}
+
+### Folders on the Shelf: one level, a zine in one place, and a folder is only the name its zines carry
+
+**Status:** Proposed, 2026-10-06. **Not accepted.** Nothing is built. Written in the folders design session on
+`origin/main` @ `ae374ea` (release `0.9.0-beta.6` plus documentation). It becomes Accepted only on the owner's
+rulings on the questions listed under *Owner rulings owed* and the owner's approval of the
+[`v21-library.html`](design/mockups/v21-library.html) **A28** amendment, which is itself **proposed, not frozen**.
+Owner request of 2026-09-27, repeated 2026-10-06 ([ROADMAP](ROADMAP.md#current-priorities)). Evidence:
+[RESEARCH R22](RESEARCH.md#r22-organising-a-small-library-of-your-own-work-on-a-phone---verified---recommendation).
+**Extends (if accepted):** [ADR-099](#adr-099) (the frozen Shelf gains amendment A28), [ADR-110](#adr-110) and
+[ADR-122](#adr-122) (one more defaulted manifest field, `packageVersion` stays 2), [ADR-042](#adr-042) (one more
+index column). **Leaves standing:** [ADR-081](#adr-081) ruling 2 (no Shelf search, no sort control) and
+[ADR-121](#adr-121) (what counts as "already here" on restore). **Would supersede** the V2 de-scope line "no
+folders/collections/tags in V2" in [`V2-IA-JOURNEYS.md` §A.5](design/V2-IA-JOURNEYS.md), which is a design note
+and not an ADR.
+
+#### Context
+
+The Shelf answers one question, "Which zine do I want?", with a flat grid of covers, newest first. The owner has
+asked for folders so that a maker with many zines can keep related ones together. Three things in the repository
+pull against the idea, and the decision has to square with each:
+
+- [ADR-081](#adr-081) ruling 2 dropped V1's search and sort: "The freeze is the whole screen." ROADMAP still parks
+  search and sort as needing real-library evidence.
+- [`ZINE-DIRECTION.md`](design/ZINE-DIRECTION.md) says of the Shelf: "Never a data grid. Never a file manager."
+  [V2-CONSTITUTION](design/V2-CONSTITUTION.md) Principle 4 prefers the vocabulary of paper and shelves to "files",
+  and its never-do list names "counts, badges, toolbars that don't earn their space".
+- The [Feature Tribunal](zinely-constitution.md#vii-the-feature-tribunal) has no row for folders. Of the seven
+  articles none *creates* this feature; it is a convenience compatible with Article 1, like page reordering. What
+  the articles do is constrain it: Article 3 (what the maker arranges must survive a backup), Article 4 (it must
+  not demand attention), Article 6 (the first minute is untouched) and Sacred Thing 8 (every action has a visible,
+  accessible twin). Adding the Tribunal row is the owner's act.
+
+The research (R22) could not find evidence that folders help a library of fewer than about one screenful of
+covers. So the design is held to this test: **a maker who never makes a folder must not be able to tell the
+feature exists**, apart from one row in the zine's action sheet.
+
+What the code allows was read from `ae374ea`, not assumed:
+
+- `meta.json` is the source of truth for shelf-only metadata and Room only indexes it (`ProjectMeta.kt:6-11`,
+  `ProjectEntity.kt:8-11`). It has four fields and no version. Every writer builds it from named fields, and rename
+  rewrites it wholesale (`RoomProjectRepository.kt:226-244`), so a field an older build does not know is dropped
+  the first time that build rewrites the file.
+- **`meta.json` is not in a backup.** The archive holds `manifest.json`, documents and photo masters, and restore
+  rebuilds `meta.json` from the manifest entry (`RoomProjectRepository.kt:804-813`). Anything that must survive a
+  backup has to be in the manifest.
+- An extra file in the archive is refused by every build that reads library backups (`archive.entry.unexpected`,
+  `ZineLibraryBackupValidator.kt:204-213`; checked at `v0.9.0-beta.4-r3`, `beta.5` and `beta.6`), and a
+  `packageVersion` above 2 makes those builds refuse the whole backup. A **defaulted manifest field** is read by
+  new builds and silently ignored by old ones (`ignoreUnknownKeys`, `ZineLibraryBackupStager.kt:118`, the one
+  place a manifest is decoded). [ADR-122](#adr-122) used this for the top-level `omitted`; a key nested inside a
+  project entry relies on the same decoder setting and is **not pinned by any test today**.
+- Restore may give a zine a new local id, and the owner deferred stable origin ids ([ADR-121](#adr-121)). There
+  is no cross-device zine identity to attach a separate folder table to.
+- The document schema is not involved. The planned v4 bump
+  ([plan F1b](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)) is a *document* schema bump and is neither
+  needed nor touched.
+
+#### Decision (proposed)
+
+**What a maker gets**
+
+1. **One level.** A folder holds zines, never folders.
+2. **A zine sits in one place:** on My Shelf, or in one folder.
+3. **A folder exists only while it holds a zine.** Making a folder always starts from a zine. When its last zine
+   leaves or is deleted, the folder is gone. There is no empty folder, no folder list and no folder-management
+   screen.
+4. **Every folder action is a row in a sheet. Nothing is dragged.** The zine's action sheet gains a sixth row,
+   *Move to a folder*, between Duplicate and Delete; it opens a chooser listing My Shelf (when the zine is in a
+   folder), each folder, and *New folder*. With no folder yet the chooser is skipped and the row goes straight to
+   naming one. For a zine already in a folder the row reads *Move somewhere else*, because it is also the way
+   out. A folder has its own three-row sheet: Open folder, Rename folder, Take the zines out. Drag-to-group is
+   not part of this decision.
+5. **A folder is drawn as a pile:** a kraft sheet behind up to three of its zines' own covers, fanned, held by a
+   paper band, in one ordinary grid cell, captioned with its name and its count. The kraft sheet is drawn for
+   every pile so that a folder holding one zine does not look like that zine renamed. No folder icon, no
+   section, no chips.
+6. **Order is unchanged.** Newest first, no sort control. A folder sits where its newest zine would sit; inside
+   it, newest first. **Moving, renaming a folder and taking zines out do not make a zine "newer":** none of them
+   changes the time a zine is ordered by, so arranging the Shelf never reshuffles it and Undo puts everything
+   back where it was.
+7. **Taking the zines out removes the folder and puts its zines back on My Shelf.** There is no "delete the
+   folder and its zines". Zinely has no trash, and every app surveyed that deletes contents with a folder has one
+   (R22.1). Deleting a zine is unchanged.
+8. **Where things land.** *Make a zine* on My Shelf lands on My Shelf; inside an open folder it lands in that
+   folder, because the maker returns from the Bench to the view they left and the new zine must be there.
+   *Duplicate* puts the copy beside its original. A restored zine lands where its backup says (rule 15). The open
+   folder is kept across a return from the Bench, including when Android has stopped the app in between; if that
+   folder no longer exists the Shelf opens on My Shelf. A fresh start of the app always opens My Shelf.
+9. **Names.** 1 to 40 characters after trimming. Names are compared ignoring case; the first spelling is kept.
+   Typing an existing name in *New folder* joins that folder; in *Rename folder* it is refused with a plain line.
+   *My Shelf* is not available as a folder name.
+10. **Move, New folder and Take the zines out each offer Undo** in one snack, which is also the one polite
+    announcement; undoing says what came back by name. Rename has no Undo. When a move takes the last zine out of
+    a folder, the snack says the folder was put away. The snack goes when a sheet is raised and otherwise stays
+    at least four seconds, longer where the platform's accessibility timeout asks.
+11. **A zine waiting out its delete-undo is not on the Shelf, so it is not in a folder either.** Folders and
+    their counts are worked out from the zines the Shelf is showing. Deleting the last zine in an open folder
+    returns the view to My Shelf; undoing that delete brings the zine back in its folder, on My Shelf's view.
+
+The frozen HTML owns the pixels, words and TalkBack names: `v21-library.html`, amendment A28.
+
+**How it is stored**
+
+12. **A folder is not a thing on disk. It is a name each of its zines carries.** `ProjectMeta` gains
+    `folder: String? = null`. The folders on the Shelf are the distinct non-null names, grouped ignoring case.
+    This is why rule 3 costs nothing: with no zine carrying the name there is nothing left to delete. Every
+    `meta.json` writer carries the field across, and a test pins that for each writer.
+13. **One pure helper owns what a name is.** It trims, removes line breaks and control characters, treats a blank
+    as no folder, and cuts to 40 characters without splitting a character a reader sees as one. Two names are the
+    same folder when they are equal after Unicode NFC normalisation and `lowercase(Locale.ROOT)`. The comparison
+    is never done in SQL (`COLLATE NOCASE` folds ASCII only). Every name read from `meta.json` or from a backup
+    goes through the helper, so a hand-edited or hostile value cannot produce a name the Shelf cannot show. When
+    zines arrive carrying two spellings of one name, the Shelf shows the spelling that sorts first by code point,
+    which does not change as zines are edited.
+14. **Room mirrors it for the Shelf query:** one nullable `folder` column, an additive `MIGRATION_2_3`, a new
+    exported `3.json`. Room stays a rebuildable index, derived from `meta.json`.
+15. **A backup carries it:** `ZineBackupProjectEntry` gains `folder: String? = null`. **`packageVersion` stays
+    2.** The field is read leniently, as `omitted` is ([ADR-122](#adr-122)): a value of the wrong type is read as
+    no folder and never refuses a restore. Restore writes the name into the rebuilt `meta.json`, so a restored
+    zine joins the folder of that name if the Shelf has one (adopting the Shelf's spelling) and otherwise brings
+    the folder with it. A zine that is "already here" ([ADR-121](#adr-121)) is not added and is **not moved**:
+    restore never rearranges the Shelf the maker has now.
+16. **Older builds** restore such a backup completely and ignore the folder name: every zine arrives on My
+    Shelf. That is lost arrangement, not lost work, and the release notes must say so. A backup made by an older
+    build has no folder names and restores, on a newer build, to My Shelf.
+17. **The repository gains** `moveProject(id, folder)`, `renameFolder(from, to)` and `unpackFolder(name)`, and
+    `createProject` and `duplicateProject` gain a folder so that the name is written in the zine's first
+    `meta.json` write, not by a second step. `ProjectSummary` and `ProjectShelfEntry.Unavailable` gain
+    `folder`. The three folder operations share four properties, each of which departs from how rename works
+    today and each of which needs its own test:
+    - **They do not load the document.** They rewrite `meta.json` and update only the index row's `folder`.
+      Rename today reloads the document to refresh the row, which fails for a zine that will not open
+      (`RoomProjectRepository.kt:846-851`), leaves the row stale, and the Shelf then shows the stale row. A
+      folder operation built that way would report failure on every unavailable zine. With a meta-only update an
+      unavailable zine can be moved, and its Shelf entry reads `folder` the same way an available one does.
+    - **They do not stamp the zine as changed** (rule 6). Rename stamps `updatedAtEpochMs` (`:248`).
+    - **They list a folder's zines from the `meta.json` files**, not from Room: reconcile does not refresh a row
+      that is already indexed, so the column can be stale after a failed index write.
+    - **They never overwrite a `meta.json` that is present but cannot be read.** That zine is left as it is and
+      the operation says it could not move it. (Rename today does overwrite such a file, losing the cover; that is
+      an existing defect, recorded here and not fixed by this decision.)
+18. **Renaming a folder rewrites each member's `meta.json`** under the repository's existing lock, one atomic
+    file write per zine. It is not atomic across zines. `renameFolder(from, to)` moves every zine still carrying
+    `from` and is safe to run again. If it stops partway the Shelf shows two folders, old name and new, both
+    intact, and the failure message offers *Try again*, which runs the same rename and finishes it. That retry is
+    the one case where rule 9's refusal of an existing name does not apply; a maker who instead opens *Rename
+    folder* and types the name by hand is still refused. No journal is added.
+
+**Not in this decision:** drag-to-group; folders inside folders; a zine in several folders; tags; Shelf search or
+a sort control; a folder colour, icon or cover picker; any change to the document schema or to `packageVersion`;
+stable origin ids; any public website copy (the pages already say "nothing to try yet", per
+[ADR-118](#adr-118)); the existing rename defects named in rule 17.
+
+**Open implementation points, not design questions.** How the folder snack and the Shelf's existing delete-undo
+snack behave when one is raised while the other is showing must be read from the code and stated before the
+first Compose change: the frozen `v21-library.html` draws no delete snack, so the app's own behaviour is the
+only reference. The pile tile's caption carries a count; V2-CONSTITUTION lists "counts" under unnecessary chrome
+while the frozen Shelf already ships a count pill, and question F-11 puts the tile's count to the owner.
+
+#### Owner rulings owed
+
+Each has a recommendation, built into the proposed A28 prototype so it can be judged on screen. They are tracked
+in [OWNER-CHECKLIST §1.5](OWNER-CHECKLIST.md#15-product--design-authorship).
+
+| # | Question | Recommended |
+|---|---|---|
+| F-1 | One level, or folders inside folders? | One level |
+| F-2 | Can a zine sit in more than one folder? | No |
+| F-3 | What happens to the zines when a folder is removed? | They go back on My Shelf; no "delete folder and zines" |
+| F-4 | Where do new, duplicated and restored zines land? | Rules 8 and 15 |
+| F-5 | Do folders travel in a backup, and what does an older Zinely do with one? | Yes, as a defaulted manifest field; older builds restore every zine to My Shelf |
+| F-6 | Does this replace or coexist with the ruling against search and sort? | Coexist; ADR-081 ruling 2 stands |
+| F-7 | Is it called a *folder*, given "never a file manager"? | Yes: the word is already on the public roadmap and a paper folder is stationery; it is drawn as a pile, never as a folder icon |
+| F-8 | Is menu-only acceptable for the first release, with drag-to-group left for later? | Yes |
+| F-9 | May the backup manifest and the Room index each gain one additive field outside the 1.x plan? | Yes; neither is the planned v4 document bump, and ADR-122 is the precedent |
+| F-10 | Does the [Feature Tribunal](zinely-constitution.md#vii-the-feature-tribunal) gain a folders row, and under which article? | Owner's act |
+| F-11 | Does a folder's caption show how many zines it holds? | Yes: it stands where a zine's date stands, and a pile of three covers cannot say "seven" |
+| F-12 | Does the count beside *My Shelf* count zines (6, beside 3 tiles) or things on the Shelf? | Zines; the reviewer's first glance read it as wrong, so this one is worth a look on screen |
+| F-13 | Is a folder holding one zine acceptable, and does the pile look right (kraft sheet, blank band, no tape, no paper-size stamp)? Should the band carry the folder's name? | One-zine folders stay (every folder starts as one); blank band, since the name is in the caption |
+
+F-9 is a stop condition for this work: **no storage code is written until it is ruled.** Two smaller things the
+reviews raised are left as proposed unless the owner says otherwise: Rename has no Undo while the other three
+actions do, and a zine's own sheet does not say which folder it is in (the chooser does).
+
+#### Alternatives considered
+
+- **A folder table of its own** (a library-level file, or DataStore like the last-backup record). Rejected: a
+  library-level file cannot enter the archive without being refused by every released build; DataStore is not
+  backed up at all; and a table keyed by zine id breaks on restore, which may mint new ids. It would also create
+  empty folders that then need managing.
+- **`packageVersion` 3 with a folders section.** Rejected for the reason [ADR-122](#adr-122) gives: older builds
+  refuse the whole backup.
+- **Folders as directories on disk** (`projects/<folder>/<id>/`). Rejected: `ProjectPaths` builds every project
+  path from the id alone and nothing else may; moving a zine would move its files; and the archive's exact-closure
+  rule fixes `projects/<id>/document.json`.
+- **Membership in Room only.** Rejected: Room is rebuildable and is rebuilt from files, so a reconcile would
+  silently flatten the Shelf.
+- **A zine in several folders (tags, collections).** Rejected: it is a reading-library pattern (R22.2), it raises
+  "which one am I deleting?", and it needs the folder table rejected above.
+- **Folders inside folders.** Rejected: depth costs discoverability (R22.6) and forty zines cannot justify it.
+- **Drag one cover onto another, as the only or the first route.** Deferred, not rejected. It is the phone's own
+  gesture (R22.3), but long-press on a cover already opens the action sheet, the gesture needs a visible non-drag
+  twin anyway (WCAG 2.2 SC 2.5.7; V2-CONSTITUTION "nothing is gesture-only"), and that twin is the whole of this
+  decision. A later amendment can add the shortcut without changing the model.
+- **Persistent empty folders made by a "New folder" button on the Shelf.** Rejected: it adds a control to the
+  Shelf for everyone, and empty tiles that answer nobody's question.
+- **Sections or filter chips instead of tiles.** Rejected: both add standing chrome to the frozen Shelf and both
+  hide covers behind words.
+- **Search or sort instead of folders.** Not what was asked, and ADR-081 ruling 2 stands.
+
+#### Consequences
+
+- The frozen Shelf changes: a sixth action-sheet row for every maker, and for makers who use it a new tile, a new
+  view and three sheets. The library goldens that include the action sheet will change and must be re-recorded as
+  a reviewed act, after reading every diff.
+- Tilt and tape are derived from a tile's position, so making or removing a folder shifts the tilt of the tiles
+  after it. This already happens when a zine is added or deleted.
+- A folder sits at its newest zine, so taking that zine out moves the pile down the Shelf. The first-time-user
+  review noticed the jump. It is the price of rule 6 and of having no manual order.
+- A maker can put every zine in its own folder, and then the Shelf shows folder names and no zine names, dates or
+  paper sizes. Nothing prevents it; the design relies on a folder of one being pointless to make.
+- Moving several zines is one zine at a time: three zines into a new folder is about ten taps and a name.
+- An older build that rewrites a zine's `meta.json` (rename, cover backfill) drops the folder name. That needs a
+  downgrade of the installed app to occur, since `meta.json` does not travel in a backup.
+- No guard catches a compatibility mistake in `meta.json` or the manifest today (`DocumentSchemaShapeTest` covers
+  only the document). The implementation must add: a frozen third fixture archive carrying folder names beside the
+  two existing ones, which stay byte-identical; a test that an entry with an unknown nested key still stages (only
+  a top-level unknown key is pinned today); a test that a wrong-typed `folder` does not refuse a restore; a test
+  per `meta.json` writer that the folder survives; tests for the name helper (case, NFC, Turkish dotless i, emoji
+  at the 40-character cut, blank, control characters, *My Shelf*); and the Room `2 → 3` migration test.
+- Rule 15 means a restore can add a zine to an existing folder. The restore summary's wording is unaffected: it
+  counts zines.
+- Every backup written by a build with folders carries `"folder":null` on each zine that has none (the writer
+  encodes defaults). `meta.json` does not: a maker who never makes a folder gets byte-identical files.
+- Renaming a folder of N zines is N file writes and N index updates, so the Shelf can show the old and the new
+  folder together for a moment. Batching the index update is an implementation choice, not part of this decision.
+- This work is outside the 1.x plan's numbered steps. It does not block or change step 6 (v4) or step 8 (voices).
+
+#### Tests and evidence required before acceptance of the implementation
+
+Design acceptance needs only the owner rulings and the A28 freeze. The implementation, when it is started, needs
+the guards listed under *Consequences*, repository tests for move, rename (including a rename that stops
+partway) and unpack, ViewModel tests with fakes, Compose semantics tests, goldens for the pile, the folder view
+and each sheet in both themes and at 1.8× text, pixel parity against A28, and both device passes including the
+platform accessibility tree dump.
+
+#### Review
+
+Two independent Review Agents read the uncommitted worktree on 2026-10-06, with different lenses. Both returned
+**GO WITH FIXES** for committing this as a proposal. Neither reviewed it for acceptance.
+
+- **Technical truth and document consistency.** Three Required Fixes, all **accepted**: the claim that an
+  unavailable zine can be moved "as it can be renamed" was false against the code (rename reloads the document
+  and fails) → rule 17's meta-only operations; rule 9 made the retry promised for a half-finished rename
+  impossible → rule 18; "order is unchanged" contradicted the rename precedent of stamping a zine as changed →
+  rule 6. Seven recommended design points, all **accepted** and written into rules 8, 9, 11, 13, 15, 17 and the
+  open implementation points: pending delete, create and duplicate into a folder, lenient and normalised names,
+  one definition of "ignoring case", *My Shelf* as a reserved name, process death, and listing members from
+  files. Four documentation points **accepted**: the prototype's focus claims, one undeclared rule touching the
+  frozen count chip, paraphrase presented as quotation in R22, and three inaccurate citations. The reviewer
+  verified the code citations, the three released tags' decoder setting, that the ADR-121 matcher is unaffected
+  by a new entry field, and that both frozen fixture archives still decode. It did not run the app, the tests or
+  the web sources.
+- **First-time user, accessibility and copy**, driving the prototype in a browser. Six Required Fixes, all
+  **accepted** and fixed in the prototype: a 40-character unbroken name broke the grid and pushed Undo off-screen;
+  *My Shelf* was accepted as a name; the "what TalkBack hears" note claimed focus movement and names the page did
+  not perform (now performed, or marked *stated*); the snack's Undo was not reliably reachable; the generic "Put
+  back" contradicted [VOICE.md](design/VOICE.md) (now names what came back); a just-made folder read as "it
+  renamed my zine" (now a kraft sheet behind every pile). Recommended items **accepted**: the row label for a
+  zine already in a folder, saying so when the last zine's leaving puts a folder away, leading the take-out snack
+  with the zines, not dimming "It's here", naming the name dialog by its title, Cancel returning to the chooser,
+  and skipping a one-row chooser. **Partly accepted:** the lowered-sheet repair no longer repaints the frozen
+  Shelf, but a no-folder Shelf is not bit-identical to `origin/main`: measured, no pixel differs by more than 2
+  of 255 levels, in the lower fifth of the phone, because the zine sheet is one row taller. **Not changed, put to
+  the owner instead:** the Shelf count (F-12), the one-zine folder and the blank band (F-13), one-at-a-time
+  moving (F-8), no Undo on Rename.
+- **After reconciliation** the prototype was driven again by script: 29 checks, none failing, covering the first
+  folder, the reserved name, a 40-character name at normal and 1.8× text, joining, moving out until a folder is
+  put away, each Undo line, focus after every action, the inert lowered sheets, and the unavailable zine's sheet.
+  This is the implementer's own check, not a review.
+- **Not done:** no device, no TalkBack, no Compose. The TalkBack names are read from a browser's accessibility
+  tree, which is not the Android platform tree.
 
 ## ADR-126 {#adr-126}
 

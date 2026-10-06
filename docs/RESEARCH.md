@@ -639,3 +639,109 @@ require sign-in; optional email does not imply anonymous processing by Google.
   click tests alone cannot prove or disprove keyboard restoration. This does not verify TalkBack accessibility focus.
 - **Recommendation:** preserve the About list state across licence navigation and request return focus inside the
   restored lazy row, where its target is attached. The final regression result, not source reasoning, gates acceptance.
+
+## R22. Organising a small library of your own work on a phone — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+Research for Shelf folders ([ADR-125](DECISIONS.md#adr-125), Proposed), 6 October 2026. Sources are official
+help pages unless stated, all opened on that date. Some pages were read through a tool that returns a summary
+of the page, so this section **paraphrases and does not quote**: each sentence is the claim its source supports,
+not the source's words. What could not be opened is listed in R22.7 and is not relied on.
+
+### R22.1 A container either holds a work or points at it, and deleting follows from that — ✅ VERIFIED
+
+Apps where an item can sit in several containers keep the items when a container is deleted: Apple Books
+(deleting a collection leaves its books in the library), Apple Photos (photos stay in the library and in any
+other album) and Google Photos. Apps where an item lives in exactly one container take the contents with it:
+Samsung Notes (deleting a folder removes what is in it), Apple Notes, Goodnotes and Sketchbook. Every
+one of that second group has a trash that catches them (Recently Deleted or Trash; Concepts too). No sampled app
+destroys a folder's contents with no way back.
+
+**Sources:** [Apple Books](https://support.apple.com/guide/iphone/organize-books-iphab219b91/ios) ·
+[Apple Photos](https://support.apple.com/guide/iphone/create-and-work-with-photo-albums-iphc0fc668ab/ios) ·
+[Google Photos](https://support.google.com/photos/answer/6128849?co=GENIE.Platform%3DAndroid) ·
+[Samsung Notes](https://www.samsung.com/us/support/answer/ANS10004548) ·
+[Apple Notes](https://support.apple.com/guide/iphone/organize-in-folders-ipha61270292/ios) ·
+[Goodnotes, delete](https://support.goodnotes.com/hc/en-us/articles/7353743683599-Delete-documents-notebooks-and-folders-from-your-library) ·
+[Sketchbook](https://help.sketchbook.com/docs/gallery-folders) ·
+[Concepts](https://concepts.app/en/android/manual/gallery).
+
+### R22.2 Creative apps move a work into one place; several-at-once is a reading and photo pattern — ✅ VERIFIED
+
+Procreate, Goodnotes, Samsung Notes, Concepts, Sketchbook, ibis Paint and Apple Notes folders all move an item.
+Being in several containers at once appears in Apple Books, Apple Photos, Google Keep labels and Apple Notes
+tags. No creative-document app that was opened documents one work living in two folders.
+
+**Sources:** as R22.1, plus [Procreate](https://help.procreate.com/procreate/handbook/gallery/gallery-organize) ·
+[Goodnotes, organise](https://support.goodnotes.com/hc/en-us/articles/15303674514191-Organize-folders-and-documents-in-Goodnotes) ·
+[ibis Paint](https://ibispaint.com/lecture/index.jsp?no=193) ·
+[Google Keep](https://support.google.com/keep/answer/6191044?co=GENIE.Platform%3DAndroid) ·
+[Apple Notes tags](https://support.apple.com/en-nz/102288).
+
+### R22.3 Dragging one onto another is the phone's own gesture, and the careful apps also give a menu — ✅ VERIFIED
+
+Phone home screens make a folder by dragging one app onto another (iOS, Pixel), and Procreate, ibis Paint and
+FlipaClip copy the gesture. Procreate documents two routes (Select mode, or drag and drop), as do
+ibis Paint and Goodnotes; Sketchbook is menu-only. WCAG 2.2 SC 2.5.7 (Level AA) requires that anything done by
+dragging can also be done with a single pointer without dragging, and Android's
+accessibility guidance says to expose a drag as a custom action so TalkBack, Voice Access and Switch Access can
+perform it. A custom action serves assistive technology only, so a visible menu route is still needed.
+
+**Sources:** [iPhone User Guide](https://support.apple.com/guide/iphone/organize-your-apps-in-folders-iph822ece7dd/ios) ·
+[Pixel Help](https://support.google.com/pixelphone/answer/2781850?hl=en) ·
+[Procreate](https://help.procreate.com/procreate/handbook/gallery/gallery-organize) ·
+[FlipaClip](https://support.flipaclip.com/article/79-organizing-projects-with-stacks) ·
+[WCAG 2.2, Understanding 2.5.7](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements) ·
+[Android accessibility principles](https://developer.android.com/guide/topics/ui/accessibility/principles).
+
+### R22.4 A home-screen folder cannot be empty; a folder made by a "New folder" command can — ✅ VERIFIED
+
+On the iPhone home screen a folder that is emptied is deleted automatically. Apps with an explicit New
+folder or New collection command (Apple Books, Goodnotes, Play Books, Apple Notes) create the container empty,
+so empty ones persist and need managing.
+
+**Sources:** [iPhone User Guide](https://support.apple.com/guide/iphone/organize-your-apps-in-folders-iph822ece7dd/ios) ·
+[Play Books](https://support.google.com/googleplay/answer/9402600?hl=en&co=GENIE.Platform%3DAndroid).
+
+### R22.5 Visual work is shown as a preview of what is inside — ✅ VERIFIED
+
+Procreate draws a Stack as a pile of layered thumbnails and Concepts shows a folder with a thumbnail of what is
+in it. Goodnotes uses a coloured icon tile and Sketchbook a thumbnail strip.
+
+**Sources:** [Procreate](https://help.procreate.com/procreate/handbook/gallery/gallery-organize) ·
+[Concepts](https://concepts.app/en/android/manual/gallery).
+
+### R22.6 People navigate to their own things and keep structures shallow — ✅ VERIFIED, with a 🟨 ASSUMPTION edge
+
+Bergman et al. (2008) report that people navigated for 56–68% of file retrievals and searched for 4–15%, with
+search a last resort. Bergman, Whittaker et al. (2010) found retrieval from a mean depth of 2.86 folders with
+about 12 files per folder, and that people avoided both deep structures and large folders. NN/g finds deep
+hierarchies harder to use than flat ones. These studies are of desktop file systems and websites, not a phone
+grid of covers.
+
+🟨 **ASSUMPTION:** whether filing pays off at all may be disputed. A 2011 email study (Whittaker et al.) is
+reported second-hand as finding foldering inefficient; its primary source could not be opened, so it is recorded
+as a lead and not as a counter-finding.
+
+🟨 **ASSUMPTION:** folders start to help at roughly more than one screenful of covers and add cost below that.
+No research was found that gives a library-size threshold for a phone grid.
+
+**Sources:** [Bergman et al. 2008, abstract](https://cris.openu.ac.il/en/publications/improved-search-engines-and-navigation-preference-in-personal-inf-2/) ·
+[Bergman, Whittaker et al. 2010](https://research.ibm.com/publications/the-effect-of-folder-structure-on-personal-file-navigation) ·
+[NN/g, flat vs deep hierarchy](https://www.nngroup.com/articles/flat-vs-deep-hierarchy/).
+
+### R22.7 Not verified — 🟨 ASSUMPTION
+
+Kindle Collections, Canva mobile folders and Notability could not be opened and are not relied on. The Procreate
+handbook does not say whether a Stack can hold a Stack, what deleting one does, or whether it dissolves when
+emptied. Material 3's guidance on bottom sheets for item actions could not be read (the page is script-rendered).
+No documented example was found of an older app version reading a newer backup and letting unknown folder
+structure fall back to the root; Zinely's own behaviour is established from its code in ADR-125, not from the web.
+
+### R22.8 Zinely application — 🟦 RECOMMENDATION
+
+For a Shelf of roughly 3 to 40 zines: one level (R22.6); a zine sits in one place (R22.2); a folder that is
+removed gives its zines back to the Shelf, because Zinely has no trash and every app that deletes contents has one
+(R22.1); no empty folders, so there is nothing to manage (R22.4); a folder drawn as a pile of its own covers so
+the Shelf still answers by recognition (R22.5); every action available from a menu, with any drag gesture a later
+shortcut and never the only route (R22.3). Because nothing shows folders help below a screenful (R22.6), the
+design must cost nothing for someone who never makes one. [ADR-125](DECISIONS.md#adr-125) owns the decision.
