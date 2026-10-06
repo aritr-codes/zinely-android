@@ -304,7 +304,7 @@ Evidence: [tester package](releases/0.9.0-beta.6.md).
 | ☐ | Release PR's CI green | The branch is pushed only when the candidate is ready for you |
 | ☑ | **Your finger pass on tap-through** | **Done 2026-10-06 on the release APK:** every tap did what was expected, first try. Dragging the selected frame by its band resized it (a Known Limitation in the changelog). Your question, whether a double-tap should also close Reframe, is recorded in [ADR-124](DECISIONS.md#adr-124) Review as an open design question |
 | ☐ | TalkBack listen on tap-through | Deferred by you on 2026-10-06, not waived. Ships as "not verified" unless you listen first |
-| ☐ | **"Proceed with the beta.6 release"** | Then: merge the release PR, tag `v0.9.0-beta.6` on the merge commit, GitHub pre-release with the APK. Only after the tag: the website, `tools/check-public-copy.cjs`, the ROADMAP "Released" line and the "not yet in the download" wording move to beta.6 |
+| ☑ | **"Proceed with the beta.6 release"** | **Given 2026-10-06.** Then: merge the release PR, tag `v0.9.0-beta.6` on the merge commit, GitHub pre-release with the APK. Only after the tag: the website, `tools/check-public-copy.cjs`, the ROADMAP "Released" line and the "not yet in the download" wording move to beta.6 |
 
 ### ☑ `0.9.0-beta.5` — the maintenance release (APK only)
 
