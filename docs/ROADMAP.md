@@ -57,20 +57,22 @@ Owner-stated intentions to deliver. None has a date, and "Planned" here does not
 its HTML specification frozen and an ADR before any Compose work.
 
 - **Shelf folders:** user-created folders to organise zines on the Shelf (owner request 2026-09-27, repeated
-  2026-10-06). Not designed. It touches the shelf model and the backup archive, so it is sequenced against the
-  v4 document-format step, and it needs an ADR because the frozen Shelf has no grouping today.
+  2026-10-06). Not designed and not sequenced. It likely touches the shelf model and the backup archive, and it
+  needs an ADR because the frozen Shelf has no grouping today.
 - **Document voices, Book and Plain:** two named typefaces for a zine's words, Book (Fraunces) and Plain (Inter)
   ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); plan step 8). Blocked on the Brief 02
   rewrite, the measured Fraunces faces, the owner's minimum print size and the typebar freeze.
 - **Two hand-cut frames:** plan step 9; waits for the owner's visual approval of the two pieces.
 - **Print guidance:** help at the print step so a sheet comes out at the right size (plan step 5). Still gated
-  on the print study; the owner's own successful print is recorded in the plan as evidence, not as the study.
+  on the print study; one successful print by a user, reported by the owner, is recorded in the plan as
+  evidence, not as the study.
 - **Photo descriptions (alt text):** plan step 7; needs the v4 format step and a Read-semantics design.
 - **Page backgrounds:** a background for a page, behind its photos and words (owner request 2026-10-06). The
-  document already carries a per-page `background` field that is always `none`; no picker, renderer support or
-  design exists yet.
+  document and the renderer already carry a per-page `background` (none, or a solid colour); nothing in the
+  editor sets it, so it is `none` in every zine made today. No picker or design exists yet.
 - **More paper sizes:** today a zine prints on A4 or US Letter only (owner request 2026-10-06). Which sizes is
-  not decided; each one must pass through the imposition engine and its print checks.
+  not decided; each one must pass through the imposition engine and its print checks, and the open
+  [ADR-016](DECISIONS.md#adr-016) question on closed versus open paper specifications comes first.
 - **Google Play publication**, after owner account verification, mandatory testing and store review. Account
   verification remains blocked; the signed GitHub beta and public policy already exist. This is a distribution
   task, not a reason to rebuild or overwrite beta.5. [Release authority](RELEASING.md#3-beta-distribution-side-load).
@@ -82,7 +84,7 @@ its HTML specification frozen and an ADR before any Compose work.
    if evidence identifies an improvement. The website guide is shipped; native replay is not.
 2. **Creative tools:** more Art, photo transparency, shaped cutouts and crop improvements stay under
    evaluation (reopened 2026-09-12; see the assessment below). Fonts and frames left this list for *Planned*
-   by the owner's 2026-09-26 rulings. No delivery date is committed.
+   on 2026-10-06, following the owner's 2026-09-26 rulings. No delivery date is committed.
 
 ### Engineering follow-ups — not extra public feature promises
 
@@ -110,8 +112,8 @@ changelog, not in the feature backlog. No app feedback screen or SDK is planned.
 
 **Parked, not next:** Art cold-entry precomposition (latest trace did not justify a safe local change), image
 garbage collection (import/undo/recovery safety prerequisites), shelf search/sort (owner previously removed them;
-needs real-library evidence), extra formats and new menus. Fonts and catalogue expansion are reopened for evaluation
-above, not scheduled for delivery. Other parked work can be reconsidered
+needs real-library evidence), extra formats and new menus. Catalogue expansion stays under evaluation
+above; document voices and two frames are *Planned*, with no date. Other parked work can be reconsidered
 when a concrete user problem warrants it; the app is not declared final.
 
 <a id="creative-tools-assessment"></a>
