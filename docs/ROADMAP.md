@@ -10,8 +10,8 @@
 
 **In development** means started (being designed, built or tested) and not in the public download; each entry says which stage it is at ([ADR-118](DECISIONS.md#adr-118), amended 2026-10-06). **Planned** means an accepted
 intention to deliver. **Exploring** means a proposal or investigation, not a commitment. **Completed** work belongs in [CHANGELOG.md](../CHANGELOG.md), with public APK changes kept separate
-from repository-only changes and website updates. Work listed as In development is merged on `main` and in no
-published APK.
+from repository-only changes and website updates. Work listed as In development is in no published APK; an entry at the
+design stage has no code on `main`.
 The public website projects this list with four labels (Available, In development, Planned, Exploring) grouped by
 horizon ([ADR-118](DECISIONS.md#adr-118)).
 
@@ -30,7 +30,7 @@ is planned as a *wave-1* release on the current document format, before any sche
 plan's backup-honesty, accessibility and tap-through steps ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)).
 Those steps shipped in beta.6 on 2026-10-06.
 
-### In development — built or being tested, not in the public download
+### In development — started (designing, building or testing), not in the public download
 
 Both entries are at the **design stage**: nothing is built, and neither has a frozen HTML specification or an
 ADR yet. They are listed here on the owner's 2026-10-06 instruction because they are the work starting next.
@@ -103,7 +103,7 @@ changelog, not in the feature backlog. No app feedback screen or SDK is planned.
 **Parked, not next:** Art cold-entry precomposition (latest trace did not justify a safe local change), image
 garbage collection (import/undo/recovery safety prerequisites), shelf search/sort (owner previously removed them;
 needs real-library evidence), extra formats and new menus. Catalogue expansion stays under evaluation
-above; document voices and two frames are *Planned*, with no date. Other parked work can be reconsidered
+above; document voices are *In development* (design stage) and two frames are *Planned*, with no date. Other parked work can be reconsidered
 when a concrete user problem warrants it; the app is not declared final.
 
 <a id="creative-tools-assessment"></a>

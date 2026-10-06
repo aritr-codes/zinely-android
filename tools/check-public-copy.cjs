@@ -166,7 +166,11 @@ for (const [name, html] of [['home', home], ['changelog', notes], ['download', d
 }
 // In development items must say they cannot be tried yet.
 assert.match(roadmap, /designing, building or testing\. Not in the download yet\./);
-for (const [, item] of roadmap.matchAll(/<li><span class="status-chip development">In development<\/span>([\s\S]*?)<\/li>/g)) assert.match(item, /nothing to try yet/, 'In development item says it is not in the download');
+const inDevelopment = [...roadmap.matchAll(/<li><span class="status-chip development">In development<\/span>([\s\S]*?)<\/li>/g)];
+// Drop this guard deliberately when nothing is In development.
+assert.ok(inDevelopment.length > 0, 'Roadmap In development items found');
+for (const [, item] of inDevelopment) assert.match(item, /nothing to try yet/, 'In development item says there is nothing to try yet');
+for (const [, item] of home.matchAll(/<span class="status-line"><span class="status-chip development">In development<\/span>([\s\S]*?)<\/span>/g)) assert.match(item, /Nothing to try yet/, 'Homepage In development item says there is nothing to try yet');
 assert.match(roadmap, /not announced features/);
 for (const [status, label] of [['available', 'Available'], ['development', 'In development'], ['planned', 'Planned'], ['exploring', 'Exploring']]) {
   assert.ok(roadmap.includes(`class="status-chip ${status}">${label}</span>`), `Keep commitment levels distinct: ${label}`);
