@@ -541,7 +541,7 @@ restore-honesty defects** ([Q8](ZINELY-1X-DECISION-GATE.md#q8-the-next-release-a
 | **5 · D3 stage 1 print guidance** | ⛔ blocked | The print study, part A; then the `v21-proof.html` amendment approved. Brief 03 is rewritten after the study. *Evidence, 2026-10-06:* the owner reports that a user printed a zine and it worked. That is one successful print, recorded here; it is not the study and does not lift the gate (owner ruling the same day) |
 | **Release wave 1** | ✅ **RELEASED 2026-10-06** as `0.9.0-beta.6` (versionCode 11, tag `v0.9.0-beta.6`, merge `41b4399`) | Nothing. Shipped with step 4 not accepted; the TalkBack listen on tap-through is listed as not verified ([tester package](../releases/0.9.0-beta.6.md)) |
 | **6 · v4** / **7 · alt text** | ⏳ | Wave 1 released; step 7 also needs a Read-semantics design and the Describe amendment |
-| **8 · D2 voices** | ⛔ blocked | Brief 02 rewrite (prepared, not done); four Fraunces faces instanced and measured; the owner's minimum print size after a printed page (procedure not yet written); a defined older-build fallback test; PR #70; Q4-F |
+| **8 · D2 voices** | ⛔ blocked | Brief 02 rewrite (prepared, not done); four Fraunces faces instanced and measured; the owner's minimum print size after a printed page (procedure not yet written); a defined older-build fallback test; Q4-F. Listed publicly as In development (design stage) on the owner's 2026-10-06 instruction; the prerequisites here still gate any build |
 | **9 · D5 frames** | ⛔ blocked | Step 4 merged; the owner's visual approval of two frames |
 | **D1 part 2** | ⛔ blocked | A completed two-phone restore procedure, then the pass itself |
 

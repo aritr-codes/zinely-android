@@ -13159,6 +13159,9 @@ current features separated from direction.
    by horizon (Foundation, Craft, Proof). The roadmap also lists what Zinely will not build, quoting only
    [constitution §VI](zinely-constitution.md). There are still no dates or guarantees, and the website remains a
    projection of [ROADMAP.md](ROADMAP.md#current-priorities). Research proposals stay off it until an ADR accepts them.
+   *Amended 2026-10-06, owner-directed:* **In development** also covers work that has started but is only being
+   designed. Such an item must say on the page that there is nothing to try yet; `tools/check-public-copy.cjs`
+   enforces it.
 5. **A Download page** (`/download/`) owns the install facts: version, date, Android 7.0+, size, SHA-256 (the
    source checker verifies it against the release record), install steps, updating, moving phones through a
    `.zine` backup, and the Google Play and iPhone status. It never names an unreleased build.

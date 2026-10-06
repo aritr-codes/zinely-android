@@ -38,7 +38,7 @@
         <h2 id="status-title">Where things stand</h2>
         <dl>
           <div><dt>In the download</dt><dd><a href="../download/">0.9.0-beta.6</a>, the public beta released on 6 October 2026.</dd></div>
-          <div><dt>Still in development</dt><dd>Changes that are not in any download yet live in the <a href="https://github.com/aritr-codes/zinely-android/blob/main/CHANGELOG.md">developer changelog</a>.</dd></div>
+          <div><dt>Coming up</dt><dd>What we’re working on now is on <a href="../roadmap/">what’s next</a>.</dd></div>
         </dl>
       </section>
 
@@ -70,7 +70,7 @@
         <h3>Added</h3>
         <ul>
           <li>Undo and redo say what they did. A short line names the change, like “Words taken off”.</li>
-          <li>You can reach through a frame. Tap the photo or words showing through a window frame, ring, eyelet, torn hole, photo corner or registration cross, and you get what’s underneath. Tap the drawn part to pick up the piece itself.</li>
+          <li>You can reach through a frame. Tap the photo or words showing through a window frame, a ring, or a photo corner, and you get what’s underneath. Tap the drawn part to pick the piece up.</li>
         </ul>
         <h3>Changed</h3>
         <ul>
@@ -79,18 +79,18 @@
         </ul>
         <h3>Fixed</h3>
         <ul>
-          <li>The Backups sheet says when you last backed up on this phone, or that you haven’t yet. It no longer says your zines are “kept safe” before a backup has run.</li>
+          <li>Backups tells you when you last backed up on this phone, or that you haven’t yet. It no longer says your zines are “kept safe” before a backup has run.</li>
           <li>A backup that fails says where it failed, and Zinely tries to remove the unfinished file.</li>
           <li>One zine that can’t be read no longer stops the whole backup. The rest is saved, and the result names what was left out.</li>
           <li>A restore says what happened: “Not enough space” when the phone is full, and no “cancelled” message once zines have been added.</li>
-          <li>With TalkBack, a page on the Bench reads from top to bottom and left to right, whatever is stacked on top.</li>
-          <li>With TalkBack, the dimmed area behind the zine actions sheet is no longer read out as a button.</li>
+          <li>With a screen reader (TalkBack), the page you’re working on reads from top to bottom and left to right, whatever is stacked on top.</li>
+          <li>With a screen reader, the dimmed area behind a zine’s menu on your shelf is no longer read out as a button.</li>
         </ul>
         <h3>Known limitations</h3>
         <ul>
-          <li>Tapping through a frame has not been checked by ear with TalkBack yet. A thin frame over a photo can take a careful tap, and dragging a selected frame from its edge resizes it.</li>
-          <li>With TalkBack, an undo line that repeats may be spoken only once.</li>
-          <li>Earlier versions restore a backup that left zines out without saying so.</li>
+          <li>We haven’t tested tapping through a frame with a screen reader yet. A thin frame over a photo can take a careful tap, and dragging a selected frame from its edge resizes it; drag from the middle to move it.</li>
+          <li>With a screen reader, an undo message that repeats may be spoken only once.</li>
+          <li>If a backup had to leave a zine out, older versions of Zinely restore that backup without telling you a zine is missing.</li>
           <li>See-through pictures still come in on white. You cannot choose a font yet. Printing happens in another app.</li>
         </ul>
         <p>All of them are listed on the <a href="../download/#known-limits">download page</a>.</p>
@@ -108,24 +108,24 @@
         <h3>Changed</h3>
         <ul>
           <li>The About screen opens with a short note from Aastra, the two of us who make Zinely. Font credits now sit one tap away under <strong>Licences &amp; credits</strong>.</li>
-          <li>Reframe opens big photos more smoothly. Your crop, flip, and printed page still use the full-size photo.</li>
+          <li>Moving a photo inside its frame (Reframe) opens big photos more smoothly. Your crop, flip, and printed page still use the full-size photo.</li>
         </ul>
         <h3>Fixed</h3>
         <ul>
-          <li>On Android 7, 8 and 9, Save PDF now asks for storage access instead of failing every time. Decline, and nothing is saved. Share never needs it.</li>
+          <li>On Android 7, 8 and 9, Save PDF now asks for permission to save files instead of failing every time. Decline, and nothing is saved. Share never needs it.</li>
           <li>On those phones, a save that fails part-way no longer leaves an empty or broken file in Downloads.</li>
-          <li>A flipped photo sent across the fold now lands the right way round on both pages, so the printed spread lines up.</li>
+          <li>A flipped photo stretched across two facing pages now lands the right way round on both, so the printed pages line up.</li>
           <li>After an Undo that jumps to another page, nothing from the page you left stays selected.</li>
           <li>Pictures with see-through backgrounds, like logos, come in on white instead of black.</li>
-          <li>A move or resize that ends exactly where it started no longer wipes Redo or adds an empty Undo step.</li>
-          <li>With TalkBack, the dimmed area behind most sheets, such as <strong>Start a zine</strong> and <strong>Backups</strong>, is no longer read out as a button, so TalkBack starts inside the sheet.</li>
+          <li>A move or resize that ends exactly where it started no longer clears Redo or adds an Undo that does nothing.</li>
+          <li>With a screen reader, the dimmed area behind most pop-up panels, such as <strong>Start a zine</strong> and <strong>Backups</strong>, is no longer read out as a button.</li>
         </ul>
         <h3>Known limitations</h3>
         <ul>
-          <li>See-through pictures lose their transparency. They print correctly, but on the cream page in the app a logo shows as a faint white rectangle.</li>
-          <li>On Android 7, 8 and 9, if you decline storage access and tell Android not to ask again, Save PDF keeps failing until you allow storage in your phone’s settings. Share still works.</li>
-          <li>With TalkBack, About and its credits pages open on the Back button, and going back lands at the top of the previous screen. Everything is still reachable by swiping. The zine actions sheet still has the unlabelled dimmed area.</li>
-          <li>Replaced and deleted photos still take up space. You cannot choose a font yet. Scripts Zinely cannot print yet are kept but do not print. Printing happens in another app.</li>
+          <li>See-through pictures don’t stay see-through. They print correctly, but on the cream page in the app a logo shows as a faint white rectangle.</li>
+          <li>On Android 7, 8 and 9, if you say no to saving files and tell Android not to ask again, Save PDF keeps failing until you allow it in your phone’s settings. Share still works.</li>
+          <li>With a screen reader, About and its credits pages start on the Back button, and going back lands at the top of the previous screen. Everything is still reachable by swiping. The dimmed area behind a zine’s menu is still read out as a button here; fixed in beta.6.</li>
+          <li>Replaced and deleted photos still take up space. You cannot choose a font yet. Writing that Zinely cannot print yet, such as Bengali or Tamil, is kept but does not print. Printing happens in another app.</li>
         </ul>
       </section>
 
@@ -166,7 +166,7 @@
         <ul>
           <li>Swap a photo without starting its placement all over again. Its position, crop, and effects stay put.</li>
           <li>Changed your mind? Undo brings the old photo back.</li>
-          <li>Screen-reader labels now distinguish replacing a photo from replacing a piece of art.</li>
+          <li>A screen reader now says whether you’re replacing a photo or a piece of art.</li>
         </ul>
       </section>
 
@@ -209,7 +209,7 @@
         <p class="release-theme">Read your zine</p>
         <ul>
           <li>See your finished zine page by page, the way a reader will, before you print it.</li>
-          <li>The first build signed with Zinely’s own key. Every beta since installs over it and keeps your zines.</li>
+          <li>From this build on, each new beta installs over the last one and keeps your zines.</li>
         </ul>
       </section>
 
@@ -223,7 +223,7 @@
         <p class="release-theme">From page order to a PDF in your Downloads</p>
         <ul>
           <li>0.8.0 (15 July): Save PDF puts a copy of your zine in your phone’s Downloads folder.</li>
-          <li>Earlier builds made the page-order engine, saving, drawing, the editor, and photo framing. The <a href="https://github.com/aritr-codes/zinely-android/blob/main/CHANGELOG.md">developer changelog</a> has the details.</li>
+          <li>Earlier builds added page ordering, saving, the page editor, and fitting a photo in its frame.</li>
         </ul>
       </section>
 

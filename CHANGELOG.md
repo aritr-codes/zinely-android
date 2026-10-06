@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The public roadmap lists folders on the Shelf and a second font as In development, each saying there is
+  nothing to try yet. The roadmap and What's new pages use plainer words (for example "a screen reader" where
+  they said TalkBack alone), and the homepage status table now starts each status on its own line.
 - The public website now offers 0.9.0-beta.6 as the current download, with its version, size, versionCode 11,
   APK link and published SHA-256, a beta.6 entry in What's new with its known limitations, and the roadmap's
   wave-1 items moved to Available. Google Play and iPhone stay shown as unavailable.
