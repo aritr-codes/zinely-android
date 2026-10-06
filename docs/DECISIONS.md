@@ -14449,6 +14449,12 @@ cross's bare paper surprise them?
   inside and outside 8 dp, exact beats near, stacked near, a rotated, a mirrored and a flipped photo corner,
   crop marks and a staple by their box, long-press, and double-tap through a hole onto a photo and onto words.
   All as specified. Drag, undo, redo, text editing and Reframe behaved as before.
+- **2026-10-06, CI on the pull request** failed property 14 on a random sample the local runs had not drawn: a
+  window turned 180 degrees, tapped on its exact box corner. The box test rejected the point by one rounding
+  step while the ink test, computed apart, rounded it back onto the band, so a tap with no tolerance gained a
+  piece from blank paper. Pass 1 now asks the box before the ink. Ink lies inside its box, so nothing a finger
+  can reach changes; the sample is kept as a unit test. This one-line change was made after the review and the
+  device passes above, and was checked by the suite alone.
 - **Still owed before this ADR can be Accepted** (tracked in [OWNER-CHECKLIST](OWNER-CHECKLIST.md)): the owner's
   TalkBack listen (deferred by the owner on 2026-10-06, not waived); the owner's finger-based first-time-user
   pass, including whether a thin frame can be picked back up over a photo; and the freeze of A27. Two

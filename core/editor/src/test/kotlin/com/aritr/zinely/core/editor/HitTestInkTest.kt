@@ -290,4 +290,17 @@ class HitTestInkTest {
         assertEquals(setOf("paper.window"), EditorReducer.reduce(start, Intent.SelectAt(fiveOff, tol)).model.selection)
         assertEquals(emptySet<String>(), EditorReducer.reduce(start, Intent.SelectAt(fiveOff)).model.selection)
     }
+
+    @Test
+    fun `a tap the box rejects by one rounding step is not ink either`() {
+        // The sample the property test shrank to in CI: at 180 degrees the un-rotated corner lands one
+        // rounding step outside the box, while the unit-space ink test rounds it back onto the band.
+        val window = DecorElement(
+            "w", Transform(0.0, 0.0, 10.0, 10.0, 180.0), 0, "paper.window", ColorRgba(0, 0, 0),
+            mirrored = true, flippedVertically = true,
+        )
+        val corner = PtPoint(0.0, 0.0)
+        assertTrue(!HitTest.contains(window, corner), "the premise: the box rejects this corner")
+        assertNull(HitTest.topmostAt(page(window), corner))
+    }
 }

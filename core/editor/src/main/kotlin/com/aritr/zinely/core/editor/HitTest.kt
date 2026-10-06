@@ -45,8 +45,10 @@ public object HitTest {
             .sortedWith(compareByDescending<IndexedValue<Element>> { it.value.zIndex }.thenByDescending { it.index })
             .map { it.value }
 
-        // 1. Drawn: ink for an in-scope piece, the box for everything else.
-        topmostFirst.firstOrNull { el -> inkDistance(el, pt)?.let { it == 0.0 } ?: contains(el, pt) }
+        // 1. Drawn: ink for an in-scope piece, the box for everything else. Ink lies inside its box, but
+        // the two are computed apart and can disagree by one rounding step on the box edge; asking the box
+        // first keeps "nothing is gained from blank paper without a tolerance" exact.
+        topmostFirst.firstOrNull { el -> contains(el, pt) && inkDistance(el, pt)?.let { it == 0.0 } != false }
             ?.let { return it.id }
         // 2. Near: in-scope pieces only. A null distance is never a candidate. A non-finite tolerance is
         // no tolerance: an infinite one would hand every miss to the topmost holed piece on the page.
