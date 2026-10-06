@@ -52,7 +52,7 @@ two-phone restore pass.
 | Brief | State after 2026-09-26 |
 |---|---|
 | [01 Visible ownership](BRIEF-01-VISIBLE-OWNERSHIP.md) | **Rewritten.** Part 1 (+ late "Backup cancelled."), part 1b spec (restore honesty + skip-and-list), ADR-110 amendment draft, product-law draft, one `backup-restore.html` amendment spec |
-| [02 Voices](BRIEF-02-THREE-VOICES.md) | **Prepared, not rewritten.** Rulings and the measured Fraunces assets recorded at the top; "Corrections pending" stays until the rewrite |
+| [02 Voices](BRIEF-02-THREE-VOICES.md) | **Rewritten 2026-10-06, not ready to build.** It waits on your minimum print size (after the printed page) and your approval of the Voice row drawing; its gate table lists the rest |
 | [03 Printer test page](BRIEF-03-PRINTER-TEST-PAGE.md) | **Blocked** on the physical print study; rewritten after it reports |
 | [04 Reading order and alt text](BRIEF-04-READING-ORDER-AND-ALT-TEXT.md) | **Updated** for the current dependency structure |
 | [05 Materials: frames](BRIEF-05-MATERIALS-FRAMES.md) | **Updated.** Six-piece hit test with its ADR draft and `v21-bench.html` spec; two-frame scope; fold study not a gate |

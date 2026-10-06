@@ -70,7 +70,7 @@ the resulting sequence and per-step readiness are in the [plan §5 and §11](ZIN
   - V2-CONSTITUTION §III (~:147-153) already assigns Fraunces "zine body, captions, pull quotes", and ends
     "No fourth **UI** typeface". Precedent for reading a clause as written: the 2026-08-10 scope ruling (~:159).
   - Bundled Fraunces = three **static 9 pt roman** chrome cuts (400/500/600) in `:core:ui`; no Bold, no Italic
-    ([Brief 02 pre-rewrite record](BRIEF-02-THREE-VOICES.md)).
+    (recorded in Brief 02 before its rewrite, at `ae374ea`; now [Brief 02, The four faces](BRIEF-02-THREE-VOICES.md#the-four-faces)).
 - **Ruling (owner, 2026-09-26):**
   - **Book = Fraunces. Plain = Inter. Hand = deferred.** Averia remains the interface voice for now.
   - **Scope ruling (dated; not a constitutional rewrite):** *text inside a zine may use a document voice; a
@@ -259,6 +259,7 @@ These are still **owner** decisions. They are just not needed yet.
 | Date | Change |
 |---|---|
 | 2026-10-06 | Q4 carried out (plan step Q4-F): `v21-typebar.html` and `v21-reframe.html` frozen; the divergences found are listed in each file and returned to the owner. |
+| 2026-10-06 | Q2: Brief 02 rewritten for two voices. The four document faces are upstream's own static files (not instanced); the printed-page procedure and the older-build test are written in the brief. The minimum print size and the type-bar amendment approval are still the owner's. |
 | 2026-09-30 | Named-undo copy ruled by the owner on PR #88 and frozen in `v21-bench.html` A26: duplicate, reset framing and restack direction; Redo is spoken, through the same snack. Decorative Art in Read stays open. |
 | 2026-09-26 | **Supplementary Q8 ruling recorded** (after the final planning audit): a single poisoned or unreadable photo is skip-and-list, never a whole-backup failure. Replaces the 🟦 owner-to-confirm bullet; defect 5's restore half stays out. |
 | 2026-09-26 | **Owner rulings Q1–Q8 recorded**; the file becomes the ruling record. Corrections: Q1's 30 Sep 2026 framing (named stores in four countries, not GitHub APKs; global phase 2027); registration = package name + signing-key ownership; Averia measured at 12 of 128 Latin Extended-A letters; the N2 "conflict" was a misreading (N2 is a to-do); Q8's defect list now names the three restore-honesty defects instead of "the first three", and the poisoned-photo wording distinguishes restore ("Couldn't read that file") from backup ("This backup looks damaged"). Base `0aa7a7d`. |

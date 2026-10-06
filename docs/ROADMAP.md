@@ -39,8 +39,9 @@ ADR yet. They are listed here on the owner's 2026-10-06 instruction because they
   2026-10-06). Not designed. It likely touches the shelf model and the backup archive, and it needs an ADR because
   the frozen Shelf has no grouping today.
 - **Document voices, Book and Plain:** two named typefaces for a zine's words, Book (Fraunces) and Plain (Inter)
-  ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); plan step 8). Still waits on the Brief 02
-  rewrite, the measured Fraunces faces and the owner's minimum print size. The type bar and Reframe pages were
+  ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); plan step 8). The [brief](planning/BRIEF-02-THREE-VOICES.md)
+  is rewritten and the four Fraunces faces are fetched and measured (2026-10-06). Still waits on the owner's
+  minimum print size after a printed page, and on the Voice row being drawn in the type bar and approved. The type bar and Reframe pages were
   frozen on 2026-10-06.
 
 The wave-1 work shipped in beta.6 on 2026-10-06
@@ -369,6 +370,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-06 | **Document voices: preparation.** Brief 02 rewritten for Book and Plain; the four Fraunces document faces fetched from upstream, pinned and measured (kept outside the app build); the printed-page and older-build procedures written. No app change. Still waits on the owner's minimum print size and the type-bar amendment. | [Brief 02](planning/BRIEF-02-THREE-VOICES.md) · [gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8) |
 | 2026-10-06 | **Type bar and Reframe designs frozen** (`v21-typebar.html`, `v21-reframe.html`; 1.x plan step Q4-F, owner ruling 2026-09-26). No app change. Differences found between the frozen pages and the app are listed in each file and returned to the owner. | [gate Q4](planning/ZINELY-1X-DECISION-GATE.md#q4-typebar--reframe-specs-o10) |
 | 2026-10-06 | **Shelf folders and document voices move to In development** on the owner's instruction, as the work starting next; both are at the design stage with nothing built. The label's definition widens to "started" ([ADR-118](DECISIONS.md#adr-118) amendment). The public pages say there is nothing to try yet. | [ADR-118](DECISIONS.md#adr-118) |
 | 2026-10-06 | **beta.6 released** (tag `v0.9.0-beta.6`, merge `41b4399`): the wave-1 items leave In development; the public website offers beta.6. Tap-through ships with [ADR-124](DECISIONS.md#adr-124) still Proposed. No scope change. | [tester package](releases/0.9.0-beta.6.md) |
