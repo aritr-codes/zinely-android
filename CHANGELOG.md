@@ -16,8 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- The public roadmap page now lists what is built but not yet in the download (clearer backups and restore,
-  reaching through frames, named undo, TalkBack reading order, the tidier text toolbar) and what is planned:
+- The public website now offers 0.9.0-beta.6 as the current download, with its version, size, versionCode 11,
+  APK link and published SHA-256, a beta.6 entry in What's new with its known limitations, and the roadmap's
+  wave-1 items moved to Available. Google Play and iPhone stay shown as unavailable.
+- The public roadmap page lists what is planned:
   folders on the Shelf, a second typeface, two frames, page backgrounds, photo descriptions, help at the printer and
   more paper sizes. No date is given for any of it, and no Android behavior or download changed.
 - Rebuilt the public website story around Shelf, Bench and Proof, told in the order a visitor asks: what it is, why

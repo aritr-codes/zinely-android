@@ -207,7 +207,7 @@ from a developer's personal device library, even when it appears harmless.
 > Added 2026-07-24 for the first Play submission. §3 above remains the record for side-load
 > distribution; this section owns Play. It was written when the Play artifact was to be the
 > `0.9.0-beta.1` code as an App Bundle. That is no longer the plan: a first Play upload would be
-> whatever release build is current. `0.9.0-beta.5` is APK-only, and Play is still deferred.
+> whatever release build is current. `0.9.0-beta.6` is APK-only, and Play is still deferred.
 
 ### 4.1 The gate that is not code
 
@@ -234,8 +234,8 @@ the upload key** — Play then holds the app signing key and this one only prove
 Back it up exactly as §1 requires; losing the upload key is recoverable, losing an un-enrolled app
 signing key is not.
 
-**`versionCode`:** upload the current release build with its own `versionCode` (`10` for
-`0.9.0-beta.5`). The earlier advice here, to reuse `3` for a Play copy of beta.1, predates beta.2
+**`versionCode`:** upload the current release build with its own `versionCode` (`11` for
+`0.9.0-beta.6`). The earlier advice here, to reuse `3` for a Play copy of beta.1, predates beta.2
 through beta.5 and no longer applies.
 
 ⚠ **Check the bundle's signer before any upload.** The debug-signing gate in
