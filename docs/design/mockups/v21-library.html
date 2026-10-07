@@ -38,16 +38,16 @@ if (new URLSearchParams(location.search).has('gallery')) {
      │  A24 ACCESSIBILITY AMENDMENT · 2026-08-28: Delete is separated from the    │
      │  reversible actions by an 8px desk band as well as consequence colour.     │
      │                                                                             │
-     │  A28 FOLDERS AMENDMENT · PROPOSED 2026-10-06 · NOT FROZEN (ADR-125,         │
-     │  Proposed).  The owner asked for folders on the Shelf.  Everything this     │
-     │  amendment adds is marked A28 in the CSS, markup and script below, and none │
-     │  of it is in force until the owner approves it and ADR-125 is Accepted.     │
+     │  A28 FOLDERS AMENDMENT · FROZEN 2026-10-07 on the owner's approval, given   │
+     │  after trying this page (ADR-125, Accepted; drawn 2026-10-06).  The owner   │
+     │  asked for folders on the Shelf.  Everything this amendment adds is marked  │
+     │  A28 in the CSS, markup and script below.  Not yet built in the app.        │
      │  With no folder made, the Shelf is the frozen Shelf: same heading, same     │
      │  grid, same dock.  A28 adds one row to the zine sheet (Move to a folder),   │
      │  a folder chooser, a name sheet, a folder tile (a banded pile of its        │
      │  zines' own covers), the view inside a folder, a folder action sheet and    │
      │  one support-paper snack.  One level.  A zine sits in one place.  A folder  │
-     │  exists only while it holds a zine.  No drag gesture.  If approved, the     │
+     │  exists only while it holds a zine.  No drag gesture.  With A28 the         │
      │  unavailable zine's sheet has six rows, not the five D-111 names: Move to   │
      │  a folder is live for it, as Rename is.                                     │
      └─────────────────────────────────────────────────────────────────────────────┘ -->
@@ -399,7 +399,7 @@ body{
 .act.danger:active{color:var(--on-leaf)}
 
 /* ============================================================================
-   A28 · FOLDERS — PROPOSED 2026-10-06, NOT FROZEN (ADR-125, Proposed).
+   A28 · FOLDERS — FROZEN 2026-10-07 on the owner's approval (ADR-125, Accepted).
    Everything from here to the dev controls is the amendment.  No rule above this
    line changed.  A Shelf with no folder looks as it did before A28 (measured; see the
    note at .sheet.a28 below).
@@ -505,7 +505,7 @@ body{
 
 /* prototype-only: Android font scale 1.8, the scale the app's regression tests use */
 :root[data-large="on"]{font-size:180%}
-/* ===================== end of A28 (proposed) CSS ===================== */
+/* ===================== end of A28 CSS ===================== */
 
 /* ============================== dev controls ============================== */
 .controls{display:flex;flex-wrap:wrap;gap:var(--gap-sm);justify-content:center;max-width:640px}
@@ -528,9 +528,9 @@ same action sheet. What changes is the <b>voice</b>. Five moves are on trial —
 <b>a hard printed offset shadow</b> instead of a blur, <b>things resting at an angle</b>,
 <b>tape</b>, <b>a postmark stamp</b> carrying metadata, and <b>a wobbly display face</b>.
 Toggle each one below and judge it on its own.</p>
-<!-- A28 (proposed) -->
-<p class="cap"><span class="badge">A28 folders · proposed · not frozen</span><br>
-<b>Folders (ADR-125, Proposed).</b> Tap a zine’s three dots, then <b>Move to a folder</b>. A folder is a
+<!-- A28 -->
+<p class="cap"><span class="badge">A28 folders · frozen 2026-10-07 · not yet built</span><br>
+<b>Folders (ADR-125).</b> Tap a zine’s three dots, then <b>Move to a folder</b>. A folder is a
 banded pile of its zines’ own covers; tap it to look inside, tap its three dots to rename it or take its zines
 out. There is one level, a zine sits in one place, and a folder exists only while it holds a zine. Nothing is
 dragged. With no folder made, this is the frozen Shelf plus that one row. <b>Make a zine</b> pressed inside a
@@ -541,7 +541,7 @@ buttons below jump to each state.</p>
   <div class="shelf" id="shelf">
     <div class="shelf-head">
       <div>
-        <!-- A28 (proposed): present only inside a folder -->
+        <!-- A28: present only inside a folder -->
         <button class="back" id="back" aria-label="Back to My Shelf" hidden><svg viewBox="0 0 7 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 1 1 6l5 5"/></svg>My Shelf</button>
         <h1>My Shelf</h1>
         <svg viewBox="0 0 132 9" fill="none" aria-hidden="true"><path d="M2 6.2c22-3.4 46-4.6 74-3.2 18 .9 33 2.4 54 1.1" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>
@@ -645,12 +645,12 @@ buttons below jump to each state.</p>
     <button class="act" id="sheetShare"><span class="ic">⇪</span> Share &amp; export</button>
     <button class="act" id="sheetRename"><span class="ic">✎</span> Rename</button>
     <button class="act" id="sheetDuplicate"><span class="ic">⧉</span> Duplicate</button>
-    <!-- A28 (proposed): the sixth row.  Live for an unavailable zine, like Rename. -->
+    <!-- A28: the sixth row.  Live for an unavailable zine, like Rename. -->
     <button class="act" id="sheetMove"><span class="ic" aria-hidden="true"><svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M6 2.2 13.6 3.4 12.4 13 4.8 11.8Z"/><path d="M3 4h8.4v10.4H3Z" fill="var(--butter)"/><path d="M1.8 10h10.8"/></svg></span> <span id="sheetMoveLabel">Move to a folder</span></button>
     <button class="act danger" id="sheetDelete"><span class="ic">⌫</span> Delete</button>
   </div>
 
-  <!-- ============ A28 (proposed, not frozen) — the folder surfaces ============ -->
+  <!-- ============ A28 — the folder surfaces ============ -->
   <div class="sheet a28" id="moveSheet" role="dialog" aria-label="Move zine" aria-modal="true">
     <div class="grab"></div>
     <div class="sh-head"><div class="sh-ttl" id="mvTtl">Riso tests</div><div class="sh-sub" id="mvSub">On My Shelf · move to…</div></div>
@@ -681,7 +681,7 @@ buttons below jump to each state.</p>
   </div>
 
   <div class="snack" id="snack" role="status" aria-live="polite"><span id="snackText"></span><button id="snackUndo">Undo</button></div>
-  <!-- ======================= end of A28 (proposed) markup ======================= -->
+  <!-- ======================= end of A28 markup ======================= -->
 </div>
 
 <div class="controls">
@@ -692,7 +692,7 @@ buttons below jump to each state.</p>
   <button class="ctl" id="ld">loading</button>
   <button class="ctl" id="er">error</button>
   <button class="ctl" id="ua">unavailable sheet</button>
-  <span class="grp">folders — A28, proposed, not frozen</span>
+  <span class="grp">folders — A28</span>
   <button class="ctl on" id="fo0">no folders (the frozen Shelf)</button>
   <button class="ctl" id="fo1">with folders</button>
   <button class="ctl" id="fo2">inside a folder</button>
@@ -757,14 +757,14 @@ document.getElementById('ua').onclick = () => {
   setUnavailable(!unavailable);
   if(unavailable){ scrim.classList.add('show'); sheet.classList.add('show'); }
 };
-// A28 (proposed): closes whichever sheet is up — there are four now, not one.
+// A28: closes whichever sheet is up — there are four now, not one.
 function close(){ scrim.classList.remove('show'); document.querySelectorAll('.sheet').forEach(s => s.classList.remove('show')); lower(); }
 // The sheet's real trigger is `.more`; `.zine-open` is wired to it too because this prototype has no
 // Bench to open, and a tile that does nothing when tapped would misrepresent the design. In the app
 // `.zine-open` opens the zine and only `.more` opens this sheet.
 document.querySelectorAll('.zine').forEach(z => {
   const open = () => {
-    cur = lib.find(x => x.el === z); raise();   // A28 (proposed): the sheet's rows act on this zine
+    cur = lib.find(x => x.el === z); raise();   // A28: the sheet's rows act on this zine
     document.getElementById('shTtl').textContent = z.dataset.name;
     document.getElementById('shSub').textContent = z.dataset.sub;
     scrim.classList.add('show'); sheet.classList.add('show');
@@ -777,7 +777,7 @@ document.querySelectorAll('.act').forEach(a => a.onclick = () => { if(!a.disable
 addEventListener('keydown', e => e.key === 'Escape' && close());
 
 /* ============================================================================
-   A28 · FOLDERS — PROPOSED 2026-10-06, NOT FROZEN (ADR-125, Proposed).
+   A28 · FOLDERS — FROZEN 2026-10-07 on the owner's approval (ADR-125, Accepted).
 
    THE RULES.  Cited everywhere as A28.n, so that they are never confused with ADR-125's
    own rule numbers.  ADR-125 owns the model and the storage (what a folder is, where a
@@ -1064,5 +1064,5 @@ $('lg').onclick = () => {
   const on = R.getAttribute('data-large') !== 'on';
   R.setAttribute('data-large', on ? 'on' : 'off'); $('lg').classList.toggle('on', on);
 };
-/* ===================== end of A28 (proposed) script ===================== */
+/* ===================== end of A28 script ===================== */
 </script>

@@ -32,15 +32,14 @@ Those steps shipped in beta.6 on 2026-10-06.
 
 ### In development — started (designing, building or testing), not in the public download
 
-Both entries are at the **design stage**: nothing is built, and neither has a frozen HTML specification or an
-Accepted ADR yet. They are listed here on the owner's 2026-10-06 instruction because they are the work starting
+Both entries are at the **design stage**: nothing is built. Folders has a frozen HTML specification and an
+Accepted ADR (2026-10-07); voices has neither yet. They are listed here on the owner's 2026-10-06 instruction because they are the work starting
 next.
 
 - **Shelf folders:** user-created folders to organise zines on the Shelf (owner request 2026-09-27, repeated
-  2026-10-06). **Designed as a proposal, not approved:** [ADR-125](DECISIONS.md#adr-125) is Proposed and the
-  [`v21-library.html`](design/mockups/v21-library.html) A28 amendment is drawn but not frozen. Waits on the
-  owner's rulings and design approval ([OWNER-CHECKLIST §1.5](OWNER-CHECKLIST.md#15-product--design-authorship)).
-  No Kotlin is written before both.
+  2026-10-06). **Design approved 2026-10-07, not built:** [ADR-125](DECISIONS.md#adr-125) is Accepted and the
+  [`v21-library.html`](design/mockups/v21-library.html) A28 amendment is frozen, on the owner's approval of the
+  prototype. Implementation is next; nothing is in the app yet.
 - **Document voices, Book and Plain:** two named typefaces for a zine's words, Book (Fraunces) and Plain (Inter)
   ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); plan step 8). The [brief](planning/BRIEF-02-THREE-VOICES.md)
   is rewritten and the four Fraunces faces are fetched and measured (2026-10-06). Still waits on the owner's
@@ -373,6 +372,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-07 | **Shelf folders: design approved.** The owner tried the A28 prototype and approved it and the recommended rulings. ADR-125 is Accepted and `v21-library.html` A28 is frozen. One question (F-10, the Tribunal row) is still the owner's and blocks nothing. Nothing is built; no public copy changed. | [ADR-125](DECISIONS.md#adr-125) |
 | 2026-10-06 | **Shelf folders proposed, not approved.** Research ([R22](RESEARCH.md)), a Proposed ADR and an interactive amendment to the frozen Shelf (A28, not frozen). One level, a zine in one place, no empty folders, no drag; a backup carries folder names without a format-version change. Fourteen owner rulings are owed. Still In development at the design stage; nothing built; no public copy changed. | [ADR-125](DECISIONS.md#adr-125) |
 | 2026-10-06 | **Document voices: preparation.** Brief 02 rewritten for Book and Plain; the four Fraunces document faces fetched from upstream, pinned and measured (kept outside the app build); the printed-page and older-build procedures written; [ADR-126](DECISIONS.md#adr-126) drafted as Proposed. No app change. Still waits on the owner's minimum print size and the type-bar amendment. | [Brief 02](planning/BRIEF-02-THREE-VOICES.md) · [gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8) |
 | 2026-10-06 | **Type bar and Reframe designs frozen** (`v21-typebar.html`, `v21-reframe.html`; 1.x plan step Q4-F, owner ruling 2026-09-26). No app change. Differences found between the frozen pages and the app are listed in each file and returned to the owner. | [gate Q4](planning/ZINELY-1X-DECISION-GATE.md#q4-typebar--reframe-specs-o10) |

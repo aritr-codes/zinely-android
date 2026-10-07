@@ -642,7 +642,7 @@ require sign-in; optional email does not imply anonymous processing by Google.
 
 ## R22. Organising a small library of your own work on a phone — ✅ VERIFIED + 🟦 RECOMMENDATION
 
-Research for Shelf folders ([ADR-125](DECISIONS.md#adr-125), Proposed), 6 October 2026. Sources are official
+Research for Shelf folders ([ADR-125](DECISIONS.md#adr-125)), 6 October 2026. Sources are official
 help pages unless stated, all opened on that date. Some pages were read through a tool that returns a summary
 of the page, so this section **paraphrases and does not quote**: each sentence is the claim its source supports,
 not the source's words. What could not be opened is listed in R22.7 and is not relied on.
