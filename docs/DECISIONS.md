@@ -14653,7 +14653,9 @@ recorded the keyboard focus ring as decided where plan step Q4-F says a differen
 **accepted** (the freeze described as not fully carried out; two unknowns measurable today added to Brief 02;
 the ADR-055 forward note listed above; a dated note in ADR-102; the brief's owner list; the font script
 refusing unknown arguments). One **partly accepted**: ZINE-DIRECTION carries one dated note where it says
-"three voices" are to be built, not five. A review of that reconciliation returned **GO WITH FIXES**; its two
+"three voices" are to be built, not five. The other four mentions (lines 76, 146, 353, 739) stay as they are because this branch prepared
+voices and did not revise the direction document, and two of them need their asset facts rewritten, not a
+count changed; they are tracked in [issue #97](https://github.com/aritr-codes/zinely-android/issues/97). A review of that reconciliation returned **GO WITH FIXES**; its two
 Required Fixes (a sequencing claim the brief did not make; "done" left standing beside "not fully carried
 out") are applied. It confirmed the edits to the two frozen files touch only comments and caption prose.
 
