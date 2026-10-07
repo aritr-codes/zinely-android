@@ -1,5 +1,6 @@
 package com.aritr.zinely.core.data.asset
 
+import com.aritr.zinely.core.data.repository.LenientFolderNameSerializer
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineFormat
 import kotlinx.serialization.KSerializer
@@ -43,6 +44,11 @@ public const val MAX_BACKUP_ASSETS: Int = 100_000
  * mint a new local id on collision. [documentPath] is validated as a canonical archive-relative
  * path before any bytes are staged. Cover fields use their persisted enum names so the backup
  * preserves the shelf identity owned by `meta.json` without copying that private sidecar format.
+ *
+ * [folder] is the Shelf folder the zine was in ([ADR-125](docs/DECISIONS.md#adr-125) rule 15). Additive and
+ * defaulted, so `packageVersion` stays 2: an entry without the key is a zine on My Shelf, and builds that do
+ * not know the key ignore it and restore the zine to My Shelf. It is arrangement, not work, so it is read
+ * leniently: a value of the wrong type is no folder and never refuses a restore.
  */
 @Serializable
 public data class ZineBackupProjectEntry(
@@ -59,6 +65,8 @@ public data class ZineBackupProjectEntry(
     val assetHashes: List<String>,
     val coverSurface: String?,
     val coverStamp: String?,
+    @Serializable(with = LenientFolderNameSerializer::class)
+    val folder: String? = null,
 )
 
 /**

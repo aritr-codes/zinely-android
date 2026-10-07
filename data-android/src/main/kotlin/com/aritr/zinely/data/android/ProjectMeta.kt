@@ -1,5 +1,6 @@
 package com.aritr.zinely.data.android
 
+import com.aritr.zinely.core.data.repository.LenientFolderNameSerializer
 import kotlinx.serialization.Serializable
 
 /**
@@ -27,4 +28,16 @@ internal data class ProjectMeta(
      */
     val coverSurface: String? = null,
     val coverStamp: String? = null,
+    /**
+     * The Shelf folder this zine is in, or `null` for My Shelf ([ADR-125](docs/DECISIONS.md#adr-125) rule 12).
+     * A folder is not a thing on disk; it is this name, carried by each of its zines.
+     *
+     * Invariant: **every writer of this file carries the field across**, because each rewrite is wholesale
+     * and a field left out is destroyed. The `null` default is not encoded, so a zine that was never put in a
+     * folder has a byte-identical `meta.json` to one written before the field existed. Read leniently (a
+     * value that is not a string is no folder, and the rest of the file still reads) and always passed
+     * through `FolderNames.clean` before use.
+     */
+    @Serializable(with = LenientFolderNameSerializer::class)
+    val folder: String? = null,
 )

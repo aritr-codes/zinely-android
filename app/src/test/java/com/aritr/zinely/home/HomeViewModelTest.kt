@@ -4,6 +4,7 @@ import android.net.Uri
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.ProjectShelfEntry
+import com.aritr.zinely.core.data.repository.FolderChange
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
 import com.aritr.zinely.core.data.repository.ProjectUnavailableReason
@@ -115,6 +116,7 @@ class HomeViewModelTest {
             title: String,
             format: ZineFormat,
             paperSize: PaperSize,
+            folder: String?,
         ): DataResult<ProjectSummary> {
             created += Triple(title, format, paperSize)
             createGate?.await()
@@ -135,6 +137,16 @@ class HomeViewModelTest {
             deleted += id
             return deleteResult()
         }
+
+        // ADR-125 storage only: the Shelf does not call these yet.
+        override suspend fun moveProject(id: String, folder: String?): DataResult<Unit> =
+            error("not used by the shelf yet")
+
+        override suspend fun renameFolder(from: String, to: String): DataResult<FolderChange> =
+            error("not used by the shelf yet")
+
+        override suspend fun unpackFolder(name: String): DataResult<FolderChange> =
+            error("not used by the shelf yet")
     }
 
     private class FakeLibrarySafTransport : LibrarySafTransport {

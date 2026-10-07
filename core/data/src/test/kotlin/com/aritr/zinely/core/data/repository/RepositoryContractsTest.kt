@@ -32,6 +32,7 @@ class RepositoryContractsTest {
             title: String,
             format: ZineFormat,
             paperSize: PaperSize,
+            folder: String?,
         ): DataResult<ProjectSummary> {
             val summary = ProjectSummary(
                 id = "p${summaries.value.size + 1}",
@@ -72,6 +73,15 @@ class RepositoryContractsTest {
             summaries.value = summaries.value.filterNot { it.id == id }
             return DataResult.Success(Unit)
         }
+
+        // This fake keeps no folders; the folder contract is exercised against the real repository.
+        override suspend fun moveProject(id: String, folder: String?): DataResult<Unit> = DataResult.Success(Unit)
+
+        override suspend fun renameFolder(from: String, to: String): DataResult<FolderChange> =
+            DataResult.Success(FolderChange(folder = to, changedIds = emptyList()))
+
+        override suspend fun unpackFolder(name: String): DataResult<FolderChange> =
+            DataResult.Success(FolderChange(folder = null, changedIds = emptyList()))
 
         override suspend fun load(projectId: String): DataResult<ZineDocument> =
             docs[projectId]?.let { DataResult.Success(it) } ?: DataResult.Failure(DataError.NotFound(projectId))

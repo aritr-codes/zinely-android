@@ -27,7 +27,7 @@ import java.security.MessageDigest
  * Android repository assembles the manifest metadata, which here was built by hand to the same schema.
  *
  * Fixtures are frozen. A failure is a restore break to fix in code; never regenerate the archive to
- * pass. A new backup package version adds a new archive beside this one.
+ * pass. A new backup package version, or a new key in the manifest, adds a new archive beside this one.
  */
 class LibraryBackupFixtureTest {
 
@@ -102,6 +102,49 @@ class LibraryBackupFixtureTest {
         }
     }
 
+    /**
+     * `fixtures/library-backup-v2-folders.zine` ([ADR-125](docs/DECISIONS.md#adr-125) rule 15) was produced on
+     * the folders storage branch by the [ZineLibraryBackupWriter] from the three zines and two photos of the
+     * first archive: two zines in the folder *Moth Club* and one on My Shelf, whose entry says `"folder":null`.
+     * It is the first archive to carry the `folder` key, and `packageVersion` is still 2. Frozen like its
+     * siblings, which are unchanged: they pin that an entry with no `folder` key is a zine on My Shelf.
+     */
+    @Test
+    fun `the frozen folders archive stages with its folder names`() = runBlocking {
+        val archive = Path.of(checkNotNull(javaClass.getResource("/fixtures/library-backup-v2-folders.zine")).toURI())
+        assertEquals(FOLDERS_ARCHIVE_SHA256, sha256(Files.readAllBytes(archive))) {
+            "library-backup-v2-folders.zine changed. Fixtures are frozen: add a new archive, never regenerate one."
+        }
+
+        ZineLibraryBackupStager().stage(archive, temp.resolve("staging")).use { staged ->
+            assertEquals(2, staged.manifest.packageVersion)
+            assertEquals(emptyList<ZineBackupOmission>(), staged.manifest.omitted)
+            assertEquals(
+                listOf(
+                    Triple("zine-v3", DOC_V3, "Moth Club"),
+                    Triple("zine-v2", DOC_V2, "Moth Club"),
+                    Triple("zine-v1", DOC_V1, null),
+                ),
+                staged.projects.map {
+                    Triple(it.manifestEntry.sourceProjectId, it.manifestEntry.documentSha256, it.manifestEntry.folder)
+                },
+            )
+            assertEquals(setOf(PHOTO_A, PHOTO_B), staged.assets.keys)
+        }
+    }
+
+    /** The two archives saved before folders existed: no entry has the key, so every zine is on My Shelf. */
+    @Test
+    fun `archives saved before folders existed stage with every zine on My Shelf`() = runBlocking {
+        listOf("library-backup-v2.zine", "library-backup-v2-partial.zine").forEach { name ->
+            val archive = Path.of(checkNotNull(javaClass.getResource("/fixtures/$name")).toURI())
+            ZineLibraryBackupStager().stage(archive, temp.resolve("staging-$name")).use { staged ->
+                assertTrue(staged.projects.isNotEmpty())
+                assertTrue(staged.projects.all { it.manifestEntry.folder == null }, name)
+            }
+        }
+    }
+
     private fun sha256(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256")
         .digest(bytes)
         .joinToString("") { "%02x".format(it) }
@@ -109,6 +152,8 @@ class LibraryBackupFixtureTest {
     private companion object {
         const val ARCHIVE_SHA256 = "fd14efcd1e146bf3dc6541ac8e9cb4d0ff43034bf811a7003edad25eb7542fe0"
         const val PARTIAL_ARCHIVE_SHA256 = "b9dfabb2d792a328a503f03fabd248c25c2c482539a6790f3de75a0fb527ee27"
+
+        const val FOLDERS_ARCHIVE_SHA256 = "a5f68d9c172b53f2e5240c9fbb7940ef9eb3696834b65007372009d6f778d9d9"
 
         /** The `:core:data` corpus files, pinned there by `DocumentFixtureCorpusTest`. */
         const val DOC_V1 = "b0e82a1a512ae724930f7b32d81213dca927f0e9f1b3233791e20618253da91e"

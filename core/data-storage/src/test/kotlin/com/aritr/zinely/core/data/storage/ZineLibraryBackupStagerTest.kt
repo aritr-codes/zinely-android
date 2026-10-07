@@ -168,6 +168,58 @@ class ZineLibraryBackupStagerTest {
         }
     }
 
+    /** ADR-125 rule 15: the folder name rides in an entry, so an entry too must tolerate keys it does not know. */
+    @Test
+    fun `a zine entry with an unknown key still stages`() = runBlocking {
+        val fixture = fixture(mapOf("one" to document()))
+        val manifest = backupJson.encodeToString(ZineLibraryBackupManifest.serializer(), fixture.manifest)
+        val future = manifest.replace(""""sourceProjectId":""", """"fromAFutureZinely":{"anything":[1,2]},"sourceProjectId":""")
+        assertTrue(future != manifest)
+        val archive = writeArchive(fixture, entryOverrides = mapOf("manifest.json" to future.encodeToByteArray()))
+
+        ZineLibraryBackupStager().stage(archive, temp.resolve("stage")).use { staged ->
+            assertEquals(listOf("one"), staged.projects.map { it.manifestEntry.sourceProjectId })
+        }
+    }
+
+    @Test
+    fun `a zine's folder name stages, and an entry without one is a zine on My Shelf`() = runBlocking {
+        val base = fixture(mapOf("one" to document(), "two" to document()))
+        val fixture = base.copy(
+            manifest = base.manifest.copy(
+                projects = base.manifest.projects.map { if (it.sourceProjectId == "one") it.copy(folder = "Trips") else it },
+            ),
+        )
+        // The entry for "two" is written the way a build without the field wrote it: no key at all.
+        val manifest = backupJson.encodeToString(ZineLibraryBackupManifest.serializer(), fixture.manifest)
+        val older = manifest.replace(""","folder":null""", "")
+        assertTrue(older != manifest && older.contains(""""folder":"Trips""""))
+        val archive = writeArchive(fixture, entryOverrides = mapOf("manifest.json" to older.encodeToByteArray()))
+
+        ZineLibraryBackupStager().stage(archive, temp.resolve("stage")).use { staged ->
+            assertEquals(
+                mapOf("one" to "Trips", "two" to null),
+                staged.projects.associate { it.manifestEntry.sourceProjectId to it.manifestEntry.folder },
+            )
+        }
+    }
+
+    /** A folder name is arrangement, not work: one of the wrong type is no folder, never a refused backup. */
+    @Test
+    fun `a folder value that is not text does not refuse the archive`() = runBlocking {
+        val fixture = fixture(mapOf("one" to document()))
+        val manifest = backupJson.encodeToString(ZineLibraryBackupManifest.serializer(), fixture.manifest)
+        listOf("7", "true", """["Trips"]""", """{"name":"Trips"}""").forEachIndexed { index, value ->
+            val odd = manifest.replace(""""folder":null""", """"folder":""" + value)
+            assertTrue(odd != manifest)
+            val archive = writeArchive(fixture, entryOverrides = mapOf("manifest.json" to odd.encodeToByteArray()))
+
+            ZineLibraryBackupStager().stage(archive, temp.resolve("stage-" + index)).use { staged ->
+                assertEquals(listOf<String?>(null), staged.projects.map { it.manifestEntry.folder })
+            }
+        }
+    }
+
     @Test
     fun `rejects malformed manifest JSON and invalid manifest UTF-8`() {
         val fixture = fixture(mapOf("one" to document()))

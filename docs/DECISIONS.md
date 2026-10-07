@@ -14479,8 +14479,9 @@ cross's bare paper surprise them?
 
 **Status:** **Accepted (design), 2026-10-07.** Proposed 2026-10-06. The owner tried the
 [`v21-library.html`](design/mockups/v21-library.html) **A28** prototype and approved it and the recommended
-rulings ("i have tried it and i am fine with them. you can proceed"); A28 was frozen the same day. **Nothing is
-built.** Acceptance covers the design and the storage model; the implementation still owes everything listed
+rulings ("i have tried it and i am fine with them. you can proceed"); A28 was frozen the same day. **The storage
+half is built (part 1, 2026-10-07, see *Implementation* below); nothing a maker can see or tap is.** Acceptance
+covers the design and the storage model; the implementation still owes the rest of what is listed
 under *Tests and evidence required before acceptance of the implementation*. One question, F-10, had no
 recommendation to approve and remains the owner's. Written in the folders design session on
 `origin/main` @ `ae374ea` (release `0.9.0-beta.6` plus documentation).
@@ -14830,6 +14831,39 @@ changed only comments and labels in `v21-library.html`.
   tests or a device, and did not listen with a screen reader.
 - **Not done:** no device, no TalkBack, no Compose. The TalkBack names are read from a browser's accessibility
   tree, which is not the Android platform tree.
+
+#### Implementation
+
+**Part 1, storage (2026-10-07, branch `feat/shelf-folders-storage`).** Rules 12 to 18, with no screen, no
+ViewModel and no string: a maker cannot reach any of it yet.
+
+- **What exists.** `FolderNames` in `:core:data` is rule 13's helper (clean, key, same, display).
+  `ProjectMeta` and `ZineBackupProjectEntry` each gain a defaulted `folder`. `ProjectRepository` gains
+  `moveProject`, `renameFolder`, `unpackFolder` and a `folder` argument on `createProject`;
+  `ProjectShelfEntry` carries `folder` for a zine that opens and for one that does not. The Room table and
+  its schema file are untouched, and `packageVersion` is still 2.
+- **Three things the rules left to the implementation.**
+  1. *The cut at 40 is written out, not taken from the platform.* Android's own text-breaking changes between
+     versions, so the same name could be cut at different places on two phones. The helper keeps together a
+     letter and its marks, an emoji and its modifiers, joined emoji, and the two halves of a flag. It can keep
+     more together than Unicode's rule would; it never splits what that rule keeps.
+  2. *A `folder` value that is not text is read as no folder*, in `meta.json` and in a backup, where a strict
+     reader would have called the whole file unreadable. A folder name is arrangement, not work.
+  3. *A rename or unpack that changes some zines and not others returns success with the list of zines left*
+     (`FolderChange.failedIds`), not a failure, because part of it happened and the caller must say so.
+- **Guards added**, each named under *Consequences*: `library-backup-v2-folders.zine`, a third frozen archive
+  (the first two are byte-identical, and now also pin that an entry with no key is My Shelf); an entry with an
+  unknown key still stages; a wrong-typed `folder` refuses neither staging nor a restore; the folder survives
+  each `meta.json` writer (create, rename, duplicate, the legacy cover backfill, move, rename folder, unpack,
+  restore); the name helper's cases; the Shelf lists again after each operation with no index write. Three
+  deliberate breaks (a writer dropping the folder, the Shelf not listening, the backup not carrying the name)
+  each turned exactly the expected test red.
+- **Still owed, with part 2:** the ViewModel test that a folder action finishes a waiting delete first (rule
+  11), every screen, string, golden and semantics test, pixel parity against A28, and both device passes. The
+  stale `v21-library.html:NNN` line citations named under *Consequences* are also left for part 2: they sit in
+  Shelf screen files, and part 1 changes none of them.
+- **No device pass for part 1.** It has no surface a maker or TalkBack can reach. Evidence is the unit suites.
+- **Review:** REVIEW_PLACEHOLDER
 
 ## ADR-126 {#adr-126}
 
