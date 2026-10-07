@@ -49,6 +49,7 @@ import com.aritr.zinely.core.model.newZineCoverRecipe
 import com.aritr.zinely.data.android.room.ProjectDao
 import com.aritr.zinely.data.android.room.ProjectEntity
 import java.io.IOException
+import java.io.UncheckedIOException
 import java.io.BufferedInputStream
 import java.nio.charset.CharacterCodingException
 import java.nio.file.Files
@@ -412,8 +413,10 @@ internal class RoomProjectRepository(
         try {
             // Like every change aimed at a zine, this waits for that zine's editing session, and before the
             // lock (ADR-044 §1). The members are read again under the lock; the gate's TOCTOU is the accepted one.
+            // The list itself is read under the lock: reading `meta.json` can repair it from its backup copy,
+            // which is a write, and the store allows one writer.
             val gated = try {
-                membersOf(fromKey, foldersOnDisk())
+                mutex.withLock { membersOf(fromKey, foldersOnDisk()) }
             } catch (e: IOException) {
                 return@withContext failure(DataError.Io("failed to read the shelf's folders", e))
             }
@@ -432,6 +435,7 @@ internal class RoomProjectRepository(
                 val spelling = target(folders, members.toSet())
                 val changed = ArrayList<String>(members.size)
                 val failed = ArrayList<String>()
+                var cause: DataError? = null
                 for (id in members) {
                     currentCoroutineContext().ensureActive()
                     // Read again here: the write below replaces the whole file, so it must start from what is
@@ -439,17 +443,20 @@ internal class RoomProjectRepository(
                     val meta = readMetaOrNull(id)
                     if (meta == null) {
                         failed += id
+                        cause = cause ?: unreadableMeta(id)
                         continue
                     }
                     if (meta.folder == spelling) continue
                     try {
                         writeMeta(id, meta.copy(folder = spelling))
                         changed += id
-                    } catch (_: IOException) {
+                    } catch (e: IOException) {
+                        // Not swallowed: the zine is listed and the first cause is handed back with the list.
                         failed += id
+                        cause = cause ?: DataError.Io("failed to write project metadata for '$id'", e)
                     }
                 }
-                DataResult.Success(FolderChange(folder = spelling, changedIds = changed, failedIds = failed))
+                DataResult.Success(FolderChange(folder = spelling, changedIds = changed, failedIds = failed, cause = cause))
             }
         } finally {
             folderChanges.update { it + 1 }
@@ -1121,13 +1128,18 @@ internal class RoomProjectRepository(
     private fun listProjectIds(): List<String> {
         val root = paths.projectsRoot
         if (!Files.isDirectory(root)) return emptyList()
-        Files.list(root).use { stream ->
-            return stream
-                .filter { Files.isDirectory(it) }
-                .map { it.fileName.toString() }
-                .filter { ProjectPaths.PROJECT_ID.matches(it) }
-                .filter { id -> paths.documentFile(id)?.let(Files::isRegularFile) == true }
-                .toList()
+        try {
+            Files.list(root).use { stream ->
+                return stream
+                    .filter { Files.isDirectory(it) }
+                    .map { it.fileName.toString() }
+                    .filter { ProjectPaths.PROJECT_ID.matches(it) }
+                    .filter { id -> paths.documentFile(id)?.let(Files::isRegularFile) == true }
+                    .toList()
+            }
+        } catch (e: UncheckedIOException) {
+            // A directory stream fails mid-iteration with the unchecked wrapper; callers catch IOException.
+            throw e.cause ?: IOException(e)
         }
     }
 
@@ -1248,8 +1260,9 @@ internal class RoomProjectRepository(
             .mapNotNull { id ->
                 val docFile = paths.documentFile(id) ?: return@mapNotNull null
                 // ADR-125 rule 14: the folder is read here, from the file, for a zine that opens and for one
-                // that does not. Missing or unreadable metadata is My Shelf.
-                val meta = readMetaOrNull(id)
+                // that does not. Missing or unreadable metadata is My Shelf. Under the lock, because this read
+                // can repair the file from its backup copy and must not race a folder operation's write.
+                val meta = mutex.withLock { readMetaOrNull(id) }
                 val folder = FolderNames.clean(meta?.folder)
                 when (val loaded = documents.load(id)) {
                     is DataResult.Success -> {

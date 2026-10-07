@@ -106,7 +106,9 @@ class LibraryBackupFixtureTest {
      * `fixtures/library-backup-v2-folders.zine` ([ADR-125](docs/DECISIONS.md#adr-125) rule 15) was produced on
      * the folders storage branch by the [ZineLibraryBackupWriter] from the three zines and two photos of the
      * first archive: two zines in the folder *Moth Club* and one on My Shelf, whose entry says `"folder":null`.
-     * It is the first archive to carry the `folder` key, and `packageVersion` is still 2. Frozen like its
+     * It is the first archive to carry the `folder` key, and `packageVersion` is still 2. Its `appVersion`,
+     * `0.9.0-beta.6+folders`, names the branch build that wrote it, not a release; the one-off generator is not
+     * kept, as for the two archives before it. Frozen like its
      * siblings, which are unchanged: they pin that an entry with no `folder` key is a zine on My Shelf.
      */
     @Test

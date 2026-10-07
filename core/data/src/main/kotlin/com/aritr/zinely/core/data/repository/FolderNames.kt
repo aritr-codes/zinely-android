@@ -26,22 +26,33 @@ public object FolderNames {
     /** The longest a name may be, counted in characters as a reader sees them. */
     public const val MAX_LENGTH: Int = 40
 
+    /**
+     * The longest a name may be in UTF-16 units, whichever limit is met first. One character a reader sees can
+     * be made of any number of code points (a letter under a thousand marks), so [MAX_LENGTH] alone bounds
+     * nothing. 160 is forty four-unit emoji, the longest ordinary name.
+     */
+    public const val MAX_UNITS: Int = 160
+
     /** The Shelf's own name. It is never a folder (rule 9), typed or read from a file. */
     public const val MY_SHELF: String = "My Shelf"
 
     /**
      * The name [raw] stands for, or `null` when it stands for no folder (My Shelf).
      *
-     * Removes line breaks and control characters, trims, normalises to NFC, and cuts to [MAX_LENGTH] without
-     * splitting a character a reader sees as one. A result with nothing to see in it (blank, or only invisible
-     * formatting characters), or *My Shelf* in any capitals, is no folder.
+     * Removes line breaks, control characters and invisible formatting characters, trims, normalises to NFC,
+     * and cuts to [MAX_LENGTH] and [MAX_UNITS] at a character boundary ([cut]). A result with nothing to see in
+     * it (blank, or only marks and blank-looking characters), or *My Shelf* in any capitals, is no folder.
      * Cleaning a cleaned name returns it unchanged.
+     *
+     * Only the first [MAX_READ] units of [raw] are looked at. A value from a backup or a hand-edited file can
+     * be megabytes long, and normalising a long run of marks takes time that grows with its square.
      */
     public fun clean(raw: String?): String? {
         if (raw == null) return null
-        val visible = buildString(raw.length) {
+        val end = if (raw.length <= MAX_READ) raw.length else MAX_READ - (if (raw[MAX_READ - 1].isHighSurrogate()) 1 else 0)
+        val visible = buildString(end) {
             var i = 0
-            while (i < raw.length) {
+            while (i < end) {
                 val cp = raw.codePointAt(i)
                 if (!isRemoved(cp)) appendCodePoint(cp)
                 i += Character.charCount(cp)
@@ -78,60 +89,83 @@ public object FolderNames {
         (a.length - i).compareTo(b.length - j)
     }
 
+    /** Whether [name] has one character that draws ink: not a space, a mark on its own, or a blank-looking one. */
     private fun hasSomethingToSee(name: String): Boolean {
         var i = 0
         while (i < name.length) {
             val cp = name.codePointAt(i)
-            if (!Character.isWhitespace(cp) && !Character.isSpaceChar(cp) && Character.getType(cp).toByte() != Character.FORMAT) {
-                return true
-            }
+            val draws = !Character.isWhitespace(cp) && !Character.isSpaceChar(cp) && cp !in BLANK_LOOKING &&
+                when (Character.getType(cp).toByte()) {
+                    Character.FORMAT, Character.NON_SPACING_MARK, Character.ENCLOSING_MARK, Character.UNASSIGNED -> false
+                    else -> true
+                }
+            if (draws) return true
             i += Character.charCount(cp)
         }
         return false
     }
 
-    /** Control characters, and the line and paragraph separators. An unpaired surrogate goes too. */
-    private fun isRemoved(cp: Int): Boolean = when (Character.getType(cp).toByte()) {
+    /**
+     * Control characters, the line and paragraph separators, an unpaired surrogate, and the formatting
+     * characters that change nothing a reader sees ([INVISIBLE]), so that two names that look the same are
+     * the same. The two joiners stay: emoji and several scripts are spelled with them.
+     */
+    private fun isRemoved(cp: Int): Boolean = cp in INVISIBLE || when (Character.getType(cp).toByte()) {
         Character.CONTROL, Character.LINE_SEPARATOR, Character.PARAGRAPH_SEPARATOR, Character.SURROGATE -> true
         else -> false
     }
 
     /**
-     * Cuts [text] to [MAX_LENGTH] characters as a reader sees them.
+     * Cuts [text] to [MAX_LENGTH] characters as a reader sees them, and to [MAX_UNITS].
      *
-     * The rule is written out here, not taken from the platform's own text-breaking, so the same name is cut
-     * at the same place on every Android version. It keeps together: a letter and its combining marks; an
-     * emoji and its variation selector, skin tone, tag sequence or keycap; emoji joined by a zero-width
-     * joiner; and the two regional indicators of a flag. It is an approximation of Unicode's grapheme
-     * clusters that errs toward keeping more together, never toward splitting one.
+     * The rule is written out here, not taken from the platform's own text-breaking, so that it does not
+     * change when that does. (The character tables it reads are still the device's.) It keeps together: a
+     * letter and its combining marks; an emoji and its variation selector, skin tone, tag sequence or keycap;
+     * emoji joined by a zero-width joiner; the two regional indicators of a flag; and, in the scripts of
+     * [VIRAMAS], a consonant joined to the next by a virama.
+     *
+     * It is an approximation of Unicode's grapheme clusters, not an implementation of them. It can still cut
+     * inside what Unicode keeps as one in cases it does not list: old Hangul written as separate jamo, the
+     * prepended signs of Arabic and some Indic scripts, and viramas outside [VIRAMAS].
+     *
+     * A character that would pass [MAX_UNITS] is left out whole, never cut through, so the result may be
+     * shorter than [MAX_LENGTH] characters and is empty when the first character alone is too long.
      */
     private fun cut(text: String): String {
         var seen = 0
         var i = 0
+        var start = 0 // where the character being read began
         var joined = false // the previous code point was a zero-width joiner
         var flagHalf = false // the previous code point opened a flag that this one may close
+        var linked = false // a virama, or a virama and joiners, came just before: a letter now continues
         while (i < text.length) {
             val cp = text.codePointAt(i)
-            val continues = when {
-                i == 0 -> false
-                joined -> true
-                isExtender(cp) -> true
-                flagHalf && isRegionalIndicator(cp) -> true
-                else -> false
-            }
+            val continues = i > 0 && (
+                isExtender(cp) ||
+                    // After a joiner only something that is not a letter or digit continues: emoji are joined
+                    // this way, and a run of joined letters must not count as one endless character.
+                    (joined && !Character.isLetterOrDigit(cp)) ||
+                    (flagHalf && isRegionalIndicator(cp)) ||
+                    (linked && Character.isLetter(cp))
+                )
             if (!continues) {
                 if (seen == MAX_LENGTH) return text.substring(0, i)
                 seen++
+                start = i
             }
+            val next = i + Character.charCount(cp)
+            if (next > MAX_UNITS) return text.substring(0, start)
+            linked = cp in VIRAMAS || (linked && (cp == ZERO_WIDTH_JOINER || cp == ZERO_WIDTH_NON_JOINER))
             flagHalf = isRegionalIndicator(cp) && !(continues && flagHalf)
             joined = cp == ZERO_WIDTH_JOINER
-            i += Character.charCount(cp)
+            i = next
         }
         return text
     }
 
     private fun isExtender(cp: Int): Boolean = when {
-        cp == ZERO_WIDTH_JOINER || cp == COMBINING_ENCLOSING_KEYCAP -> true
+        cp == ZERO_WIDTH_JOINER || cp == ZERO_WIDTH_NON_JOINER || cp == COMBINING_ENCLOSING_KEYCAP -> true
+        cp == 0xFF9E || cp == 0xFF9F -> true // halfwidth katakana voicing marks
         cp in 0xFE00..0xFE0F || cp in 0xE0100..0xE01EF -> true // variation selectors
         cp in 0x1F3FB..0x1F3FF -> true // skin tones
         cp in 0xE0020..0xE007F -> true // tag sequences (subdivision flags)
@@ -143,8 +177,24 @@ public object FolderNames {
 
     private fun isRegionalIndicator(cp: Int): Boolean = cp in 0x1F1E6..0x1F1FF
 
+    private const val MAX_READ = 1024
     private const val ZERO_WIDTH_JOINER = 0x200D
+    private const val ZERO_WIDTH_NON_JOINER = 0x200C
     private const val COMBINING_ENCLOSING_KEYCAP = 0x20E3
+
+    /** Soft hyphen, zero-width space, word joiner and its kin, byte-order mark, and the direction marks. */
+    private val INVISIBLE: Set<Int> = buildSet {
+        addAll(listOf(0x00AD, 0x061C, 0x200B, 0x200E, 0x200F, 0xFEFF))
+        addAll(0x202A..0x202E)
+        addAll(0x2060..0x2064)
+        addAll(0x2066..0x2069)
+    }
+
+    /** Characters that are not spaces to Unicode and still draw nothing: Hangul fillers and the blank braille cell. */
+    private val BLANK_LOOKING: Set<Int> = setOf(0x115F, 0x1160, 0x3164, 0xFFA0, 0x2800)
+
+    /** Devanagari, Bengali, Gurmukhi, Gujarati, Oriya, Tamil, Telugu, Kannada, Malayalam, Sinhala. */
+    private val VIRAMAS: Set<Int> = setOf(0x094D, 0x09CD, 0x0A4D, 0x0ACD, 0x0B4D, 0x0BCD, 0x0C4D, 0x0CCD, 0x0D4D, 0x0DCA)
 }
 
 /**
@@ -159,6 +209,8 @@ public data class FolderChange(
     val changedIds: List<String>,
     /** The zines that were to change and could not be written. They are left exactly as they were. */
     val failedIds: List<String> = emptyList(),
+    /** Why the first of [failedIds] could not be changed; `null` when none failed. */
+    val cause: DataError? = null,
 ) {
     /** Whether every zine that was to change did. */
     val complete: Boolean get() = failedIds.isEmpty()

@@ -268,6 +268,22 @@ class RoomProjectRepositoryFoldersTest {
     }
 
     @Test
+    fun `a zine joining a folder whose files disagree takes the spelling the shelf shows`() = runTest {
+        // Only files changed outside the app can disagree; the Shelf shows the spelling that sorts first.
+        handWritten("a", """"trips"""")
+        handWritten("b", """"Trips"""")
+        val repo = repo()
+        val made = create(repo, "Made", "TRIPS")
+        val moved = create(repo, "Moved", null)
+
+        assertTrue(repo.moveProject(moved, "tRIPS") is DataResult.Success)
+
+        assertEquals("Trips", metaOnDisk(made).folder)
+        assertEquals("Trips", metaOnDisk(moved).folder)
+        assertEquals("trips", metaOnDisk("a").folder) // the others are not rewritten
+    }
+
+    @Test
     fun `a folder's only zine can change the folder's capitals`() = runTest {
         val repo = repo()
         val id = create(repo, "Lisbon", "Trips")
@@ -446,7 +462,10 @@ class RoomProjectRepositoryFoldersTest {
 
         val partial = repo(store = metaWriteFailingStore { it == b }).renameFolder("Trips", "Journeys").getOrNull()!!
 
-        assertEquals(FolderChange("Journeys", changedIds = listOf(a, c), failedIds = listOf(b)), partial)
+        assertEquals("Journeys", partial.folder)
+        assertEquals(listOf(a, c), partial.changedIds)
+        assertEquals(listOf(b), partial.failedIds)
+        assertTrue(partial.cause is DataError.Io) // the reason is handed back, not swallowed
         assertFalse(partial.complete)
         assertEquals(listOf("Journeys", "Trips", "Journeys"), listOf(a, b, c).map { metaOnDisk(it).folder })
 
@@ -464,7 +483,9 @@ class RoomProjectRepositoryFoldersTest {
 
         val partial = repo(store = metaWriteFailingStore { it == a }).unpackFolder("Trips").getOrNull()!!
 
-        assertEquals(FolderChange(null, changedIds = listOf(b), failedIds = listOf(a)), partial)
+        assertEquals(listOf(b), partial.changedIds)
+        assertEquals(listOf(a), partial.failedIds)
+        assertTrue(partial.cause is DataError.Io)
         assertEquals(listOf("Trips", null), listOf(a, b).map { metaOnDisk(it).folder })
 
         assertEquals(FolderChange(null, listOf(a)), good.unpackFolder("Trips").getOrNull())
@@ -523,6 +544,28 @@ class RoomProjectRepositoryFoldersTest {
             shelfBecomes(mapOf(a to null, b to null))
 
             assertEquals(0, dao.writes)
+        } finally {
+            watching.cancel()
+        }
+    }
+
+    @Test
+    fun `the shelf lists again after a folder operation that was refused`() = runBlocking {
+        var editing = false
+        val repo = repo(sessionGate = ProjectSessionGate { !editing })
+        val a = create(repo, "Lisbon", null)
+        val listings = Channel<Unit>(Channel.UNLIMITED)
+        val watching = launch(Dispatchers.Default) { repo.observeShelfProjects().collect { listings.send(Unit) } }
+        try {
+            withTimeout(10_000) { listings.receive() }
+            // Let any listing still on its way arrive, so the one counted below is the operation's.
+            kotlinx.coroutines.delay(500)
+            while (listings.tryReceive().isSuccess) Unit
+            editing = true
+
+            assertTrue(repo.moveProject(a, "Trips").errorOrNull() is DataError.Busy)
+
+            withTimeout(10_000) { listings.receive() }
         } finally {
             watching.cancel()
         }

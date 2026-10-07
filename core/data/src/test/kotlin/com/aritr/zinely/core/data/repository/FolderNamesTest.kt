@@ -1,10 +1,14 @@
 package com.aritr.zinely.core.data.repository
 
+import java.text.Normalizer
+import java.time.Duration
 import java.util.Locale
+import java.util.Random
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -74,6 +78,75 @@ class FolderNamesTest {
         // Forty emoji are forty characters, however many code units they take.
         assertEquals(thumb.repeat(40), FolderNames.clean(thumb.repeat(45)))
         assertEquals(india.repeat(40), FolderNames.clean(india.repeat(41)))
+    }
+
+    @Test
+    fun `consonants joined by a virama, and a letter with its non-joiner, are not cut apart`() {
+        val lead = "a".repeat(39)
+        val ksha = "\u0915\u094D\u0937" // Devanagari k + virama + ss, drawn as one
+        val kshaJoined = "\u0915\u094D\u200D\u0937"
+        val meemNonJoiner = "\u0645\u200C"
+
+        assertEquals(lead + ksha, FolderNames.clean(lead + ksha + "b"))
+        assertEquals(lead + kshaJoined, FolderNames.clean(lead + kshaJoined + "b"))
+        assertEquals(lead + meemNonJoiner, FolderNames.clean(lead + meemNonJoiner + "b"))
+    }
+
+    @Test
+    fun `no name is longer than the Shelf can show, however it is built`() {
+        // Letters glued by joiners are forty letters, not one endless character.
+        val glued = FolderNames.clean("x\u200D".repeat(500))!!
+        assertEquals("x\u200D".repeat(40), glued)
+        // One letter under a thousand marks is left out whole: it is never cut through.
+        assertNull(FolderNames.clean("a" + "\u0301".repeat(5000)))
+        assertEquals("b", FolderNames.clean("b" + "q" + "\u0301".repeat(5000)))
+        // Forty of the longest ordinary emoji stop at the unit limit, on a boundary.
+        val family = "\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66"
+        assertEquals(family.repeat(20), FolderNames.clean(family.repeat(40)))
+        assertEquals(FolderNames.MAX_UNITS, family.repeat(20).length)
+    }
+
+    @Test
+    fun `a huge value from a file is cleaned quickly, and a pair split by the reading limit is dropped`() {
+        val hostile = "\u0301\u0316".repeat(2_000_000)
+        assertTimeoutPreemptively(Duration.ofSeconds(5)) { FolderNames.clean("Trips$hostile") }
+        assertEquals("a".repeat(40), FolderNames.clean("a".repeat(1023) + "\uD83D\uDC4D"))
+    }
+
+    @Test
+    fun `invisible formatting is removed, so two names that look the same are the same`() {
+        assertEquals("Trips", FolderNames.clean("Tri\u200Bps\u00AD\uFEFF"))
+        assertEquals("Trips", FolderNames.clean("\u202ETrips\u2060"))
+        assertNull(FolderNames.clean("My Shelf\u200B"))
+        assertTrue(FolderNames.same(FolderNames.clean("Trips\u200B"), "trips"))
+    }
+
+    @Test
+    fun `a name of marks or blank-looking characters alone is no folder`() {
+        listOf("\u3164", "\u2800", "\uFE0F", "\u034F", "\u0301", "\u115F\u1160", "\u200D\u200C")
+            .forEach { assertNull(FolderNames.clean(it), it.map { c -> c.code.toString(16) }.toString()) }
+        assertEquals("\u2764\uFE0F", FolderNames.clean("\u2764\uFE0F")) // a heart is something to see
+    }
+
+    /** Rule 13's invariant, over names built from the characters that have broken it before. */
+    @Test
+    fun `every cleaned name is bounded, composed, trimmed and unchanged by cleaning again`() {
+        val pool = intArrayOf(
+            'a'.code, 'B'.code, ' '.code, '1'.code, 0x00A0, 0x0301, 0x0316, 0x00E9, 0x0131, 0x0130, 0x200B, 0x200C, 0x200D,
+            0xFE0F, 0x20E3, 0x1F44D, 0x1F3FD, 0x1F1EE, 0x1F1F3, 0x1F469, 0xE0067, 0xE007F, 0x0915, 0x094D, 0x0937,
+            0x1100, 0x119E, 0x0600, 0x3164, 0x2800, 0x0009, 0x000A, 0x2028, 0xD83D, 0xFF9E, 0x00AD, 0x03A3, 0x00DF,
+        )
+        val random = Random(125)
+        repeat(200_000) {
+            val raw = buildString { repeat(random.nextInt(120)) { appendCodePoint(pool[random.nextInt(pool.size)]) } }
+            val once = FolderNames.clean(raw) ?: return@repeat
+            val shown = raw.map { c -> c.code.toString(16) }.toString()
+            assertEquals(once, FolderNames.clean(once), shown)
+            assertTrue(once.length <= FolderNames.MAX_UNITS, shown)
+            assertEquals(Normalizer.normalize(once, Normalizer.Form.NFC), once, shown)
+            assertEquals(once.trim(), once, shown)
+            assertFalse(FolderNames.key(once) == "my shelf", shown)
+        }
     }
 
     @Test

@@ -37,7 +37,7 @@ Neither entry is anything a maker can try. Folders has a frozen HTML specificati
 next.
 
 - **Shelf folders:** user-created folders to organise zines on the Shelf (owner request 2026-09-27, repeated
-  2026-10-06). **Design approved 2026-10-07, not built:** [ADR-125](DECISIONS.md#adr-125) is Accepted and the
+  2026-10-06). **Design approved 2026-10-07; screens not built:** [ADR-125](DECISIONS.md#adr-125) is Accepted and the
   [`v21-library.html`](design/mockups/v21-library.html) A28 amendment is frozen, on the owner's approval of the
   prototype. **Storage built 2026-10-07, part 1 of 2:** a zine's folder name is kept in its own file and
   carried in a backup, with no change to the backup's format version. The Shelf screens are part 2 and are not

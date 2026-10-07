@@ -671,6 +671,35 @@ class RoomProjectRepositoryRestoreTest {
         assertNull(metaOnDisk("c").folder)
     }
 
+    /**
+     * The frozen archives of `:core:data-storage` (`LibraryBackupFixtureTest` pins their bytes), restored all
+     * the way to `meta.json`: the two saved before folders existed put every zine on My Shelf, and the third
+     * brings its folder with it.
+     */
+    @Test
+    fun `the frozen archives restore end to end, with and without folder names`() = runTest {
+        val fixtures = java.nio.file.Paths.get("..", "core", "data-storage", "src", "test", "resources", "fixtures")
+
+        val plain = repo().restoreLibrary(fixtures.resolve("library-backup-v2.zine")).getOrNull()!!
+        assertEquals(3, plain.addedCount)
+        plain.projects.forEach { assertNull(metaOnDisk(it.project.id).folder) }
+        plain.projects.forEach { assertFalse(Files.readString(root.resolve("projects/${it.project.id}/meta.json")).contains("folder")) }
+
+        // The same three zines again, now in a folder: they are already here, so none is added or moved.
+        val folders = fixtures.resolve("library-backup-v2-folders.zine")
+        val again = repo().restoreLibrary(folders).getOrNull()!!
+        assertEquals(0, again.addedCount)
+        assertEquals(3, again.alreadyHereCount)
+        plain.projects.forEach { assertNull(metaOnDisk(it.project.id).folder) }
+
+        plain.projects.forEach { assertTrue(repo().deleteProject(it.project.id).getOrNull() != null) }
+        val fresh = repo().restoreLibrary(folders).getOrNull()!!
+        assertEquals(
+            mapOf("Moth Club Bulletin" to "Moth Club", "Moth Club Bulletin, summer" to "Moth Club", "Moth Club Bulletin, spring" to null),
+            fresh.projects.associate { it.project.title to metaOnDisk(it.project.id).folder },
+        )
+    }
+
     private suspend fun saved(repository: RoomProjectRepository, title: String, photoHash: String? = null): String {
         val id = repository.createProject(title, ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER).getOrNull()!!.id
         assertTrue(documents.save(id, document(photoHash)).getOrNull() != null)
