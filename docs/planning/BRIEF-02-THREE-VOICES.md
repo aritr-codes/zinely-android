@@ -2,19 +2,20 @@
 
 > ⛔ **Not ready for an implementation session.** Three things still block one:
 > 1. **The owner's minimum print size for Book**, after one printed page ([Procedure A](#procedure-a-the-printed-book-page)).
-> 2. **The Voice row drawn in the frozen type bar** (gate 5). Someone draws it in a design session; the owner
->    approves it. It carries about ten open points, listed below with ⚠️.
-> 3. **This preparation branch merged.** The type-bar freeze, the four font files and this brief are on
->    `design/document-voices-prep` and not yet on `main`.
+> 2. **The owner's approval of the row drawn in the type bar** (gate 5). It was drawn on 2026-10-07 as the
+>    proposed amendment [`v21-typebar.html` A29](../design/mockups/v21-typebar.html), with twelve questions for the owner (V-1 to V-12). It proposes the label
+>    **Font** for the row this brief calls the Voice row.
+> 3. ~~This preparation branch merged.~~ Merged 2026-10-07 (PR #99).
 >
 > Two more gates close inside the session itself. The [gate table](#gates) has all seven.
 >
-> **Two things can be measured today and have not been.** Both shape the drawing in item 2:
-> - **Does the card still fit?** At 360 dp and the largest font size the frozen page already records about
->   28 dp of overflow, nothing has been measured since 2026-08-29, and a fifth row adds about 58 px.
-> - **What is drawn for a character the face lacks?** [ADR-070](../DECISIONS.md#adr-070) says a blank box, the
->   readiness audit §6 says a phone font, [ADR-126](../DECISIONS.md#adr-126) says not established. A Plain text
->   holding `ﬁ` (U+FB01) on the current build answers it.
+> **Two things were measured on 2026-10-07**, on an emulator with the released `0.9.0-beta.6`, not on the
+> owner's phone. Both are in [Measured on 2026-10-07](#measured-on-2026-10-07):
+> - **The card fits a 360 × 800 dp screen at font scale 2.0, with 79 dp to spare.** On 360 × 640 dp the
+>   four-row card is already cut off. (Estimated, not measured: a fifth row would leave about 13 to 21 dp, less
+>   than the reason line needs.)
+> - **A character the face lacks is drawn from another font,** on every surface and in the PDF. No blank
+>   glyph was seen.
 
 Direction D2 of the [1.x plan](ZINELY-1X-IMPLEMENTATION-PLAN.md) (plan step 8). Rewritten on 2026-10-06 on
 branch `design/document-voices-prep`, cut from `origin/main` @ `ae374ea` (release `0.9.0-beta.6`). Code
@@ -45,10 +46,10 @@ editing-surface change, and the control's shape inside the type bar.
 | # | Gate | State on 2026-10-06 | Closes when | Who |
 |---|---|---|---|---|
 | 1 | PR #70 settled (the dead *Font* control removed) | ✅ Merged (`a6eb16b`, [ADR-115](../DECISIONS.md#adr-115)) | done | done |
-| 2 | `v21-typebar.html` frozen | ◐ Frozen 2026-10-06 in `237a16f`, **on this branch, not yet on `main`**. Seven differences from the app were [returned to the owner](../OWNER-CHECKLIST.md#15-product--design-authorship); none blocks this brief, but gate 5 meets them | when the branch merges | owner merges |
-| 3 | Four Fraunces document faces fetched, pinned and measured | ◐ Done in `bf84b67`, **on this branch, not yet on `main`**. See [The four faces](#the-four-faces). They sit in `docs/planning/voices/`, outside the app build | when the branch merges | owner merges |
+| 2 | `v21-typebar.html` frozen | ✅ Frozen 2026-10-06; on `main` since 2026-10-07 (PR #99). Seven differences from the app were [returned to the owner](../OWNER-CHECKLIST.md#15-product--design-authorship); none blocks this brief, but gate 5 meets them | done | done |
+| 3 | Four Fraunces document faces fetched, pinned and measured | ✅ Done; on `main` since 2026-10-07 (PR #99). See [The four faces](#the-four-faces). They sit in `docs/planning/voices/`, outside the app build | done | done |
 | 4 | **Minimum print size for Book** | ⛔ Not ruled. [Procedure A](#procedure-a-the-printed-book-page) is written; the page is not printed | before a session starts | owner |
-| 5 | **Type-bar amendment**: the Voice row drawn in `v21-typebar.html`, reviewed, owner-approved, frozen again | ⛔ Not drawn. [UI/UX proposal](#uiux-proposal) is the input. Measure first whether the card fits with a fifth row, and what a missing character draws (see the note at the top) | before a session starts | a design session, then the owner |
+| 5 | **Type-bar amendment**: the Voice row drawn in `v21-typebar.html`, reviewed, owner-approved, frozen again | ◐ **Drawn and reviewed 2026-10-07 as proposed amendment A29; not approved, not frozen.** The owner's answers to V-1 to V-12 are owed ([OWNER-CHECKLIST §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship)) | before a session starts | the owner |
 | 6 | **Older-build fallback test** run and recorded | ⛔ Not run. [Procedure B](#procedure-b-the-older-build-fallback-test) is written. It needs a build that can set Book, so it cannot run earlier | inside the session, before merge | implementer, with an emulator or a second phone |
 | 7 | [ADR-126](../DECISIONS.md#adr-126) accepted | ⛔ Drafted as *Proposed* on this branch (2026-10-06); not accepted. It covers what [the section below](#what-the-adr-must-cover) lists, except the two figures that only the session can measure | accepted before merge | implementer drafts, owner accepts |
 
@@ -57,13 +58,56 @@ Voice row (5), always including how a choice looks when it cannot be used, becau
 that state whatever the size ruling. The owner approves the drawing. Then the session: Kotlin, the
 older-build test (6), the ADR accepted (7), merge.
 
-**The owner's part, in one place:** (1) merge this preparation branch, (2) print the page and rule the minimum
+**The owner's part, in one place:** (1) ~~merge this preparation branch~~ done 2026-10-07, (2) print the page and rule the minimum
 size (Book is then shown as unavailable below it; say so if a warning is wanted instead), (3) approve the Voice row
 drawing, including a TalkBack listen to the row's label, (4) accept the ADR.
 
 What each size ruling costs. The sizes a maker can pick are 10, 12, 14, 16 pt and up. A 12 pt minimum means
 Book cannot be used at 10 pt. A 14 pt minimum removes 10 and 12. For scale: Book's small letters at 12 pt
 (1.99 mm, ✅ computed from the measured 10 pt figure) are about as tall as Plain's at 10 pt (1.93 mm).
+
+## Measured on 2026-10-07
+
+✅ Measured on an emulator (Android 16, API 36), with the released `0.9.0-beta.6` APK and the display set to
+360 dp wide. **The owner's Samsung was not used**, so each figure is true for that emulator only. Sizes are
+from `uiautomator dump`. "Room" is the height of the canvas area above the card's bottom edge. At font
+scale 1.0 a first-run hint was on screen inside that area; measured to the hint, the card clears by 113 dp.
+Samsung's largest font setting may not equal font scale 2.0.
+
+**The type-bar card, four rows as shipped:**
+
+| Screen (dp) | Font scale | Card (dp) | Room for it (dp) | Result |
+|---|---|---|---|---|
+| 360 × 800 | 1.0 | 288 × 259 | 442 | clears by 183 dp |
+| 360 × 800 | 2.0 | 336 × 358 | 437 | clears by 79 dp |
+| 360 × 640 | 2.0 | 336 × 277 shown | 277 | cut off by about 81 dp |
+
+- At font scale 2.0 the card is at its 336 dp width limit and the Align row does not fit: "Right" is drawn on
+  three lines. That adds about 76 dp to the card's height, and the card covers the selected text.
+- On 360 × 640 dp at font scale 2.0 the Colour row cannot be reached and nothing scrolls.
+- Both are faults in the app today, tracked in [issue #102](https://github.com/aritr-codes/zinely-android/issues/102). They are not caused by a fifth row.
+- 🟨 **With a fifth row** (estimated from the frozen page's 46 px control and 12 px gap, not from a built row):
+  at 360 × 800 dp it clears by about 125 dp at font scale 1.0, and by about 13 to 21 dp at 2.0 if neither
+  word wraps. The reason line does not fit in that. So [`v21-typebar.html` A29](../design/mockups/v21-typebar.html) proposes that the card scroll inside itself
+  when it does not fit (rule A29.11, owner question V-6).
+
+**A character the face lacks.** One text holding `fi ﬁ α ж 🙂 中 ก`:
+
+| Character | In the shipped Inter | Editor, Bench, Read | Exported PDF |
+|---|---|---|---|
+| `ﬁ` U+FB01 | no | a glyph from another font | the same, embedded |
+| `α`, `ж` | yes | Inter | Inter |
+| `🙂` | no, by design | colour emoji, from the emoji font the app bundles ([ADR-112](../DECISIONS.md#adr-112)) | colour emoji, embedded |
+| `中` | no | a glyph from another font | the same, embedded |
+| `ก` | no | a glyph from another font | `NotoSansThai`, embedded |
+
+- No blank glyph on any surface, for `ﬁ`, `中` and `ก`. This matches the readiness audit §6. It does not
+  match [ADR-070](../DECISIONS.md#adr-070), which records "no system-font fallback" and an unsupported glyph
+  resolving to `.notdef`, for this emulator. The emoji is not part of that: it has its own bundled font.
+- The typing-time notice said these characters "can’t print yet". They were in the PDF. Nothing warned later.
+  Tracked in [issue #103](https://github.com/aritr-codes/zinely-android/issues/103).
+- ⚠️ Not established: what the owner's phone draws (the glyphs come from the device's own fonts, so faces,
+  widths and line breaks can differ between phones), and which fonts supplied `ﬁ` and `中` (the PDF names only `NotoSansThai`).
 
 ## Problem
 
@@ -118,8 +162,8 @@ Input to the `v21-typebar.html` amendment. Nothing here is frozen until that ame
 - ⚠️ **Room.** A fifth row adds about 58 px at the default font size (a 46 px control and a 12 px gap), more at
   font scale 2.0 because the label and the words scale, and more again with the reason line below. The frozen
   file already records that the card was measured overflowing a 360 dp screen by about 28 dp at font scale
-  2.0, that "Right" wrapped mid-word at that scale, and that nothing has been measured since the 2026-08-29
-  ruling. The amendment checks in the HTML, at 360 px wide with enlarged text, that the card still clears the
+  2.0, and that "Right" wrapped mid-word at that scale. It was measured again on 2026-10-07
+  ([above](#measured-on-2026-10-07)). The amendment checks in the HTML, at 360 px wide with enlarged text, that the card still clears the
   page and that "Book" and "Plain" do not wrap. The real check, at 360 dp and font scale 2.0 on a device, is
   the session's; a failure there is a stop condition.
 - ⚠️ **Legibility of the two words.** At the Align row's size Fraunces has thin strokes. The amendment measures
@@ -155,6 +199,10 @@ Input to the `v21-typebar.html` amendment. Nothing here is frozen until that ame
   and a Pass 2 item.
 
 ### A voice that cannot be used
+
+*Note, 2026-10-07: the proposed amendment A29 departs from this section in two ways, and puts both to the
+owner (V-8, and rule A29.7): it shows the reason line all the time, not only after a tap; and a tap on the
+unavailable choice says the reason again. The text below is the input as written on 2026-10-06.*
 
 🟦 One behaviour, for both reasons a voice can be unavailable (a script it lacks, or a size below the minimum):
 
@@ -204,11 +252,10 @@ So Book cannot set Greek or Cyrillic at all.
 - A separate guard checks the font files. `FontCoverage.requiredCodePoints()`
   (`render-android/.../FontCoverage.kt:61-72`) demands the Latin, Greek and Russian alphabets of **every**
   registered family, in all four faces. Registering Fraunces fails it.
-- ⚠️ **What is drawn for a character the face lacks is not established.** [ADR-070](../DECISIONS.md#adr-070)
-  records a blank box, with no system fallback. 🟨 This brief assumes instead that Android fills the gap from
-  a font on the phone, so the same zine could print differently from two phones. Neither was tested for this
-  brief; Procedure B check 11 and the device pass settle it. Where the text below says "a phone font", read
-  "a phone font or a blank box". (A fallback Zinely controls needs an Android 10 API; Zinely supports
+- ✅ **A character the face lacks is drawn from another font**, on one emulator
+  ([measured 2026-10-07](#measured-on-2026-10-07)); [ADR-070](../DECISIONS.md#adr-070) records no fallback
+  and a blank glyph instead. ⚠️ The owner's phone was not tested, so the same zine could still print differently from two
+  phones; Procedure B check 11 and the device pass confirm it there. (A fallback Zinely controls needs an Android 10 API; Zinely supports
   Android 7.)
 
 🟦 **The rule.**
@@ -456,8 +503,7 @@ before ruling, print them the same way.
 - A home inkjet printer, the kind a maker has. Plain office paper, 80 gsm or 20 lb. A4 or Letter.
 - A ruler marked in millimetres.
 - A computer with Chrome or Edge. Open the file from inside the repository folder, because the page reads
-  the font files beside it. Until this branch is merged the file exists only on
-  `design/document-voices-prep`; if switching branches is a nuisance, ask for a PDF of the page instead and
+  the font files beside it. If that is a nuisance, ask for a PDF of the page instead and
   print that. The ruler check in step 3 applies either way.
 
 **Steps**
@@ -642,5 +688,6 @@ running text. More scripts through faces that cover them ([ADR-070](../DECISIONS
 
 | Date | Change |
 |---|---|
+| 2026-10-07 | Two measurements recorded ([Measured on 2026-10-07](#measured-on-2026-10-07)): the card's fit at 360 dp and the largest font size, and what is drawn for a missing character. Gate 5 moved to "drawn as proposed amendment A29, not approved". The top note's third blocker struck: the preparation branch merged (PR #99). Two faults in the shipped app found by the measurements are tracked as issues #102 and #103. |
 | 2026-10-06 | Rewritten as a two-voice brief. Folds in the owner's rulings (2026-09-26), the readiness audit's [§6](ZINELY-1X-READINESS-AUDIT.md#6-d2-audit--typefaces--voices) and the pre-rewrite record (last present in `ae374ea`). New: the script rule and what it does not guarantee, the unavailable state, the editing-surface change with its file and line, the saved ids, the older-build consequence with measured widths, the four faces, and the two procedures. The "Corrections pending" banner is replaced by the blocker list and the gate table. Corrected from the pre-rewrite record: the faces are upstream's own static files from `undercasetype/Fraunces`, not instanced, and the Regular is the file the interface already ships |
 | 2026-09-26 | Pre-rewrite record added: rulings, and what the repository bundles |
