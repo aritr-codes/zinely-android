@@ -12,6 +12,8 @@ import com.aritr.zinely.core.data.asset.ZineLibraryBackupValidator
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.DocumentRepository
+import com.aritr.zinely.core.data.repository.FolderChange
+import com.aritr.zinely.core.data.repository.FolderNames
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.errorOrNull
 import com.aritr.zinely.core.data.repository.ProjectShelfEntry
@@ -33,6 +35,7 @@ import com.aritr.zinely.core.data.storage.ZineBackupStagingException
 import com.aritr.zinely.core.data.storage.ZineLibraryBackupStager
 import com.aritr.zinely.core.data.storage.ZineLibraryBackupWriter
 import com.aritr.zinely.core.data.storage.ZineBackupWritingException
+import com.aritr.zinely.core.data.validation.ValidationIssue
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
@@ -46,6 +49,7 @@ import com.aritr.zinely.core.model.newZineCoverRecipe
 import com.aritr.zinely.data.android.room.ProjectDao
 import com.aritr.zinely.data.android.room.ProjectEntity
 import java.io.IOException
+import java.io.UncheckedIOException
 import java.io.BufferedInputStream
 import java.nio.charset.CharacterCodingException
 import java.nio.file.Files
@@ -62,9 +66,12 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -96,6 +103,11 @@ import kotlinx.serialization.json.jsonPrimitive
  * with [DataError.Busy] if a session is still live at the gate's bound. `"default"` stays the
  * ADR-030 §4 bootstrap-reserved id until S6.5 moves the start destination — the app shell re-seeds
  * it on next boot if deleted at this level.
+ *
+ * Shelf folders ([ADR-125](docs/DECISIONS.md#adr-125)) are the one thing here the index does not mirror. A
+ * folder is the name each of its zines carries in `meta.json`; the Shelf and every folder operation read it
+ * from those files, so membership has one source and no copy to go stale. A folder operation writes
+ * `meta.json` and nothing else, which is why [observeShelfProjects] also listens to [folderChanges].
  */
 internal class RoomProjectRepository(
     rootDir: Path,
@@ -136,6 +148,13 @@ internal class RoomProjectRepository(
     private val mutex = Mutex()
     private val json = Json { ignoreUnknownKeys = true }
 
+    /**
+     * Bumped when a folder operation ends, whether it succeeded, failed or stopped partway (ADR-125 rule 14).
+     * The Shelf otherwise lists again only when the index changes, and a folder operation never touches the
+     * index. In memory only: it carries no state, it only says "read the files again".
+     */
+    private val folderChanges = MutableStateFlow(0)
+
     /** Cleared whenever the index may have diverged from committed file truth. */
     @Volatile
     private var reconciled = false
@@ -161,6 +180,7 @@ internal class RoomProjectRepository(
                     }
                 }
             }
+            .combine(folderChanges) { rows, _ -> rows }
             .map(::toShelfEntries)
             .flowOn(io)
 
@@ -182,11 +202,19 @@ internal class RoomProjectRepository(
         title: String,
         format: ZineFormat,
         paperSize: PaperSize,
+        folder: String?,
     ): DataResult<ProjectSummary> = withContext(io) {
         mutex.withLock {
             when (val ready = ensureReconciledLocked()) {
                 is DataResult.Failure -> return@withLock ready
                 is DataResult.Success -> Unit
+            }
+            // ADR-125 rule 17: the folder is part of the zine's FIRST metadata write, not a second step, so a
+            // zine made inside a folder can never be seen outside it. Worked out before any file is written.
+            val joined = try {
+                FolderNames.clean(folder)?.let { spellingFor(it, foldersOnDisk()) }
+            } catch (e: IOException) {
+                return@withLock failure(DataError.Io("failed to read the shelf's folders", e))
             }
             val id = newId()
             when (val saved = documents.save(id, blankDocument(format, paperSize))) {
@@ -202,7 +230,8 @@ internal class RoomProjectRepository(
                 // independently drawn covers` asserts.
                 writeMeta(
                     id,
-                    ProjectMeta(title = title, createdAtEpochMs = now).withCover(newZineCoverRecipe(random)),
+                    ProjectMeta(title = title, createdAtEpochMs = now, folder = joined)
+                        .withCover(newZineCoverRecipe(random)),
                 )
             } catch (e: IOException) {
                 // A returned failure must leave no adoptable orphan (ADR-042 / Codex RF2).
@@ -240,6 +269,8 @@ internal class RoomProjectRepository(
                         createdAtEpochMs = createdAt,
                         coverSurface = existing?.coverSurface,
                         coverStamp = existing?.coverStamp,
+                        // ADR-125 rule 12: renaming a zine must not take it out of its folder.
+                        folder = FolderNames.clean(existing?.folder),
                     ),
                 )
             } catch (e: IOException) {
@@ -264,7 +295,8 @@ internal class RoomProjectRepository(
                 is DataResult.Failure -> return@withLock DataResult.Failure(loaded.error)
                 is DataResult.Success -> loaded.value
             }
-            val sourceTitle = readMetaOrNull(id)?.title ?: DEFAULT_TITLE
+            val sourceMeta = readMetaOrNull(id)
+            val sourceTitle = sourceMeta?.title ?: DEFAULT_TITLE
             val copyId = newId()
             // Same document ⇒ same referenced content hashes: the duplicate is a new live root over
             // the shared blobs, never a byte copy (ADR-022).
@@ -280,8 +312,12 @@ internal class RoomProjectRepository(
                 // every distinguishing detail into the action sheet, so the cover is all there is.
                 writeMeta(
                     copyId,
-                    ProjectMeta(title = "$sourceTitle copy", createdAtEpochMs = now)
-                        .withCover(newZineCoverRecipe(random)),
+                    // ADR-125 rule 8: the copy is put beside its original, in its first metadata write.
+                    ProjectMeta(
+                        title = "$sourceTitle copy",
+                        createdAtEpochMs = now,
+                        folder = FolderNames.clean(sourceMeta?.folder),
+                    ).withCover(newZineCoverRecipe(random)),
                 )
             } catch (e: IOException) {
                 cleanupProjectFiles(copyId)
@@ -319,6 +355,139 @@ internal class RoomProjectRepository(
             DataResult.Success(Unit)
         }
     }
+
+    // ---- Shelf folders (ADR-125) -----------------------------------------------------------------
+
+    override suspend fun moveProject(id: String, folder: String?): DataResult<Unit> = withContext(io) {
+        try {
+            sessionBusy(id)?.let { return@withContext it }
+            mutex.withLock {
+                when (val recovered = recoverInterruptedRestoreLocked()) {
+                    is DataResult.Failure -> return@withLock recovered
+                    is DataResult.Success -> Unit
+                }
+                // Presence is checked by the file, never by loading it: a zine that will not open can be moved.
+                val docFile = paths.documentFile(id) ?: return@withLock failure(DataError.NotFound(id))
+                if (!Files.isRegularFile(docFile)) return@withLock failure(DataError.NotFound(id))
+                val meta = readMetaOrNull(id) ?: return@withLock failure(unreadableMeta(id))
+                val target = try {
+                    FolderNames.clean(folder)?.let { spellingFor(it, foldersOnDisk(), except = setOf(id)) }
+                } catch (e: IOException) {
+                    return@withLock failure(DataError.Io("failed to read the shelf's folders", e))
+                }
+                if (meta.folder == target) return@withLock DataResult.Success(Unit)
+                try {
+                    writeMeta(id, meta.copy(folder = target))
+                } catch (e: IOException) {
+                    return@withLock failure(DataError.Io("failed to write project metadata for '$id'", e))
+                }
+                DataResult.Success(Unit)
+            }
+        } finally {
+            folderChanges.update { it + 1 }
+        }
+    }
+
+    override suspend fun renameFolder(from: String, to: String): DataResult<FolderChange> {
+        val target = FolderNames.clean(to)
+            ?: return failure(DataError.Invalid(listOf(ValidationIssue("folder.name.none", "'$to' is not a folder name"))))
+        return changeFolder(from) { folders, members -> spellingFor(target, folders, except = members) }
+    }
+
+    override suspend fun unpackFolder(name: String): DataResult<FolderChange> = changeFolder(name) { _, _ -> null }
+
+    /**
+     * Gives every zine carrying [from] the folder [target] works out (`null` is My Shelf): one atomic
+     * `meta.json` write per zine under the repository lock, so **not atomic across zines** (rule 18). A zine
+     * that cannot be written is listed and left as it was, and the rest still change; running the same call
+     * again finishes it, because the members are found again from the files each time.
+     *
+     * [target] is given every zine's folder and the members' ids, both read under the lock.
+     */
+    private suspend fun changeFolder(
+        from: String,
+        target: (folders: Map<String, String>, members: Set<String>) -> String?,
+    ): DataResult<FolderChange> = withContext(io) {
+        val fromKey = FolderNames.clean(from)?.let(FolderNames::key)
+            ?: return@withContext DataResult.Success(FolderChange(folder = null, changedIds = emptyList()))
+        try {
+            // Like every change aimed at a zine, this waits for that zine's editing session, and before the
+            // lock (ADR-044 §1). The members are read again under the lock; the gate's TOCTOU is the accepted one.
+            // The list itself is read under the lock: reading `meta.json` can repair it from its backup copy,
+            // which is a write, and the store allows one writer.
+            val gated = try {
+                mutex.withLock { membersOf(fromKey, foldersOnDisk()) }
+            } catch (e: IOException) {
+                return@withContext failure(DataError.Io("failed to read the shelf's folders", e))
+            }
+            for (id in gated) sessionBusy(id)?.let { return@withContext it }
+            mutex.withLock {
+                when (val recovered = recoverInterruptedRestoreLocked()) {
+                    is DataResult.Failure -> return@withLock recovered
+                    is DataResult.Success -> Unit
+                }
+                val folders = try {
+                    foldersOnDisk()
+                } catch (e: IOException) {
+                    return@withLock failure(DataError.Io("failed to read the shelf's folders", e))
+                }
+                val members = membersOf(fromKey, folders)
+                val spelling = target(folders, members.toSet())
+                val changed = ArrayList<String>(members.size)
+                val failed = ArrayList<String>()
+                var cause: DataError? = null
+                for (id in members) {
+                    currentCoroutineContext().ensureActive()
+                    // Read again here: the write below replaces the whole file, so it must start from what is
+                    // on disk now. A file that no longer reads is never written over (rule 17).
+                    val meta = readMetaOrNull(id)
+                    if (meta == null) {
+                        failed += id
+                        cause = cause ?: unreadableMeta(id)
+                        continue
+                    }
+                    if (meta.folder == spelling) continue
+                    try {
+                        writeMeta(id, meta.copy(folder = spelling))
+                        changed += id
+                    } catch (e: IOException) {
+                        // Not swallowed: the zine is listed and the first cause is handed back with the list.
+                        failed += id
+                        cause = cause ?: DataError.Io("failed to write project metadata for '$id'", e)
+                    }
+                }
+                DataResult.Success(FolderChange(folder = spelling, changedIds = changed, failedIds = failed, cause = cause))
+            }
+        } finally {
+            folderChanges.update { it + 1 }
+        }
+    }
+
+    /**
+     * Every zine's folder as the files say now (rule 14): id to cleaned name, for each zine whose
+     * `meta.json` reads and names a folder. A zine with missing or unreadable metadata is on My Shelf and so
+     * is absent. This is the same reading the Shelf makes in [toShelfEntries]; nothing else decides membership.
+     */
+    private fun foldersOnDisk(): Map<String, String> = buildMap {
+        for (id in listProjectIds()) FolderNames.clean(readMetaOrNull(id)?.folder)?.let { put(id, it) }
+    }
+
+    /** The zines in the folder with [key], in a stable order. */
+    private fun membersOf(key: String, folders: Map<String, String>): List<String> =
+        folders.filterValues { FolderNames.key(it) == key }.keys.sorted()
+
+    /**
+     * The spelling a zine joining [name] is written with: the folder's own, if any zine outside [except]
+     * already carries it, else [name] as given. One spelling per folder (rule 13).
+     */
+    private fun spellingFor(name: String, folders: Map<String, String>, except: Set<String> = emptySet()): String {
+        val key = FolderNames.key(name)
+        return FolderNames.display(folders.filter { (id, folder) -> id !in except && FolderNames.key(folder) == key }.values)
+            ?: name
+    }
+
+    private fun unreadableMeta(id: String): DataError =
+        DataError.Corrupt("project metadata for '$id' is missing or cannot be read")
 
     /**
      * Restore a fully validated v2 archive additively under the same writer ownership and repository
@@ -581,6 +750,7 @@ internal class RoomProjectRepository(
                             assetHashes = assetHashes.toList(),
                             coverSurface = meta.coverSurface,
                             coverStamp = meta.coverStamp,
+                            folder = FolderNames.clean(meta.folder),
                         ),
                     )
                 }
@@ -790,6 +960,13 @@ internal class RoomProjectRepository(
         val preparedProjectsRoot = staged.root.resolve(PREPARED_PROJECTS_DIRECTORY)
         Files.createDirectories(preparedProjectsRoot)
 
+        // ADR-125 rule 15: a restored zine joins the folder of its name if the Shelf has one, taking the Shelf's
+        // spelling; otherwise it brings the folder with it, and zines arriving together agree on one spelling.
+        val spellings = HashMap<String, String>()
+        foldersOnDisk().values.groupBy(FolderNames::key).forEach { (key, names) ->
+            FolderNames.display(names)?.let { spellings[key] = it }
+        }
+
         val preparedProjects = ArrayList<PreparedRestoreProject>(projects.size)
         val idPairs = ArrayList<Pair<String, String>>(projects.size)
         projects.zip(localIds).forEach { (project, localId) ->
@@ -806,6 +983,7 @@ internal class RoomProjectRepository(
                 createdAtEpochMs = entry.createdAtEpochMs,
                 coverSurface = entry.coverSurface,
                 coverStamp = entry.coverStamp,
+                folder = FolderNames.clean(entry.folder)?.let { spellings.getOrPut(FolderNames.key(it)) { it } },
             )
             store.write(
                 projectDir.resolve(ProjectPaths.META_FILE),
@@ -950,13 +1128,18 @@ internal class RoomProjectRepository(
     private fun listProjectIds(): List<String> {
         val root = paths.projectsRoot
         if (!Files.isDirectory(root)) return emptyList()
-        Files.list(root).use { stream ->
-            return stream
-                .filter { Files.isDirectory(it) }
-                .map { it.fileName.toString() }
-                .filter { ProjectPaths.PROJECT_ID.matches(it) }
-                .filter { id -> paths.documentFile(id)?.let(Files::isRegularFile) == true }
-                .toList()
+        try {
+            Files.list(root).use { stream ->
+                return stream
+                    .filter { Files.isDirectory(it) }
+                    .map { it.fileName.toString() }
+                    .filter { ProjectPaths.PROJECT_ID.matches(it) }
+                    .filter { id -> paths.documentFile(id)?.let(Files::isRegularFile) == true }
+                    .toList()
+            }
+        } catch (e: UncheckedIOException) {
+            // A directory stream fails mid-iteration with the unchecked wrapper; callers catch IOException.
+            throw e.cause ?: IOException(e)
         }
     }
 
@@ -1076,14 +1259,21 @@ internal class RoomProjectRepository(
         return listProjectIds()
             .mapNotNull { id ->
                 val docFile = paths.documentFile(id) ?: return@mapNotNull null
+                // ADR-125 rule 14: the folder is read here, from the file, for a zine that opens and for one
+                // that does not. Missing or unreadable metadata is My Shelf. Under the lock, because this read
+                // can repair the file from its backup copy and must not race a folder operation's write.
+                val meta = mutex.withLock { readMetaOrNull(id) }
+                val folder = FolderNames.clean(meta?.folder)
                 when (val loaded = documents.load(id)) {
                     is DataResult.Success -> {
-                        indexed[id]?.let(::toSummary)?.let(ProjectShelfEntry::Available)
+                        indexed[id]?.let(::toSummary)?.let { ProjectShelfEntry.Available(it, folder) }
                     }
                     is DataResult.Failure -> unavailableShelfEntry(
                         id = id,
                         docFile = docFile,
                         indexed = indexed[id],
+                        meta = meta,
+                        folder = folder,
                         error = loaded.error,
                     )
                 }
@@ -1095,6 +1285,8 @@ internal class RoomProjectRepository(
         id: String,
         docFile: Path,
         indexed: ProjectEntity?,
+        meta: ProjectMeta?,
+        folder: String?,
         error: DataError,
     ): ProjectShelfEntry? {
         val reason = when (error) {
@@ -1105,7 +1297,6 @@ internal class RoomProjectRepository(
             is DataError.NotFound, is DataError.Busy -> return null
             is DataError.OutOfSpace -> return null
         }
-        val meta = readMetaOrNull(id)
         val wire = peekDocumentWire(docFile)
         val updatedAt = max(indexed?.updatedAtEpochMs ?: 0L, fileMtimeOrNull(docFile) ?: clock())
         return ProjectShelfEntry.Unavailable(
@@ -1115,6 +1306,7 @@ internal class RoomProjectRepository(
             updatedAtEpochMs = updatedAt,
             cover = indexed?.coverRecipe() ?: meta?.coverRecipe(),
             reason = reason,
+            folder = folder,
         )
     }
 

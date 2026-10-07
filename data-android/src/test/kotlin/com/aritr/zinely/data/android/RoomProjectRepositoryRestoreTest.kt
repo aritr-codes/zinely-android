@@ -568,6 +568,138 @@ class RoomProjectRepositoryRestoreTest {
         assertTrue(restored.omitted.isEmpty())
     }
 
+    // ---- ADR-125 rule 15: a backup carries folder names --------------------------------------------
+
+    @Test
+    fun `a backup carries each zine's folder, and restoring it puts the zines back in them`() = runTest {
+        val repository = repo()
+        val a = repository.createProject("Lisbon", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER, "Trips").getOrNull()!!.id
+        val b = repository.createProject("Porto", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER, "Trips").getOrNull()!!.id
+        val c = repository.createProject("Loose", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER).getOrNull()!!.id
+        val archive = root.resolve("folders.zine")
+
+        repository.createLibraryBackup(archive).getOrNull()!!
+
+        ZineLibraryBackupStager().stage(archive, root.resolve("verify")).use { staged ->
+            assertEquals(2, staged.manifest.packageVersion)
+            assertEquals(
+                mapOf(a to "Trips", b to "Trips", c to null),
+                staged.projects.associate { it.manifestEntry.sourceProjectId to it.manifestEntry.folder },
+            )
+        }
+        listOf(a, b, c).forEach { assertTrue(repository.deleteProject(it).getOrNull() != null) }
+
+        val receipt = repository.restoreLibrary(archive).getOrNull()!!
+
+        assertEquals(3, receipt.addedCount)
+        assertEquals(
+            mapOf("Lisbon" to "Trips", "Porto" to "Trips", "Loose" to null),
+            receipt.projects.associate { it.project.title to metaOnDisk(it.project.id).folder },
+        )
+        assertEquals(
+            mapOf("Lisbon" to "Trips", "Porto" to "Trips", "Loose" to null),
+            repository.observeShelfProjects().first().associate { it.title to it.folder },
+        )
+    }
+
+    @Test
+    fun `a restored zine joins the shelf's folder of the same name, in the shelf's spelling`() = runTest {
+        val repository = repo()
+        repository.createProject("Lisbon", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER, "Trips").getOrNull()!!
+        val archive = writeArchive(
+            projects = listOf(
+                BackupProjectFixture("porto", "Porto", 1L, 2L, document(), folder = "TRIPS"),
+                BackupProjectFixture("moths", "Moths", 1L, 2L, document(), folder = "club"),
+                BackupProjectFixture("bats", "Bats", 1L, 2L, document(), folder = "CLUB"),
+            ),
+        )
+
+        repository.restoreLibrary(archive).getOrNull()!!
+
+        assertEquals("Trips", metaOnDisk("porto").folder)
+        // Zines arriving together into a folder the shelf does not have agree on one spelling.
+        assertEquals("club", metaOnDisk("moths").folder)
+        assertEquals("club", metaOnDisk("bats").folder)
+    }
+
+    @Test
+    fun `a zine that is already here is not moved by a restore`() = runTest {
+        documents.save("poems", document())
+        Files.write(
+            root.resolve("projects/poems/meta.json"),
+            Json.encodeToString(ProjectMeta.serializer(), ProjectMeta("Poems", 1L, folder = "Mine")).encodeToByteArray(),
+        )
+        documents.save("loose", document())
+        Files.write(
+            root.resolve("projects/loose/meta.json"),
+            Json.encodeToString(ProjectMeta.serializer(), ProjectMeta("Loose", 1L)).encodeToByteArray(),
+        )
+        val archive = writeArchive(
+            projects = listOf(
+                BackupProjectFixture("other-id", "Poems", 1L, 2L, document(), folder = "Theirs"),
+                BackupProjectFixture("another-id", "Loose", 1L, 2L, document(), folder = "Theirs"),
+            ),
+        )
+
+        val receipt = repo().restoreLibrary(archive).getOrNull()!!
+
+        assertEquals(0, receipt.addedCount)
+        assertEquals(2, receipt.alreadyHereCount)
+        assertEquals("Mine", metaOnDisk("poems").folder)
+        assertNull(metaOnDisk("loose").folder)
+    }
+
+    @Test
+    fun `a backup's folder names are cleaned like any other, and a bad one never refuses the restore`() = runTest {
+        val archive = writeArchive(
+            projects = listOf(
+                BackupProjectFixture("a", "Shelf", 1L, 2L, document(), folder = " my shelf "),
+                BackupProjectFixture("b", "Long", 1L, 2L, document(), folder = "x".repeat(60) + "\n"),
+                BackupProjectFixture("c", "Typed", 1L, 2L, document(), folder = "REPLACED"),
+            ),
+            manifestText = { text ->
+                assertTrue(text.contains(""""folder":"REPLACED""""))
+                text.replace(""""folder":"REPLACED"""", """"folder":{"name":"Trips"},"fromAFutureZinely":[1]""")
+            },
+        )
+
+        val receipt = repo().restoreLibrary(archive).getOrNull()!!
+
+        assertEquals(3, receipt.addedCount)
+        assertNull(metaOnDisk("a").folder)
+        assertEquals("x".repeat(40), metaOnDisk("b").folder)
+        assertNull(metaOnDisk("c").folder)
+    }
+
+    /**
+     * The frozen archives of `:core:data-storage` (`LibraryBackupFixtureTest` pins their bytes), restored all
+     * the way to `meta.json`: the two saved before folders existed put every zine on My Shelf, and the third
+     * brings its folder with it.
+     */
+    @Test
+    fun `the frozen archives restore end to end, with and without folder names`() = runTest {
+        val fixtures = java.nio.file.Paths.get("..", "core", "data-storage", "src", "test", "resources", "fixtures")
+
+        val plain = repo().restoreLibrary(fixtures.resolve("library-backup-v2.zine")).getOrNull()!!
+        assertEquals(3, plain.addedCount)
+        plain.projects.forEach { assertNull(metaOnDisk(it.project.id).folder) }
+        plain.projects.forEach { assertFalse(Files.readString(root.resolve("projects/${it.project.id}/meta.json")).contains("folder")) }
+
+        // The same three zines again, now in a folder: they are already here, so none is added or moved.
+        val folders = fixtures.resolve("library-backup-v2-folders.zine")
+        val again = repo().restoreLibrary(folders).getOrNull()!!
+        assertEquals(0, again.addedCount)
+        assertEquals(3, again.alreadyHereCount)
+        plain.projects.forEach { assertNull(metaOnDisk(it.project.id).folder) }
+
+        plain.projects.forEach { assertTrue(repo().deleteProject(it.project.id).getOrNull() != null) }
+        val fresh = repo().restoreLibrary(folders).getOrNull()!!
+        assertEquals(
+            mapOf("Moth Club Bulletin" to "Moth Club", "Moth Club Bulletin, summer" to "Moth Club", "Moth Club Bulletin, spring" to null),
+            fresh.projects.associate { it.project.title to metaOnDisk(it.project.id).folder },
+        )
+    }
+
     private suspend fun saved(repository: RoomProjectRepository, title: String, photoHash: String? = null): String {
         val id = repository.createProject(title, ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER).getOrNull()!!.id
         assertTrue(documents.save(id, document(photoHash)).getOrNull() != null)
@@ -866,6 +998,7 @@ class RoomProjectRepositoryRestoreTest {
                     }.distinct(),
                     coverSurface = project.coverSurface,
                     coverStamp = project.coverStamp,
+                    folder = project.folder,
                 )
             },
             assets = assets.map { (hash, bytes) -> AssetEntry(hash, "image/jpeg", 32, 32, bytes.size.toLong()) },
@@ -915,6 +1048,7 @@ class RoomProjectRepositoryRestoreTest {
         val document: ZineDocument,
         val coverSurface: String? = null,
         val coverStamp: String? = null,
+        val folder: String? = null,
     )
 
     /** A shelf index that never holds a row for [hiddenId]: the zine exists only on disk. */

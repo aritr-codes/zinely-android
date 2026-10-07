@@ -14479,8 +14479,9 @@ cross's bare paper surprise them?
 
 **Status:** **Accepted (design), 2026-10-07.** Proposed 2026-10-06. The owner tried the
 [`v21-library.html`](design/mockups/v21-library.html) **A28** prototype and approved it and the recommended
-rulings ("i have tried it and i am fine with them. you can proceed"); A28 was frozen the same day. **Nothing is
-built.** Acceptance covers the design and the storage model; the implementation still owes everything listed
+rulings ("i have tried it and i am fine with them. you can proceed"); A28 was frozen the same day. **The storage
+half is built (part 1, 2026-10-07, see *Implementation* below); nothing a maker can see or tap is.** Acceptance
+covers the design and the storage model; the implementation still owes the rest of what is listed
 under *Tests and evidence required before acceptance of the implementation*. One question, F-10, had no
 recommendation to approve and remains the owner's. Written in the folders design session on
 `origin/main` @ `ae374ea` (release `0.9.0-beta.6` plus documentation).
@@ -14608,7 +14609,8 @@ and are cited as **A28.n**; a bare "rule n" in this ADR always means the list he
     repository gains an in-memory signal, combined with the index's flow, that fires when a folder operation
     ends, whether it succeeded, failed or stopped partway. **Membership therefore has one source, the files,
     read the same way by the Shelf and by every folder operation, and there is no mirror to go stale.** The Shelf
-    lists outside the repository's lock, so a listing that starts while a rename is running can show the old and
+    takes the repository's lock only for each single `meta.json` it reads, not for the whole listing, so a
+    listing that starts while a rename is running can show the old and
     the new folder together for a moment; the signal at the end of the operation corrects it.
 15. **A backup carries it:** `ZineBackupProjectEntry` gains `folder: String? = null`. **`packageVersion` stays
     2.** The field is read leniently, as `omitted` is ([ADR-122](#adr-122)): a value of the wrong type is read as
@@ -14742,7 +14744,8 @@ actions do, and a zine's own sheet does not say which folder it is in (the choos
   of one ([ADR-122](#adr-122), `RoomProjectRepository.kt:515-526`).
 - A28 adds lines near the top of `v21-library.html`, so existing `v21-library.html:NNN` line citations in KDoc
   and other documents now point a few lines early. No test gates them. They are not corrected here (this change
-  touches no Kotlin) and are owed with the first implementation change.
+  touches no Kotlin) and are owed with part 2 of the implementation, the first to change those files (see
+  *Implementation*).
 - Rule 15 means a restore can add a zine to an existing folder. The restore summary's wording is unaffected: it
   counts zines.
 - Every backup written by a build with folders carries `"folder":null` on each zine that has none (the writer
@@ -14830,6 +14833,141 @@ changed only comments and labels in `v21-library.html`.
   tests or a device, and did not listen with a screen reader.
 - **Not done:** no device, no TalkBack, no Compose. The TalkBack names are read from a browser's accessibility
   tree, which is not the Android platform tree.
+
+#### Implementation
+
+**Part 1, storage (2026-10-07, branch `feat/shelf-folders-storage`).** Rules 12 to 18, with no screen, no
+ViewModel and no string: a maker cannot reach any of it yet.
+
+- **What exists.** `FolderNames` in `:core:data` is rule 13's helper (clean, key, same, display).
+  `ProjectMeta` and `ZineBackupProjectEntry` each gain a defaulted `folder`. `ProjectRepository` gains
+  `moveProject`, `renameFolder`, `unpackFolder` and a `folder` argument on `createProject`;
+  `ProjectShelfEntry` carries `folder` for a zine that opens and for one that does not. The Room table and
+  its schema file are untouched, and `packageVersion` is still 2.
+- **Five things the rules left to the implementation.** The first three change what a name is, so they are
+  settled now, before any released build stores one.
+  1. *The cut at 40 is written out, and it is an approximation.* The app does not use Android's own
+     text-breaking, which changes between versions. The helper keeps together a letter and its marks, an emoji
+     and its modifiers, joined emoji, the two halves of a flag, and consonants joined by a virama in the six
+     scripts where Unicode joins them (Devanagari, Bengali, Gujarati, Oriya, Telugu, Malayalam). It can still cut inside a character in cases it does not list: old Hangul typed as separate
+     parts, and the prepended signs of Arabic and some Indic scripts. The character tables it reads are the
+     device's, so "the same on every phone" is not promised.
+  2. *A second limit: 160 UTF-16 units.* One character a reader sees can be built from any number of parts (a
+     letter under a thousand marks), so 40 characters alone bounded nothing. A character that would pass the
+     limit is left out whole. Forty ordinary emoji fit; forty three-person family emoji stop at twenty, and longer
+     built-up emoji sooner. Only the first 1024
+     units of a value are read at all, because a value from a backup can be megabytes and normalising it is slow.
+  3. *More is removed than rule 13 lists.* Besides line breaks and control characters, the helper removes the
+     invisible formatting characters that change nothing a reader sees (zero-width space, soft hyphen, word
+     joiner, byte-order mark, direction marks), so the commonest hidden characters cannot make a second *Trips*.
+     The two joiners, variation selectors and tag characters stay, because emoji and several scripts are
+     spelled with them. A name of only marks or blank-looking characters is no folder. *My Shelf* is judged
+     more widely than other names: hidden characters are ignored, any run of spaces or blank-looking
+     characters counts as one space, and fullwidth letters count as ordinary ones, so a name cannot pass as the
+     Shelf's own by hiding something in it. The price is that *My Shelf* typed with two spaces, or with a
+     visible accent that has no letter of its own, is refused too. Letters borrowed from another alphabet that
+     look like these are not caught.
+  4. *A `folder` value that is not text is read as no folder*, in `meta.json` and in a backup, where a strict
+     reader would have called the whole file unreadable. A folder name is arrangement, not work. The odd value
+     is then gone for good the next time that zine's `meta.json` is written; so is anything a name loses by
+     being cleaned.
+  5. *A rename or unpack that changes some zines and not others returns success with the list of zines left
+     and the first reason* (`FolderChange.failedIds`, `cause`), not a failure, because part of it happened and
+     the caller must say so.
+- **Known and left as they are.** Two names other than *My Shelf* can still differ only by a no-break space, a
+  stray joiner or variation selector, a final sigma, or *ß* against *ss*. Removing direction marks can change
+  where punctuation sits in a name that mixes right-to-left and left-to-right writing. The 1024-unit reading
+  limit is applied first, so a hand-edited value with more than a thousand spaces before the name is no folder. A zine whose `meta.json` is missing but which is in the index shows on the Shelf and refuses a
+  move (rule 17) until it is renamed; part 2's words must not call it damaged. A rename that is refused for its
+  name does not fire the Shelf's signal, because nothing was read or written. The Shelf's listing now waits for
+  the repository lock while it reads each `meta.json`, so it waits behind a backup or restore in progress.
+- **Guards added**, each named under *Consequences*: `library-backup-v2-folders.zine`, a third frozen archive
+  (the first two are byte-identical, and now also pin that an entry with no key is My Shelf); an entry with an
+  unknown key still stages; a wrong-typed `folder` refuses neither staging nor a restore; the folder survives
+  each `meta.json` writer (create, rename, duplicate, the legacy cover backfill, move, rename folder, unpack,
+  restore); the name helper's cases, with 200,000 generated names checked for the four properties rule 13
+  promises; the Shelf lists again after each operation, also a refused one, with no index write; all three
+  frozen archives restored to `meta.json`. The implementer broke three things on purpose (a writer dropping
+  the folder, the Shelf not listening, the backup not carrying the name) and each turned the expected test red;
+  that run is not kept, so it is the implementer's word.
+- **Older builds, run not read.** The restore tests of the `v0.9.0-beta.6` tag were run with one added case:
+  beta.6's own code restored the new folders archive (three zines added, on My Shelf), read a `meta.json`
+  carrying a folder, and dropped the folder when it renamed that zine, as rule 16 says. The added case is not
+  kept in the repository.
+- **Still owed, with part 2:** the ViewModel test that a folder action finishes a waiting delete first (rule
+  11); every screen, string, golden and semantics test; pixel parity against A28; both device passes; rule
+  16's three sentences in the release notes of the first release that has folders; a shared counter for the
+  name field, which `FolderNames` does not expose yet; a test of stopping a rename by cancelling it. The stale
+  `v21-library.html:NNN` line citations named under *Consequences* are also left for part 2. They are in Shelf
+  and editor screen files, `Copy.kt`, three test files and three documents; part 1 touches no screen file, and
+  correcting some and not others would be worse than correcting none.
+- **Device check: Pass 1 done on the owner's phone, 2026-10-07.** The first version of this note waived the
+  check; the owner then connected the phone and said to run it. Samsung SM-A176B, Android 16. Two side-by-side
+  test apps (`com.aritr.zinely.foldersqa`, `com.aritr.zinely.foldersqab6`), made-up zines only; the owner's
+  own app and library were not opened or touched, and the test apps and their backup files were removed
+  afterwards. Head commit `4b83f22` against the `v0.9.0-beta.6` tag:
+  1. *An existing library.* beta.6 made two zines; this build was installed over it. The Shelf opened with
+     both, and both `meta.json` files were byte-identical afterwards.
+  2. *A new zine* made by this build has no `folder` key in its `meta.json`.
+  3. *A new backup read by the old build.* This build's backup (every entry `"folder":null`, then one entry
+     with a real folder name) was restored by beta.6 in the second test app: "3 zines added". beta.6 wrote the
+     restored files without a folder, as rule 16 says.
+  4. *An old backup read by this build.* beta.6's backup, restored after one of its two zines was deleted
+     here: "1 zine added", the other "already here".
+  5. *A hand-written, untidy name* (`"  🫶 field Notes\n"`) put into one zine's `meta.json`: the Shelf listed
+     as before and did not rewrite the file; the backup carried `🫶 field Notes`; renaming the zine kept the
+     folder and wrote the cleaned name.
+  No crash in the log. **Not covered:** nothing a maker can tap makes a folder yet, so move, rename and unpack
+  were not driven on the phone; Android 7 to 15; TalkBack. Pass 2 has nothing to look at until there is a
+  screen. One thing seen by accident and not caused by this work: a `meta.json` made unreadable by hand was
+  put back from its older backup copy, so the file said the zine's old title while the Shelf went on showing
+  the new one ([issue #106](https://github.com/aritr-codes/zinely-android/issues/106)).
+- **Review:** two independent reviewers read commit `497d812`, one for code and concurrency, one for
+  compatibility, scope and the honesty of these documents. **Both: GO WITH FIXES.** Neither found a stop
+  condition: no schema, Room, fixture, dependency, permission, screen, string or golden changed.
+  - *Required, all accepted.* A name could be any length, because letters glued by joiners or one letter under
+    thousands of marks counted as one character → the second limit (item 2), and a joiner no longer glues
+    letters. Cleaning normalised the whole value before cutting it, and a crafted 4 MB name in a backup would
+    have frozen the app for minutes during a restore → only the first 1024 units are read. "It never splits a
+    character" was false → corrected here and in the code, and the virama and non-joiner cases added. "No
+    device pass, nothing to reach" understated a persistence change → the deviation above, and the beta.6 run.
+    A placeholder was left where this paragraph is.
+  - *Recommended, accepted:* names of only blank-looking characters (item 3); the Shelf and the member list
+    read `meta.json` under the lock, because that read can repair the file and the store allows one writer;
+    the reason for a failed write is returned, not dropped (item 5); a directory listing that fails partway is
+    reported as a failure, not a crash; the tests named above; the corrections to ROADMAP, ARCHITECTURE and
+    the fixture's description.
+  - *Recommended, partly accepted:* hidden characters making look-alike folders → the invisible ones are
+    removed (item 3); no-break space, sigma and *ß* are left (above). A test of cancelling mid-rename → owed
+    with part 2.
+  - **A third review, of the fix commit `51f3552`: GO WITH FIXES.** It ported the name helper and ran three
+    million names through it without breaking the four properties, and found no emoji cut apart and no lock
+    taken twice. Required, all accepted: a character newer than the phone's tables counted as invisible, so an
+    emoji-only folder would have vanished on older Android → it now counts as something to see; "*Trips* with a
+    hidden character is one folder" was false and a look-alike *My Shelf* got through → item 3 and *Known and
+    left* corrected, *My Shelf* judged more widely; the device deviation was the implementer granting itself
+    leave → it is the owner's decision; a sentence here claimed a run and a pull request that did not exist yet
+    → removed. Recommended, accepted: Gurmukhi, Kannada, Tamil and Sinhala taken out of the virama rule, leaving
+    the six scripts Unicode's own rule names; a test that could not
+    fail replaced; the refused-operation test no longer able to pass by a late index event; the frozen archives
+    declared as an input of the tests that restore them; rule 14's sentence about the lock.
+  - *Runs.* The full unit suites, the dependency allowlist and the golden gate were run on `497d812` and on
+    `51f3552`, each from a clean tree, all green. A commit cannot record a run on itself: the run on the last
+    commit of this branch will be recorded in the pull request's description when it is opened.
+  - **A fourth review, of the last fix commit `f0e0d18`: GO WITH FIXES**, all accepted. Blank-looking and
+    reserved-ignorable characters still got a look-alike *My Shelf* through, and counting every unknown
+    character as visible let an invisible name become a folder → one rule for "hidden" now serves both
+    checks, with an emoji the device does not know yet still counted as visible. This paragraph cited a pull
+    request that did not exist → reworded. The frozen archives' test input now has a name and a relative
+    path.
+  - **A fifth review, of that commit `8f2e52c`: GO WITH FIXES**, accepted. Two blank characters in a row still
+    got a look-alike *My Shelf* through → a run of them is one space; fullwidth letters are folded. It ran a
+    port of the helper over two million names without breaking idempotence. Its observations stand as known:
+    a few characters that draw nothing on most phones (the object-replacement character, a private-use code
+    point) can still be a folder name, and which marks count as hidden follows the phone's character tables.
+    That last change was not reviewed again: it is three lines and their tests.
+  - *Not done by any reviewer:* none ran Gradle or a device; one ran the compiled name helper directly,
+    on a desktop Java, not on Android.
 
 ## ADR-126 {#adr-126}
 
