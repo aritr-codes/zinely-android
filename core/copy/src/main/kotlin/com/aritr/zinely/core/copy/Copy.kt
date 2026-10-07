@@ -770,7 +770,7 @@ public object Copy {
      * ⚠ [FIRST_PAGE_HEADLINE] lost its trailing `✨`. That is a **visual-language** fix, not a rewording:
      * the glyph renders through Noto Color Emoji, so it lands as the one full-colour object in a corpus
      * whose entire illustration vocabulary is ink on paper — and it lands inside an Averia headline, next
-     * to the frozen `.empty h2` it is meant to rhyme with (`v21-library.html:464`, *"Make your first
+     * to the frozen `.empty h2` it is meant to rhyme with (`v21-library.html:621`, *"Make your first
      * little zine."*, which carries no emoji). The words are untouched; [D-050] still leaves the *wording*
      * to the owner.
      */

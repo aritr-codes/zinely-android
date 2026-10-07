@@ -10085,7 +10085,7 @@ and belongs beside it: *the framework's state is not the platform's state.*
 
 ##### Deviations and debts, recorded rather than resolved
 
-- **The `.tf .arrow` is `--jam`** (`v21-library.html:303`), transcribed faithfully — and §4.1 says jam is
+- **The `.tf .arrow` is `--jam`** (`v21-library.html:332`), transcribed faithfully — and §4.1 says jam is
   the only *urgent* colour. Decorative jam is a **spec** tension, not an implementation defect; flagged
   for the owner, unchanged here.
 - **`ZMenuItem` still draws `--coral-text`.** V2.1 publishes no coral. A conversion still owed.

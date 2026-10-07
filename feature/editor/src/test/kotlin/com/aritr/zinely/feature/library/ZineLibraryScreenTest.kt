@@ -391,7 +391,7 @@ class ZineLibraryScreenTest {
 
         // **The re-freeze inverted this claim, so the assertion is rewritten rather than re-baselined.**
         // V2 kept the heading up while loading; V2.1's `state()` writes
-        // `.shelf-head{visibility:hidden}` (`v21-library.html:440`) — *hidden*, which keeps the space
+        // `.shelf-head{visibility:hidden}` (`v21-library.html:722`) — *hidden*, which keeps the space
         // and drops the text. It has to: the head carries a **count**, and a count of zero while the
         // read is still running tells a user with twelve zines that they have none.
         //
