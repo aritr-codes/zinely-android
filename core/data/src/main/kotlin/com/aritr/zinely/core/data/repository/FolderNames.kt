@@ -94,12 +94,7 @@ public object FolderNames {
         var i = 0
         while (i < name.length) {
             val cp = name.codePointAt(i)
-            val draws = !Character.isWhitespace(cp) && !Character.isSpaceChar(cp) && cp !in BLANK_LOOKING &&
-                when (Character.getType(cp).toByte()) {
-                    // Not UNASSIGNED: an emoji newer than this phone's tables is still drawn by the bundled font.
-                    Character.FORMAT, Character.NON_SPACING_MARK, Character.ENCLOSING_MARK -> false
-                    else -> true
-                }
+            val draws = !Character.isWhitespace(cp) && !Character.isSpaceChar(cp) && cp !in BLANK_LOOKING && !isHidden(cp)
             if (draws) return true
             i += Character.charCount(cp)
         }
@@ -107,9 +102,21 @@ public object FolderNames {
     }
 
     /**
-     * Whether [name] reads as *My Shelf* (rule 9), judged more widely than [key]: characters that draw nothing
-     * (formatting characters, marks, variation selectors) are ignored and every kind of space is a space, so a
-     * stray joiner or a no-break space cannot smuggle the Shelf's own name in as a folder.
+     * A character that takes no room of its own: a formatting character, a mark that sits on another
+     * character, or a code point Unicode reserves as ignorable. An unassigned code point outside those reserved
+     * ranges is NOT hidden: an emoji newer than this device's tables is still a character someone typed.
+     */
+    private fun isHidden(cp: Int): Boolean = when (Character.getType(cp).toByte()) {
+        Character.FORMAT, Character.NON_SPACING_MARK, Character.ENCLOSING_MARK -> true
+        Character.UNASSIGNED -> cp == 0x2065 || cp in 0xFFF0..0xFFF8 || cp in 0xE0000..0xE0FFF
+        else -> false
+    }
+
+    /**
+     * Whether [name] reads as *My Shelf* (rule 9), judged more widely than [key]: hidden characters
+     * ([isHidden]) are ignored, and every kind of space and blank-looking character is a space, so a stray
+     * joiner or a no-break space cannot smuggle the Shelf's own name in as a folder. It errs toward refusing:
+     * a mark that cannot combine with its letter is ignored too.
      */
     private fun looksLikeMyShelf(name: String): Boolean {
         val skeleton = buildString(name.length) {
@@ -117,11 +124,9 @@ public object FolderNames {
             while (i < name.length) {
                 val cp = name.codePointAt(i)
                 when {
-                    Character.isWhitespace(cp) || Character.isSpaceChar(cp) -> append(' ')
-                    else -> when (Character.getType(cp).toByte()) {
-                        Character.FORMAT, Character.NON_SPACING_MARK, Character.ENCLOSING_MARK -> Unit
-                        else -> appendCodePoint(cp)
-                    }
+                    Character.isWhitespace(cp) || Character.isSpaceChar(cp) || cp in BLANK_LOOKING -> append(' ')
+                    isHidden(cp) -> Unit
+                    else -> appendCodePoint(cp)
                 }
                 i += Character.charCount(cp)
             }
@@ -220,7 +225,7 @@ public object FolderNames {
 
     /**
      * Devanagari, Bengali, Gujarati, Oriya, Telugu, Malayalam: the scripts where Unicode joins consonants
-     * across this mark. Not Tamil or Sinhala, where the mark is usually drawn and the letters stay apart.
+     * across this mark (Unicode 15.1). Not Gurmukhi, Kannada, Tamil or Sinhala, which that rule leaves out.
      */
     private val VIRAMAS: Set<Int> = setOf(0x094D, 0x09CD, 0x0ACD, 0x0B4D, 0x0C4D, 0x0D4D)
 }

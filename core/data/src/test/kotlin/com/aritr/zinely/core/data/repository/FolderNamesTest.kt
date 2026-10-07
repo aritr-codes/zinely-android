@@ -124,6 +124,21 @@ class FolderNamesTest {
         assertNull(FolderNames.clean("My\u200C Shelf\uFE0F"))
         assertNull(FolderNames.clean("My\u00A0Shelf"))
         assertNull(FolderNames.clean("MY\u2003SHELF\u034F"))
+        listOf("My Shelf\u3164", "My Shelf\uFFA0", "My\u2800Shelf", "My Shelf\u2065", "My Shelf\uDB40\uDC80")
+            .forEach { assertNull(FolderNames.clean(it), it.map { c -> c.code.toString(16) }.toString()) }
+        // Hidden characters dropped anywhere in it, in any number, never get it through.
+        val hidden = intArrayOf(0x200B, 0x200C, 0x200D, 0xFE0F, 0x034F, 0x00AD, 0x2065, 0xE0080, 0xE0061, 0x202E)
+        val random = Random(9)
+        repeat(20_000) {
+            val name = buildString {
+                for (c in if (random.nextBoolean()) "My Shelf" else "MY SHELF") {
+                    repeat(random.nextInt(3)) { appendCodePoint(hidden[random.nextInt(hidden.size)]) }
+                    append(c)
+                }
+                repeat(random.nextInt(3)) { appendCodePoint(hidden[random.nextInt(hidden.size)]) }
+            }
+            assertNull(FolderNames.clean(name), name.map { c -> c.code.toString(16) }.toString())
+        }
         // Known and left: a stray joiner inside any other name still makes a different folder.
         assertFalse(FolderNames.same(FolderNames.clean("Trips\u200D"), "Trips"))
         assertTrue(FolderNames.same(FolderNames.clean("Trips\u200B"), "trips"))
@@ -134,10 +149,14 @@ class FolderNamesTest {
         listOf("\u3164", "\u2800", "\uFE0F", "\u034F", "\u0301", "\u115F\u1160", "\u200D\u200C")
             .forEach { assertNull(FolderNames.clean(it), it.map { c -> c.code.toString(16) }.toString()) }
         assertEquals("\u2764\uFE0F", FolderNames.clean("\u2764\uFE0F")) // a heart is something to see
-        // A code point this machine's tables do not know yet is still a name: the app's own font may draw it.
-        val unknown = String(Character.toChars(0xE0080))
-        assertEquals(Character.UNASSIGNED, Character.getType(0xE0080).toByte())
-        assertEquals(unknown, FolderNames.clean(unknown))
+        // An emoji newer than this machine's tables is still a name: someone typed it, and a newer phone draws it.
+        (0x1FA00..0x1FAFF).firstOrNull { Character.getType(it).toByte() == Character.UNASSIGNED }?.let { newer ->
+            val unknown = String(Character.toChars(newer))
+            assertEquals(unknown, FolderNames.clean(unknown))
+        }
+        // A code point Unicode reserves as ignorable draws nothing, assigned or not.
+        assertNull(FolderNames.clean(String(Character.toChars(0xE0080))))
+        assertNull(FolderNames.clean("\u2065"))
         // Tamil's mark does not join, so its letters are counted one by one.
         assertEquals("\u0B95\u0BCD".repeat(40), FolderNames.clean("\u0B95\u0BCD".repeat(80)))
     }

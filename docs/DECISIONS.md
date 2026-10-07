@@ -14862,8 +14862,9 @@ ViewModel and no string: a maker cannot reach any of it yet.
      joiner, byte-order mark, direction marks), so the commonest hidden characters cannot make a second *Trips*.
      The two joiners, variation selectors and tag characters stay, because emoji and several scripts are
      spelled with them. A name of only marks or blank-looking characters is no folder. *My Shelf* is judged
-     more widely than other names: hidden characters are ignored and any kind of space counts as a space, so
-     no look-alike of the Shelf's own name can be a folder.
+     more widely than other names: hidden characters are ignored and any kind of space or blank-looking
+     character counts as a space, so a name cannot pass as the Shelf's own by hiding something in it. Letters
+     borrowed from another alphabet that look like these are not caught.
   4. *A `folder` value that is not text is read as no folder*, in `meta.json` and in a backup, where a strict
      reader would have called the whole file unreadable. A folder name is arrangement, not work. The odd value
      is then gone for good the next time that zine's `meta.json` is written; so is anything a name loses by
@@ -14933,12 +14934,19 @@ ViewModel and no string: a maker cannot reach any of it yet.
     hidden character is one folder" was false and a look-alike *My Shelf* got through → item 3 and *Known and
     left* corrected, *My Shelf* judged more widely; the device deviation was the implementer granting itself
     leave → it is the owner's decision; a sentence here claimed a run and a pull request that did not exist yet
-    → removed. Recommended, accepted: Tamil and Sinhala taken out of the virama rule; a test that could not
+    → removed. Recommended, accepted: Gurmukhi, Kannada, Tamil and Sinhala taken out of the virama rule, leaving
+    the six scripts Unicode's own rule names; a test that could not
     fail replaced; the refused-operation test no longer able to pass by a late index event; the frozen archives
     declared as an input of the tests that restore them; rule 14's sentence about the lock.
   - *Runs.* The full unit suites, the dependency allowlist and the golden gate were run on `497d812` and on
     `51f3552`, each from a clean tree, all green. A commit cannot record a run on itself: the run on the last
-    commit of this branch is in the pull request's description.
+    commit of this branch will be recorded in the pull request's description when it is opened.
+  - **A fourth review, of the last fix commit `f0e0d18`: GO WITH FIXES**, all accepted. Blank-looking and
+    reserved-ignorable characters still got a look-alike *My Shelf* through, and counting every unknown
+    character as visible let an invisible name become a folder → one rule for "hidden" now serves both
+    checks, with an emoji the device does not know yet still counted as visible. This paragraph cited a pull
+    request that did not exist → reworded. The frozen archives' test input now has a name and a relative
+    path. That last change was read by the implementer only.
   - *Not done by either reviewer:* neither ran Gradle or a device; one ran the compiled name helper directly,
     on a desktop Java, not on Android.
 

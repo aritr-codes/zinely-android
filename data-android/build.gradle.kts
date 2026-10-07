@@ -52,7 +52,11 @@ android {
             isIncludeAndroidResources = true
             // RoomProjectRepositoryRestoreTest restores :core:data-storage's frozen archives by path; declared
             // so a changed archive re-runs these tests instead of reusing an up-to-date result.
-            all { it.inputs.dir(rootProject.file("core/data-storage/src/test/resources/fixtures")) }
+            all {
+                it.inputs.dir(rootProject.file("core/data-storage/src/test/resources/fixtures"))
+                    .withPropertyName("backupFixtures")
+                    .withPathSensitivity(PathSensitivity.RELATIVE)
+            }
         }
     }
 
