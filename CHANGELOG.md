@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A design proposal for folders on the Shelf: a written decision that is not yet accepted (ADR-125), the
+  research behind it, and a try-it-yourself amendment to the Shelf design that is not yet frozen. Nothing in the
+  app changed and there is still nothing to try in a download.
 - The public roadmap lists folders on the Shelf and a second font as In development, each saying there is
   nothing to try yet. The roadmap and What's new pages use plainer words (for example "a screen reader" where
   they said TalkBack alone), and the homepage status table now starts each status on its own line.

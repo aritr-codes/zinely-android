@@ -37,6 +37,19 @@ if (new URLSearchParams(location.search).has('gallery')) {
      │                                                                             │
      │  A24 ACCESSIBILITY AMENDMENT · 2026-08-28: Delete is separated from the    │
      │  reversible actions by an 8px desk band as well as consequence colour.     │
+     │                                                                             │
+     │  A28 FOLDERS AMENDMENT · PROPOSED 2026-10-06 · NOT FROZEN (ADR-125,         │
+     │  Proposed).  The owner asked for folders on the Shelf.  Everything this     │
+     │  amendment adds is marked A28 in the CSS, markup and script below, and none │
+     │  of it is in force until the owner approves it and ADR-125 is Accepted.     │
+     │  With no folder made, the Shelf is the frozen Shelf: same heading, same     │
+     │  grid, same dock.  A28 adds one row to the zine sheet (Move to a folder),   │
+     │  a folder chooser, a name sheet, a folder tile (a banded pile of its        │
+     │  zines' own covers), the view inside a folder, a folder action sheet and    │
+     │  one support-paper snack.  One level.  A zine sits in one place.  A folder  │
+     │  exists only while it holds a zine.  No drag gesture.  If approved, the     │
+     │  unavailable zine's sheet has six rows, not the five D-111 names: Move to   │
+     │  a folder is live for it, as Rename is.                                     │
      └─────────────────────────────────────────────────────────────────────────────┘ -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -385,6 +398,115 @@ body{
 .act:disabled .ic{background:var(--butter);color:var(--on-leaf)}
 .act.danger:active{color:var(--on-leaf)}
 
+/* ============================================================================
+   A28 · FOLDERS — PROPOSED 2026-10-06, NOT FROZEN (ADR-125, Proposed).
+   Everything from here to the dev controls is the amendment.  No rule above this
+   line changed.  A Shelf with no folder looks as it did before A28 (measured; see the
+   note at .sheet.a28 below).
+   ============================================================================ */
+
+/* A folder is a PILE: its zines' own covers, fanned, held by a paper band.  It is an
+   <article class="zine pile">, so it takes one grid cell and one place in the tilt and
+   tape cycle like any other object on the desk — the Shelf still shows covers, not
+   containers.  The covers in a pile are decoration (aria-hidden); the tile's one
+   accessible name is on its button.  At most three covers are drawn, newest on top. */
+.zine.pile{min-width:0}
+.pile-stack{position:relative;aspect-ratio:3/4}
+/* the folder itself: one kraft sheet behind the covers, drawn for every pile.  Without it
+   a folder holding ONE zine is that zine's cover under a new name — the first folder
+   anyone makes read as "it renamed my zine" in review.  Pinned, like the band. */
+.pile-back{position:absolute;inset:0;background:#E2C59A;border:1.5px solid #27270F;
+  border-radius:var(--br-xs) var(--br-md) var(--br-md) var(--br-xs);
+  box-shadow:var(--hard) var(--hard) 0 var(--ink-line);transform:translate(8px,-9px) rotate(3.5deg)}
+.pile .name{overflow-wrap:anywhere}
+.pile-stack .cover{position:absolute;inset:0;aspect-ratio:auto}
+.pile .tape,.pile .stamp{display:none}
+/* the fan is structure, not a "direction" move: the tilt toggle does not flatten it */
+.zine.pile .cover.p2{transform:translate(9px,-8px) rotate(5deg)}
+.zine.pile .cover.p1{transform:translate(-5px,-4px) rotate(-4deg)}
+.zine.pile .cover.p0{transform:rotate(-.5deg)}
+.zine.pile .zine-open:active .cover.p0{transform:translate(2px,2px)}
+/* the band — kraft, PINNED in both themes like the tape and the stamp: it is a material
+   holding the maker's objects, and a material does not change what it is after dark. */
+.band{position:absolute;left:-6px;right:-6px;top:58%;height:24px;z-index:3;
+  background:#E2C59A;border:1.5px solid #27270F;box-shadow:2px 2px 0 #27270F;
+  transform:rotate(-2deg)}
+.band::after{content:"";position:absolute;inset:0;background-image:var(--grain);
+  background-size:130px 130px;mix-blend-mode:multiply;opacity:.5}
+:root[data-grain="off"] .band::after{display:none}
+
+/* inside a folder: the heading is the folder's name, and one quiet control leads back.
+   The chevron is DRAWN for the reason the overflow dots are: the mark must be one the
+   app owns, not a character a font may not carry. */
+.back{appearance:none;border:0;background:none;padding:0 var(--gap-sm) 0 0;min-height:48px;
+  display:flex;align-items:center;gap:var(--gap-sm);cursor:pointer;color:var(--ink-soft);
+  font:600 .82rem/1 var(--sans);text-decoration:underline;text-decoration-color:var(--hair);
+  text-underline-offset:4px}
+.back[hidden]{display:none}
+.back svg{width:7px;height:12px;flex:none}
+.back:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:var(--br-sm)}
+.shelf-head.in-folder{align-items:flex-end}
+.shelf-head.in-folder h1{font-size:1.6rem;overflow-wrap:anywhere;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.shelf-head.in-folder .count{flex:none;white-space:nowrap}
+
+/* the three A28 sheets reuse .sheet and .act unchanged; these are the additions */
+.sheet.a28{max-height:88%;overflow-y:auto}
+/* a lowered A28 sheet casts nothing: three more shadows under the dock would darken the
+   bottom of the frozen Shelf */
+.sheet.a28:not(.show){box-shadow:none}
+/* A lowered sheet is made `inert` by the script (it used to keep taking focus, and
+   focusing it scrolled the phone).  Done with the attribute, not with CSS, so the frozen
+   Shelf is not repainted.  MEASURED 2026-10-06 against origin/main, phone frame only, in
+   the light, dark, empty and error states with no folder made: no pixel differs by more
+   than 3 of 255 levels, and those that do are in the lower fifth of the phone, where the
+   lowered zine sheet (one row taller now) casts its shadow a hair differently. */
+/* the row for where the zine already is: not a choice, but its note is information, so
+   it is NOT dimmed the way a disabled row is (the dimmed note measured 1.98:1) */
+.act.here{cursor:default}
+.act.here:active{background:none;color:var(--ink)}
+.act.here .lines>span:first-child{color:var(--ink-soft)}
+.act .ic svg{display:block;width:17px;height:17px}
+.act .lines{display:flex;flex-direction:column;gap:var(--gap-hair);min-width:0;overflow-wrap:anywhere}
+.act .note{font-size:.78rem;color:var(--ink-soft);font-weight:500}
+.field{padding:var(--gap-lg) var(--gap-xl) 0;display:flex;flex-direction:column;gap:var(--gap-sm)}
+.field label{font:700 .7rem/1.2 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+/* the field is paper, pinned with its ink, so typed words read the same in both themes */
+.field input{font:500 1rem/1.3 var(--sans);color:#27270F;background:#FFF6E8;
+  border:1.5px solid var(--ink);border-radius:var(--br-sm);padding:var(--gap-md);min-height:48px;width:100%}
+.field input:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.field .hint{min-height:1.3em;margin:0;font-size:.78rem;color:var(--ink-soft);font-weight:500}
+.sheet-btns{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:var(--gap-sm) var(--gap-lg);
+  padding:var(--gap-md) var(--gap-xl) 0}
+.go{font:700 .94rem/1.2 var(--sans);background:var(--leaf);color:var(--on-leaf);border:1.5px solid var(--ink);
+  border-radius:var(--br-lg);padding:var(--gap-md) var(--gap-xl);min-height:48px;cursor:pointer;
+  max-width:100%;overflow-wrap:anywhere;text-align:center;
+  box-shadow:3px 3px 0 var(--ink-line)}
+.go:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
+.go:disabled{opacity:.45;cursor:default;transform:none;box-shadow:3px 3px 0 var(--ink-line)}
+.go:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+
+/* the Shelf's snack — the Bench's support-paper snack (v21-bench.html .snack), same
+   paint.  It says what just happened and offers Undo.  The script seats it 8px above
+   the dock at any text size; `bottom` here is only the value before first use. */
+.snack{position:absolute;left:14px;right:14px;bottom:140px;z-index:42;display:flex;align-items:center;
+  gap:var(--gap-md);background:var(--surface-soft);color:var(--ink);border:1.5px solid var(--ink);
+  border-radius:var(--br-lg);padding:var(--gap-md) var(--gap-sm) var(--gap-md) var(--gap-lg);font-size:.79rem;
+  opacity:0;transform:translateY(8px) rotate(-.6deg);pointer-events:none;
+  transition:opacity .18s,transform .18s}
+.snack.show{opacity:1;transform:rotate(-.6deg);pointer-events:auto}
+.snack span{flex:1;min-width:0;overflow-wrap:anywhere}
+.snack button{flex:none;font-family:var(--sans);font-size:.78rem;font-weight:700;color:var(--ink);min-height:48px;
+  text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px;
+  background:none;border:0;border-radius:var(--br-pill);padding:var(--gap-xs) var(--gap-md);cursor:pointer}
+.snack button[hidden]{display:none}
+/* a snack that has gone is not there at all (the script also makes it inert) */
+.snack:not(.show){visibility:hidden}
+
+/* prototype-only: Android font scale 1.8, the scale the app's regression tests use */
+:root[data-large="on"]{font-size:180%}
+/* ===================== end of A28 (proposed) CSS ===================== */
+
 /* ============================== dev controls ============================== */
 .controls{display:flex;flex-wrap:wrap;gap:var(--gap-sm);justify-content:center;max-width:640px}
 .ctl{font-family:var(--sans);font-size:.78rem;font-weight:600;background:var(--surface);
@@ -406,11 +528,21 @@ same action sheet. What changes is the <b>voice</b>. Five moves are on trial —
 <b>a hard printed offset shadow</b> instead of a blur, <b>things resting at an angle</b>,
 <b>tape</b>, <b>a postmark stamp</b> carrying metadata, and <b>a wobbly display face</b>.
 Toggle each one below and judge it on its own.</p>
+<!-- A28 (proposed) -->
+<p class="cap"><span class="badge">A28 folders · proposed · not frozen</span><br>
+<b>Folders (ADR-125, Proposed).</b> Tap a zine’s three dots, then <b>Move to a folder</b>. A folder is a
+banded pile of its zines’ own covers; tap it to look inside, tap its three dots to rename it or take its zines
+out. There is one level, a zine sits in one place, and a folder exists only while it holds a zine. Nothing is
+dragged. With no folder made, this is the frozen Shelf plus that one row. <b>Make a zine</b> pressed inside a
+folder puts the new zine in that folder (stated; this page has no Bench to make one on). The <b>folders</b>
+buttons below jump to each state.</p>
 
 <div class="phone grainy">
   <div class="shelf" id="shelf">
     <div class="shelf-head">
       <div>
+        <!-- A28 (proposed): present only inside a folder -->
+        <button class="back" id="back" aria-label="Back to My Shelf" hidden><svg viewBox="0 0 7 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 1 1 6l5 5"/></svg>My Shelf</button>
         <h1>My Shelf</h1>
         <svg viewBox="0 0 132 9" fill="none" aria-hidden="true"><path d="M2 6.2c22-3.4 46-4.6 74-3.2 18 .9 33 2.4 54 1.1" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>
       </div>
@@ -513,8 +645,43 @@ Toggle each one below and judge it on its own.</p>
     <button class="act" id="sheetShare"><span class="ic">⇪</span> Share &amp; export</button>
     <button class="act" id="sheetRename"><span class="ic">✎</span> Rename</button>
     <button class="act" id="sheetDuplicate"><span class="ic">⧉</span> Duplicate</button>
+    <!-- A28 (proposed): the sixth row.  Live for an unavailable zine, like Rename. -->
+    <button class="act" id="sheetMove"><span class="ic" aria-hidden="true"><svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M6 2.2 13.6 3.4 12.4 13 4.8 11.8Z"/><path d="M3 4h8.4v10.4H3Z" fill="var(--butter)"/><path d="M1.8 10h10.8"/></svg></span> <span id="sheetMoveLabel">Move to a folder</span></button>
     <button class="act danger" id="sheetDelete"><span class="ic">⌫</span> Delete</button>
   </div>
+
+  <!-- ============ A28 (proposed, not frozen) — the folder surfaces ============ -->
+  <div class="sheet a28" id="moveSheet" role="dialog" aria-label="Move zine" aria-modal="true">
+    <div class="grab"></div>
+    <div class="sh-head"><div class="sh-ttl" id="mvTtl">Riso tests</div><div class="sh-sub" id="mvSub">On My Shelf · move to…</div></div>
+    <div id="moveRows"></div>
+  </div>
+
+  <div class="sheet a28" id="nameSheet" role="dialog" aria-label="New folder" aria-modal="true">
+    <div class="grab"></div>
+    <div class="sh-head"><div class="sh-ttl" id="nmTtl">New folder</div><div class="sh-sub" id="nmSub">For “Riso tests”</div></div>
+    <div class="field">
+      <label for="nmInput">Folder name</label>
+      <input id="nmInput" type="text" maxlength="40" autocomplete="off">
+      <p class="hint" id="nmHint" aria-live="polite"></p>
+    </div>
+    <div class="sheet-btns">
+      <button class="quiet-action" id="nmCancel">Cancel</button>
+      <button class="go" id="nmGo" disabled>Make folder</button>
+    </div>
+  </div>
+
+  <div class="sheet a28" id="pileSheet" role="dialog" aria-label="Folder actions" aria-modal="true">
+    <div class="grab"></div>
+    <div class="sh-head"><div class="sh-ttl" id="plTtl">Family</div><div class="sh-sub" id="plSub">Folder · 2 zines</div></div>
+    <button class="act" id="pileOpen"><span class="ic" aria-hidden="true">↗</span> Open folder</button>
+    <button class="act" id="pileRename"><span class="ic" aria-hidden="true">✎</span> Rename folder</button>
+    <button class="act" id="pileUnpack"><span class="ic" aria-hidden="true"><svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M6 2.2 13.6 3.4 12.4 13 4.8 11.8Z"/><path d="M3 4h8.4v10.4H3Z" fill="var(--butter)"/><path d="M1.8 10h10.8"/></svg></span>
+      <span class="lines">Take the zines out<span class="note">They go back on My Shelf. The folder goes away.</span></span></button>
+  </div>
+
+  <div class="snack" id="snack" role="status" aria-live="polite"><span id="snackText"></span><button id="snackUndo">Undo</button></div>
+  <!-- ======================= end of A28 (proposed) markup ======================= -->
 </div>
 
 <div class="controls">
@@ -525,6 +692,14 @@ Toggle each one below and judge it on its own.</p>
   <button class="ctl" id="ld">loading</button>
   <button class="ctl" id="er">error</button>
   <button class="ctl" id="ua">unavailable sheet</button>
+  <span class="grp">folders — A28, proposed, not frozen</span>
+  <button class="ctl on" id="fo0">no folders (the frozen Shelf)</button>
+  <button class="ctl" id="fo1">with folders</button>
+  <button class="ctl" id="fo2">inside a folder</button>
+  <button class="ctl" id="fo3">move sheet</button>
+  <button class="ctl" id="fo4">new-folder sheet</button>
+  <button class="ctl" id="fo5">folder actions</button>
+  <button class="ctl" id="lg">large text (1.8×)</button>
   <span class="grp">direction — judge each move on its own</span>
   <button class="ctl on" data-t="hard">hard offset shadow</button>
   <button class="ctl on" data-t="tilt">resting at an angle</button>
@@ -582,12 +757,14 @@ document.getElementById('ua').onclick = () => {
   setUnavailable(!unavailable);
   if(unavailable){ scrim.classList.add('show'); sheet.classList.add('show'); }
 };
-function close(){ scrim.classList.remove('show'); sheet.classList.remove('show'); }
+// A28 (proposed): closes whichever sheet is up — there are four now, not one.
+function close(){ scrim.classList.remove('show'); document.querySelectorAll('.sheet').forEach(s => s.classList.remove('show')); lower(); }
 // The sheet's real trigger is `.more`; `.zine-open` is wired to it too because this prototype has no
 // Bench to open, and a tile that does nothing when tapped would misrepresent the design. In the app
 // `.zine-open` opens the zine and only `.more` opens this sheet.
 document.querySelectorAll('.zine').forEach(z => {
   const open = () => {
+    cur = lib.find(x => x.el === z); raise();   // A28 (proposed): the sheet's rows act on this zine
     document.getElementById('shTtl').textContent = z.dataset.name;
     document.getElementById('shSub').textContent = z.dataset.sub;
     scrim.classList.add('show'); sheet.classList.add('show');
@@ -598,4 +775,294 @@ document.querySelectorAll('.zine').forEach(z => {
 scrim.onclick = close;
 document.querySelectorAll('.act').forEach(a => a.onclick = () => { if(!a.disabled) close(); });
 addEventListener('keydown', e => e.key === 'Escape' && close());
+
+/* ============================================================================
+   A28 · FOLDERS — PROPOSED 2026-10-06, NOT FROZEN (ADR-125, Proposed).
+
+   THE RULES.  Cited everywhere as A28.n, so that they are never confused with ADR-125's
+   own rule numbers.  ADR-125 owns the model and the storage (what a folder is, where a
+   zine can be, names, order, where things land); this page owns what is on screen: the
+   rows, the words, the snack, focus and the drawing.  Where a line below repeats the
+   model so the page can be read alone, ADR-125 governs.
+   Each is marked [shown] where this page performs it and [stated] where it can only be
+   written down; both kinds are part of the amendment.
+
+  A28.1  [shown]  One level.  A folder holds zines, never folders.
+  A28.2  [shown]  A zine sits in one place: on My Shelf, or in one folder.
+  A28.3  [shown]  A folder exists only while it holds a zine.  Making one always starts
+                from a zine.  When its last zine leaves or is deleted the folder is
+                gone, the snack says so, and an open folder returns to My Shelf.
+  A28.4  [shown]  Order is unchanged: newest first, no sort control (ADR-081 ruling 2
+                stands).  A folder sits where its newest zine would sit; inside it,
+                newest first.  [stated] Moving, renaming a folder and taking zines out
+                never change the time a zine is ordered by.
+  A28.5  [shown]  The count beside "My Shelf" counts every zine, in a folder or not.
+                Inside a folder the count is that folder's.
+  A28.6  [stated] "Make a zine" on My Shelf lands on My Shelf.  Inside a folder it lands
+                in that folder: you come back from the Bench to where you were, and
+                the zine is there.
+  A28.7  [stated] Duplicate puts the copy beside its original, in the same place.
+  A28.8  [stated] Delete, the loading, empty and error states and the dock are unchanged.
+                Delete keeps the undo the app gives it today (this page draws none).
+                A zine waiting out that undo is not on the Shelf and is counted in no
+                folder.  Any folder action first finishes a waiting delete, as opening
+                a zine or making one already does, so its Undo is gone by the time the
+                folder snack shows.  Loading placeholders never draw piles.
+  A28.9  [stated] Inside a folder, system Back returns to My Shelf at the scroll position
+                it was left at.  The open folder survives a trip to the Bench, even if
+                Android stopped the app meanwhile.  A fresh start opens My Shelf.
+ A28.10  [shown]  A name is 1–40 characters after trimming.  Names are compared ignoring
+                case: typing a name that exists joins that folder (New folder) or is
+                refused (Rename folder).  The first spelling is kept.  Changing only
+                the capitals of a folder's own name is a rename like any other.  "My
+                Shelf" is not available as a name.  Enter in the field does what the
+                button does, and nothing more.  [stated] The app counts the 40 in
+                characters as a reader sees them, and compares names after Unicode
+                normalisation; this page's field counts UTF-16 units.
+ A28.11  [shown]  Nothing is dragged.  Every folder action is a row in a sheet.
+ A28.12  [shown]  Move, New folder and Take the zines out each raise the snack once, with
+                Undo; undoing raises it again, naming what came back.  Rename raises
+                it without Undo.  [stated] The snack is the one polite announcement; this page
+                does not prove that a screen reader speaks it.
+ A28.13  [shown]  The snack sits 8px above the dock at any text size, and goes away when
+                a sheet is raised.  When the snack goes its Undo goes with it: it
+                cannot be focused, read or pressed.  [stated] It stays at least 4 seconds, for as long
+                as the platform's accessibility timeout asks if that is longer, and
+                while it has focus or a finger on it (this page holds it on focus and
+                hover).  In the app Undo is the snack's own action, not a button
+                inside a status region.
+ A28.14  [shown]  The first folder skips the chooser: with no folder to choose, Move to a
+                folder goes straight to naming one.  Cancel on the name sheet returns
+                to the chooser when it came from the chooser.
+ A28.15  [shown]  For a zine that is in a folder the sheet row reads "Move somewhere
+                else", because for that zine the row is also the way out.
+
+   WHAT TALKBACK HEARS.  The names below are [shown]: this page's accessibility tree
+   carries them.  Roles and states are the platform's own.
+     folder tile ........ "For the stall, folder, 3 zines"
+     its three dots ..... "Actions for folder For the stall"
+     back control ....... "Back to My Shelf"
+     heading inside ..... the folder's name, a heading; then its count, "3 zines"
+     zine sheet row ..... "Move to a folder"  /  "Move somewhere else"
+     chooser rows ....... "My Shelf, Out of the folder" · "Family, 2 zines" ·
+                          "Family, It's here" (not a choice) · "New folder"
+     name sheet ......... the dialog is named by its title, "New folder" or "Rename
+                          folder"; the field is "Folder name"; the hint under it is a
+                          polite live region, spoken when it changes
+     folder sheet rows .. "Open folder" · "Rename folder" · "Take the zines out, They
+                          go back on My Shelf. The folder goes away."
+   Row icons are decoration and are not spoken.
+
+   FOCUS.  [shown] When a sheet closes after an action, focus goes to the tile that now
+   holds the zine: the zine's own tile, or its folder's pile on My Shelf; if neither is
+   in view, the heading.  Opening a folder puts focus on the back control; going back
+   puts it on that folder's pile.  A lowered sheet is inert.
+   [stated] In the app a raised sheet is modal by the platform, focus cannot leave it,
+   and dismissing it without acting returns focus to the control that raised it.  This
+   page does not trap focus in a raised sheet (the frozen zine sheet never did).
+   [stated] The folder tile's long-press label is "Actions", as a zine's is.
+   ============================================================================ */
+const lib = [...document.querySelectorAll('#shelf .zine')]
+  .map(el => ({ el, name: el.dataset.name, sub: el.dataset.sub, folder: null }));   // DOM order = newest first
+let cur = null, openFolder = null, curFolder = null, nameMode = null, nameFromChooser = false;
+let undoState = null, snackTimer = 0;
+const $ = id => document.getElementById(id);
+const phone = document.querySelector('.phone'), dock = document.querySelector('.dock');
+const head = document.querySelector('.shelf-head'), h1 = head.querySelector('h1');
+const countEl = head.querySelector('.count'), back = $('back');
+h1.tabIndex = -1;
+const plural = n => n + (n === 1 ? ' zine' : ' zines');
+const fold = t => t.trim().normalize('NFC').toLowerCase();
+const same = (a, b) => fold(a) === fold(b);
+const folders = () => [...new Set(lib.filter(z => z.folder).map(z => z.folder))];
+const members = f => lib.filter(z => z.folder === f);
+const MORE = '<svg viewBox="0 0 3 15" aria-hidden="true" fill="currentColor"><circle cx="1.5" cy="1.5" r="1.5"/><circle cx="1.5" cy="7.5" r="1.5"/><circle cx="1.5" cy="13.5" r="1.5"/></svg>';
+const PILE = $('pileUnpack').querySelector('svg').outerHTML;
+const SHELF = '<svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M3 2.5h4.5v9H3Zm6.5 0H14v9H9.5Z"/><path d="M1.5 14.5h14"/></svg>';
+
+function el(tag, cls, text){ const n = document.createElement(tag); if(cls) n.className = cls; if(text != null) n.textContent = text; return n; }
+/* a lowered sheet is inert; a raised sheet takes the snack down (A28.13) */
+function lower(){ document.querySelectorAll('.sheet').forEach(s => s.inert = !s.classList.contains('show')); }
+function hideSnack(){ const s = $('snack'); s.classList.remove('show'); s.inert = true; clearTimeout(snackTimer); undoState = null; }
+hideSnack();
+function raise(){
+  hideSnack();
+  $('sheetMoveLabel').textContent = cur && cur.folder ? 'Move somewhere else' : 'Move to a folder';   // A28.15
+  setTimeout(lower, 0);
+}
+lower();
+new MutationObserver(lower).observe(phone, { subtree: true, attributes: true, attributeFilter: ['class'] });
+
+function pileTile(name, zs){
+  const a = el('article', 'zine pile'), open = el('button', 'zine-open'), stack = el('div', 'pile-stack');
+  open.setAttribute('aria-label', name + ', folder, ' + plural(zs.length));
+  stack.appendChild(el('span', 'pile-back'));
+  zs.slice(0, 3).map((z, i) => {                       // newest is p0 and is appended last, so it paints on top
+    const c = z.el.querySelector('.cover').cloneNode(true);
+    c.classList.add('p' + i); c.setAttribute('aria-hidden', 'true'); return c;
+  }).reverse().forEach(c => stack.appendChild(c));
+  stack.appendChild(el('span', 'band'));
+  const cap = el('div', 'cap'); cap.append(el('p', 'name', name), el('p', 'sub', plural(zs.length)));
+  open.append(stack, cap);
+  const more = el('button', 'more'); more.setAttribute('aria-label', 'Actions for folder ' + name); more.innerHTML = MORE;
+  open.onclick = () => { openFolder = name; render(); back.focus({ preventScroll: true }); };
+  more.onclick = () => openPile(name);
+  a.dataset.folder = name; a.append(open, more);
+  return a;
+}
+const pileOf = name => [...shelf.querySelectorAll('.pile')].find(p => p.dataset.folder === name);
+
+function render(){
+  shelf.querySelectorAll('.zine').forEach(n => n.remove());
+  if(openFolder && !members(openFolder).length) openFolder = null;      // A28.3
+  const seen = new Set();
+  (openFolder ? members(openFolder) : lib).forEach(z => {
+    if(openFolder || !z.folder) return void shelf.appendChild(z.el);
+    if(seen.has(z.folder)) return;                                      // A28.4: the pile sits at its newest zine
+    seen.add(z.folder); shelf.appendChild(pileTile(z.folder, members(z.folder)));
+  });
+  h1.textContent = openFolder || 'My Shelf';
+  head.classList.toggle('in-folder', !!openFolder);
+  back.hidden = !openFolder;
+  countEl.textContent = plural(openFolder ? members(openFolder).length : lib.length);   // A28.5
+  shelf.scrollTop = 0;
+  ['fo0', 'fo1', 'fo2', 'fo3', 'fo4', 'fo5'].forEach(id => $(id).classList.remove('on'));
+  $(openFolder ? 'fo2' : folders().length ? 'fo1' : 'fo0').classList.add('on');
+}
+/* FOCUS: the tile that now holds the zine, else the heading */
+function focusHome(z){
+  const tile = z && z.el.isConnected ? z.el : z && z.folder ? pileOf(z.folder) : null;
+  (tile ? tile.querySelector('.zine-open') : h1).focus({ preventScroll: true });
+}
+
+function show(id){
+  close(); raise(); scrim.classList.add('show'); $(id).classList.add('show'); lower();
+  const first = $(id).querySelector('input, button:not(:disabled):not([aria-disabled="true"])');
+  first && setTimeout(() => first.focus({ preventScroll: true }), 60);
+}
+
+function snack(msg, undoable){
+  const s = $('snack');
+  $('snackText').textContent = msg; $('snackUndo').hidden = !undoable;
+  s.style.bottom = (phone.clientHeight - dock.offsetTop + 8) + 'px';     // A28.13: 8px above the dock
+  s.inert = false; s.classList.add('show'); clearTimeout(snackTimer);
+  const arm = () => { clearTimeout(snackTimer); snackTimer = setTimeout(() => s.matches(':hover, :focus-within') ? arm() : hideSnack(), 4000); };
+  arm();
+}
+const remember = back => { undoState = { where: lib.map(z => z.folder), open: openFolder, back }; };
+$('snackUndo').onclick = () => {
+  if(!undoState) return;
+  const u = undoState; undoState = null;
+  lib.forEach((z, i) => z.folder = u.where[i]); openFolder = u.open;
+  render(); snack(u.back, false); focusHome(u.zine || null);
+};
+
+function move(z, to, made){
+  const from = z.folder, emptied = from && from !== to && members(from).length === 1;
+  remember('“' + z.name + '” is back ' + (from ? 'in “' + from + '”' : 'on My Shelf')); undoState.zine = z;
+  z.folder = to; close(); render();
+  const where = made ? 'Made “' + to + '”' : to ? 'Moved to “' + to + '”' : 'Back on My Shelf';
+  snack(emptied ? where + '. “' + from + '” is empty, so it’s put away' : where, true);   // A28.3
+  focusHome(z);
+}
+
+function openMove(){
+  cur = cur || lib[0];
+  if(!folders().length) return openName('new', false);                  // A28.14
+  $('mvTtl').textContent = cur.name;
+  $('mvSub').textContent = (cur.folder ? 'In “' + cur.folder + '”' : 'On My Shelf') + ' · move to…';
+  const box = $('moveRows'); box.textContent = '';
+  const row = (label, note, icon, fn, here) => {
+    const b = el('button', 'act' + (here ? ' here' : '')), ic = el('span', 'ic'), lines = el('span', 'lines');
+    ic.innerHTML = icon; ic.setAttribute('aria-hidden', 'true');
+    lines.appendChild(el('span', '', label)); if(note) lines.appendChild(el('span', 'note', note));
+    b.append(ic, lines);
+    if(here) b.setAttribute('aria-disabled', 'true'); else b.onclick = fn;
+    box.appendChild(b);
+  };
+  if(cur.folder) row('My Shelf', 'Out of the folder', SHELF, () => move(cur, null));
+  folders().forEach(f => row(f, f === cur.folder ? 'It’s here' : plural(members(f).length), PILE,
+    () => move(cur, f), f === cur.folder));
+  row('New folder', '', '＋', () => openName('new', true));
+  show('moveSheet');
+}
+
+function openName(mode, fromChooser){
+  nameMode = mode; nameFromChooser = !!fromChooser; cur = cur || lib[0];
+  const title = mode === 'new' ? 'New folder' : 'Rename folder';
+  $('nmTtl').textContent = title; $('nameSheet').setAttribute('aria-label', title);
+  $('nmSub').textContent = mode === 'new' ? 'For “' + cur.name + '”' : plural(members(curFolder).length);
+  $('nmInput').value = mode === 'new' ? '' : curFolder;
+  checkName(); show('nameSheet');
+}
+function checkName(){
+  const v = $('nmInput').value.trim(), hit = folders().find(f => same(f, v)), go = $('nmGo'), hint = $('nmHint');
+  const say = t => { if(hint.textContent !== t) hint.textContent = t; };
+  if(same(v, 'My Shelf')){                                                // A28.10
+    go.disabled = true; go.textContent = nameMode === 'new' ? 'Make folder' : 'Rename';
+    return say('“My Shelf” is where loose zines sit. Try another name.');
+  }
+  if(nameMode === 'new'){
+    go.disabled = !v || (hit && hit === cur.folder);
+    go.textContent = hit ? 'Move to “' + hit + '”' : 'Make folder';
+    say(!hit ? '' : hit === cur.folder ? 'It’s already in “' + hit + '”.'
+      : 'You already have “' + hit + '”. This zine will join it.');
+  } else {
+    const clash = hit && !same(hit, curFolder);
+    go.disabled = !v || clash || v === curFolder; go.textContent = 'Rename';
+    say(clash ? 'You already have a folder called “' + hit + '”.' : '');
+  }
+}
+$('nmInput').oninput = checkName;
+$('nmInput').onkeydown = e => { if(e.key !== 'Enter') return; e.preventDefault(); if(!$('nmGo').disabled) $('nmGo').click(); };
+$('nmCancel').onclick = () => {                                           // A28.14
+  if(nameMode === 'new' && nameFromChooser) return openMove();
+  const f = curFolder, z = cur; close();
+  if(nameMode === 'rename'){ const p = pileOf(f); (p ? p.querySelector('.more') : h1).focus({ preventScroll: true }); }
+  else z.el.querySelector('.more').focus({ preventScroll: true });
+};
+$('nmGo').onclick = () => {
+  const v = $('nmInput').value.trim(), hit = folders().find(f => same(f, v));
+  if(nameMode === 'new') return move(cur, hit || v, !hit);
+  members(curFolder).forEach(z => z.folder = v); if(openFolder === curFolder) openFolder = v;
+  close(); render(); snack('Renamed to “' + v + '”', false);
+  const p = pileOf(v); (p ? p.querySelector('.zine-open') : h1).focus({ preventScroll: true });
+};
+
+function openPile(name){
+  curFolder = name; $('plTtl').textContent = name; $('plSub').textContent = 'Folder · ' + plural(members(name).length);
+  show('pileSheet');
+}
+$('pileOpen').onclick = () => { openFolder = curFolder; close(); render(); back.focus({ preventScroll: true }); };
+$('pileRename').onclick = () => openName('rename', false);
+$('pileUnpack').onclick = () => {
+  const name = curFolder, first = members(name)[0];
+  remember('“' + name + '” is back, with its zines'); undoState.zine = first;
+  members(name).forEach(z => z.folder = null); openFolder = null;
+  close(); render(); snack('Zines from “' + name + '” are back on My Shelf', true);
+  focusHome(first);
+};
+$('sheetMove').onclick = openMove;
+back.onclick = () => {
+  const was = openFolder; openFolder = null; render();
+  const p = pileOf(was); (p ? p.querySelector('.zine-open') : h1).focus({ preventScroll: true });
+};
+
+/* the demo buttons — each lands on one state so it can be judged without the taps */
+function seed(on){
+  const want = on ? ['For the stall', 'Family', null, 'Family', 'For the stall', 'For the stall'] : [];
+  lib.forEach((z, i) => z.folder = want[i] || null); openFolder = null;
+  hideSnack(); close(); state('content');
+}
+$('fo0').onclick = () => { seed(false); render(); };
+$('fo1').onclick = () => { seed(true); render(); };
+$('fo2').onclick = () => { seed(true); openFolder = 'For the stall'; render(); };
+$('fo3').onclick = () => { seed(true); render(); cur = lib[2]; openMove(); $('fo3').classList.add('on'); };
+$('fo4').onclick = () => { seed(true); render(); cur = lib[2]; openName('new', true); $('fo4').classList.add('on'); };
+$('fo5').onclick = () => { seed(true); render(); openPile('Family'); $('fo5').classList.add('on'); };
+$('lg').onclick = () => {
+  const on = R.getAttribute('data-large') !== 'on';
+  R.setAttribute('data-large', on ? 'on' : 'off'); $('lg').classList.toggle('on', on);
+};
+/* ===================== end of A28 (proposed) script ===================== */
 </script>
