@@ -62,7 +62,8 @@ No new destination; a richer *edge* between two existing homes.
 ### A.5 Object model (unchanged — structure, not identity)
 `Zine` (title · paper A4/Letter · **coverChoice** [new, for C1] · timestamps) → 8 ordered `Page`s →
 `Element`s (`TextElement` · `ImageElement`, each with transform/crop). One artifact type, on-device, no
-folders/collections/tags in V2 (de-scoped) — the library is a flat, self-curating shelf sorted by
+folders/collections/tags in V2 (de-scoped; *2026-10-07: folders are no longer de-scoped, see
+[ADR-125](../DECISIONS.md#adr-125); collections and tags still are*) — the library is a flat, self-curating shelf sorted by
 Recent/Name/Oldest ([R§2.6](V2-RESEARCH.md): at small scale, recency + a simple sort beats search).
 
 ### A.6 Progressive disclosure map (what each surface shows by default vs on demand)

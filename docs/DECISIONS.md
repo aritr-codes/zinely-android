@@ -134,7 +134,7 @@
 | [ADR-122](#adr-122) | **A backup is complete or explicitly partial, never silently partial; a restore reports what happened.** Backup is skip-and-list (one photo never fails it); the manifest gains a defaulted, leniently read `omitted` list, `packageVersion` stays 2; restore staging-write failures aren't "damaged", Cancel is withdrawn once commit starts, and a committed restore is a success even if the shelf lags. Amends ADR-110. | Accepted 2026-09-29; 1.x step 1b (PR #86, `1fd3c9e`) |
 | [ADR-123](#adr-123) | **Undo and redo say what they did, in the one Bench snack.** A pure `editLabel` derived from each command's memento (no History change, nothing persisted); `Effect.HistoryStepped` replaces "Changed page N"; one snack counted per step, shown in the snack and spoken once through the announcement drain; the page clause and the 2% / 2° transform rule. Words owned by frozen `v21-bench.html` A26. | Accepted 2026-10-01 (proposed 2026-09-30, revised twice 2026-10-01); 1.x step 3 (PR #90). **Accepted with documented device-verification limitations:** the owner waived the full two-pass device matrix, several A26 rows and the 2× listen were not heard, and TalkBack may say an identical repeat once |
 | [ADR-124](#adr-124) | **Taps pass through the empty part of six holed Art pieces.** For `paper.window`, `paper.hole`, `shape.ring`, `fix.grommet`, `fix.corner` and `mark.registration` the hit area is the drawn ink, read from the outline the renderer draws; resolution is drawn → near (within 8 dp of the ink, yes or no; topmost wins) → box, topmost-first; every other element keeps its box; `core:editor` gains a dependency on `core:render`. Semantics, schema and pixels unchanged | Proposed |
-| [ADR-125](#adr-125) | **Folders on the Shelf: one level, a zine in one place, and a folder is only the name its zines carry.** Every folder action is a row in a sheet, nothing is dragged; a folder is drawn as a banded pile of its zines' own covers and exists only while it holds a zine; taking the zines out puts them back on My Shelf. Stored as a defaulted `folder` name in `meta.json`, carried by a defaulted backup-manifest field; the Room index, `packageVersion` and the document schema are unchanged, older builds restore every zine to My Shelf. ADR-081 ruling 2 (no search, no sort) stands. | Proposed 2026-10-06; **not accepted**; fourteen owner rulings and the `v21-library.html` A28 freeze owed; nothing built |
+| [ADR-125](#adr-125) | **Folders on the Shelf: one level, a zine in one place, and a folder is only the name its zines carry.** Every folder action is a row in a sheet, nothing is dragged; a folder is drawn as a banded pile of its zines' own covers and exists only while it holds a zine; taking the zines out puts them back on My Shelf. Stored as a defaulted `folder` name in `meta.json`, carried by a defaulted backup-manifest field; the Room index, `packageVersion` and the document schema are unchanged, older builds restore every zine to My Shelf. ADR-081 ruling 2 (no search, no sort) stands. | **Accepted 2026-10-07** on the owner's approval of the A28 prototype and of the recommended rulings; `v21-library.html` A28 frozen the same day; F-10 (the Tribunal row) still the owner's; nothing built |
 | [ADR-126](#adr-126) | **Two document voices, Book (Fraunces) and Plain (Inter), with no change to the saved format.** `fontFamily` carries the voice; an unknown family is drawn as Inter and kept, so an older build re-wraps and may cut off a Book text but loses nothing; four unmodified upstream static faces; each voice declares its scripts (Book has no Greek or Cyrillic); the editing surface draws the document's own faces; the control is a Voice row amended into the frozen type bar. Supersedes two of ADR-055's exclusions: font choice, and font bundling for the four Book faces alone | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
@@ -14477,16 +14477,19 @@ cross's bare paper surprise them?
 
 ### Folders on the Shelf: one level, a zine in one place, and a folder is only the name its zines carry
 
-**Status:** Proposed, 2026-10-06. **Not accepted.** Nothing is built. Written in the folders design session on
-`origin/main` @ `ae374ea` (release `0.9.0-beta.6` plus documentation). It becomes Accepted only on the owner's
-rulings on the questions listed under *Owner rulings owed* and the owner's approval of the
-[`v21-library.html`](design/mockups/v21-library.html) **A28** amendment, which is itself **proposed, not frozen**.
+**Status:** **Accepted (design), 2026-10-07.** Proposed 2026-10-06. The owner tried the
+[`v21-library.html`](design/mockups/v21-library.html) **A28** prototype and approved it and the recommended
+rulings ("i have tried it and i am fine with them. you can proceed"); A28 was frozen the same day. **Nothing is
+built.** Acceptance covers the design and the storage model; the implementation still owes everything listed
+under *Tests and evidence required before acceptance of the implementation*. One question, F-10, had no
+recommendation to approve and remains the owner's. Written in the folders design session on
+`origin/main` @ `ae374ea` (release `0.9.0-beta.6` plus documentation).
 Owner request of 2026-09-27, repeated 2026-10-06 ([ROADMAP](ROADMAP.md#current-priorities)). Evidence:
 [RESEARCH R22](RESEARCH.md#r22-organising-a-small-library-of-your-own-work-on-a-phone---verified---recommendation).
-**Extends (if accepted):** [ADR-099](#adr-099) (the frozen Shelf gains amendment A28), [ADR-110](#adr-110) and
+**Extends:** [ADR-099](#adr-099) (the frozen Shelf gains amendment A28), [ADR-110](#adr-110) and
 [ADR-122](#adr-122) (one more defaulted manifest field, `packageVersion` stays 2). **Leaves standing:**
 [ADR-081](#adr-081) ruling 2 (no Shelf search, no sort control), [ADR-121](#adr-121) (what counts as "already
-here" on restore) and [ADR-042](#adr-042) (the Room index is not changed). **Would supersede** the V2 de-scope line "no
+here" on restore) and [ADR-042](#adr-042) (the Room index is not changed). **Supersedes** the V2 de-scope line "no
 folders/collections/tags in V2" in [`V2-IA-JOURNEYS.md` §A.5](design/V2-IA-JOURNEYS.md), which is a design note
 and not an ADR.
 
@@ -14532,7 +14535,7 @@ What the code allows was read from `ae374ea`, not assumed:
   ([plan F1b](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)) is a *document* schema bump and is neither
   needed nor touched.
 
-#### Decision (proposed)
+#### Decision
 
 **What a maker gets**
 
@@ -14565,9 +14568,7 @@ What the code allows was read from `ae374ea`, not assumed:
 10. **Move, New folder and Take the zines out can each be undone; Rename cannot.** How the Shelf says so, and
     for how long, is A28's.
 11. **A zine waiting out its delete-undo is not on the Shelf, so it is not in a folder either**, and folders and
-    their counts are worked out from the zines the Shelf is showing. **Proposed, and not settled until the owner rules
-    on F-14: a folder action first finishes a waiting
-    delete**, when the maker confirms it (not when a sheet opens), and does not go ahead if that delete fails.
+    their counts are worked out from the zines the Shelf is showing. **A folder action first finishes a waiting delete** (F-14, ruled 2026-10-07), when the maker confirms it (not when a sheet opens), and does not go ahead if that delete fails.
     Opening a zine, making one and starting a backup already finish a waiting delete (`HomeViewModel.kt:399`,
     `:414`, `:517`), but each of those leaves the Shelf; a folder action would be the first action that stays
     on the Shelf and still ends a delete's Undo early, which costs the maker the rest of that Undo window and
@@ -14578,7 +14579,7 @@ What the code allows was read from `ae374ea`, not assumed:
     there.
 
 **Who owns what.** This ADR owns the model and the storage. The HTML amendment
-[`v21-library.html` A28](design/mockups/v21-library.html) (proposed, not frozen) owns what is on screen: the
+[`v21-library.html` A28](design/mockups/v21-library.html) (frozen 2026-10-07) owns what is on screen: the
 rows and their words, the snack, focus, the TalkBack names and the drawing. Its rules are numbered separately
 and are cited as **A28.n**; a bare "rule n" in this ADR always means the list here.
 
@@ -14655,12 +14656,15 @@ stable origin ids; any public website copy (the pages already say "nothing to tr
 **Noted for the owner.** The pile tile's caption carries a count; V2-CONSTITUTION lists "counts" under unnecessary chrome
 while the frozen Shelf already ships a count pill, and question F-11 puts the tile's count to the owner.
 
-#### Owner rulings owed
+#### Owner rulings
 
-Each has a recommendation, built into the proposed A28 prototype so it can be judged on screen. They are tracked
-in [OWNER-CHECKLIST §1.5](OWNER-CHECKLIST.md#15-product--design-authorship).
+**Ruled 2026-10-07.** Each question had a recommendation, built into the A28 prototype so it could be judged on
+screen. The owner tried the prototype and approved the recommendations as they stand: **F-1 to F-9 and F-11 to
+F-14 are ruled as recommended.** F-10 had no recommendation ("Owner's act"), so there was nothing to approve:
+the Tribunal row is still the owner's to write, and it does not gate the implementation. Tracked in
+[OWNER-CHECKLIST §1.5](OWNER-CHECKLIST.md#15-product--design-authorship).
 
-| # | Question | Recommended |
+| # | Question | Recommended, and ruled so on 2026-10-07 (F-10 excepted) |
 |---|---|---|
 | F-1 | One level, or folders inside folders? | One level |
 | F-2 | Can a zine sit in more than one folder? | No |
@@ -14677,8 +14681,8 @@ in [OWNER-CHECKLIST §1.5](OWNER-CHECKLIST.md#15-product--design-authorship).
 | F-13 | Is a folder holding one zine acceptable, and does the pile look right (kraft sheet, blank band, no tape, no paper-size stamp)? Should the band carry the folder's name? | One-zine folders stay (every folder starts as one); blank band, since the name is in the caption |
 | F-14 | May a folder action end a waiting delete's Undo early? (rule 11) | Yes: the folder action finishes the waiting delete first, so no zine the maker cannot see is ever moved; the cost is the rest of that delete's Undo window. Rejected alternative: folder actions skip hidden zines and leave the delete waiting, which makes the Shelf's folders and the files disagree until the delete settles |
 
-F-9 is a stop condition for this work: **no storage code is written until it is ruled.** Two smaller things the
-reviews raised are left as proposed unless the owner says otherwise: Rename has no Undo while the other three
+F-9 was the stop condition for storage code; it is ruled, so the one additive backup-manifest field may be
+written. Two smaller things the reviews raised stay as drawn, the owner having approved the prototype with them: Rename has no Undo while the other three
 actions do, and a zine's own sheet does not say which folder it is in (the chooser does).
 
 #### Alternatives considered
@@ -14739,8 +14743,6 @@ actions do, and a zine's own sheet does not say which folder it is in (the choos
 - A28 adds lines near the top of `v21-library.html`, so existing `v21-library.html:NNN` line citations in KDoc
   and other documents now point a few lines early. No test gates them. They are not corrected here (this change
   touches no Kotlin) and are owed with the first implementation change.
-- A28 is drawn in the frozen file itself, labelled proposed. Once this is merged, anyone opening the Shelf
-  specification on `main` sees the sixth sheet row before the owner has approved it.
 - Rule 15 means a restore can add a zine to an existing folder. The restore summary's wording is unaffected: it
   counts zines.
 - Every backup written by a build with folders carries `"folder":null` on each zine that has none (the writer
@@ -14760,6 +14762,14 @@ platform accessibility tree dump.
 
 Two independent Review Agents read the uncommitted worktree on 2026-10-06, with different lenses. Both returned
 **GO WITH FIXES** for committing this as a proposal. Neither reviewed it for acceptance.
+
+**The acceptance record (2026-10-07) was reviewed separately: GO WITH FIXES.** The reviewer checked the owner's
+sentence against what this ADR said acceptance required, found Accepted (design) consistent with it and with
+[ADR-121](#adr-121)'s precedent, and agreed F-10 could not be covered by an approval of recommendations. It
+noted that F-5, F-6 and F-9 (backup behaviour and the storage stop condition) cannot be judged by trying a
+prototype and so rest on the owner's sentence alone, which is quoted in *Status*. One Required Fix, **accepted**:
+a ROADMAP sentence still said folders had no frozen specification or Accepted ADR. It confirmed the freeze
+changed only comments and labels in `v21-library.html`.
 
 - **Technical truth and document consistency.** Three Required Fixes, all **accepted**: the claim that an
   unavailable zine can be moved "as it can be renamed" was false against the code (rename reloads the document
