@@ -124,7 +124,10 @@ the resulting sequence and per-step readiness are in the [plan §5 and §11](ZIN
 - **Done 2026-10-06:** both files carry "❄️ DESIGN FROZEN — 2026-10-06". The TypeBar correction was already in
   the file. The check against shipped code (read from code; no device) found TypeBar divergences beyond the
   recorded correction, which are reported and not resolved, and Reframe points that freezing as shipped does
-  not settle. Each list is at the top of its file; the owner's rows are in
+  not settle. **So the ruling is not fully carried out yet:** Reframe has five unsettled points and a drawing
+  that was not redrawn where the app governs, and each waits on the owner's acceptance or a request to redraw.
+  The keyboard focus ring both pages draw and the app does not is among the returned points, with a
+  recommendation (corrected 2026-10-07; the freeze first recorded it as decided). Each list is at the top of its file; the owner's rows are in
   [OWNER-CHECKLIST §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship).
 
 ## Q5. Fold study before creative work (O14)
@@ -258,7 +261,7 @@ These are still **owner** decisions. They are just not needed yet.
 
 | Date | Change |
 |---|---|
-| 2026-10-06 | Q4 carried out (plan step Q4-F): `v21-typebar.html` and `v21-reframe.html` frozen; the divergences found are listed in each file and returned to the owner. |
+| 2026-10-06 | Q4 carried out in part (plan step Q4-F): `v21-typebar.html` and `v21-reframe.html` frozen; the divergences found are listed in each file and returned to the owner, whose rulings on them are still owed. |
 | 2026-10-06 | Q2: Brief 02 rewritten for two voices. The four document faces are upstream's own static files (not instanced); the printed-page procedure and the older-build test are written in the brief. The minimum print size and the type-bar amendment approval are still the owner's. |
 | 2026-09-30 | Named-undo copy ruled by the owner on PR #88 and frozen in `v21-bench.html` A26: duplicate, reset framing and restack direction; Redo is spoken, through the same snack. Decorative Art in Read stays open. |
 | 2026-09-26 | **Supplementary Q8 ruling recorded** (after the final planning audit): a single poisoned or unreadable photo is skip-and-list, never a whole-backup failure. Replaces the 🟦 owner-to-confirm bullet; defect 5's restore half stays out. |

@@ -134,7 +134,7 @@
 | [ADR-122](#adr-122) | **A backup is complete or explicitly partial, never silently partial; a restore reports what happened.** Backup is skip-and-list (one photo never fails it); the manifest gains a defaulted, leniently read `omitted` list, `packageVersion` stays 2; restore staging-write failures aren't "damaged", Cancel is withdrawn once commit starts, and a committed restore is a success even if the shelf lags. Amends ADR-110. | Accepted 2026-09-29; 1.x step 1b (PR #86, `1fd3c9e`) |
 | [ADR-123](#adr-123) | **Undo and redo say what they did, in the one Bench snack.** A pure `editLabel` derived from each command's memento (no History change, nothing persisted); `Effect.HistoryStepped` replaces "Changed page N"; one snack counted per step, shown in the snack and spoken once through the announcement drain; the page clause and the 2% / 2° transform rule. Words owned by frozen `v21-bench.html` A26. | Accepted 2026-10-01 (proposed 2026-09-30, revised twice 2026-10-01); 1.x step 3 (PR #90). **Accepted with documented device-verification limitations:** the owner waived the full two-pass device matrix, several A26 rows and the 2× listen were not heard, and TalkBack may say an identical repeat once |
 | [ADR-124](#adr-124) | **Taps pass through the empty part of six holed Art pieces.** For `paper.window`, `paper.hole`, `shape.ring`, `fix.grommet`, `fix.corner` and `mark.registration` the hit area is the drawn ink, read from the outline the renderer draws; resolution is drawn → near (within 8 dp of the ink, yes or no; topmost wins) → box, topmost-first; every other element keeps its box; `core:editor` gains a dependency on `core:render`. Semantics, schema and pixels unchanged | Proposed |
-| [ADR-126](#adr-126) | **Two document voices, Book (Fraunces) and Plain (Inter), with no change to the saved format.** `fontFamily` carries the voice; an unknown family is drawn as Inter and kept, so an older build re-wraps and may cut off a Book text but loses nothing; four unmodified upstream static faces; each voice declares its scripts (Book has no Greek or Cyrillic); the editing surface draws the document's own faces; the control is a Voice row amended into the frozen type bar. Supersedes ADR-055's exclusion of font choice only | Proposed |
+| [ADR-126](#adr-126) | **Two document voices, Book (Fraunces) and Plain (Inter), with no change to the saved format.** `fontFamily` carries the voice; an unknown family is drawn as Inter and kept, so an older build re-wraps and may cut off a Book text but loses nothing; four unmodified upstream static faces; each voice declares its scripts (Book has no Greek or Cyrillic); the editing surface draws the document's own faces; the control is a Voice row amended into the frozen type bar. Supersedes two of ADR-055's exclusions: font choice, and font bundling for the four Book faces alone | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -9544,7 +9544,9 @@ rather than three `aria-pressed` buttons, the readout keeps the `contentDescript
 `aria-hidden`, and the Bold/Italic pair stays two checkboxes.
 
 **The specification came first**, as the HTML-first rule requires: `docs/design/mockups/v21-typebar.html`
-(a **PROPOSAL, not frozen** — freezing is the owner's call, as with `v21-reframe.html`). It is a
+(a **PROPOSAL, not frozen** — freezing is the owner's call, as with `v21-reframe.html`; *note 2026-10-07: the
+owner ruled the freeze on 2026-09-26 and both files were frozen on 2026-10-06, see
+[gate Q4](planning/ZINELY-1X-DECISION-GATE.md#q4-typebar--reframe-specs-o10)*). It is a
 transcription rather than a design: the card is `.inkpop`'s card, the size stepper is the Reframe pad's
 `.zoom` — the control ADR-055 §4 *already named* as its precedent, so the two wearing one set of clothes
 is the specification catching up with the ADR — the row label is `.inklbl`, the swatch is `.pot` ring and
@@ -14618,6 +14620,7 @@ Tracked in [OWNER-CHECKLIST](OWNER-CHECKLIST.md) and in [Brief 02's gate table](
   *Consequences*.
 - An Android 7 check that the four faces break lines as they do on a current phone.
 - The implementation, its goldens, both device passes, and the measured APK change.
+- A dated forward note under [ADR-055](#adr-055) pointing here, written when this ADR is accepted and not before.
 - The owner's acceptance of this ADR.
 
 #### Review
@@ -14642,4 +14645,15 @@ single-zine package is another route by which a Book text can reach an older bui
 The fonts, Brief 02 and its procedures were reviewed separately before their own commits (fonts: GO; brief:
 GO WITH FIXES from two reviewers, fixes applied). This ADR has **not** been reviewed against an
 implementation, because there is none. A second review is owed at acceptance.
+
+A review of the whole branch at `e97d673` (2026-10-07) returned **GO WITH FIXES**. Two Required Fixes, both
+**accepted**: this ADR's index row named one of the two ADR-055 exclusions it supersedes; and the freeze had
+recorded the keyboard focus ring as decided where plan step Q4-F says a difference is returned to the owner
+(now returned, with a recommendation, in both frozen files and both OWNER-CHECKLIST rows). Six recommendations
+**accepted** (the freeze described as not fully carried out; two unknowns measurable today added to Brief 02;
+the ADR-055 forward note listed above; a dated note in ADR-102; the brief's owner list; the font script
+refusing unknown arguments). One **partly accepted**: ZINE-DIRECTION carries one dated note where it says
+"three voices" are to be built, not five. A review of that reconciliation returned **GO WITH FIXES**; its two
+Required Fixes (a sequencing claim the brief did not make; "done" left standing beside "not fully carried
+out") are applied. It confirmed the edits to the two frozen files touch only comments and caption prose.
 

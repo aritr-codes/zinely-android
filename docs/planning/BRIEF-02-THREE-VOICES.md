@@ -8,6 +8,13 @@
 >    `design/document-voices-prep` and not yet on `main`.
 >
 > Two more gates close inside the session itself. The [gate table](#gates) has all seven.
+>
+> **Two things can be measured today and have not been.** Both shape the drawing in item 2:
+> - **Does the card still fit?** At 360 dp and the largest font size the frozen page already records about
+>   28 dp of overflow, nothing has been measured since 2026-08-29, and a fifth row adds about 58 px.
+> - **What is drawn for a character the face lacks?** [ADR-070](../DECISIONS.md#adr-070) says a blank box, the
+>   readiness audit §6 says a phone font, [ADR-126](../DECISIONS.md#adr-126) says not established. A Plain text
+>   holding `ﬁ` (U+FB01) on the current build answers it.
 
 Direction D2 of the [1.x plan](ZINELY-1X-IMPLEMENTATION-PLAN.md) (plan step 8). Rewritten on 2026-10-06 on
 branch `design/document-voices-prep`, cut from `origin/main` @ `ae374ea` (release `0.9.0-beta.6`). Code
@@ -38,10 +45,10 @@ editing-surface change, and the control's shape inside the type bar.
 | # | Gate | State on 2026-10-06 | Closes when | Who |
 |---|---|---|---|---|
 | 1 | PR #70 settled (the dead *Font* control removed) | ✅ Merged (`a6eb16b`, [ADR-115](../DECISIONS.md#adr-115)) | done | done |
-| 2 | `v21-typebar.html` frozen | ◐ Frozen 2026-10-06 in `237a16f`, **on this branch, not yet on `main`**. Six differences from the app were [returned to the owner](../OWNER-CHECKLIST.md#15-product--design-authorship); none blocks this brief, but gate 5 meets them | when the branch merges | owner merges |
+| 2 | `v21-typebar.html` frozen | ◐ Frozen 2026-10-06 in `237a16f`, **on this branch, not yet on `main`**. Seven differences from the app were [returned to the owner](../OWNER-CHECKLIST.md#15-product--design-authorship); none blocks this brief, but gate 5 meets them | when the branch merges | owner merges |
 | 3 | Four Fraunces document faces fetched, pinned and measured | ◐ Done in `bf84b67`, **on this branch, not yet on `main`**. See [The four faces](#the-four-faces). They sit in `docs/planning/voices/`, outside the app build | when the branch merges | owner merges |
 | 4 | **Minimum print size for Book** | ⛔ Not ruled. [Procedure A](#procedure-a-the-printed-book-page) is written; the page is not printed | before a session starts | owner |
-| 5 | **Type-bar amendment**: the Voice row drawn in `v21-typebar.html`, reviewed, owner-approved, frozen again | ⛔ Not drawn. [UI/UX proposal](#uiux-proposal) is the input | before a session starts | a design session, then the owner |
+| 5 | **Type-bar amendment**: the Voice row drawn in `v21-typebar.html`, reviewed, owner-approved, frozen again | ⛔ Not drawn. [UI/UX proposal](#uiux-proposal) is the input. Measure first whether the card fits with a fifth row, and what a missing character draws (see the note at the top) | before a session starts | a design session, then the owner |
 | 6 | **Older-build fallback test** run and recorded | ⛔ Not run. [Procedure B](#procedure-b-the-older-build-fallback-test) is written. It needs a build that can set Book, so it cannot run earlier | inside the session, before merge | implementer, with an emulator or a second phone |
 | 7 | [ADR-126](../DECISIONS.md#adr-126) accepted | ⛔ Drafted as *Proposed* on this branch (2026-10-06); not accepted. It covers what [the section below](#what-the-adr-must-cover) lists, except the two figures that only the session can measure | accepted before merge | implementer drafts, owner accepts |
 
@@ -51,7 +58,8 @@ that state whatever the size ruling. The owner approves the drawing. Then the se
 older-build test (6), the ADR accepted (7), merge.
 
 **The owner's part, in one place:** (1) merge this preparation branch, (2) print the page and rule the minimum
-size, (3) approve the Voice row drawing, (4) accept the ADR.
+size (Book is then shown as unavailable below it; say so if a warning is wanted instead), (3) approve the Voice row
+drawing, including a TalkBack listen to the row's label, (4) accept the ADR.
 
 What each size ruling costs. The sizes a maker can pick are 10, 12, 14, 16 pt and up. A 12 pt minimum means
 Book cannot be used at 10 pt. A 14 pt minimum removes 10 and 12. For scale: Book's small letters at 12 pt
@@ -117,13 +125,13 @@ Input to the `v21-typebar.html` amendment. Nothing here is frozen until that ame
 - ⚠️ **Legibility of the two words.** At the Align row's size Fraunces has thin strokes. The amendment measures
   the contrast of "Book" resting, chosen and unavailable, in light and dark.
 - **Teal and the other inks:** no change.
-- 🟦 **The differences already returned to the owner.** The freeze returned six type-bar differences
-  ([OWNER-CHECKLIST §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship); the frozen file's block B).
+- 🟦 **The differences already returned to the owner.** The freeze returned seven type-bar differences
+  ([OWNER-CHECKLIST §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship); the frozen file's blocks B and E).
   The new row does not resolve them, but it has to be built one way, so:
   - **Group name.** The Voice row follows the frozen page: a named single-choice group. If the owner rules the
     other way for Align and Colour first, the Voice row follows that ruling.
-  - **Focus ring.** The Voice row draws the frozen 2 px ink focus ring, even if the sibling rows' fix has not
-    landed.
+  - **Focus ring.** The Voice row follows the frozen page and draws its 2 px ink focus ring. If the owner
+    rules the other way for the sibling rows first, the Voice row follows that ruling.
   - The other four sites (the italic *I*'s face, two glyph shapes, a colour token) are left untouched.
 
 ## Interaction details

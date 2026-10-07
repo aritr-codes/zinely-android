@@ -110,13 +110,18 @@ def measure():
 def check():
     """Stop unless every file on disk is the pinned one."""
     for name, (_, pinned) in PINNED.items():
+        if not (OUT / name).is_file():
+            sys.exit(f"{name}: not on disk; run without arguments to fetch it")
         if hashlib.sha256((OUT / name).read_bytes()).hexdigest() != pinned:
             sys.exit(f"{name}: the file on disk is not the pinned one")
 
 
 if __name__ == "__main__":
-    if "--measure" in sys.argv:
+    args = sys.argv[1:]
+    if args == ["--measure"]:
         check()
         measure()
-    else:
+    elif not args:
         fetch()
+    else:  # a typo must not fetch and write into the repository
+        sys.exit(f"unknown argument {args}; use no argument to fetch, or --measure")
