@@ -459,7 +459,7 @@ body{
    focusing it scrolled the phone).  Done with the attribute, not with CSS, so the frozen
    Shelf is not repainted.  MEASURED 2026-10-06 against origin/main, phone frame only, in
    the light, dark, empty and error states with no folder made: no pixel differs by more
-   than 2 of 255 levels, and those that do are in the lower fifth of the phone, where the
+   than 3 of 255 levels, and those that do are in the lower fifth of the phone, where the
    lowered zine sheet (one row taller now) casts its shadow a hair differently. */
 /* the row for where the zine already is: not a choice, but its note is information, so
    it is NOT dimmed the way a disabled row is (the dimmed note measured 1.98:1) */
@@ -500,6 +500,8 @@ body{
   text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px;
   background:none;border:0;border-radius:var(--br-pill);padding:var(--gap-xs) var(--gap-md);cursor:pointer}
 .snack button[hidden]{display:none}
+/* a snack that has gone is not there at all (the script also makes it inert) */
+.snack:not(.show){visibility:hidden}
 
 /* prototype-only: Android font scale 1.8, the scale the app's regression tests use */
 :root[data-large="on"]{font-size:180%}
@@ -777,49 +779,62 @@ addEventListener('keydown', e => e.key === 'Escape' && close());
 /* ============================================================================
    A28 · FOLDERS — PROPOSED 2026-10-06, NOT FROZEN (ADR-125, Proposed).
 
-   THE RULES.  Each is marked [shown] where this page performs it and [stated] where
-   it can only be written down; both kinds are part of the amendment.
+   THE RULES.  Cited everywhere as A28.n, so that they are never confused with ADR-125's
+   own rule numbers.  ADR-125 owns the model and the storage (what a folder is, where a
+   zine can be, names, order, where things land); this page owns what is on screen: the
+   rows, the words, the snack, focus and the drawing.  Where a line below repeats the
+   model so the page can be read alone, ADR-125 governs.
+   Each is marked [shown] where this page performs it and [stated] where it can only be
+   written down; both kinds are part of the amendment.
 
-    1. [shown]  One level.  A folder holds zines, never folders.
-    2. [shown]  A zine sits in one place: on My Shelf, or in one folder.
-    3. [shown]  A folder exists only while it holds a zine.  Making one always starts
+  A28.1  [shown]  One level.  A folder holds zines, never folders.
+  A28.2  [shown]  A zine sits in one place: on My Shelf, or in one folder.
+  A28.3  [shown]  A folder exists only while it holds a zine.  Making one always starts
                 from a zine.  When its last zine leaves or is deleted the folder is
                 gone, the snack says so, and an open folder returns to My Shelf.
-    4. [shown]  Order is unchanged: newest first, no sort control (ADR-081 ruling 2
+  A28.4  [shown]  Order is unchanged: newest first, no sort control (ADR-081 ruling 2
                 stands).  A folder sits where its newest zine would sit; inside it,
                 newest first.  [stated] Moving, renaming a folder and taking zines out
                 never change the time a zine is ordered by.
-    5. [shown]  The count beside "My Shelf" counts every zine, in a folder or not.
+  A28.5  [shown]  The count beside "My Shelf" counts every zine, in a folder or not.
                 Inside a folder the count is that folder's.
-    6. [stated] "Make a zine" on My Shelf lands on My Shelf.  Inside a folder it lands
+  A28.6  [stated] "Make a zine" on My Shelf lands on My Shelf.  Inside a folder it lands
                 in that folder: you come back from the Bench to where you were, and
                 the zine is there.
-    7. [stated] Duplicate puts the copy beside its original, in the same place.
-    8. [stated] Delete, the loading, empty and error states and the dock are unchanged.
+  A28.7  [stated] Duplicate puts the copy beside its original, in the same place.
+  A28.8  [stated] Delete, the loading, empty and error states and the dock are unchanged.
                 Delete keeps the undo the app gives it today (this page draws none).
                 A zine waiting out that undo is not on the Shelf and is counted in no
-                folder.  Loading placeholders never draw piles.
-    9. [stated] Inside a folder, system Back returns to My Shelf at the scroll position
+                folder.  Any folder action first finishes a waiting delete, as opening
+                a zine or making one already does, so its Undo is gone by the time the
+                folder snack shows.  Loading placeholders never draw piles.
+  A28.9  [stated] Inside a folder, system Back returns to My Shelf at the scroll position
                 it was left at.  The open folder survives a trip to the Bench, even if
                 Android stopped the app meanwhile.  A fresh start opens My Shelf.
-   10. [shown]  A name is 1–40 characters after trimming.  Names are compared ignoring
+ A28.10  [shown]  A name is 1–40 characters after trimming.  Names are compared ignoring
                 case: typing a name that exists joins that folder (New folder) or is
-                refused (Rename folder).  The first spelling is kept.  "My Shelf" is
-                not available as a name.
-   11. [shown]  Nothing is dragged.  Every folder action is a row in a sheet.
-   12. [shown]  Move, New folder and Take the zines out each raise the snack once, with
+                refused (Rename folder).  The first spelling is kept.  Changing only
+                the capitals of a folder's own name is a rename like any other.  "My
+                Shelf" is not available as a name.  Enter in the field does what the
+                button does, and nothing more.  [stated] The app counts the 40 in
+                characters as a reader sees them, and compares names after Unicode
+                normalisation; this page's field counts UTF-16 units.
+ A28.11  [shown]  Nothing is dragged.  Every folder action is a row in a sheet.
+ A28.12  [shown]  Move, New folder and Take the zines out each raise the snack once, with
                 Undo; undoing raises it again, naming what came back.  Rename raises
-                it without Undo.  The snack is the one polite announcement.
-   13. [shown]  The snack sits 8px above the dock at any text size, and goes away when
-                a sheet is raised.  [stated] It stays at least 4 seconds, for as long
+                it without Undo.  [stated] The snack is the one polite announcement; this page
+                does not prove that a screen reader speaks it.
+ A28.13  [shown]  The snack sits 8px above the dock at any text size, and goes away when
+                a sheet is raised.  When the snack goes its Undo goes with it: it
+                cannot be focused, read or pressed.  [stated] It stays at least 4 seconds, for as long
                 as the platform's accessibility timeout asks if that is longer, and
                 while it has focus or a finger on it (this page holds it on focus and
                 hover).  In the app Undo is the snack's own action, not a button
                 inside a status region.
-   14. [shown]  The first folder skips the chooser: with no folder to choose, Move to a
+ A28.14  [shown]  The first folder skips the chooser: with no folder to choose, Move to a
                 folder goes straight to naming one.  Cancel on the name sheet returns
                 to the chooser when it came from the chooser.
-   15. [shown]  For a zine that is in a folder the sheet row reads "Move somewhere
+ A28.15  [shown]  For a zine that is in a folder the sheet row reads "Move somewhere
                 else", because for that zine the row is also the way out.
 
    WHAT TALKBACK HEARS.  The names below are [shown]: this page's accessibility tree
@@ -857,7 +872,8 @@ const head = document.querySelector('.shelf-head'), h1 = head.querySelector('h1'
 const countEl = head.querySelector('.count'), back = $('back');
 h1.tabIndex = -1;
 const plural = n => n + (n === 1 ? ' zine' : ' zines');
-const same = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+const fold = t => t.trim().normalize('NFC').toLowerCase();
+const same = (a, b) => fold(a) === fold(b);
 const folders = () => [...new Set(lib.filter(z => z.folder).map(z => z.folder))];
 const members = f => lib.filter(z => z.folder === f);
 const MORE = '<svg viewBox="0 0 3 15" aria-hidden="true" fill="currentColor"><circle cx="1.5" cy="1.5" r="1.5"/><circle cx="1.5" cy="7.5" r="1.5"/><circle cx="1.5" cy="13.5" r="1.5"/></svg>';
@@ -865,11 +881,13 @@ const PILE = $('pileUnpack').querySelector('svg').outerHTML;
 const SHELF = '<svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M3 2.5h4.5v9H3Zm6.5 0H14v9H9.5Z"/><path d="M1.5 14.5h14"/></svg>';
 
 function el(tag, cls, text){ const n = document.createElement(tag); if(cls) n.className = cls; if(text != null) n.textContent = text; return n; }
-/* a lowered sheet is inert; a raised sheet takes the snack down (rule 13) */
+/* a lowered sheet is inert; a raised sheet takes the snack down (A28.13) */
 function lower(){ document.querySelectorAll('.sheet').forEach(s => s.inert = !s.classList.contains('show')); }
+function hideSnack(){ const s = $('snack'); s.classList.remove('show'); s.inert = true; clearTimeout(snackTimer); undoState = null; }
+hideSnack();
 function raise(){
-  $('snack').classList.remove('show'); clearTimeout(snackTimer);
-  $('sheetMoveLabel').textContent = cur && cur.folder ? 'Move somewhere else' : 'Move to a folder';   // rule 15
+  hideSnack();
+  $('sheetMoveLabel').textContent = cur && cur.folder ? 'Move somewhere else' : 'Move to a folder';   // A28.15
   setTimeout(lower, 0);
 }
 lower();
@@ -896,17 +914,17 @@ const pileOf = name => [...shelf.querySelectorAll('.pile')].find(p => p.dataset.
 
 function render(){
   shelf.querySelectorAll('.zine').forEach(n => n.remove());
-  if(openFolder && !members(openFolder).length) openFolder = null;      // rule 3
+  if(openFolder && !members(openFolder).length) openFolder = null;      // A28.3
   const seen = new Set();
   (openFolder ? members(openFolder) : lib).forEach(z => {
     if(openFolder || !z.folder) return void shelf.appendChild(z.el);
-    if(seen.has(z.folder)) return;                                      // rule 4: the pile sits at its newest zine
+    if(seen.has(z.folder)) return;                                      // A28.4: the pile sits at its newest zine
     seen.add(z.folder); shelf.appendChild(pileTile(z.folder, members(z.folder)));
   });
   h1.textContent = openFolder || 'My Shelf';
   head.classList.toggle('in-folder', !!openFolder);
   back.hidden = !openFolder;
-  countEl.textContent = plural(openFolder ? members(openFolder).length : lib.length);   // rule 5
+  countEl.textContent = plural(openFolder ? members(openFolder).length : lib.length);   // A28.5
   shelf.scrollTop = 0;
   ['fo0', 'fo1', 'fo2', 'fo3', 'fo4', 'fo5'].forEach(id => $(id).classList.remove('on'));
   $(openFolder ? 'fo2' : folders().length ? 'fo1' : 'fo0').classList.add('on');
@@ -926,9 +944,9 @@ function show(id){
 function snack(msg, undoable){
   const s = $('snack');
   $('snackText').textContent = msg; $('snackUndo').hidden = !undoable;
-  s.style.bottom = (phone.clientHeight - dock.offsetTop + 8) + 'px';     // rule 13: 8px above the dock
-  s.classList.add('show'); clearTimeout(snackTimer);
-  const arm = () => { clearTimeout(snackTimer); snackTimer = setTimeout(() => s.matches(':hover, :focus-within') ? arm() : s.classList.remove('show'), 4000); };
+  s.style.bottom = (phone.clientHeight - dock.offsetTop + 8) + 'px';     // A28.13: 8px above the dock
+  s.inert = false; s.classList.add('show'); clearTimeout(snackTimer);
+  const arm = () => { clearTimeout(snackTimer); snackTimer = setTimeout(() => s.matches(':hover, :focus-within') ? arm() : hideSnack(), 4000); };
   arm();
 }
 const remember = back => { undoState = { where: lib.map(z => z.folder), open: openFolder, back }; };
@@ -944,13 +962,13 @@ function move(z, to, made){
   remember('“' + z.name + '” is back ' + (from ? 'in “' + from + '”' : 'on My Shelf')); undoState.zine = z;
   z.folder = to; close(); render();
   const where = made ? 'Made “' + to + '”' : to ? 'Moved to “' + to + '”' : 'Back on My Shelf';
-  snack(emptied ? where + '. “' + from + '” is empty, so it’s put away' : where, true);   // rule 3
+  snack(emptied ? where + '. “' + from + '” is empty, so it’s put away' : where, true);   // A28.3
   focusHome(z);
 }
 
 function openMove(){
   cur = cur || lib[0];
-  if(!folders().length) return openName('new', false);                  // rule 14
+  if(!folders().length) return openName('new', false);                  // A28.14
   $('mvTtl').textContent = cur.name;
   $('mvSub').textContent = (cur.folder ? 'In “' + cur.folder + '”' : 'On My Shelf') + ' · move to…';
   const box = $('moveRows'); box.textContent = '';
@@ -980,7 +998,7 @@ function openName(mode, fromChooser){
 function checkName(){
   const v = $('nmInput').value.trim(), hit = folders().find(f => same(f, v)), go = $('nmGo'), hint = $('nmHint');
   const say = t => { if(hint.textContent !== t) hint.textContent = t; };
-  if(same(v, 'My Shelf')){                                                // rule 10
+  if(same(v, 'My Shelf')){                                                // A28.10
     go.disabled = true; go.textContent = nameMode === 'new' ? 'Make folder' : 'Rename';
     return say('“My Shelf” is where loose zines sit. Try another name.');
   }
@@ -996,8 +1014,8 @@ function checkName(){
   }
 }
 $('nmInput').oninput = checkName;
-$('nmInput').onkeydown = e => { if(e.key === 'Enter' && !$('nmGo').disabled) $('nmGo').click(); };
-$('nmCancel').onclick = () => {                                           // rule 14
+$('nmInput').onkeydown = e => { if(e.key !== 'Enter') return; e.preventDefault(); if(!$('nmGo').disabled) $('nmGo').click(); };
+$('nmCancel').onclick = () => {                                           // A28.14
   if(nameMode === 'new' && nameFromChooser) return openMove();
   const f = curFolder, z = cur; close();
   if(nameMode === 'rename'){ const p = pileOf(f); (p ? p.querySelector('.more') : h1).focus({ preventScroll: true }); }
@@ -1019,7 +1037,7 @@ $('pileOpen').onclick = () => { openFolder = curFolder; close(); render(); back.
 $('pileRename').onclick = () => openName('rename', false);
 $('pileUnpack').onclick = () => {
   const name = curFolder, first = members(name)[0];
-  remember('“' + name + '” is back, with its zines');
+  remember('“' + name + '” is back, with its zines'); undoState.zine = first;
   members(name).forEach(z => z.folder = null); openFolder = null;
   close(); render(); snack('Zines from “' + name + '” are back on My Shelf', true);
   focusHome(first);
@@ -1033,8 +1051,8 @@ back.onclick = () => {
 /* the demo buttons — each lands on one state so it can be judged without the taps */
 function seed(on){
   const want = on ? ['For the stall', 'Family', null, 'Family', 'For the stall', 'For the stall'] : [];
-  lib.forEach((z, i) => z.folder = want[i] || null); openFolder = null; undoState = null;
-  $('snack').classList.remove('show'); close(); state('content');
+  lib.forEach((z, i) => z.folder = want[i] || null); openFolder = null;
+  hideSnack(); close(); state('content');
 }
 $('fo0').onclick = () => { seed(false); render(); };
 $('fo1').onclick = () => { seed(true); render(); };

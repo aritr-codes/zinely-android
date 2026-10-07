@@ -170,7 +170,7 @@ Amending a frozen V2 surface is reserved to you (V2-CONSTITUTION §VI); an imple
 
 | ☐ | ADR | Subject | Forcing function |
 |---|---|---|---|
-| ☐ | [ADR-125](DECISIONS.md#adr-125) | Shelf folders — Proposed 2026-10-06; thirteen rulings (F-1 to F-13) and the A28 freeze owed | Any Kotlin for folders; F-9 (one additive backup-manifest field and one Room index column) gates all storage code |
+| ☐ | [ADR-125](DECISIONS.md#adr-125) | Shelf folders — Proposed 2026-10-06; thirteen rulings (F-1 to F-13) and the A28 freeze owed | Any Kotlin for folders; F-9 (one additive backup-manifest field) gates all storage code |
 | ☐ | [ADR-090](DECISIONS.md#adr-090) | The scrim amendment — *"awaiting owner adoption. Nothing in this section is in force"* | Enforcing "the artifact does not dim" against four surfaces that draw a dim |
 | ☐ | [ADR-014](DECISIONS.md#adr-014) | Public-API stability rules for `core:model` geometry | `core:render`'s first external consumer |
 | ☐ | [ADR-016](DECISIONS.md#adr-016) | Closed enums vs. open specs for paper sizes / zine formats | The second imposition format |
