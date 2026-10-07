@@ -14901,16 +14901,27 @@ ViewModel and no string: a maker cannot reach any of it yet.
   `v21-library.html:NNN` line citations named under *Consequences* are also left for part 2. They are in Shelf
   and editor screen files, `Copy.kt`, three test files and three documents; part 1 touches no screen file, and
   correcting some and not others would be worse than correcting none.
-- **Device check: a stated deviation.** [CLAUDE.md](../CLAUDE.md#device-verification-mandatory) asks for a
-  device pass on any change to persistence. Part 1 changes persistence (every new backup carries
-  `"folder":null`, and the Shelf reads each zine's `meta.json` on every listing) and was **not** run on a
-  device. The evidence is the unit suites and the beta.6 run above, both on a computer. A Pass 1 persistence
-  check on a phone (a backup from this build restored by the installed beta.6, a beta.6 backup restored by this
-  build, the Shelf opening on an existing library) is owed. The rule says before merge. **Whether part 1 may
-  merge without it is the owner's decision, not the implementer's**, and is listed in
-  [OWNER-CHECKLIST](OWNER-CHECKLIST.md); if it is allowed, the check is part of part 2's device passes and must
-  be done before folders reach any release. A computer run cannot see what an older phone's character tables
-  do to a name. Pass 2 has nothing to look at until there is a screen.
+- **Device check: Pass 1 done on the owner's phone, 2026-10-07.** The first version of this note waived the
+  check; the owner then connected the phone and said to run it. Samsung SM-A176B, Android 16. Two side-by-side
+  test apps (`com.aritr.zinely.foldersqa`, `com.aritr.zinely.foldersqab6`), made-up zines only; the owner's
+  own app and library were not opened or touched, and the test apps and their backup files were removed
+  afterwards. Head commit `4b83f22` against the `v0.9.0-beta.6` tag:
+  1. *An existing library.* beta.6 made two zines; this build was installed over it. The Shelf opened with
+     both, and both `meta.json` files were byte-identical afterwards.
+  2. *A new zine* made by this build has no `folder` key in its `meta.json`.
+  3. *A new backup read by the old build.* This build's backup (every entry `"folder":null`, then one entry
+     with a real folder name) was restored by beta.6 in the second test app: "3 zines added". beta.6 wrote the
+     restored files without a folder, as rule 16 says.
+  4. *An old backup read by this build.* beta.6's backup, restored after one of its two zines was deleted
+     here: "1 zine added", the other "already here".
+  5. *A hand-written, untidy name* (`"  🫶 field Notes\n"`) put into one zine's `meta.json`: the Shelf listed
+     as before and did not rewrite the file; the backup carried `🫶 field Notes`; renaming the zine kept the
+     folder and wrote the cleaned name.
+  No crash in the log. **Not covered:** nothing a maker can tap makes a folder yet, so move, rename and unpack
+  were not driven on the phone; Android 7 to 15; TalkBack. Pass 2 has nothing to look at until there is a
+  screen. One thing seen by accident and not caused by this work: a `meta.json` made unreadable by hand was
+  put back from its older backup copy, so the file said the zine's old title while the Shelf went on showing
+  the new one ([issue #106](https://github.com/aritr-codes/zinely-android/issues/106)).
 - **Review:** two independent reviewers read commit `497d812`, one for code and concurrency, one for
   compatibility, scope and the honesty of these documents. **Both: GO WITH FIXES.** Neither found a stop
   condition: no schema, Room, fixture, dependency, permission, screen, string or golden changed.
