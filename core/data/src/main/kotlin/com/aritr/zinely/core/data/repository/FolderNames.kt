@@ -59,7 +59,7 @@ public object FolderNames {
             }
         }
         val name = cut(Normalizer.normalize(visible.trim(), Normalizer.Form.NFC)).trim()
-        return name.takeUnless { !hasSomethingToSee(it) || key(it) == MY_SHELF_KEY }
+        return name.takeUnless { !hasSomethingToSee(it) || looksLikeMyShelf(it) }
     }
 
     /** The value two names share exactly when they are the same folder: NFC, then lower case by [Locale.ROOT]. */
@@ -96,7 +96,8 @@ public object FolderNames {
             val cp = name.codePointAt(i)
             val draws = !Character.isWhitespace(cp) && !Character.isSpaceChar(cp) && cp !in BLANK_LOOKING &&
                 when (Character.getType(cp).toByte()) {
-                    Character.FORMAT, Character.NON_SPACING_MARK, Character.ENCLOSING_MARK, Character.UNASSIGNED -> false
+                    // Not UNASSIGNED: an emoji newer than this phone's tables is still drawn by the bundled font.
+                    Character.FORMAT, Character.NON_SPACING_MARK, Character.ENCLOSING_MARK -> false
                     else -> true
                 }
             if (draws) return true
@@ -106,9 +107,33 @@ public object FolderNames {
     }
 
     /**
+     * Whether [name] reads as *My Shelf* (rule 9), judged more widely than [key]: characters that draw nothing
+     * (formatting characters, marks, variation selectors) are ignored and every kind of space is a space, so a
+     * stray joiner or a no-break space cannot smuggle the Shelf's own name in as a folder.
+     */
+    private fun looksLikeMyShelf(name: String): Boolean {
+        val skeleton = buildString(name.length) {
+            var i = 0
+            while (i < name.length) {
+                val cp = name.codePointAt(i)
+                when {
+                    Character.isWhitespace(cp) || Character.isSpaceChar(cp) -> append(' ')
+                    else -> when (Character.getType(cp).toByte()) {
+                        Character.FORMAT, Character.NON_SPACING_MARK, Character.ENCLOSING_MARK -> Unit
+                        else -> appendCodePoint(cp)
+                    }
+                }
+                i += Character.charCount(cp)
+            }
+        }
+        return key(skeleton.trim()) == MY_SHELF_KEY
+    }
+
+    /**
      * Control characters, the line and paragraph separators, an unpaired surrogate, and the formatting
-     * characters that change nothing a reader sees ([INVISIBLE]), so that two names that look the same are
-     * the same. The two joiners stay: emoji and several scripts are spelled with them.
+     * characters that change nothing a reader sees ([INVISIBLE]), so the commonest hidden characters cannot
+     * make a second folder that looks like the first. The two joiners, variation selectors and tag characters
+     * stay, because emoji and several scripts are spelled with them; a stray one still makes a different name.
      */
     private fun isRemoved(cp: Int): Boolean = cp in INVISIBLE || when (Character.getType(cp).toByte()) {
         Character.CONTROL, Character.LINE_SEPARATOR, Character.PARAGRAPH_SEPARATOR, Character.SURROGATE -> true
@@ -121,7 +146,7 @@ public object FolderNames {
      * The rule is written out here, not taken from the platform's own text-breaking, so that it does not
      * change when that does. (The character tables it reads are still the device's.) It keeps together: a
      * letter and its combining marks; an emoji and its variation selector, skin tone, tag sequence or keycap;
-     * emoji joined by a zero-width joiner; the two regional indicators of a flag; and, in the scripts of
+     * emoji joined by a zero-width joiner; the two regional indicators of a flag; and, in the six scripts of
      * [VIRAMAS], a consonant joined to the next by a virama.
      *
      * It is an approximation of Unicode's grapheme clusters, not an implementation of them. It can still cut
@@ -193,8 +218,11 @@ public object FolderNames {
     /** Characters that are not spaces to Unicode and still draw nothing: Hangul fillers and the blank braille cell. */
     private val BLANK_LOOKING: Set<Int> = setOf(0x115F, 0x1160, 0x3164, 0xFFA0, 0x2800)
 
-    /** Devanagari, Bengali, Gurmukhi, Gujarati, Oriya, Tamil, Telugu, Kannada, Malayalam, Sinhala. */
-    private val VIRAMAS: Set<Int> = setOf(0x094D, 0x09CD, 0x0A4D, 0x0ACD, 0x0B4D, 0x0BCD, 0x0C4D, 0x0CCD, 0x0D4D, 0x0DCA)
+    /**
+     * Devanagari, Bengali, Gujarati, Oriya, Telugu, Malayalam: the scripts where Unicode joins consonants
+     * across this mark. Not Tamil or Sinhala, where the mark is usually drawn and the letters stay apart.
+     */
+    private val VIRAMAS: Set<Int> = setOf(0x094D, 0x09CD, 0x0ACD, 0x0B4D, 0x0C4D, 0x0D4D)
 }
 
 /**

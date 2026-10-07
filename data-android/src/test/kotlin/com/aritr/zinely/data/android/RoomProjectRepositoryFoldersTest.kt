@@ -26,6 +26,7 @@ import java.nio.file.Path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -552,15 +553,17 @@ class RoomProjectRepositoryFoldersTest {
     @Test
     fun `the shelf lists again after a folder operation that was refused`() = runBlocking {
         var editing = false
-        val repo = repo(sessionGate = ProjectSessionGate { !editing })
-        val a = create(repo, "Lisbon", null)
+        // The index speaks once and never again, so the second listing below can only be the operation's signal.
+        val real = db.projectDao()
+        val quietIndex = object : ProjectDao by real {
+            override fun observeAll() = flow { emit(real.observeAll().first()) }
+        }
+        val a = create(repo(), "Lisbon", null)
+        val repo = repo(dao = quietIndex, sessionGate = ProjectSessionGate { !editing })
         val listings = Channel<Unit>(Channel.UNLIMITED)
         val watching = launch(Dispatchers.Default) { repo.observeShelfProjects().collect { listings.send(Unit) } }
         try {
             withTimeout(10_000) { listings.receive() }
-            // Let any listing still on its way arrive, so the one counted below is the operation's.
-            kotlinx.coroutines.delay(500)
-            while (listings.tryReceive().isSuccess) Unit
             editing = true
 
             assertTrue(repo.moveProject(a, "Trips").errorOrNull() is DataError.Busy)

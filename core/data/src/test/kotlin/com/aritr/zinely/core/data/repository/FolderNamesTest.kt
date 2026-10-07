@@ -110,14 +110,22 @@ class FolderNamesTest {
     fun `a huge value from a file is cleaned quickly, and a pair split by the reading limit is dropped`() {
         val hostile = "\u0301\u0316".repeat(2_000_000)
         assertTimeoutPreemptively(Duration.ofSeconds(5)) { FolderNames.clean("Trips$hostile") }
-        assertEquals("a".repeat(40), FolderNames.clean("a".repeat(1023) + "\uD83D\uDC4D"))
+        // 1023 removed characters, then an emoji whose second half is past the limit: the half is not kept.
+        assertNull(FolderNames.clean("\u200B".repeat(1023) + "\uD83D\uDC4D"))
+        assertEquals("\uD83D\uDC4D", FolderNames.clean("\u200B".repeat(1022) + "\uD83D\uDC4D"))
     }
 
     @Test
-    fun `invisible formatting is removed, so two names that look the same are the same`() {
+    fun `the commonest invisible characters are removed, and none of them can smuggle in My Shelf`() {
         assertEquals("Trips", FolderNames.clean("Tri\u200Bps\u00AD\uFEFF"))
         assertEquals("Trips", FolderNames.clean("\u202ETrips\u2060"))
         assertNull(FolderNames.clean("My Shelf\u200B"))
+        assertNull(FolderNames.clean("My Shelf\u200D"))
+        assertNull(FolderNames.clean("My\u200C Shelf\uFE0F"))
+        assertNull(FolderNames.clean("My\u00A0Shelf"))
+        assertNull(FolderNames.clean("MY\u2003SHELF\u034F"))
+        // Known and left: a stray joiner inside any other name still makes a different folder.
+        assertFalse(FolderNames.same(FolderNames.clean("Trips\u200D"), "Trips"))
         assertTrue(FolderNames.same(FolderNames.clean("Trips\u200B"), "trips"))
     }
 
@@ -126,6 +134,12 @@ class FolderNamesTest {
         listOf("\u3164", "\u2800", "\uFE0F", "\u034F", "\u0301", "\u115F\u1160", "\u200D\u200C")
             .forEach { assertNull(FolderNames.clean(it), it.map { c -> c.code.toString(16) }.toString()) }
         assertEquals("\u2764\uFE0F", FolderNames.clean("\u2764\uFE0F")) // a heart is something to see
+        // A code point this machine's tables do not know yet is still a name: the app's own font may draw it.
+        val unknown = String(Character.toChars(0xE0080))
+        assertEquals(Character.UNASSIGNED, Character.getType(0xE0080).toByte())
+        assertEquals(unknown, FolderNames.clean(unknown))
+        // Tamil's mark does not join, so its letters are counted one by one.
+        assertEquals("\u0B95\u0BCD".repeat(40), FolderNames.clean("\u0B95\u0BCD".repeat(80)))
     }
 
     /** Rule 13's invariant, over names built from the characters that have broken it before. */
@@ -145,7 +159,7 @@ class FolderNamesTest {
             assertTrue(once.length <= FolderNames.MAX_UNITS, shown)
             assertEquals(Normalizer.normalize(once, Normalizer.Form.NFC), once, shown)
             assertEquals(once.trim(), once, shown)
-            assertFalse(FolderNames.key(once) == "my shelf", shown)
+            assertFalse(FolderNames.key(once.replace('\u00A0', ' ')) == "my shelf", shown)
         }
     }
 
