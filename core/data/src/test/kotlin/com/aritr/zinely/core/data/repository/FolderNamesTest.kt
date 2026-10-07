@@ -34,7 +34,8 @@ class FolderNamesTest {
         assertNull(FolderNames.clean("MY SHELF"))
         assertNull(FolderNames.clean("My\n Shelf")) // the line break is removed first
         assertEquals("My Shelf 2", FolderNames.clean("My Shelf 2"))
-        assertEquals("My  Shelf", FolderNames.clean("My  Shelf")) // inner spaces are the maker's own
+        assertNull(FolderNames.clean("My  Shelf")) // two spaces read as one
+        assertEquals("Trips  2", FolderNames.clean("Trips  2")) // in any other name, inner spaces are the maker's own
     }
 
     @Test
@@ -126,6 +127,16 @@ class FolderNamesTest {
         assertNull(FolderNames.clean("MY\u2003SHELF\u034F"))
         listOf("My Shelf\u3164", "My Shelf\uFFA0", "My\u2800Shelf", "My Shelf\u2065", "My Shelf\uDB40\uDC80")
             .forEach { assertNull(FolderNames.clean(it), it.map { c -> c.code.toString(16) }.toString()) }
+        listOf("My \u3164Shelf", "My\u3164\u3164Shelf", "My\u1160 Shelf", "My \u200D Shelf", "\uFF2D\uFF59 \uFF33\uFF48\uFF45\uFF4C\uFF46")
+            .forEach { assertNull(FolderNames.clean(it), it.map { c -> c.code.toString(16) }.toString()) }
+        // Any run of spaces and blank-looking characters where its one space is never gets it through either.
+        val blanks = intArrayOf(' '.code, 0x00A0, 0x2003, 0x3164, 0x2800, 0x1160, 0x200D)
+        val gaps = Random(7)
+        repeat(5_000) {
+            val gap = buildString { repeat(1 + gaps.nextInt(4)) { appendCodePoint(blanks[gaps.nextInt(blanks.size)]) } }
+            if (gap.all { it.code == 0x200D }) return@repeat // joiners alone leave no space at all: "MyShelf"
+            assertNull(FolderNames.clean("My" + gap + "Shelf"), gap.map { c -> c.code.toString(16) }.toString())
+        }
         // Hidden characters dropped anywhere in it, in any number, never get it through.
         val hidden = intArrayOf(0x200B, 0x200C, 0x200D, 0xFE0F, 0x034F, 0x00AD, 0x2065, 0xE0080, 0xE0061, 0x202E)
         val random = Random(9)

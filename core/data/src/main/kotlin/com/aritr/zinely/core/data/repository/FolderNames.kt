@@ -114,9 +114,10 @@ public object FolderNames {
 
     /**
      * Whether [name] reads as *My Shelf* (rule 9), judged more widely than [key]: hidden characters
-     * ([isHidden]) are ignored, and every kind of space and blank-looking character is a space, so a stray
-     * joiner or a no-break space cannot smuggle the Shelf's own name in as a folder. It errs toward refusing:
-     * a mark that cannot combine with its letter is ignored too.
+     * ([isHidden]) are ignored, a run of spaces and blank-looking characters of any kind is one space, and
+     * compatibility forms (fullwidth letters) are folded, so a stray joiner or a no-break space cannot smuggle
+     * the Shelf's own name in as a folder. It errs toward refusing: a mark that cannot combine with its letter
+     * is ignored too, and *My Shelf* typed with two spaces is refused.
      */
     private fun looksLikeMyShelf(name: String): Boolean {
         val skeleton = buildString(name.length) {
@@ -124,14 +125,15 @@ public object FolderNames {
             while (i < name.length) {
                 val cp = name.codePointAt(i)
                 when {
-                    Character.isWhitespace(cp) || Character.isSpaceChar(cp) || cp in BLANK_LOOKING -> append(' ')
+                    Character.isWhitespace(cp) || Character.isSpaceChar(cp) || cp in BLANK_LOOKING ->
+                        if (!endsWith(' ')) append(' ')
                     isHidden(cp) -> Unit
                     else -> appendCodePoint(cp)
                 }
                 i += Character.charCount(cp)
             }
         }
-        return key(skeleton.trim()) == MY_SHELF_KEY
+        return key(Normalizer.normalize(skeleton.trim(), Normalizer.Form.NFKC)) == MY_SHELF_KEY
     }
 
     /**

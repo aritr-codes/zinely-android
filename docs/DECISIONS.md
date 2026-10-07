@@ -14862,9 +14862,11 @@ ViewModel and no string: a maker cannot reach any of it yet.
      joiner, byte-order mark, direction marks), so the commonest hidden characters cannot make a second *Trips*.
      The two joiners, variation selectors and tag characters stay, because emoji and several scripts are
      spelled with them. A name of only marks or blank-looking characters is no folder. *My Shelf* is judged
-     more widely than other names: hidden characters are ignored and any kind of space or blank-looking
-     character counts as a space, so a name cannot pass as the Shelf's own by hiding something in it. Letters
-     borrowed from another alphabet that look like these are not caught.
+     more widely than other names: hidden characters are ignored, any run of spaces or blank-looking
+     characters counts as one space, and fullwidth letters count as ordinary ones, so a name cannot pass as the
+     Shelf's own by hiding something in it. The price is that *My Shelf* typed with two spaces, or with a
+     visible accent that has no letter of its own, is refused too. Letters borrowed from another alphabet that
+     look like these are not caught.
   4. *A `folder` value that is not text is read as no folder*, in `meta.json` and in a backup, where a strict
      reader would have called the whole file unreadable. A folder name is arrangement, not work. The odd value
      is then gone for good the next time that zine's `meta.json` is written; so is anything a name loses by
@@ -14946,8 +14948,14 @@ ViewModel and no string: a maker cannot reach any of it yet.
     character as visible let an invisible name become a folder → one rule for "hidden" now serves both
     checks, with an emoji the device does not know yet still counted as visible. This paragraph cited a pull
     request that did not exist → reworded. The frozen archives' test input now has a name and a relative
-    path. That last change was read by the implementer only.
-  - *Not done by either reviewer:* neither ran Gradle or a device; one ran the compiled name helper directly,
+    path.
+  - **A fifth review, of that commit `8f2e52c`: GO WITH FIXES**, accepted. Two blank characters in a row still
+    got a look-alike *My Shelf* through → a run of them is one space; fullwidth letters are folded. It ran a
+    port of the helper over two million names without breaking idempotence. Its observations stand as known:
+    a few characters that draw nothing on most phones (the object-replacement character, a private-use code
+    point) can still be a folder name, and which marks count as hidden follows the phone's character tables.
+    That last change was not reviewed again: it is three lines and their tests.
+  - *Not done by any reviewer:* none ran Gradle or a device; one ran the compiled name helper directly,
     on a desktop Java, not on Android.
 
 ## ADR-126 {#adr-126}
