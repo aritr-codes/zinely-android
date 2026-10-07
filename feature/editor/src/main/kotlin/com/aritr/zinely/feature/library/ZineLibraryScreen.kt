@@ -1,25 +1,44 @@
 package com.aritr.zinely.feature.library
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalAccessibilityManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineCoverRecipe
+import com.aritr.zinely.feature.editor.BenchSnack
+import com.aritr.zinely.feature.editor.BenchSnackInsetBottom
+import com.aritr.zinely.feature.editor.FolderSnackAction
 import com.aritr.zinely.feature.editor.HomeShelfEvent
 import com.aritr.zinely.feature.editor.ShelfCreateSheet
 import com.aritr.zinely.feature.editor.ShelfRenameSheet
@@ -28,11 +47,15 @@ import com.aritr.zinely.ui.components.ZSnackbar
 import com.aritr.zinely.ui.components.ZToast
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Grain
 import com.aritr.zinely.ui.theme.rememberZinelyV21GrainBrush
 import com.aritr.zinely.ui.theme.zinelyV21Grain
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
+import java.util.Locale
 
 /** The screen itself — `.phone`, the desk everything else stands on. */
 public const val ZineLibraryTestTag: String = "zine-library"
@@ -61,6 +84,9 @@ internal const val ZineLibraryShelfTestTag: String = "zine-library-shelf"
  *   ([D-017](docs/design/V2-SPEC-DEFECTS.md#d-017-ruling)). Non-null here: a shelf cannot draw an object
  *   with no cover, and the one path that can leave a project unassigned (a backfill whose write failed)
  *   is resolved before this type is built.
+ * @property folder the folder this zine is in, or `null` on My Shelf
+ *   ([ADR-125](docs/DECISIONS.md#adr-125)). Every zine of one folder carries **the same spelling** here:
+ *   the host settles it, so the screen groups by plain equality.
  */
 public data class LibraryZine(
     val id: String,
@@ -68,6 +94,7 @@ public data class LibraryZine(
     val subtitle: String,
     val cover: ZineCoverRecipe,
     val unavailableReason: String? = null,
+    val folder: String? = null,
 )
 
 /**
@@ -107,6 +134,30 @@ private sealed interface LibrarySheet {
 
     /** The existing rename input, raised by the sheet's Rename row. */
     data class Rename(val zineId: String, val title: String) : LibrarySheet
+
+    /** A28: where one zine can go. */
+    data class Move(val zineId: String) : LibrarySheet
+
+    /** A28: naming a new folder for one zine. [fromChooser] is where Cancel leads back to (A28.14). */
+    data class NewFolder(val zineId: String, val fromChooser: Boolean) : LibrarySheet
+
+    /** A28: one folder's own sheet. */
+    data class Folder(val name: String) : LibrarySheet
+
+    /** A28: renaming one folder. */
+    data class RenameFolder(val name: String) : LibrarySheet
+}
+
+/** Where focus should go once the Shelf shows what a folder action did (A28, *Focus*). */
+private sealed interface FocusWish {
+    /** Into a folder: the control that leads back out. */
+    data object Back : FocusWish
+
+    /** Out of a folder: that folder's pile. */
+    data class Pile(val folder: String) : FocusWish
+
+    /** After an action: the tile that now holds this zine, once the zine is in [folder]. */
+    data class Zine(val id: String, val folder: String?) : FocusWish
 }
 
 /** What the undo snackbar is waiting to be told: `true` = the user pressed Undo. V1's shape, reused. */
@@ -173,7 +224,15 @@ private class UndoRequest(val id: String, val message: String, val outcome: Comp
  * @param events one-shot shelf events (undo prompts, warm failure messages), each consumed exactly once.
  * @param onOpenZine a cover was tapped, or *Open on the bench* was chosen → the editor.
  * @param onShareExport *Share & export* → the editor **and then** the Proof. See above.
- * @param onStartZine the paper was chosen → the existing creation flow.
+ * @param onStartZine the paper was chosen → the existing creation flow. The second value is the open
+ *   folder, or `null` on My Shelf: a zine made inside a folder lands in it (A28.6).
+ * @param onMoveZine `(id, folder)` — a zine goes into a folder, a new one or an existing one, or back to My
+ *   Shelf (`null`). The answer comes back as a [HomeShelfEvent.FolderSnack], as it does for the next two.
+ * @param onRenameFolder `(from, to)`.
+ * @param onUnpackFolder *Take the zines out*.
+ * @param onFolderSnackAction the folder snack's Undo or Try again was pressed.
+ * @param checkFolderName what a typed folder name stands for. The host's, because the rules live where the
+ *   names are stored.
  * @param onRenameZine `(id, newTitle)` — trimming and the blank-is-not-a-rename rule belong to the flow.
  * @param onDuplicateZine a copy of the content, with a **new** cover
  *   ([D-026](docs/design/V2-SPEC-DEFECTS.md#d-026-ruling)) — which the store does, not this screen.
@@ -190,7 +249,7 @@ public fun ZineLibraryScreen(
     lastBackup: LibraryLastBackup?,
     onOpenZine: (String) -> Unit,
     onShareExport: (String) -> Unit,
-    onStartZine: (PaperSize) -> Unit,
+    onStartZine: (PaperSize, String?) -> Unit,
     onRenameZine: (String, String) -> Unit,
     onDuplicateZine: (String) -> Unit,
     onDeleteZine: (String) -> Unit,
@@ -205,6 +264,11 @@ public fun ZineLibraryScreen(
     preferredPaper: PaperSize = PaperSize.A4,
     appVersion: String = "",
     onPreferredPaperChange: (PaperSize) -> Unit = {},
+    onMoveZine: (String, String?) -> Unit = { _, _ -> },
+    onRenameFolder: (String, String) -> Unit = { _, _ -> },
+    onUnpackFolder: (String) -> Unit = {},
+    onFolderSnackAction: () -> Unit = {},
+    checkFolderName: (String) -> FolderNameVerdict = ::plainFolderNameVerdict,
     modifier: Modifier = Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -219,6 +283,24 @@ public fun ZineLibraryScreen(
     var showColophon by rememberSaveable { mutableStateOf(false) }
     var restoreColophonActionFocus by remember { mutableStateOf(false) }
     var createPaperSnapshot by remember { mutableStateOf(preferredPaper) }
+
+    // A28. The open folder is saved, so it survives a trip to the Bench even if Android stopped the app
+    // meanwhile; a fresh start has nothing saved and opens My Shelf (A28.9).
+    var openFolder by rememberSaveable { mutableStateOf<String?>(null) }
+    val shelfGrid = rememberLazyGridState()
+    val folderGrid = rememberLazyGridState()
+    val shelfFocus = remember { ShelfFocus() }
+    var focusWish by remember { mutableStateOf<FocusWish?>(null) }
+    var focusTile by remember { mutableIntStateOf(-1) }
+    // The folder that was open when a folder action was confirmed: Undo goes back to it.
+    var folderAtAction by remember { mutableStateOf<String?>(null) }
+    var reopenFolder by remember { mutableStateOf<String?>(null) }
+    // The snack keeps its last line while it is down, so the line does not blank as it leaves.
+    var snack by remember { mutableStateOf(HomeShelfEvent.FolderSnack("")) }
+    var snackUp by remember { mutableStateOf(false) }
+    var snackStep by remember { mutableIntStateOf(0) }
+    var snackHeld by remember { mutableStateOf(false) }
+    var dockHeight by remember { mutableIntStateOf(0) }
 
     // The collector outlives recompositions; always call the latest handlers.
     val currentUndo by rememberUpdatedState(onDeleteUndo)
@@ -277,11 +359,100 @@ public fun ZineLibraryScreen(
                     gone.await()
                     toast = null
                 }
+
+                // Not awaited: a newer folder snack replaces this one (A28.12), it does not queue behind it.
+                is HomeShelfEvent.FolderSnack -> {
+                    snack = event
+                    snackStep++
+                    snackUp = true
+                    event.zineId?.let { focusWish = FocusWish.Zine(it, event.folder) }
+                }
             }
         }
     }
 
     val zines = (state as? LibraryShelfState.Content)?.zines.orEmpty()
+    val folders = shelfFolders(zines)
+    val tiles = shelfTiles(zines, openFolder)
+
+    // A28.3: a folder exists only while it holds a zine, so an open folder whose last zine left or was
+    // deleted returns to My Shelf. Only once the Shelf has answered: while it is still loading there are
+    // no zines to judge by, and a folder restored after Android stopped the app must not be dropped.
+    LaunchedEffect(state, openFolder) {
+        if (state is LibraryShelfState.Content && openFolder != null && openFolder !in folders) openFolder = null
+    }
+    // Undo puts the maker back in the folder the action was taken from, once that folder exists again.
+    LaunchedEffect(reopenFolder, folders) {
+        val folder = reopenFolder ?: return@LaunchedEffect
+        if (folder in folders) {
+            openFolder = folder
+            reopenFolder = null
+        }
+    }
+    // A28.13: the snack goes away when a sheet is raised, and its action goes with it.
+    LaunchedEffect(openSheet) {
+        if (openSheet != null) {
+            snackUp = false
+            focusWish = null
+            reopenFolder = null
+        }
+    }
+    // A28.13: at least four seconds, longer if the phone's accessibility timeout asks, and for as long as
+    // a finger or focus is on it.
+    val accessibility = LocalAccessibilityManager.current
+    LaunchedEffect(snackUp, snackStep) {
+        if (!snackUp) return@LaunchedEffect
+        val stay = accessibility?.calculateRecommendedTimeoutMillis(
+            originalTimeoutMillis = FolderSnackMillis,
+            containsText = true,
+            containsControls = snack.action != null,
+        ) ?: FolderSnackMillis
+        do {
+            delay(stay)
+        } while (snackHeld)
+        snackUp = false
+    }
+    // A28, *Focus*. A zine's wish waits until the Shelf shows the zine where the action put it; before
+    // that the tile at its place is still the old one. A tile that is not on screen has no requester
+    // attached, and then the heading takes focus, as the frozen page has it.
+    LaunchedEffect(focusWish, tiles) {
+        val wish = focusWish ?: return@LaunchedEffect
+        val index = when (wish) {
+            FocusWish.Back -> -1
+            is FocusWish.Pile -> tiles.indexOfFirst { it is ShelfTile.Pile && it.name == wish.folder }
+            is FocusWish.Zine -> {
+                if (zines.firstOrNull { it.id == wish.id }?.let { it.folder == wish.folder } != true) return@LaunchedEffect
+                tiles.indexOfFirst { tile ->
+                    when (tile) {
+                        is ShelfTile.Zine -> tile.zine.id == wish.id
+                        is ShelfTile.Pile -> tile.zines.any { it.id == wish.id }
+                    }
+                }
+            }
+        }
+        focusTile = index
+        withFrameNanos { }
+        focusWish = null
+        val first = if (wish == FocusWish.Back) shelfFocus.back else if (index >= 0) shelfFocus.tile else shelfFocus.heading
+        runCatching { first.requestFocus() }.onFailure { runCatching { shelfFocus.heading.requestFocus() } }
+    }
+
+    // ADR-125 rule 11: a folder action finishes a waiting delete first, so its Undo is gone by the time the
+    // folder snack shows. The host does the finishing; this closes the delete's own snack.
+    val confirmFolderAction = { then: () -> Unit ->
+        undo?.outcome?.complete(false)
+        folderAtAction = openFolder
+        openSheet = null
+        then()
+    }
+    // Into a folder: from the top, with focus on the control that leads back out.
+    val scope = rememberCoroutineScope()
+    val enterFolder = { name: String ->
+        openFolder = name
+        focusWish = FocusWish.Back
+        scope.launch { folderGrid.scrollToItem(0) }
+        Unit
+    }
 
     if (showColophon) {
         Box(modifier.fillMaxSize()) {
@@ -305,6 +476,13 @@ public fun ZineLibraryScreen(
         }
         return
     }
+
+    // A28.9: inside a folder, system Back returns to My Shelf, which is where it was left.
+    val leaveFolder = {
+        openFolder?.let { focusWish = FocusWish.Pile(it) }
+        openFolder = null
+    }
+    BackHandler(enabled = openFolder != null, onBack = leaveFolder)
 
     Box(
         modifier
@@ -341,22 +519,50 @@ public fun ZineLibraryScreen(
             // screenshot of either one.
             is LibraryShelfState.Empty -> ZineShelfEmpty(Modifier.fillMaxSize())
 
-            is LibraryShelfState.Content -> ZineShelf(
-                zines = zines.map { ZineShelfItem(it.title, it.cover, it.subtitle) },
-                onOpen = { index ->
-                    zines.getOrNull(index)?.let {
-                        if (it.unavailableReason == null) {
-                            onOpenZine(it.id)
-                        } else {
-                            openSheet = LibrarySheet.Actions(it.id)
+            // My Shelf and an open folder are two grids, each with its own scroll position, so going back
+            // finds My Shelf where it was left (A28.9).
+            is LibraryShelfState.Content -> key(openFolder != null) {
+                ZineShelf(
+                    zines = tiles.map { tile ->
+                        when (tile) {
+                            is ShelfTile.Zine -> ZineShelfItem(tile.zine.title, tile.zine.cover, tile.zine.subtitle)
+                            is ShelfTile.Pile -> ZineShelfItem(
+                                title = tile.name,
+                                recipe = tile.zines.first().cover,
+                                subtitle = pluralZineCount(tile.zines.size),
+                                pile = tile.zines.map { it.cover },
+                            )
                         }
-                    }
-                },
-                onActions = { index ->
-                    zines.getOrNull(index)?.let { openSheet = LibrarySheet.Actions(it.id) }
-                },
-                modifier = Modifier.fillMaxSize().testTag(ZineLibraryShelfTestTag),
-            )
+                    },
+                    onOpen = { index ->
+                        when (val tile = tiles.getOrNull(index)) {
+                            is ShelfTile.Zine ->
+                                if (tile.zine.unavailableReason == null) {
+                                    onOpenZine(tile.zine.id)
+                                } else {
+                                    openSheet = LibrarySheet.Actions(tile.zine.id)
+                                }
+                            is ShelfTile.Pile -> enterFolder(tile.name)
+                            null -> Unit
+                        }
+                    },
+                    onActions = { index ->
+                        when (val tile = tiles.getOrNull(index)) {
+                            is ShelfTile.Zine -> openSheet = LibrarySheet.Actions(tile.zine.id)
+                            is ShelfTile.Pile -> openSheet = LibrarySheet.Folder(tile.name)
+                            null -> Unit
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize().testTag(ZineLibraryShelfTestTag),
+                    // A28.5: beside My Shelf, every zine, in a folder or not; inside a folder, its own.
+                    count = if (openFolder == null) zines.size else tiles.size,
+                    folder = openFolder,
+                    onBack = { haptics.perform(ZinelyHaptic.Tick); leaveFolder() },
+                    state = if (openFolder == null) shelfGrid else folderGrid,
+                    focus = shelfFocus,
+                    focusTile = focusTile,
+                )
+            }
         }
 
         // `.grainy::before` — the desk's own paper tooth: `background-size:160px 160px`,
@@ -419,7 +625,41 @@ public fun ZineLibraryScreen(
                 )
                 else -> emptyList()
             },
-            modifier = Modifier.align(Alignment.BottomCenter),
+            modifier = Modifier.align(Alignment.BottomCenter).onSizeChanged { dockHeight = it.height },
+        )
+
+        // `.snack` — the Shelf's own, for folder actions (A28.12, A28.13): *the Bench's support-paper
+        // snack, same paint*, so it is that composable, with the two things the Shelf's rule changes.
+        // 8dp above the dock at any text size, so the dock is measured, not assumed.
+        BenchSnack(
+            visible = snackUp,
+            message = snack.message,
+            actionLabel = when (snack.action) {
+                FolderSnackAction.Undo -> Copy.Shelf.UNDO
+                FolderSnackAction.TryAgain -> Copy.Folders.TRY_AGAIN
+                null -> null
+            },
+            onAction = {
+                snackUp = false
+                if (snack.action == FolderSnackAction.Undo) reopenFolder = folderAtAction
+                onFolderSnackAction()
+            },
+            colors = colors,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .onFocusChanged { snackHeld = it.hasFocus }
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                        snackHeld = true
+                        waitForUpOrCancellation(PointerEventPass.Initial)
+                        snackHeld = false
+                    }
+                },
+            bottomClearance = with(LocalDensity.current) { dockHeight.toDp() } + FolderSnackGap - BenchSnackInsetBottom,
+            step = snackStep,
+            shape = FolderSnackShape,
+            actionMinHeight = FolderSnackActionMinHeight,
         )
 
         // Above the dock, never under the thumb that made them — V1's placement, reused with its chrome.
@@ -448,7 +688,7 @@ public fun ZineLibraryScreen(
         onDismiss = { openSheet = null },
         onChoosePaper = { paper ->
             openSheet = null
-            onStartZine(paper)
+            onStartZine(paper, openFolder)
         },
     )
 
@@ -485,6 +725,7 @@ public fun ZineLibraryScreen(
                 title = it.title,
                 subtitle = it.subtitle,
                 unavailableReason = it.unavailableReason,
+                inFolder = it.folder != null,
             )
         },
         onDismiss = { openSheet = null },
@@ -520,6 +761,16 @@ public fun ZineLibraryScreen(
                     openSheet = null
                     onDuplicateZine(zine.id)
                 }
+                // A28.14: the first folder skips the chooser. With no folder to choose, the row goes
+                // straight to naming one.
+                ZineAction.Move -> {
+                    haptics.perform(ZinelyHaptic.Tick)
+                    openSheet = if (folders.isEmpty()) {
+                        LibrarySheet.NewFolder(zine.id, fromChooser = false)
+                    } else {
+                        LibrarySheet.Move(zine.id)
+                    }
+                }
                 ZineAction.Delete -> {
                     haptics.perform(ZinelyHaptic.Boundary)
                     openSheet = null
@@ -535,6 +786,76 @@ public fun ZineLibraryScreen(
         title = renaming?.title.orEmpty(),
         onDismiss = { openSheet = null },
         onRename = { newTitle -> renaming?.let { onRenameZine(it.zineId, newTitle) } },
+    )
+
+    // ---- A28: the three folder sheets ---------------------------------------------------------------
+    val moving = (openSheet as? LibrarySheet.Move)?.let { open -> zines.firstOrNull { it.id == open.zineId } }
+    FolderMoveSheet(
+        target = moving?.let { FolderMoveTarget(it.title, it.folder, folders) },
+        onMove = { folder ->
+            moving?.let { zine ->
+                haptics.perform(ZinelyHaptic.Snap)
+                confirmFolderAction { onMoveZine(zine.id, folder) }
+            }
+        },
+        onNewFolder = {
+            moving?.let { zine ->
+                haptics.perform(ZinelyHaptic.Tick)
+                openSheet = LibrarySheet.NewFolder(zine.id, fromChooser = true)
+            }
+        },
+        onDismiss = { openSheet = null },
+    )
+
+    val naming = openSheet as? LibrarySheet.NewFolder
+    val namingFor = naming?.let { open -> zines.firstOrNull { it.id == open.zineId } }
+    val renamingFolder = (openSheet as? LibrarySheet.RenameFolder)?.name?.takeIf { it in folders }
+    FolderNameSheet(
+        target = when {
+            namingFor != null -> FolderNameTarget(zineTitle = namingFor.title, zineFolder = namingFor.folder)
+            renamingFolder != null -> FolderNameTarget(renaming = renamingFolder, count = folders.getValue(renamingFolder))
+            else -> null
+        },
+        keys = folders.keys.associateBy { name ->
+            (checkFolderName(name) as? FolderNameVerdict.Name)?.key ?: name
+        },
+        check = checkFolderName,
+        onGo = { name ->
+            when {
+                namingFor != null -> confirmFolderAction { onMoveZine(namingFor.id, name) }
+                renamingFolder != null -> confirmFolderAction { onRenameFolder(renamingFolder, name) }
+            }
+        },
+        // A28.14: Cancel returns to the chooser when the sheet came from the chooser.
+        onCancel = {
+            openSheet = if (naming != null && naming.fromChooser) LibrarySheet.Move(naming.zineId) else null
+        },
+        onDismiss = { openSheet = null },
+    )
+
+    val folderSheet = (openSheet as? LibrarySheet.Folder)?.name?.takeIf { it in folders }
+    FolderActionsSheet(
+        target = folderSheet?.let { FolderActionsTarget(it, folders.getValue(it)) },
+        onOpen = {
+            folderSheet?.let { name ->
+                haptics.perform(ZinelyHaptic.Tick)
+                openSheet = null
+                enterFolder(name)
+            }
+        },
+        onRename = {
+            folderSheet?.let { name ->
+                haptics.perform(ZinelyHaptic.Tick)
+                openSheet = LibrarySheet.RenameFolder(name)
+            }
+        },
+        onUnpack = {
+            folderSheet?.let { name ->
+                haptics.perform(ZinelyHaptic.Snap)
+                confirmFolderAction { onUnpackFolder(name) }
+            }
+        },
+        onDismiss = { openSheet = null },
     )
 
     LibraryBackupRestoreStateSheet(
@@ -560,3 +881,30 @@ private val TransientBottomInset = 96.dp
 
 /** `.grainy::before{opacity:.55}` — the effective strength is this times the tile's baked `.42`. */
 private const val DeskGrainOpacity = 0.55f
+
+/**
+ * `.snack{border-radius:var(--br-lg)}`, `.snack button{min-height:48px}`, 8px above the dock, and the four
+ * seconds it stays at least (A28.13).
+ */
+private val FolderSnackShape = RoundedCornerShape(ZinelyV21Dimens.radiusLg)
+private val FolderSnackActionMinHeight = 48.dp
+private val FolderSnackGap = 8.dp
+private const val FolderSnackMillis = 4000L
+
+/**
+ * What a typed folder name stands for when no host says: trimmed, compared ignoring case. The frozen page's
+ * own rule (`fold`), enough for a preview or a test of this screen; the app passes the real one.
+ */
+internal fun plainFolderNameVerdict(typed: String): FolderNameVerdict {
+    val whole = typed.trim()
+    // The key is of the name that is kept, so a long name and its own first forty characters are one folder.
+    val name = whole.take(PlainFolderNameLength).trim()
+    val key = name.lowercase(Locale.ROOT)
+    return when {
+        name.isEmpty() -> FolderNameVerdict.Blank
+        key == Copy.Folders.MY_SHELF.lowercase(Locale.ROOT) -> FolderNameVerdict.MyShelf
+        else -> FolderNameVerdict.Name(name, key, cut = whole.length > PlainFolderNameLength)
+    }
+}
+
+private const val PlainFolderNameLength = 40

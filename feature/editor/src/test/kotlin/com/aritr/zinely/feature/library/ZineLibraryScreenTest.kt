@@ -615,7 +615,7 @@ class ZineLibraryScreenTest {
                 lastBackup = null,
                 onOpenZine = { opened += it },
                 onShareExport = { shared += it },
-                onStartZine = { started += it },
+                onStartZine = { paper, _ -> started += paper },
                 onRenameZine = { id, title -> renamed += id to title },
                 onDuplicateZine = { duplicated += it },
                 onDeleteZine = { deleted += it },

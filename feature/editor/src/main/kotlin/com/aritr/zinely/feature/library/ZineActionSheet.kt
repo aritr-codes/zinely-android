@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -13,6 +14,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -21,6 +23,8 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -28,7 +32,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -47,7 +53,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -62,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.components.zinelyV2Shadow
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -72,7 +83,8 @@ import com.aritr.zinely.ui.theme.ZinelyV2ShadowLayer
 import kotlin.math.roundToInt
 
 /**
- * The five things the frozen sheet offers, in the frozen order.
+ * The six things the frozen sheet offers, in the frozen order. Five came with the sheet; **Move** is the
+ * A28 folders amendment's row ([ADR-125](docs/DECISIONS.md#adr-125)).
  *
  * The labels and the glyphs are the design's own bytes, which is why they live on the enum rather than
  * at the draw site: a row's icon is not a decoration chosen by the renderer, it is part of what the
@@ -87,18 +99,24 @@ import kotlin.math.roundToInt
  *
  * @property label the row's spoken and printed text, verbatim from the frozen markup.
  * @property glyph the frozen `.ic` character. Three of these six codepoints (counting the shelf's `⋯`)
- *   are absent from the bundled Inter, so the device's own fallback font draws them — **D-021**.
+ *   are absent from the bundled Inter, so the device's own fallback font draws them — **D-021**. Empty
+ *   for a row whose `.ic` is a drawing ([icon]).
+ * @property icon the frozen `.ic` drawing, for the row that has one in place of a character.
  * @property danger `.act.danger` — the consequence ink and the berry icon chip.
  */
 internal enum class ZineAction(
     val label: String,
     val glyph: String,
     val danger: Boolean = false,
+    val icon: SheetIcon? = null,
 ) {
     Open("Open on the bench", "↗"),
     ShareExport("Share & export", "⇪"),
     Rename("Rename", "✎"),
     Duplicate("Duplicate", "⧉"),
+
+    /** A28: live for a zine that will not open, as Rename is. [ZineActionTarget.inFolder] changes its words. */
+    Move(Copy.Folders.MOVE_TO_A_FOLDER, "", icon = SheetIcon.Pile),
     Delete("Delete", "⌫", danger = true),
 }
 
@@ -112,11 +130,14 @@ internal enum class ZineAction(
  *
  * @property title the zine's own name — `data-name`, and the sheet header's `.sh-ttl`.
  * @property subtitle `data-sub`, verbatim: format and recency, `"A4 · 2 days ago"`.
+ * @property inFolder the zine is in a folder, so its Move row reads *Move somewhere else* (A28.15): for
+ *   that zine the row is also the way out.
  */
 internal data class ZineActionTarget(
     val title: String,
     val subtitle: String,
     val unavailableReason: String? = null,
+    val inFolder: Boolean = false,
 )
 
 /** The scrim behind an open sheet — `.scrim`. */
@@ -198,6 +219,28 @@ internal fun ZineActionSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    LibrarySheetHost(target = target, onDismiss = onDismiss) { drawn ->
+        ZineActionSheetSurface(target = drawn, onAction = onAction, modifier = modifier)
+    }
+}
+
+/**
+ * The window every Library `.sheet` rises in: the zine's own, and the three the A28 folders amendment adds
+ * (*"the three A28 sheets reuse .sheet and .act unchanged"*). One host, so the four cannot drift apart in
+ * modality, scrim or motion.
+ *
+ * The sheet rides above the keyboard. The frozen file never had to: a browser moves its own viewport, and
+ * until A28 no Library sheet held a field.
+ *
+ * @param target what the sheet is open for, or `null` for a closed sheet.
+ * @param sheet the sheet's body for the last non-null [target], which is still drawn while it slides out.
+ */
+@Composable
+internal fun <T : Any> LibrarySheetHost(
+    target: T?,
+    onDismiss: () -> Unit,
+    sheet: @Composable (T) -> Unit,
+) {
     // Kept mounted through the exit so the sheet slides out rather than blinking away.
     val shown = remember { MutableTransitionState(false) }
     shown.targetState = target != null
@@ -205,7 +248,7 @@ internal fun ZineActionSheet(
 
     // The last non-null target, latched, so the header keeps its text for the length of the exit slide
     // instead of blanking one frame into it.
-    var latched by remember { mutableStateOf<ZineActionTarget?>(null) }
+    var latched by remember { mutableStateOf<T?>(null) }
     if (target != null) latched = target
     val drawn = latched ?: return
 
@@ -232,7 +275,7 @@ internal fun ZineActionSheet(
             }
             AnimatedVisibility(
                 visibleState = shown,
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier.align(Alignment.BottomCenter).imePadding(),
                 // `transform:translateY(103%)` — of the sheet's own height.
                 enter = slideInVertically(motion.settle(SheetDurationMillis)) {
                     (it * SheetSlide).roundToInt()
@@ -241,11 +284,7 @@ internal fun ZineActionSheet(
                     (it * SheetSlide).roundToInt()
                 },
             ) {
-                ZineActionSheetSurface(
-                    target = drawn,
-                    onAction = onAction,
-                    modifier = modifier,
-                )
+                sheet(drawn)
             }
         }
     }
@@ -302,11 +341,65 @@ internal fun ZineActionSheetSurface(
     modifier: Modifier = Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
+    LibrarySheetSurface(
+        title = target.title,
+        subtitle = target.subtitle,
+        paneTitle = ZineActionSheetPaneTitle,
+        modifier = modifier.testTag(ZineActionSheetTestTag),
+    ) {
+        ZineAction.entries.forEach { action ->
+            if (action.danger) {
+                Box(
+                    Modifier
+                        .testTag(ZineActionDangerDividerTestTag)
+                        .fillMaxWidth()
+                        .height(DangerDivider)
+                        .background(colors.desk),
+                )
+            }
+            SheetRow(
+                label = if (action == ZineAction.Move && target.inFolder) Copy.Folders.MOVE_SOMEWHERE_ELSE else action.label,
+                onClick = { onAction(action) },
+                modifier = Modifier.testTag(zineActionTestTag(action)),
+                glyph = action.glyph,
+                icon = action.icon,
+                enabled = target.isEnabled(action),
+                disabledReason = target.unavailableReason,
+                danger = action.danger,
+            )
+        }
+    }
+}
+
+/**
+ * `.sheet`: the paper, its top rule, the handle, the `.sh-head` and its one divider, then whatever the
+ * sheet holds. Shared by the zine sheet and the three A28 sheets.
+ *
+ * @param paneTitle the frozen `aria-label` on `role="dialog"`: what TalkBack says on entering the sheet.
+ * @param scrolls `.sheet.a28{max-height:88%;overflow-y:auto}`. The zine sheet is not an `.a28` sheet and
+ *   keeps its own height.
+ */
+@Composable
+internal fun LibrarySheetSurface(
+    title: String,
+    subtitle: String,
+    paneTitle: String,
+    modifier: Modifier = Modifier,
+    scrolls: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val colors = ZinelyTheme.v21Colors
 
     Column(
         modifier
-            .testTag(ZineActionSheetTestTag)
             .fillMaxWidth()
+            .then(
+                if (scrolls) {
+                    Modifier.heightIn(max = (LocalConfiguration.current.screenHeightDp * A28MaxHeight).dp)
+                } else {
+                    Modifier
+                },
+            )
             // `box-shadow:0 -16px 40px -18px var(--soft-shadow)` — upward, which is the one shadow in
             // the corpus that is not the hard offset. A sheet rising off the screen is the exception
             // §5.1 allows: it is not a printed object resting on the desk, it is chrome above it.
@@ -366,14 +459,15 @@ internal fun ZineActionSheetSurface(
             .padding(bottom = ZinelyV21Dimens.gapXl)
             // `role="dialog" aria-label="Zine actions"`. The Dialog window carries the modality; this
             // carries the name TalkBack announces on entering it.
-            .semantics { paneTitle = ZineActionSheetPaneTitle },
+            .semantics { this.paneTitle = paneTitle }
+            .then(if (scrolls) Modifier.verticalScroll(rememberScrollState()) else Modifier),
     ) {
         ZineActionGrab()
 
         // `.sh-head{padding:var(--gap-xs) var(--gap-xl) var(--gap-md)}`
         Column(Modifier.padding(HeadPadding)) {
             Text(
-                text = target.title,
+                text = title,
                 modifier = Modifier.testTag(ZineActionTitleTestTag),
                 style = TextStyle(
                     fontFamily = ZinelyV21Fonts.Voice,
@@ -384,7 +478,7 @@ internal fun ZineActionSheetSurface(
                 ),
             )
             Text(
-                text = target.subtitle,
+                text = subtitle,
                 modifier = Modifier
                     .testTag(ZineActionSubtitleTestTag)
                     .padding(top = ZinelyV21Dimens.gapHair),
@@ -423,23 +517,7 @@ internal fun ZineActionSheetSurface(
                 },
         )
 
-        ZineAction.entries.forEach { action ->
-            if (action.danger) {
-                Box(
-                    Modifier
-                        .testTag(ZineActionDangerDividerTestTag)
-                        .fillMaxWidth()
-                        .height(DangerDivider)
-                        .background(colors.desk),
-                )
-            }
-            ActionRow(
-                action = action,
-                enabled = target.isEnabled(action),
-                disabledReason = target.unavailableReason,
-                onAction = onAction,
-            )
-        }
+        content()
     }
 }
 
@@ -485,34 +563,60 @@ private fun ZineActionGrab() {
  * **`:active`, not `:hover`.** V2's rows washed on hover — a stylus/mouse state that is no state at all
  * under a finger, transcribed because the design stated it. V2.1 states the press instead, which is the
  * state a touch device actually has. The wash is therefore visible on every device rather than on none.
+ *
+ * ### What A28 adds to a row
+ *
+ * ```css
+ * .act.here{cursor:default} .act.here .lines>span:first-child{color:var(--ink-soft)}
+ * .act .ic svg{display:block;width:17px;height:17px}
+ * .act .lines{display:flex;flex-direction:column;gap:var(--gap-hair);min-width:0;overflow-wrap:anywhere}
+ * .act .note{font-size:.78rem;color:var(--ink-soft);font-weight:500}
+ * ```
+ *
+ * @param glyph the `.ic` character; ignored when [icon] is given.
+ * @param note `.note`, the second line. Non-null (even empty) makes the label a `.lines` block that wraps
+ *   inside the row; `null` is the frozen single label. TalkBack hears "label, note" as one name.
+ * @param here `.act.here`: the row for where the zine already is. Not a choice, so it cannot be pressed,
+ *   but its note is information, so it is **not** dimmed the way a disabled row is (the dimmed note
+ *   measured 1.98:1).
  */
 @Composable
-private fun ActionRow(
-    action: ZineAction,
-    enabled: Boolean,
-    disabledReason: String?,
-    onAction: (ZineAction) -> Unit,
+internal fun SheetRow(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    glyph: String = "",
+    icon: SheetIcon? = null,
+    note: String? = null,
+    enabled: Boolean = true,
+    disabledReason: String? = null,
+    danger: Boolean = false,
+    here: Boolean = false,
 ) {
     val colors = ZinelyTheme.v21Colors
 
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val ink = if (pressed) colors.onLeaf else if (action.danger) colors.jamText else colors.ink
+    val ink = when {
+        pressed -> colors.onLeaf
+        danger -> colors.jamText
+        here -> colors.inkSoft
+        else -> colors.ink
+    }
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .testTag(zineActionTestTag(action))
             .semantics {
                 if (!enabled && disabledReason != null) {
                     stateDescription = disabledReason
                 }
             }
             .zinelyV2Control(
-                label = action.label,
-                enabled = enabled,
+                label = if (note.isNullOrEmpty()) label else "$label, $note",
+                enabled = enabled && !here,
                 interactionSource = interaction,
-                onClick = { onAction(action) },
+                onClick = onClick,
             )
             .background(if (pressed) colors.leafTint else Color.Transparent)
             .alpha(if (enabled) 1f else ZinelyV21Dimens.disabledAlpha)
@@ -527,11 +631,11 @@ private fun ActionRow(
             Modifier
                 .size(IconChip)
                 .clip(RoundedCornerShape(ZinelyV21Dimens.radiusSm))
-                .background(if (action.danger) colors.berryTint else colors.butter),
+                .background(if (danger) colors.berryTint else colors.butter),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = action.glyph,
+            if (icon != null) SheetIconMark(icon, stroke = colors.onLeaf, fill = colors.butter) else Text(
+                text = glyph,
                 textAlign = TextAlign.Center,
                 style = TextStyle(
                     fontFamily = ZinelyV21Fonts.Work,
@@ -542,16 +646,60 @@ private fun ActionRow(
                 ),
             )
         }
-        Text(
-            text = action.label,
-            style = TextStyle(
-                fontFamily = ZinelyV21Fonts.Work,
-                fontWeight = FontWeight.Medium,
-                fontSize = RowTextSize,
-                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                color = ink,
-            ),
+        val labelStyle = TextStyle(
+            fontFamily = ZinelyV21Fonts.Work,
+            fontWeight = FontWeight.Medium,
+            fontSize = RowTextSize,
+            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+            color = ink,
         )
+        if (note == null) {
+            Text(text = label, style = labelStyle)
+        } else {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapHair)) {
+                Text(text = label, style = labelStyle)
+                if (note.isNotEmpty()) {
+                    Text(
+                        text = note,
+                        style = labelStyle.copy(fontSize = NoteSize, color = if (pressed) colors.onLeaf else colors.inkSoft),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The two `.ic` drawings A28 adds, `viewBox="0 0 17 17"`, as the frozen markup writes their paths.
+ *
+ * Drawn for the reason the Shelf's overflow dots are: the mark must be one the app owns, not a character a
+ * font may not carry.
+ *
+ * @property paths in paint order; `true` marks the one the frozen file fills with `var(--butter)`.
+ */
+internal enum class SheetIcon(val paths: List<Pair<String, Boolean>>) {
+    /** Two sheets held by a band: a folder, and the way into or out of one. */
+    Pile(listOf("M6 2.2 13.6 3.4 12.4 13 4.8 11.8Z" to false, "M3 4h8.4v10.4H3Z" to true, "M1.8 10h10.8" to false)),
+
+    /** Two zines standing on a shelf: My Shelf. */
+    Shelf(listOf("M3 2.5h4.5v9H3Zm6.5 0H14v9H9.5Z" to false, "M1.5 14.5h14" to false)),
+}
+
+/**
+ * ⚠ On the chip this app draws, the fill is butter on butter. The frozen `.ic` is `butter-tint`, on which
+ * the front sheet's butter fill shows; this sheet's chip has been `butter` since ADR-100. The fill still
+ * hides the back sheet's lines behind the front one, which is what makes the mark read as two sheets.
+ */
+@Composable
+private fun SheetIconMark(icon: SheetIcon, stroke: Color, fill: Color) {
+    val paths = remember(icon) { icon.paths.map { (data, filled) -> PathParser().parsePathString(data).toPath() to filled } }
+    Canvas(Modifier.size(SheetIconSize)) {
+        scale(size.width / SheetIconViewBox, pivot = Offset.Zero) {
+            paths.forEach { (path, filled) ->
+                if (filled) drawPath(path, fill)
+                drawPath(path, stroke, style = Stroke(width = SheetIconStroke, join = StrokeJoin.Round))
+            }
+        }
     }
 }
 
@@ -615,7 +763,18 @@ private val RowTextSize = 16.sp
 private val IconChip = 30.dp
 private val IconSize = 15.2.sp
 
+/** `.act .ic svg{width:17px;height:17px}`, `stroke-width="1.4"` in the drawing's own units. */
+private val SheetIconSize = 17.dp
+private const val SheetIconViewBox = 17f
+private const val SheetIconStroke = 1.4f
+
+/** `.act .note{font-size:.78rem}`. */
+private val NoteSize = 12.48.sp
+
+/** `.sheet.a28{max-height:88%}`. */
+private const val A28MaxHeight = 0.88f
+
 private fun ZineActionTarget.isEnabled(action: ZineAction): Boolean = when (action) {
     ZineAction.Open, ZineAction.ShareExport, ZineAction.Duplicate -> unavailableReason == null
-    ZineAction.Rename, ZineAction.Delete -> true
+    ZineAction.Rename, ZineAction.Move, ZineAction.Delete -> true
 }

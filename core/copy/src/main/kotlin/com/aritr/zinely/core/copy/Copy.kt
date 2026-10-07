@@ -1040,6 +1040,71 @@ public object Copy {
         public fun deletedMessage(title: String): String = "Deleted “$title”"
     }
 
+    /**
+     * Shelf folders: the words of the frozen `v21-library.html` A28 amendment
+     * ([ADR-125](docs/DECISIONS.md#adr-125)), as that file's markup and script write them.
+     *
+     * ⚠ The three lines under *Not in the frozen file* are not transcribed. A prototype cannot fail, so A28
+     * has no words for a rename or a take-out that stops partway; ADR-125 rule 18 requires the message and
+     * its *Try again*, so they are written here and are the owner's to reword.
+     */
+    public object Folders {
+        public const val BACK_TO_MY_SHELF: String = "Back to My Shelf"
+        public const val MY_SHELF: String = "My Shelf"
+
+        // The zine sheet's sixth row (A28.15).
+        public const val MOVE_TO_A_FOLDER: String = "Move to a folder"
+        public const val MOVE_SOMEWHERE_ELSE: String = "Move somewhere else"
+
+        // The chooser.
+        public const val MOVE_PANE: String = "Move zine"
+        public const val ON_MY_SHELF_MOVE_TO: String = "On My Shelf · move to…"
+        public fun inFolderMoveTo(folder: String): String = "In “$folder” · move to…"
+        public const val OUT_OF_THE_FOLDER: String = "Out of the folder"
+        public const val ITS_HERE: String = "It’s here"
+        public const val NEW_FOLDER: String = "New folder"
+
+        // The name sheet (A28.10).
+        public const val RENAME_FOLDER: String = "Rename folder"
+        public fun forZine(title: String): String = "For “$title”"
+        public const val FOLDER_NAME: String = "Folder name"
+        public const val CANCEL: String = "Cancel"
+        public const val MAKE_FOLDER: String = "Make folder"
+        public const val RENAME: String = "Rename"
+        public fun moveTo(folder: String): String = "Move to “$folder”"
+        public const val MY_SHELF_IS_TAKEN: String = "“My Shelf” is where loose zines sit. Try another name."
+        public fun alreadyIn(folder: String): String = "It’s already in “$folder”."
+        public fun willJoin(folder: String): String = "You already have “$folder”. This zine will join it."
+        public fun nameTaken(folder: String): String = "You already have a folder called “$folder”."
+
+        // The folder's own sheet.
+        public const val FOLDER_ACTIONS: String = "Folder actions"
+        public fun folderSubtitle(zineCount: String): String = "Folder · $zineCount"
+        public const val OPEN_FOLDER: String = "Open folder"
+        public const val TAKE_THE_ZINES_OUT: String = "Take the zines out"
+        public const val TAKE_OUT_NOTE: String = "They go back on My Shelf. The folder goes away."
+
+        // What TalkBack hears on the pile.
+        public fun tileLabel(name: String, zineCount: String): String = "$name, folder, $zineCount"
+        public fun actionsForFolder(name: String): String = "Actions for folder $name"
+
+        // The snack (A28.12).
+        public fun made(folder: String): String = "Made “$folder”"
+        public fun movedTo(folder: String): String = "Moved to “$folder”"
+        public const val BACK_ON_MY_SHELF: String = "Back on My Shelf"
+        public fun putAway(line: String, emptied: String): String = "$line. “$emptied” is empty, so it’s put away"
+        public fun backIn(title: String, folder: String): String = "“$title” is back in “$folder”"
+        public fun backOnMyShelf(title: String): String = "“$title” is back on My Shelf"
+        public fun unpacked(folder: String): String = "Zines from “$folder” are back on My Shelf"
+        public fun folderIsBack(folder: String): String = "“$folder” is back, with its zines"
+        public fun renamedTo(folder: String): String = "Renamed to “$folder”"
+
+        // Not in the frozen file (rule 18).
+        public const val TRY_AGAIN: String = Common.TRY_AGAIN
+        public fun someStillIn(folder: String): String = "Some zines are still in “$folder”."
+        public const val NOT_EVERY_ZINE_WENT_BACK: String = "Not every zine went back."
+    }
+
     /** Paper-size display names, shared by the shelf chooser and the print recipe. */
     public object Paper {
         public const val A4: String = "A4"

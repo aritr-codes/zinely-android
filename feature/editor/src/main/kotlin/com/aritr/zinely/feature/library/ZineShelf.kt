@@ -8,23 +8,30 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
@@ -32,12 +39,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -51,11 +61,15 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.ZineCoverRecipe
+import com.aritr.zinely.ui.a11y.zinelyV2Control
+import com.aritr.zinely.ui.components.zinelyFocusRing
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
@@ -80,7 +94,22 @@ internal data class ZineShelfItem(
     val title: String,
     val recipe: ZineCoverRecipe,
     val subtitle: String,
+    /**
+     * Set when this tile is a folder (A28): its zines' covers, newest first. [title] is then the folder's
+     * name and [subtitle] its count (`"3 zines"`), which stands where a zine's date stands.
+     */
+    val pile: List<ZineCoverRecipe>? = null,
 )
+
+/**
+ * Where the Shelf can be asked to put focus (A28, *Focus*): the heading, the control that leads back out
+ * of a folder, and one tile, which [ZineShelf] is told by position.
+ */
+internal class ShelfFocus {
+    val heading = FocusRequester()
+    val back = FocusRequester()
+    val tile = FocusRequester()
+}
 
 /**
  * The test handle on one placed cover, keyed by its position on the shelf.
@@ -187,6 +216,14 @@ internal const val ZineShelfHeadTestTag: String = "shelf-head"
  *   the [D-024 amendment](docs/design/V2-SPEC-DEFECTS.md#d-024-amendment). Zero at rest. They live inside
  *   this grid because the frozen markup puts them there (`:184`), under the same heading and on the same
  *   two columns, so nothing about the screen moves when the real covers land.
+ * @param count the number beside the heading. On My Shelf it counts every zine, in a folder or not, so it
+ *   is not the number of tiles (A28.5); inside a folder it is that folder's.
+ * @param folder the open folder's name, or `null` on My Shelf. Inside a folder the heading is the folder's
+ *   name and one quiet control leads back (A28).
+ * @param onBack that control was used.
+ * @param state the grid's scroll position. The caller keeps one per view, so going back finds My Shelf
+ *   where it was left (A28.9).
+ * @param focusTile the position of the tile [focus]'s tile requester is attached to, or `-1`.
  */
 @Composable
 internal fun ZineShelf(
@@ -195,10 +232,17 @@ internal fun ZineShelf(
     onActions: (Int) -> Unit,
     modifier: Modifier = Modifier,
     placeholders: Int = 0,
+    count: Int = zines.size,
+    folder: String? = null,
+    onBack: () -> Unit = {},
+    state: LazyGridState = rememberLazyGridState(),
+    focus: ShelfFocus = remember { ShelfFocus() },
+    focusTile: Int = -1,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(ShelfColumns),
         modifier = modifier,
+        state = state,
         contentPadding = PaddingValues(
             start = ZinelyV21Dimens.gapLg,
             top = ZinelyV21Dimens.gapXl,
@@ -235,7 +279,10 @@ internal fun ZineShelf(
         item(span = { GridItemSpan(maxLineSpan) }) {
             val hidden = placeholders > 0
             ShelfHeading(
-                count = zines.size,
+                count = count,
+                folder = folder,
+                onBack = onBack,
+                focus = focus,
                 modifier = if (hidden) {
                     Modifier.alpha(0f).clearAndSetSemantics {
                         contentDescription = Copy.Shelf.LOADING_YOUR_ZINES
@@ -259,7 +306,13 @@ internal fun ZineShelf(
         // No `key`: position is the identity a list that cannot reorder actually has. B5 supplies the
         // stable one with real projects — asserting a key here would be asserting B5's data model.
         itemsIndexed(zines) { index, zine ->
-            ZineOnShelf(zine = zine, index = index, onOpen = onOpen, onActions = onActions)
+            ZineOnShelf(
+                zine = zine,
+                index = index,
+                onOpen = onOpen,
+                onActions = onActions,
+                focusRequester = focus.tile.takeIf { index == focusTile },
+            )
         }
     }
 }
@@ -297,9 +350,29 @@ internal fun ZineShelf(
  * text node with its own semantics rather than being folded into the heading. It is **not** a heading:
  * the `<h1>` is, and `heading()` stays on the title alone so TalkBack's heading navigation lands on one
  * node per screen rather than two.
+ *
+ * ### Inside a folder (A28)
+ *
+ * ```css
+ * .shelf-head.in-folder h1{font-size:1.6rem;overflow-wrap:anywhere;
+ *   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ * .shelf-head.in-folder .count{flex:none;white-space:nowrap}
+ * ```
+ *
+ * The heading is the folder's name, smaller and held to two lines because a maker wrote it; the count is
+ * that folder's and never gives up its room to a long name. [ShelfBack] stands above it.
+ *
+ * The heading can take focus, which the frozen `<h1 tabindex="-1">` can too: it is where focus goes when the
+ * tile a folder action was about is not on screen.
  */
 @Composable
-private fun ShelfHeading(count: Int, modifier: Modifier = Modifier) {
+private fun ShelfHeading(
+    count: Int,
+    folder: String?,
+    onBack: () -> Unit,
+    focus: ShelfFocus,
+    modifier: Modifier = Modifier,
+) {
     val colors = ZinelyTheme.v21Colors
     Row(
         modifier
@@ -310,18 +383,21 @@ private fun ShelfHeading(count: Int, modifier: Modifier = Modifier) {
         // `align-items:flex-end` — the count's baseline sits with the swipe, not with the cap height.
         verticalAlignment = Alignment.Bottom,
     ) {
-        Column {
+        Column(if (folder != null) Modifier.weight(1f, fill = false) else Modifier) {
+            if (folder != null) ShelfBack(onBack, Modifier.focusRequester(focus.back))
             Text(
-                text = ShelfHeadingText,
+                text = folder ?: ShelfHeadingText,
                 style = TextStyle(
                     fontFamily = ZinelyV21Fonts.Voice,
                     fontWeight = FontWeight.Bold,
-                    fontSize = ShelfHeadingSize,
-                    lineHeight = ShelfHeadingLineHeight,
+                    fontSize = if (folder != null) FolderHeadingSize else ShelfHeadingSize,
+                    lineHeight = if (folder != null) FolderHeadingLineHeight else ShelfHeadingLineHeight,
                     letterSpacing = ShelfHeadingTracking,
                     color = colors.ink,
                 ),
-                modifier = Modifier.semantics { heading() },
+                maxLines = if (folder != null) FolderHeadingMaxLines else Int.MAX_VALUE,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.focusRequester(focus.heading).focusable().semantics { heading() },
             )
             val swipe = rememberShelfSwipePath()
             Canvas(
@@ -378,6 +454,65 @@ private fun ShelfHeading(count: Int, modifier: Modifier = Modifier) {
                     horizontal = ZinelyV21Dimens.gapMd,
                     vertical = ZinelyV21Dimens.gapXs,
                 ),
+        )
+    }
+}
+
+/**
+ * `.back` — the one quiet control inside a folder, which leads back to My Shelf (A28).
+ *
+ * ```css
+ * .back{padding:0 var(--gap-sm) 0 0;min-height:48px;display:flex;align-items:center;gap:var(--gap-sm);
+ *   color:var(--ink-soft);font:600 .82rem/1 var(--sans);text-decoration:underline;
+ *   text-decoration-color:var(--hair);text-underline-offset:4px}
+ * .back svg{width:7px;height:12px;flex:none}
+ * .back:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:var(--br-sm)}
+ * ```
+ *
+ * The chevron is **drawn** for the reason the overflow dots are: the mark must be one the app owns, not a
+ * character a font may not carry. Its words are *My Shelf*; what TalkBack hears is *Back to My Shelf*.
+ *
+ * `text-decoration-color` and `text-underline-offset` have no Compose equivalent: the underline is drawn in
+ * the text's own colour at the platform's offset. Recorded, not faked, as on the Bench's snack.
+ */
+@Composable
+private fun ShelfBack(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val focused by interaction.collectIsFocusedAsState()
+    Row(
+        modifier
+            .testTag(ZineShelfBackTestTag)
+            .zinelyFocusRing(focused, ZinelyV21Dimens.radiusSm, BackFocusOffset)
+            .zinelyV2Control(label = Copy.Folders.BACK_TO_MY_SHELF, interactionSource = interaction, onClick = onBack)
+            .defaultMinSize(minHeight = BackMinHeight)
+            .padding(end = ZinelyV21Dimens.gapSm),
+        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Canvas(Modifier.size(width = BackChevronWidth, height = BackChevronHeight)) {
+            // `<path d="M6 1 1 6l5 5"/>` in a 7x12 viewBox drawn at 7x12: units are dp one for one.
+            val path = Path().apply {
+                moveTo(6.dp.toPx(), 1.dp.toPx())
+                lineTo(1.dp.toPx(), 6.dp.toPx())
+                lineTo(6.dp.toPx(), 11.dp.toPx())
+            }
+            drawPath(
+                path,
+                colors.inkSoft,
+                style = Stroke(width = BackChevronStroke.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+            )
+        }
+        Text(
+            text = Copy.Folders.MY_SHELF,
+            style = TextStyle(
+                fontFamily = ZinelyV21Fonts.Work,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = BackTextSize,
+                lineHeight = BackTextSize,
+                color = colors.inkSoft,
+                textDecoration = TextDecoration.Underline,
+            ),
         )
     }
 }
@@ -526,7 +661,23 @@ private val ShelfRowGap = ZinelyV21Dimens.gapXl
 private val ShelfColumnGap = ZinelyV21Dimens.gapLg
 
 /** `.shelf-head h1{margin:0}` — the heading's own text. */
-private const val ShelfHeadingText = "My Shelf"
+private const val ShelfHeadingText = Copy.Folders.MY_SHELF
+
+/** `.back`, the control that leads out of a folder. */
+internal const val ZineShelfBackTestTag: String = "shelf-back"
+
+/** `.shelf-head.in-folder h1{font-size:1.6rem}` at the heading's own `line-height:1.05`, clamped to two lines. */
+private val FolderHeadingSize = 25.6.sp
+private val FolderHeadingLineHeight = 26.88.sp
+private const val FolderHeadingMaxLines = 2
+
+/** `.back{min-height:48px;font:600 .82rem/1}`, its 7x12 chevron at `stroke-width="1.8"`, its focus outline. */
+private val BackMinHeight = 48.dp
+private val BackTextSize = 13.12.sp
+private val BackChevronWidth = 7.dp
+private val BackChevronHeight = 12.dp
+private val BackChevronStroke = 1.8.dp
+private val BackFocusOffset = 2.dp
 
 /** `font-size:2rem` against the browser's 16px root, and `line-height:1.05` of that. */
 private val ShelfHeadingSize = 32.sp

@@ -79,7 +79,7 @@ class ZineLibraryInsetTest {
                     lastBackup = null,
                     onOpenZine = {},
                     onShareExport = {},
-                    onStartZine = {},
+                    onStartZine = { _, _ -> },
                     onRenameZine = { _, _ -> },
                     onDuplicateZine = {},
                     onDeleteZine = {},

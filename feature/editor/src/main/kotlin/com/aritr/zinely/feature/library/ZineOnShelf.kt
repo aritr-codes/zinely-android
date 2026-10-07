@@ -2,16 +2,22 @@ package com.aritr.zinely.feature.library
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.Image
@@ -24,25 +30,37 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.ui.a11y.zinelyV2Control
+import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import com.aritr.zinely.ui.theme.ZinelyV21Grain
+import com.aritr.zinely.ui.theme.rememberZinelyV21GrainBrush
+import com.aritr.zinely.ui.theme.zinelyV21Grain
 
 /** The `⋯` on one placed cover — `.more`, keyed by position like [zineShelfCoverTestTag]. */
 internal fun zineShelfMoreTestTag(index: Int): String = "shelf-more-$index"
@@ -114,6 +132,8 @@ internal fun zineShelfMoreTestTag(index: Int): String = "shelf-more-$index"
  *   `:nth-child(3n+k)`, so the position is visual as well as identifying.
  * @param onOpen tap.
  * @param onActions long-press, or the `⋯`.
+ * @param focusRequester set on the tile the Shelf wants focus to land on after a folder action (A28,
+ *   *Focus*); `null` for every other tile.
  */
 @Composable
 internal fun ZineOnShelf(
@@ -122,9 +142,11 @@ internal fun ZineOnShelf(
     onOpen: (Int) -> Unit,
     onActions: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    focusRequester: FocusRequester? = null,
 ) {
     val colors = ZinelyTheme.v21Colors
     val haptics = ZinelyTheme.haptics
+    val pile = zine.pile
 
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -151,6 +173,7 @@ internal fun ZineOnShelf(
                         style = Stroke(width = stroke),
                     )
                 }
+                .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
                 // Before the seam, never after: the seam ends in `clearAndSetSemantics`, and a tag
                 // chained behind it leaves a node no test and no service can find.
                 .testTag(zineShelfCoverTestTag(index))
@@ -162,7 +185,9 @@ internal fun ZineOnShelf(
                     // therefore a deliberate narrowing, not the browser's behaviour: the date is
                     // disclosure and the sheet's header states it, whereas a shelf that read
                     // "Camping trip, A4, 2 days ago" six times over is a list nobody can skim by ear.
-                    label = zine.title,
+                    // A28, *What TalkBack hears*: "For the stall, folder, 3 zines". A pile's covers are
+                    // decoration; this is the tile's one name.
+                    label = if (pile != null) Copy.Folders.tileLabel(zine.title, zine.subtitle) else zine.title,
                     interactionSource = interaction,
                     onClick = { haptics.perform(ZinelyHaptic.Tick); onOpen(index) },
                     onLongClick = {
@@ -173,7 +198,7 @@ internal fun ZineOnShelf(
                 ),
             verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
         ) {
-            ZineV21Cover(
+            if (pile != null) ZinePile(pile, pressed, Modifier.fillMaxWidth()) else ZineV21Cover(
                 fill = fill,
                 stampLabel = zineShelfStampLabel(zine.subtitle),
                 index = index,
@@ -245,7 +270,7 @@ internal fun ZineOnShelf(
         }
 
         MoreButton(
-            title = zine.title,
+            label = if (pile != null) Copy.Folders.actionsForFolder(zine.title) else "Actions for ${zine.title}",
             ink = colors.inkSoft,
             // The same sheet the long press opens, and the long press already buzzes — a tile whose two
             // routes to one sheet feel different is a tile that seems to have failed on the quiet one.
@@ -286,7 +311,7 @@ private const val SubtitleSeparator = "·"
  */
 @Composable
 private fun MoreButton(
-    title: String,
+    label: String,
     ink: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -312,7 +337,8 @@ private fun MoreButton(
             }
             .zinelyV2Control(
                 // `aria-label="Actions for Sunday market"` — V2's own string, kept with the affordance.
-                label = "Actions for $title",
+                // A pile's is A28's: "Actions for folder For the stall".
+                label = label,
                 interactionSource = interaction,
                 onClick = onClick,
             ),
@@ -328,6 +354,123 @@ private fun MoreButton(
         }
     }
 }
+
+/**
+ * `.zine.pile` — a folder, drawn as a pile: its zines' own covers, fanned, on a kraft sheet, held by a
+ * paper band (`v21-library.html` A28, [ADR-125](docs/DECISIONS.md#adr-125)).
+ *
+ * ```css
+ * .pile-stack{position:relative;aspect-ratio:3/4}
+ * .pile-back{position:absolute;inset:0;background:#E2C59A;border:1.5px solid #27270F;
+ *   border-radius:var(--br-xs) var(--br-md) var(--br-md) var(--br-xs);
+ *   box-shadow:var(--hard) var(--hard) 0 var(--ink-line);transform:translate(8px,-9px) rotate(3.5deg)}
+ * .pile .tape,.pile .stamp{display:none}
+ * .zine.pile .cover.p2{transform:translate(9px,-8px) rotate(5deg)}
+ * .zine.pile .cover.p1{transform:translate(-5px,-4px) rotate(-4deg)}
+ * .zine.pile .cover.p0{transform:rotate(-.5deg)}
+ * .zine.pile .zine-open:active .cover.p0{transform:translate(2px,2px)}
+ * .band{position:absolute;left:-6px;right:-6px;top:58%;height:24px;z-index:3;
+ *   background:#E2C59A;border:1.5px solid #27270F;box-shadow:2px 2px 0 #27270F;transform:rotate(-2deg)}
+ * .band::after{background-image:var(--grain);background-size:130px 130px;mix-blend-mode:multiply;opacity:.5}
+ * ```
+ *
+ * **The kraft sheet is drawn for every pile.** Without it a folder holding one zine is that zine's cover
+ * under a new name, and the first folder anyone makes read as *"it renamed my zine"* in review.
+ *
+ * **The band and the sheet are pinned**, like the tape and the stamp: a material holding the maker's objects
+ * does not change what it is after dark.
+ *
+ * **The fan is structure, not tilt.** A pile takes one place in the Shelf's tilt and tape cycle, so the
+ * tiles after it shift as they would for a zine, but its own covers lie at the fan's angles, not the
+ * position's.
+ *
+ * @param covers the folder's covers, newest first. At most three are drawn, the newest on top.
+ * @param pressed `.zine-open:active`: only the top cover answers, as only it can be touched.
+ */
+@Composable
+internal fun ZinePile(covers: List<ZineCoverRecipe>, pressed: Boolean, modifier: Modifier = Modifier) {
+    val colors = ZinelyTheme.v21Colors
+    val grain = rememberZinelyV21GrainBrush(BandGrainTile)
+    BoxWithConstraints(modifier.aspectRatio(PileAspectRatio)) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    translationX = PileBackShift.x.toPx()
+                    translationY = PileBackShift.y.toPx()
+                    rotationZ = PileBackTilt
+                }
+                .zinelyV21HardShadow(ZinelyV21Dimens.hardShadow, colors.inkLine, CoverShapeV21)
+                .background(Kraft, CoverShapeV21)
+                .border(PinnedLine, PinnedInk, CoverShapeV21),
+        )
+        // Painted from the bottom of the pile up, so the newest cover (`p0`) lands on top.
+        covers.take(PileFan.size).withIndex().reversed().forEach { (place, recipe) ->
+            val fan = PileFan[place]
+            ZineV21Cover(
+                fill = recipe.surface.v21Fill(colors),
+                stampLabel = "",
+                index = 0,
+                pressed = pressed && place == 0,
+                borderInk = recipe.surface.v21BorderInk(colors),
+                tilt = fan.tilt,
+                taped = false,
+                modifier = Modifier.fillMaxSize().graphicsLayer {
+                    translationX = fan.x.toPx()
+                    translationY = fan.y.toPx()
+                },
+            ) { markModifier ->
+                Image(
+                    imageVector = recipe.stamp.v21Mark(),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(recipe.surface.v21MarkInk(colors)),
+                    modifier = markModifier.aspectRatio(1f),
+                )
+            }
+        }
+        Box(
+            Modifier
+                .align(Alignment.TopCenter)
+                .offset(y = maxHeight * BandTop)
+                // `left:-6px;right:-6px`: wider than the cell by 6dp a side, which a required width
+                // centres for free.
+                .requiredWidth(maxWidth + BandOverhang * 2)
+                .height(BandHeight)
+                .graphicsLayer { rotationZ = BandTilt }
+                .zinelyV21HardShadow(BandShadow, PinnedInk, RectangleShape)
+                .background(Kraft)
+                .border(PinnedLine, PinnedInk)
+                .zinelyV21Grain(grain, ZinelyV21Grain.BakedAlpha * BandGrainOpacity, ZinelyV21Grain.PaperBlend),
+        )
+    }
+}
+
+/** One cover's place in the fan: `translate(x,y) rotate(tilt)`. */
+private class PileFanPlace(val x: Dp, val y: Dp, val tilt: Float)
+
+/** `.cover.p0`, `.p1`, `.p2` — newest first. */
+private val PileFan = listOf(
+    PileFanPlace(0.dp, 0.dp, -0.5f),
+    PileFanPlace((-5).dp, (-4).dp, -4f),
+    PileFanPlace(9.dp, (-8).dp, 5f),
+)
+
+private const val PileAspectRatio = 3f / 4f
+private val PileBackShift = DpOffset(8.dp, (-9).dp)
+private const val PileBackTilt = 3.5f
+
+/** `#E2C59A` and `#27270F`: kraft and its ink, the same in both themes. */
+private val Kraft = Color(0xFFE2C59A)
+private val PinnedInk = Color(0xFF27270F)
+private val PinnedLine = 1.5.dp
+
+private const val BandTop = 0.58f
+private val BandOverhang = 6.dp
+private val BandHeight = 24.dp
+private const val BandTilt = -2f
+private val BandShadow = 2.dp
+private val BandGrainTile = 130.dp
+private const val BandGrainOpacity = 0.5f
 
 // ---------------------------------------------------------------------------------------------
 // The frozen values — per component, per the D-007 ruling that V2.1's §3.3 did not overturn.

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.aritr.zinely.core.data.asset.ZineBackupOmission
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
+import com.aritr.zinely.core.data.repository.FolderNames
 import com.aritr.zinely.core.data.repository.ProjectShelfEntry
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
@@ -23,8 +24,10 @@ import com.aritr.zinely.data.android.LibrarySafTransport
 import com.aritr.zinely.data.android.OutcomeLatch
 import com.aritr.zinely.data.android.prefs.BackupRecord
 import com.aritr.zinely.data.android.prefs.BackupRecordStore
+import com.aritr.zinely.feature.editor.FolderSnackAction
 import com.aritr.zinely.feature.editor.HomeShelfEvent
 import com.aritr.zinely.feature.editor.HomeZineCard
+import com.aritr.zinely.feature.library.FolderNameVerdict
 import com.aritr.zinely.feature.library.LibraryBackupRestoreFailureKind
 import com.aritr.zinely.feature.library.LibraryBackupRestoreMode
 import com.aritr.zinely.feature.library.LibraryBackupRestoreUiState
@@ -101,6 +104,10 @@ internal sealed interface HomeUiState {
  * unhides the card: the shelf never lies about what was deleted. [HomeUiState.Empty] means the
  * STORE is empty; a shelf filtered to zero by pending deletes stays a zero-card
  * [HomeUiState.Content] (the invitation would be dishonest while a delete is still reversible).
+ *
+ * Shelf folders ([ADR-125](docs/DECISIONS.md#adr-125)): [moveZine], [renameFolder] and [unpackFolder]
+ * delegate to the store and answer with a [HomeShelfEvent.FolderSnack]. Each **first finishes a waiting
+ * delete and does not go ahead if that delete fails** (rule 11), so no zine the maker cannot see is moved.
  */
 @HiltViewModel
 internal class HomeViewModel @Inject constructor(
@@ -143,6 +150,12 @@ internal class HomeViewModel @Inject constructor(
 
     /** The in-flight create (ADR-046 §5 single-flight): taps during it are no-ops. */
     private var createJob: Job? = null
+
+    /** The folder action in flight. Single-flight, as create is: a second tap while one runs is a no-op. */
+    private var folderJob: Job? = null
+
+    /** What the standing folder snack's action does (Undo, or Try again); `null` when it offers none. */
+    private var snackAction: (suspend () -> Unit)? = null
     private var backupRestoreJob: Job? = null
     private var backupRestorePickerPending: Boolean = false
     private var backupRestoreCancellationRequested: Boolean = false
@@ -240,11 +253,22 @@ internal class HomeViewModel @Inject constructor(
                     pendingDeletes.update { current -> current.filterTo(mutableSetOf()) { it in projectIds } }
                 }
                 val visible = projects.filterNot { it.id in pending }
+                // ADR-125 rules 11 and 13: folders are worked out from the zines the Shelf is showing, and
+                // a folder has one spelling. Only files changed outside the app can disagree; the screen
+                // groups by plain equality, so the one spelling is settled here.
+                val spellings = visible.mapNotNull { it.folder }.groupBy(FolderNames::key)
+                    .mapValues { (_, names) -> FolderNames.display(names) }
                 HomeUiState.Content(
                     cards = visible
                         .mapNotNull { (it as? ProjectShelfEntry.Available)?.summary }
                         .map { it.toCard(now) },
-                    zines = visible.map { it.toLibraryZine(now, fallbackCovers::get) },
+                    zines = visible.map { entry ->
+                        entry.toLibraryZine(
+                            nowEpochMs = now,
+                            fallbackCover = fallbackCovers::get,
+                            folder = entry.folder?.let { spellings[FolderNames.key(it)] },
+                        )
+                    },
                 )
             }
         }.catch { emit(HomeUiState.Error) }
@@ -407,13 +431,16 @@ internal class HomeViewModel @Inject constructor(
      * open path (ADR-046 §5). Single-flight — a tap while a create is in flight is a no-op
      * (an unguarded double-tap would mint two projects and two navigations); pending deletes commit
      * first (ADR-046 §4). Create failure keeps the warm message and emits no open event.
+     *
+     * [folder] is the folder the Shelf has open, or `null` on My Shelf: a zine made inside a folder lands
+     * in it (ADR-125 rule 8), written in the zine's first metadata write.
      */
-    fun startZine(paperSize: PaperSize) {
+    fun startZine(paperSize: PaperSize, folder: String? = null) {
         if (createJob?.isActive == true) return
         createJob = viewModelScope.launch {
             commitPendingDeletesNow()
             when (val result =
-                projectRepository.createProject(DEFAULT_NEW_TITLE, ZineFormat.SINGLE_SHEET_8, paperSize)
+                projectRepository.createProject(DEFAULT_NEW_TITLE, ZineFormat.SINGLE_SHEET_8, paperSize, folder)
             ) {
                 is DataResult.Success -> openQueue.send(result.value.id)
                 is DataResult.Failure -> eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
@@ -431,6 +458,120 @@ internal class HomeViewModel @Inject constructor(
     fun duplicate(id: String) {
         viewModelScope.launch { projectRepository.duplicateProject(id).sendMessageOnFailure() }
     }
+
+    // ---- Shelf folders (ADR-125; the words and the snack are `v21-library.html` A28's) ----------------
+
+    /**
+     * Put a zine in [folder], or back on My Shelf (`null`). The snack says where it went, and that its old
+     * folder is put away if this was the last zine in it (A28.3); Undo puts it back where it was.
+     */
+    fun moveZine(id: String, folder: String?) = folderAction {
+        val zines = shownZines()
+        val zine = zines.firstOrNull { it.id == id } ?: return@folderAction
+        val from = zine.folder
+        // The spelling the store will write: the folder's own if it exists, else the name as cleaned.
+        val joined = folder?.let { name -> zines.firstNotNullOfOrNull { z -> z.folder?.takeIf { FolderNames.same(it, name) } } }
+        val to = joined ?: FolderNames.clean(folder)
+        if (!projectRepository.moveProject(id, to).sentMessageOnFailure()) return@folderAction
+        val line = when {
+            to == null -> Copy.Folders.BACK_ON_MY_SHELF
+            joined == null -> Copy.Folders.made(to)
+            else -> Copy.Folders.movedTo(to)
+        }
+        val emptied = from != null && from != to && zines.count { it.folder == from } == 1
+        snackAction = {
+            if (projectRepository.moveProject(id, from).sentMessageOnFailure()) {
+                val back = if (from != null) Copy.Folders.backIn(zine.title, from) else Copy.Folders.backOnMyShelf(zine.title)
+                eventQueue.send(HomeShelfEvent.FolderSnack(back, zineId = id, folder = from))
+            }
+        }
+        eventQueue.send(
+            HomeShelfEvent.FolderSnack(
+                message = if (emptied) Copy.Folders.putAway(line, from!!) else line,
+                action = FolderSnackAction.Undo,
+                zineId = id,
+                folder = to,
+            ),
+        )
+    }
+
+    /**
+     * Rename a folder. No Undo (rule 10). It is one file write per zine and can stop partway (rule 18): the
+     * snack then says some zines are still under the old name and offers *Try again*, which runs the same
+     * rename and finishes it.
+     */
+    fun renameFolder(from: String, to: String) = folderAction { runRename(from, to) }
+
+    private suspend fun runRename(from: String, to: String) {
+        val change = (projectRepository.renameFolder(from, to).valueOrSentMessage() ?: return)
+        if (change.complete) {
+            eventQueue.send(
+                HomeShelfEvent.FolderSnack(
+                    message = Copy.Folders.renamedTo(change.folder ?: to),
+                    zineId = change.changedIds.firstOrNull(),
+                    folder = change.folder,
+                ),
+            )
+        } else {
+            snackAction = { runRename(from, to) }
+            eventQueue.send(HomeShelfEvent.FolderSnack(Copy.Folders.someStillIn(from), FolderSnackAction.TryAgain))
+        }
+    }
+
+    /**
+     * Take a folder's zines out: they go back on My Shelf and the folder is gone. Undo puts each back, one
+     * at a time. Like a rename it can stop partway and be run again (rule 18); the Undo then covers every
+     * zine that was taken out, in whichever run.
+     */
+    fun unpackFolder(name: String) = folderAction { runUnpack(name, alreadyOut = emptyList()) }
+
+    private suspend fun runUnpack(name: String, alreadyOut: List<String>) {
+        val change = projectRepository.unpackFolder(name).valueOrSentMessage() ?: return
+        val out = alreadyOut + change.changedIds
+        if (!change.complete) {
+            snackAction = { runUnpack(name, out) }
+            eventQueue.send(HomeShelfEvent.FolderSnack(Copy.Folders.someStillIn(name), FolderSnackAction.TryAgain))
+            return
+        }
+        // Focus follows the newest of them, which is where the pile stood.
+        val first = shownZines().firstOrNull { it.id in out }?.id ?: out.firstOrNull()
+        snackAction = {
+            // Every zine is tried even after one fails: what the Shelf then shows is true (rule 18).
+            val allBack = out.map { projectRepository.moveProject(it, name) is DataResult.Success }.all { it }
+            eventQueue.send(
+                if (allBack) {
+                    HomeShelfEvent.FolderSnack(Copy.Folders.folderIsBack(name), zineId = first, folder = name)
+                } else {
+                    HomeShelfEvent.FolderSnack(Copy.Folders.NOT_EVERY_ZINE_WENT_BACK)
+                },
+            )
+        }
+        eventQueue.send(
+            HomeShelfEvent.FolderSnack(Copy.Folders.unpacked(name), FolderSnackAction.Undo, zineId = first, folder = null),
+        )
+    }
+
+    /** The folder snack's Undo or Try again was pressed. It is a folder action like any other. */
+    fun folderSnackAction() {
+        val action = snackAction ?: return
+        folderAction { action() }
+    }
+
+    /**
+     * Runs one folder action. **A waiting delete is finished first, and the action does not go ahead if
+     * that delete fails** (ADR-125 rule 11): [commitPendingDeletesNow] has by then unhidden the zine and
+     * said so, and a folder action over a Shelf the maker has just been told is wrong would be a guess.
+     */
+    private fun folderAction(run: suspend () -> Unit) {
+        if (folderJob?.isActive == true) return
+        folderJob = viewModelScope.launch {
+            if (!commitPendingDeletesNow()) return@launch
+            snackAction = null
+            run()
+        }
+    }
+
+    private fun shownZines(): List<LibraryZine> = (state.value as? HomeUiState.Content)?.zines.orEmpty()
 
     /**
      * Durably record the delete intent, then hide the card and prompt for undo. The project store is
@@ -625,6 +766,18 @@ internal class HomeViewModel @Inject constructor(
     private suspend fun DataResult<*>.sendMessageOnFailure() {
         if (this is DataResult.Failure) eventQueue.send(HomeShelfEvent.Message(error.warmMessage()))
     }
+
+    /** Whether this succeeded; a failure has been said. */
+    private suspend fun DataResult<*>.sentMessageOnFailure(): Boolean {
+        sendMessageOnFailure()
+        return this is DataResult.Success
+    }
+
+    /** The value, or `null` after saying the failure. */
+    private suspend fun <T> DataResult<T>.valueOrSentMessage(): T? {
+        sendMessageOnFailure()
+        return (this as? DataResult.Success)?.value
+    }
 }
 
 internal sealed interface LibraryBackupRestorePickerRequest {
@@ -719,11 +872,16 @@ internal fun ProjectSummary.toLibraryZine(
     cover = cover ?: fallbackCover(id),
 )
 
+/**
+ * @param folder the folder to show this zine in. The entry's own by default; the Shelf passes the one
+ *   spelling it settled for that folder (ADR-125 rule 13).
+ */
 internal fun ProjectShelfEntry.toLibraryZine(
     nowEpochMs: Long,
     fallbackCover: (String) -> ZineCoverRecipe = { newZineCoverRecipe() },
+    folder: String? = this.folder,
 ): LibraryZine = when (this) {
-    is ProjectShelfEntry.Available -> summary.toLibraryZine(nowEpochMs, fallbackCover)
+    is ProjectShelfEntry.Available -> summary.toLibraryZine(nowEpochMs, fallbackCover).copy(folder = folder)
     is ProjectShelfEntry.Unavailable -> LibraryZine(
         id = id,
         title = title,
@@ -736,7 +894,18 @@ internal fun ProjectShelfEntry.toLibraryZine(
         },
         cover = cover ?: fallbackCover(id),
         unavailableReason = reason.shelfUnavailableReason(),
+        folder = folder,
     )
+}
+
+/**
+ * What a typed folder name stands for, for the Shelf's name sheet. [FolderNames] owns the rules (ADR-125
+ * rule 13); this only puts its three answers in the shape the screen reads.
+ */
+internal fun folderNameVerdict(typed: String): FolderNameVerdict {
+    val name = FolderNames.clean(typed)
+        ?: return if (FolderNames.isMyShelf(typed)) FolderNameVerdict.MyShelf else FolderNameVerdict.Blank
+    return FolderNameVerdict.Name(name, FolderNames.key(name), cut = FolderNames.isTooLong(typed))
 }
 
 private fun ProjectUnavailableReason.shelfUnavailableReason(): String = when (this) {

@@ -94,6 +94,7 @@ import com.aritr.zinely.export.requiresLegacyWrite
 import com.aritr.zinely.home.HomeUiState
 import com.aritr.zinely.home.HomeViewModel
 import com.aritr.zinely.home.LibraryBackupRestorePickerRequest
+import com.aritr.zinely.home.folderNameVerdict
 import com.aritr.zinely.feature.library.LibraryShelfState
 import com.aritr.zinely.feature.library.LibraryBackupRestoreMode
 import com.aritr.zinely.feature.library.ZineLibraryScreen
@@ -243,6 +244,11 @@ private fun HomeDestination(
         preferredPaper = preferredPaper,
         appVersion = appVersion,
         onPreferredPaperChange = viewModel::setPreferredPaper,
+        onMoveZine = viewModel::moveZine,
+        onRenameFolder = viewModel::renameFolder,
+        onUnpackFolder = viewModel::unpackFolder,
+        onFolderSnackAction = viewModel::folderSnackAction,
+        checkFolderName = ::folderNameVerdict,
         modifier = Modifier.fillMaxSize(),
     )
 }
