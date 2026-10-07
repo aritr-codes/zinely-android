@@ -256,7 +256,7 @@ The complete creative loop, audited stage by stage. Verdicts are decisions, not 
 | Capability | State | Verdict |
 |---|---|---|
 | Text: create, edit, size, bold/italic, align, ink | ✅ ships | **Already complete** |
-| Text: **font choice** | ✅ drawn, permanently disabled (`BenchContextBar.kt:99`) | **Needs completing → BUILD** as three named voices |
+| Text: **font choice** | ✅ drawn, permanently disabled (`BenchContextBar.kt:99`) — *2026-10-07: the dead control was removed ([ADR-115](../DECISIONS.md#adr-115))* | **Needs completing → BUILD** as three named voices — *2026-10-07: the owner ruled two, Book and Plain, on 2026-09-26 ([gate Q2](../planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)); "three voices" elsewhere in this document predates that ruling* |
 | Image: import, reframe, resize, rotate, position, delete | ✅ ships | **Already complete** |
 | Image: **replace** | ✅ verified; targeted picker success dispatches the existing `Intent.ReplaceImage` | **Complete.** D-038 closed 2026-08-31 after automated, independent-review, and two-reader Samsung verification |
 | **Decor / graphics** | ✅ half-built: `DecorElement` prior art (OD-2), decor verb set in the freeze at `v21-bench.html` §`toolsFor()` (`:679`), `BenchInkPopover.kt:140` handles `DECOR`, and `BenchContextBar.kt:125` **throws** | **Missing but structurally required → BUILD.** §9 |
@@ -713,8 +713,8 @@ The line alphabet · the tilt law · the stamped-label rule · the four motion c
 | # | Work | Depends on | Evidence |
 |---|---|---|---|
 | N1 | Measure `inkFaint` contrast on `bench` — clears AA by 0.04 on `paper`, unmeasured on `bench` | — | ✅ gap known |
-| N2 | **Freeze `v21-typebar.html` + `v21-reframe.html`** | — | ✅ |
-| N3 | TypeBar + BenchSnack take the existing island opt-out; delete the thirds grid from `ReframeOverlay` | N1, N2 | ✅ |
+| N2 | **Freeze `v21-typebar.html` + `v21-reframe.html`** — **frozen 2026-10-06** (the owner's rulings on what the freeze returned are still owed) on the owner's [Q4 ruling](../planning/ZINELY-1X-DECISION-GATE.md#q4-typebar--reframe-specs-o10); what stays open is listed at the top of each file | — | ✅ |
+| N3 | TypeBar + BenchSnack take the existing island opt-out; delete the thirds grid from `ReframeOverlay` — *2026-10-06: the grid is still drawn; the frozen `v21-reframe.html` (block C1) returns keep-or-delete to the owner, so do not delete it on this row alone* | N1, N2 | ✅ |
 | N4 | **Unclip both z-order buttons on `EditorContextBar`**, 48dp targets. Both exist — this is not "add send-backward" | — | ✅ |
 | N5 | **Ink pots to ≥48dp** | — | ✅ measured |
 | N6 | **Terminology consolidation** — one name per concept | — | ✅ |

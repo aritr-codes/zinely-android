@@ -66,7 +66,7 @@ the constitution or a frozen spec.
 
 **Briefs:**
 [01 Visible ownership](BRIEF-01-VISIBLE-OWNERSHIP.md) ·
-[02 Three voices](BRIEF-02-THREE-VOICES.md) ·
+[02 Document voices](BRIEF-02-THREE-VOICES.md) ·
 [03 Printer test page](BRIEF-03-PRINTER-TEST-PAGE.md) ·
 [04 Reading order and alt text](BRIEF-04-READING-ORDER-AND-ALT-TEXT.md) ·
 [05 Materials: frames](BRIEF-05-MATERIALS-FRAMES.md)
@@ -81,7 +81,7 @@ the constitution or a frozen spec.
 |---|---|---|
 | **Identity** | A pocket press: photos, words and bundled Art made into one 8-page single-sheet zine, read on the phone, saved or shared as a PDF, printed and folded at home. Offline, no account, no network | [PRD](../PRD.md), [constitution](../zinely-constitution.md), [ADR-118](../DECISIONS.md#adr-118) |
 | **Spine** | Shelf → Bench → Proof, each answering one question | [ADR-103](../DECISIONS.md#adr-103), [CLAUDE.md](../../CLAUDE.md#product-principle-every-screen-answers-the-users-current-question) |
-| **Frozen design** | `v21-library`, `v21-bench` (incl. Add chooser and Art sheet), `v21-proof` (incl. fold guide), `v21-colophon`, `backup-restore`, `app-entry`, `theme-37596`. `v21-typebar` and `v21-reframe` headers say "proposal, not frozen"; ZINE-DIRECTION N2 is a **to-do** ("Freeze …", its ✅ sits in the Evidence column), not a claim that they are frozen. The owner ruled on 2026-09-26 that both freeze (Reframe as shipped; TypeBar after its recorded correction) — [step Q4-F](#5-sequencing) | `docs/design/mockups/*`, [V21-SPEC](../design/V21-SPEC.md) |
+| **Frozen design** | `v21-library`, `v21-bench` (incl. Add chooser and Art sheet), `v21-proof` (incl. fold guide), `v21-colophon`, `backup-restore`, `app-entry`, `theme-37596`. `v21-typebar` and `v21-reframe` were **frozen on 2026-10-06** ([step Q4-F](#5-sequencing), on the owner's 2026-09-26 ruling: Reframe as shipped; TypeBar after its recorded correction). Each file lists at its top what the freeze leaves open | `docs/design/mockups/*`, [V21-SPEC](../design/V21-SPEC.md) |
 | **Document** | `ZineDocument` schema **v3**; `Page` has **no id** (index kept by `renumber()`); three element types (Image, Text, Decor); `ZineFormat` = `SINGLE_SHEET_8` only; the validator requires exactly 8 pages | `core/model/.../Document.kt:28,58-63,83-169`, `DefaultDocumentValidator.kt:33-54` |
 | **Schema evolution** | Strict v*N*→v*N*+1 chain; a newer document is refused (`SchemaTooNew`); JSON uses `ignoreUnknownKeys = true`, so a field added **without** a version bump is silently dropped by an older build on save | `DocumentMigrations.kt:59-86`, `JsonDocumentSerializer.kt:38-54` |
 | **Editor** | Pure MVI reducer; undo = in-memory list of field-level `Command` mementos, **unlabelled and uncapped**; `AddPage`/`DeletePage` exist but no UI dispatches them | `core/editor/.../EditorModel.kt:72-75`, `Command.kt`, `EditorReducer.kt:340-360,437-444` |
@@ -148,15 +148,16 @@ Complexity is relative (S / M / L), including the HTML-first pipeline.
 
 ### D2 — A voice for your words *(Bench typography)* → [Brief 02](BRIEF-02-THREE-VOICES.md)
 
-- **User problem:** every Zinely zine is set in Inter, and a permanently disabled *Font* control sits on the
-  Bench.
+- **User problem:** every Zinely zine is set in Inter, and nothing offers a choice (the disabled *Font* control was
+  removed by ADR-115).
 - **Opportunity:** two named voices chosen per text element, not a font picker.
 - **Ruled 2026-09-26 ([Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)):** **Book = Fraunces, Plain =
   Inter**; Hand (Averia) deferred as a document voice (it covers 12 of 128 Latin Extended-A letters, ✅
   measured); Averia stays the interface voice; a dated **scope ruling** that a document voice is not a UI
   typeface under V2-CONSTITUTION §III; **no schema bump**.
-- **Not implementation-ready yet.** [Brief 02](BRIEF-02-THREE-VOICES.md) is prepared (rulings and measured
-  assets recorded) but not rewritten. Remaining prerequisites:
+- **Not implementation-ready yet.** [Brief 02](BRIEF-02-THREE-VOICES.md) was rewritten on 2026-10-06 and its
+  [gate table](BRIEF-02-THREE-VOICES.md#gates) is the current list of what blocks a session. As recorded on
+  2026-09-26, the prerequisites were:
   - the bundled Fraunces files are three static 9 pt **roman** chrome cuts (400/500/600) in `:core:ui`; D2
     needs four static document faces (Roman/Italic × Regular/Bold) instanced from upstream into
     `render-android` assets, and their widths measured;
@@ -167,9 +168,9 @@ Complexity is relative (S / M / L), including the HTML-first pipeline.
 - **Technical (when unblocked):**
   - family-aware coverage in `core:model` (Fraunces has no Greek or Cyrillic);
   - an editing surface that uses the document's fonts;
-  - four hash-pinned static instances, one registry row, the OFL file;
+  - four hash-pinned static faces (upstream's own files, fetched 2026-10-06), one registry row, the OFL file;
   - an ADR superseding ADR-055's exclusion and recording the older-build layout consequence.
-- **Risk:** APK size (~0.4 MB estimated); small printed x-height (1.66 mm at 10 pt).
+- **Risk:** APK size (~0.45 MB estimated); small printed x-height (1.66 mm at 10 pt).
 - **Complexity:** M.
 - **Sequence:** step 8. It no longer depends on v4 (no bump), so it may run earlier if its prerequisites clear
   first (🟦); it then ships in the next release.
@@ -330,7 +331,7 @@ flowchart TB
     S7 --> REL4["Release: v4<br/>(owner-approved)"]
     Q4F["Q4-F · freeze typebar + reframe<br/>(docs/design session)"] --> S8["8 · D2 voices: Book + Plain<br/>(no schema bump)"]
     P70 --> S8
-    FA["Four Fraunces faces instanced<br/>+ printed page → owner sets min size"] --> S8
+    FA["Four Fraunces faces (fetched 2026-10-06)<br/>+ printed page → owner sets min size"] --> S8
     S4 --> S9["9 · D5 frames: two, hand-cut"]
     OV["Owner visual approval<br/>of the two frames"] --> S9
     XD["Cross-device restore pass (two phones)"] --> D1P2["D1 part 2<br/>'Changing phones?'"]
@@ -351,7 +352,7 @@ flowchart TB
 | **6 · F1b schema v4, alone** | One bump, with nothing else in the session. **While v4 is held, no release is cut from `main`** between steps 6 and 7: the `description` field (no UI), the layout-engine marker, `explicitNulls=false`, an identity v3→v4 migrator, and tests for all six version readers against the fixtures. **Step 0 made this mechanical:** the build fails on purpose until the bump adds `schema-shape-v4.txt`, `document-v4.json` with its expected document and its `FIXTURE_SHA256` pin, and moves `WRITER_PINNED_VERSION` to 4 (`DocumentFixtureCorpusTest`). The v1–v3 fixtures and the v2 archive are frozen and are never regenerated. **v4 is held unreleased until step 7 lands**, so the field ships with its first user and no second v4 shape exists. Release notes must say backups made after it need this version or newer | Step 7 | Any feature UI; `look` (D6-(2) takes its own bump); D2 (no bump) |
 | **7 · D4-B alt text** | Photos become describable to a blind reader, but only in Read on the maker's phone: `PdfDocument` has no alt-text API, so printed and exported zines gain nothing. It needs a Read-semantics design first, because Read mode speaks nothing from the page today | A reader's edition, later | D2 |
 | **Q4-F · Freeze `v21-typebar` + `v21-reframe`** (docs/design only; any time before step 8) | Ruled by [Q4](ZINELY-1X-DECISION-GATE.md#q4-typebar--reframe-specs-o10). Spec: (1) apply the correction `TypeBar.kt:600-603` records — the `.tysize` −/+ step buttons use the `<svg>` glyph of the `.zoom` buttons they cite, not a text glyph with `font-family`/`font-size`/`font-weight`; (2) check each file against the shipped `TypeBar.kt` / `ReframeControls.kt`: Reframe resolves any divergence **toward shipped behaviour** (it freezes *as shipped*, including its 2026-08-15 amendment); a TypeBar divergence beyond the recorded correction is **reported to the owner**, not resolved silently; (3) correct `v21-typebar.html`'s stale header line "Three items need a device before it can be frozen" (its closing caption records those measurements as closed, 2026-08-15 / 2026-08-29); (4) flip both headers to "❄️ DESIGN FROZEN — <date>", citing the ruling; (5) mark ZINE-DIRECTION N2 done. **Scope line (final planning audit):** the file's recorded owner-open questions — how the panel closes, and the "Coral" swatch name — plus its recorded Teal `#2A9D8F` text-contrast failure **stay open under the frozen header**, listed as open; the implementer must not resolve them, and any other TypeBar divergence between the frozen spec and shipped behaviour comes back to the owner. **Must not:** change Compose or `Copy`, rename Coral, change Teal `#2A9D8F`, or change how the panel closes. Reviewed like any HTML amendment | Step 8's type-bar amendment | Everything else |
-| **8 · D2 voices: Book + Plain** | Ruled by [Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8): two voices, no schema bump. The most visible creative gain, but the least ready: [Brief 02](BRIEF-02-THREE-VOICES.md) needs its rewrite, the four Fraunces document faces, an editing surface that draws the document's fonts, a coverage rule, and the owner's minimum print size after a printed page. After PR #70 and Q4-F | — | D4-B, v4 (🟦 it may run before step 6 if its prerequisites clear first) |
+| **8 · D2 voices: Book + Plain** | Ruled by [Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8): two voices, no schema bump. The most visible creative gain, but the least ready: [Brief 02](BRIEF-02-THREE-VOICES.md) is rewritten and the four Fraunces document faces are fetched and measured (2026-10-06). Still open: the owner's minimum print size after a printed page, the Voice row drawn in the frozen type bar, and the [brief's gates](BRIEF-02-THREE-VOICES.md#gates). After PR #70 and Q4-F | — | D4-B, v4 (🟦 it may run before step 6 if its prerequisites clear first) |
 | **9 · D5 frames: two, hand-cut** | Ruled by [Q6](ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch). Last, because it needs step 4 and the **owner's visual approval** of the two frames (names and look), drawn in the `v21-bench.html` Art-set amendment. Frames are content work (drawn outlines) on top of fixed mechanics | The Art backlog | Schema (frames are decor), the fold study |
 
 **PR #70 acceptance before steps 3, 4 and 8** (added 2026-09-25 by the final planning review; the owner
@@ -387,7 +388,8 @@ visual approval. **No step changed position.**
   today), and every later frame depends on it.
 - **The v4 bump is now its own step, after a release.** Previously it was bundled with features.
 - **D2 moved out of wave 1.** It was blocked on three owner questions (ruled 2026-09-26), and still waits on
-  PR #70's acceptance, the Q4-F freeze, its font assets, and the owner's minimum print size.
+  PR #70's acceptance, the Q4-F freeze, its font assets, and the owner's minimum print size. *(PR #70 was
+  accepted on 2026-09-29 and the Q4-F freeze was made on 2026-10-06; the owner's rulings on what it returned are still owed.)*
 - **The release no longer waits for print guidance.** Step 5 depends on a people study; it joins wave 1
   only if the study has reported.
 
@@ -530,7 +532,7 @@ restore-honesty defects** ([Q8](ZINELY-1X-DECISION-GATE.md#q8-the-next-release-a
 | Step | Readiness | What it still waits for |
 |---|---|---|
 | **2 · D4-A1 reading order + scrim** | ✅ **COMPLETE** (2026-09-26, PR #78: implementation `1587a40`; [ADR-119](../DECISIONS.md#adr-119)) | Nothing. Both device passes done, including the owner's TalkBack listen on SM-A176B |
-| **Q4-F · freeze typebar + reframe** | ✅ **READY** (docs/design session) | Nothing; the ruling and the scope line are recorded ([§5](#5-sequencing)). Reviewed like any HTML amendment |
+| **Q4-F · freeze typebar + reframe** | ◐ **Both files frozen 2026-10-06** (docs/design session; Reframe with four small corrections toward the app); the ruling is fully carried out only when the owner rules on what was returned | The owner's rulings. Returned to the owner, not resolved: the TypeBar divergences from shipped code and the Reframe points that freezing as shipped does not settle, each listed at the top of its file ([checklist §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship)). They will resurface as parity findings when step 8 amends the type bar |
 | **1a · `backup-restore.html` amendment** (steps 1 + 1b) | ✅ **DONE — approved and re-frozen 2026-09-27; backup-sheet polish frozen the same day** | Drawn, owner-approved, frozen ([freeze record](../design/BACKUP-RESTORE-FREEZE.md)); rulings F1 (a whole-backup failure is shown by where it failed) and F2 (busy is not a failure) are in [Brief 01](BRIEF-01-VISIBLE-OWNERSHIP.md#which-state-a-whole-backup-failure-shows-owner-rulings-f1-and-f2). The owner reopened 1a once after the step 1 device check, for a visual-only polish (no note, equal action tiles, file name on its own line) |
 | **1 · D1 part 1** | ✅ **COMPLETE** (2026-09-28, PR #81; [ADR-120](../DECISIONS.md#adr-120) Accepted) | Device pass, owner design check and the owner's TalkBack listen (reading order, on the pre-polish build) done. **A7**, TalkBack's opening focus: criterion **amended by the owner 2026-09-28** after the device observation (focus opens within the meaningful informational content, with the last-backup line still before "Back up this shelf"), and **accepted under it**: focus opens on the body text above the last-backup line. The original last-backup-first target was not met ([ADR-120](../DECISIONS.md#adr-120) acceptance record) |
 | **N · restore adds what's new** (amendment, before 1b) | ✅ **Design FROZEN 2026-09-28** ([ADR-121](../DECISIONS.md#adr-121), Accepted, design); implementation ⏳ built with 1b, under review | Spec and tests in [Brief 01 Part N](BRIEF-01-VISIBLE-OWNERSHIP.md#part-n--restore-adds-whats-new). Its code shares 1b's restore receipt, so building it with 1b is the natural fit; the owner authorises the session |
@@ -541,7 +543,7 @@ restore-honesty defects** ([Q8](ZINELY-1X-DECISION-GATE.md#q8-the-next-release-a
 | **5 · D3 stage 1 print guidance** | ⛔ blocked | The print study, part A; then the `v21-proof.html` amendment approved. Brief 03 is rewritten after the study. *Evidence, 2026-10-06:* the owner reports that a user printed a zine and it worked. That is one successful print, recorded here; it is not the study and does not lift the gate (owner ruling the same day) |
 | **Release wave 1** | ✅ **RELEASED 2026-10-06** as `0.9.0-beta.6` (versionCode 11, tag `v0.9.0-beta.6`, merge `41b4399`) | Nothing. Shipped with step 4 not accepted; the TalkBack listen on tap-through is listed as not verified ([tester package](../releases/0.9.0-beta.6.md)) |
 | **6 · v4** / **7 · alt text** | ⏳ | Wave 1 released; step 7 also needs a Read-semantics design and the Describe amendment |
-| **8 · D2 voices** | ⛔ blocked | Brief 02 rewrite (prepared, not done); four Fraunces faces instanced and measured; the owner's minimum print size after a printed page (procedure not yet written); a defined older-build fallback test; Q4-F. Listed publicly as In development (design stage) on the owner's 2026-10-06 instruction; the prerequisites here still gate any build |
+| **8 · D2 voices** | ⛔ blocked | Prepared on 2026-10-06, on branch `design/document-voices-prep`, not yet merged: Brief 02 rewritten, the four Fraunces faces fetched from upstream and measured, both procedures written. Still open, per the [brief's gates](BRIEF-02-THREE-VOICES.md#gates): the owner's minimum print size after the printed page; the Voice row drawn in the frozen type bar and approved; the older-build fallback test (run inside the session); [ADR-126](../DECISIONS.md#adr-126) accepted (it is Proposed). (The Q4-F freeze was made on 2026-10-06; the owner's rulings on what it returned are still owed.) Listed publicly as In development (design stage) on the owner's 2026-10-06 instruction; the prerequisites here still gate any build |
 | **9 · D5 frames** | ⛔ blocked | Step 4 merged; the owner's visual approval of two frames |
 | **D1 part 2** | ⛔ blocked | A completed two-phone restore procedure, then the pass itself |
 
@@ -574,13 +576,13 @@ rulings):
 1. **Print study, part A** — the real Zinely print path first ([protocol](STUDY-PRINT-AND-FOLD-PROTOCOL.md)).
    Gates step 5 and any inset or render change.
 2. **Fold study, part B** — 6–8 first-time makers; evidence for Proof captions (not a gate).
-3. **One printed Fraunces page** at 10/12/14 pt on a home inkjet — sets D2's minimum size. ⚠ Its procedure
-   is **not yet written** (printer and paper, sample text, faces, a print path at exactly 100 %, an Inter
-   comparison, what the owner judges, where it is recorded); write it before the page is printed.
-4. **Measure the four Fraunces document faces** (width vs Inter per style) — in D2's session.
-5. **Older-build voice fallback test** — ⚠ **not yet defined**: which older build(s), a Book-voice fixture
-   delivered by library-backup restore, what is measured (re-wrap, overflow per box, whether the voice survives
-   a save on the old build), where it is recorded. Gates step 8.
+3. **One printed Fraunces page** at 10/12/14 pt on a home inkjet — sets D2's minimum size. Its procedure was
+   written on 2026-10-06: [Brief 02, Procedure A](BRIEF-02-THREE-VOICES.md#procedure-a-the-printed-book-page).
+   The page is not printed yet.
+4. ~~Measure the four Fraunces document faces~~ — done 2026-10-06 ([Brief 02](BRIEF-02-THREE-VOICES.md#the-four-faces)).
+5. **Older-build voice fallback test** — defined on 2026-10-06:
+   [Brief 02, Procedure B](BRIEF-02-THREE-VOICES.md#procedure-b-the-older-build-fallback-test). Not run; it
+   needs a build that can set Book. Gates step 8's merge.
 6. **Two-phone cross-device restore pass** — gates D1 part 2. ⚠ Its procedure is **incomplete** (phones and
    builds, transfer route, a pass rule, the debug build that `run-as` byte checks need, where results are
    recorded); complete it before the pass.
@@ -593,11 +595,13 @@ rulings):
 
 | Date | Change |
 |---|---|
+| 2026-10-06 | **Step Q4-F: both files frozen; the owner's rulings on what it returned are still owed.** `v21-typebar.html` and `v21-reframe.html` are frozen. TypeBar: the recorded correction was already in the file, so no rule or markup changed; further divergences from shipped `TypeBar.kt` are listed in the file and returned to the owner. Reframe: frozen as shipped, with four small corrections toward shipped code and a list of points where shipped governs; the drawing itself was not redrawn. Left unfrozen for the owner: the rule-of-thirds grid (ZINE-DIRECTION N3 lists its deletion; ADR-102 §12.16a leaves it to the owner), letter-spacing, the pad's position, and whether the fit chips' second line is spoken. Both files draw a keyboard focus ring the app does not; that too is returned to the owner, with a recommendation to keep it and change the app (corrected 2026-10-07: this row first said it was decided). The check read code only; no device was used. `TypeBar.kt:600-603` still says the HTML needs the correction; that comment is now stale and is left for a code session. |
 | 2026-10-05 | **Step 4 contract proposed, not approved.** Readiness session on `a20df76`: [ADR-124](../DECISIONS.md#adr-124) Proposed; `v21-bench.html` A27 drawn as proposed, not frozen. No code, no branch for implementation. |
 | 2026-10-06 | **Step 4 implemented and merged, not accepted.** Built on `feat/1x-step4-tap-through`; [ADR-124](../DECISIONS.md#adr-124) stays Proposed and A27 unfrozen. The owner deferred the TalkBack listen; it and the finger-based pass are recorded as owed. |
 | 2026-10-06 | **Owner print report recorded; step 5 stays blocked.** The owner reported a successful user print and ruled that it is evidence only. The owner also asked for Shelf folders, page backgrounds and more paper sizes as features; they are listed as *Planned* in [ROADMAP](../ROADMAP.md#current-priorities), outside this plan's numbered steps until designed. |
 | 2026-10-06 | **Wave-1 release candidate built** as `0.9.0-beta.6` on the owner's instruction, with step 4 included but not accepted. Not tagged or published; the install on the owner's phone, the finger pass and the "proceed" are owed. |
 | 2026-10-06 | **Wave 1 released** as `0.9.0-beta.6` after the install over the previous build, a smoke pass on the release APK, the owner's finger pass on tap-through and the owner's "proceed". Steps 6 and 7 no longer wait on the release. |
+| 2026-10-06 | **Step 8 preparation** (branch `design/document-voices-prep`). Brief 02 rewritten as a two-voice brief with its own gate table; the four Fraunces document faces fetched unmodified from upstream (`undercasetype/Fraunces`), pinned and measured; the printed-page and older-build procedures written. Step 8 stays blocked on the owner's minimum print size and the type-bar amendment. No step moved. |
 | 2026-10-01 | **Step 3 COMPLETE — accepted with documented device-verification limitations.** The owner accepted [ADR-123](../DECISIONS.md#adr-123) and explicitly waived the remaining device-verification passes; PR #90 merges on that acceptance. Named undo, named redo and page-changing lines were heard on the reference device. Not verified and not claimed: the full formal two-pass device matrix and the exact formal acceptance sequence; Add Text's two-step undo; Across fold; Reframe and Transform undone; an identical repeat after a slow pause; the snack's own Undo speech; 2× TalkBack speech; whether "Saved" is spoken on its own after every event. An identical repeat spoken once is recorded as a TalkBack limitation. |
 | 2026-10-01 | **Step 3 still in review, not complete (owner's ruling).** On the second revision (`a6807c2`) the owner heard a delete, an undo and a redo, each once, and a page-changing step's named line, at normal text, and then stopped the TalkBack investigation: an identical repeat spoken once is treated as a known TalkBack limitation, the snack's own Undo is a follow-up, and the 2× listen is not run. [ADR-123](../DECISIONS.md#adr-123) lists what was and was not verified; it stays Proposed and PR #90 stays open until the owner accepts. |
 | 2026-10-01 | **Step 3 still in review, not complete (second revision).** The owner's listen on the live-region fallback heard the delete snack, an undo and a redo, but an identical undo was "Only said once" and a page-changing step was heard only as the page strip's "page 1 of 8 front cover". [ADR-123](../DECISIONS.md#adr-123) is revised again: undo and redo lines are spoken through the existing announcement drain instead of the snack's live region. Not yet heard on device. |

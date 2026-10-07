@@ -52,7 +52,7 @@ two-phone restore pass.
 | Brief | State after 2026-09-26 |
 |---|---|
 | [01 Visible ownership](BRIEF-01-VISIBLE-OWNERSHIP.md) | **Rewritten.** Part 1 (+ late "Backup cancelled."), part 1b spec (restore honesty + skip-and-list), ADR-110 amendment draft, product-law draft, one `backup-restore.html` amendment spec |
-| [02 Voices](BRIEF-02-THREE-VOICES.md) | **Prepared, not rewritten.** Rulings and the measured Fraunces assets recorded at the top; "Corrections pending" stays until the rewrite |
+| [02 Voices](BRIEF-02-THREE-VOICES.md) | **Rewritten 2026-10-06, not ready to build.** It waits on your minimum print size (after the printed page) and your approval of the Voice row drawing; its gate table lists the rest |
 | [03 Printer test page](BRIEF-03-PRINTER-TEST-PAGE.md) | **Blocked** on the physical print study; rewritten after it reports |
 | [04 Reading order and alt text](BRIEF-04-READING-ORDER-AND-ALT-TEXT.md) | **Updated** for the current dependency structure |
 | [05 Materials: frames](BRIEF-05-MATERIALS-FRAMES.md) | **Updated.** Six-piece hit test with its ADR draft and `v21-bench.html` spec; two-frame scope; fold study not a gate |
@@ -65,7 +65,7 @@ None has been made; the frozen HTML is untouched. Each is its own reviewed chang
 - [x] **`backup-restore.html`** — ✅ approved and re-frozen 2026-09-27 (with rulings F1 and F2). Steps 1 and 1b in **one** amendment: last-backup line (incl. partial), title,
   "what this file holds", backup-failure wording, the three restore-honesty states, partial-backup success, a
   partial-archive notice on restore; 360 dp and 200 % text ([Brief 01](BRIEF-01-VISIBLE-OWNERSHIP.md)).
-- [ ] **`v21-typebar.html` / `v21-reframe.html`** — the freeze (step Q4-F): TypeBar's recorded correction, then
+- [x] **`v21-typebar.html` / `v21-reframe.html`** — **frozen 2026-10-06**; what it returned to you is in [OWNER-CHECKLIST §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship). Originally: the freeze (step Q4-F): TypeBar's recorded correction, then
   both headers flipped. Approved in principle by Q4; any TypeBar divergence beyond the recorded correction
   comes back to you.
 - [ ] **`v21-bench.html` — undo snack** (step 3): named undo in physical words, a page-changing variant.
@@ -88,7 +88,7 @@ None has been made; the frozen HTML is untouched. Each is its own reviewed chang
 > Step 0 ✅ → 2 (READY) · 1a → 1 → 1b → PR #70 settled → 3 → 4 → (5 if the print study has reported) →
 > **wave-1 release on v3** → 6 v4 → 7 alt text → v4 release → 8 voices (after Q4-F; no longer v4-bound) → 9 frames
 
-In parallel now: the print and fold study, the Q4-F freeze, and Play Console admin. The printed Fraunces page
+In parallel now: the print and fold study and Play Console admin (the Q4-F freeze was done on 2026-10-06). The printed Fraunces page
 follows once its procedure is written ([plan §11](ZINELY-1X-IMPLEMENTATION-PLAN.md#11-implementation-readiness-after-owner-decisions)).
 Readiness per step: [plan §11](ZINELY-1X-IMPLEMENTATION-PLAN.md#11-implementation-readiness-after-owner-decisions).
 

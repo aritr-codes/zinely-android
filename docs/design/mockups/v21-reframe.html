@@ -1,10 +1,10 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Zinely V2.1 — Reframe (PROPOSAL)</title>
+<title>Zinely V2.1 — Reframe (DESIGN FROZEN)</title>
 
 <!-- ┌─────────────────────────────────────────────────────────────────────────────┐
-     │  V2.1 REFRAME — PROPOSAL, NOT FROZEN.  Authored 2026-08-14.                  │
+     │  V2.1 REFRAME — ❄️ DESIGN FROZEN — 2026-10-06, AS SHIPPED.                  │
      │                                                                             │
      │  WHY THIS FILE EXISTS AT ALL.  Every other V2.1 surface has a frozen HTML    │
      │  specification; the Reframe session never had one, in either V2 or V2.1.     │
@@ -66,10 +66,80 @@
      │    * F-10 THE VERB SURVIVES.  The naming question this file leaves to the    │
      │      owner now carries device evidence and a recommendation: keep "Reframe". │
      │                                                                             │
-     │  STATUS.  PROPOSAL.  The owner freezes; nothing here is authoritative until  │
-     │  they do.  Companion to v21-bench.html / v21-library.html / v21-proof.html,  │
-     │  whose token block, fonts and reset this file shares byte-for-byte.          │
+     │  STATUS.  Authored 2026-08-14.  ❄️ DESIGN FROZEN — 2026-10-06, AS SHIPPED,  │
+     │  on the owner's ruling                                                      │
+     │  of 2026-09-26 (docs/planning/ZINELY-1X-DECISION-GATE.md, Q4; plan step      │
+     │  Q4-F).  The paragraphs above are the file's history: they describe a spec  │
+     │  written before its implementation.  The freeze runs the other way -- where  │
+     │  this drawing and the shipped session disagree, SHIPPED GOVERNS, as listed   │
+     │  in the block below this box.  From here a behavioural or design change      │
+     │  needs an amendment to this file first.  Companion to v21-bench.html /       │
+     │  v21-library.html / v21-proof.html / v21-typebar.html.                       │
      └─────────────────────────────────────────────────────────────────────────────┘ -->
+
+<!-- FROZEN AS SHIPPED — THE RECONCILIATION (2026-10-06).  The freeze session checked this file
+     against shipped ReframeControls.kt / ReframeOverlay.kt / EditorScreen.kt by reading code.  No
+     device was used, so every statement about the app below is "as read from code".
+
+     A. CORRECTED IN THIS FILE, toward shipped (each marked "Q4-F" at its site):
+        1. `.text-btn` side padding is --gap-sm (was --gap-md).
+        2. Done's spoken name is "Done reframing" (the button carried no aria-label).
+        3. The zoom readout's spoken name is "Zoom 118 percent" (it was read as bare text).
+        4. The pad is a --surface card; two places said "paper" against this file's own rule.
+
+     B. SHIPPED GOVERNS; THE DRAWING BELOW IS NOT REDRAWN.  Where the markup or CSS below differs
+        on these points, the shipped behaviour is the frozen contract.  Each site carries a "Q4-F"
+        marker.  The drawing was left alone because redrawing it without a device would be a guess;
+        the owner is asked to accept that or to ask for a redraw (docs/OWNER-CHECKLIST.md):
+        1. Pad semantics.  Shipped has no group name and no aria-describedby.  The pad is a
+           traversal group, and "Zoom in to move the photo" rides each unavailable nudge as its
+           state description, so the reason is heard on whichever dead control is reached first.
+           The missing group name is an accessibility difference, not a ruling against a name.
+        2. Fit chips, state.  Each is a button with a selected state rather than aria-pressed.
+        3. Glyphs.  Shipped draws the Material filled arrows, Remove, Add and Check in the same
+           16 / 20 / 20 px boxes; the stroked paths here are stand-ins.
+        4. Clipping.  The photo is not clipped (the 2026-08-15 amendment above); `.frame`'s
+           `overflow:hidden` stays a prototype convenience.  The dim over the spill is the shared
+           V2.1 scrim.
+        5. The hint's drawn state.  The mock shows "Zoom in to move the photo" beside live nudges at
+           118%.  Shipped shows the hint only while Zoom in is available and no nudge can move the
+           photo, which is the rule in this file's "CORRECTED 2026-08-16" markup comment.
+        6. Not shipped, so not part of the frozen contract: the `.edgehint` caption ("Anything past
+           this line gets trimmed off") and the `.other` rule that makes the page's other pieces
+           recede during a session.
+        7. The Reframe chip (`.aff`).  This file has the chip's clothes only and no instance of it.
+           Shipped places it from fixed offsets near the middle of the photo's bottom edge, with
+           the word "Reframe" and the spoken name "Reframe this photo"; it is withheld while the
+           context bar is up, and it pulses once on first use when motion is allowed.
+        8. Values this file never stated: zoom runs 100% to 400% in steps of x1.15; Cancel, Reset
+           and Done are never unavailable; Whole photo makes the whole pad unavailable.
+
+     C. NOT FROZEN EITHER WAY — the owner's, listed in docs/OWNER-CHECKLIST.md.  An implementer
+        must not resolve these:
+        1. Rule-of-thirds grid.  Shipped draws one inside the frame; this file has none.  The
+           records disagree: docs/design/ZINE-DIRECTION.md lists its deletion (N3), while ADR-102
+           (section 12.16a) and the code's own comment leave keeping it to the owner.  Freezing it
+           in as shipped would settle that by accident, so it is not frozen in.
+        2. Letter-spacing.  The rules below set none, except `.padhint` at .005em.  Shipped
+           Reframe text appears to inherit Material's 0.5sp, and the shipped hint sets none of its
+           own.  Needs a screenshot.
+        3. Pad position and the page row.  Here the pad floats over the canvas and no page row is
+           drawn; shipped appears to place the pad in flow, --gap-xs above the band, with the
+           Bench page row still on screen.  Needs a screenshot before this drawing is changed.
+        4. Fit chips, spoken name.  The buttons here are read with their second line ("Fill, crops
+           edges"; "Whole photo, may add margins").  Shipped speaks the title only, so a
+           screen-reader user does not hear the outcome words.
+        5. Recorded by this file before the freeze, unchanged: whether the verb stays "Reframe"
+           (recommendation: keep; shipped keeps it), and the TalkBack collision between
+           "Move photo up" here and the Bench's "Move up".
+
+     D. ONE PLACE WHERE THIS PAGE DOES NOT FOLLOW SHIPPED, RETURNED TO THE OWNER: THE KEYBOARD
+        FOCUS RING.  `button:focus-visible` below draws a 2px ink outline.  Shipped Reframe
+        controls set `indication = null` and appear to draw none.  "As shipped" would remove the
+        ring from this page; it is left drawn and the choice is the owner's (corrected 2026-10-07:
+        this block first called it "not open", which decided it).  Recommendation: keep the ring
+        and change the app, because a keyboard or switch user cannot otherwise see where they
+        are. -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -186,19 +256,21 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .frame::after{content:"";position:absolute;inset:0;border:1.6px dashed var(--ink);
   border-radius:var(--br-xs);pointer-events:none}
 
+/* Q4-F: NOT SHIPPED, not the contract; see block B6 at the top of this file. */
 /* Everything else on the page recedes while a session is open — the rest of the page is
    context, not material, for as long as one photo is the subject. */
 .page .other{position:absolute;left:14%;right:14%;bottom:12%;height:5px;border-radius:var(--br-pill);
   background:var(--hair)}
 .page .other.two{bottom:19%;right:38%}
 
+/* Q4-F: NOT SHIPPED, not the contract; see block B6 at the top of this file. */
 /* the caption that says what the line MEANS, in consequence and not in trade terms.
    Never "bleed", never "safe area", never "crop marks" — see the research note above. */
 .edgehint{position:absolute;left:50%;transform:translateX(-50%);bottom:var(--gap-sm);
   font-size:.62rem;font-weight:600;color:var(--ink-soft);background:var(--paper);
   border:1.5px solid var(--hair);border-radius:var(--br-pill);padding:2px var(--gap-sm);white-space:nowrap}
 
-/* ===== the precision pad — a PAPER card on the bench, above the band ====== */
+/* ===== the precision pad — a SURFACE card on the bench, above the band (Q4-F: was "PAPER") ====== */
 /* ⚠ THIS PAD IS NOT DECORATION AND IS NOT OPTIONAL.  Inside a reframe session the photo
    is moved by dragging and scaled by pinching, and NOTHING else registers a custom
    accessibility action for either.  So these buttons ARE the single-pointer alternative
@@ -276,7 +348,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    Same clothes as `.icon-btn`, sized to its text. */
 .text-btn{height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
   background:var(--surface);color:var(--ink);font-family:var(--sans);font-size:.82rem;font-weight:700;
-  cursor:pointer;padding:0 var(--gap-md);box-shadow:2px 2px 0 var(--ink-line)}
+  cursor:pointer;padding:0 var(--gap-sm);box-shadow:2px 2px 0 var(--ink-line)} /* Q4-F: --gap-sm as shipped; was --gap-md */
 .text-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 
 /* DONE INHERITS `.add`'s CLOTHES, INCLUDING THE RING — and that is the ruling this file
@@ -323,7 +395,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 </style>
 
 <p class="cap lead">Reframe — fitting a photo inside the box it sits in.</p>
-<p class="cap"><span class="badge">Proposal</span> &nbsp;The surface below is the <b>same session</b>
+<p class="cap"><span class="badge">frozen as shipped · 2026-10-06</span> &nbsp;The surface below is the <b>same session</b>
 ADR-053 specified, wearing V2.1's clothes. Nothing about what the controls <i>do</i> changes: the fit
 choice, the step pad, the zoom readout, Cancel and Done are the same acts, driving the same draft.
 What changes is that the room stops changing when you enter it.</p>
@@ -342,6 +414,7 @@ What changes is that the room stops changing when you enter it.</p>
       <div class="frame">
         <div class="fake"></div>
       </div>
+      <!-- Q4-F: the two `.other` bars and the `.edgehint` caption are NOT SHIPPED and not the contract; see block B6. -->
       <div class="other"></div>
       <div class="other two"></div>
       <div class="edgehint">Anything past this line gets trimmed off</div>
@@ -356,6 +429,8 @@ What changes is that the room stops changing when you enter it.</p>
        hint is a standing property of the pad's current state, not an event; it is announced
        when focus reaches the group, and it leaves the DOM the moment a nudge goes live so it
        can never be read as stale advice. -->
+  <!-- Q4-F: shipped governs for the group name and aria-describedby; see block B1. Shipped also
+       shows the hint only when no nudge can move the photo; see block B5. -->
   <div class="pad" role="group" aria-label="Framing controls" aria-describedby="padhint-1">
     <div class="padrow">
     <div class="nudge">
@@ -371,7 +446,7 @@ What changes is that the room stops changing when you enter it.</p>
     </div>
     <div class="zoom">
       <button aria-label="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
-      <b>118%</b>
+      <b role="img" aria-label="Zoom 118 percent">118%</b><!-- Q4-F: spoken name as shipped -->
       <button aria-label="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
     </div>
     </div><!-- /.padrow -->
@@ -422,6 +497,8 @@ What changes is that the room stops changing when you enter it.</p>
   </div>
 
   <div class="fitrow">
+    <!-- Q4-F: shipped governs for the chips' state (selected, not pressed), block B2; whether the
+         second line is spoken is open, block C4. -->
     <button class="fit on" aria-pressed="true">
       <b>Fill</b><span>crops edges</span>
     </button>
@@ -440,7 +517,7 @@ What changes is that the room stops changing when you enter it.</p>
   <div class="bar">
     <button class="text-btn" aria-label="Cancel reframing">Cancel</button>
     <button class="text-btn" aria-label="Reset framing">Reset</button>
-    <button class="done">
+    <button class="done" aria-label="Done reframing"><!-- Q4-F: spoken name as shipped -->
       <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> Done
     </button>
   </div>
@@ -453,7 +530,7 @@ What changes is that the room stops changing when you enter it.</p>
 has no coral; its primary is <code>--leaf</code> under <code>--on-leaf</code>, and this surface now says so.
 <br><b>2. Two floating surfaces became one room.</b> The session used a <code>--menu</code> pill floating
 over a <code>--desk</code> toolbar — two grounds the rest of V2.1 does not have. The pad is now a
-<code>--paper</code> card on the bench and the band is the Bench's own <code>.bar</code>, so entering a
+<code>--surface</code> card on the bench and the band is the Bench's own <code>.bar</code>, so entering a
 session changes the tools and not the room.
 <br><b>3. The fit choice is two chips, not a segmented control.</b> It is one binary; the corpus already
 has a two-state chip and it costs less than a segment pair. The wording stays in outcome language.
@@ -489,3 +566,21 @@ bar, chip, custom action, copy tests — is unchanged. <i>Recommendation: keep "
 inside its frame, the other moves the frame across the page. For TalkBack the two are near
 indistinguishable. Renaming <i>Reframe</i> to <i>Move photo</i> would make that collision worse, not
 better, which is a second and independent reason to leave the verb alone.</p>
+
+<p class="cap"><b>Frozen as shipped, 2026-10-06.</b> The owner ruled on 2026-09-26 that this surface freezes
+the way the app has it. This check read the app's code. No phone was used.
+<br>Four small points on this page were corrected to match the app: the side padding of Cancel and Reset, the
+spoken names of Done and of the zoom readout, and the background colour of the pad (the card with the arrows
+and the zoom buttons).
+<br>The drawing above was not redrawn. Where it still differs from the app, the app is the contract. The
+caption under the frame ("Anything past this line gets trimmed off") is drawn here and is not in the app.
+The two grey bars that show the rest of the page stepping back are drawn here and are not in the app. The
+line "Zoom in to move the photo" shows in the app only when the arrows cannot move the photo and zooming in
+can. The drawing shows it beside working arrows. The app would not.
+<br><b>Still open, and the owner's:</b> the rule-of-thirds grid the app draws and this page does not; the
+spacing between letters; where the pad sits and whether the row of pages stays on screen; whether a screen
+reader should hear each fit button's second line; and the two naming questions above. The spacing and the
+pad's position are not yet confirmed on a phone.
+<br><b>Also open:</b> the keyboard focus ring this page draws. The app does not draw it, so "as shipped"
+would remove it here. The recommendation is to keep it and change the app; the ruling is the owner's. The full
+list is in the comment at the top of this file and in <code>docs/OWNER-CHECKLIST.md</code>.</p>

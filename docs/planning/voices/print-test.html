@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Zinely — Book voice print test</title>
+<!--
+  The printed page for docs/planning/BRIEF-02-THREE-VOICES.md, "Procedure A".
+  Open this file in Chrome or Edge on a computer and print it at Scale 100. Firefox will not load the Inter
+  files from outside this folder. The page says so on screen, and on paper, if any font failed to load.
+  The Book faces are the four files in this folder. Inter is read from the app's own document fonts.
+  Sizes are in pt and mm, so the print is true to size only at 100 %; the ruler line proves it.
+-->
+<style>
+@font-face{font-family:Book;src:url(Fraunces9pt-Regular.ttf);font-weight:400;font-style:normal}
+@font-face{font-family:Book;src:url(Fraunces9pt-Bold.ttf);font-weight:700;font-style:normal}
+@font-face{font-family:Book;src:url(Fraunces9pt-Italic.ttf);font-weight:400;font-style:italic}
+@font-face{font-family:Book;src:url(Fraunces9pt-BoldItalic.ttf);font-weight:700;font-style:italic}
+@font-face{font-family:Plain;src:url(../../../render-android/src/main/assets/fonts/Inter-Regular.ttf);font-weight:400;font-style:normal}
+@font-face{font-family:Plain;src:url(../../../render-android/src/main/assets/fonts/Inter-Bold.ttf);font-weight:700;font-style:normal}
+@font-face{font-family:Plain;src:url(../../../render-android/src/main/assets/fonts/Inter-Italic.ttf);font-weight:400;font-style:italic}
+
+@page{margin:12mm}
+*{box-sizing:border-box}
+/* No fallback font anywhere: if a face fails to load the text shows in the browser's default serif and the
+   warning below is printed. Synthesis is off so a missing bold or italic is not faked. */
+body{margin:0;color:#000;background:#fff;font-family:Plain;font-size:9pt;line-height:1.3;font-synthesis:none;
+  font-kerning:normal}
+h1{font-size:12pt;margin:0 0 2mm}
+.meta{display:flex;gap:6mm;flex-wrap:wrap;margin:0 0 3mm}
+.meta span{border-bottom:.3mm solid #000;min-width:38mm;padding-bottom:1mm}
+.ruler{width:100mm;height:3mm;border:solid #000;border-width:0 .3mm .3mm .3mm;margin:1mm 0}
+.note{margin:0 0 3mm}
+#fontfail{display:none;border:1mm solid #000;padding:2mm;font-size:14pt;font-weight:700;margin:0 0 3mm}
+.row{display:flex;gap:8mm;margin:0 0 4mm;break-inside:avoid}
+/* 60 mm is close to the text width of one panel of an eight-page A4 zine. */
+.col{width:60mm}
+.tag{font-family:Plain;font-size:7pt;margin:0 0 1mm}
+.book{font-family:Book}
+.plain{font-family:Plain}
+.col p{margin:0 0 1.5mm;line-height:1.233}
+.plain p{line-height:1.21}
+.s10 p{font-size:10pt}.s12 p{font-size:12pt}.s14 p{font-size:14pt}
+@media screen{body{max-width:186mm;margin:8mm auto}}
+</style>
+
+<h1>Zinely — Book voice print test</h1>
+<p id="fontfail">A FONT DID NOT LOAD. Do not use this page. Open the file in Chrome or Edge, from inside the
+repository folder.</p>
+<noscript><p style="border:1mm solid #000;padding:2mm;font-size:14pt;font-weight:700">SCRIPTS ARE OFF, so this
+page cannot check its fonts. Do not use it.</p></noscript>
+<p class="meta"><span>Date:</span><span>Printer:</span><span>Paper:</span><span>Printed from:</span></p>
+<div class="ruler"></div>
+<p class="note">Measure the line above. It must be 100 mm long, give or take half a millimetre. If it is not,
+the page was scaled: print again at Scale 100, with "Fit to page" off.</p>
+
+<div class="row s10">
+  <div class="col book"><p class="tag">A · Book · 10 pt</p>
+    <p>This zine is about the allotment at the end of our road, the people who keep it, and what grew there last summer. We folded it by hand and left copies at the library.</p>
+    <p><i>Mrs Okafor's beans came up first, as they do every year.</i></p>
+    <p><b>How to fold it: 8 pages, 1 sheet.</b></p>
+    <p>il1 rn m 0O 8B 3 .,;:' é ö ž ł &amp; ?</p></div>
+  <div class="col plain"><p class="tag">B · Plain · 10 pt</p>
+    <p>This zine is about the allotment at the end of our road, the people who keep it, and what grew there last summer. We folded it by hand and left copies at the library.</p>
+    <p><i>Mrs Okafor's beans came up first, as they do every year.</i></p>
+    <p><b>How to fold it: 8 pages, 1 sheet.</b></p>
+    <p>il1 rn m 0O 8B 3 .,;:' é ö ž ł &amp; ?</p></div>
+</div>
+
+<div class="row s12">
+  <div class="col book"><p class="tag">C · Book · 12 pt</p>
+    <p>This zine is about the allotment at the end of our road, the people who keep it, and what grew there last summer. We folded it by hand and left copies at the library.</p>
+    <p><i>Mrs Okafor's beans came up first, as they do every year.</i></p>
+    <p><b>How to fold it: 8 pages, 1 sheet.</b></p>
+    <p>il1 rn m 0O 8B 3 .,;:' é ö ž ł &amp; ?</p></div>
+  <div class="col plain"><p class="tag">D · Plain · 12 pt</p>
+    <p>This zine is about the allotment at the end of our road, the people who keep it, and what grew there last summer. We folded it by hand and left copies at the library.</p>
+    <p><i>Mrs Okafor's beans came up first, as they do every year.</i></p>
+    <p><b>How to fold it: 8 pages, 1 sheet.</b></p>
+    <p>il1 rn m 0O 8B 3 .,;:' é ö ž ł &amp; ?</p></div>
+</div>
+
+<div class="row s14">
+  <div class="col book"><p class="tag">E · Book · 14 pt</p>
+    <p>This zine is about the allotment at the end of our road, the people who keep it, and what grew there last summer.</p>
+    <p><i>Mrs Okafor's beans came up first, as they do every year.</i></p>
+    <p><b>How to fold it: 8 pages, 1 sheet.</b></p>
+    <p>il1 rn m 0O 8B 3 .,;:' é ö ž ł &amp; ?</p></div>
+  <div class="col plain"><p class="tag">F · Plain · 14 pt</p>
+    <p>This zine is about the allotment at the end of our road, the people who keep it, and what grew there last summer.</p>
+    <p><i>Mrs Okafor's beans came up first, as they do every year.</i></p>
+    <p><b>How to fold it: 8 pages, 1 sheet.</b></p>
+    <p>il1 rn m 0O 8B 3 .,;:' é ö ž ł &amp; ?</p></div>
+</div>
+
+<script>
+// Every face this page uses must have loaded. Otherwise say so, on screen and on paper.
+var faces = ['400 12pt Book', '700 12pt Book', 'italic 400 12pt Book', 'italic 700 12pt Book',
+             '400 12pt Plain', '700 12pt Plain', 'italic 400 12pt Plain'];
+Promise.all(faces.map(function (f) { return document.fonts.load(f); })).then(function (loaded) {
+  var ok = loaded.every(function (list) { return list.length > 0; });
+  if (!ok) document.getElementById('fontfail').style.display = 'block';
+}, function () { document.getElementById('fontfail').style.display = 'block'; });
+</script>
+</html>

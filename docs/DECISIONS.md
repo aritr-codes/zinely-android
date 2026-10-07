@@ -134,6 +134,7 @@
 | [ADR-122](#adr-122) | **A backup is complete or explicitly partial, never silently partial; a restore reports what happened.** Backup is skip-and-list (one photo never fails it); the manifest gains a defaulted, leniently read `omitted` list, `packageVersion` stays 2; restore staging-write failures aren't "damaged", Cancel is withdrawn once commit starts, and a committed restore is a success even if the shelf lags. Amends ADR-110. | Accepted 2026-09-29; 1.x step 1b (PR #86, `1fd3c9e`) |
 | [ADR-123](#adr-123) | **Undo and redo say what they did, in the one Bench snack.** A pure `editLabel` derived from each command's memento (no History change, nothing persisted); `Effect.HistoryStepped` replaces "Changed page N"; one snack counted per step, shown in the snack and spoken once through the announcement drain; the page clause and the 2% / 2° transform rule. Words owned by frozen `v21-bench.html` A26. | Accepted 2026-10-01 (proposed 2026-09-30, revised twice 2026-10-01); 1.x step 3 (PR #90). **Accepted with documented device-verification limitations:** the owner waived the full two-pass device matrix, several A26 rows and the 2× listen were not heard, and TalkBack may say an identical repeat once |
 | [ADR-124](#adr-124) | **Taps pass through the empty part of six holed Art pieces.** For `paper.window`, `paper.hole`, `shape.ring`, `fix.grommet`, `fix.corner` and `mark.registration` the hit area is the drawn ink, read from the outline the renderer draws; resolution is drawn → near (within 8 dp of the ink, yes or no; topmost wins) → box, topmost-first; every other element keeps its box; `core:editor` gains a dependency on `core:render`. Semantics, schema and pixels unchanged | Proposed |
+| [ADR-126](#adr-126) | **Two document voices, Book (Fraunces) and Plain (Inter), with no change to the saved format.** `fontFamily` carries the voice; an unknown family is drawn as Inter and kept, so an older build re-wraps and may cut off a Book text but loses nothing; four unmodified upstream static faces; each voice declares its scripts (Book has no Greek or Cyrillic); the editing surface draws the document's own faces; the control is a Voice row amended into the frozen type bar. Supersedes two of ADR-055's exclusions: font choice, and font bundling for the four Book faces alone | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -9543,7 +9544,9 @@ rather than three `aria-pressed` buttons, the readout keeps the `contentDescript
 `aria-hidden`, and the Bold/Italic pair stays two checkboxes.
 
 **The specification came first**, as the HTML-first rule requires: `docs/design/mockups/v21-typebar.html`
-(a **PROPOSAL, not frozen** — freezing is the owner's call, as with `v21-reframe.html`). It is a
+(a **PROPOSAL, not frozen** — freezing is the owner's call, as with `v21-reframe.html`; *note 2026-10-07: the
+owner ruled the freeze on 2026-09-26 and both files were frozen on 2026-10-06, see
+[gate Q4](planning/ZINELY-1X-DECISION-GATE.md#q4-typebar--reframe-specs-o10)*). It is a
 transcription rather than a design: the card is `.inkpop`'s card, the size stepper is the Reframe pad's
 `.zoom` — the control ADR-055 §4 *already named* as its precedent, so the two wearing one set of clothes
 is the specification catching up with the ADR — the row label is `.inklbl`, the swatch is `.pot` ring and
@@ -14468,3 +14471,191 @@ cross's bare paper surprise them?
   observations from the device are recorded for those passes and changed nothing here: a selected thin piece
   dragged from its band resizes, because the resize handles sit on the box edge; and a second tap on small
   selected words can be swallowed by a handle's touch target, with or without a holed piece on the page.
+
+## ADR-126 {#adr-126}
+
+### Two document voices, Book and Plain, with no change to the saved format
+
+**Status:** Proposed, 2026-10-06. **Not accepted.** A preparation record: no Kotlin has been written. Drafted on
+`design/document-voices-prep` from `origin/main` @ `ae374ea`. It can be Accepted only when the owner has set
+the minimum print size, approved the type-bar amendment and accepted this text, and the implementation's
+evidence is in; what is owed is listed under *Still owed*. Zinely 1.x step 8
+([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)), ruled by the owner on 2026-09-26
+([decision gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8) and
+[Q4](planning/ZINELY-1X-DECISION-GATE.md#q4-typebar--reframe-specs-o10)), specified in
+[Brief 02](planning/BRIEF-02-THREE-VOICES.md). The brief holds the detail; where this ADR and the brief
+differ, this governs.
+**Supersedes:** two exclusions in [ADR-055](#adr-055), and only as far as the two voices need.
+(1) **Font choice.** Its scope sentence "This ADR **excludes font choice**"; decision 7's "Styled text renders
+in Inter", "`fontFamily` is **never written by the editor**" and the retirement of the prototype's Fraunces
+voice; and the places that repeat them: the summary paragraph, the architecture section ("`fontFamily`
+remains but is never set here") and the exclusion list ("font choice"). Its testing line "`fontFamily` is
+never mutated" stays true for every existing style change (size, colour, alignment, bold, italic); only the
+new voice change writes the field.
+(2) **Font bundling**, for the four Book faces alone. ADR-055 lists "font bundling" as out of scope and names
+the way back in: a frozen-HTML amendment and its own ADR. This is that ADR, and the type-bar amendment is
+that amendment. Wider character sets and custom fonts stay excluded.
+The rest of ADR-055 stands, including decision 7's line-height and letter-spacing clause.
+**Extends:** [ADR-028](#adr-028) (one replayer, one text layout, for every surface); [ADR-057](#adr-057) (one
+font registry; what Zinely promises is kept apart from what the font files are measured to hold);
+[ADR-070](#adr-070) (the typing-time notice, which never removes a character; that rule is kept);
+[ADR-115](#adr-115) (no font control before font choice exists).
+**Relation to [ADR-098](#adr-098) §2.3:** that section says Fraunces becomes a document family only "if OD-30
+rules that way", as a standalone change. The owner's Q2 ruling of 2026-09-26 decided Book = Fraunces directly,
+and this ADR is that standalone change. It supplies one of OD-30's options (Fraunces bundled as a document
+family). It does not rule what OD-30 asks, which is what nine selectors in the design files must render, so
+OD-30 stays open in [OWNER-CHECKLIST](OWNER-CHECKLIST.md) and this ADR does not close it. ADR-098's note that a second font family could make a database migration "live" does not apply:
+the family is a string inside the saved document, not a database column.
+
+#### Context
+
+- Every zine is set in Inter. The document registry holds one family, and an unknown `fontFamily` resolves to
+  it (`render-android/.../DocumentFontRegistry.kt:88-113`). No production code writes `fontFamily`.
+- ADR-055 gave text a size, an alignment, bold, italic and a colour, and left font choice out because only one
+  family was bundled. ADR-115 then removed the dead *Font* control.
+- The owner ruled on 2026-09-26: two document voices, **Book = Fraunces** and **Plain = Inter**; Hand (Averia)
+  deferred; a document voice is not a UI typeface under V2-CONSTITUTION §III as written; **no schema bump**;
+  the control is an amendment to the frozen type bar. These are the owner's rulings. This ADR records how they
+  are carried out; it does not re-decide them.
+- The ROADMAP constraint "unknown-font fallback must not silently become layout loss" is qualified by that
+  ruling for document voices: the fallback is allowed, and it is documented and tested rather than prevented.
+
+#### Decision
+
+1. **A text element has one of two voices.** Plain is `fontFamily` `"sans-serif"` (what every text holds today)
+   or `"Inter"`. Book is `"Fraunces"`. Choosing Plain writes `"sans-serif"`, so a text returned to Plain is
+   byte-identical to one never changed. The style patch gains `fontFamily`; a change is one undoable command;
+   choosing the current voice is a no-op.
+2. **No schema bump, no migrator, no database migration, no fixture change.** `fontFamily` is an existing
+   serialised string. `CURRENT_SCHEMA_VERSION` stays 3 and the backup package version stays 2.
+3. **An unknown family is drawn as Inter and kept.** This is today's behaviour, read from the code, and it
+   stays. That an older build never rewrites a voice it does not know is confirmed by the older-build test
+   before merge, not yet.
+4. **Book is four real static faces**, regular, bold, italic and bold italic: upstream's own 9 pt static files,
+   **unmodified**, from `undercasetype/Fraunces` @ `7ccdec3` (Version 1.003), pinned by SHA-256 in
+   [`tools/build-document-fonts.py`](../tools/build-document-fonts.py), under the SIL OFL 1.1. The Regular is
+   the same file the interface already ships as `fraunces_regular.ttf`; the licence is listed once. Until step
+   8 they sit in `docs/planning/voices/`, outside the app build.
+5. **Each voice declares the scripts it sets, and the font files are checked against that.** Plain: Latin,
+   Greek, Cyrillic, as today. Book: Latin only. The typing-time check stays a check by script and is unchanged
+   for Plain. A voice that cannot set the selected text is shown unavailable with a visible, spoken reason.
+   Typing a Greek or Cyrillic letter into a Book text raises the typing-time notice. Its line should name the
+   voice; the wording, and any change to a frozen page that it needs, go through the amendment. The face is
+   never switched for the maker. `FontCoverage`'s guard takes its required set from the
+   family.
+6. **The editing surface draws the document's own faces.** It builds its font family from the same four asset
+   files the registry names. Today it draws the interface's Inter and a synthesised italic
+   (`feature/editor/.../BenchEditingSurface.kt:213-224`), so the draft and the result already differ for italic
+   text.
+7. **The control is a Voice row in the type-bar card**, two named choices, each written in its own face. It is
+   specified by an amendment to the frozen [`v21-typebar.html`](design/mockups/v21-typebar.html), which the owner
+   approves. It is not a font list and not a picker. Its name and the two words are settled there.
+8. **The minimum print size for Book is the owner's**, after a printed page. If it is above 10 pt, the
+   default is that Book is unavailable below it, with a reason, unless the owner asks for a warning instead.
+   Nothing changes a size or a voice on the maker's behalf. If the owner finds Book unacceptable at every
+   size tried, the choice of face reopens and this ADR is withdrawn.
+
+#### Consequences
+
+- **Older builds.** By code reading, `0.9.0-beta.6` and earlier keep a Book text's words and its voice, and
+  draw it in Inter. A maker meets this by restoring a library backup on an older build. From the measured
+  faces (sums of letter widths, without kerning), most running text is wider in Inter: upright regular 2 to
+  5 %, italic 6 to 10 %. Capitals are the exception. The full table is in
+  [Brief 02](planning/BRIEF-02-THREE-VOICES.md#the-four-faces). So lines can re-wrap. A text box has a fixed size and what falls below its bottom edge is cut off, so
+  **lines that no longer fit are not shown, or are sliced, on screen and in the PDF**. That can be more than
+  one line. The words remain in the zine and reappear, in Book, on a current build. The older build tells the
+  maker nothing. This is a layout change, not data loss. It is predicted from font measurements; the
+  older-build fallback test (Brief 02, Procedure B) measures it before merge. **Its measured worst case is
+  recorded here at acceptance**, and the release notes state it.
+- **The same cut-off can happen on the current build** when a maker switches a text between voices, because
+  the two faces differ in width and in line height. What the maker sees then is for the type-bar amendment.
+- **The script check does not cover every path.** It runs when a voice is chosen and while a text is open for
+  editing. It does not run on open, on restore or at export. The maker is not told in these cases, listed in
+  full in [Brief 02](planning/BRIEF-02-THREE-VOICES.md#scripts-what-each-voice-can-set): a Book text edited
+  on an older build, or restored from a backup, that holds Greek or Cyrillic letters; a Latin character that
+  Fraunces happens to lack (ŉ, ſ, the thin space, rarer accented letters), which is never flagged; and 17
+  characters Fraunces has and Inter lacks, in Plain or on an older build. Plain has the same kind of gap
+  today. Closing it is a separate decision.
+- **What is drawn for a character the face lacks is not established.** [ADR-070](#adr-070) records that such
+  a glyph is drawn as a blank box, with no system fallback. This preparation assumed instead that Android
+  fills it from a font on the phone, which could differ between phones. Neither was tested here. The
+  older-build test (check 11) and the device pass settle it, and whichever is true is written here at
+  acceptance.
+- **Coverage is narrower for Book than for Plain**, by design of the face (637 characters against 2,815). A
+  maker writing Greek or Cyrillic cannot use Book for that text.
+- **APK size** grows by about 0.45 MB before compression (four files; the Regular is then in the APK twice,
+  once as an interface resource and once as a document asset). The measured figure is recorded here at
+  acceptance.
+- **Scope ruling.** Because a document voice is not an interface typeface, V2-CONSTITUTION §III is not amended
+  and no interface type role is added. Brief 02 recommends that the Voice row write its two words in the
+  interface's own Fraunces and Inter. §III gives Fraunces to long-form text and Inter to controls, so a
+  control labelled in Fraunces is a reading of §III the owner should see and approve in the amendment.
+- **PRD and ADR-047.** Font choice was reclassified from the FR-3 MVP style clause to V1 by ADR-055. This ADR is
+  that V1 item, as two named voices rather than a choice of fonts.
+- **Stale comments to correct with the code:** the KDoc at `core/editor/.../Intent.kt:182` and
+  `EditorReducer.kt:461`, which say the editor never writes `fontFamily`.
+- **Not decided here:** a third voice; a per-zine default; a check for undrawable characters on open or at
+  export; whether the minimum size blocks or only warns, if the owner asks for a warning.
+
+#### Alternatives considered
+
+- **Ride a schema bump so older builds refuse the zine.** The readiness audit recommended it: a refusal is
+  honest where cut-off text is silent. The owner ruled the other way, because any bump makes an older build
+  refuse the **whole** backup, not one zine. Recorded; not reopened.
+- **Instance the four faces from the variable font.** Tried first, from the archived fork
+  `googlefonts/fraunces`, and rejected by the independent review of that attempt on 2026-10-06 (the instances
+  are not in the repository): two letters had wrong widths, the italics lost the default fl ligature, and the
+  fork's own static italics lack `# $ £` and đ. Upstream's own static files have none of these problems and
+  need no modification.
+- **A per-character table instead of a per-script rule.** Rejected: it would change what Plain warns about
+  today, and would flag line breaks and emoji, which no font file holds.
+- **Three voices, with Hand.** Deferred by the owner; Averia covers 12 of 128 Latin Extended-A letters.
+
+#### Still owed
+
+Tracked in [OWNER-CHECKLIST](OWNER-CHECKLIST.md) and in [Brief 02's gate table](planning/BRIEF-02-THREE-VOICES.md#gates).
+- The owner's minimum print size, after the printed page (Brief 02, Procedure A).
+- The type-bar amendment, drawn, reviewed and owner-approved.
+- The older-build fallback test, run and recorded (Brief 02, Procedure B), and its worst case written into
+  *Consequences*.
+- An Android 7 check that the four faces break lines as they do on a current phone.
+- The implementation, its goldens, both device passes, and the measured APK change.
+- A dated forward note under [ADR-055](#adr-055) pointing here, written when this ADR is accepted and not before.
+- The owner's acceptance of this ADR.
+
+#### Review
+
+**Independent Review Agent, 2026-10-06, on the draft text: GO WITH FIXES.** The reviewer read the ADR against
+the decision gate, ADR-055, ADR-057, ADR-070, ADR-098, the constitution and the code. It found no owner ruling
+re-decided and every cited code line and number correct. Three Required Fixes, all accepted and applied before
+this text was committed:
+- The supersession was too narrow. ADR-055 also excludes font bundling, which the four Book faces override;
+  that exclusion and the restatements are now named.
+- ADR-070 was described as the coverage guard, which is ADR-057's. ADR-057 is now cited and ADR-070 described
+  correctly.
+- "Drawn from a font on the phone" contradicted ADR-070's "blank box, no system fallback" with no evidence.
+  It is now recorded as not established, and owed to the older-build test and the device pass.
+
+Recommended points accepted: the testing-line supersession narrowed; the OD-30 relation stated precisely; the
+minimum-size decision phrased as a default; the width sentence given its exception; the uncovered cases
+listed; older-build behaviour marked as code reading; the Voice row's faces flagged as a reading of §III for
+the owner; the notice wording made subject to the amendment. One observation is left open: whether a
+single-zine package is another route by which a Book text can reach an older build was not checked.
+
+The fonts, Brief 02 and its procedures were reviewed separately before their own commits (fonts: GO; brief:
+GO WITH FIXES from two reviewers, fixes applied). This ADR has **not** been reviewed against an
+implementation, because there is none. A second review is owed at acceptance.
+
+A review of the whole branch at `e97d673` (2026-10-07) returned **GO WITH FIXES**. Two Required Fixes, both
+**accepted**: this ADR's index row named one of the two ADR-055 exclusions it supersedes; and the freeze had
+recorded the keyboard focus ring as decided where plan step Q4-F says a difference is returned to the owner
+(now returned, with a recommendation, in both frozen files and both OWNER-CHECKLIST rows). Six recommendations
+**accepted** (the freeze described as not fully carried out; two unknowns measurable today added to Brief 02;
+the ADR-055 forward note listed above; a dated note in ADR-102; the brief's owner list; the font script
+refusing unknown arguments). One **partly accepted**: ZINE-DIRECTION carries one dated note where it says
+"three voices" are to be built, not five. The other four mentions (lines 76, 146, 353, 739) stay as they are because this branch prepared
+voices and did not revise the direction document, and two of them need their asset facts rewritten, not a
+count changed; they are tracked in [issue #97](https://github.com/aritr-codes/zinely-android/issues/97). A review of that reconciliation returned **GO WITH FIXES**; its two
+Required Fixes (a sequencing claim the brief did not make; "done" left standing beside "not fully carried
+out") are applied. It confirmed the edits to the two frozen files touch only comments and caption prose.
+

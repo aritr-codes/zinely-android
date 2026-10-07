@@ -1,10 +1,10 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Zinely V2.1 — Type bar (PROPOSAL)</title>
+<title>Zinely V2.1 — Type bar (DESIGN FROZEN)</title>
 
 <!-- ┌─────────────────────────────────────────────────────────────────────────────┐
-     │  V2.1 TYPE BAR — PROPOSAL, NOT FROZEN.  Authored 2026-08-14.                 │
+     │  V2.1 TYPE BAR — ❄️ DESIGN FROZEN — 2026-10-06.  Authored 2026-08-14.        │
      │                                                                             │
      │  WHY THIS FILE EXISTS.  `TypeBar.kt` is the last text surface still wearing  │
      │  V1: `--menu` as its card ground, `--field`/`--fieldEdge` on every control,  │
@@ -47,12 +47,61 @@
      │  commit and no primary (cancel is undo), and `.add` never leaves.  The ring  │
      │  stays where it is.                                                          │
      │                                                                             │
-     │  STATUS.  PROPOSAL.  The owner freezes; nothing here is authoritative until  │
-     │  they do.  Companion to v21-bench.html / v21-library.html / v21-proof.html / │
-     │  v21-reframe.html, whose font and token blocks this file shares byte-for-    │
-     │  byte.  Three items need a device before it can be frozen — see the last     │
-     │  caption.                                                                    │
+     │  STATUS.  ❄️ DESIGN FROZEN — 2026-10-06, on the owner's ruling of 2026-09-26 │
+     │  (docs/planning/ZINELY-1X-DECISION-GATE.md, Q4; plan step Q4-F).  This file  │
+     │  is now the authoritative Type bar specification; a behavioural or design   │
+     │  change needs an amendment here first.  Companion to v21-bench.html /        │
+     │  v21-library.html / v21-proof.html / v21-reframe.html.  The earlier line     │
+     │  "three items need a device before it can be frozen" is retired: the       │
+     │  caption "Two measurements this card owed, and how they were closed"       │
+     │  records the swatch target and the wide-card measurement as closed           │
+     │  (2026-08-15, ruling 2026-08-29) and the third item as closed by ruling.     │
+     │  What the freeze leaves OPEN is listed in the block below this box.          │
      └─────────────────────────────────────────────────────────────────────────────┘ -->
+
+<!-- OPEN UNDER THE FREEZE (2026-10-06).  The freeze changed no rule and no markup in this file: the
+     one correction the ruling named (the Size stepper's glyphs are <svg>, not text) was already in
+     the file.  The check behind blocks B to E read shipped TypeBar.kt; no device was used.  Nothing
+     in A to D is resolved by the freeze, and an implementer must not resolve any of it; each item
+     is the owner's (docs/OWNER-CHECKLIST.md).
+
+     A. Recorded by this file before the freeze, unchanged (see the closing captions):
+        1. How the panel closes.   2. The swatch name "Coral".   3. Teal #2A9D8F fails AA as text.
+
+     B. Six differences between this file and shipped TypeBar.kt.  Reported to the owner, not
+        resolved.  Until the owner rules, the spec below is unchanged and the shipped behaviour is
+        unchanged:
+        1. Italic toggle face.  `.tytog .i` sets the "I" in var(--serif) (Fraunces) italic; shipped
+           draws it in Inter italic (StyleToggle sets no font family).
+        2. Card group name.  `.typebar` is role="group" aria-label="Text style"; shipped has no
+           group-level name (TypeBar.kt, "No group-level semantics wrapper").
+        3. Row names on the two radio groups.  aria-labelledby the row label here; shipped uses an
+           unnamed selectableGroup with the label as a separate node.
+        4. `--on-butter` is used by the selected-ink check cue and is not defined in this file's
+           :root (it is defined in v21-library.html: #27270F light, #242312 dark, which is what
+           shipped uses).  A defect inside this file, left as found.
+        5. Stepper glyph shape.  2.2px round-capped strokes here; shipped uses the Material filled
+           Remove / Add icons in the same 20px box.
+        6. Check cue glyph.  A text "✓" at .72rem here; shipped uses the Material Check icon at 14dp.
+
+     C. Stale statements inside this file, left as found so the frozen bytes stay the reviewed bytes:
+        the comments that call the readout and the resting toggles `--ink-soft` (both rules say
+        `--ink`); "the pot gap below is 18px" (the rule is --gap-xs); "--jam-text is #A63B20" (the
+        token is #A9303D); and the closing caption's "this one does not" register BackHandler
+        (shipped does: EditorScreen.kt, `BackHandler(enabled = typeBarOpen)`), so recommendation (a)
+        under "How the panel closes" is already shipped while (b) and (c) are not.
+
+     D. Not checkable without a device, and not claimed: the card's vertical offset above the bar,
+        and the card's width at 360dp and font scale 2.0 after the 2026-08-29 ruling (no later
+        measurement is recorded).
+
+     E. A SEVENTH DIFFERENCE, RETURNED TO THE OWNER WITH A RECOMMENDATION: THE KEYBOARD FOCUS
+        RING.  `button:focus-visible` below draws a 2px ink outline.  Read from code, the shipped
+        stepper, align and style controls set `indication = null` and draw none (the ink swatches
+        keep the default indication).  Like the six in block B this is reported, not resolved
+        (corrected 2026-10-07: this block first called it "not open", which decided it).
+        Recommendation: keep the ring on this page and change the app, because a keyboard or
+        switch user cannot otherwise see where they are.  The ruling is the owner's. -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -377,7 +426,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 </style>
 
 <p class="cap lead">The Type bar — changing how the words on this page look.</p>
-<p class="cap"><span class="badge">Proposal</span> &nbsp;The panel below is the <b>same bar</b> ADR-055
+<p class="cap"><span class="badge">frozen · 2026-10-06</span> &nbsp;The panel below is the <b>same bar</b> ADR-055
 specified, wearing V2.1's clothes. Nothing about what the controls <i>do</i> changes: four rows, a ten-stop
 size ramp behind a settle window, three alignments, two toggles that genuinely compose, five inks, and no
 commit — because cancel is undo. What changes is that the panel stops being the only thing on the Bench
@@ -814,3 +863,15 @@ papers</b>, clearing AA-Large on <code>--paper</code> by 0.10 and failing even t
 member of a set whose entire justification is contrast correction that was never actually corrected. That
 needs a corrected <i>value</i>, measured on device, and it is an accessibility fix rather than a naming
 one.</p>
+
+<p class="cap"><b>Frozen, 2026-10-06.</b> The owner ruled on 2026-09-26 that this card freezes once its one
+known correction was in. It was already in: the Size buttons draw their minus and plus as shapes, not as
+letters. The freeze changed no rule and no control on this page.
+<br><b>Still open, and the owner's:</b> how the panel closes, the name "Coral" and Teal's contrast, all three
+described above. One note above is out of date: it says Back does not close the panel. In the app, Back now
+closes it. Tapping outside, and a close action for switch users, are still not built.
+<br><b>Also open:</b> six places where this page and the app differ. They were found by reading the app's
+code. No phone was used. None is decided here. The list is in the comment at the top of this file and in
+<code>docs/OWNER-CHECKLIST.md</code>.
+<br><b>Also open, a seventh:</b> the keyboard focus ring this page draws. The app does not draw it on every
+control. The recommendation is to keep it here and change the app; the ruling is the owner's.</p>
