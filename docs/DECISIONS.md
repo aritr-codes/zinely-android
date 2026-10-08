@@ -15073,7 +15073,9 @@ fixture, dependency or permission change.
     two actions within milliseconds or behind one message, where Undo returns to the wrong view; a retry that
     fails outright no longer says why. It ran nothing and viewed no raster.
 - **Still owed.**
-  - **A TalkBack listen.** Not run (see *Phone passes* below): what it says on each sheet, where its focus
+  - **A TalkBack listen.** Deferred by the owner on 2026-10-08, who said to merge without it: a waiver of
+    the handbook's device check before merge for this one part, not a pass. Still owed before acceptance.
+    Not run (see *Phone passes* below): what it says on each sheet, where its focus
     lands after an action (deviation 1), whether the field's name hides what is typed in it, and whether the
     snack's stay (four seconds, or the phone's accessibility timeout if longer) is enough to reach Undo.
   - The name sheet under the keyboard on Android 7 to 9.
