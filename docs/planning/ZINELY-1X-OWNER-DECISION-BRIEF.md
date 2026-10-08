@@ -31,7 +31,8 @@ sessions under the rulings above.
 1. **Approve each drawn HTML amendment** before its Compose work ([§4](#4-html-amendments-that-need-owner-approval)).
 2. **The two frames' names, visuals, set membership and order** (Q6); a landing-size override only if a frame
    needs one.
-3. **Fraunces minimum print size**, after a printed page at 10/12/14 pt (Q2).
+3. ~~**Fraunces minimum print size**~~ Ruled 12 pt on 2026-10-08 (Q2). Still yours: the printed page at
+   10/12/14 pt, which confirms it.
 4. **After the print study:** whether the guidance ships as designed, a static test page, any inset change,
    any render change (Q7). **After the fold study:** reprioritise only if it finds a fundamental failure (Q5).
 5. **Approve the wave-1 release** in its release session, and acknowledge one limit of the backup rule: a
@@ -52,7 +53,7 @@ two-phone restore pass.
 | Brief | State after 2026-09-26 |
 |---|---|
 | [01 Visible ownership](BRIEF-01-VISIBLE-OWNERSHIP.md) | **Rewritten.** Part 1 (+ late "Backup cancelled."), part 1b spec (restore honesty + skip-and-list), ADR-110 amendment draft, product-law draft, one `backup-restore.html` amendment spec |
-| [02 Voices](BRIEF-02-THREE-VOICES.md) | **Rewritten 2026-10-06, not ready to build.** It waits on your minimum print size (after the printed page) and your approval of the Voice row drawing; its gate table lists the rest |
+| [02 Voices](BRIEF-02-THREE-VOICES.md) | **Rewritten 2026-10-06; ready to build since 2026-10-08** (taking the printed page as a check that may follow the start), when you approved the Font row drawing (A29) and ruled the minimum print size, 12 pt; its gate table lists the rest |
 | [03 Printer test page](BRIEF-03-PRINTER-TEST-PAGE.md) | **Blocked** on the physical print study; rewritten after it reports |
 | [04 Reading order and alt text](BRIEF-04-READING-ORDER-AND-ALT-TEXT.md) | **Updated** for the current dependency structure |
 | [05 Materials: frames](BRIEF-05-MATERIALS-FRAMES.md) | **Updated.** Six-piece hit test with its ADR draft and `v21-bench.html` spec; two-frame scope; fold study not a gate |
@@ -88,8 +89,8 @@ None has been made; the frozen HTML is untouched. Each is its own reviewed chang
 > Step 0 ✅ → 2 (READY) · 1a → 1 → 1b → PR #70 settled → 3 → 4 → (5 if the print study has reported) →
 > **wave-1 release on v3** → 6 v4 → 7 alt text → v4 release → 8 voices (after Q4-F; no longer v4-bound) → 9 frames
 
-In parallel now: the print and fold study and Play Console admin (the Q4-F freeze was done on 2026-10-06). The printed Fraunces page
-follows once its procedure is written ([plan §11](ZINELY-1X-IMPLEMENTATION-PLAN.md#11-implementation-readiness-after-owner-decisions)).
+In parallel now: the print and fold study and Play Console admin (the Q4-F freeze was done on 2026-10-06). The printed Fraunces page's
+procedure is written (Brief 02, Procedure A); the page is not printed ([plan §11](ZINELY-1X-IMPLEMENTATION-PLAN.md#11-implementation-readiness-after-owner-decisions)).
 Readiness per step: [plan §11](ZINELY-1X-IMPLEMENTATION-PLAN.md#11-implementation-readiness-after-owner-decisions).
 
 ## Change log

@@ -103,6 +103,30 @@
         Recommendation: keep the ring on this page and change the app, because a keyboard or
         switch user cannot otherwise see where they are.  The ruling is the owner's. -->
 
+<!-- A29 · THE FONT ROW — PROPOSED 2026-10-07, FROZEN 2026-10-08 (ADR-126 is still Proposed).
+     The owner ruled two document fonts, Book (Fraunces) and Plain (Inter), chosen from a control
+     that is an amendment to this card (decision gate Q2, 2026-09-26).  A29 is that amendment.
+     It is drawn at the foot of this file: its CSS is the last block in the stylesheet,
+     its markup and script follow the "Frozen, 2026-10-06" caption, and all three are marked A29.
+     It adds one pointer paragraph under the title, and on freezing it rewrote one frozen caption
+     (the top of the ramp), as its rule 9 said it would.  It changes no other frozen rule or markup.
+     The owner approved all twelve recommendations on 2026-10-08 and left the last decision to the
+     implementer after one more research pass (RESEARCH R24).  That pass changed V-12 (the Undo
+     line, now v21-bench.html A30), and sharpened V-6 (the sign of scrolling) and V-10 (the
+     unknown-font line).  Not built yet.
+     Its rules are cited as A29.1 to A29.14; its twelve owner questions are V-1 to V-12.
+
+     MEASURED 2026-10-07, which closes block D's second item for an emulator only (Android 16,
+     360 x 800 dp, the released 0.9.0-beta.6; the owner's phone was not used):
+       font scale 1.0: card 288 x 259 dp, clears the room by 183 dp.  (The room is the canvas area
+         above the card's bottom edge.  A first-run hint was on screen in it; to the hint, 113 dp.)
+       font scale 2.0: card 336 x 358 dp, clears by 79 dp, at its 336 dp width limit.  "Right" breaks
+         across three lines in a 48 x 130 dp button, which adds 76 dp to the card.  The 2026-08-29
+         ruling that gave back 4 px of side padding did not stop it at this width.
+       360 x 640 dp, font scale 2.0: the card is cut off by about 81 dp; no ink swatch is in the
+         platform tree and nothing scrolls, so Colour cannot be reached.
+     Block D's first item (the card's vertical offset) is still not measured. -->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -423,9 +447,104 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 .pair{display:flex;flex-wrap:wrap;gap:var(--gap-xl);justify-content:center;align-items:flex-start}
 .stack{display:flex;flex-direction:column;align-items:center;gap:var(--gap-sm)}
 .stack .cap{max-width:390px;text-align:center}
+/* ========================================================================================
+   A29 · THE FONT ROW — FROZEN 2026-10-08 (ADR-126, Proposed).
+   Everything from here to "end of A29 css" is the amendment.  No rule above this line is
+   changed.  The row wears `.tyalign`'s clothes by repeating its declarations, so the frozen
+   rule is not touched and the two cannot drift silently: a parity check reads both.
+   ======================================================================================== */
+/* A29.3 — the Align row's button, repeated: 46px floor, --surface, --ink edge, 2px rest shadow,
+   chosen = --leaf under --on-leaf.  A29.5 — `white-space:nowrap`: the two words never wrap. */
+.tyvoice{display:flex;gap:var(--gap-sm)}
+.tyvoice button{position:relative;font-size:.78rem;min-width:46px;min-height:46px;
+  padding:var(--gap-sm) var(--gap-md);white-space:nowrap;
+  border-radius:var(--br-md);border:1.5px solid var(--ink);
+  background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:2px 2px 0 var(--ink-line)}
+/* A29.2 — each word in its own face, from the INTERFACE's faces: Fraunces Medium, Inter SemiBold. */
+.tyvoice .book{font-family:var(--serif);font-weight:500}
+.tyvoice .plain{font-family:var(--sans);font-weight:600}
+.tyvoice button[aria-checked="true"]{background:var(--leaf);color:var(--on-leaf)}
+.tyvoice button:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
+/* A29.4 — the second cue.  --leaf on --surface measures 2.21:1 in the light room (6.53:1 in the
+   dark one), under the 3:1 a state needs when fill is its only sign.  So the chosen word also
+   carries the Colour row's paper tick, on the button's corner where it costs no width.  The tick
+   is a shape, not a letter, for the reason `.tysize` gives.  --on-leaf is used for its ink because
+   it has the value the frozen file's undefined --on-butter was meant to have (block B, item 4). */
+.tyvoice button[aria-checked="true"]::after{content:"";position:absolute;top:-7px;right:-7px;width:18px;height:18px;
+  border:2px solid var(--on-leaf);border-radius:999px;
+  background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2327270F' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 7 10 17l-5-5'/%3E%3C/svg%3E") center/11px no-repeat}
+/* A29.7 — a choice that cannot be used.  It is NOT disabled: it can be reached and tapped, so it is
+   not faded to .35 like the stepper's ends.  It lies flat (no rest shadow), its edge thins to the
+   hairline (1.34:1 light, 1.57:1 dark: the edge alone does not carry the state) and its word drops
+   to --ink-soft (5.76:1 light, 7.87:1 dark).  The reason line under the row is what explains it,
+   and that line is shown without a tap (A29.8). */
+.tyvoice button.cant,.tysize button.cant{box-shadow:none;border-color:var(--hair);color:var(--ink-soft)}
+.tyvoice button.cant:active,.tysize button.cant:active{transform:none;box-shadow:none}
+/* A29.8 — the reason line.  One slot, directly under the Font row.  Plain words in --ink. */
+/* `width:0;min-width:100%`: the line takes the card's width and never sets it, so the card does not
+   grow sideways when the line appears.  It does grow taller, upward, by the line's own height. */
+.tywhy{margin:calc(-1 * var(--gap-xs)) 0 0;width:0;min-width:100%;font-size:.72rem;line-height:1.35;font-weight:500;color:var(--ink)}
+.tywhy[hidden]{display:none}
+/* A29.11 — the card never outgrows the room.  When its rows are taller than the room, it scrolls
+   up and down inside itself; nothing is cut off and unreachable.  The room in this drawing is the
+   phone, less the card's frozen bottom offset (--gap-md + 74px) and less 44px for the status row
+   above the canvas, which is this drawing's own figure; in the app the room is the canvas area.
+   A ROW CUT BY THE EDGE is the first sign that the card scrolls, and A SHADE ON THE EDGE THAT HIDES
+   MORE the second (A29.11; the shade is what is left when the edge falls between rows): the two 'local' layers
+   travel with the rows and cover the shade at whichever end has been reached.
+   The card's own padding keeps the corner tick and the rest shadows inside the scrolling box for as
+   long as the row fits the card.  With the label "Lettering" at the largest text it does not fit, and
+   the tick and the shadow of the last word are cut (V-1 says so). */
+.typebar.a29{max-height:calc(100% - var(--gap-md) - 74px - 44px);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
+  background:
+    linear-gradient(var(--surface) 40%,transparent) top/100% 44px no-repeat local,
+    linear-gradient(transparent,var(--surface) 60%) bottom/100% 44px no-repeat local,
+    linear-gradient(var(--soft-shadow),transparent) top/100% 22px no-repeat scroll,
+    linear-gradient(transparent,var(--soft-shadow)) bottom/100% 22px no-repeat scroll,
+    var(--surface)}
+.typebar.a29.loose{max-height:none;background:var(--surface)}
+/* ---- presentation of this document only: the try-it controls and the large-text simulation ---- */
+.a29tools{display:flex;flex-wrap:wrap;gap:var(--gap-sm);justify-content:center;max-width:680px}
+.a29tools fieldset{border:1.5px solid var(--hair);border-radius:var(--br-md);padding:var(--gap-xs) var(--gap-sm) var(--gap-sm);margin:0;
+  display:flex;flex-wrap:wrap;gap:var(--gap-xs);align-items:center}
+.a29tools legend{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);padding:0 var(--gap-xs)}
+.a29tools button{font:600 .78rem var(--sans);min-height:36px;padding:var(--gap-xs) var(--gap-md);border-radius:var(--br-pill);
+  border:1.5px solid var(--ink);background:var(--surface);color:var(--ink);cursor:pointer}
+.a29tools button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.a29said{max-width:390px;min-height:2.6em;margin:0;font-size:.74rem;color:var(--ink-soft);text-align:center}
+.a29said b{color:var(--ink)}
+.phone.a29phone .el{cursor:default}
+.phone.a29phone .t-title{overflow:hidden;max-height:300px;overflow-wrap:anywhere}
+/* Large text, simulated: a 360 x 800 screen and every word in the card at twice its size.  The Align
+   words are allowed to break inside a word here because that is what the app was MEASURED doing
+   (2026-10-07, emulator): "Right" on three lines.  That defect is the app's today, not this row's. */
+.phone.fs2{width:360px;height:800px}
+/* At the largest text the card is given the room the APP was measured to have (2026-10-07), because
+   the app's canvas area is smaller than this drawing's, which has no page strip: 437 dp on the
+   360 x 800 screen, 277 dp on the 360 x 640 one. */
+.phone.fs2 .typebar.a29{max-height:437px}
+.phone.fs2.short{height:640px}
+.phone.fs2.short .typebar.a29{max-height:277px}
+.fs2 .tylab{font-size:1.2rem}
+.fs2 .tyval{font-size:1.56rem}
+.fs2 .tyalign button{font-size:1.56rem;overflow-wrap:anywhere;min-width:0}
+.fs2 .tytog button{font-size:2.1rem}
+.fs2 .tyvoice button{font-size:1.56rem}
+.fs2 .tywhy{font-size:1.44rem}
+.fs2 .tyrow{gap:var(--gap-sm)}
+.a29list{max-width:680px;margin:0;padding-left:1.4em;color:var(--ink-soft);font-size:13.5px}
+.a29list li{margin-bottom:var(--gap-xs)}
+.a29list b{color:var(--ink)}
+table.a29q{max-width:680px;border-collapse:collapse;font-size:13px;color:var(--ink-soft)}
+table.a29q th,table.a29q td{border:1px solid var(--hair);padding:var(--gap-xs) var(--gap-sm);text-align:left;vertical-align:top}
+table.a29q th{color:var(--ink)}
+/* ================================= end of A29 css ================================= */
 </style>
 
 <p class="cap lead">The Type bar — changing how the words on this page look.</p>
+<p class="cap"><span class="badge">A29 · frozen · 2026-10-08</span> &nbsp;A fifth row, for choosing
+between two fonts, is drawn <a href="#a29" style="color:inherit">at the foot of this page</a>. It is
+approved and not yet in the app. Everything between here and there is the card as frozen on 2026-10-06.</p>
 <p class="cap"><span class="badge">frozen · 2026-10-06</span> &nbsp;The panel below is the <b>same bar</b> ADR-055
 specified, wearing V2.1's clothes. Nothing about what the controls <i>do</i> changes: four rows, a ten-stop
 size ramp behind a settle window, three alignments, two toggles that genuinely compose, five inks, and no
@@ -650,7 +769,8 @@ two can be read at size. Neither is reachable from the two frames above.</p>
       </div>
     </div>
     <p class="cap"><b>The top of the ramp.</b> 48 pt is the last stop, so "Larger" is unavailable. The two
-    ends are the bar's only disabled state — every other control is always actionable.</p>
+    ends are the bar's only disabled state. (Rewritten 2026-10-08 by A29: a word in the Font row that cannot
+    be used, and Smaller at Book's smallest size, are not disabled; they can be reached and say why.)</p>
   </div>
 
   <div class="stack">
@@ -875,3 +995,335 @@ code. No phone was used. None is decided here. The list is in the comment at the
 <code>docs/OWNER-CHECKLIST.md</code>.
 <br><b>Also open, a seventh:</b> the keyboard focus ring this page draws. The app does not draw it on every
 control. The recommendation is to keep it here and change the app; the ruling is the owner's.</p>
+
+<!-- ======================================================================================
+     A29 · THE FONT ROW — FROZEN 2026-10-08 (ADR-126, Proposed).
+     Everything from here to the end of the file is the amendment.  Nothing above is changed
+     except one pointer paragraph under the title, the A29 notes in the opening comments, and the
+     caption under "The top of the ramp", rewritten on freezing as rule 9 said.
+     ====================================================================================== -->
+<hr style="width:100%;max-width:680px;border:0;border-top:1.5px dashed var(--ink-soft);margin:var(--gap-xl) 0 0">
+<p class="cap lead" id="a29">A29 — choosing a font for the words: Book or Plain.</p>
+<p class="cap"><span class="badge">A29 · frozen · 2026-10-08</span> &nbsp;The owner ruled on 2026-09-26 that
+a text can be set in one of two faces, <b>Book</b> (Fraunces) or <b>Plain</b> (Inter), and that the control is
+an amendment to this card. This is that amendment. <b>The owner approved it on 2026-10-08 and it is frozen.
+Nothing here is in the app yet.</b> The four rows above are untouched. Try it: tap the words in
+the card, then use the switches under the phone.</p>
+
+<div class="stack">
+  <div class="phone a29phone" id="a29phone">
+    <div class="status">
+      <span>9:41</span>
+      <span class="saved"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> Saved</span>
+    </div>
+    <div class="canvasArea">
+      <div class="page">
+        <div class="content">
+          <div class="el">
+            <div class="t-title" id="a29text"></div>
+            <span class="ring"></span>
+            <span class="hnd tl"></span><span class="hnd tr"></span>
+            <span class="hnd bl"></span><span class="hnd br"></span>
+          </div>
+          <div class="t-body dim">Two of us walked to the end of the pier and back before the rain
+            started, which is the whole of it.</div>
+        </div>
+      </div>
+    </div>
+    <div class="typebar a29" id="a29card" role="group" aria-label="Text style"></div>
+    <div class="bar">
+      <button class="icon-btn" id="a29undo" aria-label="Undo" disabled>
+        <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h9a7 7 0 0 1 0 14H8"/></svg>
+      </button>
+      <button class="icon-btn" aria-label="Redo" disabled>
+        <svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9h-9a7 7 0 0 0 0 14h5"/></svg>
+      </button>
+      <button class="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add</button>
+    </div>
+  </div>
+  <p class="a29said" id="a29said"></p>
+</div>
+
+<div class="a29tools" id="a29tools">
+  <fieldset><legend>The text holds</legend>
+    <button data-scene="latin" aria-pressed="true">English words</button>
+    <button data-scene="greek" aria-pressed="false">Some Greek letters</button>
+    <button data-scene="unknown" aria-pressed="false">A font this app does not know</button>
+  </fieldset>
+  <fieldset><legend>The row's name</legend>
+    <button data-label="Font" aria-pressed="true">Font</button>
+    <button data-label="Voice" aria-pressed="false">Voice</button>
+    <button data-label="Lettering" aria-pressed="false">Lettering</button>
+    <button data-label="Type" aria-pressed="false">Type</button>
+  </fieldset>
+  <fieldset><legend>Text size and phone</legend>
+    <button data-fs="1" aria-pressed="true">Usual text</button>
+    <button data-fs="2" aria-pressed="false">Largest text, small phone</button>
+    <button data-fs="2s" aria-pressed="false">Largest text, short phone</button>
+  </fieldset>
+  <fieldset><legend>Room</legend>
+    <button data-theme-set="light" aria-pressed="false">Day</button>
+    <button data-theme-set="dark" aria-pressed="false">Night</button>
+  </fieldset>
+</div>
+<p class="cap"><b>What the switches are for.</b> "Some Greek letters" shows a text Book cannot set. "A font this
+app does not know" is a zine made on a later version of the app. "Largest text, small phone" is a 360 × 800
+screen with every word in the card at twice its size. "Largest text, short phone" is 360 × 640: there the card
+does not fit, so it scrolls, and a row cut by its edge, with a shade there, shows there is more. In both, the card is given the room
+the app was measured to have, so on the small phone it also scrolls once a reason line is showing. Both are drawings of those states,
+not measurements of the app. <b>The 12 pt minimum used here is the owner's ruling of 2026-10-08, to be confirmed on the
+printed page</b> (Brief 02, Procedure A); if that page brings it down to 10 pt there is no minimum and the two
+states that depend on it never happen.</p>
+
+<p class="cap"><b>Four states, shown loose</b> so each can be read, and later compared with the app, without
+reaching it by hand.</p>
+<div class="pair">
+  <div class="stack"><div class="typebar a29 loose" role="group" aria-label="Text style" data-still="book"></div>
+    <p class="cap"><b>Book chosen.</b> The chosen word is filled and carries the small tick on its corner.</p></div>
+  <div class="stack"><div class="typebar a29 loose" role="group" aria-label="Text style" data-still="greek"></div>
+    <p class="cap"><b>Book cannot be used for this text.</b> The word lies flat and quiet, and the line under
+    the row says why. The line is there as soon as the card opens; no tap is needed to see it.</p></div>
+  <div class="stack"><div class="typebar a29 loose" role="group" aria-label="Text style" data-still="min"></div>
+    <p class="cap"><b>A Book text at the smallest size Book allows.</b> Smaller is drawn flat, not faded, and
+    the same line says why and gives the way out.</p></div>
+  <div class="stack"><div class="typebar a29 loose" role="group" aria-label="Text style" data-still="unknown"></div>
+    <p class="cap"><b>A font this app does not know.</b> Neither word is chosen, as with an ink the Colour row
+    does not offer, and the line says what is being shown. The text keeps its own font until the maker taps a
+    word.</p></div>
+</div>
+
+<p class="cap"><b>A29's rules.</b> Cite them as A29.1 to A29.14.</p>
+<ol class="a29list">
+<li><b>A fifth row, first in the card, labelled "Font".</b> Two word buttons, Book and Plain. One choice of
+two, so it is a single-choice group named by its label, like Align.</li>
+<li><b>Each word is written in its own face,</b> from the faces the interface already has: Book in Fraunces
+Medium, Plain in Inter SemiBold, at the Align row's size. No document font file is loaded into the interface.</li>
+<li><b>The clothes are the Align row's,</b> unchanged: the 46 px floor, the card's surface, an ink edge, the
+2 px rest shadow, and leaf under on-leaf for the chosen one. Whatever is drawn, each word takes a touch at
+least 48 dp tall and wide.</li>
+<li><b>The chosen word carries a second sign:</b> the Colour row's paper tick, on the button's corner. The
+leaf fill against the card is 2.21:1 by day (table below), under the 3:1 a state needs when fill is its only
+sign. The Align row has the same 2.21:1 today; A29 reports it and does not change it.</li>
+<li><b>The two words never wrap,</b> at any text size. With two buttons the row is narrower than Align, so it
+does not set the card's width. The reason line takes the card's width and never sets it.</li>
+<li><b>Tapping a word changes the text at once</b> and leaves the card open, as Align does. It is one step for
+Undo. Tapping the word already chosen does nothing and adds no step. Undo says "Font put back" and Redo "Font changed"
+(<code>v21-bench.html</code> A30). The app's "Text style" lines are not used for it: the card has a row named
+Style, and a font is not what that row changes.</li>
+<li><b>A word that cannot be used stays in the row.</b> It is never hidden and never faded like the stepper's
+ends. It lies flat with a hairline edge and a quieter word. It can be reached and tapped; a tap changes
+nothing. To the platform it is enabled, clickable and not checked. A screen reader reaching it hears the word,
+"unavailable", and the reason; a tap says the reason once more. The exact spoken words are settled by
+listening on a phone. The word already chosen is never shown this way.</li>
+<li><b>One reason line, in one place: directly under the Font row. It is shown without a tap,</b> for as long
+as its cause lasts, so a sighted maker is never left to guess why a word is quiet. It says what is in the way
+and, where there is one, the way out. When it appears or goes, the card grows or shrinks upward by the line's
+height and does not change width. The lines:
+"Book has no Greek letters, so this text stays Plain." (it names the script found; "Greek and Cyrillic" when
+both) · "Book needs 12 pt or larger. Make the text larger first." · "Book stops at 12 pt. Switch to Plain to go
+smaller." · "This text uses a font this version of Zinely does not have. It is drawn in Plain for now. Choosing Book or Plain replaces its font."
+When more than one applies, one shows, in this order: the unknown font, then the script, then the size. The
+unknown font is first because until the maker chooses a word the text is in neither font, and "this text stays
+Plain" would not be true of it; Book is still drawn as rule 7 says when it cannot be used, and a tap on it says
+its reason.</li>
+<li><b>Smaller, on a Book text at Book's smallest size,</b> is drawn like rule 7 and the third line shows. Its
+reason sits in the one slot under the Font row, which with Font first is directly above the Size row. The real
+bottom of the ramp (10 pt) stays truly unavailable and faded, as frozen. Brief 02 asked for the frozen caption
+that calls the two ends "the bar's only disabled state" to be rewritten; while A29 is only a proposal that
+caption was left as frozen, and it was rewritten when A29 was frozen on 2026-10-08.</li>
+<li><b>A font this app does not know:</b> neither word is chosen and the fourth line shows. It says the text
+is drawn in Plain for now, which is why Plain is not shown as chosen, and that choosing a word replaces the
+text's font. Tapping either word sets it and is one step for Undo; until then the text's own font is kept.</li>
+<li><b>The card never outgrows the room.</b> When its rows are taller than the room, the card scrolls up and
+down inside itself. <b>The first sign is a row cut by the card's edge; a shade on that edge is the second,</b>
+and is what is left when the edge happens to fall between two rows. The shade alone is faint, by night most of
+all; whether the two together are noticed is a question for the first-time pass. It never scrolls sideways. This rule changes how the frozen card behaves, and it is the only rule here that does. Why it is
+needed is in the measurements below.</li>
+<li><b>When a change of font pushes words out of their box,</b> the maker sees what a change of size shows
+today: the words that no longer fit are not drawn. A29 adds no new sign for it. This is a known limit, and
+for a zine that will be printed it is the costliest one here; a sign for cut-off words is its own design.</li>
+<li><b>Typing a letter Book does not have into a Book text</b> raises the typing-time notice, with a line that
+names the font and the way out: "Book has no Greek letters. Switch this text to Plain to print them in a
+matching face." The font is never switched for the maker. No page in this folder draws that notice; its words
+live in the app's copy, and this rule is where the new line is set (V-9).</li>
+<li><b>The row follows this page</b> on the two points returned to the owner for its sibling rows: it is a
+named group and it draws the keyboard focus ring. If the owner rules the other way for Align and Colour, the
+Font row follows that ruling.</li>
+</ol>
+
+<p class="cap"><b>Contrast, computed from this file's tokens</b> (day / night). Text needs 4.5:1; a state told
+by fill alone needs 3:1.</p>
+<table class="a29q">
+<tr><th>What</th><th>Day</th><th>Night</th><th>Note</th></tr>
+<tr><td>"Book" or "Plain" at rest (ink on the card)</td><td>10.42</td><td>10.99</td><td></td></tr>
+<tr><td>The chosen word (on-leaf on leaf)</td><td>4.73</td><td>8.90</td><td>By day this is only just over 4.5:1, and "Book" is a thin serif at a small size. The owner should look at it on a phone.</td></tr>
+<tr><td>A word that cannot be used (ink-soft on the card)</td><td>5.76</td><td>7.87</td><td></td></tr>
+<tr><td>Chosen fill against the card (leaf on surface)</td><td>2.21</td><td>6.53</td><td>Under 3:1 by day; the corner tick is the second sign (rule 4).</td></tr>
+<tr><td>The hairline edge of a word that cannot be used</td><td>1.34</td><td>1.57</td><td>The edge does not carry the state. The quieter word and the reason line do.</td></tr>
+</table>
+
+<p class="cap"><b>What was measured, and what is only estimated.</b> Measured on 2026-10-07 on an emulator
+(Android 16, the released 0.9.0-beta.6, font scale 2.0), not on the owner's phone: on a 360 × 800 dp screen the
+four-row card clears the room by 79 dp; on 360 × 640 dp it is cut off by about 81 dp and the Colour row cannot
+be reached. <b>Estimated, not measured,</b> from this page's 46 px control and 12 px gap: a fifth row would
+leave about 13 to 21 dp on the 360 × 800 dp screen, which is less than the reason line needs. The same
+measurement found "Right" breaking across three lines, which by itself adds 76 dp to the card.</p>
+
+<p class="cap"><b>Twelve questions, answered on 2026-10-08.</b> The owner agreed to every recommendation, asked
+for one more research pass before the freeze, and left the decision after it to the implementer. After that
+pass (RESEARCH R24) <b>nine answers stand as the owner agreed them. Three are the implementer's and the owner
+has not seen them:</b> V-12 is reversed, and V-6 and V-10 keep their answer with a change. Each says so below,
+and the owner may overturn any of the three. The prototype above is built to these answers.</p>
+<table class="a29q">
+<tr><th>#</th><th>Question</th><th>Answer, 2026-10-08</th></tr>
+<tr><td>V-1</td><td>What is the row called?</td><td><b>Font.</b> It is the word people look for, and the public page already says "a second font". Against it: Book and Plain are not font names, and the owner's ruling and the design records call them voices. <b>Voice</b> keeps the design's word; on a phone it can read as sound or read-aloud, more so with a screen reader. <b>Lettering</b> is unambiguous; it is the longest label and at the largest text it pushes the row past the card's edge. <b>Type</b> is short; it can read as typing. Try all four with the switch.</td></tr>
+<tr><td>V-2</td><td>Where does the row sit?</td><td><b>First.</b> Font, Size, Align, Style, Colour is the order people know, and the reason line then sits beside the Size row it often talks about. Against it: the four rows a returning maker knows each move down one place, and at the largest text the taller card covers the words being changed.</td></tr>
+<tr><td>V-3</td><td>Is the way in still the button named "Size"?</td><td><b>Yes, for now.</b> A29 does not change how the card opens. A maker looking for a font may not look under "Size"; the first-time pass on a phone tests it, and renaming that button is a change to the Bench page, not to this one.</td></tr>
+<tr><td>V-4</td><td>May the word "Book" on a control be set in Fraunces?</td><td><b>Yes.</b> The design rules give Fraunces to long text and Inter to controls; here the word is a sample of the choice, and that is the reason to allow it.</td></tr>
+<tr><td>V-5</td><td>Does the chosen word carry the corner tick?</td><td><b>Yes</b> (rule 4). Without it, by day, the choice is told by a fill of 2.21:1 alone.</td></tr>
+<tr><td>V-6</td><td>May the card scroll inside itself when it does not fit, with a shade as the sign?</td><td><b>Yes</b> (rule 11), <b>with the half-shown row as the first sign and the shade as the second</b> (sharpened after R24: the evidence found is for content that is cut off, and none was found for a faint shade). By night the shade is about 1.4:1 at its darkest against 1.8:1 by day. The other ways out: mend "Right" breaking across lines, which gives back 76 dp at the largest text and is needed anyway, but does not help the short screen; a shorter card, which means smaller targets; or leaving rows that cannot be reached.</td></tr>
+<tr><td>V-7</td><td>How should a word that cannot be used look?</td><td><b>Flat, hairline edge, quieter word</b> (rule 7), still able to take a tap.</td></tr>
+<tr><td>V-8</td><td>Is the reason shown all the time, or only after a tap?</td><td><b>All the time</b> (rule 8). Against it: a Plain text below the minimum size always carries a line about Book, and the card is one line taller. Shown only after a tap, a sighted maker must tap a word that looks unavailable to learn why.</td></tr>
+<tr><td>V-9</td><td>Are these the lines?</td><td><b>Yes</b>: the four in rule 8 and the typing-time line in rule 13. Each names the font and gives the way out where there is one. They share one place, under the Font row, and that includes the reason for Smaller (rule 9).</td></tr>
+<tr><td>V-10</td><td>A font this app does not know: neither word chosen, with a line saying so?</td><td><b>Yes</b> (rule 10). Tapping a word then replaces the text's own font, and Undo puts it back. <b>The line now says so</b> (reworded after R24: it used to say only "It is shown in Plain", beside a Plain that was not chosen). If Book also cannot be used for that text, this line still shows first, and Book's reason shows once a word is chosen (changed with the rewording: the reason used to replace this line, and said the text "stays Plain" when it was not Plain).</td></tr>
+<tr><td>V-11</td><td>Is it acceptable that a change of font can push words out of the box with no new sign?</td><td><b>Yes, for now</b> (rule 12). It is what a size change does today. A sign for cut-off text is a separate piece of design.</td></tr>
+<tr><td>V-12</td><td>Does Undo say "Text style changed" and "Text style put back" for a font change?</td><td><b>No: "Font changed" and "Font put back"</b> (changed after R24, on the authority the owner gave on 2026-10-08; the recommendation agreed to was Yes). With a row named Style in the same card, "Text style" names the wrong row. The new lines are the Bench page's amendment A30.</td></tr>
+</table>
+
+<p class="cap"><b>For the first-time pass on a phone,</b> when this is built: does a maker find the row behind
+"Size"; do they understand a quiet "Book" and its line; do they notice the card scrolls; can they still see
+the words they are changing at the largest text; do they notice words leaving the box after a change of
+font; can the chosen "Book" be read by day (4.73:1, a thin serif). R24 expects the first of these to fail: a
+font is not what a button named "Size" promises, so renaming that button is ready to be proposed on the Bench
+page if it does. For the listen with a screen reader: whether "unavailable" on a word the platform calls
+enabled is the right thing to hear, or the word should be truly disabled (rule 7).</p>
+<p class="cap"><b>What A29 does not do.</b> It does not rule the smallest size for Book (the owner's: 12 pt, ruled 2026-10-08, to
+be confirmed on the printed page). It does not settle the seven differences between this page and the app, how the panel
+closes, the name "Coral" or Teal's contrast. It does not mend "Right" breaking across three lines at the
+largest text, or the typing-time notice saying letters "can't print yet" when they do; both were measured on
+2026-10-07 and both are the app's own faults today. It adds no third font, no font list and no size, spacing
+or line-height control.</p>
+<p class="cap"><b>What this page cannot show.</b> The page loads only two weights of Fraunces, so Bold on a Book
+text is thickened by the browser here; the app would use the real bold face. The largest-text views are drawn,
+not measured. What a screen reader says is written under the phone and has not been listened to; this page
+redraws the card on every tap, so its own reason line is not a model of when the app speaks. As in the frozen
+rows above, the arrow keys do not move between the choices here.</p>
+
+<script>
+/* A29 · THE FONT ROW — FROZEN 2026-10-08.  This script draws the A29 cards only. */
+(() => {
+  const SIZES = [10,12,14,16,20,24,28,32,40,48], MIN = 12 /* the owner's ruling of 2026-10-08, to be confirmed on the printed page */;
+  const INKS = [['Ink','ink','#23201C'],['Coral','coral','#A63C22'],['Teal','teal','#2A9D8F'],['Blue','blue','#264653'],['Ochre','ochre','#7A5E12']];
+  const TEXTS = {latin:'Saturday, and nothing planned', greek:'Saturday, and nothing planned. Καλημέρα', unknown:'Saturday, and nothing planned'};
+  const WHY = {
+    script: s => `Book has no ${s} letters, so this text stays Plain.`,
+    small: `Book needs ${MIN} pt or larger. Make the text larger first.`,
+    floor: `Book stops at ${MIN} pt. Switch to Plain to go smaller.`,
+    unknown: 'This text uses a font this version of Zinely does not have. It is drawn in Plain for now. Choosing Book or Plain replaces its font.',
+  };
+  const scriptsIn = t => { const g = /[Ͱ-Ͽἀ-῿]/.test(t), c = /[Ѐ-ԯ]/.test(t);
+    return g && c ? 'Greek and Cyrillic' : g ? 'Greek' : c ? 'Cyrillic' : ''; };
+  const fresh = scene => ({scene, text:TEXTS[scene], family: scene === 'unknown' ? 'unknown' : 'plain',
+    size:3, align:'Left', bold:false, italic:false, ink:0});
+  // Why Book cannot be chosen for this text now, or '' when it can (or is already chosen).
+  const bookBlock = s => { if (s.family === 'book') return ''; const sc = scriptsIn(s.text);
+    return sc ? WHY.script(sc) : SIZES[s.size] < MIN ? WHY.small : ''; };
+  const atFloor = s => s.family === 'book' && SIZES[s.size] === MIN && s.size > 0;
+  // A29.8: the one line under the Font row, derived from the state; never stored, never needs a tap.
+  const whyOf = s => s.family === 'unknown' ? WHY.unknown : atFloor(s) ? WHY.floor : bookBlock(s);
+  const esc = t => t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  let label = 'Font', uid = 0;
+
+  function card(s) {
+    const n = ++uid, block = bookBlock(s), why = whyOf(s), pt = SIZES[s.size];
+    const radio = (grp, name, on) => `<button role="radio" data-${grp}="${name}" aria-checked="${on}">${name}</button>`;
+    return `
+      <div class="tyrow"><span class="tylab" id="a29-lab-font-${n}">${label}</span>
+        <div class="tyvoice" role="radiogroup" aria-labelledby="a29-lab-font-${n}">
+          <button role="radio" data-font="book" class="book${block ? ' cant' : ''}" aria-checked="${s.family === 'book'}"
+            aria-label="${block ? esc('Book, unavailable. ' + block) : 'Book'}">Book</button>
+          <button role="radio" data-font="plain" class="plain" aria-checked="${s.family === 'plain'}" aria-label="Plain">Plain</button>
+        </div></div>
+      <p class="tywhy"${why ? '' : ' hidden'}>${esc(why)}</p>
+      <div class="tyrow"><span class="tylab">Size</span>
+        <div class="tysize">
+          <button data-step="-1" ${s.size === 0 ? 'disabled aria-label="Smaller"' : atFloor(s)
+            ? `class="cant" aria-label="${esc('Smaller, unavailable. ' + WHY.floor)}"` : 'aria-label="Smaller"'}><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+          <span class="tyval" role="img" aria-label="Size ${pt} point">${pt} pt</span>
+          <button data-step="1" aria-label="Larger"${s.size === SIZES.length - 1 ? ' disabled' : ''}><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+        </div></div>
+      <div class="tyrow"><span class="tylab" id="a29-lab-align-${n}">Align</span>
+        <div class="tyalign" role="radiogroup" aria-labelledby="a29-lab-align-${n}">
+          ${['Left','Center','Right'].map(a => radio('align', a, s.align === a)).join('')}
+        </div></div>
+      <div class="tyrow"><span class="tylab">Style</span>
+        <div class="tytog">
+          <button role="checkbox" data-tog="bold" aria-checked="${s.bold}" aria-label="Bold"><span class="b">B</span></button>
+          <button role="checkbox" data-tog="italic" aria-checked="${s.italic}" aria-label="Italic"><span class="i">I</span></button>
+        </div></div>
+      <div class="tyrow colour"><span class="tylab" id="a29-lab-colour-${n}">Colour</span>
+        <div class="tyinks" role="radiogroup" aria-labelledby="a29-lab-colour-${n}">
+          ${INKS.map(([name, cls], i) => `<button class="inkopt" role="radio" data-ink="${i}" aria-checked="${s.ink === i}" aria-label="${name}"><span class="pot ${cls}"></span></button>`).join('')}
+        </div></div>`;
+  }
+
+  // ---- the four stills ----
+  const still = {
+    book:    {...fresh('latin'), family:'book'},
+    greek:   fresh('greek'),
+    min:     {...fresh('latin'), family:'book', size:1},
+    unknown: fresh('unknown'),
+  };
+  const drawStills = () => document.querySelectorAll('[data-still]').forEach(el => { el.innerHTML = card(still[el.dataset.still]); });
+
+  // ---- the phone you can try ----
+  const $ = id => document.getElementById(id);
+  let s = fresh('latin'), past = [];
+  const say = html => { $('a29said').innerHTML = html; };
+  function draw(focusSel) {
+    const c = $('a29card'), top = c.scrollTop;
+    c.innerHTML = card(s); c.scrollTop = top;
+    const t = $('a29text');
+    t.textContent = s.text;
+    t.style.cssText = `font-family:${s.family === 'book' ? 'var(--serif)' : 'var(--sans)'};font-size:${SIZES[s.size] * 1.25}px;` +
+      `font-weight:${s.bold ? 700 : 400};font-style:${s.italic ? 'italic' : 'normal'};text-align:${s.align.toLowerCase()};color:${INKS[s.ink][2]};line-height:1.15`;
+    $('a29undo').disabled = !past.length;
+    if (focusSel) { const b = c.querySelector(focusSel); if (b) b.focus({preventScroll:true}); }
+  }
+  const commit = (next, sel, what = 'Text style') => { past.push([s, what]); s = next; draw(sel);
+    say(`Changed. Undo would say: <b>“${what} put back”</b>.`); };
+  const refuse = (why, sel, name) => { draw(sel);
+    say(`Nothing changed. A screen reader hears: <b>“${name}, unavailable. ${esc(why)}”</b>`); };
+
+  $('a29card').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const d = b.dataset;
+    if (d.font) {
+      const sel = `[data-font="${d.font}"]`;
+      if (d.font === s.family) return;                       // A29.6: the chosen word does nothing
+      if (d.font === 'book') { const why = bookBlock(s); if (why) return refuse(why, sel, 'Book'); }
+      return commit({...s, family:d.font}, sel, 'Font');   // v21-bench.html A30
+    }
+    if (d.step) {
+      const sel = `[data-step="${d.step}"]`;
+      if (d.step === '-1' && atFloor(s)) return refuse(WHY.floor, sel, 'Smaller');
+      return commit({...s, size: s.size + Number(d.step)}, sel);
+    }
+    if (d.align) return d.align === s.align ? undefined : commit({...s, align:d.align}, `[data-align="${d.align}"]`);
+    if (d.tog) return commit({...s, [d.tog]: !s[d.tog]}, `[data-tog="${d.tog}"]`);
+    if (d.ink) return Number(d.ink) === s.ink ? undefined : commit({...s, ink:Number(d.ink)}, `[data-ink="${d.ink}"]`);
+  });
+  $('a29undo').onclick = () => { if (!past.length) return; const [was, what] = past.pop(); s = was; draw();
+    say(`<b>“${what} put back”</b>`); };
+
+  $('a29tools').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const d = b.dataset, press = attr => b.parentElement.querySelectorAll(`[${attr}]`).forEach(x => x.setAttribute('aria-pressed', x === b));
+    if (d.scene) { press('data-scene'); s = fresh(d.scene); past = []; say(''); draw(); }
+    if (d.label) { press('data-label'); label = d.label; draw(); drawStills(); }
+    if (d.fs) { press('data-fs'); const p = $('a29phone').classList; p.toggle('fs2', d.fs !== '1'); p.toggle('short', d.fs === '2s'); $('a29card').scrollTop = 0; }
+    if (d.themeSet) { press('data-theme-set'); document.documentElement.dataset.theme = d.themeSet; }
+  });
+  drawStills(); draw();
+})();
+</script>

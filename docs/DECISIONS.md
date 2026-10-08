@@ -15118,7 +15118,7 @@ fixture, dependency or permission change.
 
 **Status:** Proposed, 2026-10-06. **Not accepted.** A preparation record: no Kotlin has been written. Drafted on
 `design/document-voices-prep` from `origin/main` @ `ae374ea`. It can be Accepted only when the owner has set
-the minimum print size, approved the type-bar amendment and accepted this text, and the implementation's
+the minimum print size (ruled 12 pt on 2026-10-08) and confirmed it on the printed page, approved the type-bar amendment and accepted this text, and the implementation's
 evidence is in; what is owed is listed under *Still owed*. Zinely 1.x step 8
 ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)), ruled by the owner on 2026-09-26
 ([decision gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8) and
@@ -15190,7 +15190,9 @@ the family is a string inside the saved document, not a database column.
 7. **The control is a Voice row in the type-bar card**, two named choices, each written in its own face. It is
    specified by an amendment to the frozen [`v21-typebar.html`](design/mockups/v21-typebar.html), which the owner
    approves. It is not a font list and not a picker. Its name and the two words are settled there.
-8. **The minimum print size for Book is the owner's**, after a printed page. If it is above 10 pt, the
+8. **The minimum print size for Book is the owner's**, after a printed page. **Ruled 12 pt on 2026-10-08,
+   to be confirmed on the printed page, which is not printed yet**
+   ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)). If it is above 10 pt, the
    default is that Book is unavailable below it, with a reason, unless the owner asks for a warning instead.
    Nothing changes a size or a voice on the maker's behalf. If the owner finds Book unacceptable at every
    size tried, the choice of face reopens and this ADR is withdrawn.
@@ -15216,11 +15218,17 @@ the family is a string inside the saved document, not a database column.
   Fraunces happens to lack (ŉ, ſ, the thin space, rarer accented letters), which is never flagged; and 17
   characters Fraunces has and Inter lacks, in Plain or on an older build. Plain has the same kind of gap
   today. Closing it is a separate decision.
-- **What is drawn for a character the face lacks is not established.** [ADR-070](#adr-070) records that such
-  a glyph is drawn as a blank box, with no system fallback. This preparation assumed instead that Android
-  fills it from a font on the phone, which could differ between phones. Neither was tested here. The
-  older-build test (check 11) and the device pass settle it, and whichever is true is written here at
-  acceptance.
+- **A character the face lacks is drawn from another font; established on one emulator only.**
+  [ADR-070](#adr-070) records "no system-font fallback", with an unsupported glyph resolving to `.notdef`. Measured on
+  2026-10-07 (Android 16 emulator, the released `0.9.0-beta.6`): `ﬁ`, a Chinese and a Thai character, none
+  of them in the shipped Inter, were each drawn from another font in the editor, on the Bench, in Read and in
+  the exported PDF. No blank glyph was seen. (Emoji are a separate case: the app bundles an emoji font,
+  [ADR-112](#adr-112).) The table is in
+  [Brief 02](planning/BRIEF-02-THREE-VOICES.md#measured-on-2026-10-07). The owner's phone was not tested, and
+  if the glyphs come from the device's own fonts, as the Thai one did (`NotoSansThai`), the same zine can differ between phones. The older-build
+  test (check 11) and the device pass confirm it on a phone, and the result is written here at acceptance.
+  ADR-070's text is not edited by this ADR; whether it gains a dated note is in [issue #103](https://github.com/aritr-codes/zinely-android/issues/103), with the
+  notice's wording.
 - **Coverage is narrower for Book than for Plain**, by design of the face (637 characters against 2,815). A
   maker writing Greek or Cyrillic cannot use Book for that text.
 - **APK size** grows by about 0.45 MB before compression (four files; the Regular is then in the APK twice,
@@ -15254,8 +15262,13 @@ the family is a string inside the saved document, not a database column.
 #### Still owed
 
 Tracked in [OWNER-CHECKLIST](OWNER-CHECKLIST.md) and in [Brief 02's gate table](planning/BRIEF-02-THREE-VOICES.md#gates).
-- The owner's minimum print size, after the printed page (Brief 02, Procedure A).
-- The type-bar amendment, drawn, reviewed and owner-approved.
+- The printed page (Brief 02, Procedure A), which confirms or changes the 12 pt minimum the owner ruled on
+  2026-10-08 before it was printed.
+- ~~The owner's approval of the type-bar amendment.~~ **Approved and frozen 2026-10-08** as
+  [`v21-typebar.html` A29](design/mockups/v21-typebar.html)
+  ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)). The row is labelled **Font**; decision 7's "a Voice
+  row" is read as that row, and the wording here is brought into line at acceptance. A font change has its own
+  undo lines, "Font changed" and "Font put back" (`v21-bench.html` A30).
 - The older-build fallback test, run and recorded (Brief 02, Procedure B), and its worst case written into
   *Consequences*.
 - An Android 7 check that the four faces break lines as they do on a current phone.
@@ -15274,7 +15287,7 @@ this text was committed:
 - ADR-070 was described as the coverage guard, which is ADR-057's. ADR-057 is now cited and ADR-070 described
   correctly.
 - "Drawn from a font on the phone" contradicted ADR-070's "blank box, no system fallback" with no evidence.
-  It is now recorded as not established, and owed to the older-build test and the device pass.
+  It is now recorded as not established, and owed to the older-build test and the device pass. (Measured on one emulator on 2026-10-07; see *Consequences*.)
 
 Recommended points accepted: the testing-line supersession narrowed; the OD-30 relation stated precisely; the
 minimum-size decision phrased as a default; the width sentence given its exception; the uncovered cases
@@ -15298,4 +15311,35 @@ voices and did not revise the direction document, and two of them need their ass
 count changed; they are tracked in [issue #97](https://github.com/aritr-codes/zinely-android/issues/97). A review of that reconciliation returned **GO WITH FIXES**; its two
 Required Fixes (a sequencing claim the brief did not make; "done" left standing beside "not fully carried
 out") are applied. It confirmed the edits to the two frozen files touch only comments and caption prose.
+
+**The type-bar amendment A29 and the 2026-10-07 measurements** were reviewed before commit by two independent
+reviewers, one reading the design as a first-time user and for accessibility, one checking the records against
+the raw measurement files. Both returned **GO WITH FIXES**. Four Required Fixes on the design, all **accepted**:
+the rule that lets the card scroll was not shown by the prototype (it now is, with the room the app was
+measured to have); nothing showed that the card scrolls (an edge shade was added); a sighted maker had to tap
+a quiet word to learn why it was quiet (the reason is now shown without a tap, and put to the owner as V-8);
+and the contrast of the word at rest, chosen and unavailable was not stated (a table was added). Three on the
+records, all **accepted**: an emoji was counted as a missing character, where the app bundles an emoji font
+([ADR-112](#adr-112)); an estimate for the fifth row stood under "Measured"; and Brief 02 and the 1.x plan
+still said the preparation branch was unmerged. The recommendations were accepted, with one **partly**: the
+spoken form of an unavailable choice repeats the word "Book", kept so the spoken and visible lines are one
+string, and left to the listen on a phone. The owner questions grew from eight to twelve. A review of that
+reconciliation returned **GO WITH FIXES** with no Required Fix; its five recommendations are applied (the
+faint night shade is stated in V-6, not strengthened). A29 was then a proposal, not approved and not frozen.
+
+**The freeze, 2026-10-08.** The owner agreed to all twelve recommendations, asked for one more research pass
+and left the decision after it to the implementer
+([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8) has the words). That pass
+([RESEARCH R24](RESEARCH.md#r24-the-font-row-what-other-editors-and-the-guidance-say---verified---recommendation-with-a--assumption-edge)) was briefed to overturn the recommendations. Nine answers
+stand as the owner agreed them. Three are the implementer's, made after that pass and not yet seen by the
+owner, who may overturn them: V-12 is reversed (the undo lines; one row added to the Bench page as A30), and
+V-6 and V-10 keep their answer with a change (a cut row is the first sign of scrolling; the unknown-font line
+says a tap replaces the font, and shows ahead of Book's own reason). Two reviews of the freeze returned **GO
+WITH FIXES**, and the fixes are applied: A30 first sat in the middle of the Bench page's table and moved two
+rows its script reaches by number (it is now the last row); a promise about where the card's edge falls was
+taken out because the drawing did not keep it; "kept all twelve" was false and is gone; and one reviewer held
+that A30 should have gone to the owner before it was frozen, so it is marked as owed the owner's confirmation.
+Not done by either reviewer: a phone, a screen reader, Gradle. The
+prototype was driven in a headless browser after the change: a font change reports "Font put back", any
+other change "Text style put back", and the unknown-font state shows the new line with neither word chosen.
 
