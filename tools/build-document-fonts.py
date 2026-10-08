@@ -1,6 +1,6 @@
 """Fetch the four static Fraunces faces for the Book document voice, and measure them against Inter.
 
-    python tools/build-document-fonts.py            fetch into docs/planning/voices/ and check the pinned hashes
+    python tools/build-document-fonts.py            fetch into render-android/src/main/assets/fonts/ and check the pinned hashes
     python tools/build-document-fonts.py --measure  no download: check the files on disk against the pins, then
                                                     print coverage and size against the bundled Inter faces
 
@@ -11,7 +11,8 @@ interface already ships: Fraunces9pt-Regular.ttf here is the same file as core/u
 fraunces_regular.ttf.
 
 Fetching needs only the standard library; --measure needs fontTools.
-The output is a preparation asset. Nothing in the app build reads docs/planning/voices/.
+The faces are the Book document voice (ADR-126) and ship in the app. PINNED below is the one record of their
+hashes: DocumentFontPinTest in :render-android reads this file and holds the bundled faces to it.
 """
 import hashlib
 import sys
@@ -19,8 +20,8 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "docs/planning/voices"
-INTER = ROOT / "render-android/src/main/assets/fonts"
+OUT = INTER = ROOT / "render-android/src/main/assets/fonts"
+LICENCE = ROOT / "feature/editor/src/main/assets/fonts"  # the one copy the app shows (Colophon, ADR-117)
 
 COMMIT = "7ccdec31c6028118dce3e47fe864e3744460371d"  # undercasetype/Fraunces master, 2025-10-21; fonts are Version 1.003
 BASE = f"https://raw.githubusercontent.com/undercasetype/Fraunces/{COMMIT}/"
@@ -38,6 +39,11 @@ PINNED = {  # file written to OUT -> (path upstream, SHA-256)
 FACES = [name for name in PINNED if name.endswith(".ttf")]
 
 
+def where(name):
+    """The faces sit with the document fonts; the licence sits where the app reads it."""
+    return (OUT if name.endswith(".ttf") else LICENCE) / name
+
+
 def fetch():
     """Download every pinned file, and write none of them unless all of them match."""
     files = {}
@@ -47,9 +53,8 @@ def fetch():
         if actual != pinned:
             sys.exit(f"{path}: upstream bytes are not the pinned ones ({actual}); nothing was written")
         files[name] = data
-    OUT.mkdir(parents=True, exist_ok=True)
     for name, data in files.items():
-        (OUT / name).write_bytes(data)
+        where(name).write_bytes(data)
         print(f"{PINNED[name][1]}  {name}")
 
 
@@ -110,9 +115,9 @@ def measure():
 def check():
     """Stop unless every file on disk is the pinned one."""
     for name, (_, pinned) in PINNED.items():
-        if not (OUT / name).is_file():
+        if not where(name).is_file():
             sys.exit(f"{name}: not on disk; run without arguments to fetch it")
-        if hashlib.sha256((OUT / name).read_bytes()).hexdigest() != pinned:
+        if hashlib.sha256(where(name).read_bytes()).hexdigest() != pinned:
             sys.exit(f"{name}: the file on disk is not the pinned one")
 
 

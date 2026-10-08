@@ -1,5 +1,7 @@
 package com.aritr.zinely.render.android
 
+import com.aritr.zinely.core.model.DocumentVoice
+
 /**
  * One bundled family's four static faces, as asset paths under the render module's `assets/`.
  *
@@ -89,15 +91,20 @@ public class DocumentFontRegistry(
         byName[fontFamily.canonical()] ?: defaultFamily
 
     public companion object {
-        /** The wire name of the family the render module bundles today. */
+        /** The wire name of the default family: Plain's face, and what an unknown family is drawn in. */
         public const val INTER: String = "Inter"
 
+        /** The wire name of Book's family ([DocumentVoice.BOOK], ADR-126). */
+        public val FRAUNCES: String = DocumentVoice.BOOK.familyName
+
         /**
-         * The families this build actually carries in `assets/fonts/`.
+         * The families this build actually carries in `assets/fonts/`: Inter (Plain) and Fraunces (Book,
+         * [ADR-126](../../../../../../../../docs/DECISIONS.md#adr-126)).
          *
-         * One family today. That is a statement about what is bundled, not about what the registry
-         * supports — expanding the set is the designer's font/preset curation, gated on its freeze, and
-         * lands here as additional rows plus their TTFs.
+         * The Fraunces faces are upstream's own static 9 pt files, unmodified and pinned by SHA-256 in
+         * `tools/build-document-fonts.py`; `DocumentFontPinTest` holds the files here to those pins.
+         * `"sans-serif"`, which every Plain text carries, is deliberately **not** a row: it resolves to the
+         * default like any unregistered name, which is the behaviour older builds already have.
          */
         public val Bundled: DocumentFontRegistry = DocumentFontRegistry(
             families = listOf(
@@ -107,6 +114,13 @@ public class DocumentFontRegistry(
                     boldAsset = "fonts/Inter-Bold.ttf",
                     italicAsset = "fonts/Inter-Italic.ttf",
                     boldItalicAsset = "fonts/Inter-BoldItalic.ttf",
+                ),
+                DocumentFontFamily(
+                    name = FRAUNCES,
+                    regularAsset = "fonts/Fraunces9pt-Regular.ttf",
+                    boldAsset = "fonts/Fraunces9pt-Bold.ttf",
+                    italicAsset = "fonts/Fraunces9pt-Italic.ttf",
+                    boldItalicAsset = "fonts/Fraunces9pt-BoldItalic.ttf",
                 ),
             ),
             defaultFamilyName = INTER,
