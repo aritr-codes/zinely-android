@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.ui.theme.ZinelyTheme
 
@@ -29,10 +30,12 @@ internal fun EditorSelectionCue(
     // disappears on it; `onButter` is the palette's explicit dark-on-bright material ink in both themes.
     contentColor: Color = ZinelyTheme.v21Colors.onButter,
     borderColor: Color = ZinelyTheme.v21Colors.onButter,
+    size: Dp = EditorSelectionCueSize,
+    glyphSize: Dp = EditorSelectionCueGlyphSize,
 ) {
     Box(
         modifier = modifier
-            .size(EditorSelectionCueSize)
+            .size(size)
             .background(containerColor, CircleShape)
             .border(EditorSelectionCueBorder, borderColor, CircleShape),
         contentAlignment = Alignment.Center,
@@ -41,7 +44,7 @@ internal fun EditorSelectionCue(
             imageVector = Icons.Filled.Check,
             contentDescription = null,
             tint = contentColor,
-            modifier = Modifier.size(EditorSelectionCueGlyphSize),
+            modifier = Modifier.size(glyphSize),
         )
     }
 }
