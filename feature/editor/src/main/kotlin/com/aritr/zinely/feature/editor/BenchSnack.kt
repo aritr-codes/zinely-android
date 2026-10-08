@@ -397,6 +397,7 @@ internal fun undoSnackLine(step: Effect.HistoryStepped, currentPageIndex: Int): 
         EditVerb.WORDS -> if (undo) u.WORDS_PUT_BACK else u.WORDS_CHANGED
         EditVerb.WORDS_FROM_EMPTY -> if (undo) u.WORDS_TAKEN_OFF else u.WORDS_ADDED
         EditVerb.TEXT_STYLE -> if (undo) u.TEXT_STYLE_PUT_BACK else u.TEXT_STYLE_CHANGED
+        EditVerb.FONT -> if (undo) u.FONT_PUT_BACK else u.FONT_CHANGED
         EditVerb.COPIER_ON -> if (undo) u.COPIER_TAKEN_OFF else u.COPIER_ADDED
         EditVerb.COPIER_OFF -> if (undo) u.COPIER_PUT_BACK else u.COPIER_REMOVED
         EditVerb.FLIP_LEFT_RIGHT_ON -> if (undo) u.flipTakenOff(u.LEFT_RIGHT) else u.flipAdded(u.LEFT_RIGHT)

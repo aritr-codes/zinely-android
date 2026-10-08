@@ -104,6 +104,28 @@ class EditLabelTest {
     }
 
     @Test
+    fun `a font-only step is Font, and font with anything else stays Text style (A30)`() {
+        assertEquals(EditLabel(EditVerb.FONT, null), labelAfter(model(text), Intent.StyleText("text", fontFamily = "Fraunces")))
+        // Back to Plain, and an unknown family replaced: both change only the font.
+        val book = text.copy(style = text.style.copy(fontFamily = "Fraunces"))
+        assertEquals(EditVerb.FONT, labelAfter(model(book), Intent.StyleText("text", fontFamily = "sans-serif"))!!.verb)
+        val unknown = text.copy(style = text.style.copy(fontFamily = "Averia Sans Libre"))
+        assertEquals(EditVerb.FONT, labelAfter(model(unknown), Intent.StyleText("text", fontFamily = "Fraunces"))!!.verb)
+
+        assertEquals(
+            EditVerb.TEXT_STYLE,
+            labelAfter(model(text), Intent.StyleText("text", fontFamily = "Fraunces", bold = true))!!.verb,
+        )
+        assertEquals(
+            EditVerb.TEXT_STYLE,
+            labelAfter(model(text), Intent.StyleText("text", fontFamily = "Fraunces", sizePt = 20.0))!!.verb,
+        )
+        // Words and a font together still say the words (A26).
+        val both = EditTextCommand(1, "text", text, text.copy(text = "other", style = text.style.copy(fontFamily = "Fraunces")))
+        assertEquals(EditLabel(EditVerb.WORDS, null), both.editLabel(model(text).document))
+    }
+
+    @Test
     fun `photo replace, copier, flips and framing`() {
         assertEquals(EditLabel(EditVerb.SWAP, EditKind.PHOTO), labelAfter(model(photo), Intent.ReplaceImage("photo", "b".repeat(64))))
         assertEquals(EditVerb.COPIER_ON, labelAfter(model(photo), Intent.ToggleCopier("photo"))!!.verb)

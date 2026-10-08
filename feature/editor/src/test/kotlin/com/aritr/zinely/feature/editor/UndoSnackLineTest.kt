@@ -36,6 +36,7 @@ class UndoSnackLineTest {
         Triple(EditVerb.WORDS, null, 1) to ("Words put back" to "Words changed"),
         Triple(EditVerb.WORDS_FROM_EMPTY, null, 1) to ("Words taken off" to "Words added"),
         Triple(EditVerb.TEXT_STYLE, null, 1) to ("Text style put back" to "Text style changed"),
+        Triple(EditVerb.FONT, null, 1) to ("Font put back" to "Font changed"),
         Triple(EditVerb.SWAP, EditKind.PHOTO, 1) to ("Photo swapped back" to "Photo swapped"),
         Triple(EditVerb.SWAP, EditKind.ART, 1) to ("Art piece swapped back" to "Art piece swapped"),
         Triple(EditVerb.COPIER_ON, null, 1) to ("Copier taken off" to "Copier added"),

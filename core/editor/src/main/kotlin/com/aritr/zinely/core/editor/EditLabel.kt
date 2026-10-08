@@ -16,7 +16,7 @@ import kotlin.math.abs
  * live in `Copy.Undo`; this is only the meaning they are chosen from.
  *
  * @property kind the thing acted on, or `null` for a verb the copy names without one (stacking, words,
- *   text style, copier, flip, ink, across fold, framing).
+ *   text style, font, copier, flip, ink, across fold, framing).
  * @property count how many things the step held; the copy says "N things" above one.
  */
 public data class EditLabel(val verb: EditVerb, val kind: EditKind?, val count: Int = 1)
@@ -28,7 +28,11 @@ public enum class EditVerb {
 
     /** Typing into a box that had no words: Add Text's second step (A26 "Words taken off"). */
     WORDS_FROM_EMPTY,
-    TEXT_STYLE, SWAP,
+    TEXT_STYLE,
+
+    /** A step that changes only a text's font (`v21-bench.html` A30). Font and anything else is [TEXT_STYLE]. */
+    FONT,
+    SWAP,
     COPIER_ON, COPIER_OFF,
     FLIP_LEFT_RIGHT_ON, FLIP_LEFT_RIGHT_OFF, FLIP_TOP_BOTTOM_ON, FLIP_TOP_BOTTOM_OFF,
     INK, SPREAD, FRAMING,
@@ -66,6 +70,10 @@ public fun Command.editLabel(doc: ZineDocument): EditLabel? = when (this) {
     )
     is ReorderCommand -> EditLabel(EditVerb.RESTACK, null)
     is EditTextCommand -> when {
+        // A30: the font alone. Put the new family on the old style; if that is the whole change, it was
+        // a font step. The type-bar card has a row named Style, and a font is not what that row changes.
+        before.text == after.text && before.style != after.style &&
+            before.style.copy(fontFamily = after.style.fontFamily) == after.style -> EditLabel(EditVerb.FONT, null)
         before.text == after.text -> EditLabel(EditVerb.TEXT_STYLE, null)
         // A26: words and style together say the words.
         before.text.isBlank() -> EditLabel(EditVerb.WORDS_FROM_EMPTY, null)

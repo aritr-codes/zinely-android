@@ -20,7 +20,8 @@ import org.junit.jupiter.api.Test
 /**
  * Immediate-commit text styling (FR-3, ADR-055): [Intent.StyleText] patches individual [TextStyle]
  * fields via one undoable [EditTextCommand], preserving every untouched field (incl. `fontFamily`),
- * the element's text/geometry/id/zIndex, and doing nothing for a blank/absent element. Pure.
+ * the element's text/geometry/id/zIndex, and doing nothing for a blank/absent element. The font patch
+ * (ADR-126) is the one writer of `fontFamily`. Pure.
  */
 class TextStyleIntentTest {
 
@@ -62,6 +63,51 @@ class TextStyleIntentTest {
         val start = model(txt("a", style = TextStyle(fontFamily = "serif")))
         val after = el(styleOf(start, Intent.StyleText("a", sizePt = 30.0, bold = true)), "a").style
         assertEquals("serif", after.fontFamily)
+    }
+
+    @Test
+    fun `a font change writes the family and nothing else, as one undo entry that redo restores`() {
+        val styled = TextStyle(sizePt = 18.0, color = ColorRgba.WHITE, align = TextAlign.END, bold = true, italic = true)
+        val start = model(txt("a", style = styled))
+
+        val r = EditorReducer.reduce(start, Intent.StyleText("a", fontFamily = "Fraunces"))
+
+        assertEquals(styled.copy(fontFamily = "Fraunces"), el(r.model, "a").style)
+        assertEquals(1, r.model.history.undo.size)
+        assertTrue(r.effects.any { it is Effect.Autosave })
+        val undone = EditorReducer.reduce(r.model, Intent.Undo).model
+        assertEquals(start.document, undone.document)
+        val redone = EditorReducer.reduce(undone, Intent.Redo).model
+        assertEquals("Fraunces", el(redone, "a").style.fontFamily)
+    }
+
+    @Test
+    fun `the same font again is a no-op and adds no step`() {
+        val start = model(txt("a", style = TextStyle(fontFamily = "Fraunces")))
+        val r = EditorReducer.reduce(start, Intent.StyleText("a", fontFamily = "Fraunces"))
+        assertEquals(start.document, r.model.document)
+        assertTrue(r.model.history.undo.isEmpty())
+        assertTrue(r.effects.none { it is Effect.Autosave })
+    }
+
+    @Test
+    fun `a text returned to Plain is identical to one never touched`() {
+        val start = model(txt("a"))
+        val book = EditorReducer.reduce(start, Intent.StyleText("a", fontFamily = "Fraunces")).model
+        val plain = EditorReducer.reduce(book, Intent.StyleText("a", fontFamily = "sans-serif")).model
+        assertEquals(start.document, plain.document)
+    }
+
+    @Test
+    fun `a family this build does not know is kept by every other style change, and replaced only by a font patch`() {
+        val start = model(txt("a", style = TextStyle(fontFamily = "Averia Sans Libre")))
+        val restyled = EditorReducer.reduce(start, Intent.StyleText("a", bold = true, align = TextAlign.CENTER)).model
+        assertEquals("Averia Sans Libre", el(restyled, "a").style.fontFamily)
+
+        val chosen = EditorReducer.reduce(restyled, Intent.StyleText("a", fontFamily = "sans-serif")).model
+        assertEquals("sans-serif", el(chosen, "a").style.fontFamily)
+        // Until the maker chooses, the text's own font is kept; Undo puts it back.
+        assertEquals("Averia Sans Libre", el(EditorReducer.reduce(chosen, Intent.Undo).model, "a").style.fontFamily)
     }
 
     @Test

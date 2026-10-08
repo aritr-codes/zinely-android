@@ -456,12 +456,6 @@ public object EditorReducer {
     }
 
     /**
-     * Immediate style commit (FR-3, ADR-055). Patches only the supplied fields onto the element's current
-     * [com.aritr.zinely.core.model.TextStyle] via copy-on-copy, so every untouched field — including
-     * `fontFamily`, which has no patch — plus the element's text/geometry/id/zIndex are preserved. One
-     * committed change ⇒ one undoable [EditTextCommand]. Absent / non-text id or an unchanged style ⇒ no-op.
-     */
-    /**
      * SUPPLIES-SPEC §8 *Change ink*. Total by construction: anything that is not a [DecorElement] on the
      * **current** page resolves to `null` and reduces to a no-op, which is the same shape every other
      * type-specific verb here already has.
@@ -493,6 +487,13 @@ public object EditorReducer {
         else committing(model, EditDecorCommand(model.currentPageIndex, el.id, el, after))
     }
 
+    /**
+     * Immediate style commit (FR-3, ADR-055; the font is ADR-126). Patches only the supplied fields onto
+     * the element's current [com.aritr.zinely.core.model.TextStyle] via copy-on-copy, so every untouched
+     * field plus the element's text/geometry/id/zIndex are preserved; `fontFamily` is written only when the
+     * intent carries one. One committed change ⇒ one undoable [EditTextCommand]. Absent / non-text id or an
+     * unchanged style (the same font again included) ⇒ no-op.
+     */
     private fun styleText(model: EditorModel, intent: Intent.StyleText): Reduction {
         val el = currentPage(model).elements.firstOrNull { it.id == intent.id } as? TextElement
             ?: return Reduction(model)
@@ -507,6 +508,7 @@ public object EditorReducer {
                 align = intent.align ?: el.style.align,
                 bold = intent.bold ?: el.style.bold,
                 italic = intent.italic ?: el.style.italic,
+                fontFamily = intent.fontFamily ?: el.style.fontFamily,
             ),
         )
         return if (after == el) Reduction(model)
