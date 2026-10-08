@@ -19,8 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The design for folders on the Shelf: a written decision (ADR-125), the research behind it, and a
   try-it-yourself amendment to the Shelf design. The design was approved on 2026-10-07. It is not built yet:
   nothing in the app changed and there is still nothing to try in a download.
-- A design proposal for choosing a font for a text, Book or Plain: a try-it-yourself amendment to the
-  type-bar design, not yet approved. Two measurements behind it are recorded. Nothing in the app changed and
+- The design for choosing a font for a text, Book or Plain: a try-it-yourself amendment to the
+  type-bar design, approved on 2026-10-08, with one line added to the editor design's list of Undo messages
+  ("Font changed"). Two measurements behind it are recorded. Nothing in the app changed and
   there is still nothing to try in a download.
 - The storage for folders on the Shelf (ADR-125, part 1 of 2). A zine can now carry a folder name in its own
   file, and a backup carries that name too, so folders will come back after a restore. Older backups still

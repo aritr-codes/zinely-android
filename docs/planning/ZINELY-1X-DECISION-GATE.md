@@ -95,7 +95,19 @@ the resulting sequence and per-step readiness are in the [plan §5 and §11](ZIN
     against, since the minimum is one named value, so the printed page no longer has to come before an
     implementation session; it has to come before [ADR-126](../DECISIONS.md#adr-126) is accepted. If the
     owner meant the page to come first, say so and the session waits for it.
-- **Still the owner's:** the printed page; approving the type-bar amendment drawing.
+- **Ruling (owner, 2026-10-08): the type-bar amendment is approved.** Asked the twelve questions V-1 to V-12
+  of [`v21-typebar.html` A29](../design/mockups/v21-typebar.html), each with a recommendation, the owner
+  answered: "i agree with all you may proceed. if there a need of change we can always do it later right?
+  though i would again suggest to do research, use web search tool, look in android development UI, use proper
+  skills in your arsenal then decide. you have the full autonomy". The research was done
+  ([RESEARCH R24](../RESEARCH.md#r24-the-font-row-what-other-editors-and-the-guidance-say---verified---recommendation-with-a--assumption-edge)) and A29 was frozen the same day.
+  - **Decided by the implementer under that authority, and the owner's to overturn:** V-12 changed. A font
+    change says "Font changed" and "Font put back", not the "Text style" lines the owner had agreed to,
+    because the card has a row named Style; that is one new row in the Bench page's undo table
+    (`v21-bench.html` A30). V-6 and V-10 keep their answers and were sharpened: a cut row is the first sign
+    that the card scrolls and the shade the second; the unknown-font line now says that choosing a word
+    replaces the font. The other nine stand as recommended.
+- **Still the owner's:** the printed page; accepting [ADR-126](../DECISIONS.md#adr-126) once it is built.
 - **Note:** for document voices this ruling qualifies the ROADMAP constraint "unknown-font fallback must not
   silently become layout loss"; the ROADMAP carries a dated note pointing here. D2 must still document and test
   the fallback layout honestly (re-wrap, possible overflow of a fixed box).
@@ -273,6 +285,7 @@ These are still **owner** decisions. They are just not needed yet.
 
 | Date | Change |
 |---|---|
+| 2026-10-08 | Q2: **the owner approved the type-bar amendment A29** (all twelve recommendations) and left the last decision to the implementer after one more research pass (RESEARCH R24). A29 frozen; V-12 changed to "Font changed" / "Font put back" (`v21-bench.html` A30); V-6 and V-10 sharpened. |
 | 2026-10-08 | Q2: **the owner ruled Book's minimum print size, 12 pt**, on the recommendation in RESEARCH R23 and to be confirmed on the printed page, which is not printed yet. |
 | 2026-10-06 | Q4 carried out in part (plan step Q4-F): `v21-typebar.html` and `v21-reframe.html` frozen; the divergences found are listed in each file and returned to the owner, whose rulings on them are still owed. |
 | 2026-10-06 | Q2: Brief 02 rewritten for two voices. The four document faces are upstream's own static files (not instanced); the printed-page procedure and the older-build test are written in the brief. The minimum print size and the type-bar amendment approval are still the owner's. |

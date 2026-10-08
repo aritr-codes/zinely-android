@@ -798,3 +798,88 @@ Fraunces the answer would be 14 pt.
 was found on that. Only the printed page answers it
 ([Brief 02, Procedure A](planning/BRIEF-02-THREE-VOICES.md#procedure-a-the-printed-book-page)). The ruling is
 in the [decision gate, Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8).
+
+## R24. The Font row: what other editors and the guidance say — ✅ VERIFIED + 🟦 RECOMMENDATION, with a 🟨 ASSUMPTION edge
+
+A second pass before [`v21-typebar.html` A29](design/mockups/v21-typebar.html) was frozen, asked for by the owner
+on 2026-10-08. Its brief was to overturn the twelve recommendations (V-1 to V-12), not to confirm them. Web
+research, one pass. ✅ marks a page that was opened; 🟨 a search summary or an inference. **Not found or not
+opened:** the Material 3 guideline pages for segmented buttons and snackbars (they would not render), Canva's
+and Adobe's help pages (refused), and anything on how CapCut, Phonto, Picsart, Procreate, GoDaddy Studio or
+Adobe Express name the control. No study comparing a fade with cut-off content as a sign of scrolling was found.
+
+### R24.1 The word is "Font", and it comes before Size — ✅ VERIFIED
+
+[Google Docs on Android](https://support.google.com/docs/answer/1663349?co=GENIE.Platform%3DAndroid) lists
+"Style, Font, Size, Text color". [Keynote on iPhone](https://support.apple.com/guide/keynote-iphone/tan7b17ae845/ios)
+says "tap Font". 🟨 Canva's text toolbar is reported to start with Font. Nothing was found that calls the
+control Voice, Lettering or Type. 🟨 Moving controls a returning user knows has a cost; nothing was found on
+a shift of one row.
+
+### R24.2 A font behind a button named "Size" is likely to be missed — ✅ VERIFIED
+
+[NN/g on information scent](https://www.nngroup.com/articles/information-scent/): with a vague label, "people
+might miss a good source of information". No evidence was found for the other side.
+
+### R24.3 A state told by a 2.21:1 fill is told by colour alone — ✅ VERIFIED
+
+[WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html) counts a difference in colour as a
+second sign only from 3:1. [WCAG 1.4.11](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html)
+wants a graphic that carries a state to reach 3:1 against what is beside it.
+
+### R24.4 Scrolling inside a panel is allowed; the sign that works is content cut off — ✅ VERIFIED (the sources give advice, not measurements)
+
+[WCAG 1.4.4](https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html) fails text that is "clipped,
+truncated or obscured" at 200 %; scrolling to reach it passes.
+[NN/g, the illusion of completeness](https://www.nngroup.com/articles/illusion-of-completeness/) recommends
+content that peeks past the edge and does not mention fades;
+[UIE](https://archive.uie.com/brainsparks/2006/08/02/utilizing-the-cut-off-look-to-encourage-users-to-scroll)
+says the same, without data. [NN/g on bottom sheets](https://www.nngroup.com/articles/bottom-sheet/) warns
+against a sheet "obscuring relevant background content".
+
+### R24.5 Something that cannot be used should stay reachable and say why — ✅ VERIFIED for the web, 🟨 on Android
+
+[Smashing Magazine](https://www.smashingmagazine.com/2021/08/frustrating-design-patterns-disabled-buttons/)
+("Disabled buttons don't explain what's wrong") and
+[CSS-Tricks](https://css-tricks.com/making-disabled-buttons-more-inclusive/). 🟨 Their reason is the web's,
+where a disabled control leaves the focus order. On Android a disabled node is reported to stay reachable by
+TalkBack and to be read as "disabled", so a control that is enabled and does nothing may promise more than
+one that is disabled. Not settled here.
+
+### R24.6 A missing font is flagged beside its name, and replacing it is treated as a change worth a warning — ✅ VERIFIED, with a 🟨 ASSUMPTION edge
+
+[Figma, the missing-font alert](https://help.figma.com/hc/en-us/articles/360039956994-Missing-font-alert-in-Figma-Design).
+For words that leave their box, [Affinity Publisher](https://affinity.help/publisher2/en-US.lproj/pages/Text/flowingText.html)
+turns the flow button red; 🟨 InDesign is reported to show a plus sign.
+
+### R24.7 Platform facts that bind the build — ✅ VERIFIED
+
+- [Android accessibility help](https://support.google.com/accessibility/android/answer/7101858): touch targets
+  of 48 dp at least, both ways.
+- [Material Components for Android](https://github.com/material-components/material-components-android/blob/master/docs/components/ToggleButtonGroup.md):
+  "Segmented buttons are being deprecated in the Material 3 expressive update".
+- [Android 14](https://developer.android.com/about/versions/14/features): text scaling to 200 % is not linear
+  ("4sp + 20sp might not equal 24sp"), so sizes worked out by adding sp values cannot be relied on; the page
+  also says not to use sp for padding.
+
+### R24.8 Zinely application — 🟦 RECOMMENDATION
+
+Nine of the twelve answers stand. One is reversed (V-12) and two keep their answer with a change (V-6, V-10),
+all three in A29 before it is frozen; the rest are conditions on the build:
+
+- **V-12 changes.** With a row named Style in the card, "Text style changed" names the wrong row after a
+  font change. Outside evidence for this is thin (🟨 one design system's wording pattern); the collision is
+  the app's own. A font change says "Font changed" and "Font put back".
+- **V-6 is sharpened.** The evidence is for a cut row, and none was found for a shade of 1.4 to 1.8:1. The
+  cut row is the first sign and the shade the second (R24.4).
+- **V-10 is sharpened.** The line said "It is shown in Plain" beside a Plain that was not chosen, and a tap
+  on Plain then replaced the stored font with nothing to see. The line now says the tap replaces the font
+  (R24.6), and it shows ahead of Book's own reason while the font is unknown.
+- **For the build:** a 48 dp touch target whatever is drawn; the row built as the Align row is, not from the
+  Material segmented button; the card's fit at the largest text measured, not worked out (R24.7).
+- **For the phone passes:** whether the row is found behind "Size" (R24.2 expects not); whether the chosen
+  "Book" reads by day; whether "unavailable" on an enabled control is right under TalkBack (R24.5); whether
+  the card covering the words being changed gets in the way (R24.4).
+- **A known limit, not mended:** words pushed out of their box by a change of font get no sign (R24.6).
+
+[Decision gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8) owns the ruling; A29 owns the design.

@@ -2387,6 +2387,12 @@ const a26=(()=>{
     ['Type into a box that had no words (Add Text)','EditText: text, from empty', ()=>'Words taken off',        ()=>'Words added',            [[]]],
     ['Add Text, box still empty',                   'PlaceCommand of an empty text box', ()=>'Empty box taken off', ()=>'Empty box added',   [[]]],
     ['Reframe (Done)',                              'EditImage: crop · fit', ()=>'Framing put back',            ()=>'Framing changed',        [[]]],
+    // A30 · 2026-10-08 · FROZEN with v21-typebar.html A29 (its V-12), BY THE IMPLEMENTER on the authority the
+    // owner gave that day; the owner has not seen this row and may overturn it (OWNER-CHECKLIST).  One row
+    // added to A26's table; no A26 line changed.  It is the LAST row because FORWARD below reaches rows by
+    // number.  A step that changes only a text's font is not "Text style": the type-bar card has a row named
+    // Style.  A step that changes the font and something else in one go keeps the "Text style" row.
+    ['Font of text (Book or Plain)',                'EditText: font only',   ()=>'Font put back',               ()=>'Font changed',           [[]]],
   ];
   const table=()=>ROWS.map(([act,source,undo,redo,ex])=>({act,source,undo:ex.map(a=>undo(...a)),redo:ex.map(a=>redo(...a))}));
   const line=i=>ROWS[i][2];

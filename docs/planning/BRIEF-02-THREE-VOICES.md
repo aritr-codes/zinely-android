@@ -1,12 +1,14 @@
 # Brief 02 — Document voices: Book and Plain
 
-> ⛔ **Not ready for an implementation session.** One thing still blocks one (item 2):
+> ✅ **Ready for an implementation session** since 2026-10-08, **on one reading that is the implementer's**:
+> that the build may start against 12 pt before the page that confirms it is printed (item 1; put to the
+> owner in the gate). What blocked a session, and how each closed:
 > 1. ~~The owner's minimum print size for Book.~~ **Ruled 2026-10-08: 12 pt, to be confirmed on the printed
 >    page** ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)). [Procedure A](#procedure-a-the-printed-book-page) is not printed yet.
 >    Whether it must come before a session is the implementer's reading, recorded and put to the owner there.
-> 2. **The owner's approval of the row drawn in the type bar** (gate 5). It was drawn on 2026-10-07 as the
->    proposed amendment [`v21-typebar.html` A29](../design/mockups/v21-typebar.html), with twelve questions for the owner (V-1 to V-12). It proposes the label
->    **Font** for the row this brief calls the Voice row.
+> 2. ~~The owner's approval of the row drawn in the type bar~~ (gate 5). **Approved and frozen 2026-10-08** as
+>    [`v21-typebar.html` A29](../design/mockups/v21-typebar.html) ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)). The row
+>    this brief calls the Voice row is labelled **Font**. Where this brief and A29 differ, A29 is the design.
 > 3. ~~This preparation branch merged.~~ Merged 2026-10-07 (PR #99).
 >
 > Two more gates close inside the session itself. The [gate table](#gates) has all seven.
@@ -51,19 +53,19 @@ editing-surface change, and the control's shape inside the type bar.
 | 2 | `v21-typebar.html` frozen | ✅ Frozen 2026-10-06; on `main` since 2026-10-07 (PR #99). Seven differences from the app were [returned to the owner](../OWNER-CHECKLIST.md#15-product--design-authorship); none blocks this brief, but gate 5 meets them | done | done |
 | 3 | Four Fraunces document faces fetched, pinned and measured | ✅ Done; on `main` since 2026-10-07 (PR #99). See [The four faces](#the-four-faces). They sit in `docs/planning/voices/`, outside the app build | done | done |
 | 4 | **Minimum print size for Book** | ◐ **12 pt**, ruled 2026-10-08, to be confirmed on the printed page ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)). [Procedure A](#procedure-a-the-printed-book-page) is written; the page is not printed | the page: before gate 7 (the gate's reading, put to the owner) | owner |
-| 5 | **Type-bar amendment**: the Voice row drawn in `v21-typebar.html`, reviewed, owner-approved, frozen again | ◐ **Drawn and reviewed 2026-10-07 as proposed amendment A29; not approved, not frozen.** The owner's answers to V-1 to V-12 are owed ([OWNER-CHECKLIST §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship)) | before a session starts | the owner |
+| 5 | **Type-bar amendment**: the Voice row drawn in `v21-typebar.html`, reviewed, owner-approved, frozen again | ✅ **Approved by the owner and frozen 2026-10-08 as A29** ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)), after a second research pass ([RESEARCH R24](../RESEARCH.md#r24-the-font-row-what-other-editors-and-the-guidance-say---verified---recommendation-with-a--assumption-edge)). With it, one row added to the Bench page's undo table (`v21-bench.html` A30) | done | done |
 | 6 | **Older-build fallback test** run and recorded | ⛔ Not run. [Procedure B](#procedure-b-the-older-build-fallback-test) is written. It needs a build that can set Book, so it cannot run earlier | inside the session, before merge | implementer, with an emulator or a second phone |
 | 7 | [ADR-126](../DECISIONS.md#adr-126) accepted | ⛔ Drafted as *Proposed* on this branch (2026-10-06); not accepted. It covers what [the section below](#what-the-adr-must-cover) lists, except the two figures that only the session can measure | accepted before merge | implementer drafts, owner accepts |
 
 **Order.** The size is ruled, 12 pt, and the page that confirms it (4) can be printed at any time before
-gate 7; it needs nothing from the drawing. Draw the
-Voice row (5), always including how a choice looks when it cannot be used, because the script rule needs
-that state whatever the size ruling. The owner approves the drawing. Then the session: Kotlin, the
+gate 7. The row is drawn, approved and frozen (5, done 2026-10-08). What is left is the session: Kotlin, the
 older-build test (6), the ADR accepted (7), merge.
 
 **The owner's part, in one place:** (1) ~~merge this preparation branch~~ done 2026-10-07, (2) ~~rule the minimum size~~ 12 pt, ruled 2026-10-08; print the page to confirm it
-(Book is shown as unavailable below the minimum; say so if a warning is wanted instead), (3) approve the Voice row
-drawing, including a TalkBack listen to the row's label, (4) accept the ADR.
+(Book is shown as unavailable below the minimum; say so if a warning is wanted instead), (3) ~~approve the Voice row
+drawing~~ approved 2026-10-08, **without** the TalkBack listen to the row's label this line asked for, which is
+still owed and is made on the built row ([OWNER-CHECKLIST](../OWNER-CHECKLIST.md)); confirm or overturn the
+three answers the implementer changed after the second research pass, (4) accept the ADR.
 
 What each size ruling costs. The sizes a maker can pick are 10, 12, 14, 16 pt and up. A 12 pt minimum means
 Book cannot be used at 10 pt. A 14 pt minimum removes 10 and 12. For scale: Book's small letters at 12 pt
@@ -190,7 +192,9 @@ Input to the `v21-typebar.html` amendment. Nothing here is frozen until that ame
 - **Undo wording** follows named undo ([ADR-123](../DECISIONS.md#adr-123), `v21-bench.html` A26). ✅ `Copy`
   already has "Text style put back" and "Text style changed" (`core/copy/.../Copy.kt:695-696`). ⚠️ Whether a
   voice change uses those lines is checked when the amendment is drawn. If it needs a new line, that is a
-  separate owner-approved A26 amendment; the session stops for it.
+  separate owner-approved A26 amendment; the session stops for it. **Settled 2026-10-08:** it does not use
+  them. A step that changes only the font says "Font changed" and "Font put back" (`v21-bench.html` A30,
+  frozen with A29 on the authority the owner gave that day), so the session has its line and does not stop.
 - ⚠️ **A voice change can push words out of the box, on the current build too.** A text box has a fixed size
   and whatever falls below its bottom edge is cut off (`SharedTextLayout.kt:31`; the clip is
   `CanvasReplayer.kt:87`). That can be several lines, or half a line sliced through its letters. Two causes:
@@ -203,8 +207,8 @@ Input to the `v21-typebar.html` amendment. Nothing here is frozen until that ame
 
 ### A voice that cannot be used
 
-*Note, 2026-10-07: the proposed amendment A29 departs from this section in two ways, and puts both to the
-owner (V-8, and rule A29.7): it shows the reason line all the time, not only after a tap; and a tap on the
+*Note, 2026-10-07, and 2026-10-08: A29, now frozen, departs from this section in two ways, both approved by
+the owner (V-8, and rule A29.7): it shows the reason line all the time, not only after a tap; and a tap on the
 unavailable choice says the reason again. The text below is the input as written on 2026-10-06.*
 
 🟦 One behaviour, for both reasons a voice can be unavailable (a script it lacks, or a size below the minimum):
@@ -649,7 +653,8 @@ type role. The document faces are content, not design tokens.
 
 ## Acceptance criteria
 
-1. Gates 2 to 5 closed before the session starts; gates 6 and 7 closed before merge.
+1. Gates 2, 3 and 5 closed before the session starts, and gate 4 ruled (its printed page may follow, before
+   gate 7; that reading is the implementer's, see the top of this brief); gates 6 and 7 closed before merge.
 2. Two voices selectable per text element. The Bench, the page strip, the editing surface, Read and the PDF
    draw the same face for the same text.
 3. Bold and italic use real faces in both voices. The draft while typing matches the result.
@@ -667,9 +672,8 @@ type role. The document faces are content, not design tokens.
 ## Stop conditions
 
 Stop and report, do not improvise, if:
-- the Voice row amendment is not approved;
 - the Voice row needs a change to the frozen type bar beyond the approved amendment;
-- a voice change needs an undo line A26 does not have;
+- a voice change needs an undo line that neither A26 nor A30 has;
 - the typing-time notice needs a change to a frozen page that no approved amendment covers;
 - any step appears to need a saved-format change, a backup-format change or a fixture change;
 - the card with five rows and the reason line does not clear the page at 360 dp or at font scale 2.0;
@@ -695,6 +699,7 @@ running text. More scripts through faces that cover them ([ADR-070](../DECISIONS
 
 | Date | Change |
 |---|---|
+| 2026-10-08 | Gate 5 closed: the owner approved A29 and it is frozen ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)). A second research pass ([RESEARCH R24](../RESEARCH.md#r24-the-font-row-what-other-editors-and-the-guidance-say---verified---recommendation-with-a--assumption-edge)) changed the undo line to "Font changed" / "Font put back" (`v21-bench.html` A30) and sharpened two rules. The brief is ready for a session. For that session, from R24: a 48 dp touch target; build the row as Align is built, not from the Material segmented button; measure the card at the largest text. |
 | 2026-10-08 | Gate 4: the owner ruled Book's minimum print size, 12 pt, to be confirmed on the printed page ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); evidence in [RESEARCH R23](../RESEARCH.md#r23-the-smallest-size-for-book-on-a-mini-zine-page---verified---recommendation-with-a--assumption-edge)). The page is not printed. |
 | 2026-10-07 | Two measurements recorded ([Measured on 2026-10-07](#measured-on-2026-10-07)): the card's fit at 360 dp and the largest font size, and what is drawn for a missing character. Gate 5 moved to "drawn as proposed amendment A29, not approved". The top note's third blocker struck: the preparation branch merged (PR #99). Two faults in the shipped app found by the measurements are tracked as issues #102 and #103. |
 | 2026-10-06 | Rewritten as a two-voice brief. Folds in the owner's rulings (2026-09-26), the readiness audit's [§6](ZINELY-1X-READINESS-AUDIT.md#6-d2-audit--typefaces--voices) and the pre-rewrite record (last present in `ae374ea`). New: the script rule and what it does not guarantee, the unavailable state, the editing-surface change with its file and line, the saved ids, the older-build consequence with measured widths, the four faces, and the two procedures. The "Corrections pending" banner is replaced by the blocker list and the gate table. Corrected from the pre-rewrite record: the faces are upstream's own static files from `undercasetype/Fraunces`, not instanced, and the Regular is the file the interface already ships |

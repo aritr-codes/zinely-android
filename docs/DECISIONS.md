@@ -15264,10 +15264,11 @@ the family is a string inside the saved document, not a database column.
 Tracked in [OWNER-CHECKLIST](OWNER-CHECKLIST.md) and in [Brief 02's gate table](planning/BRIEF-02-THREE-VOICES.md#gates).
 - The printed page (Brief 02, Procedure A), which confirms or changes the 12 pt minimum the owner ruled on
   2026-10-08 before it was printed.
-- The owner's approval of the type-bar amendment. It was drawn on 2026-10-07 as the proposed amendment
-  [`v21-typebar.html` A29](design/mockups/v21-typebar.html), which calls the row **Font** and puts twelve
-  questions to the owner (V-1 to V-12). Decision 7's "a Voice row" is read as that row whatever its label;
-  the wording here is brought into line with the owner's answer to V-1 at acceptance.
+- ~~The owner's approval of the type-bar amendment.~~ **Approved and frozen 2026-10-08** as
+  [`v21-typebar.html` A29](design/mockups/v21-typebar.html)
+  ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)). The row is labelled **Font**; decision 7's "a Voice
+  row" is read as that row, and the wording here is brought into line at acceptance. A font change has its own
+  undo lines, "Font changed" and "Font put back" (`v21-bench.html` A30).
 - The older-build fallback test, run and recorded (Brief 02, Procedure B), and its worst case written into
   *Consequences*.
 - An Android 7 check that the four faces break lines as they do on a current phone.
@@ -15324,5 +15325,21 @@ still said the preparation branch was unmerged. The recommendations were accepte
 spoken form of an unavailable choice repeats the word "Book", kept so the spoken and visible lines are one
 string, and left to the listen on a phone. The owner questions grew from eight to twelve. A review of that
 reconciliation returned **GO WITH FIXES** with no Required Fix; its five recommendations are applied (the
-faint night shade is stated in V-6, not strengthened). A29 is a proposal: it is not approved and not frozen.
+faint night shade is stated in V-6, not strengthened). A29 was then a proposal, not approved and not frozen.
+
+**The freeze, 2026-10-08.** The owner agreed to all twelve recommendations, asked for one more research pass
+and left the decision after it to the implementer
+([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8) has the words). That pass
+([RESEARCH R24](RESEARCH.md#r24-the-font-row-what-other-editors-and-the-guidance-say---verified---recommendation-with-a--assumption-edge)) was briefed to overturn the recommendations. Nine answers
+stand as the owner agreed them. Three are the implementer's, made after that pass and not yet seen by the
+owner, who may overturn them: V-12 is reversed (the undo lines; one row added to the Bench page as A30), and
+V-6 and V-10 keep their answer with a change (a cut row is the first sign of scrolling; the unknown-font line
+says a tap replaces the font, and shows ahead of Book's own reason). Two reviews of the freeze returned **GO
+WITH FIXES**, and the fixes are applied: A30 first sat in the middle of the Bench page's table and moved two
+rows its script reaches by number (it is now the last row); a promise about where the card's edge falls was
+taken out because the drawing did not keep it; "kept all twelve" was false and is gone; and one reviewer held
+that A30 should have gone to the owner before it was frozen, so it is marked as owed the owner's confirmation.
+Not done by either reviewer: a phone, a screen reader, Gradle. The
+prototype was driven in a headless browser after the change: a font change reports "Font put back", any
+other change "Text style put back", and the unknown-font state shows the new line with neither word chosen.
 
