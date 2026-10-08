@@ -15009,7 +15009,7 @@ fixture, dependency or permission change.
      action, into a folder, back out) is implemented with focus requests, and in this app a tappable control
      does not take focus by request in touch mode. Only the heading does. This is the app-wide limitation
      recorded at the beta.5 stability pass, not new, but A28 marks these moves *shown*. The two tests that
-     cover them say "with a keyboard" in their names. What TalkBack does on a phone is unknown until Pass 1.
+     cover them say "with a keyboard" in their names. What TalkBack does on a phone is unknown until the TalkBack listen.
   2. The back control's underline is drawn in the text's colour; the page uses the fainter `--hair`. The
      snack's Undo underline is at the platform's offset and weight. *Cancel* on the name sheet has no
      underline: it is the dock's quiet action, which never had one.
@@ -15074,8 +15074,8 @@ fixture, dependency or permission change.
     fails outright no longer says why. It ran nothing and viewed no raster.
 - **Still owed.**
   - **A TalkBack listen.** Not run (see *Phone passes* below): what it says on each sheet, where its focus
-    lands after an action (deviation 1), whether the field's name hides what is typed in it, and whether four
-    seconds is enough to reach Undo.
+    lands after an action (deviation 1), whether the field's name hides what is typed in it, and whether the
+    snack's stay (four seconds, or the phone's accessibility timeout if longer) is enough to reach Undo.
   - The name sheet under the keyboard on Android 7 to 9.
   - Rule 16's three sentences in the release notes of the first release that has folders.
   - The owner's rulings listed in [OWNER-CHECKLIST](OWNER-CHECKLIST.md).
@@ -15099,7 +15099,9 @@ fixture, dependency or permission change.
       holds it.
     - *Not covered:* TalkBack; the three failure lines (nothing failed); Android 7 to 15; large text on the
       phone (rasters only).
-  - **Pass 2, first-time reading: passes, one finding.** A pile reads as a pile, the count under it and in
+  - **Pass 2, first-time reading: passes, one finding.** Read by the implementer, who knows why each screen
+    behaves as it does, so this is the weaker of the two passes; the owner's own first use is the better
+    reading. A pile reads as a pile, the count under it and in
     each sheet says what is inside, every snack says where the zine now is, and Undo did what it said each
     time. **Finding:** a two-line snack (*Back on My Shelf. “Trips” is empty, so it’s put away*; *Zines from
     “Journeys” are back on My Shelf*) is gone in the frozen four seconds, about when a first reader finishes

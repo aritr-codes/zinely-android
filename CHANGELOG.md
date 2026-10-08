@@ -26,8 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Folders on the Shelf (ADR-125, part 2 of 2), built and not yet in a download. From a zine's three dots,
   *Move to a folder* makes a folder or puts the zine in one. A folder shows as a pile of its zines' covers;
   tap it to look inside, or tap its three dots to rename it or take its zines out. Moving, making a folder
-  and taking zines out can be undone for a few seconds; renaming cannot. Not yet checked on a phone or with a
-  screen reader.
+  and taking zines out can be undone for a few seconds; renaming cannot. Checked by hand on one phone (Android 16); not yet
+  with a screen reader.
   Notes for the release that first carries folders: a backup keeps each zine's folder; an older Zinely
   restores such a backup with every zine on My Shelf; a backup made by an older Zinely restores with every
   zine on My Shelf; and restoring onto a phone that already has the same zines adds nothing, so it brings no
