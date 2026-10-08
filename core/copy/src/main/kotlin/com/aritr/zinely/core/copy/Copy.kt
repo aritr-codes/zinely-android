@@ -1099,10 +1099,13 @@ public object Copy {
         public fun folderIsBack(folder: String): String = "“$folder” is back, with its zines"
         public fun renamedTo(folder: String): String = "Renamed to “$folder”"
 
-        // Not in the frozen file (rule 18).
+        // Not in the frozen file: ADR-125 rule 18's three failures, which A28 never drew. Provisional
+        // words in the frozen snack's own manner (a fragment, no full stop), put to the owner in
+        // OWNER-CHECKLIST. Each says what is true now; the first two carry *Try again* as the way out.
         public const val TRY_AGAIN: String = Common.TRY_AGAIN
-        public fun someStillIn(folder: String): String = "Some zines are still in “$folder”."
-        public const val NOT_EVERY_ZINE_WENT_BACK: String = "Not every zine went back."
+        public fun someStillIn(folder: String): String = "Some zines are still in “$folder”"
+        public const val NOT_EVERY_ZINE_WENT_BACK: String =
+            "Some zines didn’t go back. They’re on My Shelf, nothing is lost"
     }
 
     /** Paper-size display names, shared by the shelf chooser and the print recipe. */

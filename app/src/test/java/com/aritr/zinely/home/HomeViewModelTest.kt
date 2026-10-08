@@ -176,7 +176,11 @@ class HomeViewModelTest {
             return DataResult.Success(Unit)
         }
 
+        /** When set, a rename or unpack fails outright, having changed nothing. */
+        var folderFailure = false
+
         private suspend fun changeFolder(from: String, to: String?): DataResult<FolderChange> {
+            if (folderFailure) return DataResult.Failure(DataError.Busy("live session"))
             val (failed, changed) = folders.filterValues { it != null && FolderNames.same(it, from) }.keys
                 .partition { it in unwritable }
             changed.forEach { folders[it] = to }
@@ -1765,6 +1769,92 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `a folder action ends the Undo of every waiting delete, and each is deleted once`() = runTest {
+        // Rule 11. The screen shows one delete prompt at a time, so the second is still queued when the
+        // folder action is confirmed; it must not be offered an Undo afterwards, and the first, which the
+        // screen reports as committed when its snack closes, must not be deleted a second time.
+        val shelf = folderShelf("a" to "Family", "x" to null, "y" to null)
+        shelf.viewModel.delete("x")
+        shelf.viewModel.delete("y")
+        assertTrue(shelf.viewModel.isDeleteWaiting("x") && shelf.viewModel.isDeleteWaiting("y"))
+
+        shelf.viewModel.unpackFolder("Family")
+        shelf.viewModel.commitDelete("x")
+
+        assertEquals(listOf("delete x", "delete y", "unpack Family"), repository.calls)
+        assertTrue(!shelf.viewModel.isDeleteWaiting("x") && !shelf.viewModel.isDeleteWaiting("y"))
+        shelf.close()
+    }
+
+    @Test
+    fun `a delete made after a folder action can be undone again`() = runTest {
+        val shelf = folderShelf("a" to "Family", "x" to null)
+        shelf.viewModel.delete("x")
+        repository.deleteResult = { DataResult.Failure(DataError.Busy("live session")) }
+        shelf.viewModel.unpackFolder("Family")
+        assertTrue(!shelf.viewModel.isDeleteWaiting("x"))
+
+        // The failed delete put the zine back; deleting it again is a new delete with its own Undo.
+        repository.deleteResult = { DataResult.Success(Unit) }
+        shelf.viewModel.delete("x")
+        assertTrue(shelf.viewModel.isDeleteWaiting("x"))
+        shelf.viewModel.commitDelete("x")
+        assertEquals(listOf("delete x", "delete x"), repository.calls)
+        shelf.close()
+    }
+
+    @Test
+    fun `a Try again that fails outright keeps its offer, and the Undo still covers the first run`() = runTest {
+        // Rule 18.
+        val shelf = folderShelf("a" to "Family", "b" to "Family")
+        repository.unwritable = setOf("b")
+        shelf.viewModel.unpackFolder("Family")
+        repository.folderFailure = true
+
+        shelf.viewModel.folderSnackAction()
+        assertEquals(
+            HomeShelfEvent.FolderSnack("Some zines are still in “Family”", FolderSnackAction.TryAgain),
+            shelf.events.last(),
+        )
+
+        repository.folderFailure = false
+        repository.unwritable = emptySet()
+        shelf.viewModel.folderSnackAction()
+        shelf.viewModel.folderSnackAction()
+        assertEquals(listOf("Family", "Family"), shelf.zines.map { it.folder })
+        shelf.close()
+    }
+
+    @Test
+    fun `a rename's Try again that fails outright is offered again`() = runTest {
+        val shelf = folderShelf("a" to "Family", "b" to "Family")
+        repository.unwritable = setOf("b")
+        shelf.viewModel.renameFolder("Family", "Home")
+        repository.folderFailure = true
+
+        shelf.viewModel.folderSnackAction()
+        assertEquals(FolderSnackAction.TryAgain, shelf.snacks().last().action)
+
+        repository.folderFailure = false
+        repository.unwritable = emptySet()
+        shelf.viewModel.folderSnackAction()
+        assertEquals(listOf("Home", "Home"), shelf.zines.map { it.folder })
+        shelf.close()
+    }
+
+    @Test
+    fun `a rename or unpack the store refuses outright says so and offers nothing`() = runTest {
+        val shelf = folderShelf("a" to "Family")
+        repository.folderFailure = true
+
+        shelf.viewModel.renameFolder("Family", "Home")
+        shelf.viewModel.unpackFolder("Family")
+
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message(BUSY_MESSAGE), HomeShelfEvent.Message(BUSY_MESSAGE)), shelf.events)
+        shelf.close()
+    }
+
+    @Test
     fun `a folder action does not go ahead when the waiting delete fails`() = runTest {
         // Rule 11. The zine is back on the Shelf and the maker has been told; the action is not guessed at.
         val shelf = folderShelf("a" to null, "gone" to null)
@@ -1803,7 +1893,7 @@ class HomeViewModelTest {
 
         shelf.viewModel.renameFolder("Family", "Home")
         assertEquals(
-            HomeShelfEvent.FolderSnack("Some zines are still in “Family”.", FolderSnackAction.TryAgain),
+            HomeShelfEvent.FolderSnack("Some zines are still in “Family”", FolderSnackAction.TryAgain),
             shelf.events.last(),
         )
         assertEquals(listOf("Home", "Family"), shelf.zines.map { it.folder })
@@ -1847,7 +1937,7 @@ class HomeViewModelTest {
 
         shelf.viewModel.unpackFolder("Family")
         assertEquals(
-            HomeShelfEvent.FolderSnack("Some zines are still in “Family”.", FolderSnackAction.TryAgain),
+            HomeShelfEvent.FolderSnack("Some zines are still in “Family”", FolderSnackAction.TryAgain),
             shelf.events.last(),
         )
 
@@ -1871,7 +1961,7 @@ class HomeViewModelTest {
 
         assertEquals(listOf("unpack Family", "move a -> Family", "move b -> Family"), repository.calls)
         assertEquals(listOf(null, "Family"), shelf.zines.map { it.folder })
-        assertEquals(HomeShelfEvent.FolderSnack("Not every zine went back."), shelf.events.last())
+        assertEquals(HomeShelfEvent.FolderSnack("Some zines didn’t go back. They’re on My Shelf, nothing is lost"), shelf.events.last())
         shelf.close()
     }
 

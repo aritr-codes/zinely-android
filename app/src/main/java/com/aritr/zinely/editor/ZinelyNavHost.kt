@@ -248,6 +248,7 @@ private fun HomeDestination(
         onRenameFolder = viewModel::renameFolder,
         onUnpackFolder = viewModel::unpackFolder,
         onFolderSnackAction = viewModel::folderSnackAction,
+        isDeleteWaiting = viewModel::isDeleteWaiting,
         checkFolderName = ::folderNameVerdict,
         modifier = Modifier.fillMaxSize(),
     )

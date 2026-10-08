@@ -27,13 +27,14 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * Parity rasters of Shelf folders — `v21-library.html` A28 ([ADR-125](docs/DECISIONS.md#adr-125)): the
  * Shelf with its piles, the inside of a folder, and the three sheets, in both themes, with the Shelf and
- * the name sheet again at 1.8× text.
+ * every surface again at 1.8× text. The snack, which belongs to the screen and sits against its dock, is in
+ * [ZineLibraryGoldenTest].
  *
  * The Shelf is the frozen page's own seeded one (`seed(true)`): [ZineShelfGoldenFixture.FROZEN]'s six
  * zines, three in *For the stall*, two in *Family*, one loose. The sheets are composed over it the way
  * [ZineActionSheetGoldenTest] composes its sheet, and for the same reason: the production sheets live in a
- * window of their own that a raster of this one cannot see. What these do not show is the slide, the dock
- * (the screen's, not the Shelf's) and the snack; those are device-verification matters.
+ * window of their own that a raster of this one cannot see. What these do not show is the slide and the
+ * dock (the screen's, not the Shelf's).
  *
  * As with every raster here, a plain `testDebugUnitTest` neither writes nor compares these. The claims that
  * can be measured are asserted in [ZineLibraryFoldersTest] and [ShelfFoldersTest].
@@ -77,6 +78,15 @@ class ZineFoldersGoldenTest {
     @Test fun `inside a folder light`() = capture("inside_light", dark = false) { Inside() }
 
     @Test fun `inside a folder dark`() = capture("inside_dark", dark = true) { Inside() }
+
+    @Test fun `inside a folder at large text`() = capture("inside_large", dark = false, fontScale = 1.8f) { Inside() }
+
+    @Test fun `the Move sheet at large text`() = capture("move_large", dark = false, fontScale = 1.8f) { Move() }
+
+    @Test fun `the folder sheet at large text`() = capture("actions_large", dark = false, fontScale = 1.8f) { Actions() }
+
+    /** What a maker making a first folder sees: nothing typed, and a button that cannot be pressed yet. */
+    @Test fun `the name sheet before anything is typed`() = capture("name_empty", dark = false) { Name(typed = "") }
 
     @Test fun `the Move sheet light`() = capture("move_light", dark = false) { Move() }
 
@@ -136,14 +146,14 @@ class ZineFoldersGoldenTest {
 
     /** A name that exists, so the line under the field and the *Move to* button are both in the picture. */
     @Composable
-    private fun BoxScope.Name() = Sheet {
+    private fun BoxScope.Name(typed: String = "family") = Sheet {
         FolderNameSheetSurface(
             drawn = FolderNameTarget(zineTitle = "Riso tests"),
             keys = KEYS,
             check = ::plainFolderNameVerdict,
             onGo = {},
             onCancel = {},
-            initial = "family",
+            initial = typed,
         )
     }
 

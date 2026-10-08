@@ -55,7 +55,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 /** The screen itself — `.phone`, the desk everything else stands on. */
 public const val ZineLibraryTestTag: String = "zine-library"
@@ -268,7 +267,8 @@ public fun ZineLibraryScreen(
     onRenameFolder: (String, String) -> Unit = { _, _ -> },
     onUnpackFolder: (String) -> Unit = {},
     onFolderSnackAction: () -> Unit = {},
-    checkFolderName: (String) -> FolderNameVerdict = ::plainFolderNameVerdict,
+    isDeleteWaiting: (String) -> Boolean = { true },
+    checkFolderName: (String) -> FolderNameVerdict,
     modifier: Modifier = Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -305,6 +305,7 @@ public fun ZineLibraryScreen(
     // The collector outlives recompositions; always call the latest handlers.
     val currentUndo by rememberUpdatedState(onDeleteUndo)
     val currentCommit by rememberUpdatedState(onDeleteCommit)
+    val currentDeleteWaiting by rememberUpdatedState(isDeleteWaiting)
 
     LaunchedEffect(backupRestoreState) {
         if (backupRestoreState != null) openSheet = null
@@ -342,7 +343,10 @@ public fun ZineLibraryScreen(
     LaunchedEffect(events) {
         events.collect { event ->
             when (event) {
+                // Prompts queue. One whose delete a folder action has finished meanwhile (rule 11) is not
+                // shown: its Undo would be a button that does nothing.
                 is HomeShelfEvent.DeletePrompt -> {
+                    if (!currentDeleteWaiting(event.id)) return@collect
                     val outcome = CompletableDeferred<Boolean>()
                     undo = UndoRequest(event.id, homeDeletedMessage(event.title), outcome)
                     try {
@@ -438,7 +442,9 @@ public fun ZineLibraryScreen(
     }
 
     // ADR-125 rule 11: a folder action finishes a waiting delete first, so its Undo is gone by the time the
-    // folder snack shows. The host does the finishing; this closes the delete's own snack.
+    // folder snack shows. The host does the finishing, of this delete and of any whose prompt is still
+    // queued; this closes the snack that is up. The collector then reports the commit as it does for a
+    // snack that timed out, and the host knows it has that one in hand.
     val confirmFolderAction = { then: () -> Unit ->
         undo?.outcome?.complete(false)
         folderAtAction = openFolder
@@ -641,7 +647,10 @@ public fun ZineLibraryScreen(
             },
             onAction = {
                 snackUp = false
-                if (snack.action == FolderSnackAction.Undo) reopenFolder = folderAtAction
+                // Undo goes back to where the action was taken: My Shelf at once, a folder once it is there again.
+                if (snack.action == FolderSnackAction.Undo) {
+                    if (folderAtAction == null) openFolder = null else reopenFolder = folderAtAction
+                }
                 onFolderSnackAction()
             },
             colors = colors,
@@ -890,21 +899,3 @@ private val FolderSnackShape = RoundedCornerShape(ZinelyV21Dimens.radiusLg)
 private val FolderSnackActionMinHeight = 48.dp
 private val FolderSnackGap = 8.dp
 private const val FolderSnackMillis = 4000L
-
-/**
- * What a typed folder name stands for when no host says: trimmed, compared ignoring case. The frozen page's
- * own rule (`fold`), enough for a preview or a test of this screen; the app passes the real one.
- */
-internal fun plainFolderNameVerdict(typed: String): FolderNameVerdict {
-    val whole = typed.trim()
-    // The key is of the name that is kept, so a long name and its own first forty characters are one folder.
-    val name = whole.take(PlainFolderNameLength).trim()
-    val key = name.lowercase(Locale.ROOT)
-    return when {
-        name.isEmpty() -> FolderNameVerdict.Blank
-        key == Copy.Folders.MY_SHELF.lowercase(Locale.ROOT) -> FolderNameVerdict.MyShelf
-        else -> FolderNameVerdict.Name(name, key, cut = whole.length > PlainFolderNameLength)
-    }
-}
-
-private const val PlainFolderNameLength = 40

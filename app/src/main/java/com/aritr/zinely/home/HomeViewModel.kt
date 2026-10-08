@@ -156,6 +156,12 @@ internal class HomeViewModel @Inject constructor(
 
     /** What the standing folder snack's action does (Undo, or Try again); `null` when it offers none. */
     private var snackAction: (suspend () -> Unit)? = null
+
+    /**
+     * The deletes a folder action took over (rule 11). Their Undo is over from the moment the action is
+     * confirmed, whether or not the screen has shown their prompt yet: see [isDeleteWaiting].
+     */
+    private var settling: Set<String> = emptySet()
     private var backupRestoreJob: Job? = null
     private var backupRestorePickerPending: Boolean = false
     private var backupRestoreCancellationRequested: Boolean = false
@@ -500,11 +506,18 @@ internal class HomeViewModel @Inject constructor(
      * snack then says some zines are still under the old name and offers *Try again*, which runs the same
      * rename and finishes it.
      */
-    fun renameFolder(from: String, to: String) = folderAction { runRename(from, to) }
+    fun renameFolder(from: String, to: String) = folderAction { runRename(from, to, retrying = false) }
 
-    private suspend fun runRename(from: String, to: String) {
-        val change = (projectRepository.renameFolder(from, to).valueOrSentMessage() ?: return)
-        if (change.complete) {
+    private suspend fun runRename(from: String, to: String, retrying: Boolean) {
+        val result = projectRepository.renameFolder(from, to)
+        val change = (result as? DataResult.Success)?.value
+        if (change == null && !retrying) {
+            result.sendMessageOnFailure()
+        } else if (change == null || !change.complete) {
+            // Also a retry that failed outright: the folder is still in two, so the offer stands.
+            snackAction = { runRename(from, to, retrying = true) }
+            eventQueue.send(HomeShelfEvent.FolderSnack(Copy.Folders.someStillIn(from), FolderSnackAction.TryAgain))
+        } else {
             eventQueue.send(
                 HomeShelfEvent.FolderSnack(
                     message = Copy.Folders.renamedTo(change.folder ?: to),
@@ -512,9 +525,6 @@ internal class HomeViewModel @Inject constructor(
                     folder = change.folder,
                 ),
             )
-        } else {
-            snackAction = { runRename(from, to) }
-            eventQueue.send(HomeShelfEvent.FolderSnack(Copy.Folders.someStillIn(from), FolderSnackAction.TryAgain))
         }
     }
 
@@ -526,9 +536,15 @@ internal class HomeViewModel @Inject constructor(
     fun unpackFolder(name: String) = folderAction { runUnpack(name, alreadyOut = emptyList()) }
 
     private suspend fun runUnpack(name: String, alreadyOut: List<String>) {
-        val change = projectRepository.unpackFolder(name).valueOrSentMessage() ?: return
-        val out = alreadyOut + change.changedIds
-        if (!change.complete) {
+        val result = projectRepository.unpackFolder(name)
+        val change = (result as? DataResult.Success)?.value
+        if (change == null && alreadyOut.isEmpty()) {
+            result.sendMessageOnFailure()
+            return
+        }
+        // A retry that failed outright took nothing more out, and must not forget what the first run did.
+        val out = alreadyOut + change?.changedIds.orEmpty()
+        if (change == null || !change.complete) {
             snackAction = { runUnpack(name, out) }
             eventQueue.send(HomeShelfEvent.FolderSnack(Copy.Folders.someStillIn(name), FolderSnackAction.TryAgain))
             return
@@ -564,6 +580,7 @@ internal class HomeViewModel @Inject constructor(
      */
     private fun folderAction(run: suspend () -> Unit) {
         if (folderJob?.isActive == true) return
+        settling = pendingDeletes.value
         folderJob = viewModelScope.launch {
             if (!commitPendingDeletesNow()) return@launch
             snackAction = null
@@ -585,9 +602,17 @@ internal class HomeViewModel @Inject constructor(
             eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
             return
         }
+        settling = settling - id
         pendingDeletes.update { it + id }
         eventQueue.trySend(HomeShelfEvent.DeletePrompt(id, title))
     }
+
+    /**
+     * Whether [id]'s delete can still be undone. The screen asks before it offers Undo: prompts queue, so
+     * one can reach the screen after a folder action has already finished its delete (rule 11), and an Undo
+     * offered then would do nothing.
+     */
+    fun isDeleteWaiting(id: String): Boolean = id in pendingDeletes.value && id !in settling
 
     /** Undo within the window: clear the durable intent, then unhide; the project store was never called. */
     fun undoDelete(id: String) {
@@ -606,6 +631,8 @@ internal class HomeViewModel @Inject constructor(
      * Only a failed commit unhides + messages: the card is still real, and the shelf never lies.
      */
     fun commitDelete(id: String) {
+        // A folder action is finishing this one, or has: once is enough, and a second failure would say so twice.
+        if (id in settling) return
         viewModelScope.launch { performCommit(id) }
     }
 
@@ -771,12 +798,6 @@ internal class HomeViewModel @Inject constructor(
     private suspend fun DataResult<*>.sentMessageOnFailure(): Boolean {
         sendMessageOnFailure()
         return this is DataResult.Success
-    }
-
-    /** The value, or `null` after saying the failure. */
-    private suspend fun <T> DataResult<T>.valueOrSentMessage(): T? {
-        sendMessageOnFailure()
-        return (this as? DataResult.Success)?.value
     }
 }
 

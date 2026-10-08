@@ -80,6 +80,7 @@ class ZineLibraryInsetTest {
                     onOpenZine = {},
                     onShareExport = {},
                     onStartZine = { _, _ -> },
+                    checkFolderName = ::plainFolderNameVerdict,
                     onRenameZine = { _, _ -> },
                     onDuplicateZine = {},
                     onDeleteZine = {},

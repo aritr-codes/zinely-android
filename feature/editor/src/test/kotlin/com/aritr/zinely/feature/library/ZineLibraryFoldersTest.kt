@@ -1,6 +1,7 @@
 package com.aritr.zinely.feature.library
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,10 +20,12 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
@@ -77,6 +80,7 @@ class ZineLibraryFoldersTest {
     private val undone = mutableListOf<String>()
     private val committed = mutableListOf<String>()
     private var snackActions = 0
+    private val settled = mutableSetOf<String>()
     private val events = Channel<HomeShelfEvent>(Channel.BUFFERED)
     private var zines by mutableStateOf(SEEDED)
     private lateinit var inputMode: InputModeManager
@@ -158,8 +162,10 @@ class ZineLibraryFoldersTest {
     }
 
     @Test
-    fun `opening a folder puts focus on the back control, and going back puts it on the pile`() {
-        // A28, *Focus*. Keyboard mode: a control takes focus by request only outside touch mode.
+    fun `with a keyboard, opening a folder puts focus on the back control, and going back puts it on the pile`() {
+        // A28, *Focus*, **in keyboard mode only**. In touch mode a tappable control does not take focus
+        // by request in this app, so on a phone under a finger or TalkBack these moves do not happen;
+        // that is a recorded deviation (ADR-125 *Implementation*, part 2), and this test does not cover it.
         shelf()
         composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
         composeRule.onNodeWithContentDescription("Family, folder, 2 zines").performClick()
@@ -188,6 +194,7 @@ class ZineLibraryFoldersTest {
         composeRule.onNodeWithTag(FolderNameSheetTestTag).assertExists()
         composeRule.onNodeWithTag(ZineActionTitleTestTag).assertTextEquals("New folder")
         composeRule.onNodeWithTag(ZineActionSubtitleTestTag).assertTextEquals("For “Riso tests”")
+        composeRule.onNodeWithTag(FolderNameSheetTestTag).assert(paneTitled("New folder"))
 
         // Nothing typed: the button is there and cannot be pressed.
         composeRule.onNodeWithTag(FolderNameGoTestTag).assert(hasContentDescription("Make folder")).assertIsNotEnabled()
@@ -213,6 +220,7 @@ class ZineLibraryFoldersTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(ZineActionSubtitleTestTag).assertTextEquals("In “Family” · move to…")
+        composeRule.onNodeWithTag(FolderMoveSheetTestTag).assert(paneTitled("Move zine"))
         composeRule.onNodeWithTag(FolderMoveToShelfTestTag)
             .assert(hasContentDescription("My Shelf, Out of the folder")).assertIsEnabled()
         composeRule.onNodeWithTag(folderMoveRowTestTag("For the stall"))
@@ -321,6 +329,7 @@ class ZineLibraryFoldersTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(ZineActionTitleTestTag).assertTextEquals("Family")
         composeRule.onNodeWithTag(ZineActionSubtitleTestTag).assertTextEquals("Folder · 2 zines")
+        composeRule.onNodeWithTag(FolderActionsSheetTestTag).assert(paneTitled("Folder actions"))
         composeRule.onNodeWithTag(FolderOpenTestTag).assert(hasContentDescription("Open folder"))
         composeRule.onNodeWithTag(FolderRenameTestTag).assert(hasContentDescription("Rename folder"))
         composeRule.onNodeWithTag(FolderUnpackTestTag)
@@ -347,6 +356,7 @@ class ZineLibraryFoldersTest {
 
         composeRule.onNodeWithTag(ZineActionTitleTestTag).assertTextEquals("Rename folder")
         composeRule.onNodeWithTag(ZineActionSubtitleTestTag).assertTextEquals("2 zines")
+        composeRule.onNodeWithTag(FolderNameSheetTestTag).assert(paneTitled("Rename folder"))
         composeRule.onNodeWithTag(FolderNameFieldTestTag).assertTextEquals("Family")
         // Its own name, unchanged, is nothing to do.
         composeRule.onNodeWithTag(FolderNameGoTestTag).assert(hasContentDescription("Rename")).assertIsNotEnabled()
@@ -407,6 +417,77 @@ class ZineLibraryFoldersTest {
     }
 
     @Test
+    fun `a delete a folder action has already finished is not offered an Undo`() {
+        // Rule 11. Prompts queue: this one reaches the screen after the host has finished its delete.
+        shelf()
+        settled += "Tiny poems"
+        events.trySend(HomeShelfEvent.DeletePrompt("Tiny poems", "Tiny poems"))
+        events.trySend(HomeShelfEvent.DeletePrompt("Coffee log", "Coffee log"))
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText(homeDeletedMessage("Tiny poems")).assertDoesNotExist()
+        // And it does not hold up the next one, which is still waiting and still offered.
+        composeRule.onNodeWithText(homeDeletedMessage("Coffee log")).assertExists()
+        assertTrue(committed.isEmpty())
+        assertTrue(undone.isEmpty())
+    }
+
+    @Test
+    fun `Undo goes back to where the action was taken`() {
+        // The frozen page's `undo()` restores the view the action was taken in, My Shelf included.
+        shelf()
+        composeRule.onNodeWithContentDescription("Actions for folder Family").performClick()
+        composeRule.onNodeWithTag(FolderUnpackTestTag).performClick()
+        composeRule.waitForIdle()
+        events.trySend(HomeShelfEvent.FolderSnack("Zines from “Family” are back on My Shelf", FolderSnackAction.Undo))
+        composeRule.onNodeWithContentDescription("For the stall, folder, 3 zines").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNode(isHeading()).assertTextEquals("For the stall")
+
+        composeRule.onNodeWithTag(BenchSnackActionTestTag, useUnmergedTree = true).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNode(isHeading()).assertTextEquals("My Shelf")
+    }
+
+    @Test
+    fun `Undo of a move made inside a folder returns to that folder once it is there again`() {
+        // The last zine left, so the folder went and the view with it (A28.3); Undo brings both back.
+        zines = SEEDED.filter { it.folder != "Family" || it.id == "Letters home" }
+        shelf()
+        composeRule.onNodeWithContentDescription("Family, folder, 1 zine").performClick()
+        composeRule.onNodeWithContentDescription("Actions for Letters home").performClick()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Move)).performClick()
+        composeRule.onNodeWithTag(FolderMoveToShelfTestTag).performClick()
+        composeRule.waitForIdle()
+        val before = zines
+        zines = zines.map { if (it.id == "Letters home") it.copy(folder = null) else it }
+        events.trySend(HomeShelfEvent.FolderSnack("Back on My Shelf", FolderSnackAction.Undo))
+        composeRule.waitForIdle()
+        composeRule.onNode(isHeading()).assertTextEquals("My Shelf")
+
+        composeRule.onNodeWithTag(BenchSnackActionTestTag, useUnmergedTree = true).performClick()
+        composeRule.waitForIdle()
+        // Not before the Shelf shows the folder again.
+        composeRule.onNode(isHeading()).assertTextEquals("My Shelf")
+        zines = before
+        composeRule.waitForIdle()
+        composeRule.onNode(isHeading()).assertTextEquals("Family")
+    }
+
+    @Test
+    fun `the open folder survives the screen being rebuilt`() {
+        // Rule 8: kept across a return from the Bench, also when Android stopped the app in between.
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent { Screen() }
+        composeRule.onNodeWithContentDescription("Family, folder, 2 zines").performClick()
+        composeRule.waitForIdle()
+
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+        composeRule.onNode(isHeading()).assertTextEquals("Family")
+    }
+
+    @Test
     fun `the folder snack says what happened and offers Undo, which reports back and takes it down`() {
         // A28.12.
         shelf()
@@ -429,6 +510,21 @@ class ZineLibraryFoldersTest {
     }
 
     @Test
+    fun `the folder snack sits eight dp above the dock, and fourteen in from each side`() {
+        // A28.13: `.snack{left:14px;right:14px;bottom:140px}`, which is the frozen dock's 132 and 8 more. Density is 1 here, so px are dp.
+        shelf()
+        events.trySend(HomeShelfEvent.FolderSnack("Moved to “Family”", FolderSnackAction.Undo))
+        composeRule.waitForIdle()
+        val snack = composeRule.onNodeWithTag(BenchSnackTestTag).fetchSemanticsNode().boundsInRoot
+        val dock = composeRule.onNodeWithTag(ZineDockTestTag).fetchSemanticsNode().boundsInRoot
+        val root = composeRule.onRoot().fetchSemanticsNode().boundsInRoot
+        // The snack lies a little crooked, so its box is a pixel or two larger than the paper.
+        assertEquals(8f, dock.top - snack.bottom, 2.5f)
+        assertEquals(14f, snack.left - root.left, 2.5f)
+        assertEquals(14f, root.right - snack.right, 2.5f)
+    }
+
+    @Test
     fun `a rename's snack offers nothing, and a stopped one offers Try again`() {
         shelf()
         events.trySend(HomeShelfEvent.FolderSnack("Renamed to “Home”"))
@@ -437,10 +533,10 @@ class ZineLibraryFoldersTest {
         composeRule.onNodeWithTag(BenchSnackActionTestTag, useUnmergedTree = true).assertDoesNotExist()
 
         // A newer snack replaces the standing one; it does not wait behind it.
-        events.trySend(HomeShelfEvent.FolderSnack("Some zines are still in “Family”.", FolderSnackAction.TryAgain))
+        events.trySend(HomeShelfEvent.FolderSnack("Some zines are still in “Family”", FolderSnackAction.TryAgain))
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(BenchSnackVoiceTestTag, useUnmergedTree = true)
-            .assert(hasContentDescription("Some zines are still in “Family”."))
+            .assert(hasContentDescription("Some zines are still in “Family”"))
         composeRule.onNodeWithTag(BenchSnackActionTestTag, useUnmergedTree = true)
             .assert(hasContentDescription("Try again"))
     }
@@ -474,8 +570,8 @@ class ZineLibraryFoldersTest {
     }
 
     @Test
-    fun `after a move focus goes to the pile that now holds the zine, once the Shelf shows it there`() {
-        // A28, *Focus*. The snack can arrive before the Shelf has listed again; focus must not land on
+    fun `with a keyboard, after a move focus goes to the pile that now holds the zine, once the Shelf shows it there`() {
+        // A28, *Focus*, in keyboard mode only (see the test above). The snack can arrive before the Shelf has listed again; focus must not land on
         // whatever tile is standing in the zine's old place.
         shelf()
         composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
@@ -492,8 +588,16 @@ class ZineLibraryFoldersTest {
     // Harness
     // ---------------------------------------------------------------------------------------------
 
+    private fun paneTitled(title: String) = SemanticsMatcher.expectValue(SemanticsProperties.PaneTitle, title)
+
     private fun shelf() {
-        composeRule.setContent {
+        composeRule.setContent { Screen() }
+        composeRule.waitForIdle()
+    }
+
+    @Composable
+    private fun Screen() {
+        run {
             ZinelyTheme {
                 inputMode = LocalInputModeManager.current
                 ZineLibraryScreen(
@@ -519,11 +623,12 @@ class ZineLibraryFoldersTest {
                     onRenameFolder = { from, to -> renamed += from to to },
                     onUnpackFolder = { unpacked += it },
                     onFolderSnackAction = { snackActions++ },
+                    isDeleteWaiting = { it !in settled },
+                    checkFolderName = ::plainFolderNameVerdict,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
         }
-        composeRule.waitForIdle()
     }
 
     private companion object {
