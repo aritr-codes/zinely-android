@@ -47,7 +47,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * The frozen action sheet — its geometry, its type, its inks, its five rows, and its dismissal paths.
+ * The frozen action sheet — its geometry, its type, its inks, its six rows, and its dismissal paths.
  *
  * **Two hosts, deliberately.** The dismissal and modality claims need the real [ZineActionSheet], window and
  * all; the geometry and pixel claims need a surface the decor-view raster can see, which a `Dialog`'s own
@@ -230,9 +230,11 @@ class ZineActionSheetTest {
         assertEquals("${INSET}px in from the left", INSET.toFloat(), card.left - window.left, HALF_PIXEL)
         assertEquals("${INSET}px in from the right", INSET.toFloat(), window.right - card.right, HALF_PIXEL)
         assertEquals("${INSET}px up from the bottom", INSET.toFloat(), window.bottom - card.bottom, HALF_PIXEL)
+        // Under two thirds, where this said half: the A28 folders amendment added a sixth row, and six rows
+        // measure 484 of 960. The claim is unchanged, a card and not a panel.
         assertTrue(
             "and it is a card, not a full-height panel (measured ${card.height} of ${window.height})",
-            card.height < window.height / 2f,
+            card.height < window.height * 2f / 3f,
         )
     }
 
@@ -273,11 +275,11 @@ class ZineActionSheetTest {
     }
 
     // ---------------------------------------------------------------------------------------------
-    // The five rows — on the surface, where they can be measured and sampled
+    // The six rows — on the surface, where they can be measured and sampled
     // ---------------------------------------------------------------------------------------------
 
     @Test
-    fun `the five actions stand in the frozen order`() {
+    fun `the six actions stand in the frozen order`() {
         surface()
         // `:173-177`. The order is the design's argument about consequence — Open first, Delete last and
         // apart — so it is asserted by placement rather than by the enum's own declaration order, which
@@ -291,6 +293,8 @@ class ZineActionSheetTest {
             ZineAction.ShareExport,
             ZineAction.Rename,
             ZineAction.Duplicate,
+            // A28: `#sheetMove`, after Duplicate and before the boundary that sets Delete apart.
+            ZineAction.Move,
             ZineAction.Delete,
         )
         assertEquals(
@@ -307,6 +311,7 @@ class ZineActionSheetTest {
             "Share & export",
             "Rename",
             "Duplicate",
+            "Move to a folder",
             "Delete",
         ).forEach { label ->
             // Twice over, because the two are different claims and either can fail alone: the row *says*
@@ -350,8 +355,8 @@ class ZineActionSheetTest {
                 HALF_PIXEL,
             )
         }
-        assertEquals(rows[3].bottom, dangerDivider.top, HALF_PIXEL)
-        assertEquals(dangerDivider.bottom, rows[4].top, HALF_PIXEL)
+        assertEquals(rows[rows.lastIndex - 1].bottom, dangerDivider.top, HALF_PIXEL)
+        assertEquals(dangerDivider.bottom, rows.last().top, HALF_PIXEL)
     }
 
     @Test
@@ -465,7 +470,35 @@ class ZineActionSheetTest {
         composeRule.onNodeWithTag(zineActionTestTag(ZineAction.ShareExport)).assertIsNotEnabled()
         composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Duplicate)).assertIsNotEnabled()
         composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Rename)).assertIsEnabled()
+        // A28: *"Live for an unavailable zine, like Rename."* A zine that will not open can still be filed.
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Move)).assertIsEnabled()
         composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Delete)).assertIsEnabled()
+    }
+
+    @Test
+    fun `the Move row reads as the way out for a zine that is in a folder`() {
+        // A28.15. The row's words depend on where the zine is, so both are asserted on one row.
+        surface(TARGET.copy(inFolder = true))
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Move))
+            .assert(hasContentDescription("Move somewhere else"))
+        composeRule.onNode(hasContentDescription("Move to a folder")).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the Move row's icon is a drawing, and it draws`() {
+        // The one row whose `.ic` is an `<svg>`, not a character: nothing for a font to lack, and nothing
+        // for the tofu test below to compare. So it is checked the only way a drawing can be: there is
+        // something other than the chip's own butter inside the chip.
+        surface()
+        val raster = decorRaster()
+        val row = tagBounds(zineActionTestTag(ZineAction.Move))
+        // The middle of the 30px chip, which starts 24px in: all butter unless something is drawn on it.
+        val xs = (row.left + 32f).roundToInt()..(row.left + 46f).roundToInt()
+        val ys = (row.center.y - 7f).roundToInt()..(row.center.y + 7f).roundToInt()
+        assertTrue(
+            "the Move row's chip holds no drawing",
+            xs.any { x -> ys.any { y -> !raster.colourAt(x, y).closeTo(capturedChip) } },
+        )
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -576,7 +609,8 @@ class ZineActionSheetTest {
             tofuA.count { it } < tofuA.size / 2,
         )
 
-        val glyphs = ZineAction.entries.map { it.glyph } + listOf("\u22EF")
+        // Move has no glyph: its icon is drawn (`the Move row's icon is a drawing, and it draws`).
+        val glyphs = ZineAction.entries.map { it.glyph }.filter { it.isNotEmpty() } + listOf("\u22EF")
         glyphs.forEach { glyph ->
             val drawn = raster.signature(tagBounds("glyph-$glyph"), threshold)
             assertTrue("'$glyph' drew nothing at all", drawn.any { it })

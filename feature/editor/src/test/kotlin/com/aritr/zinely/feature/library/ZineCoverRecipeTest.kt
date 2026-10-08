@@ -40,7 +40,7 @@ class ZineCoverRecipeTest {
 
     @Test
     fun `each surface prints on its own frozen stock`() {
-        // `v21-library.html:182-187`, verbatim, resolved through the light palette.
+        // `v21-library.html:249-262`, verbatim, resolved through the light palette.
         assertEquals(Color(0xFF4E7A3C), ZineCoverSurface.MatchaInk.v21Fill(light))
         assertEquals(Color(0xFFE4879F), ZineCoverSurface.StrawberryInk.v21Fill(light))
         assertEquals(Color(0xFFF6B22C), ZineCoverSurface.OchreInk.v21Fill(light))

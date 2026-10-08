@@ -40,8 +40,9 @@ next.
   2026-10-06). **Design approved 2026-10-07; screens not built:** [ADR-125](DECISIONS.md#adr-125) is Accepted and the
   [`v21-library.html`](design/mockups/v21-library.html) A28 amendment is frozen, on the owner's approval of the
   prototype. **Storage built 2026-10-07, part 1 of 2:** a zine's folder name is kept in its own file and
-  carried in a backup, with no change to the backup's format version. The Shelf screens are part 2 and are not
-  started, so there is still nothing to see or tap in the app.
+  carried in a backup, with no change to the backup's format version. **Screens built 2026-10-08, part 2 of 2,
+  in no release:** move a zine to a folder, look inside, rename it, take its zines out, with Undo. Both phone
+  checks were run on 2026-10-08; a TalkBack listen is still owed, so it is not accepted, and there is nothing to try in a download.
 - **Document voices, Book and Plain:** two named typefaces for a zine's words, Book (Fraunces) and Plain (Inter)
   ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); plan step 8). The [brief](planning/BRIEF-02-THREE-VOICES.md)
   is rewritten and the four Fraunces faces are fetched and measured (2026-10-06). Still waits on the owner's
@@ -374,6 +375,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-08 | **Shelf folders: screens built (part 2 of 2), not accepted.** The Shelf shows a folder as a pile, opens it, and moves, renames and takes out through sheets, with an Undo snack, as frozen in A28. Storage, Room, the backup format and the document schema are untouched. Recorded deviations from A28 (focus moves only with a keyboard, three failure lines the page never drew, underline colours) and a TalkBack listen are owed; both phone passes were run 2026-10-08 without it. In no release; no public copy changed. | [ADR-125 *Implementation*, part 2](DECISIONS.md#adr-125) |
 | 2026-10-07 | **Shelf folders: storage built (part 1 of 2).** A zine's folder name is kept in its `meta.json`, the Shelf reads it from there, and a backup carries it in one defaulted field (`packageVersion` stays 2; Room and the document schema are untouched). Move, rename and unpack exist in the repository only. No screen, no string, no golden changed; nothing a maker can reach. The Shelf screens, their tests and both device passes are part 2. No public copy changed. | [ADR-125 *Implementation*](DECISIONS.md#adr-125) |
 | 2026-10-07 | **Shelf folders: design approved.** The owner tried the A28 prototype and approved it and the recommended rulings. ADR-125 is Accepted and `v21-library.html` A28 is frozen. One question (F-10, the Tribunal row) is still the owner's and blocks nothing. Nothing is built; no public copy changed. | [ADR-125](DECISIONS.md#adr-125) |
 | 2026-10-06 | **Shelf folders proposed, not approved.** Research ([R22](RESEARCH.md)), a Proposed ADR and an interactive amendment to the frozen Shelf (A28, not frozen). One level, a zine in one place, no empty folders, no drag; a backup carries folder names without a format-version change. Fourteen owner rulings are owed. Still In development at the design stage; nothing built; no public copy changed. | [ADR-125](DECISIONS.md#adr-125) |

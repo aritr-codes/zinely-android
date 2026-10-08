@@ -5,6 +5,7 @@ import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.ProjectShelfEntry
 import com.aritr.zinely.core.data.repository.FolderChange
+import com.aritr.zinely.core.data.repository.FolderNames
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
 import com.aritr.zinely.core.data.repository.ProjectUnavailableReason
@@ -28,7 +29,9 @@ import com.aritr.zinely.data.android.LibraryRestoreReceipt
 import com.aritr.zinely.data.android.LibrarySafTransport
 import com.aritr.zinely.data.android.prefs.PreferredPaperStore
 import com.aritr.zinely.data.android.RestoredProject
+import com.aritr.zinely.feature.editor.FolderSnackAction
 import com.aritr.zinely.feature.editor.HomeShelfEvent
+import com.aritr.zinely.feature.library.FolderNameVerdict
 import com.aritr.zinely.feature.library.LibraryBackupRestoreFailureKind
 import com.aritr.zinely.feature.library.LibraryBackupRestoreMode
 import com.aritr.zinely.feature.library.LibraryBackupRestoreUiState
@@ -41,7 +44,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -97,8 +102,11 @@ class HomeViewModelTest {
             emitAll(projects)
         }
 
+        /** Each zine's folder, as its own file would hold it. A folder call changes it and the Shelf lists again. */
+        val folders = mutableMapOf<String, String?>()
+
         var shelfProjection: (List<ProjectSummary>) -> List<ProjectShelfEntry> =
-            { items -> items.map(ProjectShelfEntry::Available) }
+            { items -> items.map { ProjectShelfEntry.Available(it, folders[it.id]) } }
 
         override fun observeShelfProjects(): Flow<List<ProjectShelfEntry>> = flow {
             observeCollections++
@@ -119,6 +127,7 @@ class HomeViewModelTest {
             folder: String?,
         ): DataResult<ProjectSummary> {
             created += Triple(title, format, paperSize)
+            createdIn += folder
             createGate?.await()
             return createResult()
         }
@@ -135,18 +144,61 @@ class HomeViewModelTest {
 
         override suspend fun deleteProject(id: String): DataResult<Unit> {
             deleted += id
+            calls += "delete $id"
             return deleteResult()
         }
 
-        // ADR-125 storage only: the Shelf does not call these yet.
-        override suspend fun moveProject(id: String, folder: String?): DataResult<Unit> =
-            error("not used by the shelf yet")
+        // ---- Shelf folders (ADR-125). The store's contract in miniature: one write per zine, a zine that
+        // cannot be written is left as it was and named in the answer, and the Shelf then lists again.
 
-        override suspend fun renameFolder(from: String, to: String): DataResult<FolderChange> =
-            error("not used by the shelf yet")
+        /** The folder each new zine was created in, beside [created]. */
+        val createdIn = mutableListOf<String?>()
 
-        override suspend fun unpackFolder(name: String): DataResult<FolderChange> =
-            error("not used by the shelf yet")
+        /** Every store call a folder action can make, in the order made (rule 11 is an ordering rule). */
+        val calls = mutableListOf<String>()
+
+        /** Zines whose file cannot be written: a move of one fails, a rename or unpack leaves it behind. */
+        var unwritable = setOf<String>()
+
+        /** When set, [moveProject] suspends on it: lets a test hold a folder action in flight. */
+        var moveGate: CompletableDeferred<Unit>? = null
+
+        private suspend fun listAgain() {
+            projects.replayCache.lastOrNull()?.let { projects.emit(it) }
+        }
+
+        override suspend fun moveProject(id: String, folder: String?): DataResult<Unit> {
+            calls += "move $id -> $folder"
+            moveGate?.await()
+            if (id in unwritable) return DataResult.Failure(DataError.Busy("live session"))
+            folders[id] = folder
+            listAgain()
+            return DataResult.Success(Unit)
+        }
+
+        /** When set, a rename or unpack fails outright, having changed nothing. */
+        var folderFailure = false
+
+        private suspend fun changeFolder(from: String, to: String?): DataResult<FolderChange> {
+            if (folderFailure) return DataResult.Failure(DataError.Busy("live session"))
+            val (failed, changed) = folders.filterValues { it != null && FolderNames.same(it, from) }.keys
+                .partition { it in unwritable }
+            changed.forEach { folders[it] = to }
+            listAgain()
+            return DataResult.Success(
+                FolderChange(to, changed, failed, DataError.Busy("live session").takeIf { failed.isNotEmpty() }),
+            )
+        }
+
+        override suspend fun renameFolder(from: String, to: String): DataResult<FolderChange> {
+            calls += "rename $from -> $to"
+            return changeFolder(from, to)
+        }
+
+        override suspend fun unpackFolder(name: String): DataResult<FolderChange> {
+            calls += "unpack $name"
+            return changeFolder(name, null)
+        }
     }
 
     private class FakeLibrarySafTransport : LibrarySafTransport {
@@ -1584,6 +1636,370 @@ class HomeViewModelTest {
     }
 
     // --- the recency label, a pure function ---
+
+    // ---------------------------------------------------------------------------------------------
+    // Shelf folders (ADR-125; the words are `v21-library.html` A28's, written out here as literals)
+    // ---------------------------------------------------------------------------------------------
+
+    private class FolderShelf(val viewModel: HomeViewModel, val events: MutableList<HomeShelfEvent>, val jobs: List<Job>) {
+        val zines get() = (viewModel.state.value as HomeUiState.Content).zines
+        fun folderOf(id: String) = zines.first { it.id == id }.folder
+        fun snacks() = events.filterIsInstance<HomeShelfEvent.FolderSnack>()
+        fun close() = jobs.forEach { it.cancel() }
+    }
+
+    /** A Shelf of zines whose id is their title, each in the folder given (`null` is My Shelf). */
+    private suspend fun TestScope.folderShelf(vararg zines: Pair<String, String?>): FolderShelf {
+        val now = System.currentTimeMillis()
+        zines.forEach { (id, folder) -> repository.folders[id] = folder }
+        val viewModel = viewModel()
+        val events = mutableListOf<HomeShelfEvent>()
+        val jobs = listOf(
+            launch(Dispatchers.Main) { viewModel.state.collect {} },
+            launch(Dispatchers.Main) { viewModel.events.collect { events += it } },
+        )
+        repository.projects.emit(zines.map { (id, _) -> summary(id, id, now) })
+        return FolderShelf(viewModel, events, jobs)
+    }
+
+    @Test
+    fun `a folder has one spelling on the Shelf, however its zines' files spell it`() = runTest {
+        // Rule 13. Only files changed outside the app can disagree; the screen groups by plain equality.
+        val shelf = folderShelf("a" to "Family", "b" to "family", "c" to "FAMILY", "d" to null)
+
+        assertEquals(1, shelf.zines.mapNotNull { it.folder }.distinct().size)
+        assertEquals(null, shelf.folderOf("d"))
+        shelf.close()
+    }
+
+    @Test
+    fun `a zine moved to a new name makes the folder, and the snack offers Undo`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null)
+
+        shelf.viewModel.moveZine("a", "  Trips ")
+
+        assertEquals(listOf("move a -> Trips"), repository.calls)
+        assertEquals("Trips", shelf.folderOf("a"))
+        assertEquals(
+            listOf(HomeShelfEvent.FolderSnack("Made “Trips”", FolderSnackAction.Undo, zineId = "a", folder = "Trips")),
+            shelf.events,
+        )
+        shelf.close()
+    }
+
+    @Test
+    fun `a zine moved to a folder that exists joins it in the folder's own spelling`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to "Family")
+
+        shelf.viewModel.moveZine("a", "FAMILY")
+
+        assertEquals(listOf("move a -> Family"), repository.calls)
+        assertEquals(
+            listOf(HomeShelfEvent.FolderSnack("Moved to “Family”", FolderSnackAction.Undo, zineId = "a", folder = "Family")),
+            shelf.events,
+        )
+        shelf.close()
+    }
+
+    @Test
+    fun `taking the last zine out of a folder says the folder is put away`() = runTest {
+        // A28.3 and A28.12.
+        val shelf = folderShelf("a" to "Solo", "b" to "Family", "c" to "Family")
+
+        shelf.viewModel.moveZine("a", null)
+        assertEquals("Back on My Shelf. “Solo” is empty, so it’s put away", shelf.snacks().last().message)
+
+        // Not the last one: nothing is put away.
+        shelf.viewModel.moveZine("b", null)
+        assertEquals("Back on My Shelf", shelf.snacks().last().message)
+
+        // The last one, to another folder.
+        shelf.viewModel.moveZine("c", "Trips")
+        assertEquals("Made “Trips”. “Family” is empty, so it’s put away", shelf.snacks().last().message)
+        shelf.close()
+    }
+
+    @Test
+    fun `Undo puts a moved zine back where it was, and can be pressed once`() = runTest {
+        val shelf = folderShelf("a" to "Family", "b" to "Family", "c" to null)
+        shelf.viewModel.moveZine("a", null)
+        shelf.viewModel.folderSnackAction()
+
+        assertEquals(listOf("move a -> null", "move a -> Family"), repository.calls)
+        assertEquals("Family", shelf.folderOf("a"))
+        // The line that answers an Undo offers nothing more.
+        assertEquals(HomeShelfEvent.FolderSnack("“a” is back in “Family”", zineId = "a", folder = "Family"), shelf.events.last())
+
+        shelf.viewModel.folderSnackAction()
+        assertEquals(2, repository.calls.size)
+
+        // And a zine that came from My Shelf goes back to My Shelf.
+        shelf.viewModel.moveZine("c", "Family")
+        shelf.viewModel.folderSnackAction()
+        assertEquals(HomeShelfEvent.FolderSnack("“c” is back on My Shelf", zineId = "c", folder = null), shelf.events.last())
+        assertEquals(null, shelf.folderOf("c"))
+        shelf.close()
+    }
+
+    @Test
+    fun `a move the store refuses says so and offers no Undo`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to "Family")
+        repository.unwritable = setOf("a")
+
+        shelf.viewModel.moveZine("a", "Family")
+
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message(BUSY_MESSAGE)), shelf.events)
+        shelf.viewModel.folderSnackAction()
+        assertEquals(1, repository.calls.size)
+        shelf.close()
+    }
+
+    @Test
+    fun `a folder action finishes a waiting delete first`() = runTest {
+        // Rule 11: folders are worked out from the zines the Shelf shows, so the Shelf must first be true.
+        val shelf = folderShelf("a" to "Family", "b" to "Family", "gone" to "Family")
+        shelf.viewModel.delete("gone")
+        assertTrue(repository.deleted.isEmpty())
+
+        shelf.viewModel.unpackFolder("Family")
+
+        assertEquals(listOf("delete gone", "unpack Family"), repository.calls)
+        assertTrue(pendingDeleteStore.ids.isEmpty())
+        shelf.close()
+    }
+
+    @Test
+    fun `a folder action ends the Undo of every waiting delete, and each is deleted once`() = runTest {
+        // Rule 11. The screen shows one delete prompt at a time, so the second is still queued when the
+        // folder action is confirmed; it must not be offered an Undo afterwards, and the first, which the
+        // screen reports as committed when its snack closes, must not be deleted a second time.
+        val shelf = folderShelf("a" to "Family", "x" to null, "y" to null)
+        shelf.viewModel.delete("x")
+        shelf.viewModel.delete("y")
+        assertTrue(shelf.viewModel.isDeleteWaiting("x") && shelf.viewModel.isDeleteWaiting("y"))
+
+        shelf.viewModel.unpackFolder("Family")
+        shelf.viewModel.commitDelete("x")
+
+        assertEquals(listOf("delete x", "delete y", "unpack Family"), repository.calls)
+        assertTrue(!shelf.viewModel.isDeleteWaiting("x") && !shelf.viewModel.isDeleteWaiting("y"))
+        shelf.close()
+    }
+
+    @Test
+    fun `a delete made after a folder action can be undone again`() = runTest {
+        val shelf = folderShelf("a" to "Family", "x" to null)
+        shelf.viewModel.delete("x")
+        repository.deleteResult = { DataResult.Failure(DataError.Busy("live session")) }
+        shelf.viewModel.unpackFolder("Family")
+        assertTrue(!shelf.viewModel.isDeleteWaiting("x"))
+
+        // The failed delete put the zine back; deleting it again is a new delete with its own Undo.
+        repository.deleteResult = { DataResult.Success(Unit) }
+        shelf.viewModel.delete("x")
+        assertTrue(shelf.viewModel.isDeleteWaiting("x"))
+        shelf.viewModel.commitDelete("x")
+        assertEquals(listOf("delete x", "delete x"), repository.calls)
+        shelf.close()
+    }
+
+    @Test
+    fun `a Try again that fails outright keeps its offer, and the Undo still covers the first run`() = runTest {
+        // Rule 18.
+        val shelf = folderShelf("a" to "Family", "b" to "Family")
+        repository.unwritable = setOf("b")
+        shelf.viewModel.unpackFolder("Family")
+        repository.folderFailure = true
+
+        shelf.viewModel.folderSnackAction()
+        assertEquals(
+            HomeShelfEvent.FolderSnack("Some zines are still in “Family”", FolderSnackAction.TryAgain),
+            shelf.events.last(),
+        )
+
+        repository.folderFailure = false
+        repository.unwritable = emptySet()
+        shelf.viewModel.folderSnackAction()
+        shelf.viewModel.folderSnackAction()
+        assertEquals(listOf("Family", "Family"), shelf.zines.map { it.folder })
+        shelf.close()
+    }
+
+    @Test
+    fun `a rename's Try again that fails outright is offered again`() = runTest {
+        val shelf = folderShelf("a" to "Family", "b" to "Family")
+        repository.unwritable = setOf("b")
+        shelf.viewModel.renameFolder("Family", "Home")
+        repository.folderFailure = true
+
+        shelf.viewModel.folderSnackAction()
+        assertEquals(FolderSnackAction.TryAgain, shelf.snacks().last().action)
+
+        repository.folderFailure = false
+        repository.unwritable = emptySet()
+        shelf.viewModel.folderSnackAction()
+        assertEquals(listOf("Home", "Home"), shelf.zines.map { it.folder })
+        shelf.close()
+    }
+
+    @Test
+    fun `a rename or unpack the store refuses outright says so and offers nothing`() = runTest {
+        val shelf = folderShelf("a" to "Family")
+        repository.folderFailure = true
+
+        shelf.viewModel.renameFolder("Family", "Home")
+        shelf.viewModel.unpackFolder("Family")
+
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message(BUSY_MESSAGE), HomeShelfEvent.Message(BUSY_MESSAGE)), shelf.events)
+        shelf.close()
+    }
+
+    @Test
+    fun `a folder action does not go ahead when the waiting delete fails`() = runTest {
+        // Rule 11. The zine is back on the Shelf and the maker has been told; the action is not guessed at.
+        val shelf = folderShelf("a" to null, "gone" to null)
+        shelf.viewModel.delete("gone")
+        repository.deleteResult = { DataResult.Failure(DataError.Busy("live session")) }
+
+        shelf.viewModel.moveZine("a", "Trips")
+
+        assertEquals(listOf("delete gone"), repository.calls)
+        assertTrue(shelf.snacks().isEmpty())
+        assertTrue(shelf.events.any { it is HomeShelfEvent.Message })
+        assertEquals(listOf("a", "gone"), shelf.zines.map { it.id })
+        shelf.close()
+    }
+
+    @Test
+    fun `a rename says the new name and offers no Undo`() = runTest {
+        // Rule 10.
+        val shelf = folderShelf("a" to "Family", "b" to "Family", "c" to null)
+
+        shelf.viewModel.renameFolder("Family", "Home")
+
+        assertEquals(listOf("rename Family -> Home"), repository.calls)
+        assertEquals(listOf("Home", "Home", null), shelf.zines.map { it.folder })
+        assertEquals(listOf(HomeShelfEvent.FolderSnack("Renamed to “Home”", zineId = "a", folder = "Home")), shelf.events)
+        shelf.viewModel.folderSnackAction()
+        assertEquals(1, repository.calls.size)
+        shelf.close()
+    }
+
+    @Test
+    fun `a rename that stops partway offers Try again, which finishes it`() = runTest {
+        // Rule 18.
+        val shelf = folderShelf("a" to "Family", "b" to "Family")
+        repository.unwritable = setOf("b")
+
+        shelf.viewModel.renameFolder("Family", "Home")
+        assertEquals(
+            HomeShelfEvent.FolderSnack("Some zines are still in “Family”", FolderSnackAction.TryAgain),
+            shelf.events.last(),
+        )
+        assertEquals(listOf("Home", "Family"), shelf.zines.map { it.folder })
+
+        repository.unwritable = emptySet()
+        shelf.viewModel.folderSnackAction()
+
+        assertEquals(listOf("rename Family -> Home", "rename Family -> Home"), repository.calls)
+        assertEquals(listOf("Home", "Home"), shelf.zines.map { it.folder })
+        assertEquals("Renamed to “Home”", shelf.snacks().last().message)
+        assertEquals(null, shelf.snacks().last().action)
+        shelf.close()
+    }
+
+    @Test
+    fun `taking the zines out offers Undo, which puts every one back`() = runTest {
+        val shelf = folderShelf("a" to "Family", "b" to "Family", "c" to null)
+
+        shelf.viewModel.unpackFolder("Family")
+        assertEquals(
+            HomeShelfEvent.FolderSnack("Zines from “Family” are back on My Shelf", FolderSnackAction.Undo, zineId = "a", folder = null),
+            shelf.events.last(),
+        )
+        assertEquals(listOf<String?>(null, null, null), shelf.zines.map { it.folder })
+
+        shelf.viewModel.folderSnackAction()
+        assertEquals(listOf("unpack Family", "move a -> Family", "move b -> Family"), repository.calls)
+        assertEquals(listOf("Family", "Family", null), shelf.zines.map { it.folder })
+        assertEquals(
+            HomeShelfEvent.FolderSnack("“Family” is back, with its zines", zineId = "a", folder = "Family"),
+            shelf.events.last(),
+        )
+        shelf.close()
+    }
+
+    @Test
+    fun `an unpack that stops partway is finished by Try again, and its Undo covers both runs`() = runTest {
+        // Rule 18.
+        val shelf = folderShelf("a" to "Family", "b" to "Family")
+        repository.unwritable = setOf("b")
+
+        shelf.viewModel.unpackFolder("Family")
+        assertEquals(
+            HomeShelfEvent.FolderSnack("Some zines are still in “Family”", FolderSnackAction.TryAgain),
+            shelf.events.last(),
+        )
+
+        repository.unwritable = emptySet()
+        shelf.viewModel.folderSnackAction()
+        assertEquals(FolderSnackAction.Undo, shelf.snacks().last().action)
+        assertEquals(listOf<String?>(null, null), shelf.zines.map { it.folder })
+
+        shelf.viewModel.folderSnackAction()
+        assertEquals(listOf("Family", "Family"), shelf.zines.map { it.folder })
+        shelf.close()
+    }
+
+    @Test
+    fun `an Undo that cannot put every zine back tries them all and says so`() = runTest {
+        val shelf = folderShelf("a" to "Family", "b" to "Family")
+        shelf.viewModel.unpackFolder("Family")
+        repository.unwritable = setOf("a")
+
+        shelf.viewModel.folderSnackAction()
+
+        assertEquals(listOf("unpack Family", "move a -> Family", "move b -> Family"), repository.calls)
+        assertEquals(listOf(null, "Family"), shelf.zines.map { it.folder })
+        assertEquals(HomeShelfEvent.FolderSnack("Some zines didn’t go back. They’re on My Shelf, nothing is lost"), shelf.events.last())
+        shelf.close()
+    }
+
+    @Test
+    fun `one folder action runs at a time`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to "Family")
+        repository.moveGate = CompletableDeferred()
+
+        shelf.viewModel.moveZine("a", "Family")
+        shelf.viewModel.unpackFolder("Family")
+        shelf.viewModel.renameFolder("Family", "Home")
+        repository.moveGate!!.complete(Unit)
+
+        assertEquals(listOf("move a -> Family"), repository.calls)
+        shelf.close()
+    }
+
+    @Test
+    fun `a zine made inside a folder is created in it`() = runTest {
+        // Rule 8.
+        val viewModel = viewModel()
+        repository.createResult = { DataResult.Success(summary("new", "Untitled zine", 0L)) }
+
+        viewModel.startZine(PaperSize.A4, "Family")
+
+        assertEquals(listOf<String?>("Family"), repository.createdIn)
+    }
+
+    @Test
+    fun `the name sheet is answered by the store's own name rules`() {
+        assertEquals(FolderNameVerdict.Blank, folderNameVerdict("  \t "))
+        assertEquals(FolderNameVerdict.MyShelf, folderNameVerdict(" my SHELF "))
+        assertEquals(FolderNameVerdict.Name("Trips", FolderNames.key("Trips")), folderNameVerdict("  Trips "))
+        assertEquals(FolderNames.key("trips"), (folderNameVerdict("TRIPS") as FolderNameVerdict.Name).key)
+        val long = folderNameVerdict("a".repeat(41)) as FolderNameVerdict.Name
+        assertEquals("a".repeat(40), long.name)
+        assertTrue(long.cut)
+    }
 
     @Test
     fun `edited label speaks human - just now, minutes, hours, yesterday, days`() {

@@ -264,4 +264,23 @@ class FolderNamesTest {
         assertTrue(FolderChange("Trips", listOf("a")).complete)
         assertFalse(FolderChange("Trips", listOf("a"), failedIds = listOf("b")).complete)
     }
+
+    @Test
+    fun `the name sheet can tell My Shelf from a blank, and a long name from one that fits`() {
+        assertTrue(FolderNames.isMyShelf("  my shelf "))
+        assertTrue(FolderNames.isMyShelf("My Shelf"))
+        assertFalse(FolderNames.isMyShelf("   "))
+        assertFalse(FolderNames.isMyShelf("My Shelf 2"))
+        assertFalse(FolderNames.isMyShelf(null))
+
+        assertFalse(FolderNames.isTooLong("a".repeat(FolderNames.MAX_LENGTH)))
+        assertFalse(FolderNames.isTooLong("  " + "a".repeat(FolderNames.MAX_LENGTH) + "  ")) // trimmed first
+        assertTrue(FolderNames.isTooLong("a".repeat(FolderNames.MAX_LENGTH + 1)))
+        assertFalse(FolderNames.isTooLong(null))
+        // Whatever is too long is exactly what clean gives back less of.
+        listOf("Trips", "a".repeat(41), "🫶".repeat(41), "é".repeat(40)).forEach {
+            val whole = Normalizer.normalize(it, Normalizer.Form.NFC)
+            assertEquals(FolderNames.isTooLong(it), FolderNames.clean(it)!!.length < whole.length, it)
+        }
+    }
 }

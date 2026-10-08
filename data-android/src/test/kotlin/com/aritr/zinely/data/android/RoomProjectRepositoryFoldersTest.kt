@@ -24,6 +24,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -474,6 +475,38 @@ class RoomProjectRepositoryFoldersTest {
 
         assertEquals(FolderChange("Journeys", listOf(b)), finished)
         assertEquals(listOf("Journeys", "Journeys", "Journeys"), listOf(a, b, c).map { metaOnDisk(it).folder })
+    }
+
+    @Test
+    fun `a rename cancelled partway leaves every zine whole, and running it again finishes it`() = runTest {
+        // Rule 18, the case with no message to retry from: the work is stopped, not refused.
+        val good = repo()
+        val ids = listOf(create(good, "Lisbon", "Trips"), create(good, "Porto", "Trips"), create(good, "Faro", "Trips"))
+        lateinit var rename: Job
+        // Stops the rename as soon as its first zine is written.
+        val stopping = AtomicFileStore(
+            object : FileSystemOps by NioFileSystemOps {
+                override fun atomicReplace(source: Path, replacing: Path) {
+                    NioFileSystemOps.atomicReplace(source, replacing)
+                    if (replacing.fileName.toString() == "meta.json") rename.cancel()
+                }
+            },
+        )
+        val stopped = repo(store = stopping)
+
+        rename = launch { stopped.renameFolder("Trips", "Journeys") }
+        rename.join()
+
+        assertTrue(rename.isCancelled)
+        // One zine moved, two did not, and each file still reads: old name and new, both intact.
+        assertEquals(listOf("Journeys", "Trips", "Trips"), ids.map { metaOnDisk(it).folder }.sortedBy { it })
+        assertEquals(setOf("Journeys", "Trips"), shelfFolders(good).values.toSet())
+
+        val finished = good.renameFolder("Trips", "Journeys").getOrNull()!!
+
+        assertEquals(2, finished.changedIds.size)
+        assertTrue(finished.complete)
+        assertEquals(listOf("Journeys", "Journeys", "Journeys"), ids.map { metaOnDisk(it).folder })
     }
 
     @Test

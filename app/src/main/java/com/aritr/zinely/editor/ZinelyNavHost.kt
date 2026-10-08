@@ -94,6 +94,7 @@ import com.aritr.zinely.export.requiresLegacyWrite
 import com.aritr.zinely.home.HomeUiState
 import com.aritr.zinely.home.HomeViewModel
 import com.aritr.zinely.home.LibraryBackupRestorePickerRequest
+import com.aritr.zinely.home.folderNameVerdict
 import com.aritr.zinely.feature.library.LibraryShelfState
 import com.aritr.zinely.feature.library.LibraryBackupRestoreMode
 import com.aritr.zinely.feature.library.ZineLibraryScreen
@@ -243,6 +244,12 @@ private fun HomeDestination(
         preferredPaper = preferredPaper,
         appVersion = appVersion,
         onPreferredPaperChange = viewModel::setPreferredPaper,
+        onMoveZine = viewModel::moveZine,
+        onRenameFolder = viewModel::renameFolder,
+        onUnpackFolder = viewModel::unpackFolder,
+        onFolderSnackAction = viewModel::folderSnackAction,
+        isDeleteWaiting = viewModel::isDeleteWaiting,
+        checkFolderName = ::folderNameVerdict,
         modifier = Modifier.fillMaxSize(),
     )
 }
@@ -558,7 +565,7 @@ internal const val BootFailureActionTestTag: String = "boot-failure-action"
 
 /**
  * **Opening a zine is a state no prototype freezes**, so this is drawn by analogy with the nearest
- * frozen surface: the Library's own loading state, `.ph` (`v21-library.html:271-281`), whose comment in
+ * frozen surface: the Library's own loading state, `.ph` (`v21-library.html:300-310`), whose comment in
  * the frozen file is *"loading — the same objects, unprinted"*.
  *
  * ```css
@@ -660,7 +667,7 @@ internal fun BootLoading() {
 
 /**
  * **A boot failure is not frozen either**, so it is drawn by analogy with `.fail` — the Library's error
- * state (`v21-library.html:311-322`), implemented by
+ * state (`v21-library.html:336-348`), implemented by
  * [ZineShelfFail][com.aritr.zinely.feature.library.ZineShelfFail], which this follows structurally:
  * the rotated `!` mark, then the sentence, then one quiet `.retry` pill.
  *

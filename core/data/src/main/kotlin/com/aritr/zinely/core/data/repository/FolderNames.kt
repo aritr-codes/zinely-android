@@ -47,8 +47,20 @@ public object FolderNames {
      * Only the first [MAX_READ] units of [raw] are looked at. A value from a backup or a hand-edited file can
      * be megabytes long, and normalising a long run of marks takes time that grows with its square.
      */
-    public fun clean(raw: String?): String? {
-        if (raw == null) return null
+    public fun clean(raw: String?): String? =
+        raw?.let { cut(whole(it)).trim() }?.takeUnless { !hasSomethingToSee(it) || looksLikeMyShelf(it) }
+
+    /**
+     * Whether [raw] reads as the Shelf's own name, which [clean] answers with `null` exactly as it does a
+     * blank. The name sheet asks, so that it can say why the name is refused (A28.10).
+     */
+    public fun isMyShelf(raw: String?): Boolean = raw != null && looksLikeMyShelf(cut(whole(raw)).trim())
+
+    /** Whether [raw] is longer than a name may be, so [clean] gives back less than was typed. */
+    public fun isTooLong(raw: String?): Boolean = raw != null && whole(raw).let { cut(it).length < it.length }
+
+    /** [raw] without what [isRemoved] removes, trimmed and in NFC: a name before it is cut to length. */
+    private fun whole(raw: String): String {
         val end = if (raw.length <= MAX_READ) raw.length else MAX_READ - (if (raw[MAX_READ - 1].isHighSurrogate()) 1 else 0)
         val visible = buildString(end) {
             var i = 0
@@ -58,8 +70,7 @@ public object FolderNames {
                 i += Character.charCount(cp)
             }
         }
-        val name = cut(Normalizer.normalize(visible.trim(), Normalizer.Form.NFC)).trim()
-        return name.takeUnless { !hasSomethingToSee(it) || looksLikeMyShelf(it) }
+        return Normalizer.normalize(visible.trim(), Normalizer.Form.NFC)
     }
 
     /** The value two names share exactly when they are the same folder: NFC, then lower case by [Locale.ROOT]. */
