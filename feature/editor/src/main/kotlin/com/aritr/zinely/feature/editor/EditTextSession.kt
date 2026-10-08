@@ -125,8 +125,10 @@ public fun EditTextSession(
     // ADR-070: analyse the draft's script coverage on the seed (this runs on first composition, catching
     // pre-existing/imported unprintable text) and on every keystroke (`draft.text` re-keys it). Pure and
     // allocation-light, so per-key is cheap; the host raises the EditorCoverageNotice from the result.
-    LaunchedEffect(session.token, draft.text) {
-        latestOnCoverage(analyzeTextCoverage(draft.text))
+    // ADR-126: checked against the text's own voice, so a Greek letter typed into a Book text is reported
+    // (Book has none) where the same letter in a Plain text is not.
+    LaunchedEffect(session.token, draft.text, element.style.fontFamily) {
+        latestOnCoverage(analyzeTextCoverage(draft.text, element.style.fontFamily))
     }
 
     fun commit(notifyHost: Boolean = true) {
