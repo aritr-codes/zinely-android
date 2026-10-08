@@ -72,4 +72,30 @@ public sealed interface HomeShelfEvent {
 
     /** A warm, transient message (a failed mutation). */
     public data class Message(val text: String) : HomeShelfEvent
+
+    /**
+     * A folder action ended (`v21-library.html` A28.12, [ADR-125](docs/DECISIONS.md#adr-125)): raise the
+     * Shelf's snack with [message]. Unlike the two above it does not hold the queue: a newer one replaces it.
+     *
+     * @property action what the snack offers, or `null` for none (a rename, and the line after an undo). The
+     *   host remembers what it does; the screen only reports that it was pressed.
+     * @property zineId the zine focus should follow, or `null` to leave focus where it is.
+     * @property folder where that zine is now (`null` is My Shelf), so the screen can wait for the Shelf to
+     *   show it there before moving focus.
+     */
+    public data class FolderSnack(
+        val message: String,
+        val action: FolderSnackAction? = null,
+        val zineId: String? = null,
+        val folder: String? = null,
+    ) : HomeShelfEvent
+}
+
+/** The one thing a folder snack can offer. */
+public enum class FolderSnackAction {
+    /** Take the move, the new folder or the take-out back. */
+    Undo,
+
+    /** A rename or a take-out stopped partway (rule 18): run it again to finish it. */
+    TryAgain,
 }

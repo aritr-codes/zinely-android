@@ -17,8 +17,20 @@ public sealed interface ProjectShelfEntry {
     public val updatedAtEpochMs: Long
     public val cover: ZineCoverRecipe?
 
+    /**
+     * The Shelf folder this zine is in, or `null` for My Shelf ([ADR-125](docs/DECISIONS.md#adr-125)).
+     * Already cleaned by [FolderNames.clean]. Read from the zine's own metadata file each time the Shelf
+     * lists, never from the index, and carried by these two types and by nothing else: [ProjectSummary] is
+     * built from the index row and does not have it. Group with [FolderNames.key]; a folder's zines agree on
+     * its spelling unless files were changed outside the app ([FolderNames.display]).
+     */
+    public val folder: String?
+
     /** A project whose authoritative document is readable right now. */
-    public data class Available(val summary: ProjectSummary) : ProjectShelfEntry {
+    public data class Available(
+        val summary: ProjectSummary,
+        override val folder: String? = null,
+    ) : ProjectShelfEntry {
         override val id: String get() = summary.id
         override val title: String get() = summary.title
         override val paperSize: PaperSize get() = summary.paperSize
@@ -39,6 +51,7 @@ public sealed interface ProjectShelfEntry {
         override val updatedAtEpochMs: Long,
         override val cover: ZineCoverRecipe?,
         val reason: ProjectUnavailableReason,
+        override val folder: String? = null,
     ) : ProjectShelfEntry
 }
 

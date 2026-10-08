@@ -72,7 +72,7 @@ public const val LaterPageInvitationHeadline: String = Copy.EmptyState.LATER_PAG
  * `leaf-tint` pill carrying the privacy promise. Copying its grammar is what makes the shelf and the page
  * read as one product rather than two apps that both happen to be empty.
  *
- * Every value below is therefore transcribed from `v21-library.html:284-307`, with **two** adaptations,
+ * Every value below is therefore transcribed from `v21-library.html:313-334`, with **two** adaptations,
  * both named where they occur: the box padding (there is no dock to clear here) and the illustration
  * (the Library illustrates *sheets becoming a book*; a blank page illustrates *supplies*).
  *
@@ -189,7 +189,7 @@ public fun EditorEmptyState(
  * palette V2.1 does not publish and cannot be mapped into) without inventing a new illustration after a
  * freeze, which is what *"do not invent new visual ideas"* rules out.
  *
- * Each card is `.sheet-ill`/`.book-ill`'s recipe verbatim (`v21-library.html:292-301`): a 1.5dp `ink`
+ * Each card is `.sheet-ill`/`.book-ill`'s recipe verbatim (`v21-library.html:321-330`): a 1.5dp `ink`
  * border, a 3dp hard shadow in `inkLine`, a small rotation, over a ground the frozen corpus already uses
  * as a fill — `paper`, `leaf` (`.book-ill`), and `berryTint` (`v21-bench.html:211 .photo`). Every glyph is
  * on a measured pairing: `ink` on `paper`, `onLeaf` on `leaf`, `ink` on `berryTint`. The V2 cards drew

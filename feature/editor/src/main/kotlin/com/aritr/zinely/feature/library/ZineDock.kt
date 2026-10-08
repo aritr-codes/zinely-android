@@ -153,7 +153,7 @@ internal fun ZineDock(
 }
 
 @Composable
-private fun QuietAction(action: ZineDockSecondaryAction) {
+internal fun QuietAction(action: ZineDockSecondaryAction) {
     val colors = ZinelyTheme.v21Colors
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()

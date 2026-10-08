@@ -141,7 +141,7 @@ class ZineOnShelfTest {
          * The column width `w480dp` produces on the frozen shelf: `(480 − 16 − 16 − 16) / 2`.
          *
          * This read **208** until a review caught it — V2's `padding:0 22px` and `gap:… 20px`, which the
-         * re-freeze moved to `--gap-lg` (16) on both (`v21-library.html:149-150`, and `ZineShelfTest`
+         * re-freeze moved to `--gap-lg` (16) on both (`v21-library.html:180-181`, and `ZineShelfTest`
          * derives the same 216 independently). Every absolute geometry in this file was therefore
          * measured on a cell 8dp narrower than the product ever renders, under a class KDoc that called
          * it "the numbers a real cell sees".

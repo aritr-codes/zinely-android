@@ -134,7 +134,7 @@
 | [ADR-122](#adr-122) | **A backup is complete or explicitly partial, never silently partial; a restore reports what happened.** Backup is skip-and-list (one photo never fails it); the manifest gains a defaulted, leniently read `omitted` list, `packageVersion` stays 2; restore staging-write failures aren't "damaged", Cancel is withdrawn once commit starts, and a committed restore is a success even if the shelf lags. Amends ADR-110. | Accepted 2026-09-29; 1.x step 1b (PR #86, `1fd3c9e`) |
 | [ADR-123](#adr-123) | **Undo and redo say what they did, in the one Bench snack.** A pure `editLabel` derived from each command's memento (no History change, nothing persisted); `Effect.HistoryStepped` replaces "Changed page N"; one snack counted per step, shown in the snack and spoken once through the announcement drain; the page clause and the 2% / 2° transform rule. Words owned by frozen `v21-bench.html` A26. | Accepted 2026-10-01 (proposed 2026-09-30, revised twice 2026-10-01); 1.x step 3 (PR #90). **Accepted with documented device-verification limitations:** the owner waived the full two-pass device matrix, several A26 rows and the 2× listen were not heard, and TalkBack may say an identical repeat once |
 | [ADR-124](#adr-124) | **Taps pass through the empty part of six holed Art pieces.** For `paper.window`, `paper.hole`, `shape.ring`, `fix.grommet`, `fix.corner` and `mark.registration` the hit area is the drawn ink, read from the outline the renderer draws; resolution is drawn → near (within 8 dp of the ink, yes or no; topmost wins) → box, topmost-first; every other element keeps its box; `core:editor` gains a dependency on `core:render`. Semantics, schema and pixels unchanged | Proposed |
-| [ADR-125](#adr-125) | **Folders on the Shelf: one level, a zine in one place, and a folder is only the name its zines carry.** Every folder action is a row in a sheet, nothing is dragged; a folder is drawn as a banded pile of its zines' own covers and exists only while it holds a zine; taking the zines out puts them back on My Shelf. Stored as a defaulted `folder` name in `meta.json`, carried by a defaulted backup-manifest field; the Room index, `packageVersion` and the document schema are unchanged, older builds restore every zine to My Shelf. ADR-081 ruling 2 (no search, no sort) stands. | **Accepted 2026-10-07** on the owner's approval of the A28 prototype and of the recommended rulings; `v21-library.html` A28 frozen the same day; F-10 (the Tribunal row) still the owner's; nothing built |
+| [ADR-125](#adr-125) | **Folders on the Shelf: one level, a zine in one place, and a folder is only the name its zines carry.** Every folder action is a row in a sheet, nothing is dragged; a folder is drawn as a banded pile of its zines' own covers and exists only while it holds a zine; taking the zines out puts them back on My Shelf. Stored as a defaulted `folder` name in `meta.json`, carried by a defaulted backup-manifest field; the Room index, `packageVersion` and the document schema are unchanged, older builds restore every zine to My Shelf. ADR-081 ruling 2 (no search, no sort) stands. | **Accepted 2026-10-07** on the owner's approval of the A28 prototype and of the recommended rulings; `v21-library.html` A28 frozen the same day; F-10 (the Tribunal row) still the owner's; storage merged (part 1); the Shelf screens built 2026-10-08 (part 2), in no release, **both phone passes still owed** |
 | [ADR-126](#adr-126) | **Two document voices, Book (Fraunces) and Plain (Inter), with no change to the saved format.** `fontFamily` carries the voice; an unknown family is drawn as Inter and kept, so an older build re-wraps and may cut off a Book text but loses nothing; four unmodified upstream static faces; each voice declares its scripts (Book has no Greek or Cyrillic); the editing surface draws the document's own faces; the control is a Voice row amended into the frozen type bar. Supersedes two of ADR-055's exclusions: font choice, and font bundling for the four Book faces alone | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
@@ -10085,7 +10085,7 @@ and belongs beside it: *the framework's state is not the platform's state.*
 
 ##### Deviations and debts, recorded rather than resolved
 
-- **The `.tf .arrow` is `--jam`** (`v21-library.html:303`), transcribed faithfully — and §4.1 says jam is
+- **The `.tf .arrow` is `--jam`** (`v21-library.html:332`), transcribed faithfully — and §4.1 says jam is
   the only *urgent* colour. Decorative jam is a **spec** tension, not an implementation defect; flagged
   for the owner, unchanged here.
 - **`ZMenuItem` still draws `--coral-text`.** V2.1 publishes no coral. A conversion still owed.
@@ -14479,9 +14479,12 @@ cross's bare paper surprise them?
 
 **Status:** **Accepted (design), 2026-10-07.** Proposed 2026-10-06. The owner tried the
 [`v21-library.html`](design/mockups/v21-library.html) **A28** prototype and approved it and the recommended
-rulings ("i have tried it and i am fine with them. you can proceed"); A28 was frozen the same day. **Nothing is
-built.** Acceptance covers the design and the storage model; the implementation still owes everything listed
-under *Tests and evidence required before acceptance of the implementation*. One question, F-10, had no
+rulings ("i have tried it and i am fine with them. you can proceed"); A28 was frozen the same day. **The storage
+half is built and merged (part 1, 2026-10-07) and the Shelf screens are built (part 2, 2026-10-08); see
+*Implementation* below. Folders are in no release.** Acceptance
+covers the design and the storage model; the implementation still owes both phone passes and the other items
+part 2 lists as owed, out of
+*Tests and evidence required before acceptance of the implementation*. One question, F-10, had no
 recommendation to approve and remains the owner's. Written in the folders design session on
 `origin/main` @ `ae374ea` (release `0.9.0-beta.6` plus documentation).
 Owner request of 2026-09-27, repeated 2026-10-06 ([ROADMAP](ROADMAP.md#current-priorities)). Evidence:
@@ -14608,7 +14611,8 @@ and are cited as **A28.n**; a bare "rule n" in this ADR always means the list he
     repository gains an in-memory signal, combined with the index's flow, that fires when a folder operation
     ends, whether it succeeded, failed or stopped partway. **Membership therefore has one source, the files,
     read the same way by the Shelf and by every folder operation, and there is no mirror to go stale.** The Shelf
-    lists outside the repository's lock, so a listing that starts while a rename is running can show the old and
+    takes the repository's lock only for each single `meta.json` it reads, not for the whole listing, so a
+    listing that starts while a rename is running can show the old and
     the new folder together for a moment; the signal at the end of the operation corrects it.
 15. **A backup carries it:** `ZineBackupProjectEntry` gains `folder: String? = null`. **`packageVersion` stays
     2.** The field is read leniently, as `omitted` is ([ADR-122](#adr-122)): a value of the wrong type is read as
@@ -14742,7 +14746,8 @@ actions do, and a zine's own sheet does not say which folder it is in (the choos
   of one ([ADR-122](#adr-122), `RoomProjectRepository.kt:515-526`).
 - A28 adds lines near the top of `v21-library.html`, so existing `v21-library.html:NNN` line citations in KDoc
   and other documents now point a few lines early. No test gates them. They are not corrected here (this change
-  touches no Kotlin) and are owed with the first implementation change.
+  touches no Kotlin) and are owed with part 2 of the implementation, the first to change those files (see
+  *Implementation*).
 - Rule 15 means a restore can add a zine to an existing folder. The restore summary's wording is unaffected: it
   counts zines.
 - Every backup written by a build with folders carries `"folder":null` on each zine that has none (the writer
@@ -14830,6 +14835,282 @@ changed only comments and labels in `v21-library.html`.
   tests or a device, and did not listen with a screen reader.
 - **Not done:** no device, no TalkBack, no Compose. The TalkBack names are read from a browser's accessibility
   tree, which is not the Android platform tree.
+
+#### Implementation
+
+**Part 1, storage (2026-10-07, branch `feat/shelf-folders-storage`).** Rules 12 to 18, with no screen, no
+ViewModel and no string: a maker cannot reach any of it yet.
+
+- **What exists.** `FolderNames` in `:core:data` is rule 13's helper (clean, key, same, display).
+  `ProjectMeta` and `ZineBackupProjectEntry` each gain a defaulted `folder`. `ProjectRepository` gains
+  `moveProject`, `renameFolder`, `unpackFolder` and a `folder` argument on `createProject`;
+  `ProjectShelfEntry` carries `folder` for a zine that opens and for one that does not. The Room table and
+  its schema file are untouched, and `packageVersion` is still 2.
+- **Five things the rules left to the implementation.** The first three change what a name is, so they are
+  settled now, before any released build stores one.
+  1. *The cut at 40 is written out, and it is an approximation.* The app does not use Android's own
+     text-breaking, which changes between versions. The helper keeps together a letter and its marks, an emoji
+     and its modifiers, joined emoji, the two halves of a flag, and consonants joined by a virama in the six
+     scripts where Unicode joins them (Devanagari, Bengali, Gujarati, Oriya, Telugu, Malayalam). It can still cut inside a character in cases it does not list: old Hangul typed as separate
+     parts, and the prepended signs of Arabic and some Indic scripts. The character tables it reads are the
+     device's, so "the same on every phone" is not promised.
+  2. *A second limit: 160 UTF-16 units.* One character a reader sees can be built from any number of parts (a
+     letter under a thousand marks), so 40 characters alone bounded nothing. A character that would pass the
+     limit is left out whole. Forty ordinary emoji fit; forty three-person family emoji stop at twenty, and longer
+     built-up emoji sooner. Only the first 1024
+     units of a value are read at all, because a value from a backup can be megabytes and normalising it is slow.
+  3. *More is removed than rule 13 lists.* Besides line breaks and control characters, the helper removes the
+     invisible formatting characters that change nothing a reader sees (zero-width space, soft hyphen, word
+     joiner, byte-order mark, direction marks), so the commonest hidden characters cannot make a second *Trips*.
+     The two joiners, variation selectors and tag characters stay, because emoji and several scripts are
+     spelled with them. A name of only marks or blank-looking characters is no folder. *My Shelf* is judged
+     more widely than other names: hidden characters are ignored, any run of spaces or blank-looking
+     characters counts as one space, and fullwidth letters count as ordinary ones, so a name cannot pass as the
+     Shelf's own by hiding something in it. The price is that *My Shelf* typed with two spaces, or with a
+     visible accent that has no letter of its own, is refused too. Letters borrowed from another alphabet that
+     look like these are not caught.
+  4. *A `folder` value that is not text is read as no folder*, in `meta.json` and in a backup, where a strict
+     reader would have called the whole file unreadable. A folder name is arrangement, not work. The odd value
+     is then gone for good the next time that zine's `meta.json` is written; so is anything a name loses by
+     being cleaned.
+  5. *A rename or unpack that changes some zines and not others returns success with the list of zines left
+     and the first reason* (`FolderChange.failedIds`, `cause`), not a failure, because part of it happened and
+     the caller must say so.
+- **Known and left as they are.** Two names other than *My Shelf* can still differ only by a no-break space, a
+  stray joiner or variation selector, a final sigma, or *ß* against *ss*. Removing direction marks can change
+  where punctuation sits in a name that mixes right-to-left and left-to-right writing. The 1024-unit reading
+  limit is applied first, so a hand-edited value with more than a thousand spaces before the name is no folder. A zine whose `meta.json` is missing but which is in the index shows on the Shelf and refuses a
+  move (rule 17) until it is renamed; part 2's words must not call it damaged. A rename that is refused for its
+  name does not fire the Shelf's signal, because nothing was read or written. The Shelf's listing now waits for
+  the repository lock while it reads each `meta.json`, so it waits behind a backup or restore in progress.
+- **Guards added**, each named under *Consequences*: `library-backup-v2-folders.zine`, a third frozen archive
+  (the first two are byte-identical, and now also pin that an entry with no key is My Shelf); an entry with an
+  unknown key still stages; a wrong-typed `folder` refuses neither staging nor a restore; the folder survives
+  each `meta.json` writer (create, rename, duplicate, the legacy cover backfill, move, rename folder, unpack,
+  restore); the name helper's cases, with 200,000 generated names checked for the four properties rule 13
+  promises; the Shelf lists again after each operation, also a refused one, with no index write; all three
+  frozen archives restored to `meta.json`. The implementer broke three things on purpose (a writer dropping
+  the folder, the Shelf not listening, the backup not carrying the name) and each turned the expected test red;
+  that run is not kept, so it is the implementer's word.
+- **Older builds, run not read.** The restore tests of the `v0.9.0-beta.6` tag were run with one added case:
+  beta.6's own code restored the new folders archive (three zines added, on My Shelf), read a `meta.json`
+  carrying a folder, and dropped the folder when it renamed that zine, as rule 16 says. The added case is not
+  kept in the repository.
+- **Still owed, with part 2:** the ViewModel test that a folder action finishes a waiting delete first (rule
+  11); every screen, string, golden and semantics test; pixel parity against A28; both device passes; rule
+  16's three sentences in the release notes of the first release that has folders; a shared counter for the
+  name field, which `FolderNames` does not expose yet; a test of stopping a rename by cancelling it. The stale
+  `v21-library.html:NNN` line citations named under *Consequences* are also left for part 2. They are in Shelf
+  and editor screen files, `Copy.kt`, three test files and three documents; part 1 touches no screen file, and
+  correcting some and not others would be worse than correcting none.
+- **Device check: Pass 1 done on the owner's phone, 2026-10-07.** The first version of this note waived the
+  check; the owner then connected the phone and said to run it. Samsung SM-A176B, Android 16. Two side-by-side
+  test apps (`com.aritr.zinely.foldersqa`, `com.aritr.zinely.foldersqab6`), made-up zines only; the owner's
+  own app and library were not opened or touched, and the test apps and their backup files were removed
+  afterwards. Head commit `4b83f22` against the `v0.9.0-beta.6` tag:
+  1. *An existing library.* beta.6 made two zines; this build was installed over it. The Shelf opened with
+     both, and both `meta.json` files were byte-identical afterwards.
+  2. *A new zine* made by this build has no `folder` key in its `meta.json`.
+  3. *A new backup read by the old build.* This build's backup (every entry `"folder":null`, then one entry
+     with a real folder name) was restored by beta.6 in the second test app: "3 zines added". beta.6 wrote the
+     restored files without a folder, as rule 16 says.
+  4. *An old backup read by this build.* beta.6's backup, restored after one of its two zines was deleted
+     here: "1 zine added", the other "already here".
+  5. *A hand-written, untidy name* (`"  🫶 field Notes\n"`) put into one zine's `meta.json`: the Shelf listed
+     as before and did not rewrite the file; the backup carried `🫶 field Notes`; renaming the zine kept the
+     folder and wrote the cleaned name.
+  No crash in the log. **Not covered:** nothing a maker can tap makes a folder yet, so move, rename and unpack
+  were not driven on the phone; Android 7 to 15; TalkBack. Pass 2 has nothing to look at until there is a
+  screen. One thing seen by accident and not caused by this work: a `meta.json` made unreadable by hand was
+  put back from its older backup copy, so the file said the zine's old title while the Shelf went on showing
+  the new one ([issue #106](https://github.com/aritr-codes/zinely-android/issues/106)).
+- **Review:** two independent reviewers read commit `497d812`, one for code and concurrency, one for
+  compatibility, scope and the honesty of these documents. **Both: GO WITH FIXES.** Neither found a stop
+  condition: no schema, Room, fixture, dependency, permission, screen, string or golden changed.
+  - *Required, all accepted.* A name could be any length, because letters glued by joiners or one letter under
+    thousands of marks counted as one character → the second limit (item 2), and a joiner no longer glues
+    letters. Cleaning normalised the whole value before cutting it, and a crafted 4 MB name in a backup would
+    have frozen the app for minutes during a restore → only the first 1024 units are read. "It never splits a
+    character" was false → corrected here and in the code, and the virama and non-joiner cases added. "No
+    device pass, nothing to reach" understated a persistence change → the deviation above, and the beta.6 run.
+    A placeholder was left where this paragraph is.
+  - *Recommended, accepted:* names of only blank-looking characters (item 3); the Shelf and the member list
+    read `meta.json` under the lock, because that read can repair the file and the store allows one writer;
+    the reason for a failed write is returned, not dropped (item 5); a directory listing that fails partway is
+    reported as a failure, not a crash; the tests named above; the corrections to ROADMAP, ARCHITECTURE and
+    the fixture's description.
+  - *Recommended, partly accepted:* hidden characters making look-alike folders → the invisible ones are
+    removed (item 3); no-break space, sigma and *ß* are left (above). A test of cancelling mid-rename → owed
+    with part 2.
+  - **A third review, of the fix commit `51f3552`: GO WITH FIXES.** It ported the name helper and ran three
+    million names through it without breaking the four properties, and found no emoji cut apart and no lock
+    taken twice. Required, all accepted: a character newer than the phone's tables counted as invisible, so an
+    emoji-only folder would have vanished on older Android → it now counts as something to see; "*Trips* with a
+    hidden character is one folder" was false and a look-alike *My Shelf* got through → item 3 and *Known and
+    left* corrected, *My Shelf* judged more widely; the device deviation was the implementer granting itself
+    leave → it is the owner's decision; a sentence here claimed a run and a pull request that did not exist yet
+    → removed. Recommended, accepted: Gurmukhi, Kannada, Tamil and Sinhala taken out of the virama rule, leaving
+    the six scripts Unicode's own rule names; a test that could not
+    fail replaced; the refused-operation test no longer able to pass by a late index event; the frozen archives
+    declared as an input of the tests that restore them; rule 14's sentence about the lock.
+  - *Runs.* The full unit suites, the dependency allowlist and the golden gate were run on `497d812` and on
+    `51f3552`, each from a clean tree, all green. A commit cannot record a run on itself: the run on the last
+    commit of this branch will be recorded in the pull request's description when it is opened.
+  - **A fourth review, of the last fix commit `f0e0d18`: GO WITH FIXES**, all accepted. Blank-looking and
+    reserved-ignorable characters still got a look-alike *My Shelf* through, and counting every unknown
+    character as visible let an invisible name become a folder → one rule for "hidden" now serves both
+    checks, with an emoji the device does not know yet still counted as visible. This paragraph cited a pull
+    request that did not exist → reworded. The frozen archives' test input now has a name and a relative
+    path.
+  - **A fifth review, of that commit `8f2e52c`: GO WITH FIXES**, accepted. Two blank characters in a row still
+    got a look-alike *My Shelf* through → a run of them is one space; fullwidth letters are folded. It ran a
+    port of the helper over two million names without breaking idempotence. Its observations stand as known:
+    a few characters that draw nothing on most phones (the object-replacement character, a private-use code
+    point) can still be a folder name, and which marks count as hidden follows the phone's character tables.
+    That last change was not reviewed again: it is three lines and their tests.
+  - *Not done by any reviewer:* none ran Gradle or a device; one ran the compiled name helper directly,
+    on a desktop Java, not on Android.
+
+**Part 2, the Shelf screens (2026-10-08, branch `feat/shelf-folders-ui`, on part 1 as merged in `fe31d29`).**
+Rules 1 to 11 and A28, on the Library screen. Of part 1's storage, only `FolderNames` changed: two read-only
+questions were added (*is this My Shelf*, *is this too long*) and `clean` was rearranged to share their first
+step, with its tests unchanged and still passing. No schema, Room, backup-format,
+fixture, dependency or permission change.
+
+- **What exists.** A folder is one tile, a pile of up to three of its zines' covers behind a kraft band. Tapping
+  it opens the folder in the same grid, with a back control and the folder's name as the heading. The zine
+  sheet has a sixth row (*Move to a folder*, or *Move somewhere else*); three new sheets (where to move, the
+  name, the folder's own); and the folder snack with *Undo*. The view model owns every store call, rule 11, the
+  snack's words and what its button does; which tiles stand where, and what the name sheet answers, are two
+  pure helpers (`ShelfFolders.kt`). The name rules stay in `:core:data`: the screen's module cannot see it, so
+  the app passes them in as a function, and the screen cannot be built without one.
+- **Left to the implementation, and settled so.**
+  1. *Rule 11 is the view model's.* A folder action takes over every waiting delete at the moment it is
+     confirmed. The screen shows one delete prompt at a time, so a second delete's prompt can still be queued
+     then; the screen asks before it shows a prompt, and a delete that a folder action has finished is not
+     offered an Undo. A delete the folder action could not finish puts the zine back and says so, the folder
+     action does not run, and the next action is a new decision.
+  2. *One folder action at a time.* A second one confirmed while the first is still writing is dropped
+     without a word. The window is a few file writes.
+  3. *Rule 18's partial cases have a message and a button.* A rename or take-out that leaves zines behind says
+     *Some zines are still in “Trips”* with *Try again*; a *Try again* that fails outright keeps the offer, and
+     the Undo of a take-out covers every zine taken out in any run. An Undo that cannot put every zine back
+     tries them all and says *Some zines didn’t go back. They’re on My Shelf, nothing is lost*, with no button.
+     **These three lines are not in the frozen page**, which never drew a failure; they are provisional and put
+     to the owner.
+  4. *Undo returns to where the action was taken*, as the frozen page's `undo()` does: My Shelf at once, a
+     folder once the Shelf shows it again.
+  5. *The snack is the Bench's snack*, reused, with a larger corner and a 48dp button, placed 8dp above the
+     dock as measured, not assumed. It lies over the bottom of the Shelf and takes the taps there while it is
+     up. It stays four seconds, or the phone's accessibility timeout if longer, and while a finger or keyboard
+     focus is on it. It does not survive a rotation.
+- **Deviations from A28, each a difference a reader can see or hear. None is ruled; all are put to the owner.**
+  1. **Focus moves happen with a keyboard, not under a finger or TalkBack.** A28's *Focus* table (after an
+     action, into a folder, back out) is implemented with focus requests, and in this app a tappable control
+     does not take focus by request in touch mode. Only the heading does. This is the app-wide limitation
+     recorded at the beta.5 stability pass, not new, but A28 marks these moves *shown*. The two tests that
+     cover them say "with a keyboard" in their names. What TalkBack does on a phone is unknown until the TalkBack listen.
+  2. The back control's underline is drawn in the text's colour; the page uses the fainter `--hair`. The
+     snack's Undo underline is at the platform's offset and weight. *Cancel* on the name sheet has no
+     underline: it is the dock's quiet action, which never had one.
+  3. The Move row's icon chip is the sheet's ordinary butter chip ([ADR-100](#adr-100)).
+  4. The heading is a keyboard tab stop without a ring; the page's is reachable by script only.
+  5. Deleting the last zine of an open folder returns to My Shelf with the delete's own line only. A28.3 says
+     "the snack says so"; rule 11 governs, and the delete snack is not the folder snack.
+- **Found, not caused by this work.**
+  - *The heading's swipe cannot be seen in the light theme.* The frozen CSS colours it butter through a
+    selector that never matches the frozen markup, so a browser draws it in ink; Compose follows the CSS, and
+    butter on the light desk is the desk's own colour. It is on `main` already and now also sits under a
+    folder's name. It needs a ruling on which the page means.
+  - *Two goldens on `main` were stale and passing.* `v21_sheet_light/dark` still pictured the heading as
+    "Your shelf" where the code and the frozen page say "My Shelf"; the change is under the 2% threshold every
+    Shelf raster is compared at. They are re-recorded here, after reading the diffs, for that and for the sixth
+    row. The four `v21_shelf_*`/`v21_library_content_*` rasters that picture the same heading still pass at
+    that threshold and are not re-recorded in this change.
+- **Tests.** Pure: tiles, counts and every name-sheet answer (`ShelfFoldersTest`). Screen, in Robolectric
+  (`ZineLibraryFoldersTest`): each A28 rule the screen owns, every name in *What TalkBack hears* as a literal,
+  each sheet's dialog name, the snack's place, its four seconds, its leaving when a sheet rises, rule 11 on the
+  screen's side, the open folder surviving a rebuild. View model, with a fake store
+  (`HomeViewModelTest`): each snack line, Undo, rule 11 in order and on failure, both partial cases and their
+  retries, one spelling per folder. Repository: a rename cancelled partway leaves every zine whole and is
+  finished by running it again (owed from part 1). **Rasters:** eighteen, the pile Shelf, the inside of a
+  folder and the three sheets in both themes and at 1.8×, the empty name sheet, and the Shelf with its dock and
+  the snack in both themes. A plain unit run does not compare them; the golden gate does.
+  They were recorded on the development machine (Windows), not on the pinned CI image that gates them; a
+  re-record there, with the diff read, is owed at the next opportunity, as the recording workflow asks.
+- **Pixel parity.** The frozen page was screenshotted in its five folder states in a headless browser and laid
+  beside the light rasters. Piles, band, sheets, field and button agree; a reviewer measured the top cover's
+  slope, the band's slope and span and the cover height as equal. The differences are the deviations above,
+  the swipe, and the browser's fallback fonts. The dark theme was compared by eye only. The screenshots are not
+  kept in the repository.
+- **Mockup line citations.** Ten `v21-library.html:NNN` citations in code, tests and this file now point at
+  the lines they name. Four in `BETA-UX-REVIEW.md` and `V2-SPEC-DEFECTS.md` cite a rule removed from the page
+  before A28 and are left as the historical record they are.
+- **Review:** two independent reviewers read `db56dda`, one for code, state and test honesty, one for A28,
+  accessibility, copy and a first-time user. **Both: GO WITH FIXES.** Neither found a stop condition.
+  - *Required, accepted.* A queued delete prompt kept a working-looking Undo after a folder action had
+    already deleted the zine → item 1 above, with a test of two queued deletes. Focus moves were tested in
+    keyboard mode under names that claimed the rule → renamed, and recorded as deviation 1. The documents
+    still said nothing was built → this entry and the rows it is linked from. The three failure lines were not
+    on the owner's list, and one named no way out → reworded and listed. The evidence list's rasters were
+    incomplete (three surfaces at 1.8×, the empty name sheet, the snack) → added, with a test of the snack's
+    place. The visible differences sat only in code comments → the list above.
+  - *Recommended, accepted.* A folder action committed the visible delete twice, and a failure said so twice
+    → once. A *Try again* that failed outright forgot the zines already taken out → item 3. The stand-in name
+    rule was the screen's default, so the real rules were wired by one untested line → no default; the
+    stand-in is test code. Undo to My Shelf, the rebuilt screen and the dialog names were untested → tested.
+  - *Recommended, not done.* Telling the maker when a second action is dropped (item 2). The snack surviving
+    a rotation. A ring on the focused heading.
+  - *Rejected.* "A failed move leaves a focus request standing": the request is set only by a snack, and a
+    failed move sends none.
+  - *Not done by either reviewer:* neither ran Gradle, a phone or a screen reader.
+  - **A second review, of the fix commit `ed34b62`: GO.** It tried and failed to break the queued-delete fix
+    (a dropped action, a failed takeover, a rotation) and the retry paths, and counted the rasters. Accepted:
+    the screen's question about a waiting delete had a permissive default, the trap just removed for the name
+    rules → no default; one sentence here understated the change to `FolderNames` → corrected; where the
+    rasters were recorded → said above. Left as known: starting a backup while a delete's snack is up can
+    still leave that snack's Undo with nothing to undo, which is on `main` already; two paths, each needing
+    two actions within milliseconds or behind one message, where Undo returns to the wrong view; a retry that
+    fails outright no longer says why. It ran nothing and viewed no raster.
+- **Still owed.**
+  - **A TalkBack listen.** Deferred by the owner on 2026-10-08, who said to merge without it: a waiver of
+    the handbook's device check before merge for this one part, not a pass. Still owed before acceptance.
+    Not run (see *Phone passes* below): what it says on each sheet, where its focus
+    lands after an action (deviation 1), whether the field's name hides what is typed in it, and whether the
+    snack's stay (four seconds, or the phone's accessibility timeout if longer) is enough to reach Undo.
+  - The name sheet under the keyboard on Android 7 to 9.
+  - Rule 16's three sentences in the release notes of the first release that has folders.
+  - The owner's rulings listed in [OWNER-CHECKLIST](OWNER-CHECKLIST.md).
+- **Phone passes, 2026-10-08.** Samsung SM-A176B, Android 16, the build of `436fbb9` installed side by side as
+  `com.aritr.zinely.foldersqa` (the owner's app and library untouched), four made-up zines, driven over adb
+  with the platform tree read by `uiautomator dump` after each step. The test app and its dump file were
+  removed afterwards. TalkBack was not turned on.
+  - **Pass 1, built right: passes, with TalkBack unheard.** Driven and read: the zine sheet's six rows; a
+    first folder skipping the chooser; the name sheet above the keyboard with its field focused, *Make
+    folder* clickable and not enabled while empty, the *my shelf* hint, and *You already have a folder called
+    “Club”* with *Rename* not enabled; making a folder by the button and by the keyboard's Enter; the chooser
+    (*Trips, 1 zine*; inside a folder *My Shelf, Out of the folder* and the zine's own folder not enabled);
+    *Cancel* on a new name going back to the chooser; a move and its Undo; opening a folder, the back control
+    and the system Back; *Make a zine* inside a folder putting the zine in it and coming back to it; a
+    rename; taking the zines out and its Undo; the last zine leaving a folder (*“Trips” is empty, so it’s put
+    away*, and the view back on My Shelf); a delete followed at once by a folder action (rule 11: the delete
+    is finished, its snack gone, the folder snack up); and a folder surviving a force-stop. Every pile, tile,
+    row and snack action is a `Button` with the name the tests assert; the snack's message and its Undo are
+    separate nodes.
+    - *Seen, as recorded in deviation 1:* in touch mode no control takes focus after an action; the heading
+      holds it.
+    - *Not covered:* TalkBack; the three failure lines (nothing failed); Android 7 to 15; large text on the
+      phone (rasters only).
+  - **Pass 2, first-time reading: passes, one finding.** Read by the implementer, who knows why each screen
+    behaves as it does, so this is the weaker of the two passes; the owner's own first use is the better
+    reading. A pile reads as a pile, the count under it and in
+    each sheet says what is inside, every snack says where the zine now is, and Undo did what it said each
+    time. **Finding:** a two-line snack (*Back on My Shelf. “Trips” is empty, so it’s put away*; *Zines from
+    “Journeys” are back on My Shelf*) is gone in the frozen four seconds, about when a first reader finishes
+    it, so Undo is offered for less time than it takes to learn what it would undo. The value is A28's; not
+    changed, put to the owner. Also seen: in the dark theme the heading's swipe appears after the first action
+    and was not there before it (the focus mark of deviation 1), a mark that comes and goes with no meaning to
+    the maker; it is with the heading ruling already on the checklist.
 
 ## ADR-126 {#adr-126}
 

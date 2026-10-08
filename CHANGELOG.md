@@ -22,6 +22,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A design proposal for choosing a font for a text, Book or Plain: a try-it-yourself amendment to the
   type-bar design, not yet approved. Two measurements behind it are recorded. Nothing in the app changed and
   there is still nothing to try in a download.
+- The storage for folders on the Shelf (ADR-125, part 1 of 2). A zine can now carry a folder name in its own
+  file, and a backup carries that name too, so folders will come back after a restore. Older backups still
+  restore, with every zine on My Shelf. There is no screen for any of this yet: nothing in the app looks or
+  behaves differently, and there is still nothing to try in a download.
+- Folders on the Shelf (ADR-125, part 2 of 2), built and not yet in a download. From a zine's three dots,
+  *Move to a folder* makes a folder or puts the zine in one. A folder shows as a pile of its zines' covers;
+  tap it to look inside, or tap its three dots to rename it or take its zines out. Moving, making a folder
+  and taking zines out can be undone for a few seconds; renaming cannot. Checked by hand on one phone (Android 16); not yet
+  with a screen reader.
+  Notes for the release that first carries folders: a backup keeps each zine's folder; an older Zinely
+  restores such a backup with every zine on My Shelf; a backup made by an older Zinely restores with every
+  zine on My Shelf; and restoring onto a phone that already has the same zines adds nothing, so it brings no
+  folders.
 - The public roadmap lists folders on the Shelf and a second font as In development, each saying there is
   nothing to try yet. The roadmap and What's new pages use plainer words (for example "a screen reader" where
   they said TalkBack alone), and the homepage status table now starts each status on its own line.

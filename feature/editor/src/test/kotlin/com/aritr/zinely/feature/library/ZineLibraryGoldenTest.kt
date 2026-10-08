@@ -10,7 +10,11 @@ import androidx.compose.ui.test.onNodeWithTag
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.aritr.zinely.feature.editor.FolderSnackAction
+import com.aritr.zinely.feature.editor.HomeShelfEvent
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -71,23 +75,42 @@ class ZineLibraryGoldenTest {
     @Test
     fun `the frozen library error dark`() = viewport("error_dark", LibraryShelfState.Error, true)
 
-    private fun viewport(name: String, state: LibraryShelfState, dark: Boolean) {
-        composeRule.setContent { Screen(state, dark) }
+    /**
+     * A28: the Shelf with its piles against the dock, and the folder snack standing 8dp above it. The one
+     * raster of the snack; the rest of the folder surfaces are in [ZineFoldersGoldenTest].
+     */
+    @Test
+    fun `the library with folders and the folder snack light`() = folders("light", dark = false)
+
+    @Test
+    fun `the library with folders and the folder snack dark`() = folders("dark", dark = true)
+
+    private fun folders(name: String, dark: Boolean) {
+        val inFolder = mapOf(0 to "For the stall", 4 to "For the stall", 5 to "For the stall", 1 to "Family", 3 to "Family")
+        val seeded = LibraryShelfState.Content(content().zines.mapIndexed { i, zine -> zine.copy(folder = inFolder[i]) })
+        val snack = HomeShelfEvent.FolderSnack("Moved to “Family”", FolderSnackAction.Undo)
+        viewport("folders_snack_$name", seeded, dark, flowOf(snack))
+    }
+
+    private fun viewport(name: String, state: LibraryShelfState, dark: Boolean, events: Flow<HomeShelfEvent> = emptyFlow()) {
+        composeRule.setContent { Screen(state, dark, events) }
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(VIEWPORT).captureRoboImage("$GOLDEN_DIR/v21_library_$name.png", aa())
     }
 
     @Composable
-    private fun Screen(state: LibraryShelfState, dark: Boolean) {
+    private fun Screen(state: LibraryShelfState, dark: Boolean, events: Flow<HomeShelfEvent>) {
         ZinelyTheme(darkTheme = dark) {
             ZineLibraryScreen(
                 state = state,
-                events = emptyFlow(),
+                events = events,
                 backupRestoreState = null,
                 lastBackup = null,
                 onOpenZine = {},
                 onShareExport = {},
-                onStartZine = {},
+                onStartZine = { _, _ -> },
+                checkFolderName = ::plainFolderNameVerdict,
+                isDeleteWaiting = { true },
                 onRenameZine = { _, _ -> },
                 onDuplicateZine = {},
                 onDeleteZine = {},

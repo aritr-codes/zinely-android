@@ -7,9 +7,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -199,6 +202,9 @@ public const val BenchSnackInkMillis: Long = 1600L
  * @param announce `false` when the caller has already spoken this line another way (an undo or redo line,
  *   [ADR-123](../../../../../../../../docs/DECISIONS.md#adr-123)). The live region then stays silent and the
  *   pill itself carries the words as a node a screen reader can land on.
+ * @param shape the Bench's pill by default. The Shelf's snack is this one with `border-radius:var(--br-lg)`
+ *   (`v21-library.html` A28: *"the Bench's support-paper snack, same paint"*).
+ * @param actionMinHeight `.snack button{min-height:48px}` on the Shelf's snack; the Bench's declares none.
  */
 @Composable
 internal fun BenchSnack(
@@ -211,6 +217,8 @@ internal fun BenchSnack(
     bottomClearance: Dp = 0.dp,
     step: Int = 0,
     announce: Boolean = true,
+    shape: Shape = BenchSnackShape,
+    actionMinHeight: Dp = Dp.Unspecified,
 ) {
     // Still routed through the V2 motion object: V2.1 changed the duration, not the arrival, and this
     // is where the reduced-motion downgrade lives ([ADR-075]). Same call [BenchStyleRow] makes.
@@ -262,10 +270,10 @@ internal fun BenchSnack(
                         Modifier
                     },
                 )
-                .clip(BenchSnackShape)
+                .clip(shape)
                 .background(colors.surfaceSoft)
                 // A transient confirmation is a warm support scrap: ordinary ink and border on surfaceSoft.
-                .border(BenchSnackBorder, colors.ink, BenchSnackShape)
+                .border(BenchSnackBorder, colors.ink, shape)
                 .padding(BenchSnackPadding)
         },
         horizontalArrangement = Arrangement.spacedBy(BenchSnackGap, Alignment.Start),
@@ -314,6 +322,8 @@ internal fun BenchSnack(
                         role = Role.Button
                         onClick { act(); true }
                     }
+                    .defaultMinSize(minHeight = actionMinHeight)
+                    .wrapContentHeight()
                     .padding(
                         horizontal = BenchSnackActionPaddingH,
                         vertical = BenchSnackActionPaddingV,

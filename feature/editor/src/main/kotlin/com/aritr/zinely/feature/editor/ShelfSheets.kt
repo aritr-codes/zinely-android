@@ -564,7 +564,7 @@ internal fun ShelfRenameSheet(
 }
 
 /**
- * `Save` — the rename's one committing action, drawn as `.start` (`v21-library.html:328-341`) minus its
+ * `Save` — the rename's one committing action, drawn as `.start` (`v21-library.html:354-366`) minus its
  * ring.
  *
  * ```css

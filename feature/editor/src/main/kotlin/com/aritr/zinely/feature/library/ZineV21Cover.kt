@@ -90,6 +90,10 @@ import com.aritr.zinely.ui.theme.zinelyV21LightColors
  *   key the tilt and the tape's placement off. Position, not identity: the same zine tilts differently
  *   after a sibling is deleted, exactly as it does in the prototype.
  * @param pressed `.zine:active`.
+ * @param tilt the resting rotation, in degrees. The position's own by default; a cover in a folder's pile
+ *   takes the pile's fan in its place (A28, [ZinePile]).
+ * @param taped `.pile .tape,.pile .stamp{display:none}`: a cover in a pile carries no tape. It carries no
+ *   stamp either, which a blank [stampLabel] already says.
  * @param mark the cover's centred glyph, drawn at 46% of the cover's width. A **slot**, not an icon id:
  *   `.cover .mark` takes its colour per surface (`rgba(255,246,232,.92)` on ink, `inkSoft` on paper), so
  *   the tint belongs to whoever knows which surface this is. The six glyphs are [ZineV21CoverMarks].
@@ -107,6 +111,8 @@ internal fun ZineV21Cover(
     // stocks that stopped theming — see `ZineCoverSurface.v21BorderInk`. Defaulted so callers that draw
     // a cover from a bare colour (the golden sheets) keep the frozen rule without restating it.
     borderInk: Color = ZinelyTheme.v21Colors.ink,
+    tilt: Float = tiltFor(index),
+    taped: Boolean = true,
     mark: @Composable BoxScope.(Modifier) -> Unit = {},
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -137,7 +143,7 @@ internal fun ZineV21Cover(
             // The tilt is a render-time rotation, not a layout one: a tilted cover must not change the
             // space the grid gives it, or the shelf's columns would breathe as tiles were added.
             // `rotate(0deg)` on :active is why this reads `pressed` rather than being hoisted.
-            .graphicsLayer { rotationZ = tiltFor(index) * (1f - pressed01) }
+            .graphicsLayer { rotationZ = tilt * (1f - pressed01) }
             // Travel and shadow, transcribed from the Hero tier, and stated inline rather than through
             // zinelyV21Pressable so the rotation can sit between them.
             //
@@ -223,7 +229,7 @@ internal fun ZineV21Cover(
             // the padding box's width. A first version mapped the three positions onto
             // Alignment.TopCenter/Start/End, which is not the same thing at all — Start is the left
             // edge, not 38% — and the parity raster showed it immediately.
-            BoxWithConstraints(
+            if (taped) BoxWithConstraints(
                 Modifier
                     .align(Alignment.TopStart)
                     .fillMaxWidth()
