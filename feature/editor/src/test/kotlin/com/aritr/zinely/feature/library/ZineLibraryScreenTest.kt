@@ -617,6 +617,7 @@ class ZineLibraryScreenTest {
                 onShareExport = { shared += it },
                 onStartZine = { paper, _ -> started += paper },
                 checkFolderName = ::plainFolderNameVerdict,
+                isDeleteWaiting = { true },
                 onRenameZine = { id, title -> renamed += id to title },
                 onDuplicateZine = { duplicated += it },
                 onDeleteZine = { deleted += it },

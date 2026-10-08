@@ -110,6 +110,7 @@ class ZineLibraryGoldenTest {
                 onShareExport = {},
                 onStartZine = { _, _ -> },
                 checkFolderName = ::plainFolderNameVerdict,
+                isDeleteWaiting = { true },
                 onRenameZine = { _, _ -> },
                 onDuplicateZine = {},
                 onDeleteZine = {},

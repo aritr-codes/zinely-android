@@ -14972,8 +14972,9 @@ ViewModel and no string: a maker cannot reach any of it yet.
     on a desktop Java, not on Android.
 
 **Part 2, the Shelf screens (2026-10-08, branch `feat/shelf-folders-ui`, on part 1 as merged in `fe31d29`).**
-Rules 1 to 11 and A28, on the Library screen. No file of part 1's storage changed except two read-only
-questions added to `FolderNames` (*is this My Shelf*, *is this too long*). No schema, Room, backup-format,
+Rules 1 to 11 and A28, on the Library screen. Of part 1's storage, only `FolderNames` changed: two read-only
+questions were added (*is this My Shelf*, *is this too long*) and `clean` was rearranged to share their first
+step, with its tests unchanged and still passing. No schema, Room, backup-format,
 fixture, dependency or permission change.
 
 - **What exists.** A folder is one tile, a pile of up to three of its zines' covers behind a kraft band. Tapping
@@ -15035,6 +15036,8 @@ fixture, dependency or permission change.
   finished by running it again (owed from part 1). **Rasters:** eighteen, the pile Shelf, the inside of a
   folder and the three sheets in both themes and at 1.8×, the empty name sheet, and the Shelf with its dock and
   the snack in both themes. A plain unit run does not compare them; the golden gate does.
+  They were recorded on the development machine (Windows), not on the pinned CI image that gates them; a
+  re-record there, with the diff read, is owed at the next opportunity, as the recording workflow asks.
 - **Pixel parity.** The frozen page was screenshotted in its five folder states in a headless browser and laid
   beside the light rasters. Piles, band, sheets, field and button agree; a reviewer measured the top cover's
   slope, the band's slope and span and the cover height as equal. The differences are the deviations above,
@@ -15061,7 +15064,14 @@ fixture, dependency or permission change.
   - *Rejected.* "A failed move leaves a focus request standing": the request is set only by a snack, and a
     failed move sends none.
   - *Not done by either reviewer:* neither ran Gradle, a phone or a screen reader.
-  - The fixes were not reviewed again when this was written.
+  - **A second review, of the fix commit `ed34b62`: GO.** It tried and failed to break the queued-delete fix
+    (a dropped action, a failed takeover, a rotation) and the retry paths, and counted the rasters. Accepted:
+    the screen's question about a waiting delete had a permissive default, the trap just removed for the name
+    rules → no default; one sentence here understated the change to `FolderNames` → corrected; where the
+    rasters were recorded → said above. Left as known: starting a backup while a delete's snack is up can
+    still leave that snack's Undo with nothing to undo, which is on `main` already; two paths, each needing
+    two actions within milliseconds or behind one message, where Undo returns to the wrong view; a retry that
+    fails outright no longer says why. It ran nothing and viewed no raster.
 - **Still owed.**
   - **Both phone passes.** Not run: the phone was not connected in this session. Pass 1 owes the platform
     accessibility tree of every new surface, move, rename and take-out driven by hand, the keyboard over the

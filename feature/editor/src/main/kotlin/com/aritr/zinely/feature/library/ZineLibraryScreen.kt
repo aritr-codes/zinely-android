@@ -267,7 +267,7 @@ public fun ZineLibraryScreen(
     onRenameFolder: (String, String) -> Unit = { _, _ -> },
     onUnpackFolder: (String) -> Unit = {},
     onFolderSnackAction: () -> Unit = {},
-    isDeleteWaiting: (String) -> Boolean = { true },
+    isDeleteWaiting: (String) -> Boolean,
     checkFolderName: (String) -> FolderNameVerdict,
     modifier: Modifier = Modifier,
 ) {
