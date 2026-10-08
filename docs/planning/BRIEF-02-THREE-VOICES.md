@@ -1,7 +1,9 @@
 # Brief 02 — Document voices: Book and Plain
 
-> ⛔ **Not ready for an implementation session.** Three things still block one:
-> 1. **The owner's minimum print size for Book**, after one printed page ([Procedure A](#procedure-a-the-printed-book-page)).
+> ⛔ **Not ready for an implementation session.** One thing still blocks one (item 2):
+> 1. ~~The owner's minimum print size for Book.~~ **Ruled 2026-10-08: 12 pt, to be confirmed on the printed
+>    page** ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)). [Procedure A](#procedure-a-the-printed-book-page) is not printed yet.
+>    Whether it must come before a session is the implementer's reading, recorded and put to the owner there.
 > 2. **The owner's approval of the row drawn in the type bar** (gate 5). It was drawn on 2026-10-07 as the
 >    proposed amendment [`v21-typebar.html` A29](../design/mockups/v21-typebar.html), with twelve questions for the owner (V-1 to V-12). It proposes the label
 >    **Font** for the row this brief calls the Voice row.
@@ -35,7 +37,7 @@ nothing they left to the owner. The gate is the record; this table is a summary 
 | A document voice is not an interface typeface. Averia stays the interface voice for now. The owner read the constitution's existing wording this way; the constitution itself is not changed | Q2 |
 | **The saved-file format does not change** ("no schema bump"). An older build keeps and restores the content. It may draw a voice it does not know in Inter. That is a layout change, not data loss, and its extent is documented and tested | Q2 |
 | The Voice control is an amendment to the frozen `v21-typebar.html`. The owner approves the drawing | Q2, [Q4](ZINELY-1X-DECISION-GATE.md#q4-typebar--reframe-specs-o10) |
-| The smallest size Book may be used at is the owner's, after a printed page at 10, 12 and 14 pt | Q2 |
+| The smallest size Book may be used at is the owner's: 12 pt, ruled 2026-10-08, to be confirmed on a printed page at 10, 12 and 14 pt | Q2 |
 | The fold study does not gate this work | [Q5](ZINELY-1X-DECISION-GATE.md#q5-fold-study-before-creative-work-o14) |
 
 Delegated by Q2 and specified below: what happens with scripts Fraunces lacks, the four document faces, the
@@ -48,18 +50,19 @@ editing-surface change, and the control's shape inside the type bar.
 | 1 | PR #70 settled (the dead *Font* control removed) | ✅ Merged (`a6eb16b`, [ADR-115](../DECISIONS.md#adr-115)) | done | done |
 | 2 | `v21-typebar.html` frozen | ✅ Frozen 2026-10-06; on `main` since 2026-10-07 (PR #99). Seven differences from the app were [returned to the owner](../OWNER-CHECKLIST.md#15-product--design-authorship); none blocks this brief, but gate 5 meets them | done | done |
 | 3 | Four Fraunces document faces fetched, pinned and measured | ✅ Done; on `main` since 2026-10-07 (PR #99). See [The four faces](#the-four-faces). They sit in `docs/planning/voices/`, outside the app build | done | done |
-| 4 | **Minimum print size for Book** | ⛔ Not ruled. [Procedure A](#procedure-a-the-printed-book-page) is written; the page is not printed | before a session starts | owner |
+| 4 | **Minimum print size for Book** | ◐ **12 pt**, ruled 2026-10-08, to be confirmed on the printed page ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)). [Procedure A](#procedure-a-the-printed-book-page) is written; the page is not printed | the page: before gate 7 (the gate's reading, put to the owner) | owner |
 | 5 | **Type-bar amendment**: the Voice row drawn in `v21-typebar.html`, reviewed, owner-approved, frozen again | ◐ **Drawn and reviewed 2026-10-07 as proposed amendment A29; not approved, not frozen.** The owner's answers to V-1 to V-12 are owed ([OWNER-CHECKLIST §1.5](../OWNER-CHECKLIST.md#15-product--design-authorship)) | before a session starts | the owner |
 | 6 | **Older-build fallback test** run and recorded | ⛔ Not run. [Procedure B](#procedure-b-the-older-build-fallback-test) is written. It needs a build that can set Book, so it cannot run earlier | inside the session, before merge | implementer, with an emulator or a second phone |
 | 7 | [ADR-126](../DECISIONS.md#adr-126) accepted | ⛔ Drafted as *Proposed* on this branch (2026-10-06); not accepted. It covers what [the section below](#what-the-adr-must-cover) lists, except the two figures that only the session can measure | accepted before merge | implementer drafts, owner accepts |
 
-**Order.** First print the page and rule the size (4); it needs nothing from the drawing. Then draw the
+**Order.** The size is ruled, 12 pt, and the page that confirms it (4) can be printed at any time before
+gate 7; it needs nothing from the drawing. Draw the
 Voice row (5), always including how a choice looks when it cannot be used, because the script rule needs
 that state whatever the size ruling. The owner approves the drawing. Then the session: Kotlin, the
 older-build test (6), the ADR accepted (7), merge.
 
-**The owner's part, in one place:** (1) ~~merge this preparation branch~~ done 2026-10-07, (2) print the page and rule the minimum
-size (Book is then shown as unavailable below it; say so if a warning is wanted instead), (3) approve the Voice row
+**The owner's part, in one place:** (1) ~~merge this preparation branch~~ done 2026-10-07, (2) ~~rule the minimum size~~ 12 pt, ruled 2026-10-08; print the page to confirm it
+(Book is shown as unavailable below the minimum; say so if a warning is wanted instead), (3) approve the Voice row
 drawing, including a TalkBack listen to the row's label, (4) accept the ADR.
 
 What each size ruling costs. The sizes a maker can pick are 10, 12, 14, 16 pt and up. A 12 pt minimum means
@@ -297,16 +300,20 @@ cannot draw without the maker having been told, in these cases:
 ⚠️ Closing those cases needs a check outside the editing session (on open, or at export). That is a new
 decision for the owner, not part of this brief. Today's Plain has the same hole for unsupported scripts.
 
-### Minimum print size: waiting for the owner
+### Minimum print size: 12 pt
+
+**Ruled by the owner on 2026-10-08: 12 pt, to be confirmed on the printed page** ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8), which
+owns the ruling). The mechanism below is therefore built, with 12 pt as its minimum. The printed page can
+still change that, so the minimum is one named value in the code.
 
 ✅ Fraunces is smaller on the body than Inter at the same point size. The small letters at 10 pt are 1.66 mm
 tall in the Book regular face (1.65 mm italic, 1.69 mm bold), against 1.93 mm in Inter: 14 % shorter, with
 thinner strokes. The size steps start at 10 pt (`TypeBar.kt:93`).
 
 This is a readability decision for the people who read the printed zine, including older and low-vision
-readers. The owner makes it with the printed page in hand ([Procedure A](#procedure-a-the-printed-book-page)).
+readers. The printed page ([Procedure A](#procedure-a-the-printed-book-page)) is how the owner checks it.
 
-🟦 The mechanism, built **only if** the ruled minimum is above 10 pt:
+🟦 The mechanism, built because the ruled minimum is above 10 pt:
 - Book is [unavailable](#a-voice-that-cannot-be-used) for a text smaller than the minimum.
 - For a Book text, **Smaller** stops at the minimum, with its own reason line (see the examples above).
   (Smaller is an icon button with no place for text today; the amendment draws where the line goes.)
@@ -316,7 +323,7 @@ readers. The owner makes it with the printed page in hand ([Procedure A](#proced
 
 ⚠️ This blocks rather than warns, and only the blocking version is specified. The owner may ask for a
 warning instead; that version would need its own short specification before a session could start.
-If the owner rules that 10 pt is acceptable, none of this is built.
+If the printed page brings the ruling down to 10 pt, none of this is needed and it is taken out.
 
 ## The four faces
 
@@ -487,8 +494,8 @@ Gate 7's ADR ([ADR-126](../DECISIONS.md#adr-126)) records, at least:
 
 ## Procedure A: the printed Book page
 
-**Purpose.** The owner sets the smallest size at which Book may be used (gate 4). This is a judgment made on
-paper, by eye. It is separate from the [print and fold study](STUDY-PRINT-AND-FOLD-PROTOCOL.md).
+**Purpose.** The owner confirms, or changes, the smallest size at which Book may be used (gate 4): 12 pt,
+ruled on 2026-10-08 before anything was printed. This is a judgment made on paper, by eye. It is separate from the [print and fold study](STUDY-PRINT-AND-FOLD-PROTOCOL.md).
 
 **What it can and cannot show.** It shows how the Book faces read on the owner's printer at 10, 12 and 14 pt,
 beside Plain. It does not test Zinely's own print path, a phone's print service, a laser printer, or any
@@ -533,7 +540,7 @@ before ruling, print them the same way.
 **The ruling.** One of:
 - **10 pt.** Book is offered at every size. Nothing extra is built.
 - **12 pt** or **14 pt.** Book is then unavailable below that size, as the
-  [minimum print size](#minimum-print-size-waiting-for-the-owner) section describes.
+  [minimum print size](#minimum-print-size-12-pt) section describes.
 - **Not acceptable at any of these sizes on a home printer.** That reopens the choice of face and goes back to
   the decision gate.
 
@@ -660,7 +667,7 @@ type role. The document faces are content, not design tokens.
 ## Stop conditions
 
 Stop and report, do not improvise, if:
-- the owner's minimum print size has not been ruled, or the Voice row amendment is not approved;
+- the Voice row amendment is not approved;
 - the Voice row needs a change to the frozen type bar beyond the approved amendment;
 - a voice change needs an undo line A26 does not have;
 - the typing-time notice needs a change to a frozen page that no approved amendment covers;
@@ -688,6 +695,7 @@ running text. More scripts through faces that cover them ([ADR-070](../DECISIONS
 
 | Date | Change |
 |---|---|
+| 2026-10-08 | Gate 4: the owner ruled Book's minimum print size, 12 pt, to be confirmed on the printed page ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); evidence in [RESEARCH R23](../RESEARCH.md#r23-the-smallest-size-for-book-on-a-mini-zine-page---verified---recommendation-with-a--assumption-edge)). The page is not printed. |
 | 2026-10-07 | Two measurements recorded ([Measured on 2026-10-07](#measured-on-2026-10-07)): the card's fit at 360 dp and the largest font size, and what is drawn for a missing character. Gate 5 moved to "drawn as proposed amendment A29, not approved". The top note's third blocker struck: the preparation branch merged (PR #99). Two faults in the shipped app found by the measurements are tracked as issues #102 and #103. |
 | 2026-10-06 | Rewritten as a two-voice brief. Folds in the owner's rulings (2026-09-26), the readiness audit's [§6](ZINELY-1X-READINESS-AUDIT.md#6-d2-audit--typefaces--voices) and the pre-rewrite record (last present in `ae374ea`). New: the script rule and what it does not guarantee, the unavailable state, the editing-surface change with its file and line, the saved ids, the older-build consequence with measured widths, the four faces, and the two procedures. The "Corrections pending" banner is replaced by the blocker list and the gate table. Corrected from the pre-rewrite record: the faces are upstream's own static files from `undercasetype/Fraunces`, not instanced, and the Regular is the file the interface already ships |
 | 2026-09-26 | Pre-rewrite record added: rulings, and what the repository bundles |

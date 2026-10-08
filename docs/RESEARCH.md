@@ -745,3 +745,56 @@ removed gives its zines back to the Shelf, because Zinely has no trash and every
 the Shelf still answers by recognition (R22.5); every action available from a menu, with any drag gesture a later
 shortcut and never the only route (R22.3). Because nothing shows folders help below a screenful (R22.6), the
 design must cost nothing for someone who never makes one. [ADR-125](DECISIONS.md#adr-125) owns the decision.
+
+## R23. The smallest size for Book on a mini-zine page — ✅ VERIFIED + 🟦 RECOMMENDATION, with a 🟨 ASSUMPTION edge
+
+Asked by the owner on 2026-10-08: what do other zine tools use as a minimum text size, and what should Book's
+be? Web research, one pass, 2026-10-08. Sources were opened unless marked otherwise. Not independently
+re-checked source by source.
+
+### R23.1 No zine tool found sets a minimum — ✅ VERIFIED (as an absence), partly 🟨 ASSUMPTION
+
+- The zine-making guides of two university libraries
+  ([University of Delaware](https://guides.lib.udel.edu/zines/making),
+  [Niagara County Community College](https://libguides.niagaracc.suny.edu/zines/makezines)) give no text-size
+  advice. Delaware lists Electric Zine Maker and Canva, with none either.
+- 🟨 Searches found no documented minimum for Electric Zine Maker or Canva's zine templates. Mixam's artwork
+  guide could not be opened. Adobe Express, Blurb, Affinity and InDesign tutorials, and web imposers were not
+  searched. The "9 to 12 pt for zine body text" figure that turns up comes from pages with no source and is
+  not relied on.
+- [Amazon KDP](https://kdp.amazon.com/en_US/help/topic/G202145450) requires "a minimum font size of 7
+  points". That is a floor for any printed text, not a size for body text.
+
+So a minimum in Zinely follows no convention among zine tools. It is a legibility decision of its own.
+
+### R23.2 Clear print is measured by the height of the small letters — ✅ VERIFIED
+
+[UKAAF, *Creating clear print and large print documents*](https://webs.uab.cat/act/wp-content/uploads/sites/126/2017/03/ukaaf-creating-clear-print-and-large-print-documents.pdf):
+clear print is 12 pt at least, 14 pt recommended; large print 16 pt at least, 18 preferred. Its note 3.1 says
+point size "varies from typeface to typeface" and gives the measure meant: small letters 2 mm tall for
+"12 point", 2.3 mm for "14 point". It finds "no definitive evidence" that serif or sans is easier to read.
+🟨 The 18 pt large-print figures of [APH](https://www.aph.org/app/uploads/2022/04/Research-Based-Large-Print-Guidelines.pdf)
+and [ACB](https://www.acb.org/node/173) are from search summaries; the pages were not opened.
+
+### R23.3 Fraunces has a cut made for small text, and Zinely bundles it — ✅ VERIFIED
+
+The [Fraunces README](https://github.com/undercasetype/Fraunces): the optical-size axis runs 9 to 144, and as
+it goes down "the x-height increases, spacing opens up, and the characters expand in width". The static
+instances are 9pt, 72pt and 144pt; the four document faces are the 9pt ones
+([Brief 02, The four faces](planning/BRIEF-02-THREE-VOICES.md#the-four-faces)). ⚠️ DISPUTED for paper: one
+[review](https://pimpmytype.com/fraunces/) calls Fraunces "almost too delicate" below 14 px, which is a
+judgement of a screen.
+
+### R23.4 Zinely application — 🟦 RECOMMENDATION
+
+**12 pt.** By Brief 02's measurement Book's small letters are 1.66 mm at 10 pt and 1.99 mm at 12 pt, so 12 pt
+is where Book all but reaches UKAAF's 2 mm and 10 pt is clearly under it. Book at 12 pt is about Plain at
+10 pt (1.93 mm, itself just under 2 mm), which the app allows, so the two are held to the same standard as each
+other; 14 pt (2.32 mm) would hold Book to a
+stricter one and, on a page about 74 mm wide, costs line length and two size steps. With a display cut of
+Fraunces the answer would be 14 pt.
+
+**Not settled by any of this:** how the 9pt cut's thin strokes and its bold print on a home inkjet. Nothing
+was found on that. Only the printed page answers it
+([Brief 02, Procedure A](planning/BRIEF-02-THREE-VOICES.md#procedure-a-the-printed-book-page)). The ruling is
+in the [decision gate, Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8).

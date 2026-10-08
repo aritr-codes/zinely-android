@@ -14837,7 +14837,7 @@ changed only comments and labels in `v21-library.html`.
 
 **Status:** Proposed, 2026-10-06. **Not accepted.** A preparation record: no Kotlin has been written. Drafted on
 `design/document-voices-prep` from `origin/main` @ `ae374ea`. It can be Accepted only when the owner has set
-the minimum print size, approved the type-bar amendment and accepted this text, and the implementation's
+the minimum print size (ruled 12 pt on 2026-10-08) and confirmed it on the printed page, approved the type-bar amendment and accepted this text, and the implementation's
 evidence is in; what is owed is listed under *Still owed*. Zinely 1.x step 8
 ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)), ruled by the owner on 2026-09-26
 ([decision gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8) and
@@ -14909,7 +14909,9 @@ the family is a string inside the saved document, not a database column.
 7. **The control is a Voice row in the type-bar card**, two named choices, each written in its own face. It is
    specified by an amendment to the frozen [`v21-typebar.html`](design/mockups/v21-typebar.html), which the owner
    approves. It is not a font list and not a picker. Its name and the two words are settled there.
-8. **The minimum print size for Book is the owner's**, after a printed page. If it is above 10 pt, the
+8. **The minimum print size for Book is the owner's**, after a printed page. **Ruled 12 pt on 2026-10-08,
+   to be confirmed on the printed page, which is not printed yet**
+   ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)). If it is above 10 pt, the
    default is that Book is unavailable below it, with a reason, unless the owner asks for a warning instead.
    Nothing changes a size or a voice on the maker's behalf. If the owner finds Book unacceptable at every
    size tried, the choice of face reopens and this ADR is withdrawn.
@@ -14979,7 +14981,8 @@ the family is a string inside the saved document, not a database column.
 #### Still owed
 
 Tracked in [OWNER-CHECKLIST](OWNER-CHECKLIST.md) and in [Brief 02's gate table](planning/BRIEF-02-THREE-VOICES.md#gates).
-- The owner's minimum print size, after the printed page (Brief 02, Procedure A).
+- The printed page (Brief 02, Procedure A), which confirms or changes the 12 pt minimum the owner ruled on
+  2026-10-08 before it was printed.
 - The owner's approval of the type-bar amendment. It was drawn on 2026-10-07 as the proposed amendment
   [`v21-typebar.html` A29](design/mockups/v21-typebar.html), which calls the row **Font** and puts twelve
   questions to the owner (V-1 to V-12). Decision 7's "a Voice row" is read as that row whatever its label;

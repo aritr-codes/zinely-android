@@ -82,8 +82,20 @@ the resulting sequence and per-step readiness are in the [plan §5 and §11](ZIN
 - **Delegated:** coverage handling for scripts Fraunces lacks; the four document-face instances and their
   measurement; the editing-surface change; D2's ADR (supersedes ADR-055's exclusion); the "named voices, not a
   picker" control shape within the frozen type bar.
-- **Still the owner's:** the **minimum Fraunces print size**, after the physical printed page (10/12/14 pt);
-  approving the type-bar amendment drawing.
+- **Ruling (owner, 2026-10-08): the minimum print size for Book is 12 pt, to be confirmed on the printed
+  page.** The owner asked for research on what other zine tools use
+  ([RESEARCH R23](../RESEARCH.md#r23-the-smallest-size-for-book-on-a-mini-zine-page---verified---recommendation-with-a--assumption-edge)); the
+  recommendation given was "12 pt as the Book minimum, to be confirmed on your printed page", and the owner's
+  answer was "proceed with your recommendation". **Nothing has been printed**, so no printer, paper or ruler
+  measurement is recorded. Book is unavailable below 12 pt, with a reason (the blocking version; a warning was
+  not asked for). The printed page
+  ([Brief 02, Procedure A](BRIEF-02-THREE-VOICES.md#procedure-a-the-printed-book-page)) confirms 12 pt or
+  changes it, to any of that procedure's outcomes.
+  - 🟨 **The implementer's reading, not the owner's words, and put to the owner:** 12 pt is enough to build
+    against, since the minimum is one named value, so the printed page no longer has to come before an
+    implementation session; it has to come before [ADR-126](../DECISIONS.md#adr-126) is accepted. If the
+    owner meant the page to come first, say so and the session waits for it.
+- **Still the owner's:** the printed page; approving the type-bar amendment drawing.
 - **Note:** for document voices this ruling qualifies the ROADMAP constraint "unknown-font fallback must not
   silently become layout loss"; the ROADMAP carries a dated note pointing here. D2 must still document and test
   the fallback layout honestly (re-wrap, possible overflow of a fixed box).
@@ -261,6 +273,7 @@ These are still **owner** decisions. They are just not needed yet.
 
 | Date | Change |
 |---|---|
+| 2026-10-08 | Q2: **the owner ruled Book's minimum print size, 12 pt**, on the recommendation in RESEARCH R23 and to be confirmed on the printed page, which is not printed yet. |
 | 2026-10-06 | Q4 carried out in part (plan step Q4-F): `v21-typebar.html` and `v21-reframe.html` frozen; the divergences found are listed in each file and returned to the owner, whose rulings on them are still owed. |
 | 2026-10-06 | Q2: Brief 02 rewritten for two voices. The four document faces are upstream's own static files (not instanced); the printed-page procedure and the older-build test are written in the brief. The minimum print size and the type-bar amendment approval are still the owner's. |
 | 2026-09-30 | Named-undo copy ruled by the owner on PR #88 and frozen in `v21-bench.html` A26: duplicate, reset framing and restack direction; Redo is spoken, through the same snack. Decorative Art in Read stays open. |

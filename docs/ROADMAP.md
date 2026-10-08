@@ -42,8 +42,8 @@ next.
   prototype. Implementation is next; nothing is in the app yet.
 - **Document voices, Book and Plain:** two named typefaces for a zine's words, Book (Fraunces) and Plain (Inter)
   ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); plan step 8). The [brief](planning/BRIEF-02-THREE-VOICES.md)
-  is rewritten and the four Fraunces faces are fetched and measured (2026-10-06). Still waits on the owner's
-  minimum print size after a printed page, and on the Voice row being drawn in the type bar and approved. The type bar and Reframe pages were
+  is rewritten and the four Fraunces faces are fetched and measured (2026-10-06). The owner ruled Book's
+  minimum print size, 12 pt, on 2026-10-08, to be confirmed on a printed page. Still waits on the Voice row drawn in the type bar being approved. The type bar and Reframe pages were
   frozen on 2026-10-06.
 
 The wave-1 work shipped in beta.6 on 2026-10-06
@@ -372,6 +372,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-08 | **Document voices: Book's minimum print size ruled, 12 pt**, to be confirmed on the printed page, which is not printed yet ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); evidence in [RESEARCH R23](RESEARCH.md#r23-the-smallest-size-for-book-on-a-mini-zine-page---verified---recommendation-with-a--assumption-edge)). No tool found sets a minimum; 12 pt is where Book's small letters come to about 2 mm. The Font row drawing (A29) is still not approved, so nothing is built. |
 | 2026-10-07 | **Document voices: the type-bar row drawn as a proposal, and two measurements taken.** `v21-typebar.html` carries proposed amendment A29 (a fifth row, proposed label "Font", Book and Plain); it is not approved and not frozen, and twelve owner questions (V-1 to V-12) are owed. Measured on an emulator with 0.9.0-beta.6: the card fits 360 × 800 dp at font scale 2.0 but is cut off on 360 × 640 dp, and a character the font lacks is drawn from another font, not left blank. Two faults in the shipped app were found and filed (#102, #103). Nothing is built; no public copy changed. | [Brief 02](planning/BRIEF-02-THREE-VOICES.md#measured-on-2026-10-07) · [ADR-126](DECISIONS.md#adr-126) |
 | 2026-10-07 | **Shelf folders: design approved.** The owner tried the A28 prototype and approved it and the recommended rulings. ADR-125 is Accepted and `v21-library.html` A28 is frozen. One question (F-10, the Tribunal row) is still the owner's and blocks nothing. Nothing is built; no public copy changed. | [ADR-125](DECISIONS.md#adr-125) |
 | 2026-10-06 | **Shelf folders proposed, not approved.** Research ([R22](RESEARCH.md)), a Proposed ADR and an interactive amendment to the frozen Shelf (A28, not frozen). One level, a zine in one place, no empty folders, no drag; a backup carries folder names without a format-version change. Fourteen owner rulings are owed. Still In development at the design stage; nothing built; no public copy changed. | [ADR-125](DECISIONS.md#adr-125) |
