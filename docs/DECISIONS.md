@@ -15073,13 +15073,40 @@ fixture, dependency or permission change.
     two actions within milliseconds or behind one message, where Undo returns to the wrong view; a retry that
     fails outright no longer says why. It ran nothing and viewed no raster.
 - **Still owed.**
-  - **Both phone passes.** Not run: the phone was not connected in this session. Pass 1 owes the platform
-    accessibility tree of every new surface, move, rename and take-out driven by hand, the keyboard over the
-    name sheet, and what TalkBack says and where its focus lands (deviation 1; whether the field's name hides
-    what is typed in it; whether four seconds is enough to reach Undo). Pass 2 owes a first-time reading.
+  - **A TalkBack listen.** Not run (see *Phone passes* below): what it says on each sheet, where its focus
+    lands after an action (deviation 1), whether the field's name hides what is typed in it, and whether four
+    seconds is enough to reach Undo.
   - The name sheet under the keyboard on Android 7 to 9.
   - Rule 16's three sentences in the release notes of the first release that has folders.
   - The owner's rulings listed in [OWNER-CHECKLIST](OWNER-CHECKLIST.md).
+- **Phone passes, 2026-10-08.** Samsung SM-A176B, Android 16, the build of `436fbb9` installed side by side as
+  `com.aritr.zinely.foldersqa` (the owner's app and library untouched), four made-up zines, driven over adb
+  with the platform tree read by `uiautomator dump` after each step. The test app and its dump file were
+  removed afterwards. TalkBack was not turned on.
+  - **Pass 1, built right: passes, with TalkBack unheard.** Driven and read: the zine sheet's six rows; a
+    first folder skipping the chooser; the name sheet above the keyboard with its field focused, *Make
+    folder* clickable and not enabled while empty, the *my shelf* hint, and *You already have a folder called
+    “Club”* with *Rename* not enabled; making a folder by the button and by the keyboard's Enter; the chooser
+    (*Trips, 1 zine*; inside a folder *My Shelf, Out of the folder* and the zine's own folder not enabled);
+    *Cancel* on a new name going back to the chooser; a move and its Undo; opening a folder, the back control
+    and the system Back; *Make a zine* inside a folder putting the zine in it and coming back to it; a
+    rename; taking the zines out and its Undo; the last zine leaving a folder (*“Trips” is empty, so it’s put
+    away*, and the view back on My Shelf); a delete followed at once by a folder action (rule 11: the delete
+    is finished, its snack gone, the folder snack up); and a folder surviving a force-stop. Every pile, tile,
+    row and snack action is a `Button` with the name the tests assert; the snack's message and its Undo are
+    separate nodes.
+    - *Seen, as recorded in deviation 1:* in touch mode no control takes focus after an action; the heading
+      holds it.
+    - *Not covered:* TalkBack; the three failure lines (nothing failed); Android 7 to 15; large text on the
+      phone (rasters only).
+  - **Pass 2, first-time reading: passes, one finding.** A pile reads as a pile, the count under it and in
+    each sheet says what is inside, every snack says where the zine now is, and Undo did what it said each
+    time. **Finding:** a two-line snack (*Back on My Shelf. “Trips” is empty, so it’s put away*; *Zines from
+    “Journeys” are back on My Shelf*) is gone in the frozen four seconds, about when a first reader finishes
+    it, so Undo is offered for less time than it takes to learn what it would undo. The value is A28's; not
+    changed, put to the owner. Also seen: in the dark theme the heading's swipe appears after the first action
+    and was not there before it (the focus mark of deviation 1), a mark that comes and goes with no meaning to
+    the maker; it is with the heading ruling already on the checklist.
 
 ## ADR-126 {#adr-126}
 
