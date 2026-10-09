@@ -2,6 +2,7 @@ package com.aritr.zinely.core.editor
 
 import com.aritr.zinely.core.model.Crop
 import com.aritr.zinely.core.model.DecorElement
+import com.aritr.zinely.core.model.DocumentVoice
 import com.aritr.zinely.core.model.Fit
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
@@ -511,8 +512,28 @@ public object EditorReducer {
                 fontFamily = intent.fontFamily ?: el.style.fontFamily,
             ),
         )
-        return if (after == el) Reduction(model)
-        else committing(model, EditTextCommand(model.currentPageIndex, el.id, el, after))
+        if (after == el || breaksBookRule(el, after)) return Reduction(model)
+        return committing(model, EditTextCommand(model.currentPageIndex, el.id, el, after))
+    }
+
+    /**
+     * ADR-126 decision 8, held here so no surface can get past it: Book's minimum **blocks**. The Font row
+     * already refuses these (`fontRow`), but it reads a composition-old state and coalesces sizes, so two
+     * taps in one frame could otherwise commit Book below its minimum.
+     *
+     * Refused: a patch that turns a text into Book while [fontRow] says Book is blocked for the resulting
+     * size or the text's scripts, and a patch that makes a Book text smaller than the minimum. Not refused:
+     * anything else on a Book text that is already below it (a hand-edited or older document), so its
+     * colour, alignment and a step back up still work.
+     */
+    private fun breaksBookRule(before: TextElement, after: TextElement): Boolean {
+        if (DocumentVoice.of(after.style.fontFamily) != DocumentVoice.BOOK) return false
+        val becomesBook = DocumentVoice.of(before.style.fontFamily) != DocumentVoice.BOOK
+        return if (becomesBook) {
+            fontRow(after.text, after.style.copy(fontFamily = before.style.fontFamily), rampMinPt = 0.0).bookBlock != null
+        } else {
+            after.style.sizePt < DocumentVoice.BOOK_MIN_SIZE_PT && after.style.sizePt < before.style.sizePt
+        }
     }
 
     /** Open a Reframe session on [id] iff it names an [ImageElement] on the current page; else a no-op. */

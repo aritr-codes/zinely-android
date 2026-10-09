@@ -123,14 +123,14 @@ class EditTextSessionCoverageTest {
     }
 
     @Test
-    fun the_check_is_against_the_texts_own_font_Greek_is_flagged_in_Book_and_not_in_Plain() {
-        // ADR-126: Plain sets Greek, Book does not. The same letters, two answers.
+    fun typing_Greek_into_a_Plain_text_is_checked_and_not_flagged() {
+        // ADR-126: Plain sets Greek, Book does not. The same letters, two answers; Book's is the next test.
         val kalimera = "Καλημέρα"
-        var plain: TextCoverage = TextCoverage.Covered
+        var plain: TextCoverage? = null
         setSession(store(initialText = "hello")) { plain = it }
         composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("hello $kalimera")
         composeRule.waitForIdle()
-        assertTrue("Plain sets Greek; nothing to flag", plain.isFullyCovered)
+        assertTrue("the check ran, and Plain sets Greek so there is nothing to flag", plain?.isFullyCovered == true)
     }
 
     @Test

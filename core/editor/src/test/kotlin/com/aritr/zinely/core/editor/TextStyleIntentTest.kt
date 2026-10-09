@@ -98,6 +98,41 @@ class TextStyleIntentTest {
         assertEquals(start.document, plain.document)
     }
 
+    // ADR-126 decision 8: the minimum blocks in the reducer, whatever a surface dispatches. The Font row
+    // coalesces sizes and reads a composition-old state, so these are the two orders two quick taps can take.
+
+    @Test
+    fun `Book is refused for a text below its minimum, and for a text with Greek or Cyrillic letters`() {
+        val small = model(txt("a", style = TextStyle(sizePt = 10.0)))
+        assertNoStep(small, Intent.StyleText("a", fontFamily = "Fraunces"))
+        // Smaller then Book in one patch is the same refusal: the resulting size decides.
+        assertNoStep(model(txt("a")), Intent.StyleText("a", sizePt = 10.0, fontFamily = "Fraunces"))
+        assertNoStep(model(txt("a", text = "καλημέρα")), Intent.StyleText("a", fontFamily = "Fraunces"))
+        assertNoStep(model(txt("a", text = "привет")), Intent.StyleText("a", fontFamily = "Fraunces"))
+    }
+
+    @Test
+    fun `a Book text cannot be made smaller than its minimum, and Plain still can`() {
+        val book = model(txt("a", style = TextStyle(sizePt = 12.0, fontFamily = "Fraunces")))
+        assertNoStep(book, Intent.StyleText("a", sizePt = 10.0))
+        assertEquals(14.0, el(styleOf(book, Intent.StyleText("a", sizePt = 14.0)), "a").style.sizePt)
+        assertEquals(10.0, el(styleOf(model(txt("a")), Intent.StyleText("a", sizePt = 10.0)), "a").style.sizePt)
+    }
+
+    @Test
+    fun `a Book text already below the minimum keeps every other change, and can step back up`() {
+        val old = model(txt("a", style = TextStyle(sizePt = 10.0, fontFamily = "Fraunces")))
+        assertTrue(el(styleOf(old, Intent.StyleText("a", bold = true)), "a").style.bold)
+        assertEquals(11.0, el(styleOf(old, Intent.StyleText("a", sizePt = 11.0)), "a").style.sizePt)
+        assertNoStep(old, Intent.StyleText("a", sizePt = 9.0))
+    }
+
+    private fun assertNoStep(start: EditorModel, intent: Intent.StyleText) {
+        val r = EditorReducer.reduce(start, intent)
+        assertEquals(start.document, r.model.document)
+        assertTrue(r.model.history.undo.isEmpty())
+    }
+
     @Test
     fun `a family this build does not know is kept by every other style change, and replaced only by a font patch`() {
         val start = model(txt("a", style = TextStyle(fontFamily = "Averia Sans Libre")))

@@ -305,6 +305,21 @@ class TypeBarGoldenTest {
         largestText("unknown", unknownText, reason = true)
 
     /**
+     * A29 rule 11 as the maker sees it: the three goldens above are given the whole 640dp screen, where the
+     * card fits. Inside the editor on that screen it is given 378dp (measured by `TypeBarFontRowTest`), so
+     * it scrolls. This is that room: a row cut by the card's edge, and the shade.
+     */
+    @Test
+    fun type_bar_font_scale2_unknown_scrolling() {
+        val bmp = cardBitmap(darkTheme = false, element = unknownText, fontScale = 2f, room = DpSize(360.dp, 402.dp))
+        val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInRoot
+        with(composeRule.density) {
+            assertTrue("the card is ${card.height.toDp()} tall in a 378dp room", card.height.toDp() <= 378.5.dp)
+        }
+        bmp.captureRoboImage("$GOLDEN_DIR/type_bar_font_scale2_unknown_scrolling.png", aa())
+    }
+
+    /**
      * Bench freezes `.tysize button:disabled{ opacity:.4 }` — the fade covers the **whole chip**, edge
      * included. The port faded the glyph alone and left the 1dp edge at full strength (ADR-055 §8, closed
      * 2026-07-17).

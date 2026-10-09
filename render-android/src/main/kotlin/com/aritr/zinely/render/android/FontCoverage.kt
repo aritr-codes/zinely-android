@@ -95,7 +95,7 @@ public object FontCoverage {
      *
      *  - **Book, U+017F** (LATIN SMALL LETTER LONG S): absent from all four Fraunces 9pt statics. An
      *    archaic letter no present-day orthography needs. A Book text that holds one draws it from another
-     *    font and nothing flags it ([ARCHITECTURE.md](../../../../../../../../docs/ARCHITECTURE.md) §5).
+     *    font and nothing flags it (ADR-126, *Consequences*: "The script check does not cover every path").
      */
     private val FAMILY_GAPS: Map<DocumentVoice, Set<Int>> = mapOf(DocumentVoice.BOOK to setOf(0x017F))
 
