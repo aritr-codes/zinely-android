@@ -56,6 +56,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
@@ -118,8 +120,28 @@ internal class HomeViewModel @Inject constructor(
     private val backupRecordStore: BackupRecordStore,
 ) : ViewModel() {
 
-    /** Ids hidden from the shelf while their undo window is open or a durable interrupted delete resumes. */
+    /**
+     * Ids hidden from the shelf: deletes still waiting (their undo window is open, or a durable interrupted
+     * delete is resuming), and [finishedDeletes] the store has not yet listed the Shelf without.
+     */
     private val pendingDeletes = MutableStateFlow<Set<String>>(emptySet())
+
+    /**
+     * The deletes the store has finished, kept in [pendingDeletes] only so a deleted card does not flash back
+     * before the store lists the Shelf without it.
+     *
+     * **A finished delete is over.** It is never sent to the store a second time and it offers no Undo
+     * ([performCommit], [isDeleteWaiting]). That is what keeps a zine safe when it comes back under the same
+     * id: a restore gives a zine its id from the backup when that id is free, so a zine deleted and then
+     * restored returns under the id whose delete has just finished, and a second delete of that id would
+     * delete the restored zine ([ADR-121](docs/DECISIONS.md#adr-121), note of 2026-10-09). An id leaves this
+     * set when the store lists the Shelf without it, when a restore succeeds ([forgetFinishedDeletes]), or
+     * when the zine is deleted again. Always a subset of [pendingDeletes].
+     */
+    private var finishedDeletes: Set<String> = emptySet()
+
+    /** One commit at a time, so two callers finishing the same delete ask the store once ([performCommit]). */
+    private val commitMutex = Mutex()
 
     /** This session's display-only covers for zines the store could not assign one to. */
     private val fallbackCovers = FallbackCovers()
@@ -246,18 +268,21 @@ internal class HomeViewModel @Inject constructor(
             projectRepository.observeShelfProjects(),
             pendingDeletes,
         ) { projects, pending ->
+            // Prune pending ids the store no longer knows (committed deletes it caught up with):
+            // this VM is process-lifetime since the ADR-046 re-root, so "stale ids are inert"
+            // is no longer enough — they must not accumulate forever (Codex). The update
+            // re-triggers this combine once; the second pass is a no-op and it converges.
+            // Before the empty check, not inside it: a stale id is not inert. A restore can bring the same
+            // id back, and deleting the only zine on the Shelf is the commonest way to get an empty list.
+            val projectIds = projects.mapTo(HashSet()) { it.id }
+            if (pending.any { it !in projectIds }) {
+                pendingDeletes.update { current -> current.filterTo(mutableSetOf()) { it in projectIds } }
+                finishedDeletes = finishedDeletes.filterTo(mutableSetOf()) { it in projectIds }
+            }
             if (projects.isEmpty()) {
                 HomeUiState.Empty
             } else {
                 val now = System.currentTimeMillis()
-                // Prune pending ids the store no longer knows (committed deletes it caught up with):
-                // this VM is process-lifetime since the ADR-046 re-root, so "stale ids are inert"
-                // is no longer enough — they must not accumulate forever (Codex). The update
-                // re-triggers this combine once; the second pass is a no-op and it converges.
-                val projectIds = projects.mapTo(HashSet()) { it.id }
-                if (pending.any { it !in projectIds }) {
-                    pendingDeletes.update { current -> current.filterTo(mutableSetOf()) { it in projectIds } }
-                }
                 val visible = projects.filterNot { it.id in pending }
                 // ADR-125 rules 11 and 13: folders are worked out from the zines the Shelf is showing, and
                 // a folder has one spelling. Only files changed outside the app can disagree; the screen
@@ -353,6 +378,8 @@ internal class HomeViewModel @Inject constructor(
         backupRestorePickerPending = false
         if (uri == null) return
         if (backupRestoreJob?.isActive == true) return
+        // Before anything is added: a marker left by a finished delete must not outlive the restore.
+        clearFinishedMarkers()
         val latch = OutcomeLatch()
         outcomeLatch = latch
         // ADR-122 R2: called inside the repository's lock just before the non-cancellable commit. Winning the
@@ -372,6 +399,7 @@ internal class HomeViewModel @Inject constructor(
             when (val result = librarySafTransport.restoreFrom(uri, onCommitStart)) {
                 is DataResult.Success -> {
                     val receipt = result.value
+                    forgetFinishedDeletes()
                     // R3: committed, but the shelf index lags. A fresh subscription reconciles it.
                     if (!receipt.shelfUpToDate) retry()
                     LibraryBackupRestoreUiState.RestoreAdded(
@@ -603,16 +631,18 @@ internal class HomeViewModel @Inject constructor(
             return
         }
         settling = settling - id
+        finishedDeletes = finishedDeletes - id
         pendingDeletes.update { it + id }
         eventQueue.trySend(HomeShelfEvent.DeletePrompt(id, title))
     }
 
     /**
      * Whether [id]'s delete can still be undone. The screen asks before it offers Undo: prompts queue, so
-     * one can reach the screen after a folder action has already finished its delete (rule 11), and an Undo
-     * offered then would do nothing.
+     * one can reach the screen after a folder action has already finished its delete (rule 11), or after a
+     * restore, an open or a new zine has ([finishedDeletes]), and an Undo offered then would do nothing.
      */
-    fun isDeleteWaiting(id: String): Boolean = id in pendingDeletes.value && id !in settling
+    fun isDeleteWaiting(id: String): Boolean =
+        id in pendingDeletes.value && id !in settling && id !in finishedDeletes
 
     /** Undo within the window: clear the durable intent, then unhide; the project store was never called. */
     fun undoDelete(id: String) {
@@ -620,6 +650,7 @@ internal class HomeViewModel @Inject constructor(
             eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
             return
         }
+        finishedDeletes = finishedDeletes - id
         pendingDeletes.update { it - id }
     }
 
@@ -627,8 +658,11 @@ internal class HomeViewModel @Inject constructor(
      * The undo window closed: perform the store delete. On success the id STAYS in
      * [pendingDeletes] — unhiding here would flash the deleted card back for the window between
      * `deleteProject` returning and [ProjectRepository.observeProjects] re-emitting; once the flow
-     * emits the shorter list the filter is a no-op (a stale id over a fresh-UUID store is inert).
+     * emits the shorter list the id is pruned. Until then it is one of [finishedDeletes].
      * Only a failed commit unhides + messages: the card is still real, and the shelf never lies.
+     *
+     * The screen calls this whenever a delete prompt closes without Undo, including after something else
+     * has already finished that delete. [performCommit] makes such a call a no-op.
      */
     fun commitDelete(id: String) {
         // A folder action is finishing this one, or has: once is enough, and a second failure would say so twice.
@@ -651,13 +685,35 @@ internal class HomeViewModel @Inject constructor(
         }
     }
 
-    /** The one commit path [commitDelete] and [commitPendingDeletesNow] share. */
-    private suspend fun performCommit(id: String): Boolean =
+    /**
+     * The one commit path [commitDelete] and [commitPendingDeletesNow] share.
+     *
+     * **A delete reaches the store once.** Only a delete that is still waiting is sent: one that was undone,
+     * or that the store has already finished ([finishedDeletes]), is a no-op answered `true`, because there
+     * is nothing left to wait for. Every caller comes through here, so no caller needs to know whether a
+     * zine with this id has come back since.
+     *
+     * Accepted limit: a caller that waited behind a commit which then **failed** is also answered `true`,
+     * where it once made its own store call and got its own failure. The failed delete has by then put the
+     * card back and said so, so the Shelf that caller goes on to act on is true.
+     */
+    private suspend fun performCommit(id: String): Boolean = commitMutex.withLock {
+        if (id in finishedDeletes) return@withLock true
+        if (id !in pendingDeletes.value) {
+            // Undone, or the zine was already gone and the store's list dropped it. A marker with no delete
+            // behind it must not wait for the next start.
+            pendingDeleteStore.remove(id)
+            return@withLock true
+        }
         when (val result = projectRepository.deleteProject(id)) {
             is DataResult.Success -> {
-                // If clearing the marker fails, retrying this idempotent delete on the next start is safe.
+                // If clearing the marker fails, the next start retries this delete. That is safe while the
+                // zine stays deleted; a restore, which could bring it back, clears the marker before it
+                // starts and again when it succeeds ([clearFinishedMarkers]).
                 pendingDeleteStore.remove(id)
-                true // stay hidden; the store flow removes the card
+                // Stay hidden; the store flow removes the card. If it already has, there is nothing to keep.
+                if (id in pendingDeletes.value) finishedDeletes = finishedDeletes + id
+                true
             }
             is DataResult.Failure -> {
                 // Only show the real card again after clearing the durable retry intent. Otherwise the next
@@ -667,6 +723,33 @@ internal class HomeViewModel @Inject constructor(
                 false
             }
         }
+    }
+
+    /**
+     * A restore succeeded, so a zine may have come back under the id of a delete that had finished: the
+     * restore wins, because the maker has just asked for that zine. Every finished delete stops hiding its
+     * id, and no marker is left that would make the next start delete it. A delete still waiting is left as
+     * it is, with its Undo: its zine has not been deleted, so the restore had no reason to add it.
+     *
+     * The store listing the Shelf without the id would unhide it too, and usually has. This does not rely on
+     * that list having been seen before the restored zine arrived.
+     */
+    private fun forgetFinishedDeletes() {
+        clearFinishedMarkers()
+        pendingDeletes.update { it - finishedDeletes }
+        finishedDeletes = emptySet()
+    }
+
+    /**
+     * Removes every delete marker that no waiting delete stands behind. Such a marker is left when a
+     * finished delete could not clear its own, and the next start would act on it: harmless while the zine
+     * stays deleted, and the loss of the zine once a restore has brought it back. So a restore calls this
+     * before it starts and again when it succeeds. If the marker still cannot be cleared, that risk remains.
+     */
+    private fun clearFinishedMarkers() {
+        val waiting = pendingDeletes.value - finishedDeletes
+        (pendingDeleteStore.pendingIds() - waiting).forEach { pendingDeleteStore.remove(it) }
+    }
 
     /**
      * Commit every pending delete before leaving the shelf (ADR-046 §4): navigating away cancels the

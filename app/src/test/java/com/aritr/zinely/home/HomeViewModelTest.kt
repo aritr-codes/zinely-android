@@ -48,6 +48,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -142,9 +143,13 @@ class HomeViewModelTest {
             return duplicateResult()
         }
 
+        /** When set, [deleteProject] suspends on it: lets a test hold a delete in flight. */
+        var deleteGate: CompletableDeferred<Unit>? = null
+
         override suspend fun deleteProject(id: String): DataResult<Unit> {
             deleted += id
             calls += "delete $id"
+            deleteGate?.await()
             return deleteResult()
         }
 
@@ -1633,6 +1638,272 @@ class HomeViewModelTest {
         assertEquals(listOf("z1"), (viewModel.state.value as HomeUiState.Content).cards.map { it.id })
         stateJob.cancel()
         requestJob.cancel()
+    }
+
+    // --- a zine that comes back under the id of a finished delete (ADR-121, note of 2026-10-09) ---
+    //
+    // A restore gives a zine its id from the backup when that id is free, so a zine deleted and then
+    // restored returns under the id whose delete has just finished. The Undo window itself is the
+    // screen's (ADR-044 §3): when it closes the screen calls `commitDelete`, and when Home stops the nav
+    // host calls `flushPendingDeletes`. Those two calls are "time passing" as far as the ViewModel can see.
+
+    private fun shownIds(viewModel: HomeViewModel): List<String>? =
+        (viewModel.state.value as? HomeUiState.Content)?.zines?.map { it.id }
+
+    /** The maker picks a backup and it adds one zine. The store lists the Shelf again afterwards, as Room does. */
+    private suspend fun restoreAddsOne(viewModel: HomeViewModel, shelfAfter: List<ProjectSummary>) {
+        transport.restoreResult = DataResult.Success(LibraryRestoreReceipt(projects = emptyList(), addedCount = 1))
+        viewModel.startRestore()
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/restore"))
+        repository.projects.emit(shelfAfter)
+    }
+
+    @Test
+    fun `a zine restored while its delete's Undo was still showing is on the Shelf and stays there`() = runTest {
+        // Given the only zine, deleted, its Undo still on screen
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+        viewModel.delete("z1")
+
+        // When a restore finishes that delete (as it always has), and then brings the zine back
+        viewModel.startRestore()
+        repository.projects.emit(emptyList())
+        restoreAddsOne(viewModel, listOf(summary("z1", "One", now)))
+
+        // Then the Shelf shows it
+        assertEquals(listOf("z1"), shownIds(viewModel))
+
+        // And when the Undo snack closes and Home later stops, the restored zine is not deleted
+        viewModel.commitDelete("z1")
+        viewModel.flushPendingDeletes()
+        advanceUntilIdle()
+        assertEquals(listOf("z1"), repository.deleted)
+        assertEquals(listOf("z1"), shownIds(viewModel))
+        assertTrue(pendingDeleteStore.ids.isEmpty())
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a zine restored after its delete finished is on the Shelf and stays there`() = runTest {
+        // Given the only zine, deleted, the Undo window over and the store caught up
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val openJob = launch(Dispatchers.Main) { viewModel.openEvents.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+        viewModel.delete("z1")
+        viewModel.commitDelete("z1")
+        repository.projects.emit(emptyList())
+        assertEquals(HomeUiState.Empty, viewModel.state.value)
+
+        // When
+        restoreAddsOne(viewModel, listOf(summary("z1", "One", now)))
+
+        // Then
+        assertEquals(listOf("z1"), shownIds(viewModel))
+
+        // And nothing that finishes waiting deletes touches it: Home stopping, or opening a zine
+        viewModel.flushPendingDeletes()
+        viewModel.openZine("z1")
+        advanceUntilIdle()
+        assertEquals(listOf("z1"), repository.deleted)
+        assertEquals(listOf("z1"), shownIds(viewModel))
+        stateJob.cancel()
+        openJob.cancel()
+    }
+
+    @Test
+    fun `a zine restored after a restart finished its delete is on the Shelf and stays there`() = runTest {
+        // Given the app was stopped inside the Undo window, and the next start finished the delete
+        val now = System.currentTimeMillis()
+        pendingDeleteStore = FakePendingDeleteStore(setOf("z1"))
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(emptyList())
+        assertEquals(listOf("z1"), repository.deleted)
+
+        // When
+        restoreAddsOne(viewModel, listOf(summary("z1", "One", now)))
+
+        // Then
+        assertEquals(listOf("z1"), shownIds(viewModel))
+
+        // And Home stopping does not delete it
+        viewModel.flushPendingDeletes()
+        advanceUntilIdle()
+        assertEquals(listOf("z1"), repository.deleted)
+        assertEquals(listOf("z1"), shownIds(viewModel))
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a restored zine shows even when the store never listed the Shelf without it`() = runTest {
+        // Given a delete the restore finished, and a store that has not listed the Shelf again since
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val shelf = listOf(summary("z1", "One", now), summary("z2", "Two", now))
+        repository.projects.emit(shelf)
+        viewModel.delete("z1")
+        viewModel.startRestore()
+
+        // When the first list the Shelf sees after the delete already holds the restored zine
+        transport.restoreResult = DataResult.Success(LibraryRestoreReceipt(projects = emptyList(), addedCount = 1))
+        transport.commitGate = CompletableDeferred()
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/restore"))
+        repository.projects.emit(shelf)
+        transport.commitGate!!.complete(Unit)
+
+        // Then
+        assertEquals(listOf("z1", "z2"), shownIds(viewModel))
+        viewModel.commitDelete("z1")
+        viewModel.flushPendingDeletes()
+        advanceUntilIdle()
+        assertEquals(listOf("z1"), repository.deleted)
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a restore clears a finished delete's marker before it adds anything, so no later start deletes the zine`() = runTest {
+        // Given a delete that reached the store but whose marker could not be cleared
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+        viewModel.delete("z1")
+        pendingDeleteStore.writesSucceed = false
+        viewModel.commitDelete("z1")
+        assertEquals(setOf("z1"), pendingDeleteStore.ids)
+        pendingDeleteStore.writesSucceed = true
+        repository.projects.emit(emptyList())
+
+        // When a restore is running and has added nothing yet
+        transport.restoreResult = DataResult.Success(LibraryRestoreReceipt(projects = emptyList(), addedCount = 1))
+        transport.restoreGate = CompletableDeferred()
+        viewModel.startRestore()
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/restore"))
+
+        // Then the marker is already gone, so the app stopping mid-restore leaves no delete for the next start
+        assertTrue(pendingDeleteStore.ids.isEmpty())
+        transport.restoreGate!!.complete(Unit)
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+        viewModel()
+        assertEquals(listOf("z1"), repository.deleted)
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a delete still waiting when a restore succeeds keeps its Undo and is still deleted`() = runTest {
+        // Given a restore in flight, and a zine deleted while it runs
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+        transport.restoreResult = DataResult.Success(LibraryRestoreReceipt(projects = emptyList(), addedCount = 1))
+        transport.restoreGate = CompletableDeferred()
+        viewModel.startRestore()
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/restore"))
+        viewModel.delete("z2")
+
+        // When the restore succeeds
+        transport.restoreGate!!.complete(Unit)
+
+        // Then that delete is untouched: hidden, undoable, its marker kept
+        assertEquals(listOf("z1"), shownIds(viewModel))
+        assertTrue(viewModel.isDeleteWaiting("z2"))
+        assertEquals(setOf("z2"), pendingDeleteStore.ids)
+        assertTrue(repository.deleted.isEmpty())
+
+        // And it is deleted when its Undo window closes
+        viewModel.commitDelete("z2")
+        assertEquals(listOf("z2"), repository.deleted)
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `two callers finishing the same delete ask the store once`() = runTest {
+        // Given a delete whose commit is in flight (the Undo snack closed)
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+        viewModel.delete("z1")
+        repository.deleteGate = CompletableDeferred()
+        viewModel.commitDelete("z1")
+
+        // When Home stops before the store has answered
+        viewModel.flushPendingDeletes()
+        repository.deleteGate!!.complete(Unit)
+        advanceUntilIdle()
+
+        // Then
+        assertEquals(listOf("z1"), repository.deleted)
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a marker for a zine that is already gone is cleared, not left for the next start`() = runTest {
+        // Given two interrupted deletes, one of a zine the store no longer has
+        val now = System.currentTimeMillis()
+        pendingDeleteStore = FakePendingDeleteStore(setOf("here", "gone"))
+        repository.deleteGate = CompletableDeferred()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+
+        // When the store lists the Shelf while the first delete is still in flight
+        repository.projects.emit(listOf(summary("here", "Here", now)))
+        repository.deleteGate!!.complete(Unit)
+        advanceUntilIdle()
+
+        // Then no marker is left
+        assertTrue(pendingDeleteStore.ids.isEmpty())
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a delete prompt still queued when a restore finishes its delete offers no Undo`() = runTest {
+        // Given two deletes; the screen shows one prompt at a time, so the second is still queued
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+        viewModel.delete("z1")
+        viewModel.delete("z2")
+
+        // When
+        viewModel.startRestore()
+
+        // Then neither is waiting: an Undo offered now would do nothing
+        assertEquals(listOf("z1", "z2"), repository.deleted)
+        assertTrue(!viewModel.isDeleteWaiting("z1") && !viewModel.isDeleteWaiting("z2"))
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a zine that came back can be deleted again, with its own Undo`() = runTest {
+        // Given a finished delete and the same zine back on the Shelf
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+        viewModel.delete("z1")
+        viewModel.commitDelete("z1")
+        repository.projects.emit(emptyList())
+        restoreAddsOne(viewModel, listOf(summary("z1", "One", now)))
+
+        // When it is deleted and undone, then deleted for good
+        viewModel.delete("z1")
+        assertTrue(viewModel.isDeleteWaiting("z1"))
+        viewModel.undoDelete("z1")
+        assertEquals(listOf("z1"), shownIds(viewModel))
+        viewModel.delete("z1")
+        viewModel.commitDelete("z1")
+
+        // Then the store was asked a second time
+        assertEquals(listOf("z1", "z1"), repository.deleted)
+        stateJob.cancel()
     }
 
     // --- the recency label, a pure function ---
