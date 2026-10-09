@@ -16,43 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- The design for folders on the Shelf: a written decision (ADR-125), the research behind it, and a
-  try-it-yourself amendment to the Shelf design. The design was approved on 2026-10-07. It is not built yet:
-  nothing in the app changed and there is still nothing to try in a download.
-- The design for choosing a font for a text, Book or Plain: a try-it-yourself amendment to the
-  type-bar design, approved on 2026-10-08, with one line added to the editor design's list of Undo messages
-  ("Font changed"). Two measurements behind it are recorded. Nothing in the app changed and
-  there is still nothing to try in a download.
-- A font for each text, Book or Plain (ADR-126), in the app's source and not yet in a download. Select a text and tap
-  **Text** (named "Size" until now): the card that opens has a new first row, Font. Book is a serif face with its own bold and italic; Plain is the face every
-  zine has used so far. Book has no Greek or Cyrillic letters and is not offered below 12 pt; in both cases
-  the card says why. While you type, the text is now drawn in its own face, including a real italic, and
-  the lines of a longer draft now sit as far apart as they will on the page, to within about a pixel a
-  line. Before, they sat closer together and the text moved when you tapped Done. This is checked in
-  tests and not yet on a phone.
-  The two faces differ in width and height, so **a text that just fits its box can lose its last line when
-  you switch it to Book**, with no sign: the box does not grow. Make the box taller to see it again.
-  The download grows by about a quarter of a megabyte. Still owed before it is accepted: a printed page to
-  confirm 12 pt, a listen with TalkBack, and the owner's own try.
-  - **If a zine with Book text is restored on an older build** (0.9.0-beta.6 or earlier), that build draws
-    the text in Plain. This is a layout change, not data loss: every word is kept and is Book again on a
-    newer build. But the two faces differ in width, so lines break in other places, and **lines that no
-    longer fit their box are missing from the page and from the PDF on the older build**. In our test an
-    italic paragraph that just fitted lost its last line, and a one-line box of digits lost its last group.
-    A longer text can lose more. The older build does not say so.
-- The storage for folders on the Shelf (ADR-125, part 1 of 2). A zine can now carry a folder name in its own
-  file, and a backup carries that name too, so folders will come back after a restore. Older backups still
-  restore, with every zine on My Shelf. There is no screen for any of this yet: nothing in the app looks or
-  behaves differently, and there is still nothing to try in a download.
-- Folders on the Shelf (ADR-125, part 2 of 2), built and not yet in a download. From a zine's three dots,
-  *Move to a folder* makes a folder or puts the zine in one. A folder shows as a pile of its zines' covers;
-  tap it to look inside, or tap its three dots to rename it or take its zines out. Moving, making a folder
-  and taking zines out can be undone for a few seconds; renaming cannot. Checked by hand on one phone (Android 16); not yet
-  with a screen reader.
-  Notes for the release that first carries folders: a backup keeps each zine's folder; an older Zinely
-  restores such a backup with every zine on My Shelf; a backup made by an older Zinely restores with every
-  zine on My Shelf; and restoring onto a phone that already has the same zines adds nothing, so it brings no
-  folders.
 - The public roadmap lists folders on the Shelf and a second font as In development, each saying there is
   nothing to try yet. The roadmap and What's new pages use plainer words (for example "a screen reader" where
   they said TalkBack alone), and the homepage status table now starts each status on its own line.
@@ -117,10 +80,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- A zine you deleted and then restored from a backup, without closing the app in between, could stay hidden
-  from the Shelf until the app was restarted, and could be deleted again when the delete's Undo message closed
-  or you left the Shelf. A restored zine now shows at once and stays. Checked by automated tests only, not yet
-  on a phone, and not yet in a download ([ADR-121](docs/DECISIONS.md#adr-121), note of 2026-10-09).
 - The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
   privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
   the files.
@@ -131,6 +90,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restored the Reframe accessibility regression that proves a measurable but undisplayable photo keeps every
   adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
   than stream-consumer ordering, eliminating the CI race tracked by issue #57.
+
+## [0.9.0-beta.7] — 2026-10-09 — Folders, and a second font
+
+This release carries `versionCode 12`. It installs over earlier release-signed beta builds without
+uninstalling. The saved-document format and the backup format version are unchanged; a zine can now carry a
+folder name and a text can name the Book font, and earlier versions read both without failing (see Known
+limitations for what they then show). It is published as an APK only.
+
+Folders and the second font ship **built and merged, not yet accepted**: the checks still owed are listed
+under Known limitations and in [ADR-125](docs/DECISIONS.md#adr-125) and [ADR-126](docs/DECISIONS.md#adr-126).
+
+### Added
+
+- **Folders on the Shelf.** From a zine's three dots, *Move to a folder* makes a folder or puts the zine in
+  one. A folder shows as a pile of its zines' covers; tap it to look inside, or tap its three dots to rename
+  it or take its zines out. Moving, making a folder and taking zines out can be undone for a few seconds;
+  renaming cannot. A backup keeps each zine's folder ([ADR-125](docs/DECISIONS.md#adr-125)).
+- **A second font: Book, beside Plain.** Select a text and tap **Text**: the card that opens has a new first
+  row, Font. Book is a serif face with its own bold and italic; Plain is the face every zine has used so far.
+  Book has no Greek or Cyrillic letters and is not offered below 12 pt; in both cases the card says why.
+  Undo says "Font changed" and "Font put back" ([ADR-126](docs/DECISIONS.md#adr-126)).
+- While you type, the text is drawn in its own font, including a real italic.
+
+### Changed
+
+- The button on a selected text that opens the text card is named **Text**. It was named "Size", which named
+  one of the card's five rows. The row inside the card that changes the size is still "Size".
+- The Shelf's heading reads "My Shelf".
+- The download grows by about a quarter of a megabyte, for the four Book font files.
+
+### Fixed
+
+- A zine you deleted and then restored from a backup, without closing the app in between, could stay hidden
+  from the Shelf until the app was restarted, and could be deleted again when the delete's Undo message
+  closed or you left the Shelf. A restored zine now shows at once and stays
+  ([ADR-121](docs/DECISIONS.md#adr-121), note of 2026-10-09).
+- The lines of a longer text sat closer together while you typed than on the finished page, so the text
+  moved when you tapped Done. They now sit as far apart as on the page, to within about a pixel a line.
+
+### Known limitations
+
+- **A text that just fits its box can lose its last line when you switch it to Book**, with no sign: the two
+  fonts differ in width and height and the box does not grow. Make the box taller to see the line again.
+- Book's smallest size, 12 pt, has not yet been confirmed on a printed page.
+- **If a zine with Book text is opened or restored on 0.9.0-beta.6 or earlier**, that version draws the text
+  in Plain. Every word is kept and is Book again on this version. But lines break in other places, and lines
+  that no longer fit their box are missing from the page and from the PDF on the older version, which does
+  not say so. In our test an italic paragraph that just fitted lost its last line.
+- An older Zinely restores a backup that has folders with every zine on My Shelf. Restoring a backup onto a
+  phone that already has the same zines adds nothing, so it brings no folders.
+- Folders and the Font row have not been checked by ear with TalkBack; they were read from the phone's
+  accessibility tree. With TalkBack, focus does not move to the result after a folder action.
+- A selected text shows **Text** on the upper bar and **Text style** on the lower bar; both open the same
+  card.
+- The message after the last zine leaves a folder is two lines long and stays for four seconds, with its Undo.
+- At large text sizes the draft can still sit about a pixel a line away from the finished page.
+- This APK itself was not installed over an existing library before release; see the
+  [tester package](docs/releases/0.9.0-beta.7.md#verification) for what was checked and on what.
+- Tapping through a holed piece has not yet been checked by ear with TalkBack. A very thin frame over a photo
+  can take a careful tap. Once selected, dragging from its edge resizes it; drag from the middle of the
+  selection to move it.
+- A second tap on small selected words can land on a resize handle and not open the words for editing.
+  Double-tap the words, or use **Edit**.
+- With TalkBack, a repeated identical undo or redo line may be spoken only once.
+- A backup that left zines out is restored by versions before beta.6 without saying so.
+- Transparency in imported pictures isn't kept: the see-through parts are flattened onto white when the
+  picture comes in. Exports and prints are right, because the paper is white. On the cream editor page,
+  though, a transparent logo shows as a faint white rectangle, and placed over a photo it shows a white box.
+- On Android 7–9, if you decline storage access and ask Android not to ask again, Save PDF keeps showing
+  "Couldn’t make the PDF" until you allow storage for Zinely in the phone's settings. Share still works.
+- With TalkBack on, **About**, **Licences & credits** and a font licence open with TalkBack on the Back
+  button, and going Back returns TalkBack to the top of the previous screen.
+- Replaced and deleted photo assets are retained; app storage is not reclaimed yet.
+- Unsupported print scripts are kept and warned about but do not print.
+- Zinely saves the PDF; printing happens in the phone's PDF or print app.
 
 ## [0.9.0-beta.6] — 2026-10-06 — Backups that tell you what happened
 
