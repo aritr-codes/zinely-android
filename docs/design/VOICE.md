@@ -164,6 +164,24 @@ current failure. `Colophon` remains the architectural small-press term, but it i
   - when the undo or redo lands on another page that the words don't already name, the page joins the same
     line: **"Photo put back, page 3"**; a line that names its pages never gains one
     (**"Photo runs across pages 2 & 3"**).
+  - a font change has its own pair, because the card has a row named Style: **"Font put back"** (undo) ·
+    **"Font changed"** (redo) (`v21-bench.html` A30).
+- **The Font row** (`v21-typebar.html` A29 is the source; these are its strings as built). The two choices
+  are **"Book"** and **"Plain"**. A choice that cannot be used stays on screen and says why in one line,
+  and the same line is what is spoken after **"Book, unavailable."**:
+  - **"Book has no Greek letters, so this text stays Plain."** (or *Cyrillic*)
+  - **"Book needs 12 pt or larger. Make the text larger first."**
+  - on the Smaller control of a Book text at 12 pt: **"Book stops at 12 pt. Switch to Plain to go smaller."**
+  - a text whose font this version does not have: **"This text uses a font this version of Zinely does not
+    have. It is drawn in Plain for now. Choosing Book or Plain replaces its font."**
+  - while typing in a Book text: **"Book has no Greek letters. Switch this text to Plain to print them in a
+    matching face."**
+
+  Spoken when a choice lands, on the pattern of "Colour Teal": **"Font Book"** · **"Font Plain"**. This
+  line is not on the frozen page; it is an accessibility addition.
+
+  The pattern: name the font, say what it lacks or needs, say the one thing the maker can do. Never
+  "unsupported", and never a change made for the maker.
 - Deleting an element (gentle, undoable): **"Removed — undo?"** *(action, not a modal)*
 - Nothing destructive needs a scary dialog; if a true confirm is ever required:
   - Title: **"Delete this page?"** / body: **"The photos and words on it will go too."** /
