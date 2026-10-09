@@ -61,7 +61,7 @@ class BenchContextBarPlatformA11yTest {
     @Test
     fun authored_text_exposes_exactly_five_live_actions_in_order_and_dispatches_them() {
         render(BenchVerbKind.TEXT)
-        val expected = listOf("Edit", "Size", "Ink", "Duplicate", "Delete")
+        val expected = listOf("Edit", "Text", "Ink", "Duplicate", "Delete")
         assertEquals(expected, platformTraversalStops(composeRule.activity).map { it.label })
         composeRule.onNodeWithContentDescription(Copy.BenchVerbs.FONT).assertDoesNotExist()
         for (label in expected) {
@@ -78,7 +78,7 @@ class BenchContextBarPlatformA11yTest {
         composeRule.onNodeWithContentDescription(Copy.BenchVerbs.FONT).assertDoesNotExist()
         assertLiveButton(Copy.BenchVerbs.EDIT)
         assertLiveButton(Copy.BenchVerbs.DELETE)
-        for (label in listOf(Copy.BenchVerbs.SIZE, Copy.BenchVerbs.INK, Copy.BenchVerbs.DUPLICATE)) {
+        for (label in listOf(Copy.BenchVerbs.TEXT, Copy.BenchVerbs.INK, Copy.BenchVerbs.DUPLICATE)) {
             val node = composeRule.onNodeWithContentDescription(label).platformNode(composeRule.activity)
             assertFalse(node.isEnabled)
             assertFalse(node.isClickable)

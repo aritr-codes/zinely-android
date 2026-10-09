@@ -1753,7 +1753,7 @@ public fun EditorScreen(
                 BenchContextBar(
                     visible = ctxVisible,
                     // `styleable` is the same test the Style control already applies (ADR-055): a text box
-                    // the reducer would refuse to style must not be offered Size or Ink (D-040).
+                    // the reducer would refuse to style must not be offered Text or Ink (D-040).
                     verbs = ctxKind?.let {
                         benchContextVerbs(
                             it,
@@ -1777,8 +1777,8 @@ public fun EditorScreen(
                         val id = ctxElement?.id
                         when (verb.label) {
                             Copy.BenchVerbs.EDIT -> if (id != null) dispatch(Intent.BeginEditText(id))
-                            // OD-9 routed Size to the shipped Type bar, and it stays there.
-                            Copy.BenchVerbs.SIZE -> typeBarOpen = true
+                            // OD-9 routed this verb (then named Size) to the shipped Type bar, and it stays there.
+                            Copy.BenchVerbs.TEXT -> typeBarOpen = true
                             // C6 (ADR-096 row 6.1): Ink now opens the frozen `.inkpop`, which is what
                             // the freeze binds it to. Until this package it borrowed the Type bar,
                             // because `.inkpop` was outside C2b's fence and blocked on D-028 — recorded
@@ -2167,7 +2167,7 @@ public fun EditorScreen(
                 // outside an inline edit session. Anything else — a photo, a multi-selection, a
                 // still-blank box the reducer would refuse anyway — gets the bar exactly as before.
                 //
-                // D-039 deliberately does NOT touch this one. `Size` and `Ink` on the frozen bar open the
+                // D-039 deliberately does NOT touch this one. `Text` (named `Size` until A31) and `Ink` on the frozen bar open the
                 // same Type bar, so it is tempting to call Style a third door onto one room — but the
                 // ruling is about *identical actions presented twice*, and the evidence Pass 2 produced was
                 // two controls wearing the same word (`Delete`, `Reframe`). "Text style" is a different

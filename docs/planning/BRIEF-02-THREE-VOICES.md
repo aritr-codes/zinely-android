@@ -709,6 +709,7 @@ running text. More scripts through faces that cover them ([ADR-070](../DECISIONS
 
 | Date | Change |
 |---|---|
+| 2026-10-09 | The owner ruled the way in: the Bench button that opens the text card is renamed from "Size" to "Text" (`v21-bench.html` A31). Where this brief says **Size** on the Bench, read **Text**. |
 | 2026-10-09 | Merged to `main` on the owner's instruction (PR #108, then PR #110) with gates 4 and 7 open. Acceptance criterion 1 ("gates 6 and 7 closed before merge") is therefore not met for gate 7; that is the owner's decision, recorded here. |
 | 2026-10-09 | Built on `feat/document-voices`. Gate 6 closed: Procedure B run on two older builds and recorded. The row is the Font row of A29; where this brief says "Voice row" it means that row. The build blocks Book below 12 pt, as ruled. Not accepted: gates 4 and 7 are open. |
 | 2026-10-08 | Gate 5 closed: the owner approved A29 and it is frozen ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)). A second research pass ([RESEARCH R24](../RESEARCH.md#r24-the-font-row-what-other-editors-and-the-guidance-say---verified---recommendation-with-a--assumption-edge)) changed the undo line to "Font changed" / "Font put back" (`v21-bench.html` A30) and sharpened two rules. The brief is ready for a session. For that session, from R24: a 48 dp touch target; build the row as Align is built, not from the Material segmented button; measure the card at the largest text. |

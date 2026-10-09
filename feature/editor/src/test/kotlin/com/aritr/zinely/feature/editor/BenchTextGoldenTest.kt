@@ -36,7 +36,7 @@ class BenchTextGoldenTest {
     private fun capture(dark: Boolean) {
         val verbs = benchContextVerbs(BenchVerbKind.TEXT)
         val expected = listOf(
-            Copy.BenchVerbs.EDIT, Copy.BenchVerbs.SIZE, Copy.BenchVerbs.INK,
+            Copy.BenchVerbs.EDIT, Copy.BenchVerbs.TEXT, Copy.BenchVerbs.INK,
             Copy.BenchVerbs.DUPLICATE, Copy.BenchVerbs.DELETE,
         )
         assertEquals(expected, verbs.map { it.label })

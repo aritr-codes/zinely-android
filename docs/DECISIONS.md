@@ -15341,8 +15341,14 @@ On `feat/document-voices`, from `origin/main` @ `99a8f67`; merged to `main` on 2
   Windows machine, not on the pinned CI image; the CI recording is owed.**
 - **Phone, Pass 1** (Samsung SM-A176B, Android 16): passed, read from the platform's accessibility tree.
   **Pass 2** was done by the implementer and is the weaker pass. Its main finding: the row is reached
-  through a button labelled "Size", which gives no hint that a font can be chosen there. A new name is
-  proposed to the owner and not made.
+  through a button labelled "Size", which gives no hint that a font can be chosen there. **Ruled by the owner on 2026-10-09: the button is renamed "Text"** (`v21-bench.html` A31, then `Copy.BenchVerbs.TEXT`).
+  The row inside the card that changes the size keeps the name "Size". Whether a first-time maker now
+  finds the font is still for the owner's own pass to say. The two goldens of the selected-text bar
+  (`bench_context_bar_text_light`, `_dark`) were re-recorded for the new word, on Windows; their test
+  allows a 2% change, so the old pictures had still passed, and the label list in that test is the real
+  guard. Seen on the phone (Samsung SM-A176B, Android 16, 2026-10-09): the platform tree reads Edit,
+  Text, Ink, Duplicate, Delete, and Text opens the card. Open for the owner: "Text" now sits above the
+  lower bar's "Text style", which opens the same card.
 - **Found, and fixed in a separate change:** a draft of several lines sat tighter than the finished text,
   in both voices, because the editing field's line height was 1 em and the page's is the font's own. It
   was older than this change. The fix (branch `fix/editing-draft-line-height`, 2026-10-09, stacked on

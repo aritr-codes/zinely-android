@@ -49,9 +49,9 @@ class SuppliesCopyTest {
             Copy.BenchInk.STONE to "swatch", Copy.BenchInk.FOG to "swatch",
             Copy.BenchVerbs.INK to "bench verb", Copy.BenchVerbs.REPLACE to "bench verb",
             Copy.BenchVerbs.DELETE to "bench verb", Copy.BenchVerbs.EDIT to "bench verb",
-            Copy.BenchVerbs.SIZE to "bench verb", Copy.BenchVerbs.FONT to "bench verb",
+            Copy.Type.ROW_SIZE to "text card row", Copy.BenchVerbs.FONT to "bench verb",
             Copy.BenchVerbs.REFRAME to "bench verb", Copy.BenchVerbs.COPIER to "bench verb",
-            Copy.AddChooser.TEXT_TITLE to "Add row", Copy.AddChooser.PHOTO_TITLE to "Add row",
+            Copy.AddChooser.TEXT_TITLE to "Add row and bench verb", Copy.AddChooser.PHOTO_TITLE to "Add row",
         )
     }
 

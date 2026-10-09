@@ -955,7 +955,7 @@ class EditorScreenTest {
         val store = selectedText()
         setScreen(store)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").performClick()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertDoesNotExist()
@@ -1121,7 +1121,7 @@ class EditorScreenTest {
         store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "   "))
         setScreen(store)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").assertIsNotEnabled()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").assertIsNotEnabled()
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.INK}").assertIsNotEnabled()
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DUPLICATE}").assertIsNotEnabled()
         // Delete stays live — a blank box is exactly the one you most want to get rid of.

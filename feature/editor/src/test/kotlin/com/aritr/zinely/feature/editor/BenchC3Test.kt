@@ -625,7 +625,7 @@ class BenchC3Test {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.FONT}").assertDoesNotExist()
-        composeRule.onNodeWithTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.SIZE}").assertDoesNotExist()
+        composeRule.onNodeWithTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.TEXT}").assertDoesNotExist()
         composeRule.onNodeWithTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.INK}").assertIsEnabled()
         composeRule.onNodeWithTag("$BenchStyleRowTestTag-hint").assertIsDisplayed()
         composeRule.onNodeWithTag("$BenchStyleRowTestTag-done").assertIsEnabled()
@@ -863,8 +863,8 @@ class BenchC3Test {
         // removes nothing from the selected state. OD-11 / OD-14 / D-042.
         val store = store()
         val id = placedText(store)
-        // Reach the Type bar the way the shipped product does — the context bar's Size verb (OD-9).
-        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").performClick()
+        // Reach the Type bar the way the shipped product does — the context bar's Text verb (OD-9).
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(TypeBarTestTag).assertIsDisplayed()

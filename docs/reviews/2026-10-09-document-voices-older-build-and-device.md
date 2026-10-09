@@ -210,7 +210,7 @@ I wrote this screen, which is the wrong chair to judge it from. What I could sti
   the owner, and neither is made here, because the button belongs to the frozen page: put the **Font**
   action back on a selected text (the Bench page had one until A24 removed it, on the ground that no
   font could be chosen; that ground is gone), or rename "Size" ("Text"; not "Style", which is already a
-  row inside the card).
+  row inside the card). **The owner chose the rename on 2026-10-09** (Bench page A31).
 - Once the card is open the row is first, the two words are drawn in their own faces, and one tap changes
   the text behind the card. That part reads at once.
 - "Book" and "Plain" do not say "serif" or "sans". The faces carry it. Whether the words alone do is a

@@ -2520,3 +2520,31 @@ and `mark.registration` "are the three marks that have one".  That was true of A
 and is left as the record.  The shipped cabinet has the six above.  The live comment on
 `.tile svg` (:479-480) is corrected in place, within its own two lines, to name all six.
 =========================================================================== -->
+
+<!-- ===========================================================================
+A31 · 2026-10-09 · FROZEN by the owner's ruling of that date ("rename Size to Text"), ADR-126.
+The selected-text bar's second action is named "Text", not "Size".
+
+WHY.  Since v21-typebar.html A29 the card this action opens holds five rows: Font, Size,
+Align, Style and Colour.  "Size" named one of the five.  The first-time pass on a phone
+(2026-10-09) found what that page's V-3 expected: nothing on a selected text said a font
+could be chosen.  The owner was offered two ways out, putting a Font action back or
+renaming this one, and chose the name.
+
+WHAT CHANGES.  One word, drawn and spoken.  Final order for a selected text:
+Edit / Text / Ink / Duplicate / Delete.
+
+WHAT DOES NOT CHANGE.  The icon (ICON.size, the small and large letter).  What the action
+does: it opens the text card.  When it is unavailable and what it then says ("Type
+something first", "Finish typing to change this").  A21's spacing and touch floors.  The
+row inside the card that changes the size is still named "Size".  Every other kind's bar.
+
+HISTORY, NOT REWRITTEN.  toolsFor() (:695), A21's note (:2181) and A24's order (:2259) say
+"Size" and are left as the record of the bar before this ruling.
+=========================================================================== -->
+<script>
+var toolsForBeforeA31=toolsFor;
+toolsFor=function(kind){
+  return toolsForBeforeA31(kind).map(tool=>kind==='text'&&tool[0]==='Size'?['Text',...tool.slice(1)]:tool);
+};
+</script>
