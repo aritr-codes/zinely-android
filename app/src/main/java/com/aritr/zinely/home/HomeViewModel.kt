@@ -378,6 +378,8 @@ internal class HomeViewModel @Inject constructor(
         backupRestorePickerPending = false
         if (uri == null) return
         if (backupRestoreJob?.isActive == true) return
+        // Before anything is added: a marker left by a finished delete must not outlive the restore.
+        clearFinishedMarkers()
         val latch = OutcomeLatch()
         outcomeLatch = latch
         // ADR-122 R2: called inside the repository's lock just before the non-cancellable commit. Winning the
@@ -690,14 +692,24 @@ internal class HomeViewModel @Inject constructor(
      * or that the store has already finished ([finishedDeletes]), is a no-op answered `true`, because there
      * is nothing left to wait for. Every caller comes through here, so no caller needs to know whether a
      * zine with this id has come back since.
+     *
+     * Accepted limit: a caller that waited behind a commit which then **failed** is also answered `true`,
+     * where it once made its own store call and got its own failure. The failed delete has by then put the
+     * card back and said so, so the Shelf that caller goes on to act on is true.
      */
     private suspend fun performCommit(id: String): Boolean = commitMutex.withLock {
-        if (id !in pendingDeletes.value || id in finishedDeletes) return@withLock true
+        if (id in finishedDeletes) return@withLock true
+        if (id !in pendingDeletes.value) {
+            // Undone, or the zine was already gone and the store's list dropped it. A marker with no delete
+            // behind it must not wait for the next start.
+            pendingDeleteStore.remove(id)
+            return@withLock true
+        }
         when (val result = projectRepository.deleteProject(id)) {
             is DataResult.Success -> {
                 // If clearing the marker fails, the next start retries this delete. That is safe while the
-                // zine stays deleted; a restore that could bring it back clears the marker first
-                // ([forgetFinishedDeletes]).
+                // zine stays deleted; a restore, which could bring it back, clears the marker before it
+                // starts and again when it succeeds ([clearFinishedMarkers]).
                 pendingDeleteStore.remove(id)
                 // Stay hidden; the store flow removes the card. If it already has, there is nothing to keep.
                 if (id in pendingDeletes.value) finishedDeletes = finishedDeletes + id
@@ -717,16 +729,26 @@ internal class HomeViewModel @Inject constructor(
      * A restore succeeded, so a zine may have come back under the id of a delete that had finished: the
      * restore wins, because the maker has just asked for that zine. Every finished delete stops hiding its
      * id, and no marker is left that would make the next start delete it. A delete still waiting is left as
-     * it is; the zine it names was on the shelf throughout, so the restore did not add it.
+     * it is, with its Undo: its zine has not been deleted, so the restore had no reason to add it.
      *
      * The store listing the Shelf without the id would unhide it too, and usually has. This does not rely on
      * that list having been seen before the restored zine arrived.
      */
     private fun forgetFinishedDeletes() {
+        clearFinishedMarkers()
+        pendingDeletes.update { it - finishedDeletes }
+        finishedDeletes = emptySet()
+    }
+
+    /**
+     * Removes every delete marker that no waiting delete stands behind. Such a marker is left when a
+     * finished delete could not clear its own, and the next start would act on it: harmless while the zine
+     * stays deleted, and the loss of the zine once a restore has brought it back. So a restore calls this
+     * before it starts and again when it succeeds. If the marker still cannot be cleared, that risk remains.
+     */
+    private fun clearFinishedMarkers() {
         val waiting = pendingDeletes.value - finishedDeletes
         (pendingDeleteStore.pendingIds() - waiting).forEach { pendingDeleteStore.remove(it) }
-        finishedDeletes = emptySet()
-        pendingDeletes.value = waiting
     }
 
     /**

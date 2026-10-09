@@ -13582,8 +13582,9 @@ wrong.
   delete first, as opening a zine does ([ADR-046](#adr-046) §4), so by the time the restore runs the delete is
   finished, not waiting, and the zine counts as new and is added.
 - **The rule.** A finished delete is over. It is sent to the store once, it stops hiding its id when the store
-  lists the Shelf without it or when a restore succeeds, and it leaves no marker for the next start. The
-  restore wins, because the maker has just asked for that zine.
+  lists the Shelf without it or when a restore succeeds, and it leaves no marker for the next start: a restore
+  clears any left-over marker before it starts and again when it succeeds. The restore wins, because the
+  maker has just asked for that zine. A delete still waiting when a restore succeeds is not touched.
 - **What was wrong.** The Shelf kept the id of a finished delete hidden until the store listed the Shelf without
   it, and never dropped it when that list was empty, which is what deleting the only zine gives. The restored
   zine was then hidden, and the next thing that finishes waiting deletes (the Undo message closing, leaving
@@ -13596,7 +13597,12 @@ wrong.
 - **Not changed.** A restore still ends a waiting delete's Undo early, and an Undo message already on screen at
   that moment is not taken down by this change, so its Undo may do nothing. That is older behaviour and a
   design question, not part of this fix.
-- **Review and device check.** Recorded in the pull request for branch `fix/shelf-restore-after-delete`.
+- **Accepted limits.** If a delete's marker cannot be cleared even by the restore, the next start still acts
+  on it. And a folder action that waited behind another caller's commit of the same delete goes ahead if that
+  commit fails, where [ADR-125](#adr-125) rule 11 would stop it; the failed delete has by then put the zine
+  back and said so, so the action runs on a true Shelf.
+- **Review and device check.** Independent review: GO WITH FIXES, reconciled in the pull request for branch
+  `fix/shelf-restore-after-delete`. Both device passes are still owed.
 
 ## ADR-122 {#adr-122}
 

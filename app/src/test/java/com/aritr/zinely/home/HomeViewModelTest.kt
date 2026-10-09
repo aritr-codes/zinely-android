@@ -143,9 +143,13 @@ class HomeViewModelTest {
             return duplicateResult()
         }
 
+        /** When set, [deleteProject] suspends on it: lets a test hold a delete in flight. */
+        var deleteGate: CompletableDeferred<Unit>? = null
+
         override suspend fun deleteProject(id: String): DataResult<Unit> {
             deleted += id
             calls += "delete $id"
+            deleteGate?.await()
             return deleteResult()
         }
 
@@ -1726,10 +1730,9 @@ class HomeViewModelTest {
         // Then
         assertEquals(listOf("z1"), shownIds(viewModel))
 
-        // And neither Home stopping nor the start after this one deletes it
+        // And Home stopping does not delete it
         viewModel.flushPendingDeletes()
         advanceUntilIdle()
-        viewModel()
         assertEquals(listOf("z1"), repository.deleted)
         assertEquals(listOf("z1"), shownIds(viewModel))
         stateJob.cancel()
@@ -1763,7 +1766,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `a restore clears the marker of a finished delete, so the next start deletes nothing`() = runTest {
+    fun `a restore clears a finished delete's marker before it adds anything, so no later start deletes the zine`() = runTest {
         // Given a delete that reached the store but whose marker could not be cleared
         val now = System.currentTimeMillis()
         val viewModel = viewModel()
@@ -1776,13 +1779,86 @@ class HomeViewModelTest {
         pendingDeleteStore.writesSucceed = true
         repository.projects.emit(emptyList())
 
-        // When
-        restoreAddsOne(viewModel, listOf(summary("z1", "One", now)))
+        // When a restore is running and has added nothing yet
+        transport.restoreResult = DataResult.Success(LibraryRestoreReceipt(projects = emptyList(), addedCount = 1))
+        transport.restoreGate = CompletableDeferred()
+        viewModel.startRestore()
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/restore"))
 
-        // Then the next start has no delete to finish
+        // Then the marker is already gone, so the app stopping mid-restore leaves no delete for the next start
         assertTrue(pendingDeleteStore.ids.isEmpty())
+        transport.restoreGate!!.complete(Unit)
+        repository.projects.emit(listOf(summary("z1", "One", now)))
         viewModel()
         assertEquals(listOf("z1"), repository.deleted)
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a delete still waiting when a restore succeeds keeps its Undo and is still deleted`() = runTest {
+        // Given a restore in flight, and a zine deleted while it runs
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+        transport.restoreResult = DataResult.Success(LibraryRestoreReceipt(projects = emptyList(), addedCount = 1))
+        transport.restoreGate = CompletableDeferred()
+        viewModel.startRestore()
+        viewModel.restorePicked(Uri.parse("content://zinely-tests/restore"))
+        viewModel.delete("z2")
+
+        // When the restore succeeds
+        transport.restoreGate!!.complete(Unit)
+
+        // Then that delete is untouched: hidden, undoable, its marker kept
+        assertEquals(listOf("z1"), shownIds(viewModel))
+        assertTrue(viewModel.isDeleteWaiting("z2"))
+        assertEquals(setOf("z2"), pendingDeleteStore.ids)
+        assertTrue(repository.deleted.isEmpty())
+
+        // And it is deleted when its Undo window closes
+        viewModel.commitDelete("z2")
+        assertEquals(listOf("z2"), repository.deleted)
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `two callers finishing the same delete ask the store once`() = runTest {
+        // Given a delete whose commit is in flight (the Undo snack closed)
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+        viewModel.delete("z1")
+        repository.deleteGate = CompletableDeferred()
+        viewModel.commitDelete("z1")
+
+        // When Home stops before the store has answered
+        viewModel.flushPendingDeletes()
+        repository.deleteGate!!.complete(Unit)
+        advanceUntilIdle()
+
+        // Then
+        assertEquals(listOf("z1"), repository.deleted)
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a marker for a zine that is already gone is cleared, not left for the next start`() = runTest {
+        // Given two interrupted deletes, one of a zine the store no longer has
+        val now = System.currentTimeMillis()
+        pendingDeleteStore = FakePendingDeleteStore(setOf("here", "gone"))
+        repository.deleteGate = CompletableDeferred()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+
+        // When the store lists the Shelf while the first delete is still in flight
+        repository.projects.emit(listOf(summary("here", "Here", now)))
+        repository.deleteGate!!.complete(Unit)
+        advanceUntilIdle()
+
+        // Then no marker is left
+        assertTrue(pendingDeleteStore.ids.isEmpty())
         stateJob.cancel()
     }
 
