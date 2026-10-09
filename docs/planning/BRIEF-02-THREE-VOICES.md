@@ -664,7 +664,10 @@ type role. The document faces are content, not design tokens.
 3. Bold and italic use real faces in both voices. The draft while typing matches the result.
    *(As built, 2026-10-09: met for the faces, not for line spacing. A draft of several lines sits tighter
    than the page, in both voices, as it did before this change;
-   [the record](../reviews/2026-10-09-document-voices-older-build-and-device.md#7-brief-02s-acceptance-criterion-3-is-met-in-part).)*
+   [the record](../reviews/2026-10-09-document-voices-older-build-and-device.md#7-brief-02s-acceptance-criterion-3-is-met-in-part).
+   Later the same day, in a separate change stacked on this one: the line spacing is fixed and held by a
+   test to within one device pixel per line; not yet checked on a phone.
+   [The addendum](../reviews/2026-10-09-document-voices-older-build-and-device.md#10-addendum-2026-10-09-the-drafts-line-spacing).)*
 4. A zine made before this change opens unchanged and saves unchanged.
 5. An unknown family draws Inter and keeps its value.
 6. A voice is never switched, and a size never changed, on the maker's behalf. Choosing a voice the text's

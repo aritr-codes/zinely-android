@@ -26,8 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A font for each text, Book or Plain (ADR-126), built and not yet in a download. Select a text and tap
   **Size**: the card that opens has a new first row, Font. Book is a serif face with its own bold and italic; Plain is the face every
   zine has used so far. Book has no Greek or Cyrillic letters and is not offered below 12 pt; in both cases
-  the card says why. While you type, the text is now drawn in its own face, including a real italic; the
-  lines of a longer draft still sit closer together than they do on the page.
+  the card says why. While you type, the text is now drawn in its own face, including a real italic, and
+  the lines of a longer draft now sit as far apart as they will on the page. Before, they sat closer
+  together and the text moved when you tapped Done. This is checked in tests and not yet on a phone. A
+  draft that is too long for its box now shows that while you type, as the page always did.
   The two faces differ in width and height, so **a text that just fits its box can lose its last line when
   you switch it to Book**, with no sign: the box does not grow. Make the box taller to see it again.
   The download grows by about a quarter of a megabyte. Still owed before it is accepted: a printed page to

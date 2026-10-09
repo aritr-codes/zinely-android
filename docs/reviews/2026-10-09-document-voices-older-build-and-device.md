@@ -268,3 +268,37 @@ line is not announced.
 - The printed page (Procedure A).
 - The new and re-recorded goldens were recorded on this Windows machine, not on the pinned CI image.
 - The frozen HTML was not rendered beside the phone.
+
+## 10. Addendum, 2026-10-09: the draft's line spacing
+
+Finding (a) in section 5 and section 7 stand as written for the document-voices branch. This is what
+happened next, in a separate change stacked on it (branch `fix/editing-draft-line-height`).
+
+- **Cause.** `BenchEditingSurface` set `lineHeight = 1.em`, with a comment calling it the mirror of the
+  renderer's `setLineSpacing(0f, 1f)`. That call multiplies the font's own line height by one; it does
+  not set one em. Its own comment shows it was meant to match the renderer, not to differ from it.
+- **Is it allowed after the freeze.** Yes, as a parity fix. In `v21-bench.html` the text being edited
+  is the same node as the text at rest (`.t-title`, `.t-body`, lines 280 and 281); `edit()` only adds
+  the class `editing` (line 781), and the only rule that reads it shows the caret (line 290). The
+  frozen page gives the draft no line height of its own, and its caption says "You type on the page
+  itself, at the size it will print."
+- **Fix.** The field sets no line height. Compose then builds the font's own pitch from the same four
+  files the page uses. No number is written down, so a third voice cannot drift.
+- **Proof.** `EditingDraftLineParityTest` reads the composed field's layout and compares every
+  baseline with `SharedTextLayout`'s: each registered family, four faces, the ten type-bar sizes,
+  three scales, six lines with an empty one. Allowed: one device pixel per line, because each engine
+  rounds a line's ascent and descent to whole pixels at its own scale, and that difference adds up
+  down the box. Measured worst case: under 0.9 px per line, first baseline under 0.75 px. Before the
+  fix the second line of a 24 pt Plain draft was 17 px high of the page's. Also held: the three
+  alignments, tall accented capitals on the first line, and system font scale 2.0 (the draft does not
+  move, because the page is in points).
+- **Goldens.** New: `voice_editing_multiline_plain`, `voice_editing_multiline_book` (four lines each).
+  None re-recorded: the golden gate passed with the fix before anything was recorded, because every
+  existing editing golden holds one line and the first baseline did not change. Recorded on Windows;
+  the CI recording is owed.
+- **What the maker sees that is new.** A draft with more lines than its box holds now runs past the
+  box while typing. Before, the tighter draft could seem to fit and the last line was cut on Done.
+- **Not done.** No phone, no emulator, no TalkBack. Both device passes are owed for this fix. Where
+  the two engines wrap a long line is unchanged and still a phone check. A draft holding an emoji or a
+  letter the font lacks may still differ in line height from the page, because the field lets a
+  fallback font's metrics widen a line and the page does not; not measured.

@@ -15311,9 +15311,13 @@ On `feat/document-voices`, from `origin/main` @ `99a8f67`. Not merged. The evide
   **Pass 2** was done by the implementer and is the weaker pass. Its main finding: the row is reached
   through a button labelled "Size", which gives no hint that a font can be chosen there. A new name is
   proposed to the owner and not made.
-- **Found and left alone:** a draft of several lines sits tighter than the finished text, in both voices,
-  because the editing field's line height is 1 em and the page's is not. It is older than this change.
-  So decision 6 is met for the faces and not for line spacing.
+- **Found, and fixed in a separate change:** a draft of several lines sat tighter than the finished text,
+  in both voices, because the editing field's line height was 1 em and the page's is the font's own. It
+  was older than this change. The fix (branch `fix/editing-draft-line-height`, 2026-10-09, stacked on
+  this one) removes the field's line height so both use the font's own, and
+  `EditingDraftLineParityTest` holds every baseline of the draft to the page's within one device pixel
+  per line. So decision 6 is met for the faces and, in tests, for line spacing; the phone check is owed.
+  [The record's addendum](reviews/2026-10-09-document-voices-older-build-and-device.md#10-addendum-2026-10-09-the-drafts-line-spacing).
 - **Review, 2026-10-09.** Two independent Review Agents, one for code evidence and one for product and
   accessibility, each told to treat comments, documents and the implementer's summary as claims. Both
   returned **GO WITH FIXES**; neither ran Gradle, a phone or a screen reader. Six Required Fixes, all
