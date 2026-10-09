@@ -135,7 +135,7 @@
 | [ADR-123](#adr-123) | **Undo and redo say what they did, in the one Bench snack.** A pure `editLabel` derived from each command's memento (no History change, nothing persisted); `Effect.HistoryStepped` replaces "Changed page N"; one snack counted per step, shown in the snack and spoken once through the announcement drain; the page clause and the 2% / 2° transform rule. Words owned by frozen `v21-bench.html` A26. | Accepted 2026-10-01 (proposed 2026-09-30, revised twice 2026-10-01); 1.x step 3 (PR #90). **Accepted with documented device-verification limitations:** the owner waived the full two-pass device matrix, several A26 rows and the 2× listen were not heard, and TalkBack may say an identical repeat once |
 | [ADR-124](#adr-124) | **Taps pass through the empty part of six holed Art pieces.** For `paper.window`, `paper.hole`, `shape.ring`, `fix.grommet`, `fix.corner` and `mark.registration` the hit area is the drawn ink, read from the outline the renderer draws; resolution is drawn → near (within 8 dp of the ink, yes or no; topmost wins) → box, topmost-first; every other element keeps its box; `core:editor` gains a dependency on `core:render`. Semantics, schema and pixels unchanged | Proposed |
 | [ADR-125](#adr-125) | **Folders on the Shelf: one level, a zine in one place, and a folder is only the name its zines carry.** Every folder action is a row in a sheet, nothing is dragged; a folder is drawn as a banded pile of its zines' own covers and exists only while it holds a zine; taking the zines out puts them back on My Shelf. Stored as a defaulted `folder` name in `meta.json`, carried by a defaulted backup-manifest field; the Room index, `packageVersion` and the document schema are unchanged, older builds restore every zine to My Shelf. ADR-081 ruling 2 (no search, no sort) stands. | **Accepted 2026-10-07** on the owner's approval of the A28 prototype and of the recommended rulings; `v21-library.html` A28 frozen the same day; F-10 (the Tribunal row) still the owner's; storage merged (part 1); the Shelf screens built 2026-10-08 (part 2), in no release, **both phone passes still owed** |
-| [ADR-126](#adr-126) | **Two document voices, Book (Fraunces) and Plain (Inter), with no change to the saved format.** `fontFamily` carries the voice; an unknown family is drawn as Inter and kept, so an older build re-wraps and may cut off a Book text but loses nothing; four unmodified upstream static faces; each voice declares its scripts (Book has no Greek or Cyrillic); the editing surface draws the document's own faces; the control is a Font row amended into the frozen type bar (A29). Built on `feat/document-voices`, not merged. Supersedes two of ADR-055's exclusions: font choice, and font bundling for the four Book faces alone | Proposed |
+| [ADR-126](#adr-126) | **Two document voices, Book (Fraunces) and Plain (Inter), with no change to the saved format.** `fontFamily` carries the voice; an unknown family is drawn as Inter and kept, so an older build re-wraps and may cut off a Book text but loses nothing; four unmodified upstream static faces; each voice declares its scripts (Book has no Greek or Cyrillic); the editing surface draws the document's own faces; the control is a Font row amended into the frozen type bar (A29). Built and merged to `main` on 2026-10-09 (PR #108); not accepted. Supersedes two of ADR-055's exclusions: font choice, and font bundling for the four Book faces alone | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -15149,7 +15149,7 @@ fixture, dependency or permission change.
 ### Two document voices, Book and Plain, with no change to the saved format
 
 **Status:** Proposed, 2026-10-06. **Not accepted.** Built on `feat/document-voices` (2026-10-09, from
-`origin/main` @ `99a8f67`), not merged; what was built and measured is under [*As built*](#adr-126-as-built). Drafted on
+`origin/main` @ `99a8f67`) and merged to `main` on 2026-10-09 on the owner's instruction (PR #108, with the draft line-spacing fix PR #110), **before acceptance**: the owner chose to merge with this ADR still Proposed, as with [ADR-124](#adr-124). What was built and measured is under [*As built*](#adr-126-as-built). Drafted on
 `design/document-voices-prep` from `origin/main` @ `ae374ea`, before any Kotlin. It can be Accepted only when the owner has set
 the minimum print size (ruled 12 pt on 2026-10-08) and confirmed it on the printed page, approved the type-bar amendment and accepted this text, and the implementation's
 evidence is in; what is owed is listed under *Still owed*. Zinely 1.x step 8
@@ -15310,7 +15310,7 @@ the family is a string inside the saved document, not a database column.
 
 #### As built (2026-10-09) {#adr-126-as-built}
 
-On `feat/document-voices`, from `origin/main` @ `99a8f67`. Not merged. The evidence is in
+On `feat/document-voices`, from `origin/main` @ `99a8f67`; merged to `main` on 2026-10-09 on the owner's instruction (PR #108, with the draft line-spacing fix PR #110). Not accepted, in no release. The evidence is in
 [the dated note](reviews/2026-10-09-document-voices-older-build-and-device.md).
 
 - **Model, pure.** `DocumentVoice` in `:core:model` reads a `fontFamily` as Plain, Book or unknown and holds
@@ -15343,9 +15343,13 @@ On `feat/document-voices`, from `origin/main` @ `99a8f67`. Not merged. The evide
   **Pass 2** was done by the implementer and is the weaker pass. Its main finding: the row is reached
   through a button labelled "Size", which gives no hint that a font can be chosen there. A new name is
   proposed to the owner and not made.
-- **Found and left alone:** a draft of several lines sits tighter than the finished text, in both voices,
-  because the editing field's line height is 1 em and the page's is not. It is older than this change.
-  So decision 6 is met for the faces and not for line spacing.
+- **Found, and fixed in a separate change:** a draft of several lines sat tighter than the finished text,
+  in both voices, because the editing field's line height was 1 em and the page's is the font's own. It
+  was older than this change. The fix (branch `fix/editing-draft-line-height`, 2026-10-09, stacked on
+  this one) removes the field's line height so both use the font's own, and
+  `EditingDraftLineParityTest` holds every baseline of the draft to the page's within one device pixel
+  per line. So decision 6 is met for the faces and, in tests, for line spacing; the phone check is owed.
+  [The record's addendum](reviews/2026-10-09-document-voices-older-build-and-device.md#10-addendum-2026-10-09-the-drafts-line-spacing).
 - **Review, 2026-10-09.** Two independent Review Agents, one for code evidence and one for product and
   accessibility, each told to treat comments, documents and the implementer's summary as claims. Both
   returned **GO WITH FIXES**; neither ran Gradle, a phone or a screen reader. Six Required Fixes, all

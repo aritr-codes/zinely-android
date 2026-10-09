@@ -23,11 +23,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontSynthesis
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.model.PtPoint
@@ -158,10 +156,13 @@ internal fun benchCaretAlphaAt(elapsedMillis: Long, reduceMotion: Boolean): Floa
  * ### The parity this can and cannot promise (row 3.11)
  *
  * Everything the two engines *both* take from the model is matched exactly here: the box rect, the point
- * size scaled by the live `screenPxPerPt`, the ink, the alignment, bold and italic. Line **breaking** is
- * matched as closely as the two APIs allow — `includeFontPadding = false` and a 1.0 line-height mirror the
- * renderer's `setIncludePad(false)` / `setLineSpacing(0f, 1f)`, and Compose's default simple break strategy
- * matches its `BREAK_STRATEGY_SIMPLE` — but they are not the same code path, so a long line may wrap one
+ * size scaled by the live `screenPxPerPt`, the ink, the alignment, bold and italic. Line **placement** is
+ * matched too: `includeFontPadding = false` with **no** `lineHeight` gives the font's own line pitch from
+ * the first baseline down, which is what the renderer's `setIncludePad(false)` / `setLineSpacing(0f, 1f)`
+ * gives. `EditingDraftLineParityTest` holds every baseline to the page's within one device pixel per line
+ * (each engine rounds a line's ascent and descent to whole pixels at its own scale). Line **breaking** is
+ * matched as closely as the two APIs allow — Compose's default simple break strategy matches the
+ * renderer's `BREAK_STRATEGY_SIMPLE` — but they are not the same code path, so a long line may wrap one
  * word differently and shift on commit. That residue is a **device-verification** item, not something a
  * unit test can settle, and it is the honest limit of this approach: the alternative is editing through the
  * export replayer, which would mean building a caret and hit-testing on a canvas, i.e. a text engine.
@@ -232,13 +233,22 @@ internal fun BenchEditingSurface(
             ModelTextAlign.CENTER -> TextAlign.Center
             ModelTextAlign.END -> TextAlign.End
         },
-        // Mirrors SharedTextLayout's `setLineSpacing(0f, 1f)` + `setIncludePad(false)`: unit line spacing
-        // with no font padding, and the trim that stops Compose re-adding it at the first and last line.
-        lineHeight = 1.em,
-        lineHeightStyle = LineHeightStyle(
-            alignment = LineHeightStyle.Alignment.Proportional,
-            trim = LineHeightStyle.Trim.Both,
-        ),
+        // INVARIANT: no `lineHeight` here, ever. SharedTextLayout's `setLineSpacing(0f, 1f)` is a
+        // multiplier of 1 on the FONT'S OWN line height (ascent + descent, about 1.21 em for Inter and
+        // 1.23 em for Fraunces), not a line height of 1 em. Leaving it unspecified makes Compose build the
+        // same thing from the same four files, so the pitch follows the font and a third voice cannot
+        // drift. `1.em` stood here until 2026-10-09 and set every draft about a fifth of a line too tight.
+        // `includeFontPadding = false` is the renderer's `setIncludePad(false)`: the first line starts at
+        // the ascent in both. Held by EditingDraftLineParityTest, within one device pixel per line.
+        //
+        // Three limits, none of them proven away:
+        //  - Android 7 to 8.1 (API 24-27): Compose adds top padding when the first line's ink rises above
+        //    the ascent, which moves every baseline down. The test runs at SDK 34 and cannot see it.
+        //  - A line holding a glyph from a fallback font (a letter the voice lacks, an emoji) can be
+        //    taller here than on the page: Compose lets the fallback's metrics widen the line, the
+        //    renderer does not.
+        //  - The field clips to its box and scrolls to follow the caret; the page keeps the top and cuts
+        //    the foot. A draft that only just fits can therefore scroll by a few pixels.
         platformStyle = PlatformTextStyle(includeFontPadding = false),
     )
 

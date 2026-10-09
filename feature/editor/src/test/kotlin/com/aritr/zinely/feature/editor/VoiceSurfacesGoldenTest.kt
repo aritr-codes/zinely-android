@@ -68,6 +68,7 @@ class VoiceSurfacesGoldenTest {
         const val GOLDEN_DIR = "src/test/roborazzi"
         const val HOST_TAG = "voiceSurfacesGoldenHost"
         const val LINE = "Quiet zine"
+        const val FOUR_LINES = "Quiet zine\nof small hours,\nfolded twice\nand left out"
         val PAGE = PtSize(200.0, 300.0)
 
         /** regular, bold, italic, bold italic: label to (bold, italic). */
@@ -171,13 +172,20 @@ class VoiceSurfacesGoldenTest {
     // ── The field a maker types into ──────────────────────────────────────────────────────────────
 
     /** The open editing field for one face, cropped to the field's own bounds. */
-    private fun field(family: String, bold: Boolean, italic: Boolean): Bitmap {
+    private fun field(
+        family: String,
+        bold: Boolean,
+        italic: Boolean,
+        text: String = LINE,
+        heightPt: Double = 40.0,
+        sizePt: Double = 24.0,
+    ): Bitmap {
         val element = TextElement(
             id = "t1",
             // Low on the page, as `bench_editing_state_light` places it and for its reason.
-            transform = Transform(16.0, 200.0, 168.0, 40.0),
-            text = LINE,
-            style = TextStyle(fontFamily = family, sizePt = 24.0, bold = bold, italic = italic),
+            transform = Transform(16.0, 200.0, 168.0, heightPt),
+            text = text,
+            style = TextStyle(fontFamily = family, sizePt = sizePt, bold = bold, italic = italic),
         )
         val s = store(listOf(Page(index = 0, role = PageRole.INTERIOR, elements = listOf(element))))
         show {
@@ -221,5 +229,22 @@ class VoiceSurfacesGoldenTest {
         shots.forEach { (voice, faces) ->
             faces.forEach { (label, bmp) -> bmp.captureRoboImage("$GOLDEN_DIR/voice_editing_${voice}_$label.png", aa()) }
         }
+    }
+
+    /**
+     * A draft of four lines in each voice. The one-line pictures above cannot show how far apart the
+     * lines of a draft sit; these can. That the lines sit where the page's do is
+     * `EditingDraftLineParityTest`'s to prove, not a picture's.
+     */
+    @Test
+    fun voice_editing_multiline() {
+        val shots = VOICES.associate { (voice, family) ->
+            voice to field(family, bold = false, italic = false, text = FOUR_LINES, heightPt = 76.0, sizePt = 14.0)
+        }
+        assertFalse(
+            "the field drew a Book draft as a Plain one",
+            shots.getValue("book").sameAs(shots.getValue("plain")),
+        )
+        shots.forEach { (voice, bmp) -> bmp.captureRoboImage("$GOLDEN_DIR/voice_editing_multiline_$voice.png", aa()) }
     }
 }
