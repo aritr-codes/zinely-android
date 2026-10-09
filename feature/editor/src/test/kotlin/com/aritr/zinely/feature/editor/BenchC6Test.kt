@@ -949,9 +949,9 @@ class BenchC6Test {
         assertEquals(0, count(TypeBarTestTag))
         composeRule.onNodeWithTag(BenchInkDoneTestTag).performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").performClick()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").performClick()
         composeRule.waitForIdle()
-        assertEquals("Size keeps its OD-9 route", 1, count(TypeBarTestTag))
+        assertEquals("Text keeps its OD-9 route", 1, count(TypeBarTestTag))
     }
 
     /**
@@ -977,9 +977,9 @@ class BenchC6Test {
         setScreen(store)
         placedText(store)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").performClick()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").performClick()
         composeRule.waitForIdle()
-        assertEquals("Size did not open the Type bar", 1, count(TypeBarTestTag))
+        assertEquals("Text did not open the Type bar", 1, count(TypeBarTestTag))
         val selectedBefore = store.uiState.value.selection
 
         composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }

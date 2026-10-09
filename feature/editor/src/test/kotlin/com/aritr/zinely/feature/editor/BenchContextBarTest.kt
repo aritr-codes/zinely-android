@@ -123,7 +123,7 @@ class BenchContextBarTest {
         assertEquals(
             listOf(
                 Copy.BenchVerbs.EDIT,
-                Copy.BenchVerbs.SIZE,
+                Copy.BenchVerbs.TEXT,
                 Copy.BenchVerbs.INK,
                 Copy.BenchVerbs.DUPLICATE,
                 Copy.BenchVerbs.DELETE,
@@ -405,15 +405,15 @@ class BenchContextBarTest {
         fun state(label: String) = config(label).getOrNull(SemanticsProperties.StateDescription)
 
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.FONT}").assertDoesNotExist()
-        assertEquals(Copy.BenchVerbs.TYPE_FIRST, state(Copy.BenchVerbs.SIZE))
+        assertEquals(Copy.BenchVerbs.TYPE_FIRST, state(Copy.BenchVerbs.TEXT))
         assertEquals(Copy.BenchVerbs.TYPE_FIRST, state(Copy.BenchVerbs.INK))
         assertEquals(Copy.BenchVerbs.TYPE_FIRST, state(Copy.BenchVerbs.DUPLICATE))
         assertEquals("an enabled verb must not carry a reason", null, state(Copy.BenchVerbs.EDIT))
 
         // The name is untouched — this is the assertion that fails if the reason ever migrates into it.
         assertEquals(
-            listOf(Copy.BenchVerbs.SIZE),
-            config(Copy.BenchVerbs.SIZE).getOrNull(SemanticsProperties.ContentDescription),
+            listOf(Copy.BenchVerbs.TEXT),
+            config(Copy.BenchVerbs.TEXT).getOrNull(SemanticsProperties.ContentDescription),
         )
     }
 
@@ -672,9 +672,9 @@ class BenchContextBarTest {
         // with each other on a wrong value.
         host(benchContextVerbs(BenchVerbKind.TEXT, styleable = false))
         val bmp = hostBitmap()
-        val size = inkOf(bmp, Copy.BenchVerbs.SIZE)
+        val size = inkOf(bmp, Copy.BenchVerbs.TEXT)
         val edit = inkOf(bmp, Copy.BenchVerbs.EDIT)
-        assertNotEquals("Size is dimmed on blank text; Edit is not", edit, size)
+        assertNotEquals("Text is dimmed on blank text; Edit is not", edit, size)
         // .35 alpha over `paper` lands between the two, and much nearer paper than full inkSoft.
         assertTrue("the dimmed glyph is lighter than the live one", luma(size) > luma(edit))
         assertTrue("…and still darker than the surface it sits on", luma(size) < luma(surfaceArgb))

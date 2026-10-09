@@ -104,7 +104,7 @@ internal data class BenchVerb(
     /**
      * Why this verb is disabled, announced as its **state** rather than folded into its name.
      *
-     * Use `stateDescription`, not `contentDescription`: Size stays Size when blank text prevents styling.
+     * Use `stateDescription`, not `contentDescription`: Text stays Text when blank text prevents styling.
      * State is the axis that changes; the name is not.
      *
      * Null for an enabled verb, and null is meaningful: a verb with no reason is either live or disabled
@@ -145,7 +145,7 @@ internal fun benchContextVerbs(
         // that swallowed the toolbar, and the mirror image of what `TypeBarTest` already forbids on the
         // transform bar (D-040).
         BenchVerb(
-            Copy.BenchVerbs.SIZE, Icons.Filled.FormatSize, enabled = styleable,
+            Copy.BenchVerbs.TEXT, Icons.Filled.FormatSize, enabled = styleable,
             unavailableBecause = Copy.BenchVerbs.TYPE_FIRST.takeUnless { styleable },
         ),
         BenchVerb(

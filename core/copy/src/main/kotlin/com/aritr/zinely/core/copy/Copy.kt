@@ -210,7 +210,9 @@ public object Copy {
     public object BenchVerbs {
         public const val EDIT: String = "Edit"
         public const val FONT: String = "Font"
-        public const val SIZE: String = "Size"
+        /** Opens the text card. Named "Size" until `v21-bench.html` A31 (2026-10-09): the card now
+         *  also holds the font, and "Size" named one row of five. */
+        public const val TEXT: String = "Text"
         public const val INK: String = "Ink"
         public const val REFRAME: String = "Reframe"
         public const val ACROSS_FOLD: String = "Across fold"
@@ -247,7 +249,7 @@ public object Copy {
          */
         public const val NOT_YET: String = "Not available yet"
 
-        /** Size and Ink on a still-blank box — the reducer refuses to style one (ADR-055). */
+        /** Text and Ink on a still-blank box — the reducer refuses to style one (ADR-055). */
         public const val TYPE_FIRST: String = "Type something first"
 
         /**
