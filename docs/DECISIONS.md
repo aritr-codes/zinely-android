@@ -13572,6 +13572,38 @@ your shelf. It never replaces what's here."*
   - One recommended note was recorded, not applied: the Pass 2 check of "the changed one is added too".
   - The owner's exact text stands.
 
+#### Note, 2026-10-09: a restored zine is never touched by an earlier delete
+
+Not a new decision: it is what "restore adds what's new" already promises, stated for one case the Shelf got
+wrong.
+
+- **The case.** A restore gives a zine its id from the backup when that id is free. So a zine deleted and then
+  restored comes back under the id of a delete that has just finished. Starting a restore finishes any waiting
+  delete first, as opening a zine does ([ADR-046](#adr-046) §4), so by the time the restore runs the delete is
+  finished, not waiting, and the zine counts as new and is added.
+- **The rule.** A finished delete is over. It is sent to the store once, it stops hiding its id when the store
+  lists the Shelf without it or when a restore succeeds, and it leaves no marker for the next start: a restore
+  clears any left-over marker before it starts and again when it succeeds. The restore wins, because the
+  maker has just asked for that zine. A delete still waiting when a restore succeeds is not touched.
+- **What was wrong.** The Shelf kept the id of a finished delete hidden until the store listed the Shelf without
+  it, and never dropped it when that list was empty, which is what deleting the only zine gives. The restored
+  zine was then hidden, and the next thing that finishes waiting deletes (the Undo message closing, leaving
+  the Shelf, opening or starting a zine, a folder action) deleted it. The Undo message closing could do the
+  same on a Shelf of any size.
+- **Where it lives.** `HomeViewModel.performCommit` is the one path every delete takes to the store; the rule
+  and its reasons are in the KDoc there and on `finishedDeletes`. No saved format, backup format or wording
+  changed. A delete prompt still queued when something else finishes its delete is no longer shown, as
+  [ADR-125](#adr-125) rule 11 already does for folder actions.
+- **Not changed.** A restore still ends a waiting delete's Undo early, and an Undo message already on screen at
+  that moment is not taken down by this change, so its Undo may do nothing. That is older behaviour and a
+  design question, not part of this fix.
+- **Accepted limits.** If a delete's marker cannot be cleared even by the restore, the next start still acts
+  on it. And a folder action that waited behind another caller's commit of the same delete goes ahead if that
+  commit fails, where [ADR-125](#adr-125) rule 11 would stop it; the failed delete has by then put the zine
+  back and said so, so the action runs on a true Shelf.
+- **Review and device check.** Independent review: GO WITH FIXES, reconciled in the pull request for branch
+  `fix/shelf-restore-after-delete`. Both device passes are still owed.
+
 ## ADR-122 {#adr-122}
 
 ### A backup is complete or explicitly partial, never silently partial; a restore reports what happened

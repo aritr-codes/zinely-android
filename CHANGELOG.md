@@ -117,6 +117,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A zine you deleted and then restored from a backup, without closing the app in between, could stay hidden
+  from the Shelf until the app was restarted, and could be deleted again when the delete's Undo message closed
+  or you left the Shelf. A restored zine now shows at once and stays. Checked by automated tests only, not yet
+  on a phone, and not yet in a download ([ADR-121](docs/DECISIONS.md#adr-121), note of 2026-10-09).
 - The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
   privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
   the files.
