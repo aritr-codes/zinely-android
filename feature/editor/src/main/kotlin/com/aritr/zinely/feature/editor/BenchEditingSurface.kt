@@ -15,11 +15,13 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontSynthesis
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -209,11 +211,18 @@ internal fun BenchEditingSurface(
     val fontSizePx = (style.sizePt * screenPxPerPt).toFloat()
     val ink = Color(style.color.r, style.color.g, style.color.b, style.color.a)
 
+    // The element's own faces: the same four asset files the registry names for its family, so the draft
+    // and the baked artifact share glyphs and metrics in every style (ADR-126 decision 6). Never the
+    // interface's Inter, which has no italic file and so drew a slanted upright where the page draws the
+    // real italic.
+    val assets = LocalContext.current.assets
+    val documentFaces = remember(assets, style.fontFamily) { editingFontFamily(assets, style.fontFamily) }
+
     val textStyle = TextStyle(
-        // The bundled Inter the export/preview path resolves to, so the draft and the baked artifact share
-        // glyphs and metrics. Deliberately the V2 face rather than V1's `typography.shell`, which is the
-        // same four resources under a family this phase retires.
-        fontFamily = ZinelyTheme.v2Typography.work,
+        fontFamily = documentFaces,
+        // Never a synthesised face: all four are real files, and a faked bold or slant is exactly the
+        // draft-versus-result difference this removes.
+        fontSynthesis = FontSynthesis.None,
         fontSize = with(density) { fontSizePx.toSp() },
         color = ink,
         fontWeight = if (style.bold) FontWeight.Bold else FontWeight.Normal,

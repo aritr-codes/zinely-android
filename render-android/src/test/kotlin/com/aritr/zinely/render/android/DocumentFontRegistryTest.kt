@@ -1,5 +1,7 @@
 package com.aritr.zinely.render.android
 
+import com.aritr.zinely.core.model.DocumentVoice
+
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
@@ -101,10 +103,13 @@ class DocumentFontRegistryTest {
     fun `the bundled registry declares exactly what the render module carries`() {
         val bundled = DocumentFontRegistry.Bundled
 
-        // One family today. This asserts what is BUNDLED, not what the registry supports: expanding the
-        // set is the designer's font/preset curation, and this test is the tripwire that makes adding a
-        // family a deliberate act rather than a silent one.
-        assertEquals(listOf(DocumentFontRegistry.INTER), bundled.families.map { it.name })
+        // Two families: Inter (Plain) and Fraunces (Book, ADR-126). This asserts what is BUNDLED, not what
+        // the registry supports, and is the tripwire that makes adding a family a deliberate act rather
+        // than a silent one.
+        assertEquals(
+            listOf(DocumentFontRegistry.INTER, DocumentFontRegistry.FRAUNCES),
+            bundled.families.map { it.name },
+        )
         assertEquals(DocumentFontRegistry.INTER, bundled.defaultFamily.name)
 
         val inter = bundled.resolve(DocumentFontRegistry.INTER)
@@ -112,5 +117,29 @@ class DocumentFontRegistryTest {
         assertEquals("fonts/Inter-Bold.ttf", inter.boldAsset)
         assertEquals("fonts/Inter-Italic.ttf", inter.italicAsset)
         assertEquals("fonts/Inter-BoldItalic.ttf", inter.boldItalicAsset)
+
+        val book = bundled.resolve("Fraunces")
+        assertEquals("fonts/Fraunces9pt-Regular.ttf", book.regularAsset)
+        assertEquals("fonts/Fraunces9pt-Bold.ttf", book.boldAsset)
+        assertEquals("fonts/Fraunces9pt-Italic.ttf", book.italicAsset)
+        assertEquals("fonts/Fraunces9pt-BoldItalic.ttf", book.boldItalicAsset)
+    }
+
+    @Test
+    fun `every voice id resolves to its own family and an unknown one to Inter`() {
+        val bundled = DocumentFontRegistry.Bundled
+
+        // Plain writes "sans-serif", which is deliberately not a row: it lands on the default, as it
+        // always has, and as it does on every older build.
+        assertFalse(bundled.isRegistered(DocumentVoice.PLAIN.familyName))
+        assertEquals(DocumentFontRegistry.INTER, bundled.resolve(DocumentVoice.PLAIN.familyName).name)
+        assertEquals(DocumentFontRegistry.INTER, bundled.resolve("Inter").name)
+        assertTrue(bundled.isRegistered(DocumentVoice.BOOK.familyName))
+        assertEquals(DocumentFontRegistry.FRAUNCES, bundled.resolve(DocumentVoice.BOOK.familyName).name)
+        // A family from a later build: drawn in Inter, and DocumentVoice agrees it is unknown.
+        assertEquals(DocumentFontRegistry.INTER, bundled.resolve("Averia Sans Libre").name)
+        assertEquals(null, DocumentVoice.of("Averia Sans Libre"))
+        // The registry and the voice table must agree on what is known, in both directions.
+        for (family in bundled.families) assertTrue(family.name, DocumentVoice.of(family.name) != null)
     }
 }

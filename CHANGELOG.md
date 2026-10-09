@@ -23,6 +23,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   type-bar design, approved on 2026-10-08, with one line added to the editor design's list of Undo messages
   ("Font changed"). Two measurements behind it are recorded. Nothing in the app changed and
   there is still nothing to try in a download.
+- A font for each text, Book or Plain (ADR-126), built and not yet in a download. Select a text and tap
+  **Size**: the card that opens has a new first row, Font. Book is a serif face with its own bold and italic; Plain is the face every
+  zine has used so far. Book has no Greek or Cyrillic letters and is not offered below 12 pt; in both cases
+  the card says why. While you type, the text is now drawn in its own face, including a real italic; the
+  lines of a longer draft still sit closer together than they do on the page.
+  The two faces differ in width and height, so **a text that just fits its box can lose its last line when
+  you switch it to Book**, with no sign: the box does not grow. Make the box taller to see it again.
+  The download grows by about a quarter of a megabyte. Still owed before it is accepted: a printed page to
+  confirm 12 pt, a listen with TalkBack, and the owner's own try.
+  - **If a zine with Book text is restored on an older build** (0.9.0-beta.6 or earlier), that build draws
+    the text in Plain. This is a layout change, not data loss: every word is kept and is Book again on a
+    newer build. But the two faces differ in width, so lines break in other places, and **lines that no
+    longer fit their box are missing from the page and from the PDF on the older build**. In our test an
+    italic paragraph that just fitted lost its last line, and a one-line box of digits lost its last group.
+    A longer text can lose more. The older build does not say so.
 - The storage for folders on the Shelf (ADR-125, part 1 of 2). A zine can now carry a folder name in its own
   file, and a backup carries that name too, so folders will come back after a restore. Older backups still
   restore, with every zine on My Shelf. There is no screen for any of this yet: nothing in the app looks or

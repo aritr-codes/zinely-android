@@ -9,6 +9,7 @@ import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.Script
 import com.aritr.zinely.core.model.TextCoverage
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -70,5 +71,28 @@ class EditorCoverageNoticeTest {
         }
         composeRule.onNodeWithText(Copy.Coverage.unsupported(listOf("Japanese")), substring = true)
             .assertIsDisplayed()
+    }
+
+    // ── ADR-126: Greek and Cyrillic are only ever reported for a Book text ──────────────────────────
+
+    @Test
+    fun a_Book_text_holding_Greek_is_told_the_way_out_not_that_it_cannot_print() {
+        assertEquals(
+            "Book has no Greek letters. Switch this text to Plain to print them in a matching face.",
+            coverageNoticeLine(coverage(Script.GREEK)),
+        )
+        assertEquals(
+            "Book has no Greek and Cyrillic letters. Switch this text to Plain to print them in a matching face.",
+            coverageNoticeLine(coverage(Script.CYRILLIC, Script.GREEK)),
+        )
+    }
+
+    @Test
+    fun a_script_no_font_sets_keeps_its_own_line_and_both_show_when_a_Book_text_holds_both() {
+        assertEquals(Copy.Coverage.unsupported(listOf("Bengali")), coverageNoticeLine(coverage(Script.BENGALI)))
+        assertEquals(
+            Copy.Coverage.bookLacks("Cyrillic") + " " + Copy.Coverage.unsupported(listOf("Bengali")),
+            coverageNoticeLine(coverage(Script.CYRILLIC, Script.BENGALI)),
+        )
     }
 }

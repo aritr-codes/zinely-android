@@ -46,9 +46,16 @@ public data class TextCoverage(
  *
  * Surrogate pairs are handled by iterating code points, so an emoji or a CJK ideograph outside the BMP
  * counts once, not twice.
+ *
+ * **Per voice ([ADR-126](../../../../../../../../docs/DECISIONS.md#adr-126)).** [fontFamily] is the text's
+ * own `TextStyle.fontFamily`; the check applies the script set of the voice that family is drawn in
+ * ([DocumentVoice.drawnAs]). With the default, with Plain, or with a family this build does not know (Inter
+ * draws it) the answer is exactly what it was before voices existed. For Book, Greek and Cyrillic are
+ * reported too, because the Book faces hold neither.
  */
-public fun analyzeTextCoverage(text: String): TextCoverage {
+public fun analyzeTextCoverage(text: String, fontFamily: String = DocumentVoice.PLAIN.familyName): TextCoverage {
     if (text.isEmpty()) return TextCoverage.Covered
+    val supported = DocumentVoice.drawnAs(fontFamily).scripts
 
     val scripts = LinkedHashSet<Script>()
     val samples = LinkedHashSet<String>()
@@ -57,7 +64,7 @@ public fun analyzeTextCoverage(text: String): TextCoverage {
     while (i < text.length) {
         val cp = text.codePointAt(i)
         val width = Character.charCount(cp)
-        if (!SupportedScripts.isSupported(cp)) {
+        if (SupportedScripts.scriptOf(cp) !in supported) {
             count++
             scripts += SupportedScripts.scriptOf(cp)
             if (samples.size < TextCoverage.MAX_SAMPLES) samples += text.substring(i, i + width)

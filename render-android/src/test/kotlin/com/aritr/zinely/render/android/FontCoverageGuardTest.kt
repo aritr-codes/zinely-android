@@ -63,6 +63,55 @@ class FontCoverageGuardTest {
     }
 
     @Test
+    fun intersRequiredSetIsWhatItWasBeforeVoices() {
+        // ADR-126 stop condition: the per-family guard must not change what Inter is held to.
+        assertEquals(FontCoverage.requiredCodePoints(), FontCoverage.requiredCodePoints(DocumentFontRegistry.INTER))
+        assertEquals(FontCoverage.requiredCodePoints(), FontCoverage.requiredCodePoints("sans-serif"))
+        // A family this build does not know is drawn in Inter, so it is held to Inter's set.
+        assertEquals(FontCoverage.requiredCodePoints(), FontCoverage.requiredCodePoints("Averia Sans Libre"))
+    }
+
+    @Test
+    fun booksRequiredSetIsTheLatinPartLessItsOneRecordedGap() {
+        val all = FontCoverage.requiredCodePoints()
+        val book = FontCoverage.requiredCodePoints(DocumentFontRegistry.FRAUNCES)
+        val latin = all.filter { SupportedScripts.scriptOf(it) == Script.LATIN }.toSet()
+
+        assertEquals(latin - 0x017F, book)
+        assertTrue("the gap is a real member of the Latin set", 0x017F in latin)
+        assertTrue("no Greek", book.none { SupportedScripts.scriptOf(it) == Script.GREEK })
+        assertTrue("no Cyrillic", book.none { SupportedScripts.scriptOf(it) == Script.CYRILLIC })
+        assertTrue("meaningful size", book.size > 250)
+    }
+
+    @Test
+    fun theScriptTableAndTheBookFilesAgree() {
+        // The other direction of the promise: Book declares no Greek and no Cyrillic BECAUSE its four
+        // faces hold none. If a later Fraunces gained them, this is the prompt to widen the table.
+        val book = DocumentFontRegistry.Bundled.resolve(DocumentFontRegistry.FRAUNCES)
+        for (asset in listOf(book.regularAsset, book.boldAsset, book.italicAsset, book.boldItalicAsset)) {
+            val covered = CmapCoverage.coveredCodePoints(assets.open(asset).use { it.readBytes() })
+            assertTrue("$asset holds Greek", (0x0370..0x03FF).none { it in covered })
+            assertTrue("$asset holds Cyrillic", (0x0400..0x04FF).none { it in covered })
+            assertFalse("$asset holds the long s it is recorded as lacking", 0x017F in covered)
+        }
+    }
+
+    @Test
+    fun theGuardWouldCatchBookDeclaringAScriptItsFilesLack() {
+        // What "the script table and the font files disagree" looks like: hold Book to Inter's set.
+        val report = FontCoverage.report(
+            assets = assets,
+            family = DocumentFontRegistry.Bundled.resolve(DocumentFontRegistry.FRAUNCES),
+            required = FontCoverage.requiredCodePoints(),
+        )
+
+        assertFalse(report.isComplete)
+        assertTrue(0x03B1 in report.missing) // α
+        assertTrue(0x0436 in report.missing) // ж
+    }
+
+    @Test
     fun theGuardDetectsAGenuineGap() {
         // Prove the guard can FAIL. A code point no text font carries (U+10FFFD, a private-use plane
         // character) must be reported missing — otherwise a green result would mean nothing.

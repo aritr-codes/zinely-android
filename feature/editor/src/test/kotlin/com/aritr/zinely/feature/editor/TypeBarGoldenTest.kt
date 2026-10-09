@@ -5,15 +5,21 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.model.ColorRgba
+import com.aritr.zinely.core.model.DocumentVoice
 import com.aritr.zinely.core.model.TextAlign
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.TextStyle
@@ -96,17 +102,26 @@ class TypeBarGoldenTest {
         val MinSizeText = StyledText.copy(style = StyledText.style.copy(sizePt = TypeSizesPt.first()))
     }
 
-    /** Compose the card on the desk and let it settle. */
-    private fun showCard(darkTheme: Boolean, element: TextElement) {
+    /**
+     * Compose the card on the desk and let it settle.
+     *
+     * [room] is the space the host gives the card, for the A29 states that need one: `null` leaves the
+     * card unbounded (every pre-A29 golden), a size is the room it must stay inside and scroll within.
+     */
+    private fun showCard(darkTheme: Boolean, element: TextElement, fontScale: Float = 1f, room: DpSize? = null) {
         composeRule.setContent {
-            ZinelyTheme(darkTheme = darkTheme) {
-                Box(
-                    modifier = Modifier
-                        .testTag(HOST_TAG)
-                        .background(ZinelyTheme.v21Colors.desk)
-                        .padding(12.dp),
-                ) {
-                    TypeBar(element = element, dispatch = {}, onAnnounce = {}, onPreview = {})
+            val base = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(base.density, fontScale)) {
+                ZinelyTheme(darkTheme = darkTheme) {
+                    Box(
+                        modifier = Modifier
+                            .testTag(HOST_TAG)
+                            .background(ZinelyTheme.v21Colors.desk)
+                            .then(if (room != null) Modifier.sizeIn(maxWidth = room.width, maxHeight = room.height) else Modifier)
+                            .padding(12.dp),
+                    ) {
+                        TypeBar(element = element, dispatch = {}, onAnnounce = {}, onPreview = {})
+                    }
                 }
             }
         }
@@ -114,8 +129,13 @@ class TypeBarGoldenTest {
     }
 
     /** Compose the card on the desk, draw the decor view, crop to the card's ACTUAL placed bounds. */
-    private fun cardBitmap(darkTheme: Boolean, element: TextElement = StyledText): Bitmap {
-        showCard(darkTheme, element)
+    private fun cardBitmap(
+        darkTheme: Boolean,
+        element: TextElement = StyledText,
+        fontScale: Float = 1f,
+        room: DpSize? = null,
+    ): Bitmap {
+        showCard(darkTheme, element, fontScale, room)
         val bounds = composeRule.onNodeWithTag(HOST_TAG).fetchSemanticsNode().boundsInRoot
         val full = composeRule.activity.window.decorView.rasterizeToBitmap()
         val x = bounds.left.roundToInt().coerceAtLeast(0)
@@ -219,6 +239,84 @@ class TypeBarGoldenTest {
             bmp.countColour(Color(0xFF242312).toArgb()) > 200,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/type_bar_dark.png", aa())
+    }
+
+    // ── A29: the Font row's states (ADR-126) ──────────────────────────────────────────────────────
+    //
+    // `type_bar_light` / `type_bar_dark` above are the Plain-chosen state. These are the others the
+    // frozen page draws: Book chosen, Book unavailable with its reason, Smaller at Book's floor, and a
+    // font this build does not know. Then the card at font scale 2.0 in a 360dp-wide room it cannot
+    // fit, where it must scroll inside itself (A29 rule 11).
+
+    private val bookText = StyledText.copy(style = StyledText.style.copy(fontFamily = "Fraunces"))
+    private val greekText = StyledText.copy(text = "Zine. \u039A\u03B1\u03BB\u03B7\u03BC\u03AD\u03C1\u03B1")
+    private val floorText = bookText.copy(style = bookText.style.copy(sizePt = DocumentVoice.BOOK_MIN_SIZE_PT))
+    private val unknownText = StyledText.copy(style = StyledText.style.copy(fontFamily = "Averia Sans Libre"))
+
+    private fun fontState(name: String, dark: Boolean, element: TextElement, chosen: String?, reason: Boolean) {
+        val bmp = cardBitmap(darkTheme = dark, element = element)
+        assertFrozenCardWidth()
+        // Non-vacuity: the state the name claims is the state on screen.
+        listOf("Book", "Plain").forEach { word ->
+            val cue = composeRule.onNodeWithTag(selectionCueTag("type-bar-font-$word"), useUnmergedTree = true)
+            if (word == chosen) cue.assertExists() else cue.assertDoesNotExist()
+        }
+        composeRule.onNodeWithTag(TypeBarFontReasonTestTag).let { if (reason) it.assertExists() else it.assertDoesNotExist() }
+        bmp.captureRoboImage("$GOLDEN_DIR/type_bar_font_${name}_${if (dark) "dark" else "light"}.png", aa())
+    }
+
+    @Test fun type_bar_font_book_light() = fontState("book", false, bookText, chosen = "Book", reason = false)
+
+    @Test fun type_bar_font_book_dark() = fontState("book", true, bookText, chosen = "Book", reason = false)
+
+    @Test fun type_bar_font_book_unavailable_light() = fontState("book_unavailable", false, greekText, chosen = "Plain", reason = true)
+
+    @Test fun type_bar_font_book_unavailable_dark() = fontState("book_unavailable", true, greekText, chosen = "Plain", reason = true)
+
+    @Test fun type_bar_font_book_floor_light() = fontState("book_floor", false, floorText, chosen = "Book", reason = true)
+
+    @Test fun type_bar_font_book_floor_dark() = fontState("book_floor", true, floorText, chosen = "Book", reason = true)
+
+    @Test fun type_bar_font_unknown_light() = fontState("unknown", false, unknownText, chosen = null, reason = true)
+
+    @Test fun type_bar_font_unknown_dark() = fontState("unknown", true, unknownText, chosen = null, reason = true)
+
+    private fun largestText(name: String, element: TextElement, reason: Boolean) {
+        // 360 x 640 dp: the smaller of the two rooms R24 names. The host's 12dp inset is the editor's.
+        val bmp = cardBitmap(darkTheme = false, element = element, fontScale = 2f, room = DpSize(360.dp, 640.dp))
+        val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInRoot
+        with(composeRule.density) {
+            assertTrue("the card is ${card.width.toDp()} wide in a 336dp room", card.width.toDp() <= 336.5.dp)
+            assertTrue("the card is ${card.height.toDp()} tall in a 616dp room", card.height.toDp() <= 616.5.dp)
+        }
+        composeRule.onNodeWithTag(TypeBarFontReasonTestTag).let { if (reason) it.assertExists() else it.assertDoesNotExist() }
+        bmp.captureRoboImage("$GOLDEN_DIR/type_bar_font_scale2_$name.png", aa())
+    }
+
+    @Test
+    fun type_bar_font_scale2_plain() = largestText("plain", StyledText, reason = false)
+
+    @Test
+    fun type_bar_font_scale2_book_unavailable() =
+        largestText("book_unavailable", greekText, reason = true)
+
+    @Test
+    fun type_bar_font_scale2_unknown() =
+        largestText("unknown", unknownText, reason = true)
+
+    /**
+     * A29 rule 11 as the maker sees it: the three goldens above are given the whole 640dp screen, where the
+     * card fits. Inside the editor on that screen it is given 378dp (measured by `TypeBarFontRowTest`), so
+     * it scrolls. This is that room: a row cut by the card's edge, and the shade.
+     */
+    @Test
+    fun type_bar_font_scale2_unknown_scrolling() {
+        val bmp = cardBitmap(darkTheme = false, element = unknownText, fontScale = 2f, room = DpSize(360.dp, 402.dp))
+        val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInRoot
+        with(composeRule.density) {
+            assertTrue("the card is ${card.height.toDp()} tall in a 378dp room", card.height.toDp() <= 378.5.dp)
+        }
+        bmp.captureRoboImage("$GOLDEN_DIR/type_bar_font_scale2_unknown_scrolling.png", aa())
     }
 
     /**

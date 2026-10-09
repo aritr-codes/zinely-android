@@ -694,6 +694,10 @@ public object Copy {
         public const val WORDS_ADDED: String = "Words added"
         public const val TEXT_STYLE_PUT_BACK: String = "Text style put back"
         public const val TEXT_STYLE_CHANGED: String = "Text style changed"
+
+        /** `v21-bench.html` A30: a step that changed only a text's font. Font and anything else is "Text style". */
+        public const val FONT_PUT_BACK: String = "Font put back"
+        public const val FONT_CHANGED: String = "Font changed"
         public const val COPIER_TAKEN_OFF: String = "Copier taken off"
         public const val COPIER_PUT_BACK: String = "Copier put back"
         public const val COPIER_ADDED: String = "Copier added"
@@ -884,6 +888,14 @@ public object Copy {
             "${joinScripts(scripts)} characters can’t print yet — " +
                 "but they’re saved with your zine, so nothing’s lost."
 
+        /**
+         * Typing a letter Book does not have into a Book text (frozen `v21-typebar.html` A29 rule 13).
+         * [script] is "Greek", "Cyrillic" or "Greek and Cyrillic" ([Type.bookScripts]). It names the font
+         * and the way out; the font is never switched for the maker.
+         */
+        public fun bookLacks(script: String): String =
+            "Book has no $script letters. Switch this text to Plain to print them in a matching face."
+
         /** English list grammar: `A` · `A and B` · `A, B and C`. */
         private fun joinScripts(scripts: List<String>): String = when (scripts.size) {
             // Defensive only — the notice is hidden whenever the text is fully covered, so an empty
@@ -909,6 +921,7 @@ public object Copy {
         public const val ITALIC_ON: String = "Italic on"
         public const val ITALIC_OFF: String = "Italic off"
         // Row labels.
+        public const val ROW_FONT: String = "Font"
         public const val ROW_SIZE: String = "Size"
         public const val ROW_ALIGN: String = "Align"
         public const val ROW_STYLE: String = "Style"
@@ -929,6 +942,35 @@ public object Copy {
         public fun sizePtLabel(pt: Int): String = "$pt pt"
         public fun sizePointAnnouncement(pt: Int): String = "Size $pt point"
         public fun colourAnnouncement(label: String): String = "Colour $label"
+
+        // The Font row (frozen `v21-typebar.html` A29, ADR-126). The two words are the choices' names; a
+        // screen reader hears the word, never a face name.
+        public const val FONT_BOOK: String = "Book"
+        public const val FONT_PLAIN: String = "Plain"
+        public fun fontAnnouncement(name: String): String = "Font $name"
+
+        /** The script named in a Book reason: "Greek", "Cyrillic", or "Greek and Cyrillic" when both. */
+        public fun bookScripts(greek: Boolean, cyrillic: Boolean): String = when {
+            greek && cyrillic -> "Greek and Cyrillic"
+            cyrillic -> "Cyrillic"
+            else -> "Greek"
+        }
+
+        // The four reason lines, exactly as A29 rule 8 gives them. One slot, directly under the Font row.
+        // The minimum is a parameter because it is one named value the printed page may still change.
+        public fun bookHasNoScript(script: String): String = "Book has no $script letters, so this text stays Plain."
+        public fun bookNeedsSize(minPt: Int): String = "Book needs $minPt pt or larger. Make the text larger first."
+        public fun bookStopsAt(minPt: Int): String = "Book stops at $minPt pt. Switch to Plain to go smaller."
+        public const val FONT_UNKNOWN: String =
+            "This text uses a font this version of Zinely does not have. It is drawn in Plain for now. " +
+                "Choosing Book or Plain replaces its font."
+
+        /**
+         * A choice that cannot be used, spoken (A29 rule 7): the word, "unavailable", then the reason. One
+         * string with the visible line, so the two cannot drift. The exact spoken words are settled by
+         * listening on a phone (OWNER-CHECKLIST).
+         */
+        public fun unavailable(name: String, reason: String): String = "$name, unavailable. $reason"
     }
 
     /** Photo reframe controls (`ReframeControls.kt`). "Reset framing" comes from [A11y.RESET_FRAMING]. */

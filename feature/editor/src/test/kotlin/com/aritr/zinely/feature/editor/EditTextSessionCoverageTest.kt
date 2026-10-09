@@ -52,7 +52,7 @@ class EditTextSessionCoverageTest {
     // so the test is independent of source-file encoding.
     private val bengaliA = String(Character.toChars(0x0985))
 
-    private fun store(initialText: String): EditorStore {
+    private fun store(initialText: String, family: String? = null): EditorStore {
         val runner = object : EditorEffectRunner {
             override fun run(effect: Effect, dispatch: (Intent) -> Unit) = Unit
         }
@@ -68,6 +68,7 @@ class EditTextSessionCoverageTest {
         )
         s.dispatch(Intent.PlaceText(Transform(40.0, 40.0, 40.0, 20.0), initialText))
         val id = s.uiState.value.selection.single()
+        family?.let { s.dispatch(Intent.StyleText(id, fontFamily = it)) }
         s.dispatch(Intent.BeginEditText(id))
         return s
     }
@@ -119,6 +120,39 @@ class EditTextSessionCoverageTest {
         composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("hello")
         composeRule.waitForIdle()
         assertTrue("removing it should clear the notice", latest.isFullyCovered)
+    }
+
+    @Test
+    fun typing_Greek_into_a_Plain_text_is_checked_and_not_flagged() {
+        // ADR-126: Plain sets Greek, Book does not. The same letters, two answers; Book's is the next test.
+        val kalimera = "Καλημέρα"
+        var plain: TextCoverage? = null
+        setSession(store(initialText = "hello")) { plain = it }
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("hello $kalimera")
+        composeRule.waitForIdle()
+        assertTrue("the check ran, and Plain sets Greek so there is nothing to flag", plain?.isFullyCovered == true)
+    }
+
+    @Test
+    fun typing_Greek_into_a_Book_text_is_flagged_at_once() {
+        val kalimera = "Καλημέρα"
+        var book: TextCoverage = TextCoverage.Covered
+        setSession(store(initialText = "hello", family = "Fraunces")) { book = it }
+        composeRule.waitForIdle()
+        assertTrue("a Latin Book text is fully covered", book.isFullyCovered)
+
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("hello $kalimera")
+        composeRule.waitForIdle()
+        assertEquals(listOf(Script.GREEK), book.unsupportedScripts.distinct())
+    }
+
+    @Test
+    fun a_font_this_build_does_not_have_is_checked_as_the_Plain_it_is_drawn_in() {
+        val kalimera = "Καλημέρα"
+        var latest: TextCoverage = TextCoverage.Covered
+        setSession(store(initialText = "hello $kalimera", family = "Averia Sans Libre")) { latest = it }
+        composeRule.waitForIdle()
+        assertTrue(latest.isFullyCovered)
     }
 
     @Test

@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.model.Script
 import com.aritr.zinely.core.model.TextCoverage
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
@@ -53,8 +54,8 @@ public const val EditorCoverageNoticeTestTag: String = "editor-coverage-notice"
  * to have it reappear on the next keystroke, would be noise. The character itself is **never stripped**
  * (that lives in [EditTextSession]'s draft), so it prints unchanged the day its script is supported.
  *
- * **Copy names the script.** The line is built from the distinct human script names in the coverage
- * ([Copy.Coverage.unsupported]); it auto-narrows if the bundled set grows, because a supported script
+ * **Copy names the script.** The line is built by [coverageNoticeLine] from the distinct human script
+ * names in the coverage ([Copy.Coverage.unsupported], and [Copy.Coverage.bookLacks] for a Book text); it auto-narrows if the bundled set grows, because a supported script
  * stops appearing in [TextCoverage.unsupportedScripts] and so stops being named — no copy change.
  *
  * **TalkBack: polite.** Unlike the save-failure banner (assertive — edits may already be lost), this is
@@ -79,18 +80,38 @@ public const val EditorCoverageNoticeTestTag: String = "editor-coverage-notice"
  * @param modifier sizing/placement applied by the host (typically aligned to the top of the canvas).
  * @param reduceMotion whether to drop the fade (defaults to the system "remove animations" setting).
  */
+/**
+ * The notice's words for [coverage].
+ *
+ * **Greek and Cyrillic are only ever reported for a Book text** (ADR-126: Plain sets both, so the per-voice
+ * check never lists them for Plain or for an unknown family). For those the line is A29 rule 13's, which
+ * names the font and the way out, because "can't print yet" would be false: they print, in Plain.
+ *
+ * A script no voice sets keeps the ADR-070 line, unchanged. If a Book text holds both kinds, both
+ * sentences show: dropping the second would let a character reach paper unflagged, which is the one thing
+ * this notice must never do.
+ */
+internal fun coverageNoticeLine(coverage: TextCoverage): String {
+    val scripts = coverage.unsupportedScripts
+    val greek = Script.GREEK in scripts
+    val cyrillic = Script.CYRILLIC in scripts
+    val others = scripts.filter { it != Script.GREEK && it != Script.CYRILLIC }.map { it.displayName }.distinct()
+    return listOfNotNull(
+        if (greek || cyrillic) Copy.Coverage.bookLacks(Copy.Type.bookScripts(greek, cyrillic)) else null,
+        if (others.isNotEmpty()) Copy.Coverage.unsupported(others) else null,
+    ).joinToString(" ")
+}
+
 @Composable
 public fun EditorCoverageNotice(
     coverage: TextCoverage,
     modifier: Modifier = Modifier,
     reduceMotion: Boolean = rememberReduceMotion(),
 ) {
-    // Retain the last non-empty script names across the exit fade, so the sentence doesn't blank out
+    // Retain the last non-empty line across the exit fade, so the sentence doesn't blank out
     // mid-dismissal when `coverage` flips back to Covered (which carries no scripts to name).
-    var lastNames by remember { mutableStateOf(emptyList<String>()) }
-    if (!coverage.isFullyCovered) {
-        lastNames = coverage.unsupportedScripts.map { it.displayName }.distinct()
-    }
+    var lastLine by remember { mutableStateOf("") }
+    if (!coverage.isFullyCovered) lastLine = coverageNoticeLine(coverage)
 
     AnimatedVisibility(
         visible = !coverage.isFullyCovered,
@@ -114,7 +135,7 @@ public fun EditorCoverageNotice(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = Copy.Coverage.unsupported(lastNames),
+                text = lastLine,
                 style = TextStyle(
                     fontFamily = ZinelyV21Fonts.Work,
                     fontSize = NoticeTextSize,

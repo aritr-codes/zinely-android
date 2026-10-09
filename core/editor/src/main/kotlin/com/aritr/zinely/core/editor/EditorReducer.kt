@@ -2,6 +2,7 @@ package com.aritr.zinely.core.editor
 
 import com.aritr.zinely.core.model.Crop
 import com.aritr.zinely.core.model.DecorElement
+import com.aritr.zinely.core.model.DocumentVoice
 import com.aritr.zinely.core.model.Fit
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
@@ -456,12 +457,6 @@ public object EditorReducer {
     }
 
     /**
-     * Immediate style commit (FR-3, ADR-055). Patches only the supplied fields onto the element's current
-     * [com.aritr.zinely.core.model.TextStyle] via copy-on-copy, so every untouched field — including
-     * `fontFamily`, which has no patch — plus the element's text/geometry/id/zIndex are preserved. One
-     * committed change ⇒ one undoable [EditTextCommand]. Absent / non-text id or an unchanged style ⇒ no-op.
-     */
-    /**
      * SUPPLIES-SPEC §8 *Change ink*. Total by construction: anything that is not a [DecorElement] on the
      * **current** page resolves to `null` and reduces to a no-op, which is the same shape every other
      * type-specific verb here already has.
@@ -493,6 +488,13 @@ public object EditorReducer {
         else committing(model, EditDecorCommand(model.currentPageIndex, el.id, el, after))
     }
 
+    /**
+     * Immediate style commit (FR-3, ADR-055; the font is ADR-126). Patches only the supplied fields onto
+     * the element's current [com.aritr.zinely.core.model.TextStyle] via copy-on-copy, so every untouched
+     * field plus the element's text/geometry/id/zIndex are preserved; `fontFamily` is written only when the
+     * intent carries one. One committed change ⇒ one undoable [EditTextCommand]. Absent / non-text id or an
+     * unchanged style (the same font again included) ⇒ no-op.
+     */
     private fun styleText(model: EditorModel, intent: Intent.StyleText): Reduction {
         val el = currentPage(model).elements.firstOrNull { it.id == intent.id } as? TextElement
             ?: return Reduction(model)
@@ -507,10 +509,31 @@ public object EditorReducer {
                 align = intent.align ?: el.style.align,
                 bold = intent.bold ?: el.style.bold,
                 italic = intent.italic ?: el.style.italic,
+                fontFamily = intent.fontFamily ?: el.style.fontFamily,
             ),
         )
-        return if (after == el) Reduction(model)
-        else committing(model, EditTextCommand(model.currentPageIndex, el.id, el, after))
+        if (after == el || breaksBookRule(el, after)) return Reduction(model)
+        return committing(model, EditTextCommand(model.currentPageIndex, el.id, el, after))
+    }
+
+    /**
+     * ADR-126 decision 8, held here so no surface can get past it: Book's minimum **blocks**. The Font row
+     * already refuses these (`fontRow`), but it reads a composition-old state and coalesces sizes, so two
+     * taps in one frame could otherwise commit Book below its minimum.
+     *
+     * Refused: a patch that turns a text into Book while [fontRow] says Book is blocked for the resulting
+     * size or the text's scripts, and a patch that makes a Book text smaller than the minimum. Not refused:
+     * anything else on a Book text that is already below it (a hand-edited or older document), so its
+     * colour, alignment and a step back up still work.
+     */
+    private fun breaksBookRule(before: TextElement, after: TextElement): Boolean {
+        if (DocumentVoice.of(after.style.fontFamily) != DocumentVoice.BOOK) return false
+        val becomesBook = DocumentVoice.of(before.style.fontFamily) != DocumentVoice.BOOK
+        return if (becomesBook) {
+            fontRow(after.text, after.style.copy(fontFamily = before.style.fontFamily), rampMinPt = 0.0).bookBlock != null
+        } else {
+            after.style.sizePt < DocumentVoice.BOOK_MIN_SIZE_PT && after.style.sizePt < before.style.sizePt
+        }
     }
 
     /** Open a Reframe session on [id] iff it names an [ImageElement] on the current page; else a no-op. */

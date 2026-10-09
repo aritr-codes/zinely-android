@@ -12,13 +12,16 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
@@ -41,12 +44,20 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -58,21 +69,28 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign as ComposeTextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.editor.FontReason
 import com.aritr.zinely.core.editor.Intent
+import com.aritr.zinely.core.editor.fontRow
 import com.aritr.zinely.core.model.ColorRgba
+import com.aritr.zinely.core.model.DocumentVoice
 import com.aritr.zinely.core.model.TextAlign
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.TextStyle
+import com.aritr.zinely.ui.components.zinelyFocusRing
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.components.zinelyV21Pressable
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV2Fonts
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import com.aritr.zinely.ui.theme.ZinelyV21Press
@@ -83,6 +101,27 @@ import kotlinx.coroutines.delay
 /** Test tag on the Type bar surface; absent from the tree unless a single non-blank text box is selected. */
 public const val TypeBarTestTag: String = "type-bar"
 internal const val TypeBarInkRowTestTag: String = "type-bar-ink-row"
+
+/** The one reason line under the Font row (A29 rule 8); absent from the tree when there is nothing to say. */
+internal const val TypeBarFontReasonTestTag: String = "type-bar-font-reason"
+
+/** The Font row's group node: the named single-choice group A29 rule 1 asks for. */
+internal const val TypeBarFontGroupTestTag: String = "type-bar-font-group"
+
+/**
+ * The words for a [FontReason] (frozen `v21-typebar.html` A29 rule 8). One string serves the visible line
+ * and the spoken reason, so the two cannot drift.
+ */
+internal fun fontReasonLine(reason: FontReason): String {
+    val minPt = DocumentVoice.BOOK_MIN_SIZE_PT.toInt()
+    return when (reason) {
+        FontReason.UnknownFont -> Copy.Type.FONT_UNKNOWN
+        is FontReason.BookLacksScript ->
+            Copy.Type.bookHasNoScript(Copy.Type.bookScripts(reason.greek, reason.cyrillic))
+        FontReason.BookNeedsSize -> Copy.Type.bookNeedsSize(minPt)
+        FontReason.BookAtFloor -> Copy.Type.bookStopsAt(minPt)
+    }
+}
 
 /**
  * The point ramp the size stepper walks (frozen bench.html `SIZES`). This is a **surface-owned
@@ -198,8 +237,9 @@ internal fun nearestSizeIndex(sizePt: Double): Int {
  * commit/cancel — **cancel is undo** — so an undo/redo that restores a different style re-syncs this bar
  * for free on the next recomposition (ADR-055 §3).
  *
- * Align / bold / italic / colour each commit **instantly**: one tap, one [Intent.StyleText], one undo
- * step. Size is the exception (ADR-055 §3): the stepper coalesces a tap burst behind a
+ * Font / align / bold / italic / colour each commit **instantly**: one tap, one [Intent.StyleText], one
+ * undo step. The Font row is amendment A29 (ADR-126): first in the card, with one reason line under it,
+ * and the card scrolls inside itself when its rows are taller than the room it is given. Size is the exception (ADR-055 §3): the stepper coalesces a tap burst behind a
  * [TypeSizeSettleMs] settle window and dispatches **one** patch carrying the final ramp value, so
  * "tap + four times" is one undo step rather than four.
  *
@@ -286,6 +326,14 @@ internal fun TypeBar(
         }
     }
 
+    // A29: the Font row's state, derived from the element on every recomposition and never stored. It reads
+    // the size the READOUT shows, so a settling burst that carries the text across Book's minimum moves the
+    // row with it rather than 400ms later.
+    val shownStyle = pendingSizeIndex?.let { style.copy(sizePt = TypeSizesPt[it]) } ?: style
+    val font = fontRow(element.text, shownStyle, rampMinPt = TypeSizesPt.first())
+    val fontLine = font.line?.let(::fontReasonLine)
+    val scroll = rememberScrollState()
+
     // `v21-typebar.html` `.typebar` — **`.inkpop`'s card**, and deliberately not a card of its own. Same
     // app, same canvas, same job: a floating tray of controls belonging to the element that summoned it,
     // standing where `.inkpop` and `.ctx` stand. `--surface` ground, 1.5dp ink edge, `--br-lg`, and the 4dp
@@ -303,6 +351,25 @@ internal fun TypeBar(
             .zinelyV21HardShadow(ZinelyV21Dimens.hardShadow, cardColors.inkLine, cardShape)
             .clip(cardShape)
             .background(cardColors.surface)
+            // A29 rule 11, the second sign that the card scrolls: a shade on whichever edge hides more
+            // (`.typebar.a29`'s two `scroll` background layers, 22px, `--soft-shadow`). The first sign is the
+            // row the edge cuts, which needs no drawing. Behind the rows, as a CSS background is.
+            .drawBehind {
+                val shade = TypeBarScrollShade.toPx()
+                if (scroll.canScrollBackward) {
+                    drawRect(
+                        Brush.verticalGradient(listOf(cardColors.softShadow, Color.Transparent), 0f, shade),
+                        size = Size(size.width, shade),
+                    )
+                }
+                if (scroll.canScrollForward) {
+                    drawRect(
+                        Brush.verticalGradient(listOf(Color.Transparent, cardColors.softShadow), size.height - shade, size.height),
+                        topLeft = Offset(0f, size.height - shade),
+                        size = Size(size.width, shade),
+                    )
+                }
+            }
             .border(BenchChromeBorder, cardColors.ink, cardShape)
             // ⚠ **The card must swallow the taps that land on its own surface**, and this empty
             // `pointerInput` is the whole of that. It is not decoration: `Surface` installs exactly this
@@ -349,7 +416,12 @@ internal fun TypeBar(
                 // symmetric vertically where `.inkpop`'s is not: `.inkpop` carries an `h4` whose own margin
                 // already opens its top, and this card has no heading, so the extra bottom would be padding
                 // with nothing to balance.
+                // A29 rule 11: **the card never outgrows the room.** The host hands it the canvas area as
+                // its max height; when the rows are taller than that, they scroll up and down here and
+                // nothing is cut off and unreachable. Never sideways. The padding is INSIDE the scroll so
+                // the corner tick and the rest shadows of the first and last rows are not clipped at rest.
                 modifier = Modifier
+                    .verticalScroll(scroll)
                     .width(IntrinsicSize.Max)
                     .padding(horizontal = ZinelyV21Dimens.gapLg, vertical = ZinelyV21Dimens.gapMd),
                 // `.typebar{gap:var(--gap-md)}` — 12dp, and **it is a touch-target measurement, not a
@@ -362,12 +434,62 @@ internal fun TypeBar(
                 // it — the strip is taken from whatever paint is there.
                 verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
             ) {
+                // A29 rule 8: `.tywhy{margin-top:calc(-1 * var(--gap-xs))}` — the line sits 4dp closer to
+                // its row than a row sits to a row, so it reads as the Font row's and not as a sixth row.
+                Column(verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd - ZinelyV21Dimens.gapXs)) {
+                    TypeRow(Copy.Type.ROW_FONT) {
+                        FontSegment(
+                            voice = font.voice,
+                            bookCant = font.bookBlock != null,
+                            bookSpoken = font.bookBlock?.let { Copy.Type.unavailable(Copy.Type.FONT_BOOK, fontReasonLine(it)) }
+                                ?: Copy.Type.FONT_BOOK,
+                            onVoice = { voice ->
+                                val blocked = font.bookBlock.takeIf { voice == DocumentVoice.BOOK }
+                                when {
+                                    // A29 rule 6: the word already chosen does nothing and adds no step.
+                                    voice == font.voice -> Unit
+                                    // A29 rule 7: a tap changes nothing and says the reason once more.
+                                    blocked != null ->
+                                        onAnnounce(Copy.Type.unavailable(Copy.Type.FONT_BOOK, fontReasonLine(blocked)))
+                                    else -> {
+                                        // A size burst still settling is committed first, as its own step,
+                                        // so the font step changes ONLY the font and Undo can say "Font put
+                                        // back" (A30). It also means Book is never applied to a size the
+                                        // document does not hold yet.
+                                        pendingSizeIndex?.let {
+                                            dispatch(Intent.StyleText(id = id, sizePt = TypeSizesPt[it]))
+                                            pendingSizeIndex = null
+                                        }
+                                        dispatch(Intent.StyleText(id = id, fontFamily = voice.familyName))
+                                        buzz()
+                                        onAnnounce(
+                                            Copy.Type.fontAnnouncement(
+                                                if (voice == DocumentVoice.BOOK) Copy.Type.FONT_BOOK else Copy.Type.FONT_PLAIN,
+                                            ),
+                                        )
+                                    }
+                                }
+                            },
+                        )
+                    }
+                    if (fontLine != null) FontReasonLine(fontLine)
+                }
                 TypeRow(Copy.Type.ROW_SIZE) {
                     SizeStepper(
                         index = sizeIndex,
+                        // A29 rule 9: Smaller on a Book text at Book's smallest size. Drawn flat, still
+                        // tappable; the reason is the line already showing under the Font row.
+                        smallerCant = font.smallerBlocked,
+                        smallerSpoken = if (font.smallerBlocked) {
+                            Copy.Type.unavailable(Copy.Type.SMALLER, fontReasonLine(FontReason.BookAtFloor))
+                        } else {
+                            Copy.Type.SMALLER
+                        },
                         onStep = { dir ->
                             val next = (sizeIndex + dir).coerceIn(0, TypeSizesPt.lastIndex)
-                            if (next != sizeIndex) {
+                            if (dir < 0 && font.smallerBlocked) {
+                                onAnnounce(Copy.Type.unavailable(Copy.Type.SMALLER, fontReasonLine(FontReason.BookAtFloor)))
+                            } else if (next != sizeIndex) {
                                 pendingSizeIndex = next
                                 buzz()
                                 onAnnounce(Copy.Type.sizePointAnnouncement(TypeSizesPt[next].toInt()))
@@ -536,12 +658,23 @@ private fun TypeRowLabel(label: String, modifier: Modifier = Modifier) {
  * single flat node rather than a traversable text run.
  */
 @Composable
-private fun SizeStepper(index: Int, onStep: (Int) -> Unit) {
+private fun SizeStepper(
+    index: Int,
+    smallerCant: Boolean,
+    smallerSpoken: String,
+    onStep: (Int) -> Unit,
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        StepButton(Icons.Filled.Remove, Copy.Type.SMALLER, enabled = index > 0) { onStep(-1) }
+        StepButton(
+            Icons.Filled.Remove,
+            Copy.Type.SMALLER,
+            enabled = index > 0,
+            cant = smallerCant,
+            spoken = smallerSpoken,
+        ) { onStep(-1) }
         Text(
             text = Copy.Type.sizePtLabel(TypeSizesPt[index].toInt()),
             // `min-width:58px`, not `width` — the same correction `.tyval` states over `.zoom b`'s 46:
@@ -601,9 +734,21 @@ private fun SizeStepper(index: Int, onStep: (Int) -> Unit) {
  * where the `.zoom button` it cites uses an `<svg>`; that is an undeclared divergence in the proposal, and
  * this file resolves it toward the cited source. `v21-typebar.html` needs the same correction before it is
  * frozen.
+ *
+ * **[cant] is not [enabled] = false (A29 rule 9, ADR-126).** Smaller on a Book text at Book's smallest
+ * size cannot be used, but it stays enabled and clickable so a tap can say why: `.tysize button.cant` is
+ * flat with a hairline edge and a quieter glyph, never the `.35` fade. [spoken] then carries the label,
+ * "unavailable" and the reason. The real bottom of the ramp stays truly disabled and faded, as frozen.
  */
 @Composable
-private fun StepButton(icon: ImageVector, description: String, enabled: Boolean, onClick: () -> Unit) {
+private fun StepButton(
+    icon: ImageVector,
+    description: String,
+    enabled: Boolean,
+    cant: Boolean = false,
+    spoken: String = description,
+    onClick: () -> Unit,
+) {
     val colors = ZinelyTheme.v21Colors
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -617,7 +762,9 @@ private fun StepButton(icon: ImageVector, description: String, enabled: Boolean,
             // ahead of the paint modifiers so the layer wraps them all (ADR-055 §8).
             .alpha(if (enabled) 1f else ZinelyV21Dimens.disabledAlpha)
             .then(
-                if (enabled) {
+                // `.tysize button.cant{box-shadow:none}` — a button that cannot be used lies flat, like
+                // the truly disabled one, but is NOT faded: it can still be reached and tapped (A29 rule 9).
+                if (enabled && !cant) {
                     Modifier.zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
                 } else {
                     Modifier
@@ -625,7 +772,7 @@ private fun StepButton(icon: ImageVector, description: String, enabled: Boolean,
             )
             .clip(shape)
             .background(colors.surface)
-            .border(BenchChromeBorder, colors.ink, shape)
+            .border(BenchChromeBorder, if (cant) colors.hair else colors.ink, shape)
             .clickable(
                 interactionSource = interaction,
                 // indication = null, as [zinelyControl] does: the chip has no ripple, and a default ripple
@@ -637,11 +784,199 @@ private fun StepButton(icon: ImageVector, description: String, enabled: Boolean,
                 role = Role.Button,
                 onClick = onClick,
             )
-            .semantics { contentDescription = description },
+            .semantics { contentDescription = spoken },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = colors.ink, modifier = Modifier.size(20.dp))
+        Icon(icon, contentDescription = null, tint = if (cant) colors.inkSoft else colors.ink, modifier = Modifier.size(20.dp))
     }
+}
+
+/**
+ * The Font row — `.tyvoice` (frozen `v21-typebar.html` A29, ADR-126). Two word buttons, Book and Plain:
+ * one choice of two, so a single-choice group **named by its label** (A29 rules 1 and 14: the row follows
+ * the frozen page on the two points returned to the owner for Align and Colour, which name no group in the
+ * app today; if the owner rules the other way for them, this row follows that ruling).
+ *
+ * Built the way [AlignSegment] is built, not from Material 3's `SegmentedButton`, which is being
+ * deprecated (RESEARCH R24.7).
+ *
+ * [voice] is `null` for a family this build does not know: then neither word is chosen, as [InkRow] shows
+ * none chosen for an ink it does not offer (A29 rule 10).
+ */
+@Composable
+private fun FontSegment(
+    voice: DocumentVoice?,
+    bookCant: Boolean,
+    bookSpoken: String,
+    onVoice: (DocumentVoice) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .testTag(TypeBarFontGroupTestTag)
+            .selectableGroup()
+            .semantics { contentDescription = Copy.Type.ROW_FONT },
+        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+    ) {
+        // A29 rule 2: each word in its own face, from the faces the INTERFACE already has. No document
+        // font file is loaded into the interface: Fraunces Medium is V2's `fraunces_medium`, Inter
+        // SemiBold is the card's own `--sans`.
+        FontOption(
+            label = Copy.Type.FONT_BOOK,
+            spoken = bookSpoken,
+            family = ZinelyV2Fonts.Voice,
+            weight = FontWeight.Medium,
+            chosen = voice == DocumentVoice.BOOK,
+            cant = bookCant,
+            onClick = { onVoice(DocumentVoice.BOOK) },
+        )
+        FontOption(
+            label = Copy.Type.FONT_PLAIN,
+            spoken = Copy.Type.FONT_PLAIN,
+            family = ZinelyV21Fonts.Work,
+            weight = FontWeight.SemiBold,
+            chosen = voice == DocumentVoice.PLAIN,
+            cant = false,
+            onClick = { onVoice(DocumentVoice.PLAIN) },
+        )
+    }
+}
+
+/**
+ * One font word — `.tyvoice button`: [AlignOption]'s clothes (A29 rule 3: the 46dp floor, the card's
+ * surface, an ink edge, the 2dp rest shadow, leaf under on-leaf when chosen), plus three things of its own.
+ *
+ *  - **The corner tick (A29 rule 4).** The leaf fill against the card is 2.21:1 by day, under the 3:1 a
+ *    state needs when fill is its only sign, so the chosen word also carries the Colour row's paper tick
+ *    on its corner, where it costs no width. It sits OUTSIDE the button's clip, which is why the button is
+ *    wrapped: the clip belongs to the inner box.
+ *  - **The word never wraps (A29 rule 5)**, at any text size.
+ *  - **[cant] (A29 rule 7): a word that cannot be used.** It is NOT disabled. It lies flat (no rest
+ *    shadow), its edge thins to the hairline and its word drops to `inkSoft`; it is never faded like the
+ *    stepper's ends. To the platform it is enabled, clickable and not checked, and [spoken] carries the
+ *    word, "unavailable" and the reason. A tap changes nothing and says the reason once more.
+ *
+ * ⚠ The semantics are [AlignOption]'s for the reason written there: a `Text` child splits the node, and a
+ * service reads the node with the label, so everything is cleared and re-declared on the one clickable
+ * node. That is also what keeps the unavailable word honest in the PLATFORM tree, which is the
+ * `ReframeControls.ZoomButton` trap: [TypeBarFontRowTest] reads it there, not here.
+ *
+ * The touch target is 48dp both ways off the 46dp paint, expanded at the input layer as for every other
+ * control in the card (see [StepButton]); [TypeBarFontRowTest] asserts it.
+ */
+@Composable
+private fun FontOption(
+    label: String,
+    spoken: String,
+    family: FontFamily,
+    weight: FontWeight,
+    chosen: Boolean,
+    cant: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
+    Box {
+        Box(
+            modifier = Modifier
+                .testTag("$TypeBarTestTag-font-$label")
+                .defaultMinSize(minWidth = 46.dp, minHeight = 46.dp)
+                // A29 rule 14: this row draws the keyboard focus ring the frozen page draws.
+                .zinelyFocusRing(interaction, ZinelyV21Dimens.radiusMd)
+                .then(
+                    // `.tyvoice button.cant{box-shadow:none}` and `.cant:active{transform:none}`.
+                    if (cant) Modifier else Modifier.zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape),
+                )
+                .clip(shape)
+                .background(if (chosen) colors.leaf else colors.surface)
+                .border(BenchChromeBorder, if (cant) colors.hair else colors.ink, shape)
+                .clickable(interactionSource = interaction, indication = null, onClick = onClick)
+                .clearAndSetSemantics {
+                    contentDescription = spoken
+                    role = Role.RadioButton
+                    selected = chosen
+                    onClick { onClick(); true }
+                }
+                // `.tyvoice button{padding:var(--gap-sm) var(--gap-md)}`.
+                .padding(horizontal = ZinelyV21Dimens.gapMd, vertical = ZinelyV21Dimens.gapSm),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = label,
+                color = when {
+                    chosen -> colors.onLeaf
+                    cant -> colors.inkSoft
+                    else -> colors.ink
+                },
+                fontFamily = family,
+                fontSize = 12.48.sp,
+                fontWeight = weight,
+                maxLines = 1,
+                softWrap = false,
+            )
+        }
+        if (chosen) {
+            EditorSelectionCue(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = FontCueOutset, y = -FontCueOutset)
+                    .testTag(selectionCueTag("$TypeBarTestTag-font-$label")),
+                contentColor = colors.onLeaf,
+                borderColor = colors.onLeaf,
+                size = FontCueSize,
+                glyphSize = FontCueGlyphSize,
+            )
+        }
+    }
+}
+
+/**
+ * The one reason line — `.tywhy` (A29 rule 8). Shown without a tap for as long as its cause lasts, so a
+ * sighted maker is never left to guess why a word is quiet. Plain words in `ink`, `.72rem` at 1.35.
+ *
+ * **It takes the card's width and never sets it** (`width:0;min-width:100%`, A29 rule 5). The card is
+ * `width(IntrinsicSize.Max)`, and a `Text`'s max intrinsic width is its whole sentence on one line, which
+ * would blow the card out to the screen the moment the line appeared. So this reports no intrinsic width
+ * at all and is then measured at whatever width the five rows settled on; the card only grows taller.
+ *
+ * Not a live region: the reason is part of the unavailable choice's own spoken label, so it is heard when
+ * the choice is reached and not announced again on every pass (Brief 02). It is still an ordinary text
+ * node a screen reader can read in place.
+ */
+@Composable
+private fun FontReasonLine(text: String) {
+    Layout(
+        content = {
+            Text(
+                text = text,
+                color = ZinelyTheme.v21Colors.ink,
+                fontSize = 11.52.sp,
+                lineHeight = 1.35.em,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.testTag(TypeBarFontReasonTestTag),
+            )
+        },
+        modifier = Modifier.fillMaxWidth(),
+        measurePolicy = TakesWidthNeverSetsIt,
+    )
+}
+
+private object TakesWidthNeverSetsIt : MeasurePolicy {
+    override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+        val line = measurables.single().measure(constraints.copy(minHeight = 0))
+        return layout(line.width, line.height) { line.place(0, 0) }
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
+        measurables.single().minIntrinsicHeight(width)
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
+        measurables.single().maxIntrinsicHeight(width)
 }
 
 /**
@@ -920,6 +1255,14 @@ private fun Swatch(ink: TextInk, selected: Boolean, onInk: (TextInk) -> Unit) {
         }
     }
 }
+
+/** `.typebar.a29` scroll shade: `22px` tall on the edge that hides more. */
+private val TypeBarScrollShade = 22.dp
+
+/** `.tyvoice button[aria-checked="true"]::after{top:-7px;right:-7px;width:18px;height:18px}`, an 11px tick. */
+private val FontCueSize = 18.dp
+private val FontCueGlyphSize = 11.dp
+private val FontCueOutset = 7.dp
 
 /** `.pot{width:30px;height:30px}`. */
 private val SwatchSize = 30.dp

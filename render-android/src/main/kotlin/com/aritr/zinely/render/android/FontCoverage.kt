@@ -1,7 +1,9 @@
 package com.aritr.zinely.render.android
 
 import android.content.res.AssetManager
+import com.aritr.zinely.core.model.DocumentVoice
 import com.aritr.zinely.core.model.Script
+import com.aritr.zinely.core.model.SupportedScripts
 
 /**
  * What a bundled font file actually covers, measured from the file itself.
@@ -72,6 +74,32 @@ public object FontCoverage {
     }.filter { it !in UNPRINTABLE }.toSet()
 
     /**
+     * What [familyName]'s four faces must hold: the part of [requiredCodePoints] that lies in the scripts
+     * its voice declares ([DocumentVoice.scripts], ADR-126), less that family's own recorded gaps.
+     *
+     * Taking the set from the voice's script table is the point. The typing-time check promises by that
+     * table, so a voice that declared a script its files lack would fail here, loudly, instead of
+     * reaching paper as glyphs borrowed from the phone. Inter's set is [requiredCodePoints] unchanged:
+     * every code point in it belongs to a script Plain declares.
+     */
+    public fun requiredCodePoints(familyName: String): Set<Int> {
+        val voice = DocumentVoice.drawnAs(familyName)
+        return requiredCodePoints()
+            .filter { SupportedScripts.scriptOf(it) in voice.scripts }
+            .toSet() - FAMILY_GAPS[voice].orEmpty()
+    }
+
+    /**
+     * Characters inside a voice's declared scripts that its faces are known not to hold. Recorded, with
+     * the reason, so the guard fails on a *new* gap and not on these.
+     *
+     *  - **Book, U+017F** (LATIN SMALL LETTER LONG S): absent from all four Fraunces 9pt statics. An
+     *    archaic letter no present-day orthography needs. A Book text that holds one draws it from another
+     *    font and nothing flags it (ADR-126, *Consequences*: "The script check does not cover every path").
+     */
+    private val FAMILY_GAPS: Map<DocumentVoice, Set<Int>> = mapOf(DocumentVoice.BOOK to setOf(0x017F))
+
+    /**
      * Code points inside the probed ranges that Unicode leaves unassigned or formally deprecates.
      * Excluded explicitly, and only with a reason, so the guard fails on *real* gaps rather than on
      * slots no well-built font is expected to fill.
@@ -86,7 +114,7 @@ public object FontCoverage {
     private val UNPRINTABLE: Set<Int> = setOf(0x0149)
 
     /**
-     * Measure a family against [required], across **every face it declares**.
+     * Measure a family against [required] (by default its own voice's set), across **every face it declares**.
      *
      * All four faces are checked because bold and italic ship (ADR-055) and a character that renders in
      * regular but blanks in bold is still a blank on paper. A code point is reported missing if *any*
@@ -96,7 +124,7 @@ public object FontCoverage {
     public fun report(
         assets: AssetManager,
         family: DocumentFontFamily,
-        required: Set<Int> = requiredCodePoints(),
+        required: Set<Int> = requiredCodePoints(family.name),
     ): FontCoverageReport {
         val faces = listOf(
             family.regularAsset,
@@ -121,13 +149,15 @@ public object FontCoverage {
         )
     }
 
-    /** Measure every family in [registry]; an empty result means the registry keeps its promise. */
+    /**
+     * Measure every family in [registry], each against its own voice's set ([requiredCodePoints] by
+     * family name); an empty result means the registry keeps its promise.
+     */
     public fun incompleteFamilies(
         assets: AssetManager,
         registry: DocumentFontRegistry = DocumentFontRegistry.Bundled,
-        required: Set<Int> = requiredCodePoints(),
     ): List<FontCoverageReport> =
-        registry.families.map { report(assets, it, required) }.filter { !it.isComplete }
+        registry.families.map { report(assets, it) }.filter { !it.isComplete }
 
     /** The ratified scripts this guard covers, for reporting alongside a failure. */
     public val guardedScripts: Set<Script> =

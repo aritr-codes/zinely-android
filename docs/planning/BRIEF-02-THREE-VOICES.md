@@ -1,5 +1,9 @@
 # Brief 02 — Document voices: Book and Plain
 
+> 🟡 **Built on 2026-10-09** on `feat/document-voices` (draft PR, not merged, not accepted). Gate 6 is
+> closed; gates 4 and 7 are open. What was built and measured is in
+> [ADR-126, *As built*](../DECISIONS.md#adr-126-as-built). The note below is the state before the build.
+>
 > ✅ **Ready for an implementation session** since 2026-10-08, **on one reading that is the implementer's**:
 > that the build may start against 12 pt before the page that confirms it is printed (item 1; put to the
 > owner in the gate). What blocked a session, and how each closed:
@@ -54,8 +58,8 @@ editing-surface change, and the control's shape inside the type bar.
 | 3 | Four Fraunces document faces fetched, pinned and measured | ✅ Done; on `main` since 2026-10-07 (PR #99). See [The four faces](#the-four-faces). They sit in `docs/planning/voices/`, outside the app build | done | done |
 | 4 | **Minimum print size for Book** | ◐ **12 pt**, ruled 2026-10-08, to be confirmed on the printed page ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)). [Procedure A](#procedure-a-the-printed-book-page) is written; the page is not printed | the page: before gate 7 (the gate's reading, put to the owner) | owner |
 | 5 | **Type-bar amendment**: the Voice row drawn in `v21-typebar.html`, reviewed, owner-approved, frozen again | ✅ **Approved by the owner and frozen 2026-10-08 as A29** ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)), after a second research pass ([RESEARCH R24](../RESEARCH.md#r24-the-font-row-what-other-editors-and-the-guidance-say---verified---recommendation-with-a--assumption-edge)). With it, one row added to the Bench page's undo table (`v21-bench.html` A30) | done | done |
-| 6 | **Older-build fallback test** run and recorded | ⛔ Not run. [Procedure B](#procedure-b-the-older-build-fallback-test) is written. It needs a build that can set Book, so it cannot run earlier | inside the session, before merge | implementer, with an emulator or a second phone |
-| 7 | [ADR-126](../DECISIONS.md#adr-126) accepted | ⛔ Drafted as *Proposed* on this branch (2026-10-06); not accepted. It covers what [the section below](#what-the-adr-must-cover) lists, except the two figures that only the session can measure | accepted before merge | implementer drafts, owner accepts |
+| 6 | **Older-build fallback test** run and recorded | ✅ **Run 2026-10-09, passed**, on `0.9.0-beta.6` and `0.9.0-beta.5`, on one Android 7.0 emulator. Worst case: an italic paragraph that just fitted lost its last line. Four differences from the written procedure are listed in [the record](../reviews/2026-10-09-document-voices-older-build-and-device.md) | done | implementer, with an emulator or a second phone |
+| 7 | [ADR-126](../DECISIONS.md#adr-126) accepted | ⛔ *Proposed*; amended 2026-10-09 with what was built and measured; not accepted. **The branch is a draft PR and is not merged before this gate closes**, unless the owner says otherwise. Drafted on the preparation branch (2026-10-06). It covers what [the section below](#what-the-adr-must-cover) lists, except the two figures that only the session can measure | accepted before merge | implementer drafts, owner accepts |
 
 **Order.** The size is ruled, 12 pt, and the page that confirms it (4) can be printed at any time before
 gate 7. The row is drawn, approved and frozen (5, done 2026-10-08). What is left is the session: Kotlin, the
@@ -658,6 +662,9 @@ type role. The document faces are content, not design tokens.
 2. Two voices selectable per text element. The Bench, the page strip, the editing surface, Read and the PDF
    draw the same face for the same text.
 3. Bold and italic use real faces in both voices. The draft while typing matches the result.
+   *(As built, 2026-10-09: met for the faces, not for line spacing. A draft of several lines sits tighter
+   than the page, in both voices, as it did before this change;
+   [the record](../reviews/2026-10-09-document-voices-older-build-and-device.md#7-brief-02s-acceptance-criterion-3-is-met-in-part).)*
 4. A zine made before this change opens unchanged and saves unchanged.
 5. An unknown family draws Inter and keeps its value.
 6. A voice is never switched, and a size never changed, on the maker's behalf. Choosing a voice the text's
@@ -699,6 +706,7 @@ running text. More scripts through faces that cover them ([ADR-070](../DECISIONS
 
 | Date | Change |
 |---|---|
+| 2026-10-09 | Built on `feat/document-voices`. Gate 6 closed: Procedure B run on two older builds and recorded. The row is the Font row of A29; where this brief says "Voice row" it means that row. The build blocks Book below 12 pt, as ruled. Not accepted: gates 4 and 7 are open. |
 | 2026-10-08 | Gate 5 closed: the owner approved A29 and it is frozen ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)). A second research pass ([RESEARCH R24](../RESEARCH.md#r24-the-font-row-what-other-editors-and-the-guidance-say---verified---recommendation-with-a--assumption-edge)) changed the undo line to "Font changed" / "Font put back" (`v21-bench.html` A30) and sharpened two rules. The brief is ready for a session. For that session, from R24: a 48 dp touch target; build the row as Align is built, not from the Material segmented button; measure the card at the largest text. |
 | 2026-10-08 | Gate 4: the owner ruled Book's minimum print size, 12 pt, to be confirmed on the printed page ([gate Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); evidence in [RESEARCH R23](../RESEARCH.md#r23-the-smallest-size-for-book-on-a-mini-zine-page---verified---recommendation-with-a--assumption-edge)). The page is not printed. |
 | 2026-10-07 | Two measurements recorded ([Measured on 2026-10-07](#measured-on-2026-10-07)): the card's fit at 360 dp and the largest font size, and what is drawn for a missing character. Gate 5 moved to "drawn as proposed amendment A29, not approved". The top note's third blocker struck: the preparation branch merged (PR #99). Two faults in the shipped app found by the measurements are tracked as issues #102 and #103. |

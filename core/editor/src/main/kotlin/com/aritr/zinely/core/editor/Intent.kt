@@ -179,8 +179,12 @@ public sealed interface Intent {
     /**
      * Immediate-commit style change to a [TextElement] by id (FR-3, ADR-055) — like [Nudge]/[Reorder],
      * not a session: each committed change is one undoable [EditTextCommand]. Every field is a nullable
-     * patch; `null` keeps the element's current value, so an untouched field (and `fontFamily`, which has
-     * no patch here) is always preserved. No-op if [id] is absent / not text, or the style is unchanged.
+     * patch; `null` keeps the element's current value, so an untouched field is always preserved. No-op if
+     * [id] is absent / not text, or the style is unchanged.
+     *
+     * [fontFamily] is the document voice (ADR-126): the family name a voice writes
+     * (`DocumentVoice.familyName`), never a display word. It is the only patch that writes that field, so
+     * every other style change still leaves a family this build does not know exactly as it was.
      */
     public data class StyleText(
         val id: String,
@@ -189,6 +193,7 @@ public sealed interface Intent {
         val align: TextAlign? = null,
         val bold: Boolean? = null,
         val italic: Boolean? = null,
+        val fontFamily: String? = null,
     ) : Intent
 
     // — transform (gesture + a11y twins share the commit path, §6) —
