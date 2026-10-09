@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   type-bar design, approved on 2026-10-08, with one line added to the editor design's list of Undo messages
   ("Font changed"). Two measurements behind it are recorded. Nothing in the app changed and
   there is still nothing to try in a download.
-- A font for each text, Book or Plain (ADR-126), built and not yet in a download. Select a text and tap
+- A font for each text, Book or Plain (ADR-126), in the app's source and not yet in a download. Select a text and tap
   **Size**: the card that opens has a new first row, Font. Book is a serif face with its own bold and italic; Plain is the face every
   zine has used so far. Book has no Greek or Cyrillic letters and is not offered below 12 pt; in both cases
   the card says why. While you type, the text is now drawn in its own face, including a real italic, and
