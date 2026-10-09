@@ -296,9 +296,29 @@ happened next, in a separate change stacked on it (branch `fix/editing-draft-lin
   None re-recorded: the golden gate passed with the fix before anything was recorded, because every
   existing editing golden holds one line and the first baseline did not change. Recorded on Windows;
   the CI recording is owed.
-- **What the maker sees that is new.** A draft with more lines than its box holds now runs past the
-  box while typing. Before, the tighter draft could seem to fit and the last line was cut on Done.
-- **Not done.** No phone, no emulator, no TalkBack. Both device passes are owed for this fix. Where
+- **A draft taller than its box.** Not tested; read from the Compose source by the reviewer. The field
+  clips to its box and scrolls to follow the caret, so with the caret at the end the first lines leave
+  the box, where the page keeps the top and cuts the foot. That was so before this change. What is
+  new: the draft used to be shorter than the page's text and is now the same height to within a pixel
+  a line, so a text that only just fits can make the field scroll by a few pixels at its last line.
+  The caret is drawn without the field's scroll offset (older than this change), so it may then sit
+  off its line. For the phone.
+- **The pixel a line adds up.** The rounding is the same on every line, so a draft of twenty lines
+  can end 10 to 17 px from the page's last line at a dense phone's scale. Line metrics on Android are
+  whole pixels in the field, so no line height given to it would remove this.
+- **The caret on middle lines** of a draft sits about 0.04 em lower against the letters than before
+  (3 px at 24 pt), because it hangs from the line's foot and the line is now taller. First and last
+  lines are unchanged.
+- **Review.** One independent Review Agent, told to treat the summary and comments as claims; it ran
+  no tests. **GO WITH FIXES.** Required: these documents said an over-long draft "runs past the box",
+  which the library contradicts; accepted and corrected here, in the CHANGELOG and in the owner's
+  list. Recommended and accepted: say "about a pixel a line"; name the fallback-font, Android 7 to 8.1
+  and scrolling limits where the code lives; test an empty draft and one ending in a new line; add
+  the "only just fits" case to the phone pass. Partly accepted: the first-line test runs only at SDK
+  34; it was not run below 28, and the limit is written down instead.
+- **Not done.** No phone, no emulator, no TalkBack. Both device passes are owed for this fix. On
+  Android 7 to 8.1 Compose pads the top of the field when the first line's ink rises above the ascent,
+  which this test cannot see; it joins the older-Android debt. Where
   the two engines wrap a long line is unchanged and still a phone check. A draft holding an emoji or a
   letter the font lacks may still differ in line height from the page, because the field lets a
   fallback font's metrics widen a line and the page does not; not measured.

@@ -239,7 +239,16 @@ internal fun BenchEditingSurface(
         // same thing from the same four files, so the pitch follows the font and a third voice cannot
         // drift. `1.em` stood here until 2026-10-09 and set every draft about a fifth of a line too tight.
         // `includeFontPadding = false` is the renderer's `setIncludePad(false)`: the first line starts at
-        // the ascent in both. Held by EditingDraftLineParityTest.
+        // the ascent in both. Held by EditingDraftLineParityTest, within one device pixel per line.
+        //
+        // Three limits, none of them proven away:
+        //  - Android 7 to 8.1 (API 24-27): Compose adds top padding when the first line's ink rises above
+        //    the ascent, which moves every baseline down. The test runs at SDK 34 and cannot see it.
+        //  - A line holding a glyph from a fallback font (a letter the voice lacks, an emoji) can be
+        //    taller here than on the page: Compose lets the fallback's metrics widen the line, the
+        //    renderer does not.
+        //  - The field clips to its box and scrolls to follow the caret; the page keeps the top and cuts
+        //    the foot. A draft that only just fits can therefore scroll by a few pixels.
         platformStyle = PlatformTextStyle(includeFontPadding = false),
     )
 

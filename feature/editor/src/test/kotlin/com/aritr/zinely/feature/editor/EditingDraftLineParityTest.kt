@@ -206,6 +206,18 @@ class EditingDraftLineParityTest {
     }
 
     @Test
+    fun `an empty draft and a draft ending in a new line have the page's lines`() {
+        for (family in DocumentFontRegistry.Bundled.families) for (text in listOf("", "one\ntwo\n", "\n\nthree")) {
+            val style = TextStyle(fontFamily = family.name, sizePt = 24.0)
+            // `residuals` also holds the two engines to the same number of lines.
+            residuals(text, style, 3.37f).forEachIndexed { line, px ->
+                assertTrue("${family.name} line $line: $px px", px <= PX_PER_LINE * (line + 1))
+            }
+        }
+    }
+
+    // Linear scaling only: this catches a size given in sp, not Android 14's non-linear curve.
+    @Test
     fun `the system font scale does not move the draft, because the page is in points`() {
         for (family in DocumentFontRegistry.Bundled.families) {
             val el = element(LINES, TextStyle(fontFamily = family.name, sizePt = 14.0))
