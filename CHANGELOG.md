@@ -147,9 +147,9 @@ under Known limitations and in [ADR-125](docs/DECISIONS.md#adr-125) and [ADR-126
   card.
 - The message after the last zine leaves a folder is two lines long and stays for four seconds, with its Undo.
 - At large text sizes the draft can still sit about a pixel a line away from the finished page.
-- This release was not installed over an existing library before it was published. The same commit, built the same way under a
-  test name, was run on one phone, with a new zine; the
-  [tester package](docs/releases/0.9.0-beta.7.md#verification) says what was checked.
+- The update was installed over beta.6 on one phone, and the Shelf opened with its zines; no existing zine
+  was opened afterwards. The new features were run on that phone as the same commit under a test name, with
+  a new zine. The [tester package](docs/releases/0.9.0-beta.7.md#verification) says what was checked.
 - Tapping through a holed piece has not yet been checked by ear with TalkBack. A very thin frame over a photo
   can take a careful tap. Once selected, dragging from its edge resizes it; drag from the middle of the
   selection to move it.

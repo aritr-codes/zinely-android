@@ -312,7 +312,7 @@ Evidence: [tester package](releases/0.9.0-beta.7.md).
 | ☑ | Version, changelog, suite, goldens, signed APK | Built 2026-10-11 from `29d0b20`: 2,715 tests, goldens verified, release key confirmed; a rebuild left the APK's checksum unchanged |
 | ☑ | Smoke pass on the release build | 2026-10-11, on your Samsung, as a side-by-side test package with a made-up zine (removed afterwards; your app untouched): Font, Undo, Save PDF, a folder, a cold start, backup and restore ([record](releases/0.9.0-beta.7.md#on-device---this-build)) |
 | ☐ | **Print one page with a Book text at 12 pt** | The one check that could change what ships. Not done before the release; it is a Known Limitation until you do |
-| ☐ | **Install over beta.6 on your phone**, after a fresh backup | Never done by me: your app and library are yours. The release was not checked as an update over a real library |
+| ☑ | **Install over beta.6 on your phone** | **Done 2026-10-11** on your word ("No need to backup. You can proceed."). No uninstall; install date kept; the Shelf opened with 43 zines. No zine was opened |
 | ☐ | TalkBack listens: folders, the Font row, tap-through | Deferred by you; each ships as "not verified" |
 
 ### ☑ `0.9.0-beta.6` — the wave-1 release (APK only) *(released 2026-10-06)*
