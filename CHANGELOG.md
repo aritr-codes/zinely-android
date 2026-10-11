@@ -91,7 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
   than stream-consumer ordering, eliminating the CI race tracked by issue #57.
 
-## [0.9.0-beta.7] — 2026-10-09 — Folders, and a second font
+## [0.9.0-beta.7] — 2026-10-11 — Folders, and a second font
 
 This release carries `versionCode 12`. It installs over earlier release-signed beta builds without
 uninstalling. The saved-document format and the backup format version are unchanged; a zine can now carry a
