@@ -78,10 +78,11 @@ class ResizeHandlesTest {
         val id = store.uiState.value.selection.single()
         val h = Harness(store)
 
+        val snapshot = store.uiState.value
         composeRule.setContent {
             ZinelyTheme {
                 ResizeHandles(
-                    uiState = store.uiState.value,
+                    uiState = snapshot,
                     currentState = { store.uiState.value },
                     dispatch = h::dispatch,
                     onResize = { h.lastResizeWasNull = it == null },
@@ -188,10 +189,11 @@ class ResizeHandlesTest {
         store.dispatch(Intent.PlaceText(Transform(40.0, 40.0, 20.0, 20.0), "t"))
         val h = Harness(store)
 
+        val snapshot = store.uiState.value
         composeRule.setContent {
             ZinelyTheme {
                 ResizeHandles(
-                    uiState = store.uiState.value,
+                    uiState = snapshot,
                     currentState = { store.uiState.value },
                     dispatch = h::dispatch,
                     onResize = { h.lastResizeWasNull = it == null },
