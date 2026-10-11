@@ -15338,7 +15338,9 @@ On `feat/document-voices`, from `origin/main` @ `99a8f67`; merged to `main` on 2
 - **Goldens.** New: both voices on the page (screen and export), on the Bench, in Read and in the editing
   field, and the Font row's states. Re-recorded, after reading the differences: `type_bar_light` and
   `type_bar_dark`, which gain the fifth row. No golden of existing text moved. **All were recorded on a
-  Windows machine, not on the pinned CI image; the CI recording is owed.**
+  Windows machine, not on the pinned CI image; the CI recording is owed.** *Done 2026-10-09:* the pinned
+  image recorded every golden (run 37931916815) and the tree now holds that recording; see the
+  [beta.7 tester package](releases/0.9.0-beta.7.md#verification).
 - **Phone, Pass 1** (Samsung SM-A176B, Android 16): passed, read from the platform's accessibility tree.
   **Pass 2** was done by the implementer and is the weaker pass. Its main finding: the row is reached
   through a button labelled "Size", which gives no hint that a font can be chosen there. **Ruled by the owner on 2026-10-09: the button is renamed "Text"** (`v21-bench.html` A31, then `Copy.BenchVerbs.TEXT`).

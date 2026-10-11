@@ -146,8 +146,9 @@ under Known limitations and in [ADR-125](docs/DECISIONS.md#adr-125) and [ADR-126
   card.
 - The message after the last zine leaves a folder is two lines long and stays for four seconds, with its Undo.
 - At large text sizes the draft can still sit about a pixel a line away from the finished page.
-- This APK itself was not installed over an existing library before release; see the
-  [tester package](docs/releases/0.9.0-beta.7.md#verification) for what was checked and on what.
+- This release was not installed over an existing library before it was published. The same build under a
+  test name was run on one phone, with a new zine; the
+  [tester package](docs/releases/0.9.0-beta.7.md#verification) says what was checked.
 - Tapping through a holed piece has not yet been checked by ear with TalkBack. A very thin frame over a photo
   can take a careful tap. Once selected, dragging from its edge resizes it; drag from the middle of the
   selection to move it.
