@@ -68,10 +68,11 @@ class ElementSemanticsLayerTest {
     }
 
     private fun setLayer(store: EditorStore, pageSizePt: PtSize? = null) {
+        val snapshot = store.uiState.value // snapshot for layout; the custom actions read the live store
         composeRule.setContent {
             MaterialTheme {
                 ElementSemanticsLayer(
-                    uiState = store.uiState.value, // snapshot for layout; the custom actions read the live store
+                    uiState = snapshot,
                     dispatch = store::dispatch,
                     modifier = Modifier.size(200.dp, 200.dp),
                     pageSizePt = pageSizePt,
