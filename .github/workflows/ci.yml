@@ -172,3 +172,68 @@ jobs:
             feature/editor/build/outputs/roborazzi/**
             core/ui/build/outputs/roborazzi/**
           if-no-files-found: ignore
+
+  golden-exact:
+    name: Goldens are current (re-record, byte-identical)
+    # Issue #114. verifyRoborazziDebug compares most goldens at changeThreshold = 0.02f, so a changed word,
+    # a swapped icon or a new ring on a whole-screen picture stays under 2 % and passes with a stale PNG.
+    # Nine goldens went stale on main that way and were found only by a fresh recording (PR #112).
+    #
+    # This job is that recording, on every run: it records on the same pinned image as record-goldens.yml
+    # and fails if any committed PNG would change, or if a test writes a golden that is not committed.
+    # It is a separate job so it runs beside android-graph instead of after it.
+    #
+    # When it fails for an intended change: download `roborazzi-goldens-changed`, read each picture against
+    # the committed one, then commit it. Re-recording is a reviewed act (CLAUDE.md), and this job never commits.
+    runs-on: ubuntu-24.04
+    env:
+      TZ: UTC
+      LANG: en_US.UTF-8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Record Roborazzi goldens
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :render-android:recordRoborazziDebug :feature:editor:recordRoborazziDebug \
+            :core:ui:recordRoborazziDebug \
+            --rerun-tasks --no-daemon --stacktrace
+
+      - name: Fail if any golden changed or is not committed
+        id: exact
+        run: |
+          changed="$(git status --porcelain -- render-android/src/test/roborazzi feature/editor/src/test/roborazzi core/ui/src/test/roborazzi)"
+          if [ -n "$changed" ]; then
+            echo "These goldens are stale or not committed:"
+            echo "$changed"
+            echo "$changed" | cut -c4- > changed-goldens.txt
+            exit 1
+          fi
+          echo "All committed goldens match a fresh recording."
+
+      - name: Upload the changed goldens
+        if: failure() && steps.exact.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: roborazzi-goldens-changed
+          path: |
+            changed-goldens.txt
+            render-android/src/test/roborazzi/**/*.png
+            feature/editor/src/test/roborazzi/**/*.png
+            core/ui/src/test/roborazzi/**/*.png
+          if-no-files-found: warn
