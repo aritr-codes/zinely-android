@@ -117,7 +117,6 @@ under Known limitations and in [ADR-125](docs/DECISIONS.md#adr-125) and [ADR-126
 
 - The button on a selected text that opens the text card is named **Text**. It was named "Size", which named
   one of the card's five rows. The row inside the card that changes the size is still "Size".
-- The Shelf's heading reads "My Shelf".
 - The download grows by about a quarter of a megabyte, for the four Book font files.
 
 ### Fixed
@@ -138,16 +137,18 @@ under Known limitations and in [ADR-125](docs/DECISIONS.md#adr-125) and [ADR-126
   in Plain. Every word is kept and is Book again on this version. But lines break in other places, and lines
   that no longer fit their box are missing from the page and from the PDF on the older version, which does
   not say so. In our test an italic paragraph that just fitted lost its last line.
-- An older Zinely restores a backup that has folders with every zine on My Shelf. Restoring a backup onto a
-  phone that already has the same zines adds nothing, so it brings no folders.
+- An older Zinely restores a backup that has folders with every zine on My Shelf. A backup made by an older
+  Zinely restores with every zine on My Shelf. Restoring a backup onto a phone that already has the same
+  zines adds nothing, so it brings no folders.
+- A second folder action tapped while the first is still being written is dropped without a message.
 - Folders and the Font row have not been checked by ear with TalkBack; they were read from the phone's
   accessibility tree. With TalkBack, focus does not move to the result after a folder action.
 - A selected text shows **Text** on the upper bar and **Text style** on the lower bar; both open the same
   card.
 - The message after the last zine leaves a folder is two lines long and stays for four seconds, with its Undo.
 - At large text sizes the draft can still sit about a pixel a line away from the finished page.
-- This release was not installed over an existing library before it was published. The same build under a
-  test name was run on one phone, with a new zine; the
+- This release was not installed over an existing library before it was published. The same commit, built the same way under a
+  test name, was run on one phone, with a new zine; the
   [tester package](docs/releases/0.9.0-beta.7.md#verification) says what was checked.
 - Tapping through a holed piece has not yet been checked by ear with TalkBack. A very thin frame over a photo
   can take a careful tap. Once selected, dragging from its edge resizes it; drag from the middle of the

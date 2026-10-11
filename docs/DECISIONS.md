@@ -15384,8 +15384,8 @@ Tracked in [OWNER-CHECKLIST](OWNER-CHECKLIST.md) and in [Brief 02's gate table](
 - ~~An Android 7 check that the four faces break lines as they do on a current phone.~~ Done 2026-10-09 on
   an **emulator**. A real Android 7 phone was not used.
 - ~~The implementation, its goldens, Pass 1 and the measured APK change.~~ Done 2026-10-09. Still owed from
-  that line: the goldens recorded on the pinned CI image; a listen with TalkBack; the owner's own first-time
-  pass.
+  that line: ~~the goldens recorded on the pinned CI image~~ (done 2026-10-09); a listen with TalkBack; the
+  owner's own first-time pass.
 - A missing character drawn from a device font, confirmed on a phone (so far two emulators).
 - A dated forward note under [ADR-055](#adr-055) pointing here, written when this ADR is accepted and not before.
 - The owner's acceptance of this ADR.
