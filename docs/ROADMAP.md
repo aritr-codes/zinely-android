@@ -20,10 +20,10 @@ Reframe loading and the deterministic accessibility regression were completed th
 beta.4-r3 APK; measurements and evidence remain in the
 [release-gap review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-10-reframe-loading-follow-up).
 
-**Released 2026-10-06:** beta.6, the wave-1 release, is the public download
-([0.9.0-beta.6](../CHANGELOG.md#090-beta6--2026-10-06--backups-that-tell-you-what-happened), tag `v0.9.0-beta.6`,
-GitHub pre-release, APK only; [tester package](releases/0.9.0-beta.6.md)). It follows beta.5 (2026-09-25). No
-next tester build is scheduled by date yet.
+**Released 2026-10-11:** beta.7, folders and a second font, is the public download
+([0.9.0-beta.7](../CHANGELOG.md#090-beta7--2026-10-11--folders-and-a-second-font), tag `v0.9.0-beta.7`,
+GitHub pre-release, APK only; [tester package](releases/0.9.0-beta.7.md)). It follows beta.6 (2026-10-06). Both
+features shipped **not accepted**. No next tester build is scheduled by date yet.
 
 **Owner rulings, 2026-09-26** ([1.x decision gate](planning/ZINELY-1X-DECISION-GATE.md)): the next tester build
 is planned as a *wave-1* release on the current document format, before any schema change, carrying the 1.x
@@ -32,27 +32,15 @@ Those steps shipped in beta.6 on 2026-10-06.
 
 ### In development — started (designing, building or testing), not in the public download
 
-Neither entry is anything a maker can try. Folders has a frozen HTML specification, an Accepted ADR
-(2026-10-07) and its storage half built; voices is at the design stage and has neither yet. They are listed here on the owner's 2026-10-06 instruction because they are the work starting
-next.
+Nothing at present. Shelf folders and document voices (Book and Plain) shipped in `0.9.0-beta.7` on 2026-10-11
+([CHANGELOG.md](../CHANGELOG.md#090-beta7--2026-10-11--folders-and-a-second-font)). Both shipped **not accepted**:
 
-- **Shelf folders:** user-created folders to organise zines on the Shelf (owner request 2026-09-27, repeated
-  2026-10-06). **Design approved 2026-10-07; screens not built:** [ADR-125](DECISIONS.md#adr-125) is Accepted and the
-  [`v21-library.html`](design/mockups/v21-library.html) A28 amendment is frozen, on the owner's approval of the
-  prototype. **Storage built 2026-10-07, part 1 of 2:** a zine's folder name is kept in its own file and
-  carried in a backup, with no change to the backup's format version. **Screens built 2026-10-08, part 2 of 2,
-  in no release:** move a zine to a folder, look inside, rename it, take its zines out, with Undo. Both phone
-  checks were run on 2026-10-08; a TalkBack listen is still owed, so it is not accepted, and there is nothing to try in a download.
-- **Document voices, Book and Plain:** two named typefaces for a zine's words, Book (Fraunces) and Plain (Inter)
-  ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); plan step 8). The [brief](planning/BRIEF-02-THREE-VOICES.md)
-  is rewritten and the four Fraunces faces are fetched and measured (2026-10-06). The owner ruled Book's
-  minimum print size, 12 pt, on 2026-10-08, to be confirmed on a printed page. The Font row drawn in the type bar was approved and frozen on 2026-10-08 (A29). **Built and merged to `main` on 2026-10-09 (PR #108), in no release:** a text can be set in Book or Plain from the text card. Not accepted: the printed page, a TalkBack listen and the owner's own try are owed ([ADR-126](DECISIONS.md#adr-126)). The type bar and Reframe pages were
-  frozen on 2026-10-06.
-
-The wave-1 work shipped in beta.6 on 2026-10-06
-([CHANGELOG.md](../CHANGELOG.md#090-beta6--2026-10-06--backups-that-tell-you-what-happened)). Tap-through shipped
-**not accepted**: [ADR-124](DECISIONS.md#adr-124) stays Proposed until the owner's TalkBack listen and the A27
-freeze.
+- **Shelf folders:** [ADR-125](DECISIONS.md#adr-125) is Accepted as a design; the implementation still owes a
+  TalkBack listen and the owner's rulings listed in [OWNER-CHECKLIST](OWNER-CHECKLIST.md).
+- **Document voices:** [ADR-126](DECISIONS.md#adr-126) stays Proposed until the printed page that confirms
+  Book's 12 pt minimum, a TalkBack listen and the owner's own try.
+- Tap-through, shipped in beta.6, is also still **not accepted**: [ADR-124](DECISIONS.md#adr-124) stays
+  Proposed until the owner's TalkBack listen and the A27 freeze.
 
 ### Planned
 
@@ -375,6 +363,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-11 | **beta.7 released** (tag `v0.9.0-beta.7`, merge `95d64ae`): Shelf folders and document voices leave In development; the public website offers beta.7. Both ship with their implementation not accepted ([ADR-125](DECISIONS.md#adr-125), [ADR-126](DECISIONS.md#adr-126) Proposed). No scope change. | [tester package](releases/0.9.0-beta.7.md) |
 | 2026-10-09 | **Document voices merged to `main` on the owner's instruction (PR #108, then the draft line-spacing fix PR #110); not accepted, in no release.** Also merged that day: a zine restored straight after being deleted is no longer hidden or deleted again (PR #109) | [ADR-126](DECISIONS.md#adr-126) · [ADR-121](DECISIONS.md#adr-121) |
 | 2026-10-09 | **Document voices built on a branch (plan step 8); not merged, not accepted, in no release.** The Font row as frozen (A29), the four Book faces bundled, the editing field drawn in the text's own faces. The older-build test was run on `0.9.0-beta.6` and `0.9.0-beta.5`: no word is lost from the zine, and lines can be missing from the page and the PDF there (an italic paragraph that just fitted lost its last line). Owed: the printed page, a TalkBack listen, the owner's first-time pass, goldens recorded on CI | [ADR-126](DECISIONS.md#adr-126) · [the record](reviews/2026-10-09-document-voices-older-build-and-device.md) |
 | 2026-10-08 | **Document voices: the Font row approved and frozen (A29).** The owner agreed to all twelve recommendations and left the decision after one more research pass to the implementer ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8); [RESEARCH R24](RESEARCH.md#r24-the-font-row-what-other-editors-and-the-guidance-say---verified---recommendation-with-a--assumption-edge)). That pass changed the undo line for a font change to "Font changed" / "Font put back" (`v21-bench.html` A30) and sharpened two rules. Nothing is built; ADR-126 is still Proposed. |
