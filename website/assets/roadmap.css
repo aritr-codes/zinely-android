@@ -1,5 +1,6 @@
 .roadmap-page {
   --roadmap-rule: rgba(106, 69, 47, 0.13);
+  --tape-amber: #f6b22c;
 }
 
 .roadmap-page .roadmap-layout {
@@ -56,80 +57,87 @@
 .roadmap-date > span {
   margin-bottom: 5px;
   color: var(--ink-soft);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 850;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
+/* Ledger sheets. Phone first: one column, one gutter, one row rhythm. The handmade look lives in the
+   decoration (torn edge, tape, stamps, pen line); the structure stays square. */
 .roadmap-groups {
-  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.06fr) minmax(0, 1.06fr) minmax(0, 0.88fr);
-  align-items: start;
-  gap: clamp(18px, 2.5vw, 30px);
-  margin-top: 62px;
-  padding: 20px 0 34px;
-}
-
-.roadmap-groups::before {
-  position: absolute;
-  inset: 0 -34px auto;
-  height: 12px;
-  border-block: 2px solid var(--ink);
-  background: var(--room-raised);
-  content: "";
-  box-shadow: 0 4px 0 rgba(39, 39, 15, 0.12);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 34px;
+  margin-top: 30px;
 }
 
 .roadmap-page .roadmap-group {
   position: relative;
   margin: 0;
-  padding: 34px 26px 28px;
-  border: 2px solid var(--ink);
-  border-radius: 4px 18px 14px 6px;
-  background: #fffdf5;
-  box-shadow: 5px 6px 0 var(--ink);
+  padding: 30px 18px 22px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  /* The outline and the hard shadow follow the torn edge, which a border and box-shadow cannot. */
+  filter: drop-shadow(1.5px 0 0 var(--ink)) drop-shadow(-1.5px 0 0 var(--ink)) drop-shadow(0 -1.5px 0 var(--ink))
+    drop-shadow(4px 5px 0 var(--ink));
+  transform: none;
 }
 
-.roadmap-page .roadmap-group:nth-child(1) {
-  transform: rotate(-0.65deg);
-}
-
-.roadmap-page .roadmap-group:nth-child(2) {
-  margin-top: 18px;
-  background: var(--surface);
-  transform: rotate(0.7deg);
-}
-
-.roadmap-page .roadmap-group:nth-child(3) {
-  margin-top: 7px;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 25px, rgba(39, 39, 15, 0.08) 25px 26px),
-    var(--room-raised);
-  box-shadow: 4px 5px 0 rgba(39, 39, 15, 0.58);
-  transform: rotate(-0.45deg);
-}
-
-.roadmap-pin {
+/* The sheet itself: ruled paper, torn off a pad along the top. */
+.roadmap-page .roadmap-group::after {
   position: absolute;
-  top: -13px;
-  left: 50%;
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--ink);
-  border-radius: 50%;
+  z-index: -1;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(39, 39, 15, 0.07) 27px 28px),
+    #fffdf5;
+  clip-path: polygon(0 9px, 6% 3px, 14% 9px, 23% 2px, 33% 8px, 44% 3px, 55% 9px, 66% 2px, 77% 8px, 88% 3px, 100% 9px, 100% 100%, 0 100%);
+  content: "";
+}
+
+.roadmap-page .roadmap-group.craft::after {
+  clip-path: polygon(0 4px, 8% 9px, 17% 2px, 27% 8px, 38% 3px, 49% 9px, 60% 2px, 71% 8px, 82% 3px, 92% 9px, 100% 4px, 100% 100%, 0 100%);
+}
+
+/* A strip of tape holds each sheet down: same place on every sheet, its own colour and lean. */
+.roadmap-page .roadmap-group::before {
+  position: absolute;
+  top: -12px;
+  right: 34px;
+  width: 96px;
+  height: 26px;
+  background: var(--tape-amber);
+  content: "";
+  transform: rotate(-2.5deg);
+}
+
+.roadmap-page .roadmap-group.craft::before {
   background: var(--accent);
-  box-shadow: 2px 3px 0 var(--ink);
-  transform: translateX(-50%);
+  transform: rotate(2deg);
 }
 
-.roadmap-group:nth-child(2) .roadmap-pin {
-  background: #f6b22c;
+.roadmap-page .roadmap-group.proof::before {
+  background: var(--room-raised);
+  transform: rotate(-1.5deg);
 }
 
-.roadmap-group:nth-child(3) .roadmap-pin {
-  background: var(--paper);
+/* A wobbly pen line under the title of the sheet; it follows the words, however they wrap. */
+.roadmap-page .roadmap-group h2 {
+  scroll-margin-top: 9rem;
+  line-height: 1.5;
+  text-decoration: underline wavy var(--tape-amber) 3px;
+  text-underline-offset: 6px;
+}
+
+.roadmap-page .roadmap-group.foundation h2 {
+  text-decoration-color: var(--primary);
+}
+
+.roadmap-page .roadmap-group.proof h2 {
+  text-decoration-color: var(--accent);
 }
 
 .roadmap-page .press-zone {
@@ -141,7 +149,7 @@
   border-radius: 999px;
   background: var(--primary);
   color: var(--ink);
-  font-size: 0.73rem;
+  font-size: 0.75rem;
   font-weight: 850;
   letter-spacing: 0.08em;
   line-height: 1.2;
@@ -149,7 +157,7 @@
 }
 
 .roadmap-page .craft .press-zone {
-  background: #f6b22c;
+  background: var(--tape-amber);
 }
 
 .roadmap-page .proof .press-zone {
@@ -168,8 +176,8 @@
 
 .roadmap-key dl {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
-  gap: 12px 24px;
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+  gap: 14px 20px;
   margin: 0;
 }
 
@@ -179,16 +187,242 @@
   font-size: 0.92rem;
 }
 
+/* Rows on the sheet, not cards: one item per row, a dashed rule between. */
 .roadmap-page .roadmap-items {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.roadmap-page .roadmap-items li {
+  position: relative;
+  max-width: 68ch;
+  margin: 0;
+  padding: 14px 0 16px;
+  line-height: 1.55;
+}
+
 .roadmap-page .roadmap-items li + li {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px dashed rgba(39, 39, 15, 0.35);
+  margin-top: 0;
+  border-top: 1.5px dashed rgba(39, 39, 15, 0.4);
+}
+
+/* The status is a rubber stamp: its own line on a phone, pressed down not quite straight. */
+.roadmap-page .status-chip {
+  font-size: 0.75rem;
+}
+
+.roadmap-page .roadmap-items .status-chip {
+  display: block;
+  width: fit-content;
+  margin: 0 0 8px;
+  padding: 3px 9px;
+  border-width: 2px;
+  border-radius: 4px 6px 3px 6px;
+  transform: rotate(-2deg);
+}
+
+.roadmap-page .roadmap-items li:nth-child(2n) .status-chip {
+  transform: rotate(1.5deg);
+}
+
+.roadmap-page .roadmap-items li:nth-child(3n) .status-chip {
+  transform: rotate(-0.8deg);
+}
+
+/* Where to go on this page, at the top so a phone need not scroll to find a section. */
+.roadmap-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 18px;
+  margin-top: 26px;
+  padding: 6px 14px;
+  border: 1.5px dashed var(--ink);
+  background: var(--paper);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.roadmap-jump span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink-soft);
+  font-family: Georgia, serif;
+  font-style: italic;
+}
+
+.roadmap-jump a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink);
+  text-underline-offset: 4px;
+}
+
+/* Tablet and up: the stamps move into a margin, ruled off in pink like a ledger, so status reads straight down. */
+@media (min-width: 700px) {
+  .roadmap-page .roadmap-group {
+    padding: 36px 30px 26px;
+  }
+
+  .roadmap-page .roadmap-items {
+    background: linear-gradient(var(--accent), var(--accent)) 9.875rem 0 / 2px 100% no-repeat;
+  }
+
+  .roadmap-page .roadmap-items li {
+    /* In rem, like the stamp: the margin grows with the reader's text size, so a stamp never covers its row. */
+    max-width: calc(68ch + 11.125rem);
+    padding-left: 11.125rem;
+  }
+
+  .roadmap-page .roadmap-items .status-chip {
+    position: absolute;
+    top: 14px;
+    left: 0;
+    margin: 0;
+  }
+}
+
+/* Each sheet folds. A closed sheet still shows its title and a tally of what is on it, so nothing about
+   status is hidden behind the tap. Native <details>: it works with no script and a keyboard. */
+.roadmap-page .roadmap-group summary {
+  display: grid;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.roadmap-page .roadmap-group summary::-webkit-details-marker {
+  display: none;
+}
+
+.roadmap-page .roadmap-group summary:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 6px;
+}
+
+.roadmap-page .roadmap-group summary h2 {
+  margin: 0;
+}
+
+.roadmap-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+
+.roadmap-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-height: 44px;
+  padding: 6px 14px 6px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 5px 9px 4px 8px;
+  background: var(--paper);
+  box-shadow: 2px 3px 0 var(--ink);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.roadmap-toggle::before {
+  width: 1.1em;
+  content: "+";
+  font-size: 1.3rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.roadmap-page details[open] .roadmap-toggle::before {
+  transform: rotate(45deg);
+}
+
+.roadmap-toggle .when-open,
+.roadmap-page details[open] .roadmap-toggle .when-closed {
+  display: none;
+}
+
+.roadmap-page details[open] .roadmap-toggle .when-open {
+  display: inline;
+}
+
+.roadmap-page details[open] > .roadmap-items {
+  margin-top: 16px;
+  border-top: 2px solid var(--ink);
+}
+
+/* Title beside tally only where both fit: the title keeps a floor and the tally wraps, so the title can never
+   be squeezed to nothing (it was, from 700 to 960 px, before this floor). In em, so larger text stacks sooner. */
+@media (min-width: 65em) {
+  .roadmap-page .roadmap-group summary {
+    grid-template-columns: minmax(16rem, 1fr) minmax(0, auto);
+    align-items: end;
+    gap: 10px 24px;
+  }
+
+  .roadmap-sheet-head {
+    grid-row: 1 / span 2;
+  }
+
+  .roadmap-tally,
+  .roadmap-toggle {
+    justify-self: end;
+  }
+
+  .roadmap-tally {
+    justify-content: flex-end;
+    margin-right: 110px;
+  }
+}
+
+/* The sheet unfolds rather than jumps, where the browser can animate to a natural height. Elsewhere it
+   simply opens. */
+@supports selector(::details-content) {
+  .roadmap-page {
+    interpolate-size: allow-keywords;
+  }
+
+  .roadmap-page .roadmap-group details::details-content {
+    block-size: 0;
+    overflow: clip;
+    opacity: 0;
+    transition: block-size 380ms cubic-bezier(.2, .7, .2, 1), opacity 260ms ease, content-visibility 380ms allow-discrete;
+  }
+
+  .roadmap-page .roadmap-group details[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+
+  .roadmap-toggle::before {
+    transition: transform 260ms ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roadmap-page .roadmap-group details::details-content,
+  .roadmap-toggle::before {
+    transition: none;
+  }
+}
+
+/* Forced colours drop backgrounds and shadows, so the sheets get plain borders. */
+@media (forced-colors: active) {
+  .roadmap-page .roadmap-group {
+    border: 2px solid CanvasText;
+    filter: none;
+  }
+
+  .roadmap-page .roadmap-group::before {
+    display: none;
+  }
+}
+
+.roadmap-never h2 {
+  scroll-margin-top: 2.5rem;
 }
 
 .roadmap-never {
@@ -259,18 +493,6 @@
   transform: rotate(1deg);
 }
 
-@media (max-width: 940px) {
-  .roadmap-groups {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .roadmap-page .roadmap-group:nth-child(3) {
-    grid-column: 1 / -1;
-    max-width: 620px;
-    margin-inline: auto;
-  }
-}
-
 @media (max-width: 680px) {
   .roadmap-heading,
   .roadmap-desk-note {
@@ -283,22 +505,6 @@
 
   .roadmap-date {
     justify-self: start;
-  }
-
-  .roadmap-groups {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
-    margin-top: 42px;
-  }
-
-  .roadmap-page .roadmap-group:nth-child(1),
-  .roadmap-page .roadmap-group:nth-child(2),
-  .roadmap-page .roadmap-group:nth-child(3) {
-    grid-column: auto;
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    transform: none;
   }
 
   .roadmap-board::after {
@@ -316,9 +522,6 @@
     border-radius: 20px;
   }
 
-  .roadmap-page .roadmap-group {
-    padding-inline: 20px;
-  }
 }
 
 @media print {
@@ -329,9 +532,24 @@
 
   .roadmap-board::before,
   .roadmap-board::after,
-  .roadmap-groups::before,
-  .roadmap-pin {
+  .roadmap-page .roadmap-group::before,
+  .roadmap-jump {
     display: none;
+  }
+
+  .roadmap-page .roadmap-group {
+    filter: none;
+    border: 1px solid #27270f;
+  }
+
+  .roadmap-toggle {
+    display: none;
+  }
+
+  .roadmap-page .roadmap-group details::details-content {
+    block-size: auto;
+    opacity: 1;
+    content-visibility: visible;
   }
 
   .roadmap-heading {
@@ -340,9 +558,6 @@
 
   .roadmap-date,
   .roadmap-page .roadmap-group,
-  .roadmap-page .roadmap-group:nth-child(1),
-  .roadmap-page .roadmap-group:nth-child(2),
-  .roadmap-page .roadmap-group:nth-child(3),
   .roadmap-desk-note > p:last-child {
     border: 1px solid #27270f;
     box-shadow: none;
@@ -354,10 +569,9 @@
     display: block;
   }
 
-  .roadmap-page .roadmap-group,
+  .roadmap-page .roadmap-items li,
   .roadmap-desk-note > * {
     break-inside: avoid;
-    margin: 18px 0;
   }
 }
 

@@ -40,7 +40,17 @@ assert.match(home, /Fold this step/);
 assert.match(siteScript, /picker\.addEventListener\('input'/);
 assert.match(siteStyles, /Phase 2 shared workbench story/);
 assert.match(roadmap, /assets\/roadmap\.css/);
-for (const horizon of ['Foundation', 'Craft', 'Proof']) assert.ok(roadmap.includes(`class="press-zone">${horizon}</p>`), `Roadmap horizon ${horizon}`);
+for (const horizon of ['Foundation', 'Craft', 'Proof']) assert.ok(roadmap.includes(`class="press-zone">${horizon}</span>`), `Roadmap horizon ${horizon}`);
+// A folded sheet shows a tally of its statuses; the tally must match the rows it stands for.
+const sheets = [...roadmap.matchAll(/<details[^>]*>([\s\S]*?)<\/details>/g)];
+assert.equal(sheets.length, 3, 'Roadmap has three folding sheets to check');
+for (const [, sheet] of sheets) {
+  for (const [, status, count] of sheet.matchAll(/<span class="status-chip (\w+)">(\d+) /g)) {
+    assert.equal(sheet.split(`<li><span class="status-chip ${status}">`).length - 1, Number(count), `Roadmap tally for ${status} matches its rows`);
+  }
+  assert.equal([...sheet.matchAll(/<span class="status-chip \w+">\d+ /g)].reduce((n, m) => n + Number(m[0].match(/\d+/)[0]), 0),
+    sheet.split('<li>').length - 1, 'Roadmap tally counts every row');
+}
 assert.match(roadmap, /Not on our list/);
 assert.match(notes, /assets\/journal\.css/);
 assert.match(notes, /studio-journal/);

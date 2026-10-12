@@ -1012,7 +1012,8 @@ footer .footer-colophon { display: block; flex: 1 1 44%; font-weight: 400; }
 .footer-secret { margin-top: 8px; }
 .footer-secret p { max-width: 32ch; font: italic 1rem/1.5 Georgia, serif; }
 .home-page footer nav { flex: 1 1 50%; }
-.home-page .site-header nav a, .home-page footer nav a { display: inline-flex; align-items: center; min-height: 44px; }
+/* Every page: a finger-sized target for the header and footer links, not only on the homepage. */
+.site-header nav a, footer nav a { display: inline-flex; align-items: center; min-height: 44px; }
 
 @media (prefers-reduced-motion: no-preference) {
   .home-page .paper-story { transform: perspective(900px) rotateX(var(--paper-x, 0deg)) rotateY(var(--paper-y, 0deg)) rotate(1.5deg); transition: transform 180ms ease-out; }
