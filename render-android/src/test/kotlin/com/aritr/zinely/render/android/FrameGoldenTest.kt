@@ -125,6 +125,12 @@ class FrameGoldenTest {
                 "$supplyId has no ink along its top edge @$scale, so the flip check above is vacuous",
                 bmp.row(asCut, edge, s).all { it == Color.WHITE },
             )
+            // The same for the top-bottom flip, by where the ink falls (the two cells differ in ink colour).
+            val flipped = cells[2]
+            assertFalse(
+                "$supplyId flipped top-bottom equals unflipped @$scale: the flip did nothing",
+                bmp.row(asCut, edge, s).map { it == Color.WHITE } == bmp.row(flipped, edge, s).map { it == Color.WHITE },
+            )
             bmp.captureRoboImage("$GOLDEN_DIR/frame_${label}_$scale.png", aa())
         }
     }

@@ -11759,7 +11759,8 @@ review and not merged. This note records what that did to this ADR's rulings; it
 - **R5.** Search finds both by name and tag; the four families and their order are unchanged.
 - **Older builds.** A new `supplyId` is data, so there is no schema change. A build without these outlines opens
   the zine, keeps the piece on save and draws nothing for it; the changelog says so.
-- **Review.** Recorded under [ADR-124](#adr-124), *Review*, with the tap-through scope note.
+- **Review.** Recorded under [ADR-124](#adr-124), *Review* (2026-10-12), with the device figures and what is
+  still owed. The tap-through scope note is in that ADR's decision text.
 
 #### Sources
 
@@ -14528,6 +14529,32 @@ cross's bare paper surprise them?
   blank paper a tap in the hole selected the frame. Each worked first try and the band was easy to hit. Dragging
   the selected frame by its band **resized** it and did not move it. The owner also asked whether a double-tap
   should close Reframe as well as open it; that is a Reframe design question, recorded and not acted on here.
+- **2026-10-12, the two frames ([ADR-107](#adr-107) progress note): GO WITH FIXES, twice**, by two independent
+  Review Agents reading the working tree, one for code evidence and one for product and accessibility. Neither
+  ran the suite or held the phone. Both required the recorded goldens to be committed and this entry to exist;
+  both are done. Accepted besides: the changelog now says an older build still selects the unseen piece by its
+  box and that a stretched frame's band is uneven; `FrameGoldenTest` asserts the top-bottom flip in pixels; stale
+  "not yet built" wording is struck from Brief 05 and the plan; the owner's checklist row carries the figures
+  below. **Rejected: a dated status line inside A32** in `v21-bench.html`, which still reads "specified, not yet
+  built". The build brief forbids editing the frozen file, so the contradiction is recorded in Brief 05 and put
+  to the owner. The code review found A32's coordinates reproduced point for point, the hole a real even-odd
+  hole in drawing and in hit-testing, flips and stretch agreeing between the two, and no schema, fixture,
+  placement, resize, version or website change.
+- **2026-10-12, implementer's device pass on the frames:** SM-A176B, Android 16, 450 dpi, a debug-signed copy of
+  the branch installed beside the owner's app under its own package name (not the release-signed build the
+  brief asked for, so that the owner's library was never touched); TalkBack 16.2 installed and **not listened
+  to**. Both tiles placed at 94.7 pt square. Ink, both flips, duplicate, delete, replace and undo worked, and a
+  side handle stretched width alone, the bottom handle height alone. Over a photo and over words a tap in
+  either hole selected what was underneath, a double-tap through Snipped border opened Reframe, and a tap on the
+  paper selected the frame; on blank paper a tap in the hole selected the frame. Stretched, mirrored and flipped
+  frames behaved the same. Bench, page strip, Read and the saved PDF agreed. The platform node for each frame
+  has the same attributes as Window frame's and differs in its name alone. **Snipped border's band is about 8 %
+  of its box: 7.6 pt on paper, about 12 dp on screen and about 10 dp once the page shrinks for a selection.**
+  Over a photo there is no tolerance, as this ADR's *Consequences* says: a tap 2 dp inside the hole took the
+  photo. Stretched to 60 by 160 pt its side bands are about 4.8 pt. It was picked up by its band every time by
+  a scripted tap, which says nothing about a finger. **Not checked:** whether a selected Snipped border can be
+  moved by its band or only resized (the observation below; the phone was disconnected before this was tried),
+  a printed page, the TalkBack listen, and the owner's own first-time pass.
 - **Still owed before this ADR can be Accepted** (tracked in [OWNER-CHECKLIST](OWNER-CHECKLIST.md)): the owner's
   TalkBack listen (deferred by the owner on 2026-10-06, not waived) and the freeze of A27. Two
   observations from the device are recorded for those passes and changed nothing here: a selected thin piece

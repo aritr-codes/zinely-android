@@ -21,8 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   duplicated and replaced like any other piece. A tap in the hole reaches the photo or words underneath; a tap
   on the paper selects the frame. A frame is laid over a photo; it does not hold, crop or follow it. Art now
   has 34 pieces. Known limitations: zines that use the new frames need this version or later to show and print
-  them (an older version opens the zine, keeps the frame, and draws nothing for it); and Snipped border's
-  band is thin, so over a photo it can be hard to pick back up
+  them (an older version opens the zine, keeps the frame, and draws nothing for it, though the unseen piece
+  can still be selected where it sits and takes a tap meant for what is under it); Snipped border's band is
+  thin, so over a photo it can be hard to pick back up; and a frame stretched out of square has a band that
+  is thicker on two sides than on the other two
   ([`v21-bench.html` A32](docs/design/mockups/v21-bench.html), [ADR-124](docs/DECISIONS.md#adr-124)).
 - The public website now offers 0.9.0-beta.7 as the current download, with its version, size, versionCode 12,
   APK link and published SHA-256, a beta.7 entry in What's new with its known limitations, and folders and

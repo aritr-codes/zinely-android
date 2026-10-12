@@ -34,8 +34,9 @@ Those steps shipped in beta.6 on 2026-10-06.
 
 - **Two hand-cut frames** (plan step 9): Snipped border and Round window, at the end of Cut paper. Design frozen
   2026-10-12 ([`v21-bench.html` A32](design/mockups/v21-bench.html)); built on branch `feat/d5-frames` (`d910d38`),
-  under review, not merged and in no APK. Whether the thin Snipped border can be picked back up over a photo is
-  the open question for the owner's first-time pass.
+  under review, not merged and in no released APK. Whether the thin Snipped border can be picked back up over a
+  photo is the open question for the owner's first-time pass: its band measured about 10 to 12 dp wide on the
+  reference phone, with no forgiveness over a photo ([ADR-124](DECISIONS.md#adr-124), *Review*).
 
 Shelf folders and document voices (Book and Plain) shipped in `0.9.0-beta.7` on 2026-10-11
 ([CHANGELOG.md](../CHANGELOG.md#090-beta7--2026-10-11--folders-and-a-second-font)). Both shipped **not accepted**:
