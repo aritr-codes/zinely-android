@@ -26,10 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   thin, so over a photo it can be hard to pick back up; and a frame stretched out of square has a band that
   is thicker on two sides than on the other two
   ([`v21-bench.html` A32](docs/design/mockups/v21-bench.html), [ADR-124](docs/DECISIONS.md#adr-124)).
-- The public roadmap page is laid out evenly: one full-width band per area, with every item in the same
-  card on the same grid, in place of three tilted columns of unequal length; tape, a pen underline and
-  hand-cut slips keep the handmade look. On every page the header and footer links are now finger-sized
-  (44 px), which only the homepage had. No wording changed.
+- The public roadmap page is rebuilt phone first as ledger sheets: one torn-off, taped sheet of ruled paper per
+  area, each item a row with its status as a rubber stamp (in a ruled margin on tablets and wider), in place of
+  three tilted columns of unequal length. A short "On this page" row jumps to each section. Small labels are
+  at least 12 px. On every page the header and footer links are now finger-sized (44 px), which only the
+  homepage had. No roadmap wording changed.
 - The roadmap and the public roadmap page say more plainly where things stand: which shipped features are
   not finished being checked, the known problems in beta.7, the two frames as In development with nothing to
   try yet (on the homepage too), better-drawn Art as planned and not started, and the newer customisation ideas as ideas only.
