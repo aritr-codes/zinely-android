@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   thin, so over a photo it can be hard to pick back up; and a frame stretched out of square has a band that
   is thicker on two sides than on the other two
   ([`v21-bench.html` A32](docs/design/mockups/v21-bench.html), [ADR-124](docs/DECISIONS.md#adr-124)).
+- The roadmap and the public roadmap page say more plainly where things stand: which shipped features are
+  not finished being checked, the known problems in beta.7, the two frames as In development with nothing to
+  try yet (on the homepage too), better-drawn Art as planned and not started, and the newer customisation ideas as ideas only.
 - The public website now offers 0.9.0-beta.7 as the current download, with its version, size, versionCode 12,
   APK link and published SHA-256, a beta.7 entry in What's new with its known limitations, and folders and
   the second font moved from In development to Available. The lines below about them being In development
