@@ -11740,6 +11740,27 @@ same defect class at smaller scale with a fabricated article title. Two rounds, 
 caught only by someone re-opening the sources. **In this ADR the citations were the least reliable part, not
 the reasoning** — the opposite of where the effort went.
 
+#### Progress note, 2026-10-12 — two hand-cut frames built (R1, R1a)
+
+The owner's ruling on [decision gate Q6](planning/ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch) started frames
+at two, and on 2026-10-12 the owner chose them from six drawn candidates: **Snipped border** (`paper.border`) and
+**Round window** (`paper.round`), at the end of *Cut paper*, frozen as
+[`v21-bench.html` A32](design/mockups/v21-bench.html). They are built on branch `feat/d5-frames` (`d910d38`), under
+review and not merged. This note records what that did to this ADR's rulings; it decides nothing new.
+
+- **R1 / R1a.** The cabinet holds 34 pieces: Cut paper goes from 9 to 11. Set, names and order are the owner's;
+  the ids and search tags were drafted by the implementer and are kept as A32 writes them. Both pass R1's test
+  (they are *cut*). They are not drawn from the 19 backlog pieces, which stay unselected.
+- **R3 holds.** Each frame is one outline, an outer contour and one hole, filled even-odd with nothing overlapping.
+  Neither is a composite, a slot or a nine-slice, and neither is attached to a photo.
+- **No collision with SUPPLIES-SPEC §5.2's override map**, and no entry on a uniform-scale list: both land at the
+  Cut paper size and stretch freely ([D-100](design/V2-SPEC-DEFECTS.md#d-100-ruling)). The uniform-scale lock on
+  five existing pieces is not built.
+- **R5.** Search finds both by name and tag; the four families and their order are unchanged.
+- **Older builds.** A new `supplyId` is data, so there is no schema change. A build without these outlines opens
+  the zine, keeps the piece on save and draws nothing for it; the changelog says so.
+- **Review.** Recorded under [ADR-124](#adr-124), *Review*, with the tap-through scope note.
+
 #### Sources
 
 - [Bethesda's modular toolsets and kitbashing](https://www.pcgamesn.com/fallout-4/bethesda-open-world-design) — the term **art fatigue**
@@ -14203,6 +14224,14 @@ probes the ring's hole, the corner's pocket and the registration arms with it.
 The set lives in `:core:render`, beside the outlines. It is a list, not a rule: a piece is in scope because it is
 named, not because its outline has a second subpath. A later piece (a D5 frame) joins by being added in a reviewed
 change.
+
+**Scope note, 2026-10-12: the set is eight.** The two hand-cut frames the owner chose that day
+([`v21-bench.html` A32](design/mockups/v21-bench.html)) were added by name in the change that authored them
+(branch `feat/d5-frames`, `d910d38`): `paper.border` (Snipped border, a thin band around an opening that is nearly
+the whole box) and `paper.round` (Round window, a square of paper with a round hole). Nothing else in this
+decision changed: the same three passes, the same tolerance, the same function. "Six" elsewhere in this ADR is
+left as the record of its date. This ADR's status is unchanged by the note: still Proposed. The known limit below
+(a band is only as wide as it is drawn) is sharpest for Snipped border, whose band is about 8 % of its box.
 
 **Excluded, and unchanged:** `mark.crop` (ruled out by name, Q3) and the other 25 supplies, including the five other
 pieces made of separate parts (`mark.halftone`, `fix.stitch`, `mark.bar`, `mark.scan`, `mark.perf`); every text box;

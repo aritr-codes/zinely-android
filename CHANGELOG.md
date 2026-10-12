@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Two new pieces in Art, at the end of Cut paper: **Snipped border**, a thin border cut with scissors, and
+  **Round window**, a square of paper with a round hole. Each is one ink, and each can be flipped, stretched,
+  duplicated and replaced like any other piece. A tap in the hole reaches the photo or words underneath; a tap
+  on the paper selects the frame. A frame is laid over a photo; it does not hold, crop or follow it. Art now
+  has 34 pieces. Known limitations: zines that use the new frames need this version or later to show and print
+  them (an older version opens the zine, keeps the frame, and draws nothing for it); and Snipped border's
+  band is thin, so over a photo it can be hard to pick back up
+  ([`v21-bench.html` A32](docs/design/mockups/v21-bench.html), [ADR-124](docs/DECISIONS.md#adr-124)).
 - The public website now offers 0.9.0-beta.7 as the current download, with its version, size, versionCode 12,
   APK link and published SHA-256, a beta.7 entry in What's new with its known limitations, and folders and
   the second font moved from In development to Available. The lines below about them being In development

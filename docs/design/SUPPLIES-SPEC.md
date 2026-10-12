@@ -559,7 +559,8 @@ up front hides the risk that matters: [R2's art-fatigue mechanism operating *ins
 The worked list produced 51; the 2026-08-25 owner amendment deliberately stages only sixteen of those
 candidates first. Fifteen near-duplicate fasteners are as legible a repetition as any shuffle.
 
-**The worked ceiling remains ~51; the accepted first expansion stops at 32.**
+**The worked ceiling remains ~51; the accepted first expansion stops at 32.** (Two frames were added after it,
+on 2026-10-12, for 34; see the note under the table.)
 
 | Family | Ships now | Accepted first wave | Backlog | Worked total | Ceiling reached? |
 |---|---:|---:|---:|---:|---|
@@ -568,6 +569,14 @@ candidates first. Fifteen near-duplicate fasteners are as legible a repetition a
 | **Cut paper** — hand-torn edges, things cut *out* | 4 | 5 | 4 | **13** | No |
 | **Cut shapes** — scissor-clean geometry | 4 | 1 | 4 | **9** | ⚠ **Yes** — see §4.3.5 |
 | | **16** | **16** | **19** | **51** | |
+
+**2026-10-12: two hand-cut frames join Cut paper, outside the worked list above.** The owner chose Snipped border
+(`paper.border`) and Round window (`paper.round`) from six drawn candidates
+([decision gate Q6](../planning/ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch); frozen as
+[`v21-bench.html` A32](mockups/v21-bench.html)). They are not two of the 19 backlog pieces, so the table's columns
+are left as the record of the first wave. **What the cabinet holds now: Tape & fixings 8, Stamps & marks 10, Cut
+paper 11 (was 9), Cut shapes 5; 34 in all (was 32).** Both are one outline with one hole, land at the Cut paper
+size (§5.2, no override), stretch freely, and are in the tap-through set ([ADR-124](../DECISIONS.md#adr-124)).
 
 #### 4.3.1 The filter that did the work
 
