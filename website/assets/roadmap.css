@@ -124,12 +124,9 @@
   transform: rotate(-1.5deg);
 }
 
-.roadmap-pin {
-  display: none;
-}
-
 /* A wobbly pen line under the title of the sheet; it follows the words, however they wrap. */
 .roadmap-page .roadmap-group h2 {
+  scroll-margin-top: 9rem;
   line-height: 1.5;
   text-decoration: underline wavy var(--tape-amber) 3px;
   text-underline-offset: 6px;
@@ -160,7 +157,7 @@
 }
 
 .roadmap-page .craft .press-zone {
-  background: #f6b22c;
+  background: var(--tape-amber);
 }
 
 .roadmap-page .proof .press-zone {
@@ -216,7 +213,8 @@
 }
 
 .roadmap-page .roadmap-items .status-chip {
-  display: table;
+  display: block;
+  width: fit-content;
   margin: 0 0 8px;
   padding: 3px 9px;
   border-width: 2px;
@@ -269,12 +267,13 @@
   }
 
   .roadmap-page .roadmap-items {
-    background: linear-gradient(var(--accent), var(--accent)) 158px 0 / 2px 100% no-repeat;
+    background: linear-gradient(var(--accent), var(--accent)) 9.875rem 0 / 2px 100% no-repeat;
   }
 
   .roadmap-page .roadmap-items li {
-    max-width: calc(68ch + 178px);
-    padding-left: 178px;
+    /* In rem, like the stamp: the margin grows with the reader's text size, so a stamp never covers its row. */
+    max-width: calc(68ch + 11.125rem);
+    padding-left: 11.125rem;
   }
 
   .roadmap-page .roadmap-items .status-chip {
@@ -314,6 +313,10 @@
   .roadmap-page .roadmap-group::before {
     display: none;
   }
+}
+
+.roadmap-never h2 {
+  scroll-margin-top: 2.5rem;
 }
 
 .roadmap-never {
@@ -423,7 +426,8 @@
 
   .roadmap-board::before,
   .roadmap-board::after,
-  .roadmap-page .roadmap-group::before {
+  .roadmap-page .roadmap-group::before,
+  .roadmap-jump {
     display: none;
   }
 
