@@ -32,7 +32,10 @@ Those steps shipped in beta.6 on 2026-10-06.
 
 ### In development — started (designing, building or testing), not in the public download
 
-Nothing at present. Shelf folders and document voices (Book and Plain) shipped in `0.9.0-beta.7` on 2026-10-11
+- **Two hand-cut frames** (plan step 9): design frozen 2026-10-12 ([`v21-bench.html` A32](design/mockups/v21-bench.html));
+  nothing built yet.
+
+Shelf folders and document voices (Book and Plain) shipped in `0.9.0-beta.7` on 2026-10-11
 ([CHANGELOG.md](../CHANGELOG.md#090-beta7--2026-10-11--folders-and-a-second-font)). Both shipped **not accepted**:
 
 - **Shelf folders:** [ADR-125](DECISIONS.md#adr-125) is Accepted as a design; the implementation still owes a
@@ -47,7 +50,6 @@ Nothing at present. Shelf folders and document voices (Book and Plain) shipped i
 Owner-stated intentions to deliver. None has a date, and "Planned" here does not mean designed: each still needs
 its HTML specification frozen and an ADR before any Compose work.
 
-- **Two hand-cut frames:** plan step 9; waits for the owner's visual approval of the two pieces.
 - **Print guidance:** help at the print step so a sheet comes out at the right size (plan step 5). Still gated
   on the print study; one successful print by a user, reported by the owner, is recorded in the plan as
   evidence, not as the study.
@@ -98,7 +100,7 @@ changelog, not in the feature backlog. No app feedback screen or SDK is planned.
 **Parked, not next:** Art cold-entry precomposition (latest trace did not justify a safe local change), image
 garbage collection (import/undo/recovery safety prerequisites), shelf search/sort (owner previously removed them;
 needs real-library evidence), extra formats and new menus. Catalogue expansion stays under evaluation
-above; document voices are *In development* (design stage) and two frames are *Planned*, with no date. Other parked work can be reconsidered
+above; document voices shipped in beta.7 and two frames are *In development* (design frozen, not built), with no date. Other parked work can be reconsidered
 when a concrete user problem warrants it; the app is not declared final.
 
 <a id="creative-tools-assessment"></a>
@@ -363,6 +365,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-12 | **Two frames: design frozen.** The owner chose two hand-cut frames from six drawn candidates; `v21-bench.html` A32 records them. Frames move from Planned to In development. Nothing is built; no public copy changed. | [gate Q6](planning/ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch) · [ADR-107](DECISIONS.md#adr-107) R1a |
 | 2026-10-11 | **beta.7 released** (tag `v0.9.0-beta.7`, merge `95d64ae`): Shelf folders and document voices leave In development; the public website offers beta.7. Both ship with their implementation not accepted ([ADR-125](DECISIONS.md#adr-125), [ADR-126](DECISIONS.md#adr-126) Proposed). No scope change. | [tester package](releases/0.9.0-beta.7.md) |
 | 2026-10-09 | **Document voices merged to `main` on the owner's instruction (PR #108, then the draft line-spacing fix PR #110); not accepted, in no release.** Also merged that day: a zine restored straight after being deleted is no longer hidden or deleted again (PR #109) | [ADR-126](DECISIONS.md#adr-126) · [ADR-121](DECISIONS.md#adr-121) |
 | 2026-10-09 | **Document voices built on a branch (plan step 8); not merged, not accepted, in no release.** The Font row as frozen (A29), the four Book faces bundled, the editing field drawn in the text's own faces. The older-build test was run on `0.9.0-beta.6` and `0.9.0-beta.5`: no word is lost from the zine, and lines can be missing from the page and the PDF there (an italic paragraph that just fitted lost its last line). Owed: the printed page, a TalkBack listen, the owner's first-time pass, goldens recorded on CI | [ADR-126](DECISIONS.md#adr-126) · [the record](reviews/2026-10-09-document-voices-older-build-and-device.md) |

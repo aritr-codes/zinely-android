@@ -6,7 +6,7 @@ Status: **implementation brief, not authorised.** Direction D5 of the [1.x plan]
 Base: `origin/main` @ `0aa7a7d`. Revised 2026-09-26 for the owner's rulings; code facts re-verified on that commit.
 **Readiness, by part:**
 - **Outline hit test (plan step 4):** READY AFTER (1) the owner approves the [`v21-bench.html` amendment](#v21-benchhtml-amendment-specification) below, and (2) PR #70 is settled (merged or closed), because it amends the same file. Scope is ruled ([Q3](ZINELY-1X-DECISION-GATE.md#q3-tap-through-hit-testing-how-far-it-reaches)): the six holed pieces.
-- **D5 frames (plan step 9):** BLOCKED BY the owner's visual approval of **two** frames (names, visuals, set membership, order) and by step 4 having merged. The fold study is **not** a gate ([Q5](ZINELY-1X-DECISION-GATE.md#q5-fold-study-before-creative-work-o14), owner 2026-09-26).
+- **D5 frames (plan step 9):** READY TO BUILD since 2026-10-12. The owner chose the two frames that day; they are frozen as [`v21-bench.html` A32](../design/mockups/v21-bench.html) (specified, not yet built). Step 4 is merged (PR #92). Gates 4–7 below are met. The fold study is **not** a gate ([Q5](ZINELY-1X-DECISION-GATE.md#q5-fold-study-before-creative-work-o14), owner 2026-09-26).
 
 ## Gates before an implementation session may start
 
@@ -18,10 +18,10 @@ Base: `origin/main` @ `0aa7a7d`. Revised 2026-09-26 for the owner's rulings; cod
 
 **D5 frames (step 9):**
 
-4. **Owner — visual approval of two frames** ([Q6](ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch)). This brief calls them *Frame A* and *Frame B*. Their **visuals** are the owner's by [Q6](ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch); their **set membership, drawn names and order** are the owner's by [ADR-107](../DECISIONS.md#adr-107) R1a (`DECISIONS.md:11485-11486`). R1a leaves the outline *authoring* to the implementer, which Q6 delegates under the owner's visual approval. Search tags are not covered by R1a: they are drafted in the set amendment (gate 7) and reviewed with it. Nothing here proposes names or visuals.
-5. **Work — step 4 merged.** Adding frames before the hole passes taps through would multiply the defect.
-6. **Work — the per-piece resize list finalised** and recorded against [D-100](../design/V2-SPEC-DEFECTS.md#d-100). The owner ruled that resize is decided per piece and delegated the list; the recommendation is in [*Frames (D5)*](#frames-d5).
-7. **Work — the frozen-HTML set amendment**: a reviewed change to `docs/design/mockups/v21-bench.html` that adds the two approved frames to the Art sheet (set, names, order, search tags) and records the per-piece resize behaviour. It comes before any Compose work. See *UI/UX proposal*.
+4. **Owner — visual approval of two frames** ([Q6](ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch)). This brief calls them *Frame A* and *Frame B*. Their **visuals** are the owner's by [Q6](ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch); their **set membership, drawn names and order** are the owner's by [ADR-107](../DECISIONS.md#adr-107) R1a (`DECISIONS.md:11485-11486`). R1a leaves the outline *authoring* to the implementer, which Q6 delegates under the owner's visual approval. Search tags are not covered by R1a: they are drafted in the set amendment (gate 7) and reviewed with it. Nothing here proposes names or visuals. ✅ **Met 2026-10-12:** the owner chose two of six drawn candidates ([review page](../design/experiments/v21-bench-d5-frames.html)); what was chosen is recorded once, in [`v21-bench.html` A32](../design/mockups/v21-bench.html).
+5. **Work — step 4 merged** (✅ PR #92, `84f2e48`). Adding frames before the hole passes taps through would multiply the defect.
+6. **Work — the per-piece resize list finalised** and recorded against [D-100](../design/V2-SPEC-DEFECTS.md#d-100). The owner ruled that resize is decided per piece and delegated the list; the recommendation is in [*Frames (D5)*](#frames-d5). ✅ **Met 2026-10-12:** the final list is in [D-100](../design/V2-SPEC-DEFECTS.md#d-100-ruling) and differs from the recommendation in two rows.
+7. **Work — the frozen-HTML set amendment**: a reviewed change to `docs/design/mockups/v21-bench.html` that adds the two approved frames to the Art sheet (set, names, order, search tags) and records the per-piece resize behaviour. It comes before any Compose work. See *UI/UX proposal*. ✅ **Met 2026-10-12:** A32. It keeps the two frames in a list of their own (`ART_D5_FRAMES`) and does not edit `ART_FIRST_WAVE` in place, because the amendment log is append-only and `BenchArtSheetParityTest` counts the literal lists; the build session extends that test.
 8. **Owner, optional — ratify "imperfect surface, perfect mechanics"** (research proposal D13; [decision gate, "Decisions that can wait"](ZINELY-1X-DECISION-GATE.md#decisions-that-can-wait)). This does not block D5. This brief uses the phrase as an evaluation lens only.
 
 The fold study runs now, combined with the print study where practical ([Q5](ZINELY-1X-DECISION-GATE.md#q5-fold-study-before-creative-work-o14)). It is evidence for Proof's fold instructions, not a gate on this brief. If it uncovers a fundamental product failure, the owner may reprioritise on that evidence.
@@ -170,7 +170,7 @@ Constraints only; the frames themselves are the owner's (Gate 4).
 - **Print inset:** see *Physical publishing*. The print study's output is guidance, not a gate on step 9.
 - Art never gets opacity (SUPPLIES-SPEC).
 
-**Per-piece resize (🟦 RECOMMENDATION; the owner ruled "per piece" and delegated the list).** The implementation session finalises it and records it as D-100's ruling:
+**Per-piece resize (🟦 RECOMMENDATION; the owner ruled "per piece" and delegated the list).** Finalised 2026-10-12 in [D-100](../design/V2-SPEC-DEFECTS.md#d-100-ruling), which governs where it differs from the table below (kept as the record of the recommendation):
 
 | Behaviour | Supplies | Why |
 |---|---|---|
@@ -361,6 +361,7 @@ None. Supplies are content, tinted with the existing maker inks. New outlines mu
 
 | Date | Change |
 |---|---|
+| 2026-10-12 | Step 9 design session on `9e5b96c`: six candidate frames drawn and shown to the owner, who chose two; frozen as `v21-bench.html` A32 (specified, not yet built). Per-piece resize list finalised in D-100. Gates 4–7 marked met; readiness line changed to ready to build. No Kotlin, golden or test changed. |
 | 2026-10-05 | Step 4 readiness session on `a20df76`: the ADR draft is recorded as [ADR-124](../DECISIONS.md#adr-124) (Proposed) and the amendment is drawn as `v21-bench.html` A27 (proposed, not frozen). Code facts re-verified; PR #70 is merged, so gate 2 is met. Nothing implemented. |
 | 2026-09-26 | Final planning audit fixes: the print study's output is guidance, not a gate on step 4 or 9; gate 4 re-sourced (visuals by Q6; set membership, drawn names and order by ADR-107 R1a, `DECISIONS.md:11485-11486`; R1a gives outline authoring to the implementer; search tags are not in R1a and are reviewed in the set amendment); landing-size ownership aligned with gate Q6 (family default delegated; per-supply override the owner's); ADR draft now also names the `FramingMathTest.kt:57` comment beside the build-script header. |
 | 2026-09-26 | Owner rulings Q3/Q5/Q6 applied. Hit test: scope fixed to the six holed pieces (crop marks excluded; a geometric crop region noted as unapproved future work); exact → near → box resolution; tolerance re-derived — under exact-first it cannot help a band over a photo, so 🟦 8 dp replaces ≈ 24 dp; TalkBack stays on boxes (`ElementSemanticsLayer.kt:88`). Added the ADR draft (module seam 🟦 `core:editor` → `core:render`, containment math, tests, no golden changes) and the `v21-bench.html` amendment specification (append-only log entry; the stale three-piece lists at `:479-481`/`:1431-1432` become six). Frames: two, hand-cut, no nine-slice, "Frame A / Frame B" pending the owner's visual approval; per-piece resize list as a 🟦 recommendation to be finalised in D-100. Gates: O14 and the fold study removed (evidence for Proof only); PR #70 must be settled before step 4. Base `0aa7a7d`; render-fold citation corrected to `:138-146`. |

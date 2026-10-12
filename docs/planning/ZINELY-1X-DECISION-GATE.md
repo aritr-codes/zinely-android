@@ -183,6 +183,8 @@ the resulting sequence and per-step readiness are in the [plan §5 and §11](ZIN
   override is an owner ruling on SUPPLIES-SPEC §5.2, not delegated.
 - **Still the owner's:** the two frames' **names, visuals, set membership and order**, via the `v21-bench.html`
   Art-set amendment; and a per-supply landing override, only if a frame needs one.
+- **Chosen (owner, 2026-10-12):** two of six drawn candidates, with their names, order and resize. Recorded in
+  [`v21-bench.html` A32](../design/mockups/v21-bench.html); neither needs a landing override.
 
 ## Q7. Print (O13 + D3 stage 2)
 
@@ -285,6 +287,7 @@ These are still **owner** decisions. They are just not needed yet.
 
 | Date | Change |
 |---|---|
+| 2026-10-12 | Q6: **the owner chose the two frames** from six drawn candidates. Frozen as `v21-bench.html` A32; the delegated resize list is recorded in D-100. |
 | 2026-10-08 | Q2: **the owner approved the type-bar amendment A29** (all twelve recommendations) and left the last decision to the implementer after one more research pass (RESEARCH R24). A29 frozen; V-12 changed to "Font changed" / "Font put back" (`v21-bench.html` A30); V-6 and V-10 sharpened. |
 | 2026-10-08 | Q2: **the owner ruled Book's minimum print size, 12 pt**, on the recommendation in RESEARCH R23 and to be confirmed on the printed page, which is not printed yet. |
 | 2026-10-06 | Q4 carried out in part (plan step Q4-F): `v21-typebar.html` and `v21-reframe.html` frozen; the divergences found are listed in each file and returned to the owner, whose rulings on them are still owed. |

@@ -6723,6 +6723,32 @@ the rule at all. The owner ruled on 2026-09-26 that resize behaviour is **decide
 a recommendation in [Brief 05](../planning/BRIEF-05-MATERIALS-FRAMES.md#frames-d5); the implementation
 session finalises it and records it here.
 
+#### ✓ RULING — 2026-10-12: the per-piece resize list {#d-100-ruling}
+
+*Ruled by the implementer under the owner's delegation of 2026-09-26
+([decision gate Q6](../planning/ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch)), in the step 9 design session.*
+
+| Behaviour | Supplies | Why |
+|---|---|---|
+| **Uniform-scale lock** (handles keep the piece's proportions; pinch is unchanged) | `mark.registration`, `mark.asterisk`, `mark.burst`, `mark.hand`, `fix.grommet` | Each is a drawing of one thing, and a stretch makes it a wrong drawing. The registration cross is the hard case: a stretch breaks the bare centre [D-095](#d-095) was filed to protect. |
+| **Free stretch** (today's behaviour) | every other supply, including `shape.circle`, `shape.ring` and the two frames `paper.border` and `paper.round` | Strips, tape and cut paper are material; stretching material is what a maker does with it. |
+
+**Two rows differ from Brief 05's recommendation, which locked `shape.circle` and `shape.ring`.**
+[SUPPLIES-SPEC §4.3.5](SUPPLIES-SPEC.md) refuses to ship an Oval because the maker already has one:
+*"`shape.circle` scaled non-uniformly"*. A lock on the circle would take that away and leave the catalogue
+with no oval. §3.4.1 said the opposite (circle held uniform) and was never built, so the shipped behaviour
+and §4.3.5 agree, and this ruling keeps them. The ring follows the circle: both are *Cut shapes*, geometry
+the maker reshapes. The eyelet has the ring's outline and is locked all the same, because an eyelet is an
+object and an oval one is not an eyelet.
+
+**The two frames stretch freely** (owner, 2026-10-12, with the frames themselves:
+[`v21-bench.html` A32](mockups/v21-bench.html)). There is no border-preserving scaling.
+
+⚠ **The lock is not built, and this ruling does not build it.** It changes how the handles of five shipped
+pieces behave, which is an interaction change on a frozen surface: it needs its own `v21-bench.html`
+behaviour note, seen by the owner, before any code. The frames do not wait for it. This defect stays open
+until the lock ships or the owner strikes it.
+
 ---
 
 ### D-101 — the merge gate is not deterministically green, and the reason is a known flake nobody counted {#d-101}

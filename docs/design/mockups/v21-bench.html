@@ -476,8 +476,8 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
    `fill:none;stroke:currentColor;stroke-width:1.7`.  That is what drew sixteen HOLLOW tiles for a
    catalogue that contains no hollow mark, and it is the single line D-093 is about: the drawer
    promised an outline and the page delivered a fill.  A tile is now the MARK, filled, with the
-   even-odd rule the renderer itself uses -- so a hole in the tile is a hole in the supply (`paper.window`,
-   `paper.hole`, `shape.ring`, `fix.grommet`, `fix.corner`, `mark.registration`) and nothing else is. */
+   even-odd rule the renderer itself uses -- so a hole in the tile is a hole in the supply (`paper.window`, `paper.hole`,
+   `shape.ring`, `fix.grommet`, `fix.corner`, `mark.registration`, A32's `paper.border`, `paper.round`) and nothing else is. */
 .tile svg{width:60%;height:60%;fill:currentColor;fill-rule:evenodd;stroke:none}
 /* A supply nobody has drawn yet has no mark to show, so the tile says so in words instead of
    miming one (A7 / D-086).  The dim treatment stays exactly as it was; the word is added beside
@@ -2547,4 +2547,64 @@ var toolsForBeforeA31=toolsFor;
 toolsFor=function(kind){
   return toolsForBeforeA31(kind).map(tool=>kind==='text'&&tool[0]==='Size'?['Text',...tool.slice(1)]:tool);
 };
+</script>
+<!-- ===========================================================================
+A32 · 2026-10-12 · FROZEN by the owner's ruling of that date (decision gate Q6; ADR-107 R1a).
+SPECIFIED, NOT YET BUILT.  Two hand-cut frames join Cut paper.
+
+THE RULING.  The owner was shown six candidates, each drawn as a tile, over a photo, over
+words, in several inks, stretched and at print scale (experiments/v21-bench-d5-frames.html),
+and chose two, with these names, this order and this resize behaviour:
+
+    id             name             family      place                    search tags
+    paper.border   Snipped border   Cut paper   after Folded corner      border frame thin edge scissors outline
+    paper.round    Round window     Cut paper   after Snipped border     round window hole circle frame porthole cutout
+
+WHAT THEY ARE.  Each is a piece of paper with a hole cut in it, in one ink.  Snipped border
+is a thin border cut with scissors, three straight snips to a side.  Round window is a
+square of paper with a round hole of fourteen snips.  Each is ONE outline: an outer contour
+and one hole, straight segments, filled even-odd, nothing overlapping.  Both were authored
+from scratch as coordinates for Zinely.  No reference art was traced, opened or consulted,
+and they carry no third-party licence.
+
+A frame is laid over a photo or words like any other piece.  It does not hold, clip, fit
+or follow the photo, and moving the photo does not move it.
+
+ORDER.  The two are added at the END of Cut paper, so the family goes from nine pieces to
+eleven and its grid gains one row.  No existing tile moves, and none changes colour, tilt
+or name.  The other three families are untouched.
+
+RESIZE.  Both stretch freely: the handles set width and height independently, as they do
+for every piece today, and the band stretches with the box.  There is no border-preserving
+scaling.  Stretching Round window gives an oval window; that is a use, not a fault.
+Both land at the Cut paper size (45% of the page width, square), like their family.
+Neither has a landing size of its own.  No opacity: ink only.
+
+TAP-THROUGH.  Both have a hole, so both join the pieces A27 names: a tap on the ink selects
+the frame, and a tap in the hole reaches what is underneath.  That makes eight.  A27's own
+text says "six" and is left as the record of its date; A27's status is not changed here.
+The live comment on `.tile svg` (:479-480) is corrected in place, within its two lines.
+
+NOT YET BUILT, STATED RATHER THAN HIDDEN.  The app's catalogue and its names still hold
+thirty-two pieces.  The parity test reads the literal SUP and ART_FIRST_WAVE lists above and
+counts thirty-two, so the two frames are kept in a list of their own, ART_D5_FRAMES, and
+added to the sheet when this page runs.  Until the build session authors these outlines from
+the coordinates below and extends that test to read this list, this page shows two tiles
+the app cannot place.
+
+WHAT DOES NOT CHANGE.  Every pixel of every existing tile.  The four families and their
+order.  Search, the family filters, Recent and Favourites.  How any existing piece is
+placed, resized, tinted, flipped or tapped.
+=========================================================================== -->
+<script>
+const ART_D5_FRAMES=[
+  ['Cut paper','paper.border','Snipped border','<path d="M0.3 0.6 L8.5 0 L16 0.5 L23.6 0.2 L24 7.5 L23.5 15 L23.9 23.5 L15.5 24 L7 23.6 L0.5 23.9 L0 16.5 L0.4 8 Z M2.4 2.6 L9 2.2 L16.5 2.5 L21.7 2.3 L21.9 8 L21.5 15.5 L21.8 21.6 L15 21.9 L7.5 21.6 L2.5 21.8 L2.2 16 L2.5 8.5 Z"/>'],
+  ['Cut paper','paper.round','Round window','<path d="M0 0.5 L23.6 0 L24 23.4 L0.6 24 Z M20 12.2 L19.2 15.5 L17.4 17.9 L14.6 19.6 L11.6 19.9 L6.1 17.3 L4.4 14.6 L4.1 11.6 L4.8 8.6 L6.6 6.1 L9.4 4.6 L12.4 4.1 L17.8 6.5 L19.4 9.1 Z"/>']
+];
+const ART_D5_TAGS={
+  'paper.border':'border frame thin edge scissors outline',
+  'paper.round':'round window hole circle frame porthole cutout'
+};
+ART_FIRST_WAVE.push(...ART_D5_FRAMES);
+Object.assign(ART_TAGS,ART_D5_TAGS);
 </script>
