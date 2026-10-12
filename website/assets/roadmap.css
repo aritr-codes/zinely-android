@@ -284,22 +284,126 @@
   }
 }
 
-/* Wide screens: the title of the sheet sits beside its rows instead of above them. */
-@media (min-width: 1040px) {
-  .roadmap-page .roadmap-group {
-    display: grid;
-    grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
-    grid-template-rows: auto auto auto 1fr;
-    column-gap: 34px;
+/* Each sheet folds. A closed sheet still shows its title and a tally of what is on it, so nothing about
+   status is hidden behind the tap. Native <details>: it works with no script and a keyboard. */
+.roadmap-page .roadmap-group summary {
+  display: grid;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.roadmap-page .roadmap-group summary::-webkit-details-marker {
+  display: none;
+}
+
+.roadmap-page .roadmap-group summary:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 6px;
+}
+
+.roadmap-page .roadmap-group summary h2 {
+  margin: 0;
+}
+
+.roadmap-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+
+.roadmap-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-height: 44px;
+  padding: 6px 14px 6px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 5px 9px 4px 8px;
+  background: var(--paper);
+  box-shadow: 2px 3px 0 var(--ink);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.roadmap-toggle::before {
+  width: 1.1em;
+  content: "+";
+  font-size: 1.3rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.roadmap-page details[open] .roadmap-toggle::before {
+  transform: rotate(45deg);
+}
+
+.roadmap-toggle .when-open,
+.roadmap-page details[open] .roadmap-toggle .when-closed {
+  display: none;
+}
+
+.roadmap-page details[open] .roadmap-toggle .when-open {
+  display: inline;
+}
+
+.roadmap-page details[open] > .roadmap-items {
+  margin-top: 16px;
+  border-top: 2px solid var(--ink);
+}
+
+@media (min-width: 700px) {
+  .roadmap-page .roadmap-group summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 10px 24px;
   }
 
-  .roadmap-page .roadmap-group > * {
-    grid-column: 1;
+  .roadmap-sheet-head {
+    grid-row: 1 / span 2;
   }
 
-  .roadmap-page .roadmap-items {
-    grid-column: 2;
-    grid-row: 1 / -1;
+  .roadmap-tally,
+  .roadmap-toggle {
+    justify-self: end;
+  }
+
+  .roadmap-tally {
+    justify-content: flex-end;
+    margin-right: 110px;
+  }
+}
+
+/* The sheet unfolds rather than jumps, where the browser can animate to a natural height. Elsewhere it
+   simply opens. */
+@supports selector(::details-content) {
+  .roadmap-page {
+    interpolate-size: allow-keywords;
+  }
+
+  .roadmap-page .roadmap-group details::details-content {
+    block-size: 0;
+    overflow: clip;
+    opacity: 0;
+    transition: block-size 380ms cubic-bezier(.2, .7, .2, 1), opacity 260ms ease, content-visibility 380ms allow-discrete;
+  }
+
+  .roadmap-page .roadmap-group details[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+
+  .roadmap-toggle::before {
+    transition: transform 260ms ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roadmap-page .roadmap-group details::details-content,
+  .roadmap-toggle::before {
+    transition: none;
   }
 }
 
@@ -434,6 +538,16 @@
   .roadmap-page .roadmap-group {
     filter: none;
     border: 1px solid #27270f;
+  }
+
+  .roadmap-toggle {
+    display: none;
+  }
+
+  .roadmap-page .roadmap-group details::details-content {
+    block-size: auto;
+    opacity: 1;
+    content-visibility: visible;
   }
 
   .roadmap-heading {

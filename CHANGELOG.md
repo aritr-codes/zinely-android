@@ -28,7 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([`v21-bench.html` A32](docs/design/mockups/v21-bench.html), [ADR-124](docs/DECISIONS.md#adr-124)).
 - The public roadmap page is rebuilt phone first as ledger sheets: one torn-off, taped sheet of ruled paper per
   area, each item a row with its status as a rubber stamp (in a ruled margin on tablets and wider), in place of
-  three tilted columns of unequal length. A short "On this page" row jumps to each section. Small labels are
+  three tilted columns of unequal length. Each sheet folds: closed, it shows its title and a count of each
+  status on it; a tap unfolds the rows. A short "On this page" row jumps to each section. Small labels are
   at least 12 px. On every page the header and footer links are now finger-sized (44 px), which only the
   homepage had. No roadmap wording changed.
 - The roadmap and the public roadmap page say more plainly where things stand: which shipped features are
