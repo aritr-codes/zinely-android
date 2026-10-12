@@ -381,7 +381,7 @@ accepted the implementation ([ADR-115 Acceptance](../DECISIONS.md#adr-115-accept
 **What changed on 2026-09-26 (owner rulings), and why:** step 1b is scheduled in wave 1 with skip-and-list;
 the late "Backup cancelled." joined step 1; the fold study no longer gates D2 or D5; D2 no longer depends on
 v4 (no bump); a docs-only freeze step Q4-F precedes D2; D5 starts with two frames and waits for the owner's
-visual approval. **No step changed position.**
+visual approval (given 2026-10-12). **No step changed position.**
 
 **What changed from the earlier order, and why:**
 - **D1 moved ahead of D4-A1.** The D1 audit found concrete misleading states on the backup sheet, and every

@@ -23,7 +23,7 @@ the resulting sequence and per-step readiness are in the [plan §5 and §11](ZIN
 | [Q3](#q3-tap-through-hit-testing-how-far-it-reaches) | Tap-through reach | **Six holed pieces**, outline hit test; crop marks excluded | Step 4; D5 |
 | [Q4](#q4-typebar--reframe-specs-o10) | Typebar / Reframe status | **Freeze both** (TypeBar after its correction; Reframe as shipped) | Step Q4-F; D2's route |
 | [Q5](#q5-fold-study-before-creative-work-o14) | Fold study order | **Run now**, with the print study; **not a gate** on D2/D5 | Proof fold-caption fixes |
-| [Q6](#q6-frames-o9--stretch) | Frames | **Two** hand-cut frames, no nine-slice, per-piece resize; names/visuals await owner | Step 9 (D5) |
+| [Q6](#q6-frames-o9--stretch) | Frames | **Two** hand-cut frames, no nine-slice, per-piece resize; the two were chosen 2026-10-12 | Step 9 (D5) |
 | [Q7](#q7-print-o13--d3-stage-2) | Print guidance | **Design now, ship after the print study**; "100 %" only when the print app offers scale | Step 5 (D3) |
 | [Q8](#q8-the-next-release-and-the-backuprestore-defects) | Next release; backup/restore defects | **Wave 1 on v3 before v4**; 1b restore honesty + **skip-and-list** in wave 1 (a poisoned or unreadable photo too — supplementary ruling) | Steps 1, 1b, release, 6 |
 
@@ -183,7 +183,8 @@ the resulting sequence and per-step readiness are in the [plan §5 and §11](ZIN
   override is an owner ruling on SUPPLIES-SPEC §5.2, not delegated.
 - **Still the owner's:** the two frames' **names, visuals, set membership and order**, via the `v21-bench.html`
   Art-set amendment; and a per-supply landing override, only if a frame needs one.
-- **Chosen (owner, 2026-10-12):** two of six drawn candidates, with their names, order and resize. Recorded in
+- **Chosen (owner, 2026-10-12):** shown six drawn candidates and asked which two, their names, order and resize, the
+  owner accepted the implementer's recommendation on all four ("Go with your choices"). Recorded in
   [`v21-bench.html` A32](../design/mockups/v21-bench.html); neither needs a landing override.
 
 ## Q7. Print (O13 + D3 stage 2)
@@ -287,7 +288,7 @@ These are still **owner** decisions. They are just not needed yet.
 
 | Date | Change |
 |---|---|
-| 2026-10-12 | Q6: **the owner chose the two frames** from six drawn candidates. Frozen as `v21-bench.html` A32; the delegated resize list is recorded in D-100. |
+| 2026-10-12 | Q6: **the owner accepted the recommended two frames** from six drawn candidates. Frozen as `v21-bench.html` A32; the delegated resize list is recorded in D-100. |
 | 2026-10-08 | Q2: **the owner approved the type-bar amendment A29** (all twelve recommendations) and left the last decision to the implementer after one more research pass (RESEARCH R24). A29 frozen; V-12 changed to "Font changed" / "Font put back" (`v21-bench.html` A30); V-6 and V-10 sharpened. |
 | 2026-10-08 | Q2: **the owner ruled Book's minimum print size, 12 pt**, on the recommendation in RESEARCH R23 and to be confirmed on the printed page, which is not printed yet. |
 | 2026-10-06 | Q4 carried out in part (plan step Q4-F): `v21-typebar.html` and `v21-reframe.html` frozen; the divergences found are listed in each file and returned to the owner, whose rulings on them are still owed. |

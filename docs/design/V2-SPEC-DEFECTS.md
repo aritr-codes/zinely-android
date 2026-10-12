@@ -6723,7 +6723,8 @@ the rule at all. The owner ruled on 2026-09-26 that resize behaviour is **decide
 a recommendation in [Brief 05](../planning/BRIEF-05-MATERIALS-FRAMES.md#frames-d5); the implementation
 session finalises it and records it here.
 
-#### ✓ RULING — 2026-10-12: the per-piece resize list {#d-100-ruling}
+<a id="d-100-ruling"></a>
+#### ✓ RULING — 2026-10-12: the per-piece resize list
 
 *Ruled by the implementer under the owner's delegation of 2026-09-26
 ([decision gate Q6](../planning/ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch)), in the step 9 design session.*
@@ -6741,7 +6742,7 @@ and §4.3.5 agree, and this ruling keeps them. The ring follows the circle: both
 the maker reshapes. The eyelet has the ring's outline and is locked all the same, because an eyelet is an
 object and an oval one is not an eyelet.
 
-**The two frames stretch freely** (owner, 2026-10-12, with the frames themselves:
+**The two frames stretch freely** (the implementer's recommendation, accepted by the owner on 2026-10-12 with the frames themselves:
 [`v21-bench.html` A32](mockups/v21-bench.html)). There is no border-preserving scaling.
 
 ⚠ **The lock is not built, and this ruling does not build it.** It changes how the handles of five shipped

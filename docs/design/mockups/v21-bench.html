@@ -2554,11 +2554,17 @@ SPECIFIED, NOT YET BUILT.  Two hand-cut frames join Cut paper.
 
 THE RULING.  The owner was shown six candidates, each drawn as a tile, over a photo, over
 words, in several inks, stretched and at print scale (experiments/v21-bench-d5-frames.html),
-and chose two, with these names, this order and this resize behaviour:
+and was asked which two, their names, their order and their resize.  The owner accepted the
+implementer's recommendation on all four ("Go with your choices"):
 
-    id             name             family      place                    search tags
-    paper.border   Snipped border   Cut paper   after Folded corner      border frame thin edge scissors outline
-    paper.round    Round window     Cut paper   after Snipped border     round window hole circle frame porthole cutout
+    name             family      place
+    Snipped border   Cut paper   after Folded corner
+    Round window     Cut paper   after Snipped border
+
+DRAFTED BY THE IMPLEMENTER, NOT RULED.  The ids and the search tags:
+
+    paper.border   border frame thin edge scissors outline
+    paper.round    round window hole circle frame porthole cutout
 
 WHAT THEY ARE.  Each is a piece of paper with a hole cut in it, in one ink.  Snipped border
 is a thin border cut with scissors, three straight snips to a side.  Round window is a
@@ -2571,7 +2577,8 @@ A frame is laid over a photo or words like any other piece.  It does not hold, c
 or follow the photo, and moving the photo does not move it.
 
 ORDER.  The two are added at the END of Cut paper, so the family goes from nine pieces to
-eleven and its grid gains one row.  No existing tile moves, and none changes colour, tilt
+eleven and its grid gains one row.  The sheet's two counts follow: Cut paper reads
+"11 pieces" and the whole box 34.  No existing tile moves, and none changes colour, tilt
 or name.  The other three families are untouched.
 
 RESIZE.  Both stretch freely: the handles set width and height independently, as they do
@@ -2585,8 +2592,16 @@ the frame, and a tap in the hole reaches what is underneath.  That makes eight. 
 text says "six" and is left as the record of its date; A27's status is not changed here.
 The live comment on `.tile svg` (:479-480) is corrected in place, within its two lines.
 
-NOT YET BUILT, STATED RATHER THAN HIDDEN.  The app's catalogue and its names still hold
-thirty-two pieces.  The parity test reads the literal SUP and ART_FIRST_WAVE lists above and
+A27'S KNOWN LIMIT APPLIES, AND SNIPPED BORDER IS THE CASE IT DESCRIBES.  Over a photo a
+band is only as wide as it is drawn.  Snipped border's band is about 8% of its box, about
+8pt on paper at the size it lands, and thinner than a fingertip on a phone.  Whether it is
+hard to pick back up is a question for the first-time device pass; if it is, the remedy is
+a new owner ruling, as A27 says.  Nothing here has been tried on a phone or printed.
+
+NOT YET BUILT, STATED RATHER THAN HIDDEN.  This is the one place in this file where the
+HTML is the source of a tile and the catalogue is owed: openArt's note (:875-879) says every
+`d` is generated from SupplyCatalog and that a drift goes red, and for these two neither is
+true yet.  The app's catalogue and its names still hold thirty-two pieces.  The parity test reads the literal SUP and ART_FIRST_WAVE lists above and
 counts thirty-two, so the two frames are kept in a list of their own, ART_D5_FRAMES, and
 added to the sheet when this page runs.  Until the build session authors these outlines from
 the coordinates below and extends that test to read this list, this page shows two tiles
