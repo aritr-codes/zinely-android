@@ -14552,9 +14552,10 @@ cross's bare paper surprise them?
   of its box: 7.6 pt on paper, about 12 dp on screen and about 10 dp once the page shrinks for a selection.**
   Over a photo there is no tolerance, as this ADR's *Consequences* says: a tap 2 dp inside the hole took the
   photo. Stretched to 60 by 160 pt its side bands are about 4.8 pt. It was picked up by its band every time by
-  a scripted tap, which says nothing about a finger. **Not checked:** whether a selected Snipped border can be
-  moved by its band or only resized (the observation below; the phone was disconnected before this was tried),
-  a printed page, the TalkBack listen, and the owner's own first-time pass.
+  a scripted tap, which says nothing about a finger. Once selected over a photo it **moved** when dragged by its
+  band away from a handle, and also when dragged from inside its hole; the photo stayed put both times. On a
+  handle the drag resizes, as the observation below says. **Not checked:** a printed page, the TalkBack listen,
+  and the owner's own first-time pass.
 - **Still owed before this ADR can be Accepted** (tracked in [OWNER-CHECKLIST](OWNER-CHECKLIST.md)): the owner's
   TalkBack listen (deferred by the owner on 2026-10-06, not waived) and the freeze of A27. Two
   observations from the device are recorded for those passes and changed nothing here: a selected thin piece
