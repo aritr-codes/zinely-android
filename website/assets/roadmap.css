@@ -71,6 +71,7 @@
 
 /* One lane per horizon: the same card, the same grid, a colour band to tell them apart. */
 .roadmap-page .roadmap-group {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 210px) minmax(0, 1fr);
   grid-template-rows: auto auto auto 1fr;
@@ -79,22 +80,48 @@
   padding: 26px 26px 26px 30px;
   border: 2px solid var(--ink);
   border-left-width: 12px;
-  border-radius: 6px 16px 16px 6px;
+  border-radius: 4px 18px 14px 6px;
   background: #fffdf5;
   box-shadow: 5px 6px 0 var(--ink);
   transform: none;
 }
 
-.roadmap-page .roadmap-group.foundation {
-  border-left-color: #6f7d3c;
+/* A strip of tape holds each sheet down. Same place on every sheet; only the colour and lean differ. */
+.roadmap-page .roadmap-group::before {
+  position: absolute;
+  top: -15px;
+  right: 54px;
+  width: 112px;
+  height: 28px;
+  border: 1px solid rgba(106, 69, 47, 0.22);
+  background: rgba(246, 178, 44, 0.72);
+  content: "";
+  transform: rotate(-2.5deg);
 }
 
-.roadmap-page .roadmap-group.craft {
-  border-left-color: #f6b22c;
+.roadmap-page .roadmap-group.craft::before {
+  background: rgba(242, 136, 146, 0.7);
+  transform: rotate(2deg);
 }
 
-.roadmap-page .roadmap-group.proof {
-  border-left-color: var(--accent);
+.roadmap-page .roadmap-group.proof::before {
+  background: rgba(150, 170, 80, 0.7);
+  transform: rotate(-1.5deg);
+}
+
+/* A wobbly pen line under the sheet's title; it follows the words, however they wrap. */
+.roadmap-page .roadmap-group h2 {
+  line-height: 1.5;
+  text-decoration: underline wavy #f6b22c 3px;
+  text-underline-offset: 6px;
+}
+
+.roadmap-page .roadmap-group.foundation h2 {
+  text-decoration-color: #6f7d3c;
+}
+
+.roadmap-page .roadmap-group.proof h2 {
+  text-decoration-color: var(--accent);
 }
 
 .roadmap-page .roadmap-group > * {
@@ -141,8 +168,8 @@
 
 .roadmap-key dl {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
-  gap: 12px 24px;
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+  gap: 14px 20px;
   margin: 0;
 }
 
@@ -167,16 +194,30 @@
   margin: 0;
   padding: 14px 16px 16px;
   border: 1.5px solid var(--ink);
-  border-radius: 10px;
+  border-radius: 3px 12px 5px 10px;
   background: var(--paper);
+  box-shadow: 3px 3px 0 rgba(39, 39, 15, 0.82);
   font-size: 0.95rem;
   line-height: 1.5;
+  transform: rotate(-0.5deg);
+}
+
+/* Slips are cut by hand and laid down not quite straight. The grid under them stays square. */
+.roadmap-page .roadmap-items li:nth-child(2n) {
+  border-radius: 11px 4px 12px 4px;
+  transform: rotate(0.45deg);
+}
+
+.roadmap-page .roadmap-items li:nth-child(3n) {
+  border-radius: 5px 10px 3px 13px;
+  transform: rotate(-0.25deg);
 }
 
 /* The label sits on its own line, so every card starts the same way. */
 .roadmap-page .roadmap-items .status-chip {
   display: table;
   margin: 0 0 8px;
+  transform: rotate(-1.5deg);
 }
 
 .roadmap-never {
@@ -278,6 +319,12 @@
     margin-top: 36px;
   }
 
+  .roadmap-page .roadmap-items li,
+  .roadmap-page .roadmap-items li:nth-child(2n),
+  .roadmap-page .roadmap-items li:nth-child(3n) {
+    transform: none;
+  }
+
   .roadmap-board::after {
     display: none;
   }
@@ -306,8 +353,14 @@
   }
 
   .roadmap-board::before,
-  .roadmap-board::after {
+  .roadmap-board::after,
+  .roadmap-page .roadmap-group::before {
     display: none;
+  }
+
+  .roadmap-page .roadmap-items li {
+    box-shadow: none;
+    transform: none !important;
   }
 
   .roadmap-heading {
