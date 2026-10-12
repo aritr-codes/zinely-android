@@ -354,9 +354,11 @@
   border-top: 2px solid var(--ink);
 }
 
-@media (min-width: 700px) {
+/* Title beside tally only where both fit: the title keeps a floor and the tally wraps, so the title can never
+   be squeezed to nothing (it was, from 700 to 960 px, before this floor). In em, so larger text stacks sooner. */
+@media (min-width: 65em) {
   .roadmap-page .roadmap-group summary {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(16rem, 1fr) minmax(0, auto);
     align-items: end;
     gap: 10px 24px;
   }

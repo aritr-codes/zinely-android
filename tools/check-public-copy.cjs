@@ -42,7 +42,9 @@ assert.match(siteStyles, /Phase 2 shared workbench story/);
 assert.match(roadmap, /assets\/roadmap\.css/);
 for (const horizon of ['Foundation', 'Craft', 'Proof']) assert.ok(roadmap.includes(`class="press-zone">${horizon}</span>`), `Roadmap horizon ${horizon}`);
 // A folded sheet shows a tally of its statuses; the tally must match the rows it stands for.
-for (const [, sheet] of roadmap.matchAll(/<details>([\s\S]*?)<\/details>/g)) {
+const sheets = [...roadmap.matchAll(/<details[^>]*>([\s\S]*?)<\/details>/g)];
+assert.equal(sheets.length, 3, 'Roadmap has three folding sheets to check');
+for (const [, sheet] of sheets) {
   for (const [, status, count] of sheet.matchAll(/<span class="status-chip (\w+)">(\d+) /g)) {
     assert.equal(sheet.split(`<li><span class="status-chip ${status}">`).length - 1, Number(count), `Roadmap tally for ${status} matches its rows`);
   }
