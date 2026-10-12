@@ -33,8 +33,8 @@ Those steps shipped in beta.6 on 2026-10-06.
 ### In development — started (designing, building or testing), not in the public download
 
 - **Two hand-cut frames** (plan step 9): Snipped border and Round window, at the end of Cut paper. Design frozen
-  2026-10-12 ([`v21-bench.html` A32](design/mockups/v21-bench.html)); built on branch `feat/d5-frames` (`d910d38`),
-  under review, not merged and in no released APK. Whether the thin Snipped border can be picked back up over a
+  2026-10-12 ([`v21-bench.html` A32](design/mockups/v21-bench.html)); built and merged to `main` on the owner's instruction 2026-10-12 (PR #119, `7f8980a`),
+  not accepted and in no released APK. Whether the thin Snipped border can be picked back up over a
   photo is the open question for the owner's first-time pass: its band measured about 10 to 12 dp wide on the
   reference phone, with no forgiveness over a photo ([ADR-124](DECISIONS.md#adr-124), *Review*).
 
@@ -103,7 +103,7 @@ changelog, not in the feature backlog. No app feedback screen or SDK is planned.
 **Parked, not next:** Art cold-entry precomposition (latest trace did not justify a safe local change), image
 garbage collection (import/undo/recovery safety prerequisites), shelf search/sort (owner previously removed them;
 needs real-library evidence), extra formats and new menus. Catalogue expansion stays under evaluation
-above; document voices shipped in beta.7 and two frames are *In development* (built on a branch, under review), with no date. Other parked work can be reconsidered
+above; document voices shipped in beta.7 and two frames are *In development* (merged, not accepted, in no released APK), with no date. Other parked work can be reconsidered
 when a concrete user problem warrants it; the app is not declared final.
 
 <a id="creative-tools-assessment"></a>
@@ -368,6 +368,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-12 | **Two frames merged, not accepted.** PR #119 merged as `7f8980a` on the owner's instruction after three independent reviews (GO WITH FIXES twice, reconciled; then GO). Owed before acceptance: the owner's first-time pass, TalkBack listen and one printed page. In no released APK; no public copy changed. | [Brief 05](planning/BRIEF-05-MATERIALS-FRAMES.md) · [ADR-107](DECISIONS.md#adr-107) · [ADR-124](DECISIONS.md#adr-124) |
 | 2026-10-12 | **Two frames: built, under review.** Snipped border and Round window are implemented from A32's coordinates on branch `feat/d5-frames` (`d910d38`); the Art sheet holds 34 pieces and tap-through names eight. Not merged, not accepted, in no APK; no public copy changed. | [Brief 05](planning/BRIEF-05-MATERIALS-FRAMES.md) · [ADR-107](DECISIONS.md#adr-107) · [ADR-124](DECISIONS.md#adr-124) |
 | 2026-10-12 | **Two frames: design frozen.** The owner chose two hand-cut frames from six drawn candidates; `v21-bench.html` A32 records them. Frames move from Planned to In development. Nothing is built; no public copy changed. | [gate Q6](planning/ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch) · [ADR-107](DECISIONS.md#adr-107) R1a |
 | 2026-10-11 | **beta.7 released** (tag `v0.9.0-beta.7`, merge `95d64ae`): Shelf folders and document voices leave In development; the public website offers beta.7. Both ship with their implementation not accepted ([ADR-125](DECISIONS.md#adr-125), [ADR-126](DECISIONS.md#adr-126) Proposed). No scope change. | [tester package](releases/0.9.0-beta.7.md) |
