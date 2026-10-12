@@ -226,7 +226,8 @@ Complexity is relative (S / M / L), including the HTML-first pipeline.
   frames are withdrawn (ADR-107 R3).
 - **Ruled 2026-09-26 ([Q6](ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch)):** start with **two** frames,
   hand-cut in character, no nine-slice, resize behaviour decided per piece, after the hit test. Their names
-  and visuals are the **owner's visual approval**, not yet given.
+  and visuals are the **owner's visual approval**, given 2026-10-12 and frozen as
+  [`v21-bench.html` A32](../design/mockups/v21-bench.html).
 - **Dependencies:**
   - the hole-aware hit test (step 4);
   - a `v21-bench.html` Art-set amendment (ADR-107 R1a) drawn for that approval;
@@ -354,7 +355,7 @@ flowchart TB
 | **7 · D4-B alt text** | Photos become describable to a blind reader, but only in Read on the maker's phone: `PdfDocument` has no alt-text API, so printed and exported zines gain nothing. It needs a Read-semantics design first, because Read mode speaks nothing from the page today | A reader's edition, later | D2 |
 | **Q4-F · Freeze `v21-typebar` + `v21-reframe`** (docs/design only; any time before step 8) | Ruled by [Q4](ZINELY-1X-DECISION-GATE.md#q4-typebar--reframe-specs-o10). Spec: (1) apply the correction `TypeBar.kt:600-603` records — the `.tysize` −/+ step buttons use the `<svg>` glyph of the `.zoom` buttons they cite, not a text glyph with `font-family`/`font-size`/`font-weight`; (2) check each file against the shipped `TypeBar.kt` / `ReframeControls.kt`: Reframe resolves any divergence **toward shipped behaviour** (it freezes *as shipped*, including its 2026-08-15 amendment); a TypeBar divergence beyond the recorded correction is **reported to the owner**, not resolved silently; (3) correct `v21-typebar.html`'s stale header line "Three items need a device before it can be frozen" (its closing caption records those measurements as closed, 2026-08-15 / 2026-08-29); (4) flip both headers to "❄️ DESIGN FROZEN — <date>", citing the ruling; (5) mark ZINE-DIRECTION N2 done. **Scope line (final planning audit):** the file's recorded owner-open questions — how the panel closes, and the "Coral" swatch name — plus its recorded Teal `#2A9D8F` text-contrast failure **stay open under the frozen header**, listed as open; the implementer must not resolve them, and any other TypeBar divergence between the frozen spec and shipped behaviour comes back to the owner. **Must not:** change Compose or `Copy`, rename Coral, change Teal `#2A9D8F`, or change how the panel closes. Reviewed like any HTML amendment | Step 8's type-bar amendment | Everything else |
 | **8 · D2 voices: Book + Plain** | Ruled by [Q2](ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8): two voices, no schema bump. The most visible creative gain. [Brief 02](BRIEF-02-THREE-VOICES.md) is rewritten, the four Fraunces document faces are fetched and measured (2026-10-06), and the Font row is approved and frozen (A29, 2026-10-08). Still open: the printed page that confirms the 12 pt minimum ruled on 2026-10-08, and the [brief's in-session gates](BRIEF-02-THREE-VOICES.md#gates). After PR #70 and Q4-F | — | D4-B, v4 (🟦 it may run before step 6 if its prerequisites clear first) |
-| **9 · D5 frames: two, hand-cut** | Ruled by [Q6](ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch). Last, because it needs step 4 and the **owner's visual approval** of the two frames (names and look), drawn in the `v21-bench.html` Art-set amendment. Frames are content work (drawn outlines) on top of fixed mechanics | The Art backlog | Schema (frames are decor), the fold study |
+| **9 · D5 frames: two, hand-cut** | Ruled by [Q6](ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch). Last, because it needs step 4 and the **owner's visual approval** of the two frames (names and look), drawn in the `v21-bench.html` Art-set amendment (approved 2026-10-12, A32). Frames are content work (drawn outlines) on top of fixed mechanics | The Art backlog | Schema (frames are decor), the fold study |
 
 **PR #70 acceptance before steps 3, 4 and 8** (added 2026-09-25 by the final planning review; the owner
 confirmed on 2026-09-26 that it remains a separate prerequisite; the removal is already approved, so this is
@@ -380,7 +381,7 @@ accepted the implementation ([ADR-115 Acceptance](../DECISIONS.md#adr-115-accept
 **What changed on 2026-09-26 (owner rulings), and why:** step 1b is scheduled in wave 1 with skip-and-list;
 the late "Backup cancelled." joined step 1; the fold study no longer gates D2 or D5; D2 no longer depends on
 v4 (no bump); a docs-only freeze step Q4-F precedes D2; D5 starts with two frames and waits for the owner's
-visual approval. **No step changed position.**
+visual approval (given 2026-10-12). **No step changed position.**
 
 **What changed from the earlier order, and why:**
 - **D1 moved ahead of D4-A1.** The D1 audit found concrete misleading states on the backup sheet, and every
@@ -545,7 +546,7 @@ restore-honesty defects** ([Q8](ZINELY-1X-DECISION-GATE.md#q8-the-next-release-a
 | **Release wave 1** | ✅ **RELEASED 2026-10-06** as `0.9.0-beta.6` (versionCode 11, tag `v0.9.0-beta.6`, merge `41b4399`) | Nothing. Shipped with step 4 not accepted; the TalkBack listen on tap-through is listed as not verified ([tester package](../releases/0.9.0-beta.6.md)) |
 | **6 · v4** / **7 · alt text** | ⏳ | Wave 1 released; step 7 also needs a Read-semantics design and the Describe amendment |
 | **8 · D2 voices** | 🟡 **built and merged to `main` on 2026-10-09 on the owner's instruction (PR #108, with the draft line-spacing fix PR #110); shipped in `0.9.0-beta.7` on 2026-10-11; not accepted.** Run in the session: the older-build test (passed; an italic paragraph that just fitted loses its last line on the older build), an Android 7 emulator check, APK +254,135 bytes, phone Pass 1. Owed: the printed page, a TalkBack listen, the owner's first-time pass, goldens recorded on CI, the owner's word on V-12, V-6 and V-10, [ADR-126](../DECISIONS.md#adr-126) accepted. Record: [dated note](../reviews/2026-10-09-document-voices-older-build-and-device.md). *Before the build:* ready to build (since 2026-10-08, on the reading at the top of Brief 02) | Prepared on 2026-10-06 and merged on 2026-10-07 (PR #99): Brief 02 rewritten, the four Fraunces faces fetched from upstream and measured, both procedures written. Closed on 2026-10-08: the owner's minimum print size (12 pt, to be confirmed on the printed page) and the owner's approval of the row drawn in the type bar (frozen as A29). Still open, per the [brief's gates](BRIEF-02-THREE-VOICES.md#gates): the printed page; the older-build fallback test (run inside the session); [ADR-126](../DECISIONS.md#adr-126) accepted (it is Proposed). (The Q4-F freeze was made on 2026-10-06; the owner's rulings on what it returned are still owed.) Listed publicly as In development (design stage) on the owner's 2026-10-06 instruction |
-| **9 · D5 frames** | ⛔ blocked | Step 4 merged; the owner's visual approval of two frames |
+| **9 · D5 frames** | 🟢 **ready to build** (since 2026-10-12); nothing built | Met: step 4 merged (PR #92); the owner chose the two frames on 2026-10-12, frozen as [`v21-bench.html` A32](../design/mockups/v21-bench.html) (specified, not yet built); the resize list is in [D-100](../design/V2-SPEC-DEFECTS.md#d-100-ruling). Readiness detail: [Brief 05](BRIEF-05-MATERIALS-FRAMES.md) |
 | **D1 part 2** | ⛔ blocked | A completed two-phone restore procedure, then the pass itself |
 
 🟦 **Wave-1 risk:** the release waits on step 4, which is merged but not accepted. If its acceptance stalls,
@@ -557,8 +558,8 @@ rulings):
 1. **Approve each drawn HTML amendment:** `backup-restore.html` (1a), `v21-bench.html` undo snack (step 3),
    `v21-bench.html` tap-through note (step 4), `v21-proof.html` Print step (step 5, after the study), the D5
    Art-set amendment (step 9).
-2. **The two frames' names, visuals, set membership and order** (Q6; ADR-107 R1a); a per-supply landing
-   override only if a frame needs one (SUPPLIES-SPEC §5.2).
+2. ~~**The two frames' names, visuals, set membership and order**~~ Ruled 2026-10-12 (Q6; ADR-107 R1a); recorded in
+   `v21-bench.html` A32. Neither frame needs a landing override.
 3. ~~**Fraunces minimum print size**~~ Ruled 12 pt on 2026-10-08 (Q2), to be confirmed on the printed page.
 4. **After the print study:** whether guidance ships, a static test page, any inset change, and whether a
    render change is warranted (Q7); **after the fold study:** any reprioritisation if it finds a fundamental
@@ -596,6 +597,7 @@ rulings):
 
 | Date | Change |
 |---|---|
+| 2026-10-12 | **Step 9: the two frames are chosen and frozen; ready to build.** The owner chose two of six drawn candidates; `v21-bench.html` A32 records them (specified, not yet built). §11 row 9 and §9 item 2 updated. Nothing built. |
 | 2026-10-06 | **Step Q4-F: both files frozen; the owner's rulings on what it returned are still owed.** `v21-typebar.html` and `v21-reframe.html` are frozen. TypeBar: the recorded correction was already in the file, so no rule or markup changed; further divergences from shipped `TypeBar.kt` are listed in the file and returned to the owner. Reframe: frozen as shipped, with four small corrections toward shipped code and a list of points where shipped governs; the drawing itself was not redrawn. Left unfrozen for the owner: the rule-of-thirds grid (ZINE-DIRECTION N3 lists its deletion; ADR-102 §12.16a leaves it to the owner), letter-spacing, the pad's position, and whether the fit chips' second line is spoken. Both files draw a keyboard focus ring the app does not; that too is returned to the owner, with a recommendation to keep it and change the app (corrected 2026-10-07: this row first said it was decided). The check read code only; no device was used. `TypeBar.kt:600-603` still says the HTML needs the correction; that comment is now stale and is left for a code session. |
 | 2026-10-05 | **Step 4 contract proposed, not approved.** Readiness session on `a20df76`: [ADR-124](../DECISIONS.md#adr-124) Proposed; `v21-bench.html` A27 drawn as proposed, not frozen. No code, no branch for implementation. |
 | 2026-10-06 | **Step 4 implemented and merged, not accepted.** Built on `feat/1x-step4-tap-through`; [ADR-124](../DECISIONS.md#adr-124) stays Proposed and A27 unfrozen. The owner deferred the TalkBack listen; it and the finger-based pass are recorded as owed. |

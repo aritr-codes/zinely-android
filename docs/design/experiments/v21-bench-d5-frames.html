@@ -1,0 +1,294 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>D5 frames — candidates (decided 2026-10-12)</title>
+
+<!--
+  REVIEW PAGE, DECIDED 2026-10-12.  The owner chose B (Snipped border) and C (Round window), with the
+  names, order and resize proposed here.  The choice is frozen in mockups/v21-bench.html as A32, which is
+  the authority; this page is kept as the record of what was shown.  It was written as:
+
+  PROPOSAL — NOT FROZEN.  Review page for 1.x plan step 9 (D5 frames), Brief 05 gate 4.
+
+  Six candidate hand-cut frames for the owner to choose TWO from (decision gate Q6, 2026-09-26).
+  Nothing on this page is part of the product until the owner picks, and the pick is then drawn
+  into v21-bench.html as an appended amendment.  This page changes no frozen file and no tile.
+
+  Every outline below is authored here, from scratch, by writing coordinates on the catalogue's
+  own 24-unit grid.  No reference art was traced, opened or consulted.  Each is ONE outline: an
+  outer contour plus one inner-hole subpath, straight segments only, filled even-odd, with no
+  overlapping or self-crossing subpaths (checked by the script at the foot of this file and
+  reported in the "Checks" table).  That is the form SupplyCatalog can hold as it stands.
+
+  The photos and words on the pages are invented for this review.  The "photos" are drawings.
+-->
+<style>
+:root{--bg:#FFF6E8;--fg:#27270F;--soft:#6A452F;--line:rgba(39,39,15,.18);--card:#F2DEBC;--mark:#A9303D;--on-mark:#FFF9DB;
+  --paper:#FFF6E8;--ink:#27270F;--leaf-tint:#BBCA6F;--berry-tint:#F1B4AF;--butter-tint:#F2CFBB;--ink-line:#27270F;--pick:#555A1B}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#242312;--fg:#FFF9DB;--soft:#DAD7A0;--line:rgba(255,249,219,.18);--card:#1C1712;--mark:#FF9CA4;--on-mark:#242312;
+  --leaf-tint:#8E9546;--butter-tint:#3D3920;--ink-line:#120E0A;--pick:#BBCA6F}}
+:root[data-theme="dark"]{--bg:#242312;--fg:#FFF9DB;--soft:#DAD7A0;--line:rgba(255,249,219,.18);--card:#1C1712;--mark:#FF9CA4;--on-mark:#242312;
+  --leaf-tint:#8E9546;--butter-tint:#3D3920;--ink-line:#120E0A;--pick:#BBCA6F}
+*{box-sizing:border-box}
+body{margin:0;padding:24px 16px 72px;background:var(--bg);color:var(--fg);font:15px/1.5 Inter,system-ui,sans-serif}
+main{max-width:1180px;margin:0 auto}
+h1{font:700 1.7rem/1.2 Georgia,serif;margin:8px 0 6px}
+h2{font:700 1.3rem/1.25 Georgia,serif;margin:44px 0 6px;padding-top:18px;border-top:1.5px solid var(--line)}
+h3{font-size:.95rem;margin:18px 0 6px}
+p,li{max-width:78ch}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--mark);color:var(--on-mark);font:700 .72rem Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase}
+.muted{color:var(--soft);font-size:.9rem}
+.verdict{display:inline-block;margin-left:8px;padding:2px 9px;border-radius:999px;border:1.5px solid currentColor;font:700 .7rem Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;vertical-align:middle}
+.verdict.keep{color:var(--pick)} .verdict.cut{color:var(--mark)}
+table{border-collapse:collapse;width:100%;margin:8px 0 4px;font-size:.9rem}
+th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
+td.k{width:11em;color:var(--soft)}
+.views{display:flex;flex-wrap:wrap;gap:18px 16px;align-items:flex-end;margin:12px 0 8px;overflow-x:auto}
+figure{margin:0}
+figcaption{font-size:.76rem;color:var(--soft);margin-top:5px;max-width:240px}
+svg.pg{display:block;background:#FFF6E8;box-shadow:0 0 0 1px rgba(39,39,15,.35),3px 3px 0 rgba(39,39,15,.18)}
+svg.pg.print{background:#fff}
+/* The Art-sheet tile, copied from v21-bench.html (:469-481) so the candidates are judged as tiles. */
+.grid{display:grid;grid-template-columns:repeat(4,82px);gap:8px}
+.tile{position:relative;width:82px;aspect-ratio:1;border-radius:8px;border:1.5px solid var(--ink);
+  background:var(--leaf-tint);color:#27270F;display:grid;place-items:center;
+  transform:rotate(var(--tt,0deg));box-shadow:2px 2px 0 var(--ink-line);padding:0}
+.grid>.tile:nth-child(3n){--tt:-1.6deg;background:var(--berry-tint)}
+.grid>.tile:nth-child(4n){--tt:1.4deg;background:var(--butter-tint)}
+.tile svg{width:60%;height:60%;fill:currentColor;fill-rule:evenodd;stroke:none}
+.tile .tag{position:absolute;left:-6px;top:-8px;background:var(--mark);color:var(--on-mark);border-radius:999px;
+  font:700 .68rem Inter,sans-serif;padding:1px 7px}
+.sheet{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.pair{display:flex;gap:10px}
+.pair .tile:nth-child(2){background:var(--butter-tint);--tt:1.4deg}
+ul{padding-left:1.2em}
+code{font-size:.86em}
+@media print{body{background:#fff;color:#000} .noprint{display:none}}
+</style>
+
+<main>
+<span class="badge">Decided 2026-10-12 — B and C chosen, frozen as bench A32</span>
+<h1>Two hand-cut frames: six candidates</h1>
+<p class="muted">1.x plan step 9 (D5) · Brief 05 gate 4 · drawn 2026-10-12 on <code>main</code> @ <code>9e5b96c</code> ·
+for the owner's visual approval under decision gate Q6. The owner picks two, and rules their names, order and resize.
+<b>Outcome:</b> the owner chose B and C as proposed. The rest of this page is unchanged from what was shown.</p>
+
+<p>Each candidate is a piece of paper with a hole cut in it, drawn in one ink. It is laid over a photo or words like any
+other Art piece; it does not hold, clip or follow the photo. A tap in the hole reaches what is underneath.
+All six would sit in <b>Cut paper</b> and land at that family's size (45% of the page width, square).
+None needs a different landing size, a second outline or border-preserving scaling.</p>
+
+<h2>In the Art sheet</h2>
+<p class="muted">The Cut paper family as it ships (nine tiles), then the six candidates in the places new tiles would take.
+Only two would be added. Adding at the end moves no existing tile and changes no existing tile's colour or tilt.</p>
+<div class="sheet"><div class="grid" id="family"></div></div>
+
+<div id="cands"></div>
+
+<h2>My own critique, and what I recommend</h2>
+<div id="critique"></div>
+
+<h2>Checks</h2>
+<p class="muted">Computed in this page from the same coordinates that are drawn above.</p>
+<table id="checks"><thead><tr><th>Candidate</th><th>Subpaths</th><th>Points</th><th>Touches all four box edges</th>
+<th>No edge crosses another</th><th>Hole strictly inside</th><th>Thinnest band (of box)</th><th>Thinnest band at landing</th></tr></thead><tbody></tbody></table>
+
+<h2>What I need from you</h2>
+<ol>
+<li><b>Which two.</b></li>
+<li><b>Their names</b> (mine are proposals).</li>
+<li><b>Their order</b> in Cut paper. I recommend the end of the family, after <i>Folded corner</i>.</li>
+<li><b>Resize, per piece:</b> free stretch (my recommendation for all six) or locked to its proportions.</li>
+</ol>
+</main>
+
+<script>
+/* ---------------------------------------------------------------------------------------------
+   The outlines.  24-unit grid, +y down, clockwise.  `o` is the outer contour, `h` the hole.
+   --------------------------------------------------------------------------------------------- */
+const C=[
+ {k:'A', name:'Picture mat', tags:'mat mount frame border window knife cutout',
+  what:'A wide mount cut with a knife and no set square. Four straight cuts outside, four inside, none quite parallel.',
+  o:[[0,.8],[23.5,0],[24,23.2],[.7,24]],
+  h:[[5,5.2],[19,4.4],[19.6,18.8],[4.4,19.4]],
+  resize:'Free stretch', why:'It has to take a 4:3 or a tall photo, and its band is already uneven by design.'},
+ {k:'B', name:'Snipped border', tags:'border frame thin edge scissors outline',
+  what:'A thin border cut with scissors, three snips to a side. Each snip is straight; the side as a whole wanders.',
+  o:[[.3,.6],[8.5,0],[16,.5],[23.6,.2],[24,7.5],[23.5,15],[23.9,23.5],[15.5,24],[7,23.6],[.5,23.9],[0,16.5],[.4,8]],
+  h:[[2.4,2.6],[9,2.2],[16.5,2.5],[21.7,2.3],[21.9,8],[21.5,15.5],[21.8,21.6],[15,21.9],[7.5,21.6],[2.5,21.8],[2.2,16],[2.5,8.5]],
+  resize:'Free stretch', why:'A border is made to be pulled to the size of whatever it goes round.'},
+ {k:'C', name:'Round window', tags:'round window hole circle frame porthole cutout',
+  what:'A square of paper with a round hole cut by turning the paper against the scissors: fourteen snips, two of them long, not a compass circle.',
+  o:[[0,.5],[23.6,0],[24,23.4],[.6,24]],
+  h:[[20,12.2],[19.2,15.5],[17.4,17.9],[14.6,19.6],[11.6,19.9],[6.1,17.3],[4.4,14.6],[4.1,11.6],[4.8,8.6],[6.6,6.1],[9.4,4.6],[12.4,4.1],[17.8,6.5],[19.4,9.1]],
+  resize:'Free stretch', why:'Stretching it makes an oval window, which is a second use and not a broken one.'},
+ {k:'D', name:'Arch window', tags:'arch window frame doorway cutout',
+  what:'A hole with straight sides and an arched top, snipped in short cuts.',
+  o:[[.4,0],[24,.6],[23.5,24],[0,23.3]],
+  h:[[4.6,19.5],[4.5,11.5],[5.3,8.4],[7.2,5.9],[9.8,4.3],[12.4,3.9],[15,4.5],[17.4,6.2],[19,8.8],[19.5,11.8],[19.6,19.2]],
+  resize:'Free stretch', why:'A tall arch and a squat arch are both arches.'},
+ {k:'E', name:'Clipped frame', tags:'frame border clipped corners mat cutout',
+  what:'A frame whose four corners were snipped off by eye, each a different size.',
+  o:[[3.2,0],[20.5,.3],[24,3.8],[23.7,20.6],[20.2,24],[3.6,23.7],[0,19.8],[.3,3.4]],
+  h:[[4.8,5],[19,4.6],[19.3,19],[4.5,19.3]],
+  resize:'Free stretch', why:'The corners are uneven already, so a stretch does not break a promise.'},
+ {k:'F', name:'Offcut frame', tags:'frame scrap offcut window uneven cutout',
+  what:'A window cut into a scrap: the outside is a five-sided offcut, the inside a small neat window.',
+  o:[[1.5,0],[24,2.2],[22.4,24],[4,22.6],[0,9.5]],
+  h:[[6,6.2],[18.4,7],[17.8,18.2],[6.4,17.6]],
+  resize:'Free stretch', why:'It has no proportion to keep.'}
+];
+/* Shipped Cut paper tiles, copied from v21-bench.html (:887-888, :1747-1751) for context only. */
+const SHIPPED=[
+ ['Torn strip','M0 5.52 L1.92 4.32 L4.32 5.76 L7.44 3.84 L10.32 5.28 L13.44 4.08 L16.8 6 L20.16 4.32 L24 5.52 L24 18.24 L21.12 19.68 L18.24 18 L15.12 20.16 L11.76 18.72 L8.16 19.92 L4.8 18 L1.92 19.68 L0 18.48 Z'],
+ ['Window frame','M0 0 L24 0 L24 24 L0 24 Z M3.36 3.36 L20.64 3.36 L20.64 20.64 L3.36 20.64 Z'],
+ ['Speech tag','M0 0 L24 0 L24 14.88 L10.56 14.88 L2.4 24 L4.8 14.88 L0 14.88 Z'],
+ ['Marker underline','M0 11.04 L3.12 10.08 L6.72 11.52 L11.04 10.32 L15.36 11.28 L19.44 9.84 L24 10.8 L24 14.88 L20.88 16.08 L17.52 14.64 L13.92 16.08 L9.84 15.12 L6.24 16.32 L2.88 14.88 L0 16.08 Z'],
+ ['Ticket stub','M0 3 H24 V9 C20 9 20 15 24 15 V21 H0 V15 C4 15 4 9 0 9 Z'],
+ ['Postage stamp','M2 0 L4 2 L6 0 L8 2 L10 0 L12 2 L14 0 L16 2 L18 0 L20 2 L22 0 L24 2 L22 4 L24 6 L22 8 L24 10 L22 12 L24 14 L22 16 L24 18 L22 20 L24 22 L22 24 L20 22 L18 24 L16 22 L14 24 L12 22 L10 24 L8 22 L6 24 L4 22 L2 24 L0 22 L2 20 L0 18 L2 16 L0 14 L2 12 L0 10 L2 8 L0 6 L2 4 L0 2 Z'],
+ ['Deckle edge','M1 1 L5 0 L8 2 L12 0 L16 1 L20 0 L24 2 L23 6 L24 10 L22 14 L24 18 L23 23 L19 24 L15 22 L11 24 L7 23 L3 24 L0 21 L2 17 L0 13 L1 9 L0 5 Z'],
+ ['Torn hole','M2 4 L7 0 L12 2 L17 0 L23 5 L22 10 L24 15 L20 22 L14 21 L9 24 L3 20 L1 14 L0 9 Z M7 8 L6 13 L9 18 L14 17 L18 14 L17 9 L13 6 Z'],
+ ['Folded corner','M2 2 H17 L22 7 V22 H2 Z']
+];
+const INK={Ink:'#2A251E',Strawberry:'#E27F89',Forest:'#3E5E3A',Cornflower:'#6E86C9',Black:'#111'};
+const PW=210.5, PH=297.6, LAND=PW*.45, KEEP=17;      // page and landing size in pt; Bench keep-clear inset
+
+const poly=p=>'M'+p.map(q=>q.join(' ')).join(' L')+' Z';
+const d=c=>poly(c.o)+' '+poly(c.h);
+let uid=0;
+
+/* An invented "photo": a drawing of a harbour, or of a window sill.  Not a real photograph. */
+function photo(x,y,w,h,kind,gray){
+  const id='c'+(++uid), g=gray?' filter="url(#gray)"':'';
+  const scene=kind==='sill'
+   ? `<rect width="100" height="100" fill="#D9C7A6"/><rect x="12" y="8" width="76" height="62" fill="#9CC3D0"/>
+      <rect x="48" y="8" width="4" height="62" fill="#F3EAD7"/><rect x="12" y="37" width="76" height="4" fill="#F3EAD7"/>
+      <rect y="70" width="100" height="30" fill="#8A5A44"/><rect x="60" y="52" width="16" height="20" fill="#B0503F"/>
+      <path d="M68 52 C60 40 58 34 62 28 M68 52 C70 38 76 34 80 30 M68 52 C66 42 68 36 70 26" stroke="#3E5E3A" stroke-width="3" fill="none"/>
+      <ellipse cx="30" cy="66" rx="13" ry="7" fill="#2A251E"/><circle cx="20" cy="58" r="6" fill="#2A251E"/>
+      <path d="M15 55 L16 48 L20 53 Z M22 53 L25 47 L26 55 Z" fill="#2A251E"/>`
+   : `<rect width="100" height="100" fill="#F0C9A0"/><circle cx="72" cy="30" r="12" fill="#E7B53C"/>
+      <path d="M0 52 L22 40 L40 50 L62 36 L100 52 L100 100 L0 100 Z" fill="#7C8A3F"/>
+      <rect y="62" width="100" height="38" fill="#57B0A9"/>
+      <path d="M0 70 H100 M0 80 H100 M0 90 H100" stroke="#DDE9EE" stroke-width="1.5" stroke-dasharray="9 7"/>
+      <path d="M30 74 H58 L52 84 H35 Z" fill="#B0503F"/><path d="M44 74 V52 L57 70 H44" fill="#F7F2E7"/>
+      <rect x="12" y="30" width="6" height="24" fill="#F7F2E7"/><path d="M11 30 H19 L15 23 Z" fill="#B0503F"/>`;
+  return `<clipPath id="${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}"/></clipPath>
+   <g clip-path="url(#${id})"${g}><g transform="translate(${x} ${y}) scale(${w/100} ${h/100})">${scene}</g></g>`;
+}
+/* Invented words, as a zine page would carry them. */
+function words(x,y,w,ink){
+  const L=['THE NIGHT BUS','№ 3','','the 2.40 from the','depot is never','the 2.40. bring','a flask. sit','upstairs, left.'];
+  return L.map((t,i)=>`<text x="${x+w/2}" y="${y+i*8.8}" text-anchor="middle" font-family="${i<2?'Georgia,serif':'Courier New,monospace'}"
+    font-size="${i===0?9.5:i===1?8:6.6}" font-weight="${i<2?700:400}" fill="${ink}">${t}</text>`).join('');
+}
+const frame=(c,x,y,w,h,ink)=>`<path transform="translate(${x} ${y}) scale(${w/24} ${h/24})" d="${d(c)}" fill="${ink}" fill-rule="evenodd"/>`;
+const GRAY='<filter id="gray"><feColorMatrix type="saturate" values="0"/></filter>';
+function page(inner,scale,cls,mm){
+  const size=mm?`width="${PW/72*25.4}mm" height="${PH/72*25.4}mm"`:`width="${PW*scale}" height="${PH*scale}"`;
+  return `<svg class="pg ${cls||''}" ${size} viewBox="0 0 ${PW} ${PH}">${GRAY}${inner}</svg>`;
+}
+const keep=`<rect x="${KEEP}" y="${KEEP}" width="${PW-2*KEEP}" height="${PH-2*KEEP}" fill="none" stroke="#999" stroke-width=".4" stroke-dasharray="2 2"/>`;
+const fig=(svg,cap)=>`<figure>${svg}<figcaption>${cap}</figcaption></figure>`;
+const cx=PW/2, cy=PH/2, S=1.12;
+
+function views(c){
+  const lx=cx-LAND/2, ly=cy-LAND/2;
+  const v1=page(photo(cx-42,cy-42,84,84,'harbour')+frame(c,lx,ly,LAND,LAND,INK.Ink),S);
+  const v2=page(words(cx-34,cy-30,68,'#2A251E')+frame(c,lx,ly,LAND,LAND,INK.Strawberry),S);
+  const ww=158,wh=100,tw=92,th=140;
+  // The two stretched frames are drawn on one page: wide above, tall below.
+  const v3b=page(photo(cx-ww/2+7,22+6,ww-14,wh-12,'harbour')+frame(c,cx-ww/2,22,ww,wh,INK.Forest)
+               +photo(cx-tw/2+5,138+8,tw-10,th-16,'sill')+frame(c,cx-tw/2,138,tw,th,INK.Cornflower),S);
+  const p1=page(keep+photo(cx-42,cy-42,84,84,'harbour',true)+frame(c,lx,ly,LAND,LAND,INK.Black),1,'print',true);
+  const bw=PW-2*KEEP, bh=PH-2*KEEP;
+  const p2=page(photo(KEEP+8,KEEP+10,bw-16,bh-20,'sill',true)+frame(c,KEEP,KEEP,bw,bh,INK.Black),1,'print',true);
+  return fig(v1,'Over a photo, in Ink, at the size it lands (45% of the page width).')
+    +fig(v2,'Over words, in Strawberry, at landing size.')
+    +fig(v3b,'Stretched wide (Forest) and tall (Cornflower).')
+    +fig(p1,'Print scale: the page is drawn 74 × 105 mm, one black ink, grey photo. Dashes mark the keep-clear inset.')
+    +fig(p2,'Print scale, pulled out to the keep-clear inset as a page border.');
+}
+
+/* ---- checks ---------------------------------------------------------------------------------- */
+const edges=p=>p.map((a,i)=>[a,p[(i+1)%p.length]]);
+const orient=(a,b,c)=>Math.sign((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]));
+const cross=([a,b],[c,e])=>orient(a,b,c)*orient(a,b,e)<0&&orient(c,e,a)*orient(c,e,b)<0;
+const share=([a,b],[c,e])=>[a,b].some(p=>[c,e].some(q=>p[0]===q[0]&&p[1]===q[1]));
+function inside(pt,p){let n=false;for(const [a,b] of edges(p)){if((a[1]>pt[1])!==(b[1]>pt[1])&&pt[0]<a[0]+(pt[1]-a[1])*(b[0]-a[0])/(b[1]-a[1]))n=!n;}return n;}
+function dist(pt,[a,b]){const vx=b[0]-a[0],vy=b[1]-a[1];let t=((pt[0]-a[0])*vx+(pt[1]-a[1])*vy)/(vx*vx+vy*vy);t=Math.max(0,Math.min(1,t));return Math.hypot(pt[0]-a[0]-t*vx,pt[1]-a[1]-t*vy);}
+function check(c){
+  const all=[...edges(c.o),...edges(c.h)];
+  let clean=true;
+  for(let i=0;i<all.length;i++)for(let j=i+1;j<all.length;j++)if(!share(all[i],all[j])&&cross(all[i],all[j]))clean=false;
+  const xs=c.o.map(p=>p[0]),ys=c.o.map(p=>p[1]);
+  const spans=Math.min(...xs)===0&&Math.max(...xs)===24&&Math.min(...ys)===0&&Math.max(...ys)===24;
+  const holeIn=c.h.every(p=>inside(p,c.o));
+  let band=99;
+  for(const p of c.h)for(const e of edges(c.o))band=Math.min(band,dist(p,e));
+  for(const p of c.o)for(const e of edges(c.h))band=Math.min(band,dist(p,e));
+  return {clean,spans,holeIn,band,points:c.o.length+c.h.length};
+}
+window.CHECKS=C.map(c=>({k:c.k,name:c.name,...check(c)}));
+
+/* ---- the verdicts, written after rendering this page and looking at it ------------------------ */
+const VERDICT={A:['keep','Alternative'],B:['keep','Recommended'],C:['keep','Recommended'],D:['cut','Cut by me'],E:['cut','Cut by me'],F:['keep','Alternative']};
+const CRIT={
+ A:'Reads as cut by hand: the skew is plain at landing size and in print. Its weakness is its neighbour. Beside the shipped Window frame it is the same idea, a square with a square hole, made crooked. A maker cannot skew a piece, so it is not a strict duplicate, but it adds the least that is new. A first draft ran two knife cuts past their corners; rendered, they looked like drawing faults, not knife marks, so they are gone.',
+ B:'The strongest. Nothing shipped is a thin border, and it stays itself when stretched: wide, tall and as a page border it still reads as scissors. The risk is the first one on the brief: wobble that looks like noise. Three snips a side, each straight, is what keeps it on the right side of that; I would not add more points. Second risk: the band is thin, about 8 pt at landing size, so over a photo it is a small thing to pick back up (ADR-124 records that limit and leaves it to the device pass).',
+ C:'A different kind of piece from anything shipped: Ring is a compass circle with no paper round it, Torn hole is ripped. The two long snips stop it reading as a regular polygon. Stretched, it makes an oval window, which is useful. Weakness: it is mostly ink. At landing size the hole shows about a third of the box, so it suits a face or a detail, not a whole photo.',
+ D:'Cut. Drawn cleanly enough, but an arch brings a subject with it: over the harbour it reads as a doorway, in black as a headstone. The other five are paper with a hole; this one is a picture of something. Stretched wide it turns into a squat dome that reads as a mistake.',
+ E:'Cut. Four clipped corners read as a machine chamfer, a badge or a stop sign, however uneven I make them; it is the least hand-made of the six. It also fails at the job: a photo is a rectangle, and its corners show past the clipped corners (visible in every view here).',
+ F:'The most characterful, and the least practical. The box is much bigger than the ink, so a photo centred under it by the snap sticks out at the lower left (visible here), and the window is small. It works as a loud piece over words or over a photo the maker has already made small. An alternative if you want one frame that is plainly a scrap; not one of my two.'
+};
+
+/* ---- build ----------------------------------------------------------------------------------- */
+const tileOf=(name,path,tag)=>`<div class="tile" title="${name}" aria-label="${name}">${tag?`<span class="tag">${tag}</span>`:''}<svg viewBox="0 0 24 24"><path d="${path}"/></svg></div>`;
+document.getElementById('family').innerHTML=SHIPPED.map(([n,p])=>tileOf(n,p)).join('')+C.map(c=>tileOf(c.name,d(c),c.k)).join('');
+const yes=b=>b?'yes':'<b>NO</b>';
+document.getElementById('cands').innerHTML=C.map((c,i)=>{
+  const k=window.CHECKS[i], bandPt=k.band/24*LAND;
+  return `<section id="cand-${c.k}"><h2>${c.k} · ${c.name}<span class="verdict ${VERDICT[c.k][0]}">${VERDICT[c.k][1]}</span></h2>
+  <p>${c.what}</p>
+  <div class="views"><figure><div class="pair">${tileOf(c.name,d(c))}${tileOf(c.name,d(c))}</div><figcaption>The tile, on two of the sheet's three grounds.</figcaption></figure>${views(c)}</div>
+  <table><tbody>
+   <tr><td class="k">Proposed name</td><td><b>${c.name}</b></td></tr>
+   <tr><td class="k">Family</td><td>Cut paper</td></tr>
+   <tr><td class="k">Place in the order</td><td>At the end of Cut paper, after Folded corner</td></tr>
+   <tr><td class="k">Search tags</td><td><code>${c.tags}</code></td></tr>
+   <tr><td class="k">Resize</td><td>${c.resize}. ${c.why}</td></tr>
+   <tr><td class="k">Thinnest band</td><td>${(k.band/24*100).toFixed(1)}% of the box · ${bandPt.toFixed(1)} pt (${(bandPt/72*25.4).toFixed(1)} mm) at landing size</td></tr>
+   <tr><td class="k">My critique</td><td>${CRIT[c.k]}</td></tr>
+  </tbody></table></section>`;}).join('');
+document.querySelector('#checks tbody').innerHTML=window.CHECKS.map(k=>`<tr><td>${k.k} · ${k.name}</td><td>2</td><td>${k.points}</td>
+ <td>${yes(k.spans)}</td><td>${yes(k.clean)}</td><td>${yes(k.holeIn)}</td><td>${(k.band/24*100).toFixed(1)}%</td>
+ <td>${(k.band/24*LAND).toFixed(1)} pt · ${(k.band/24*LAND/72*25.4).toFixed(1)} mm</td></tr>`).join('');
+document.getElementById('critique').innerHTML=`
+<p><b>I recommend B (Snipped border) and C (Round window).</b> They are the two that add something the Art sheet does not have:
+a thin border, and a round hole in a sheet of paper. They also differ from each other in kind (thin band and big opening; heavy
+paper and small opening), so two tiles buy two uses. Both stay themselves when stretched, so both can be free.</p>
+<p><b>A (Picture mat)</b> and <b>F (Offcut frame)</b> survive as alternatives. A is sound but sits closest to the shipped Window frame.
+F has the most character and the most practical trouble. <b>D</b> and <b>E</b> I have cut; they are left on the page so you can overrule me.</p>
+<h3>What every candidate shares</h3>
+<ul>
+<li><b>One outline, one ink.</b> Two subpaths, straight segments, even-odd, nothing overlapping (table below). No composite, no second colour, no opacity.</li>
+<li><b>Lands at the Cut paper size,</b> 45% of the page width, square. None needs its own landing size.</li>
+<li><b>No border-preserving scaling.</b> Stretching a frame stretches its band. On hand-cut pieces that reads as more hand-cut, which is why I recommend free stretch for all six.</li>
+<li><b>Prints.</b> At landing size the piece sits well inside the keep-clear inset. The thinnest band of any candidate is about 8 pt (2.8 mm) at landing size, a solid band that photocopies. Used as a page border it must be kept inside the inset by the maker, like any other piece.</li>
+<li><b>Tap-through.</b> Each has a hole, so each would be added by name to the list of pieces a tap passes through (ADR-124).</li>
+</ul>
+<h3>Considered and not drawn</h3>
+<ul>
+<li><b>A pinked (zigzag) border.</b> It is the shipped Postage stamp with a hole, and a zigzag is regular by nature, so it would look machine-made.</li>
+<li><b>A mat with a deep bottom band.</b> It reads as an instant-photo border, which Brief 05 rules out.</li>
+<li><b>Corner pieces plus edge strips.</b> A composite; ADR-107 R3 withdrew those.</li>
+</ul>
+<h3>Limits of this page</h3>
+<ul>
+<li>The tiles are drawn with the bench's tile rule, but this is not the bench. The real sheet draws tiles from the catalogue, which does not hold these outlines yet.</li>
+<li>"Print scale" is true to size only when printed at 100%, or on a screen that maps CSS millimetres truly. Nothing here has been printed.</li>
+<li>Nothing has been tried on a phone. How easily a thin band is picked up is a device question.</li>
+<li>The names are checked only against the other Art names, not yet against the rest of the app's words (the copy test does that when the names go into code).</li>
+</ul>`;
+</script>

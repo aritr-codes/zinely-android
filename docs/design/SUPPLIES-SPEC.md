@@ -424,6 +424,8 @@ the stamp-distortion case §3.3 hand-waved. Consequences, both real:
 - A stamp or registration cross stretched non-uniformly is *wrong*, not stylish. **The editor constrains
   `mark.*` and `shape.circle` to uniform scale**; tape and cut paper stretch freely, because stretching
   tape is what tape does. This is an editor rule, not a render rule — the tape stays dumb.
+  ⚠ **Superseded 2026-10-12:** which pieces hold a uniform scale is now ruled per piece in
+  [D-100](V2-SPEC-DEFECTS.md#d-100-ruling); `shape.circle` stretches freely, and the lock is not built yet.
 - `AffineTransform2D` (`:41-63`) offers only `identity`, `translate`, `halfTurnAbout`, `rotateDeg`. **A
   `scale(sx, sy)` factory is a new addition to `:core:model`**, unlisted in the first draft's cost table.
 
