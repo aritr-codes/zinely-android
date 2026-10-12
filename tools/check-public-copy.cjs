@@ -167,8 +167,8 @@ for (const [name, html] of [['home', home], ['changelog', notes], ['download', d
 // In development items must say they cannot be tried yet.
 assert.match(roadmap, /designing, building or testing\. Not in the download yet\./);
 const inDevelopment = [...roadmap.matchAll(/<li><span class="status-chip development">In development<\/span>([\s\S]*?)<\/li>/g)];
-// Nothing is In development since beta.7, so there is no "at least one item" guard here; the two loops below
-// still hold any item that appears to "nothing to try yet".
+// The two frames are In development (merged, in no release), so at least one item must be listed.
+assert.ok(inDevelopment.length >= 1, 'Roadmap lists at least one In development item');
 assert.match(download, /not yet printed a page/, 'Book at 12 pt on paper is still owed');
 for (const [, item] of inDevelopment) assert.match(item, /nothing to try yet/, 'In development item says there is nothing to try yet');
 for (const [, item] of home.matchAll(/<span class="status-line"><span class="status-chip development">In development<\/span>([\s\S]*?)<\/span>/g)) assert.match(item, /Nothing to try yet/, 'Homepage In development item says there is nothing to try yet');

@@ -2,7 +2,7 @@
 
 > **The single source of truth for phasing.** *Every roadmap change is reflected here.* Scope detail per phase lives in [PRD.md](PRD.md); the "how" in [ARCHITECTURE.md](ARCHITECTURE.md); rationale in [DECISIONS.md](DECISIONS.md). No dates are committed yet — phases are ordered, not scheduled.
 
-- **Current priorities reviewed:** 2026-10-06. Earlier phase plans below are historical context, not a list of
+- **Current priorities reviewed:** 2026-10-12. Earlier phase plans below are historical context, not a list of
   promised or still-missing features. Use this current section for next-work decisions.
 
 <a id="current-priorities"></a>
@@ -30,6 +30,44 @@ is planned as a *wave-1* release on the current document format, before any sche
 plan's backup-honesty, accessibility and tap-through steps ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)).
 Those steps shipped in beta.6 on 2026-10-06.
 
+<a id="where-the-list-stands"></a>
+### Where the list stands, 2026-10-12
+
+**Not everything on the last list is finished.** Four built items are not accepted, and six items are not
+built. "Built" below means merged to `main`; "accepted" means the ADR says Accepted.
+
+| Item from the last list | Built | In the download | Accepted | What is still owed |
+|---|---|---|---|---|
+| Backup honesty, reading order, named undo | yes | beta.6 | yes ([ADR-119](DECISIONS.md#adr-119), [120](DECISIONS.md#adr-120), [122](DECISIONS.md#adr-122), [123](DECISIONS.md#adr-123); ADR-123 with its remaining device passes waived and recorded) | Nothing for acceptance. A restore onto a second phone is still untried (plan D1 part 2). |
+| Tap-through ([ADR-124](DECISIONS.md#adr-124)) | yes | beta.6 | **no** | Owner's TalkBack listen; freeze of bench A27. |
+| Shelf folders ([ADR-125](DECISIONS.md#adr-125)) | yes | beta.7 | **no** (design accepted) | TalkBack listen; six small owner rulings. |
+| Document voices, Book and Plain ([ADR-126](DECISIONS.md#adr-126)) | yes | beta.7 | **no** | A printed Book page at 12 pt; TalkBack listen; owner's own try and rulings. |
+| Two frames (plan step 9) | yes | **no** | **no** | Owner's first-time pass with a finger; TalkBack listen; one printed page. |
+| Print guidance (plan step 5) | no | no | no | Blocked on the print study, which has not been run. |
+| Photo descriptions (plan steps 6 and 7) | no | no | no | The v4 format step, then a Read-semantics design. Not started. |
+| Page backgrounds | no | no | no | No design. Also contradicts an older "do not build" line in [ZINE-DIRECTION](design/ZINE-DIRECTION.md) that has not been reconciled. |
+| More paper sizes | no | no | no | [ADR-016](DECISIONS.md#adr-016)'s open question comes first. Not started. |
+| Google Play | no | no | no | Owner's account verification is still blocked. |
+| Fold clarity study | no | no | no | Needs first-time makers with paper. Not run. |
+
+Most owner items in the "still owed" column are indexed in [OWNER-CHECKLIST](OWNER-CHECKLIST.md). Not yet indexed
+there: the two-phone restore pass, the page-background line in ZINE-DIRECTION, and the tester's screenshots.
+
+**Known problems in the current download (beta.7), open and unfixed:**
+
+- At the largest text size the Align row crowds and "Right" breaks across lines
+  ([#102](https://github.com/aritr-codes/zinely-android/issues/102)). The issue's second half, the unreachable
+  Colour row, was measured on beta.6 and is mended in beta.7 by the card scrolling
+  ([ADR-126](DECISIONS.md#adr-126), *As built*); the issue text is stale on that point.
+- The notice shown while typing can say a character "can't print yet" when it does print, from another font
+  ([#103](https://github.com/aritr-codes/zinely-android/issues/103)).
+- Seen once, on a debug build with a file damaged by hand: after a repair from the spare copy, a zine's details
+  can go back to an older title while the Shelf keeps the newer one. Pages are not affected
+  ([#106](https://github.com/aritr-codes/zinely-android/issues/106)).
+- **Tester feedback, 2026-10-12 (owner's report):** the interface breaks in places, and many Art pieces look
+  amateurish. The places are **not yet recorded**: no screenshot or screen name has reached the repository, so
+  nothing here is triaged or reproduced.
+
 ### In development — started (designing, building or testing), not in the public download
 
 - **Two hand-cut frames** (plan step 9): Snipped border and Round window, at the end of Cut paper. Design frozen
@@ -53,6 +91,9 @@ Shelf folders and document voices (Book and Plain) shipped in `0.9.0-beta.7` on 
 Owner-stated intentions to deliver. None has a date, and "Planned" here does not mean designed: each still needs
 its HTML specification frozen and an ADR before any Compose work.
 
+- **Art quality pass** (owner, 2026-10-12, after tester feedback): the Art pieces are to be redrawn to one
+  house style so they look made by one hand. No critique, style rules or bench amendment exist yet, and
+  redrawing re-records every Art golden. Nothing started.
 - **Print guidance:** help at the print step so a sheet comes out at the right size (plan step 5). Still gated
   on the print study; one successful print by a user, reported by the owner, is recorded in the plan as
   evidence, not as the study.
@@ -75,6 +116,25 @@ its HTML specification frozen and an ADR before any Compose work.
 2. **Creative tools:** more Art, photo transparency, shaped cutouts and crop improvements stay under
    evaluation (reopened 2026-09-12; see the assessment below). Fonts and frames left this list for *Planned*
    on 2026-10-06, following the owner's 2026-09-26 rulings. No delivery date is committed.
+3. **Wider customisation** (owner's ideas, 2026-10-12; evaluated the same day, nothing decided). Each is listed
+   with what stands in its way, because several reverse rulings already on record:
+   - *Colours of your own* (a hex picker): [ZINE-DIRECTION](design/ZINE-DIRECTION.md) §8 says "Free colour
+     picker / font picker: DO NOT BUILD". The evaluated middle path is inks a maker mixes and saves, not a free
+     picker on every tap. Needs the owner to amend that line, then a design and an ADR.
+   - *Saved colours, font pairs and favourite pieces:* Art favourites and recents exist but are held in memory
+     only; nothing saves colours or styles. No design.
+   - *Your own artwork:* every stored image is a JPEG, so transparency is lost and a cut-out shows a white box
+     ([ADR-023](DECISIONS.md#adr-023)). Needs an alpha-preserving image format, a backup-format change and its
+     own ADR first.
+   - *Photo fixes* (black and white, levels, background removal): [PRD §7.2](PRD.md) puts adjustments beyond crop
+     out of MVP scope; Copier already gives a 1-bit look. Background removal is rated large in the assessment
+     below and no on-device model has been tried.
+   - *More fonts, and generated variations:* a third voice is blocked on glyph coverage and an owner ruling.
+     Randomised variation was refused in [ADR-107](DECISIONS.md#adr-107) and stays refused unless the owner
+     reopens it.
+   - *HTML, CSS and JavaScript for drawing Art:* already how pieces are specified (the bench file, checked
+     against Kotlin by a parity test). Not a candidate for drawing inside the app, where one renderer keeps
+     screen, Read and PDF identical.
 
 ### Engineering follow-ups — not extra public feature promises
 
@@ -368,6 +428,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-12 | **Transparency pass.** Added *Where the list stands*: of the last list, one row (backup honesty, reading order, named undo) is built and accepted, four are built and not accepted, and six are not built. Added the open known problems in beta.7 (#102, #103, #106) and the owner's report of tester feedback, untriaged. *Planned* gains the Art quality pass; *Exploring* gains the owner's customisation ideas with what blocks each. The public roadmap page moves the two frames to In development, lists what is shipped but not finished checking and the known problems, and names the new ideas as ideas. | [ADR-118](DECISIONS.md#adr-118) · [OWNER-CHECKLIST](OWNER-CHECKLIST.md) |
 | 2026-10-12 | **Two frames merged, not accepted.** PR #119 merged as `7f8980a` on the owner's instruction after three independent reviews (GO WITH FIXES twice, reconciled; then GO). Owed before acceptance: the owner's first-time pass, TalkBack listen and one printed page. In no released APK; no public copy changed. | [Brief 05](planning/BRIEF-05-MATERIALS-FRAMES.md) · [ADR-107](DECISIONS.md#adr-107) · [ADR-124](DECISIONS.md#adr-124) |
 | 2026-10-12 | **Two frames: built, under review.** Snipped border and Round window are implemented from A32's coordinates on branch `feat/d5-frames` (`d910d38`); the Art sheet holds 34 pieces and tap-through names eight. Not merged, not accepted, in no APK; no public copy changed. | [Brief 05](planning/BRIEF-05-MATERIALS-FRAMES.md) · [ADR-107](DECISIONS.md#adr-107) · [ADR-124](DECISIONS.md#adr-124) |
 | 2026-10-12 | **Two frames: design frozen.** The owner chose two hand-cut frames from six drawn candidates; `v21-bench.html` A32 records them. Frames move from Planned to In development. Nothing is built; no public copy changed. | [gate Q6](planning/ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch) · [ADR-107](DECISIONS.md#adr-107) R1a |
