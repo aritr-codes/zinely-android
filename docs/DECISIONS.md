@@ -14556,6 +14556,14 @@ cross's bare paper surprise them?
   band away from a handle, and also when dragged from inside its hole; the photo stayed put both times. On a
   handle the drag resizes, as the observation below says. **Not checked:** a printed page, the TalkBack listen,
   and the owner's own first-time pass.
+- **2026-10-12, a third independent review of PR #119 at `f8df113`: GO**, with no Required Fix, reading git refs
+  and the three green CI jobs and running nothing locally. It asked for the basis of the older-build statement
+  to be written down: **no older APK was run.** The statement rests on an unknown id on this build
+  (`UnknownSupplyCompatibilityTest`) and on the main sources of `core/data`, `core/model`, `core/render` and
+  `core/editor` differing from tag `v0.9.0-beta.7` in the four files this change edits and nowhere else, so it
+  holds for beta.7 by reading. It also asked that the status lines naming the branch be replaced at merge, and
+  that the three unchecked items above reach the release notes if they are still open at release. A32's stale
+  "not yet built" text stays with the owner.
 - **Still owed before this ADR can be Accepted** (tracked in [OWNER-CHECKLIST](OWNER-CHECKLIST.md)): the owner's
   TalkBack listen (deferred by the owner on 2026-10-06, not waived) and the freeze of A27. Two
   observations from the device are recorded for those passes and changed nothing here: a selected thin piece
