@@ -11,8 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.components.ZSheetSurface
 import com.aritr.zinely.ui.golden.cropToBounds
@@ -73,6 +79,7 @@ class BenchArtSheetGoldenTest {
         name: String,
         darkTheme: Boolean,
         expectedGrounds: List<(BenchArtSheetGoldenTest) -> Int> = emptyList(),
+        prepare: () -> Unit = {},
         content: @Composable () -> Unit,
     ) {
         composeRule.setContent {
@@ -93,6 +100,8 @@ class BenchArtSheetGoldenTest {
                 ) { content() }
             }
         }
+        composeRule.waitForIdle()
+        prepare()
         composeRule.waitForIdle()
 
         // Non-vacuity: the sheet's own body must be present, so a later blanked re-record fails here rather
@@ -117,6 +126,27 @@ class BenchArtSheetGoldenTest {
     @Test
     fun bench_art_sheet_dark() =
         capture("bench_art_sheet_dark", darkTheme = true) { Sheet() }
+
+    /**
+     * Cut paper at eleven pieces, scrolled to its last row: the two hand-cut frames of `v21-bench.html` A32.
+     * The two captures above stop inside Tape & fixings, so without this one the frames' tiles are in no
+     * picture at all.
+     */
+    @Test
+    fun bench_art_sheet_cut_paper_frames_light() =
+        capture(
+            "bench_art_sheet_cut_paper_frames_light",
+            darkTheme = false,
+            prepare = {
+                composeRule.onNodeWithTag(benchArtFamilyFilterTestTag(Copy.Supplies.CUT_PAPER))
+                    .performScrollTo().performClick()
+                composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("11 pieces")
+                composeRule.onNodeWithTag(BenchArtSheetTestTag)
+                    .performScrollToNode(hasTestTag(benchArtTileTestTag("paper.round")))
+                composeRule.onNodeWithTag(benchArtTileTestTag("paper.border")).assertIsDisplayed()
+                composeRule.onNodeWithTag(benchArtTileTestTag("paper.round")).assertIsDisplayed()
+            },
+        ) { Sheet() }
 
     @Composable
     private fun Sheet() {

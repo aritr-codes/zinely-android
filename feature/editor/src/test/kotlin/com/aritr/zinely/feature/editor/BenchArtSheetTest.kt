@@ -59,7 +59,7 @@ class BenchArtSheetTest {
     }
 
     @Test
-    fun all_thirty_two_supplies_and_the_four_family_filters_are_present() {
+    fun all_thirty_four_supplies_and_the_four_family_filters_are_present() {
         render()
         Copy.Supplies.BY_FAMILY.keys.forEach { family ->
             composeRule.onNodeWithTag(benchArtFamilyFilterTestTag(family)).assertExists()
@@ -72,7 +72,7 @@ class BenchArtSheetTest {
             reveal(benchArtLabelTestTag(family))
             composeRule.onNodeWithTag(benchArtLabelTestTag(family)).assertExists()
         }
-        assertEquals(32, Copy.Supplies.NAMES.size)
+        assertEquals(34, Copy.Supplies.NAMES.size)
     }
 
     @Test
@@ -86,7 +86,7 @@ class BenchArtSheetTest {
         composeRule.onNodeWithTag(BenchArtSearchTestTag).performTextInput(" no-such-piece")
         composeRule.onNodeWithTag(BenchArtNoResultsTestTag).assertExists()
         composeRule.onNodeWithTag(BenchArtShowAllTestTag).performClick()
-        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("32 pieces")
+        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("34 pieces")
         reveal(benchArtTileTestTag("shape.circle"))
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).assertExists()
     }
@@ -102,7 +102,7 @@ class BenchArtSheetTest {
         composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).assertDoesNotExist()
 
         composeRule.onNodeWithTag(benchArtFamilyFilterTestTag(family)).performScrollTo().performClick()
-        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("32 pieces")
+        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("34 pieces")
         composeRule.onNodeWithTag(benchArtFamilyCueTestTag(family), useUnmergedTree = true).assertDoesNotExist()
         reveal(benchArtTileTestTag("tape.torn"))
         composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).assertExists()

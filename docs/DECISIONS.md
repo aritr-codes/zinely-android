@@ -11740,6 +11740,28 @@ same defect class at smaller scale with a fabricated article title. Two rounds, 
 caught only by someone re-opening the sources. **In this ADR the citations were the least reliable part, not
 the reasoning** — the opposite of where the effort went.
 
+#### Progress note, 2026-10-12 — two hand-cut frames built (R1, R1a)
+
+The owner's ruling on [decision gate Q6](planning/ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch) started frames
+at two, and on 2026-10-12 the owner chose them from six drawn candidates: **Snipped border** (`paper.border`) and
+**Round window** (`paper.round`), at the end of *Cut paper*, frozen as
+[`v21-bench.html` A32](design/mockups/v21-bench.html). They are built on branch `feat/d5-frames` (`d910d38`), under
+review and not merged. This note records what that did to this ADR's rulings; it decides nothing new.
+
+- **R1 / R1a.** The cabinet holds 34 pieces: Cut paper goes from 9 to 11. Set, names and order are the owner's;
+  the ids and search tags were drafted by the implementer and are kept as A32 writes them. Both pass R1's test
+  (they are *cut*). They are not drawn from the 19 backlog pieces, which stay unselected.
+- **R3 holds.** Each frame is one outline, an outer contour and one hole, filled even-odd with nothing overlapping.
+  Neither is a composite, a slot or a nine-slice, and neither is attached to a photo.
+- **No collision with SUPPLIES-SPEC §5.2's override map**, and no entry on a uniform-scale list: both land at the
+  Cut paper size and stretch freely ([D-100](design/V2-SPEC-DEFECTS.md#d-100-ruling)). The uniform-scale lock on
+  five existing pieces is not built.
+- **R5.** Search finds both by name and tag; the four families and their order are unchanged.
+- **Older builds.** A new `supplyId` is data, so there is no schema change. A build without these outlines opens
+  the zine, keeps the piece on save and draws nothing for it; the changelog says so.
+- **Review.** Recorded under [ADR-124](#adr-124), *Review* (2026-10-12), with the device figures and what is
+  still owed. The tap-through scope note is in that ADR's decision text.
+
 #### Sources
 
 - [Bethesda's modular toolsets and kitbashing](https://www.pcgamesn.com/fallout-4/bethesda-open-world-design) — the term **art fatigue**
@@ -14204,6 +14226,14 @@ The set lives in `:core:render`, beside the outlines. It is a list, not a rule: 
 named, not because its outline has a second subpath. A later piece (a D5 frame) joins by being added in a reviewed
 change.
 
+**Scope note, 2026-10-12: the set is eight.** The two hand-cut frames the owner chose that day
+([`v21-bench.html` A32](design/mockups/v21-bench.html)) were added by name in the change that authored them
+(branch `feat/d5-frames`, `d910d38`): `paper.border` (Snipped border, a thin band around an opening that is nearly
+the whole box) and `paper.round` (Round window, a square of paper with a round hole). Nothing else in this
+decision changed: the same three passes, the same tolerance, the same function. "Six" elsewhere in this ADR is
+left as the record of its date. This ADR's status is unchanged by the note: still Proposed. The known limit below
+(a band is only as wide as it is drawn) is sharpest for Snipped border, whose band is about 8 % of its box.
+
 **Excluded, and unchanged:** `mark.crop` (ruled out by name, Q3) and the other 25 supplies, including the five other
 pieces made of separate parts (`mark.halftone`, `fix.stitch`, `mark.bar`, `mark.scan`, `mark.perf`); every text box;
 every photo, including the letterbox bars of a `Fit.FIT` photo; and a supply id this build does not know. All of
@@ -14499,6 +14529,41 @@ cross's bare paper surprise them?
   blank paper a tap in the hole selected the frame. Each worked first try and the band was easy to hit. Dragging
   the selected frame by its band **resized** it and did not move it. The owner also asked whether a double-tap
   should close Reframe as well as open it; that is a Reframe design question, recorded and not acted on here.
+- **2026-10-12, the two frames ([ADR-107](#adr-107) progress note): GO WITH FIXES, twice**, by two independent
+  Review Agents reading the working tree, one for code evidence and one for product and accessibility. Neither
+  ran the suite or held the phone. Both required the recorded goldens to be committed and this entry to exist;
+  both are done. Accepted besides: the changelog now says an older build still selects the unseen piece by its
+  box and that a stretched frame's band is uneven; `FrameGoldenTest` asserts the top-bottom flip in pixels; stale
+  "not yet built" wording is struck from Brief 05 and the plan; the owner's checklist row carries the figures
+  below. **Rejected: a dated status line inside A32** in `v21-bench.html`, which still reads "specified, not yet
+  built". The build brief forbids editing the frozen file, so the contradiction is recorded in Brief 05 and put
+  to the owner. The code review found A32's coordinates reproduced point for point, the hole a real even-odd
+  hole in drawing and in hit-testing, flips and stretch agreeing between the two, and no schema, fixture,
+  placement, resize, version or website change.
+- **2026-10-12, implementer's device pass on the frames:** SM-A176B, Android 16, 450 dpi, a debug-signed copy of
+  the branch installed beside the owner's app under its own package name (not the release-signed build the
+  brief asked for, so that the owner's library was never touched); TalkBack 16.2 installed and **not listened
+  to**. Both tiles placed at 94.7 pt square. Ink, both flips, duplicate, delete, replace and undo worked, and a
+  side handle stretched width alone, the bottom handle height alone. Over a photo and over words a tap in
+  either hole selected what was underneath, a double-tap through Snipped border opened Reframe, and a tap on the
+  paper selected the frame; on blank paper a tap in the hole selected the frame. Stretched, mirrored and flipped
+  frames behaved the same. Bench, page strip, Read and the saved PDF agreed. The platform node for each frame
+  has the same attributes as Window frame's and differs in its name alone. **Snipped border's band is about 8 %
+  of its box: 7.6 pt on paper, about 12 dp on screen and about 10 dp once the page shrinks for a selection.**
+  Over a photo there is no tolerance, as this ADR's *Consequences* says: a tap 2 dp inside the hole took the
+  photo. Stretched to 60 by 160 pt its side bands are about 4.8 pt. It was picked up by its band every time by
+  a scripted tap, which says nothing about a finger. Once selected over a photo it **moved** when dragged by its
+  band away from a handle, and also when dragged from inside its hole; the photo stayed put both times. On a
+  handle the drag resizes, as the observation below says. **Not checked:** a printed page, the TalkBack listen,
+  and the owner's own first-time pass.
+- **2026-10-12, a third independent review of PR #119 at `f8df113`: GO**, with no Required Fix, reading git refs
+  and the three green CI jobs and running nothing locally. It asked for the basis of the older-build statement
+  to be written down: **no older APK was run.** The statement rests on an unknown id on this build
+  (`UnknownSupplyCompatibilityTest`) and on the main sources of `core/data`, `core/model`, `core/render` and
+  `core/editor` differing from tag `v0.9.0-beta.7` in the four files this change edits and nowhere else, so it
+  holds for beta.7 by reading. It also asked that the status lines naming the branch be replaced at merge, and
+  that the three unchecked items above reach the release notes if they are still open at release. A32's stale
+  "not yet built" text stays with the owner.
 - **Still owed before this ADR can be Accepted** (tracked in [OWNER-CHECKLIST](OWNER-CHECKLIST.md)): the owner's
   TalkBack listen (deferred by the owner on 2026-10-06, not waived) and the freeze of A27. Two
   observations from the device are recorded for those passes and changed nothing here: a selected thin piece

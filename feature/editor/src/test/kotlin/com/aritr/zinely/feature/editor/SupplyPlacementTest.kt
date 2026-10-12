@@ -156,10 +156,24 @@ class SupplyPlacementTest {
     }
 
     @Test
-    fun `Given every one of the thirty two, When its family is read, Then the copy layer names one`() {
+    fun `Given every one of the thirty four, When its family is read, Then the copy layer names one`() {
         for (id in Copy.Supplies.NAMES.keys) {
             assertTrue("$id must belong to a family", benchSupplyFamily(id) != null)
         }
+    }
+
+    @Test
+    fun `Given the two frames, When they are placed, Then they land at the Cut paper size with no override`() {
+        // v21-bench.html A32: "Both land at the Cut paper size (45% of the page width, square), like their
+        // family. Neither has a landing size of its own." A per-supply landing size is an owner ruling.
+        val family = benchSupplyPlacement("paper.window", page)
+        for (id in listOf("paper.border", "paper.round")) {
+            assertEquals(Copy.Supplies.CUT_PAPER, benchSupplyFamily(id))
+            assertEquals("$id must land like its family", family, benchSupplyPlacement(id, page))
+            assertFalse("$id must not have a landing size of its own", id in BenchSupplyOverrides)
+        }
+        assertEquals(page.width * 0.45, family.widthPt, 1e-9)
+        assertEquals(family.widthPt, family.heightPt, 1e-9)
     }
 
     @Test

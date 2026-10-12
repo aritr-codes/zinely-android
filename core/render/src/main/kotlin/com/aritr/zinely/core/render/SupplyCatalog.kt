@@ -40,7 +40,7 @@ import com.aritr.zinely.core.model.PtPoint
  *
  * ### Attestation (§4.1, the definition of done)
  *
- * **All thirty-two outlines below were authored from scratch, in this file, by writing coordinates. No
+ * **All thirty-four outlines below were authored from scratch, in this file, by writing coordinates. No
  * reference art was traced, opened or consulted; they are elementary geometry — squares, inscribed
  * circles, polygons written vertex by vertex, and one star polygon evaluated at two radii — and they
  * carry no third-party licence. They are covered by the repository licence.** §4.1 requires one attestation per supply and there is
@@ -504,6 +504,36 @@ public object SupplyCatalog {
         circle(0.5, 0.5, 0.5) + circleReverse(0.5, 0.5, 7.0 / 24.0),
     )
 
+    // =============================================================================================
+    // Two hand-cut frames — v21-bench.html A32 (decision gate Q6, ADR-107 R1a).
+    //
+    // Both were authored from scratch as coordinates for Zinely, on the 24-unit grid. No reference art
+    // was traced, opened or consulted, and they carry no third-party licence. Each is ONE outline: an
+    // outer contour and one hole, straight segments, even-odd, nothing overlapping. The coordinates are
+    // A32's, point for point — `BenchArtSheetParityTest` goes red if one is moved, smoothed or rounded.
+
+    /** Snipped border: a thin border cut with scissors, three straight snips to a side. */
+    private val SNIPPED_BORDER: SupplyOutline = SupplyOutline(
+        closed(
+            p24(0.3, 0.6), p24(8.5, 0), p24(16, 0.5), p24(23.6, 0.2), p24(24, 7.5), p24(23.5, 15),
+            p24(23.9, 23.5), p24(15.5, 24), p24(7, 23.6), p24(0.5, 23.9), p24(0, 16.5), p24(0.4, 8),
+        ).subpaths + closed(
+            p24(2.4, 2.6), p24(9, 2.2), p24(16.5, 2.5), p24(21.7, 2.3), p24(21.9, 8), p24(21.5, 15.5),
+            p24(21.8, 21.6), p24(15, 21.9), p24(7.5, 21.6), p24(2.5, 21.8), p24(2.2, 16), p24(2.5, 8.5),
+        ).subpaths,
+    )
+
+    /** Round window: a square of paper with a round hole of fourteen snips. */
+    private val ROUND_WINDOW: SupplyOutline = SupplyOutline(
+        closed(
+            p24(0, 0.5), p24(23.6, 0), p24(24, 23.4), p24(0.6, 24),
+        ).subpaths + closed(
+            p24(20, 12.2), p24(19.2, 15.5), p24(17.4, 17.9), p24(14.6, 19.6), p24(11.6, 19.9),
+            p24(6.1, 17.3), p24(4.4, 14.6), p24(4.1, 11.6), p24(4.8, 8.6), p24(6.6, 6.1),
+            p24(9.4, 4.6), p24(12.4, 4.1), p24(17.8, 6.5), p24(19.4, 9.1),
+        ).subpaths,
+    )
+
     /** Every authored outline, keyed by the `supplyId` written into saved documents. */
     public val OUTLINES: Map<String, SupplyOutline> = linkedMapOf(
         "shape.rect" to RECT,
@@ -541,6 +571,9 @@ public object SupplyCatalog {
         "paper.hole" to TORN_HOLE,
         "paper.dogear" to FOLDED_CORNER,
         "shape.ring" to RING,
+        // Two hand-cut frames (v21-bench.html A32).
+        "paper.border" to SNIPPED_BORDER,
+        "paper.round" to ROUND_WINDOW,
     )
 
     /** The outline for [supplyId], or `null` when it is not authored yet (or not a supply at all). */

@@ -18,7 +18,7 @@ import kotlin.math.abs
  * Iteration order mirrors the renderer's **stable** draw order: the renderer draws by ascending
  * `(zIndex, listIndex)`, so the topmost element is the one with the **greatest** `(zIndex, listIndex)`.
  *
- * ### Six holed pieces are their ink, not their box (ADR-124)
+ * ### Eight holed pieces are their ink, not their box (ADR-124; A32 added the two frames)
  *
  * For the pieces [SupplyInk] names, the hit area is the drawn ink; every other element keeps its box.
  * [topmostAt] resolves in three passes, each topmost-first, and the first pass that finds an element
