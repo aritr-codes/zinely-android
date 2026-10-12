@@ -438,7 +438,7 @@ public object Copy {
     }
 
     /**
-     * **The thirty-two supplies** — the Zinely cabinet's current vocabulary
+     * **The thirty-four supplies** — the Zinely cabinet's current vocabulary
      * ([SUPPLIES-SPEC §4](../../../../../../../docs/design/SUPPLIES-SPEC.md),
      * [ADR-105](../../../../../../../docs/DECISIONS.md#adr-105) step S6). *Art* is the verb; Supplies is
      * the drawer (§1).
@@ -544,6 +544,8 @@ public object Copy {
                 "paper.deckle" to "Deckle edge",
                 "paper.hole" to "Torn hole",
                 "paper.dogear" to "Folded corner",
+                "paper.border" to "Snipped border",
+                "paper.round" to "Round window",
             ),
             CUT_SHAPES to linkedMapOf(
                 "shape.rect" to "Rectangle",
@@ -592,6 +594,8 @@ public object Copy {
             "paper.hole" to "torn hole ripped paper",
             "paper.dogear" to "folded corner dog ear paper",
             "shape.ring" to "ring circle hole shape",
+            "paper.border" to "border frame thin edge scissors outline",
+            "paper.round" to "round window hole circle frame porthole cutout",
         )
 
         /** Stable, local name/tag search with an optional one-of-four family filter. */

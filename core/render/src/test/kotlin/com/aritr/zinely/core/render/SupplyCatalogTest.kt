@@ -149,7 +149,7 @@ class SupplyCatalogTest {
     }
 
     @Test
-    fun `given the frozen expanded cabinet, when catalogue keys are read, then all thirty two are authored`() {
+    fun `given the frozen expanded cabinet, when catalogue keys are read, then all thirty four are authored`() {
         assertEquals(
             Copy.Supplies.NAMES.keys,
             SupplyCatalog.OUTLINES.keys,
@@ -243,6 +243,59 @@ class SupplyCatalogTest {
             (kotlin.math.abs(b) <= 1e-12 && onSegment(first, second, other.second)) ||
             (kotlin.math.abs(c) <= 1e-12 && onSegment(other.first, other.second, first)) ||
             (kotlin.math.abs(d) <= 1e-12 && onSegment(other.first, other.second, second))
+    }
+
+    // — the two hand-cut frames (v21-bench.html A32) —
+
+    /** Unit-square probes for one frame: points on its band, and points in its hole. */
+    private fun assertIsOneFrame(id: String, band: List<Pair<Double, Double>>, hole: List<Pair<Double, Double>>) {
+        val outline = SupplyCatalog.outlineOf(id)!!
+        assertEquals(2, outline.subpaths.size, "$id is one outer contour and one hole")
+        assertTrue(
+            outline.subpaths.all { sub -> sub.segments.all { it is Segment.LineTo } },
+            "$id is cut with scissors: straight segments only",
+        )
+        // Closed and inside the unit square are the type's own guards; spanning the box on BOTH axes is
+        // this piece's: a frame that stopped short of an edge would leave a gap around what it frames.
+        val pts = outline.points()
+        assertEquals(0.0, pts.minOf { it.x }, 1e-12, "$id left edge")
+        assertEquals(1.0, pts.maxOf { it.x }, 1e-12, "$id right edge")
+        assertEquals(0.0, pts.minOf { it.y }, 1e-12, "$id top edge")
+        assertEquals(1.0, pts.maxOf { it.y }, 1e-12, "$id bottom edge")
+
+        // Even-odd with nothing overlapping: the hole lies wholly inside the outer contour. Every hole
+        // vertex is inside it and no hole edge touches an outer edge, so the two never cross.
+        val (outer, inner) = outline.subpaths.map { sub -> listOf(sub.start) + sub.segments.map { it.to } }
+        val outerOnly = SupplyOutline(listOf(outline.subpaths[0]))
+        for (p in inner) assertTrue(outerOnly.isInked(p.x, p.y), "$id: hole vertex $p is outside the paper")
+        fun edges(v: List<PtPoint>) = v.indices.map { v[it] to v[(it + 1) % v.size] }
+        for (a in edges(outer)) for (b in edges(inner)) {
+            assertTrue(!a.intersects(b), "$id: the hole's edge $b crosses the paper's edge $a")
+        }
+
+        for ((u, v) in band) assertTrue(outline.isInked(u, v), "$id must be paper at ($u, $v)")
+        for ((u, v) in hole) assertTrue(!outline.isInked(u, v), "$id must be open at ($u, $v)")
+    }
+
+    @Test
+    fun `given the snipped border, when it is filled, then a thin band surrounds one open middle`() {
+        assertIsOneFrame(
+            "paper.border",
+            // The middle of each side's band, and two corners on the diagonal.
+            band = listOf(0.05 to 0.5, 0.95 to 0.5, 0.5 to 0.05, 0.5 to 0.95, 0.06 to 0.06, 0.94 to 0.94),
+            // The centre, and just inside the band on each side: the hole is nearly the whole box.
+            hole = listOf(0.5 to 0.5, 0.15 to 0.5, 0.85 to 0.5, 0.5 to 0.15, 0.5 to 0.85),
+        )
+    }
+
+    @Test
+    fun `given the round window, when it is filled, then the corners are paper and the middle is open`() {
+        assertIsOneFrame(
+            "paper.round",
+            // The four corners are what make it a square of paper and not a ring, plus two sides' bands.
+            band = listOf(0.08 to 0.08, 0.92 to 0.08, 0.92 to 0.92, 0.08 to 0.92, 0.05 to 0.5, 0.5 to 0.95),
+            hole = listOf(0.5 to 0.5, 0.25 to 0.5, 0.75 to 0.5, 0.5 to 0.25, 0.5 to 0.75),
+        )
     }
 
     @Test

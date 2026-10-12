@@ -54,7 +54,7 @@ public sealed interface Intent {
      *
      * An unauthored or unknown [supplyId] is **not** rejected here: catalogue membership is checked at the
      * render boundary (SUPPLIES-SPEC §2.2), and the picker never offers one. `mirrored` is deliberately
-     * absent — §5.1 lands a supply flat, at 0°, unmirrored; mirroring is a maker verb that arrives later.
+     * absent — §5.1 lands a supply flat, at 0°, unmirrored; the maker mirrors it afterwards with Flip (ADR-113).
      */
     public data class PlaceSupply(
         val supplyId: String,

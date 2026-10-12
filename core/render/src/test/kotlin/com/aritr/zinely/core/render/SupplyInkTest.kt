@@ -26,7 +26,7 @@ class SupplyInkTest {
     /** One in-scope piece: a point on its ink, and points in its hole or bare paper. */
     private data class Probe(val id: String, val ink: List<Pair<Double, Double>>, val bare: List<Pair<Double, Double>>)
 
-    private val six = listOf(
+    private val holed = listOf(
         // The left band is ink only because the HOLE's implicit closing edge (u = 0.14) is counted.
         Probe("paper.window", ink = listOf(0.05 to 0.5, 0.5 to 0.05), bare = listOf(0.5 to 0.5)),
         Probe("paper.hole", ink = listOf(0.125 to 0.5), bare = listOf(0.5 to 0.5)),
@@ -36,6 +36,9 @@ class SupplyInkTest {
         // (u = 0.16) is counted; without it the ray crosses twice and the band reads as bare.
         Probe("fix.corner", ink = listOf(0.06 to 0.6, 0.06 to 0.9, 0.5 to 0.95), bare = listOf(0.25 to 0.7, 0.9 to 0.2)),
         Probe("mark.registration", ink = listOf(0.05 to 0.5, 0.5 to 0.28), bare = listOf(0.5 to 0.5, 0.15 to 0.15)),
+        // The two hand-cut frames (v21-bench.html A32): band points, and the hole.
+        Probe("paper.border", ink = listOf(0.05 to 0.5, 0.5 to 0.95), bare = listOf(0.5 to 0.5, 0.15 to 0.5)),
+        Probe("paper.round", ink = listOf(0.05 to 0.5, 0.92 to 0.92), bare = listOf(0.5 to 0.5, 0.25 to 0.5)),
     )
 
     /** Distance at unit point ([u], [v]) of an un-rotated, un-flipped [w]×[h] piece. */
@@ -50,20 +53,23 @@ class SupplyInkTest {
     ): Double? = SupplyInk.distancePt(id, (u - 0.5) * w, (v - 0.5) * h, w, h, mirrored, flippedVertically)
 
     @Test
-    fun `given each of the six, when its ink is probed, then the distance is zero, and positive in its hole`() {
-        for (p in six) {
+    fun `given each holed piece, when its ink is probed, then the distance is zero, and positive in its hole`() {
+        for (p in holed) {
             for ((u, v) in p.ink) assertEquals(0.0, at(p.id, u, v), "${p.id} must be ink at ($u, $v)")
             for ((u, v) in p.bare) assertTrue(at(p.id, u, v)!! > 0.0, "${p.id} must be bare at ($u, $v)")
         }
     }
 
     @Test
-    fun `given the scope, then it is exactly the six, each has an outline, and everything else is null`() {
+    fun `given the scope, then it is exactly the eight, each has an outline, and everything else is null`() {
         assertEquals(
-            setOf("paper.window", "paper.hole", "shape.ring", "fix.grommet", "fix.corner", "mark.registration"),
+            setOf(
+                "paper.window", "paper.hole", "shape.ring", "fix.grommet", "fix.corner", "mark.registration",
+                "paper.border", "paper.round",
+            ),
             SupplyInk.IN_SCOPE,
         )
-        assertEquals(six.map { it.id }.toSet(), SupplyInk.IN_SCOPE, "every in-scope piece is probed above")
+        assertEquals(holed.map { it.id }.toSet(), SupplyInk.IN_SCOPE, "every in-scope piece is probed above")
         for (id in SupplyInk.IN_SCOPE) assertNotNull(SupplyCatalog.outlineOf(id), "$id has no outline")
 
         // Crop marks are out by ruling; the rest are out by not being named. Their centres are bare

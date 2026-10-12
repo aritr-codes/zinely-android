@@ -161,7 +161,7 @@ internal fun benchSupplyFamily(supplyId: String): String? =
 /**
  * A [Transform] for a newly placed supply: centred on the page, at 0°, sized by its family (§5, §5.1, §5.2).
  *
- * @throws IllegalArgumentException if [supplyId] is not one of the thirty-two. That is a programming error,
+ * @throws IllegalArgumentException if [supplyId] is not one of the thirty-four. That is a programming error,
  *   not a runtime condition — the only caller is the Art sheet, which iterates the same map this reads —
  *   and a silent fallback size would be the app inventing craft knowledge it does not have.
  */
@@ -224,7 +224,7 @@ internal fun benchSupplyReplacement(
  * the two cannot disagree about what a family's default is — the whole point of the replace ruling is that
  * a replaced supply gets *the same* size a freshly-placed one would.
  *
- * @throws IllegalArgumentException if [supplyId] is not one of the thirty-two. That is a programming error,
+ * @throws IllegalArgumentException if [supplyId] is not one of the thirty-four. That is a programming error,
  *   not a runtime condition — the callers iterate the same map this reads — and a silent fallback size
  *   would be the app inventing craft knowledge it does not have.
  */

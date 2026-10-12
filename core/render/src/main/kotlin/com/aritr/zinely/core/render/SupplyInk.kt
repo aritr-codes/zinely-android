@@ -25,6 +25,9 @@ public object SupplyInk {
         "fix.grommet",
         "fix.corner",
         "mark.registration",
+        // The two hand-cut frames (v21-bench.html A32).
+        "paper.border",
+        "paper.round",
     )
 
     /**

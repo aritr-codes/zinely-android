@@ -9,7 +9,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Source-level parity with the owner-approved A16 Art amendment. */
+/** Source-level parity with the owner-approved A16 Art amendment, and A32's two frames. */
 class BenchArtSheetParityTest {
 
     private data class FrozenSupply(
@@ -34,17 +34,21 @@ class BenchArtSheetParityTest {
                 )
             }
             .toList()
-        val expansion = Regex("""\['([^']+)','([^']+)','([^']+)','<path d="([^"]*)"/>'\]""")
-            .findAll(frozen.substringAfter("const ART_FIRST_WAVE=[").substringBefore("];"))
-            .map { match ->
-                FrozenSupply(
-                    family = match.groupValues[1],
-                    id = match.groupValues[2],
-                    name = match.groupValues[3],
-                    path = match.groupValues[4],
-                )
-            }
-            .toList()
+        // A32 keeps its two frames in a list of their own and pushes it onto ART_FIRST_WAVE when the page
+        // runs, so the sheet's order is the first wave and then the frames.
+        val expansion = listOf("const ART_FIRST_WAVE=[", "const ART_D5_FRAMES=[").flatMap { list ->
+            Regex("""\['([^']+)','([^']+)','([^']+)','<path d="([^"]*)"/>'\]""")
+                .findAll(frozen.substringAfter(list).substringBefore("];"))
+                .map { match ->
+                    FrozenSupply(
+                        family = match.groupValues[1],
+                        id = match.groupValues[2],
+                        name = match.groupValues[3],
+                        path = match.groupValues[4],
+                    )
+                }
+                .toList()
+        }
         return Copy.Supplies.BY_FAMILY.keys.flatMap { family ->
             (original + expansion).filter { it.family == family }
         }
@@ -121,15 +125,37 @@ class BenchArtSheetParityTest {
     }
 
     @Test
-    fun all_thirty_two_ids_names_families_order_and_geometry_match_the_freeze() {
+    fun all_thirty_four_ids_names_families_order_and_geometry_match_the_freeze() {
         val expected = frozenSupplies()
         val actual = Copy.Supplies.BY_FAMILY.flatMap { (family, supplies) ->
             supplies.map { (id, name) -> Triple(family, id, name) }
         }
-        assertEquals(32, expected.size)
+        assertEquals(34, expected.size)
         assertEquals(expected.map { Triple(it.family, it.id, it.name) }, actual)
         expected.forEach { supply ->
             assertEquals(supply.id, normalisePath(supply.path), normalisePath(cataloguePath(supply.id)))
+        }
+    }
+
+    @Test
+    fun the_two_frames_are_a32s_frozen_and_pushed_onto_the_sheet() {
+        assertTrue(frozen.contains("A32 · 2026-10-12 · FROZEN by the owner's ruling of that date"))
+        val a32 = frozen.substringAfter("A32 · 2026-10-12 · FROZEN")
+        assertTrue(a32.contains("ART_FIRST_WAVE.push(...ART_D5_FRAMES);"))
+        assertTrue(a32.contains("Object.assign(ART_TAGS,ART_D5_TAGS);"))
+        val frames = frozenSupplies().filter { it.family == Copy.Supplies.CUT_PAPER }.takeLast(2)
+        assertEquals(
+            listOf(
+                Triple(Copy.Supplies.CUT_PAPER, "paper.border", "Snipped border"),
+                Triple(Copy.Supplies.CUT_PAPER, "paper.round", "Round window"),
+            ),
+            frames.map { Triple(it.family, it.id, it.name) },
+        )
+        frames.forEach { frame ->
+            assertTrue(
+                "${frame.id} tags",
+                a32.contains("'${frame.id}':'${Copy.Supplies.TAGS.getValue(frame.id)}'"),
+            )
         }
     }
 

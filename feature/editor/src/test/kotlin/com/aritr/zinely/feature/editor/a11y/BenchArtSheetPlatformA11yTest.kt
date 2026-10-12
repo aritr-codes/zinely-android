@@ -37,7 +37,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * The Art sheet's thirty-two tiles on the **platform** accessibility tree — the tier CI-26's `platformNode`
+ * The Art sheet's thirty-four tiles on the **platform** accessibility tree — the tier CI-26's `platformNode`
  * exists for.
  *
  * Two defects this file is aimed at, both already shipped once in this repository:
@@ -49,7 +49,7 @@ import org.robolectric.annotation.GraphicsMode
  * - **A control that tells Compose it is disabled and the platform it is not.** `ReframeControls.ZoomButton`
  *   passed `assertIsNotEnabled` against the merged tree while reporting `enabled` to
  *   `AccessibilityNodeInfo` (ADR-058). A merged-tree assertion cannot catch that by construction, so the
- *   all thirty-two authored tiles are checked on the real node — `isEnabled = true` and `isClickable = true`,
+ *   all thirty-four authored tiles are checked on the real node — `isEnabled = true` and `isClickable = true`,
  *   because `disabled()` alone still leaves a node a service may offer to activate.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -103,7 +103,7 @@ class BenchArtSheetPlatformA11yTest {
             // explanation of an absence that does not exist.
             assertNull("$id is live and must not claim to be unavailable", node.stateDescription)
         }
-        assertEquals(32, SupplyCatalog.OUTLINES.size)
+        assertEquals(34, SupplyCatalog.OUTLINES.size)
     }
 
     @Test

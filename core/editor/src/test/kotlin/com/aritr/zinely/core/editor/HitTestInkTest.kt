@@ -18,7 +18,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * Taps pass through the empty part of six holed pieces (ADR-124): drawn, then near, then box.
+ * Taps pass through the empty part of eight holed pieces (ADR-124, and A32's two frames): drawn, then
+ * near, then box.
  *
  * Every distance here is in **page points** — `HitTest` knows nothing of dp. Unless a test says
  * otherwise a piece is 100×100 pt at (50, 50), so unit point (u, v) is page point (50 + 100u, 50 + 100v).
@@ -52,20 +53,23 @@ class HitTestInkTest {
     private fun unit(u: Double, v: Double) = PtPoint(50.0 + 100.0 * u, 50.0 + 100.0 * v)
 
     /** Supply id → a unit point on its ink, and unit points in its hole or bare paper. */
-    private val six: Map<String, Pair<PtPoint, List<PtPoint>>> = mapOf(
+    private val holed: Map<String, Pair<PtPoint, List<PtPoint>>> = mapOf(
         "paper.window" to (unit(0.05, 0.5) to listOf(unit(0.5, 0.5))),
         "paper.hole" to (unit(0.125, 0.5) to listOf(unit(0.5, 0.5))),
         "shape.ring" to (unit(0.1, 0.5) to listOf(unit(0.5, 0.5))),
         "fix.grommet" to (unit(0.1, 0.5) to listOf(unit(0.5, 0.5))),
         "fix.corner" to (unit(0.06, 0.9) to listOf(unit(0.25, 0.7), unit(0.9, 0.2))),
         "mark.registration" to (unit(0.05, 0.5) to listOf(unit(0.5, 0.5), unit(0.15, 0.15))),
+        // The two hand-cut frames (v21-bench.html A32).
+        "paper.border" to (unit(0.05, 0.5) to listOf(unit(0.5, 0.5), unit(0.15, 0.5))),
+        "paper.round" to (unit(0.05, 0.5) to listOf(unit(0.5, 0.5), unit(0.25, 0.5))),
     )
 
-    // — 7, 8: each of the six —
+    // — 7, 8: each holed piece —
 
     @Test
-    fun `each of the six over a photo - the ink is the piece, the hole is the photo`() {
-        for ((id, probes) in six) {
+    fun `each holed piece over a photo - the ink is the piece, the hole is the photo`() {
+        for ((id, probes) in holed) {
             val p = page(photo(), piece(id))
             for (t in listOf(0.0, tol)) {
                 assertEquals(id, HitTest.topmostAt(p, probes.first, t), "$id ink, tolerance $t")
@@ -77,8 +81,8 @@ class HitTestInkTest {
     }
 
     @Test
-    fun `each of the six over words - the hole reaches the words`() {
-        for ((id, probes) in six) {
+    fun `each holed piece over words - the hole reaches the words`() {
+        for ((id, probes) in holed) {
             val p = page(words(), piece(id))
             assertEquals(id, HitTest.topmostAt(p, probes.first, tol), "$id ink")
             for (bare in probes.second) assertEquals("words", HitTest.topmostAt(p, bare, tol), "$id at $bare")
@@ -86,8 +90,8 @@ class HitTestInkTest {
     }
 
     @Test
-    fun `each of the six over blank paper - the hole still selects the piece, by its box`() {
-        for ((id, probes) in six) {
+    fun `each holed piece over blank paper - the hole still selects the piece, by its box`() {
+        for ((id, probes) in holed) {
             val p = page(piece(id))
             for (t in listOf(0.0, tol)) {
                 assertEquals(id, HitTest.topmostAt(p, probes.first, t), "$id ink, tolerance $t")
@@ -281,6 +285,31 @@ class HitTestInkTest {
         assertEquals(setOf("photo"), first.selection)
         val second = EditorReducer.reduce(first, Intent.SelectAt(band, tol)).model
         assertEquals(setOf("paper.window"), second.selection)
+    }
+
+    // — the two frames (v21-bench.html A32) —
+
+    @Test
+    fun `a frame stretched wide or tall over a photo - the band is the frame, the hole is the photo`() {
+        // Both frames stretch freely, so the hole must follow the box. Probes are unit points of the box.
+        val bandOf = mapOf("paper.border" to 0.04, "paper.round" to 0.06)
+        for ((id, band) in bandOf) for ((w, h) in listOf(180.0 to 50.0, 50.0 to 180.0)) {
+            val p = page(photo(), piece(id, x = 10.0, y = 10.0, w = w, h = h))
+            fun at(u: Double, v: Double) = PtPoint(10.0 + w * u, 10.0 + h * v)
+            assertEquals("photo", HitTest.topmostAt(p, at(0.5, 0.5), tol), "$id ${w}x$h, the hole")
+            assertEquals(id, HitTest.topmostAt(p, at(band, 0.5), tol), "$id ${w}x$h, the left band")
+            assertEquals(id, HitTest.topmostAt(p, at(0.5, 1.0 - band), tol), "$id ${w}x$h, the bottom band")
+        }
+    }
+
+    @Test
+    fun `DoubleTapAt through a frame's hole onto a photo opens Reframe, and on its band changes nothing`() {
+        for (id in listOf("paper.border", "paper.round")) {
+            val start = model(photo(), piece(id))
+            val through = EditorReducer.reduce(start, Intent.DoubleTapAt(hole))
+            assertEquals("photo", (through.model.interaction as Interaction.Reframing).id, id)
+            assertEquals(start, EditorReducer.reduce(start, Intent.DoubleTapAt(band)).model, id)
+        }
     }
 
     @Test

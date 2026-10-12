@@ -289,9 +289,9 @@ class BenchArtPlacementTest {
     }
 
     @Test
-    fun `Given the thirty two, When the cabinet opens on the real screen, Then every tile is there`() {
+    fun `Given the thirty four, When the cabinet opens on the real screen, Then every tile is there`() {
         // The chooser's promise — "tape, stamps and cut paper live here" — is true of the *cabinet*, not of
-        // every tile in it, so the cabinet must hold all thirty two.
+        // every tile in it, so the cabinet must hold all thirty four.
         //
         // ⚠ This test also used to re-assert a hard-coded set of four authored ids, under a comment saying
         // it was pinned against the catalogue so it would "follow instead of failing". It did neither: it
@@ -305,6 +305,6 @@ class BenchArtPlacementTest {
             reveal(benchArtTileTestTag(id))
             composeRule.onNodeWithTag(benchArtTileTestTag(id)).assertExists()
         }
-        assertEquals("A16 freezes thirty two", 32, Copy.Supplies.NAMES.size)
+        assertEquals("A16 freezes thirty two and A32 adds two frames", 34, Copy.Supplies.NAMES.size)
     }
 }
