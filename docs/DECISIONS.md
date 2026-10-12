@@ -11745,8 +11745,8 @@ the reasoning** — the opposite of where the effort went.
 The owner's ruling on [decision gate Q6](planning/ZINELY-1X-DECISION-GATE.md#q6-frames-o9--stretch) started frames
 at two, and on 2026-10-12 the owner chose them from six drawn candidates: **Snipped border** (`paper.border`) and
 **Round window** (`paper.round`), at the end of *Cut paper*, frozen as
-[`v21-bench.html` A32](design/mockups/v21-bench.html). They are built on branch `feat/d5-frames` (`d910d38`), under
-review and not merged. This note records what that did to this ADR's rulings; it decides nothing new.
+[`v21-bench.html` A32](design/mockups/v21-bench.html). They are built and merged to `main` on the owner's instruction 2026-10-12 (PR #119, `7f8980a`),
+not accepted. This note records what that did to this ADR's rulings; it decides nothing new.
 
 - **R1 / R1a.** The cabinet holds 34 pieces: Cut paper goes from 9 to 11. Set, names and order are the owner's;
   the ids and search tags were drafted by the implementer and are kept as A32 writes them. Both pass R1's test
@@ -14228,7 +14228,7 @@ change.
 
 **Scope note, 2026-10-12: the set is eight.** The two hand-cut frames the owner chose that day
 ([`v21-bench.html` A32](design/mockups/v21-bench.html)) were added by name in the change that authored them
-(branch `feat/d5-frames`, `d910d38`): `paper.border` (Snipped border, a thin band around an opening that is nearly
+(PR #119, `7f8980a`): `paper.border` (Snipped border, a thin band around an opening that is nearly
 the whole box) and `paper.round` (Round window, a square of paper with a round hole). Nothing else in this
 decision changed: the same three passes, the same tolerance, the same function. "Six" elsewhere in this ADR is
 left as the record of its date. This ADR's status is unchanged by the note: still Proposed. The known limit below
