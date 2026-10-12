@@ -63,73 +63,46 @@
 }
 
 .roadmap-groups {
-  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.06fr) minmax(0, 1.06fr) minmax(0, 0.88fr);
-  align-items: start;
-  gap: clamp(18px, 2.5vw, 30px);
-  margin-top: 62px;
-  padding: 20px 0 34px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+  margin-top: 48px;
 }
 
-.roadmap-groups::before {
-  position: absolute;
-  inset: 0 -34px auto;
-  height: 12px;
-  border-block: 2px solid var(--ink);
-  background: var(--room-raised);
-  content: "";
-  box-shadow: 0 4px 0 rgba(39, 39, 15, 0.12);
-}
-
+/* One lane per horizon: the same card, the same grid, a colour band to tell them apart. */
 .roadmap-page .roadmap-group {
-  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 210px) minmax(0, 1fr);
+  grid-template-rows: auto auto auto 1fr;
+  column-gap: 30px;
   margin: 0;
-  padding: 34px 26px 28px;
+  padding: 26px 26px 26px 30px;
   border: 2px solid var(--ink);
-  border-radius: 4px 18px 14px 6px;
+  border-left-width: 12px;
+  border-radius: 6px 16px 16px 6px;
   background: #fffdf5;
   box-shadow: 5px 6px 0 var(--ink);
+  transform: none;
 }
 
-.roadmap-page .roadmap-group:nth-child(1) {
-  transform: rotate(-0.65deg);
+.roadmap-page .roadmap-group.foundation {
+  border-left-color: #6f7d3c;
 }
 
-.roadmap-page .roadmap-group:nth-child(2) {
-  margin-top: 18px;
-  background: var(--surface);
-  transform: rotate(0.7deg);
+.roadmap-page .roadmap-group.craft {
+  border-left-color: #f6b22c;
 }
 
-.roadmap-page .roadmap-group:nth-child(3) {
-  margin-top: 7px;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 25px, rgba(39, 39, 15, 0.08) 25px 26px),
-    var(--room-raised);
-  box-shadow: 4px 5px 0 rgba(39, 39, 15, 0.58);
-  transform: rotate(-0.45deg);
+.roadmap-page .roadmap-group.proof {
+  border-left-color: var(--accent);
+}
+
+.roadmap-page .roadmap-group > * {
+  grid-column: 1;
 }
 
 .roadmap-pin {
-  position: absolute;
-  top: -13px;
-  left: 50%;
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--ink);
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 2px 3px 0 var(--ink);
-  transform: translateX(-50%);
-}
-
-.roadmap-group:nth-child(2) .roadmap-pin {
-  background: #f6b22c;
-}
-
-.roadmap-group:nth-child(3) .roadmap-pin {
-  background: var(--paper);
+  display: none;
 }
 
 .roadmap-page .press-zone {
@@ -180,15 +153,30 @@
 }
 
 .roadmap-page .roadmap-items {
+  display: grid;
+  grid-column: 2;
+  grid-row: 1 / -1;
+  grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
+  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.roadmap-page .roadmap-items li + li {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px dashed rgba(39, 39, 15, 0.35);
+.roadmap-page .roadmap-items li {
+  margin: 0;
+  padding: 14px 16px 16px;
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  background: var(--paper);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* The label sits on its own line, so every card starts the same way. */
+.roadmap-page .roadmap-items .status-chip {
+  display: table;
+  margin: 0 0 8px;
 }
 
 .roadmap-never {
@@ -259,15 +247,16 @@
   transform: rotate(1deg);
 }
 
-@media (max-width: 940px) {
-  .roadmap-groups {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 860px) {
+  .roadmap-page .roadmap-group {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    padding: 22px 20px 22px 22px;
   }
 
-  .roadmap-page .roadmap-group:nth-child(3) {
-    grid-column: 1 / -1;
-    max-width: 620px;
-    margin-inline: auto;
+  .roadmap-page .roadmap-items {
+    grid-column: 1;
+    grid-row: auto;
   }
 }
 
@@ -286,19 +275,7 @@
   }
 
   .roadmap-groups {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
-    margin-top: 42px;
-  }
-
-  .roadmap-page .roadmap-group:nth-child(1),
-  .roadmap-page .roadmap-group:nth-child(2),
-  .roadmap-page .roadmap-group:nth-child(3) {
-    grid-column: auto;
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    transform: none;
+    margin-top: 36px;
   }
 
   .roadmap-board::after {
@@ -317,7 +294,8 @@
   }
 
   .roadmap-page .roadmap-group {
-    padding-inline: 20px;
+    padding-inline: 16px;
+    border-left-width: 8px;
   }
 }
 
@@ -328,9 +306,7 @@
   }
 
   .roadmap-board::before,
-  .roadmap-board::after,
-  .roadmap-groups::before,
-  .roadmap-pin {
+  .roadmap-board::after {
     display: none;
   }
 
@@ -340,9 +316,6 @@
 
   .roadmap-date,
   .roadmap-page .roadmap-group,
-  .roadmap-page .roadmap-group:nth-child(1),
-  .roadmap-page .roadmap-group:nth-child(2),
-  .roadmap-page .roadmap-group:nth-child(3),
   .roadmap-desk-note > p:last-child {
     border: 1px solid #27270f;
     box-shadow: none;
@@ -354,10 +327,9 @@
     display: block;
   }
 
-  .roadmap-page .roadmap-group,
+  .roadmap-page .roadmap-items li,
   .roadmap-desk-note > * {
     break-inside: avoid;
-    margin: 18px 0;
   }
 }
 
