@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -102,6 +104,10 @@ internal fun ZineShelfEmpty(modifier: Modifier = Modifier) {
         modifier = modifier
             .testTag(ZineShelfEmptyTestTag)
             .fillMaxSize()
+            // Large text on a small phone makes the column taller than the room above the dock, so
+            // it scrolls. The padding is inside the scroll: the last line can then be brought up
+            // clear of the dock, and a column that fits is centred exactly as before.
+            .verticalScroll(rememberScrollState())
             .padding(
                 start = EmptyPaddingHorizontal,
                 end = EmptyPaddingHorizontal,

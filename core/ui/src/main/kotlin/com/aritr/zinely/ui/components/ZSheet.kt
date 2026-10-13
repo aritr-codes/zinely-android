@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -29,9 +30,11 @@ import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -54,12 +57,14 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -123,6 +128,11 @@ public data class ZSheetClose(val label: String, val onClose: () -> Unit)
  * for deterministic initial focus.
  * @param onHidden runs after the exit animation releases the dialog window. Use it for focus return,
  * never as the user's dismiss action.
+ * @param subMaxLines the most lines a one-paragraph [sub] may take before it ends in an ellipsis. For a
+ * sub that is somebody's own words (a zine's name) rather than copy of a known length.
+ * @param scrollBody for a sheet whose words can outgrow a small phone at large text: the grip and title
+ * stay, [sub] and the content scroll under them, and the sheet stops at 88% of the screen so its top is
+ * clear of the status bar. Off by default, and a sheet that leaves it off is laid out exactly as before.
  */
 @Composable
 public fun ZSheet(
@@ -134,6 +144,8 @@ public fun ZSheet(
     close: ZSheetClose? = null,
     onShown: (() -> Unit)? = null,
     onHidden: (() -> Unit)? = null,
+    scrollBody: Boolean = false,
+    subMaxLines: Int = Int.MAX_VALUE,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val visibleState = remember { MutableTransitionState(false) }
@@ -200,6 +212,8 @@ public fun ZSheet(
                     sub = sub,
                     modifier = modifier,
                     close = close,
+                    scrollBody = scrollBody,
+                    subMaxLines = subMaxLines,
                     content = content,
                 )
             }
@@ -224,6 +238,8 @@ public fun ZSheetSurface(
     sub: String?,
     modifier: Modifier = Modifier,
     close: ZSheetClose? = null,
+    scrollBody: Boolean = false,
+    subMaxLines: Int = Int.MAX_VALUE,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -232,6 +248,13 @@ public fun ZSheetSurface(
             .testTag(ZSheetSurfaceTestTag)
             .widthIn(max = SheetMaxWidth)
             .fillMaxWidth()
+            .then(
+                if (scrollBody) {
+                    Modifier.heightIn(max = (LocalConfiguration.current.screenHeightDp * ScrollBodyMaxHeight).dp)
+                } else {
+                    Modifier
+                },
+            )
             // `box-shadow:0 -16px 40px -18px var(--soft-shadow)` — the one blurred shadow V2.1 keeps,
             // and the one exception §5.1 allows: a sheet rising off the screen is chrome *above* the
             // desk, not a printed object resting on it. Transcribed exactly as the Library's already
@@ -272,7 +295,9 @@ public fun ZSheetSurface(
             .padding(
                 start = ZinelyV21Dimens.gapLg,
                 end = ZinelyV21Dimens.gapLg,
-                bottom = ZinelyV21Dimens.gapXl,
+                // A scrolling body carries this inside its scroll: a scroll clips at its edge, and the
+                // last button draws its shadow below itself.
+                bottom = if (scrollBody) 0.dp else ZinelyV21Dimens.gapXl,
             )
             // D-087: make the whole sheet a pointer hit target so inert titles, gaps and padding cannot
             // fall through to the scrim sibling. Observe without consuming: descendant controls and
@@ -325,36 +350,57 @@ public fun ZSheetSurface(
             )
             if (close != null) ZSheetCloseButton(close)
         }
-        // `.sh-sub{font-size:.78rem;color:var(--ink-soft);margin-top:var(--gap-hair);font-weight:500}`.
-        if (sub != null) {
-            val subModifier = Modifier.padding(
-                start = ZinelyV21Dimens.gapHair,
-                end = ZinelyV21Dimens.gapHair,
-                top = ZinelyV21Dimens.gapHair,
-                bottom = ZinelyV21Dimens.gapMd,
-            )
-            val subStyle = TextStyle(
-                color = colors.inkSoft,
-                fontFamily = ZinelyV21Fonts.Work,
-                fontSize = SubSize,
-                fontWeight = FontWeight.Medium,
-                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-            )
-            val paragraphs = sub.split(ZSheetParagraphBreak)
-            if (paragraphs.size == 1) {
-                BasicText(text = sub, modifier = subModifier, style = subStyle)
-            } else {
-                // `backup-restore.html .work .sheet-copy{gap:8px}`: paragraphs sit gapSm apart, not a blank line
-                // apart. Merged, so TalkBack still reads them in order as one stop, as the single text did.
-                Column(
-                    modifier = subModifier.semantics(mergeDescendants = true) {},
-                    verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
-                ) {
-                    paragraphs.forEach { BasicText(text = it, style = subStyle) }
+        val body: @Composable ColumnScope.() -> Unit = {
+            // `.sh-sub{font-size:.78rem;color:var(--ink-soft);margin-top:var(--gap-hair);font-weight:500}`.
+            if (sub != null) {
+                val subModifier = Modifier.padding(
+                    start = ZinelyV21Dimens.gapHair,
+                    end = ZinelyV21Dimens.gapHair,
+                    top = ZinelyV21Dimens.gapHair,
+                    bottom = ZinelyV21Dimens.gapMd,
+                )
+                val subStyle = TextStyle(
+                    color = colors.inkSoft,
+                    fontFamily = ZinelyV21Fonts.Work,
+                    fontSize = SubSize,
+                    fontWeight = FontWeight.Medium,
+                    lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+                )
+                val paragraphs = sub.split(ZSheetParagraphBreak)
+                if (paragraphs.size == 1) {
+                    BasicText(
+                        text = sub,
+                        modifier = subModifier,
+                        style = subStyle,
+                        // Clip is BasicText's own default, kept for every sheet that sets no limit.
+                        overflow = if (subMaxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis,
+                        maxLines = subMaxLines,
+                    )
+                } else {
+                    // `backup-restore.html .work .sheet-copy{gap:8px}`: paragraphs sit gapSm apart, not a blank line
+                    // apart. Merged, so TalkBack still reads them in order as one stop, as the single text did.
+                    Column(
+                        modifier = subModifier.semantics(mergeDescendants = true) {},
+                        verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+                    ) {
+                        paragraphs.forEach { BasicText(text = it, style = subStyle) }
+                    }
                 }
             }
+            content()
         }
-        content()
+        if (scrollBody) {
+            Column(
+                Modifier
+                    .weight(1f, fill = false)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = ZinelyV21Dimens.gapXl),
+                content = body,
+            )
+        } else {
+            body()
+        }
     }
 }
 
@@ -457,6 +503,9 @@ private val SheetShadowSpread = 18.dp
 
 /** Not in the frozen files (a phone-width prototype); kept from V1 so a tablet does not stretch the sheet. */
 private val SheetMaxWidth = 520.dp
+
+/** As the Library's own sheets: `v21-library.html .sheet.a28{max-height:88%}`. */
+private const val ScrollBodyMaxHeight = 0.88f
 
 /** `.grip`/`.grab{width:44px;height:5px;opacity:.5}` — V2's was 38×4 on `--field-edge`. */
 private val GripWidth = 44.dp

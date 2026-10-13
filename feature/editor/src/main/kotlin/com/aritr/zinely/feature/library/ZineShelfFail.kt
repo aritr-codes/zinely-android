@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -108,6 +110,9 @@ internal fun ZineShelfFail(onRetry: () -> Unit, modifier: Modifier = Modifier) {
         modifier = modifier
             .testTag(ZineShelfFailTestTag)
             .fillMaxSize()
+            // As the empty shelf: large text on a small phone outgrows the room above the dock, so the
+            // column scrolls, with its padding inside the scroll so Try again can be brought clear.
+            .verticalScroll(rememberScrollState())
             .padding(
                 start = FailPaddingHorizontal,
                 end = FailPaddingHorizontal,

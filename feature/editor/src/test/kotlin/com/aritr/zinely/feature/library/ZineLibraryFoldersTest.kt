@@ -605,6 +605,20 @@ class ZineLibraryFoldersTest {
         composeRule.onNodeWithContentDescription("Family, folder, 3 zines").assertIsFocused()
     }
 
+    @Test
+    fun `a toast takes the folder snack's place rather than lying on top of it`() {
+        // Both stand eight dp above the dock.
+        shelf()
+        events.trySend(HomeShelfEvent.FolderSnack("Moved to “Family”", FolderSnackAction.Undo))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertExists()
+
+        events.trySend(HomeShelfEvent.Message("Couldn’t copy that zine"))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Couldn’t copy that zine").assertExists()
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
+    }
+
     // ---------------------------------------------------------------------------------------------
     // Harness
     // ---------------------------------------------------------------------------------------------
