@@ -3,6 +3,10 @@ package com.aritr.zinely.feature.editor
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -157,23 +161,57 @@ class BenchInkClearanceTest {
     }
 
     @Test
-    fun a_page_top_element_uses_measured_clearance_without_hitting_the_ceiling() {
-        // A16's taller tray begins close enough to the sheet top that even this 7pt-high box needs some
-        // clearance. It must still remain below the 96dp clamp used by a low-page target: otherwise the
-        // implementation has fallen back to the old unconditional maximum pan.
+    fun a_page_top_element_is_already_clear_and_costs_only_the_slack() {
+        // Until D-113 the tray was as tall as the canvas and covered even a box at the very top of the
+        // page, so this test asserted a clearance term here. The tray now stops short of the canvas top,
+        // a top-of-page box is clear of it at rest, and the lift is the free slack alone.
         placedText(topOfPage)
         val rest = paperTop()
         val slack = rest - composeRule.onNodeWithTag(EditorCanvasTestTag).fetchSemanticsNode().boundsInRoot.top
 
         openInk()
 
-        // Guard before the assertion: on a host silently shrunk to its window the slack is 0 and the whole
-        // thing degrades to `assertEquals(0f, 0f)`, which is the green nothing this suite exists to catch.
         assertTrue("this host must HAVE slack or the assertion proves nothing (slack $slack)", slack > 1f)
-        val lift = rest - paperTop()
-        val ceiling = with(composeRule.density) { 96.dp.toPx() }
-        assertTrue("the measured tray must add clearance beyond slack (slack $slack, lift $lift)", lift > slack + 1f)
-        assertTrue("a top-page target must not hit the 96dp clamp (lift $lift)", lift < ceiling - 1f)
+        assertEquals("a box the tray does not cover is lifted by the slack alone", slack, rest - paperTop(), 1f)
+        assertInViewAbove(BenchInkPopoverTestTag)
+    }
+
+    // ── D-113: a docked panel leaves the thing it edits in view ──────────────────────────────────
+
+    private val midPage = Transform(20.0, 55.0, 60.0, 10.0)
+
+    private fun bounds(tag: String): Rect = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
+
+    private fun textBox(): Rect = composeRule.onNode(
+        SemanticsMatcher("an element node") {
+            it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith(ElementNodeTagPrefix) == true
+        },
+    ).fetchSemanticsNode().boundsInRoot
+
+    private fun assertInViewAbove(panelTag: String) {
+        val box = textBox()
+        val canvas = bounds(EditorCanvasTestTag)
+        val panel = bounds(panelTag)
+        assertTrue("the text box must sit above the panel (box $box, panel $panel)", box.bottom <= panel.top + 1f)
+        assertTrue("and inside the canvas (box $box, canvas $canvas)", box.top >= canvas.top - 1f)
+        assertTrue("whole, not a clipped sliver (box $box)", box.height > 4f)
+    }
+
+    @Test
+    fun the_ink_tray_leaves_the_text_it_colours_in_view() {
+        // A phone showed the tray as tall as the canvas: a maker picked an ink for words they could not see.
+        placedText(midPage)
+        openInk()
+        assertInViewAbove(BenchInkPopoverTestTag)
+    }
+
+    @Test
+    fun the_text_panel_leaves_the_text_it_styles_in_view() {
+        // Seen on a phone: the panel hid the text box completely, so size and alignment were changed blind.
+        placedText(midPage)
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").performClick()
+        composeRule.waitForIdle()
+        assertInViewAbove(TypeBarTestTag)
     }
 
     @Test

@@ -110,6 +110,23 @@ internal fun benchEditPanMagnitudeDp(
  */
 internal const val BenchEditPanMillis: Int = 340
 
+/**
+ * How much of the canvas a docked panel (the Ink tray, the Text panel) must leave showing above itself, so
+ * the element it edits can be seen while it is edited ([D-113](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-113)).
+ *
+ * The element's own height plus a 12dp margin each side — a one-line text box costs the panel little —
+ * but never less than [BenchPanelPeekMinDp], and never more than [BenchPanelPeekMaxDp] or 30% of the
+ * canvas, so a tall photo cannot starve the panel: it shows its lower part instead. Both panels scroll
+ * what no longer fits.
+ */
+internal fun benchPanelPeekDp(canvasHeightDp: Float, elementHeightDp: Float): Float {
+    val ceiling = minOf(BenchPanelPeekMaxDp, canvasHeightDp * 0.3f).coerceAtLeast(BenchPanelPeekMinDp)
+    return (elementHeightDp + 24f).coerceIn(BenchPanelPeekMinDp, ceiling)
+}
+
+internal const val BenchPanelPeekMinDp: Float = 56f
+internal const val BenchPanelPeekMaxDp: Float = 128f
+
 /** Frozen `.caret{width:1.5px}` (`v2-bench.html:204`). */
 internal val BenchCaretWidth = 1.5.dp
 
