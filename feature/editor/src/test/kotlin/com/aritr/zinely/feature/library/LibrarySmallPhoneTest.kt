@@ -19,6 +19,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.theme.LocalZinelyMotion
 import com.aritr.zinely.ui.theme.ZinelyMotion
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -88,6 +89,26 @@ class LibrarySmallPhoneTest {
 
         composeRule.onNodeWithTag(FolderMoveNewTestTag).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithTag(ZineActionTitleTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun `the backups sheet keeps its title while its choices scroll at the largest text`() {
+        setContent(fontScale = 2f) {
+            KeepSafeSheet(
+                visible = true,
+                canBackup = true,
+                lastBackup = null,
+                onDismiss = {},
+                onHidden = {},
+                onSaveBackup = {},
+                onRestoreBackup = {},
+            )
+        }
+
+        composeRule.onNodeWithTag(KeepSafeRestoreActionTestTag).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(Copy.LibraryBackup.TITLE).assertIsDisplayed()
+        // Full height, its top was under the status bar.
+        assertTrue(composeRule.onNodeWithTag(KeepSafeSheetTestTag).fetchSemanticsNode().boundsInRoot.top > 0f)
     }
 
     // ---------------------------------------------------------------------------------------------

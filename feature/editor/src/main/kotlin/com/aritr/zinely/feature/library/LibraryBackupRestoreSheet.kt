@@ -12,9 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -176,9 +174,8 @@ internal fun KeepSafeSheet(
         onHidden = onHidden,
         title = if (canBackup) Copy.LibraryBackup.TITLE else Copy.LibraryBackup.EMPTY_TITLE,
         sub = if (canBackup) Copy.LibraryBackup.SHEET_BODY else Copy.LibraryBackup.EMPTY_BODY,
-        modifier = Modifier
-            .testTag(KeepSafeSheetTestTag)
-            .verticalScroll(rememberScrollState()),
+        modifier = Modifier.testTag(KeepSafeSheetTestTag),
+        scrollBody = true,
     ) {
         // The last-backup fact sits after the body, before the action it explains; an empty shelf doesn't
         // show it (amendment 1a item 1). No note follows it on either shelf (backup-sheet polish: removed, not
@@ -328,11 +325,11 @@ private fun RunningSheet(mode: LibraryBackupRestoreMode, cancellable: Boolean, o
         },
         modifier = Modifier
             .testTag(BackupRestoreRunningSheetTestTag)
-            .verticalScroll(rememberScrollState())
             .semantics {
                 progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
                 stateDescription = Copy.LibraryBackup.RUNNING_STATE_DESCRIPTION
             },
+        scrollBody = true,
     ) {
         Box(
             Modifier
@@ -392,7 +389,8 @@ private fun SuccessSheet(
         title = copy.title,
         // The frozen body / note / more paragraphs, drawn 8dp apart and read by TalkBack in order as one stop.
         sub = copy.paragraphs.joinToString(ZSheetParagraphBreak),
-        modifier = Modifier.testTag(BackupRestoreSuccessSheetTestTag).verticalScroll(rememberScrollState()),
+        modifier = Modifier.testTag(BackupRestoreSuccessSheetTestTag),
+        scrollBody = true,
     ) {
         Mark("✓", colors.paper, colors.leaf, colors.onLeaf)
         ZPrimaryButton(
@@ -461,9 +459,8 @@ private fun ErrorSheet(
         onShown = retryFocus::requestFocus,
         title = title,
         sub = body,
-        modifier = Modifier
-            .testTag(BackupRestoreErrorSheetTestTag)
-            .verticalScroll(rememberScrollState()),
+        modifier = Modifier.testTag(BackupRestoreErrorSheetTestTag),
+        scrollBody = true,
     ) {
         val colors = ZinelyTheme.v21Colors
         Mark("!", colors.paper, colors.jam, colors.onLeaf)
