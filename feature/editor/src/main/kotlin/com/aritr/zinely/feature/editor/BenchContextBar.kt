@@ -11,6 +11,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,15 +25,15 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Flip
+import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Grain
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -43,24 +44,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
@@ -395,6 +400,43 @@ internal fun BenchContextBar(
                     .clip(BenchContextBarShape)
                     .background(colors.surface)
                     .border(BenchChromeBorder, colors.ink, BenchContextBarShape)
+                    // D-113: a bar that scrolls says so. Seven photo verbs do not fit a 360dp phone, and
+                    // the last one (Delete) sat past the edge with nothing to show it was there. The card
+                    // fades into its own paper on whichever side has more, inside the border; a bar that
+                    // fits draws nothing.
+                    .drawWithContent {
+                        drawContent()
+                        val edge = BenchChromeBorder.toPx()
+                        val fade = BenchContextBarFadeDp.toPx()
+                        val paper = colors.surface
+                        // A row scrolls from its start, and in a right-to-left layout the start is the
+                        // right edge: "more ahead" is then on the left.
+                        val rtl = layoutDirection == LayoutDirection.Rtl
+                        val moreRight = if (rtl) scrollState.canScrollBackward else scrollState.canScrollForward
+                        val moreLeft = if (rtl) scrollState.canScrollForward else scrollState.canScrollBackward
+                        if (moreRight) {
+                            drawRect(
+                                brush = Brush.horizontalGradient(
+                                    listOf(paper.copy(alpha = 0f), paper),
+                                    startX = size.width - edge - fade,
+                                    endX = size.width - edge,
+                                ),
+                                topLeft = Offset(size.width - edge - fade, edge),
+                                size = Size(fade, size.height - 2 * edge),
+                            )
+                        }
+                        if (moreLeft) {
+                            drawRect(
+                                brush = Brush.horizontalGradient(
+                                    listOf(paper, paper.copy(alpha = 0f)),
+                                    startX = edge,
+                                    endX = edge + fade,
+                                ),
+                                topLeft = Offset(edge, edge),
+                                size = Size(fade, size.height - 2 * edge),
+                            )
+                        }
+                    }
                     .horizontalScroll(scrollState)
                     .padding(BenchContextBarPaddingDp),
                 horizontalArrangement = Arrangement.spacedBy(BenchContextBarGapDp),
@@ -411,6 +453,9 @@ internal fun BenchContextBar(
         }
     }
 }
+
+/** How far the "there is more" fade reaches in from the card's edge: about half a verb. */
+internal val BenchContextBarFadeDp = 28.dp
 
 /**
  * One verb — `.ctx button` (`v21-bench.html:228-234`): a pill at least 50dp wide, 8dp of padding on every

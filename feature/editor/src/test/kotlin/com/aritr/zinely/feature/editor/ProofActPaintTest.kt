@@ -206,8 +206,8 @@ class ProofActPaintTest {
                 onNext = {}, onPrev = {}, onGoToStep = {},
             )
         }
-        // This class runs in Robolectric's default 470dp-tall window, whatever `PHONE` says, and the
-        // step column is anchored at its bottom there — so the legend starts above the fold.
+        // This class runs in Robolectric's default 470dp-tall window, whatever `PHONE` says, where the
+        // step column may scroll — so the legend is brought into view before it is read.
         composeRule.onNodeWithTag(ProofFoldLegendTestTag, useUnmergedTree = true).performScrollTo()
         composeRule.waitForIdle()
         crop(ProofFoldLegendTestTag).run {

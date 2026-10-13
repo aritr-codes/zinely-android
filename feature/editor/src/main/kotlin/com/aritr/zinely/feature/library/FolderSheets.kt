@@ -26,7 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -50,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.components.zinelyFocusRing
+import com.aritr.zinely.ui.components.zinelyV21Dimmed
 import com.aritr.zinely.ui.components.zinelyV21Pressable
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -382,7 +382,8 @@ private fun GoButton(label: String, enabled: Boolean, onClick: () -> Unit) {
     val focused by interaction.collectIsFocusedAsState()
     Box(
         Modifier
-            .alpha(if (enabled) 1f else GoDisabledOpacity)
+            // Not `Modifier.alpha`: that cut the right and bottom off the disabled button's shadow.
+            .zinelyV21Dimmed(if (enabled) 1f else GoDisabledOpacity)
             // Nothing that clips may sit before the press or the ring: both paint outside the bounds.
             .zinelyV21Pressable(pressed && enabled, ZinelyV21Press.Raised, colors.inkLine, GoShape)
             .zinelyFocusRing(focused, ZinelyV21Dimens.radiusLg, GoFocusOffset)

@@ -144,9 +144,66 @@ class ProofSmallPhoneTest {
 
         // The holding line is the last thing in the sentence block, so it stands for the whole of it.
         tagged(ProofStepHoldingTestTag).assertWhollyVisible("step 1's holding line")
-        // …and it did not buy its place with the picture: what waits above the fold is the counter and
-        // the legend.
         tagged(ProofFoldDiagramTestTag).assertWhollyVisible("step 1's diagram")
+    }
+
+    /**
+     * With text at twice its size the step cannot fit and has to scroll. It opens at its top, in reading
+     * order, with the sentence it ends on reachable; opened at its end it began in the middle of a
+     * sentence (seen on a 360 x 640 emulator, 2026-10-13).
+     */
+    @Test
+    @Config(fontScale = 2f)
+    fun `at font scale 2 the fold step opens at its top and scrolls to its sentence`() {
+        setProof(startDrawer = ProofDrawer.Fold)
+
+        tagged(ProofStepTitleTestTag).assertWhollyVisible("the step counter")
+        tagged(ProofStepNextTestTag).assertWhollyVisible("Next step")
+
+        tagged(ProofStepHoldingTestTag).performScrollTo()
+        composeRule.waitForIdle()
+        tagged(ProofStepHoldingTestTag).assertWhollyVisible("the holding line, once scrolled to")
+    }
+
+    /** A step left scrolled to its end must not leave the next one opening there. */
+    @Test
+    @Config(fontScale = 2f)
+    fun `at font scale 2 the next fold step opens at its own top`() {
+        setProof(startDrawer = ProofDrawer.Fold)
+        tagged(ProofStepHoldingTestTag).performScrollTo()
+        composeRule.waitForIdle()
+
+        tagged(ProofStepNextTestTag).performClick()
+        composeRule.waitForIdle()
+
+        tagged(ProofStepTitleTestTag).assertWhollyVisible("step 2's counter")
+    }
+
+    /**
+     * The first fix anchored the step at its bottom, which showed the sentence and hid the counter and
+     * the key above the fold with nothing to say they were there. Now the diagram gives way instead, so
+     * on this phone at ordinary text a step shows all four of its parts and does not scroll at all.
+     */
+    @Test
+    fun `every part of a fold step is on screen at once, first step and last`() {
+        setProof(startDrawer = ProofDrawer.Fold)
+
+        fun assertWholeStep(which: String) {
+            tagged(ProofStepTitleTestTag).assertWhollyVisible("$which step's counter")
+            tagged(ProofFoldLegendTestTag).assertWhollyVisible("$which step's key")
+            tagged(ProofFoldDiagramTestTag).assertWhollyVisible("$which step's diagram")
+            tagged(ProofStepHoldingTestTag).assertWhollyVisible("$which step's holding line")
+            assertTrue(
+                "$which step's diagram is too small to read: ${heightDp(ProofFoldDiagramTestTag)}dp",
+                heightDp(ProofFoldDiagramTestTag) >= 100f,
+            )
+        }
+        assertWholeStep("the first")
+
+        tagged(proofStepDotTag(FOLD_LAST_STEP)).performClick()
+        composeRule.waitForIdle()
+        assertWholeStep("the last")
+        tagged(ProofPrimaryTestTag).assertWhollyVisible("the finish button")
     }
 
     /** The last step is the tight one: the finish button takes another row out of the same drawer. */
@@ -287,6 +344,46 @@ class ProofSmallPhoneTest {
 
         assertLabelWhole(Copy.Proof.PREPARING_SHARE)
         assertLabelWhole(Copy.Proof.SAVE_PDF)
+    }
+
+    /**
+     * One label wrapping used to leave its neighbour a shorter pill. Side by side, the pair is one height.
+     */
+    @Test
+    @Config(fontScale = 1.4f)
+    fun `two buttons side by side are the same height at font scale 1_4`() {
+        // While a share is prepared its label is the long one, and Save PDF wraps in what is left: the
+        // case where the two labels are not the same number of lines.
+        setProof(busyTarget = ProofExportTarget.SEND)
+        assertTrue(
+            "the case needs one label to wrap and the other not",
+            label(Copy.Proof.SAVE_PDF).textLayout().lineCount != label(Copy.Proof.PREPARING_SHARE).textLayout().lineCount,
+        )
+        assertEquals(heightDp(ProofSavePdfTestTag), heightDp(ProofShareTestTag), 0.5f)
+    }
+
+    @Test
+    @Config(fontScale = 1.4f)
+    fun `the hand-off pair is the same height at font scale 1_4`() {
+        setProof()
+        save()
+        assertEquals(heightDp(ProofOpenPdfTestTag), heightDp(ProofFoldItUpTestTag), 0.5f)
+    }
+
+    /** From 1.5 the pair stacks: each button the full width, so no label is broken inside a word. */
+    @Test
+    @Config(fontScale = 2f)
+    fun `at font scale 2 the two buttons stack and each keeps its label on one line`() {
+        setProof(busyTarget = ProofExportTarget.SEND)
+
+        val savePdf = tagged(ProofSavePdfTestTag).fetchSemanticsNode().boundsInRoot
+        val share = tagged(ProofShareTestTag).fetchSemanticsNode().boundsInRoot
+        assertTrue("Share sits under Save PDF (save $savePdf, share $share)", share.top >= savePdf.bottom)
+        assertEquals("and is as wide", savePdf.width, share.width, 1f)
+        assertEquals(1, label(Copy.Proof.SAVE_PDF).textLayout().lineCount)
+        assertEquals(1, label(Copy.Proof.PREPARING_SHARE).textLayout().lineCount)
+        // …and the taller band did not push the top of the screen away.
+        tagged(ProofBackTestTag).assertWhollyVisible("Back")
     }
 
     // ---- P4: the honesty legend wraps --------------------------------------------------------------

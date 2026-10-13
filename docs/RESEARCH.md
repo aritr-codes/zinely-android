@@ -883,3 +883,42 @@ all three in A29 before it is frozen; the rest are conditions on the build:
 - **A known limit, not mended:** words pushed out of their box by a change of font get no sign (R24.6).
 
 [Decision gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8) owns the ruling; A29 owns the design.
+
+## R25. Selection controls that take room from the canvas (2026-10-13)
+
+Asked for [D-113](design/V2-SPEC-DEFECTS.md#d-113) item 2: the Bench adds a two-row bar on select and the page
+shrinks to make room. Decision: [ADR-129](DECISIONS.md#adr-129).
+
+### R25.1 The tap-only way to move something may be one step away — ✅ VERIFIED
+
+[WCAG 2.5.7 Dragging Movements](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html) asks
+that anything done by dragging can also be done with a single pointer without dragging. Its own examples
+are a list where an item is selected and then moved with arrow buttons, and a menu opened from the item.
+Neither is on screen before the item is chosen.
+
+### R25.2 Other editors put precise positioning one tap deeper — ✅ VERIFIED for Keynote, 🟨 for the rest
+
+[Keynote on iPhone](https://support.apple.com/guide/keynote-iphone/tanb46504b79/ios) reaches exact position
+and size through the Format button and an Arrange tab. The Research Agent for this change (2026-10-13) also
+reported that Canva's phone editor does the same from a Position entry in its bottom bar; it gave no source
+for that, so it is an assumption here.
+
+### R25.3 A layout that moves is a fault only when it is not expected — ✅ VERIFIED for the quote (web source), 🟦 for its use here
+
+[web.dev on Cumulative Layout Shift](https://web.dev/articles/cls): "A layout shift is only bad if the user
+isn't expecting it." 🟦 The reading taken here: a panel that opens because its button was tapped is
+expected; a page that changes size because a piece on it was touched is less so. The source does not say
+that. Its own metric treats a shift that follows a tap as expected, which could be read the other way.
+
+### R25.4 A row that scrolls sideways needs something cut off at its edge — ✅ VERIFIED
+
+[NN/g on horizontal scrolling](https://www.nngroup.com/articles/horizontal-scrolling/) finds arrows and
+bars often go unnoticed and recommends content that visibly continues past the edge.
+[eBay's carousel pattern](https://opensource.ebay.com/evo-web/components/carousel) shows part of the next
+item for that reason. Applied in D-113 item 6: the verb bar fades at the side that has more, over a verb
+left cut off. R24.4 above reached the same advice for panels that scroll down.
+
+### R25.5 Zinely application — 🟦 RECOMMENDATION
+
+Ranked by the research pass: swap the page strip for the buttons; a Move entry opening a docked tray; float
+the bar; reserve the rows always; keep as built. ADR-129 takes the second, and says why not the first.

@@ -1,16 +1,22 @@
 package com.aritr.zinely.ui.components
 
-import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.withSaveLayer
 import androidx.compose.ui.unit.Dp
-import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Press
 
 /**
@@ -56,6 +62,35 @@ public fun Modifier.zinelyV21HardShadow(offset: Dp, color: Color, shape: Shape):
             drawOutline(shape.createOutline(size, layoutDirection, this), color)
         }
     }
+
+/**
+ * Dims a control as one piece, together with what it paints outside its own bounds.
+ *
+ * **Use this, not `Modifier.alpha`, on anything that carries [zinelyV21HardShadow].** `alpha` composites
+ * its content in a layer the size of the node, and the hard shadow is drawn outside the node: a dimmed
+ * button lost the right and bottom of its shadow and looked chipped (the disabled *Make folder* button,
+ * seen on a phone-sized emulator, 2026-10-13). It goes first in the chain, where `alpha` went.
+ *
+ * @param alpha 1 draws the content untouched, with no layer.
+ * @param reach how far past each edge the layer extends. It must cover the shadow's offset.
+ */
+public fun Modifier.zinelyV21Dimmed(alpha: Float, reach: Dp = ZinelyV21DimReach): Modifier =
+    drawWithContent {
+        if (alpha >= 1f) {
+            drawContent()
+        } else {
+            val r = reach.toPx()
+            drawIntoCanvas { canvas ->
+                canvas.withSaveLayer(
+                    Rect(-r, -r, size.width + r, size.height + r),
+                    Paint().apply { this.alpha = alpha },
+                ) { drawContent() }
+            }
+        }
+    }
+
+/** One more than the deepest resting shadow ([ZinelyV21Press.Raised], 3dp). */
+public val ZinelyV21DimReach: Dp = 4.dp
 
 /**
  * A flat colour band drawn **outside** an object's bounds — the geometry behind every CSS

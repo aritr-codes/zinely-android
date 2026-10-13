@@ -135,6 +135,11 @@ its HTML specification frozen and an ADR before any Compose work.
    - *HTML, CSS and JavaScript for drawing Art:* already how pieces are specified (the bench file, checked
      against Kotlin by a parity test). Not a candidate for drawing inside the app, where one renderer keeps
      screen, Read and PDF identical.
+4. **A page that keeps its size when something is selected.** Today the page shrinks to make room for the
+   move-by-buttons bar each time a piece is selected; on a small phone it loses a third of its height. The
+   proposed direction is a tray opened from the verb bar ([ADR-129](DECISIONS.md#adr-129), Proposed). It would
+   reverse an earlier owner ruling, so it needs the owner, an HTML amendment and a freeze first. Not designed,
+   not built.
 
 ### Engineering follow-ups — not extra public feature promises
 
@@ -428,6 +433,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-13 | **Small-phone and large-text audit closed; one design item added to Exploring.** The D-113 list is fixed and was checked on a 360 × 640dp emulator. One item is not fixed: the page shrinks each time something is selected. A direction (a tray opened from the verb bar) is proposed; it needs the owner and an HTML amendment before anything is built. Nothing here is in a published download. | [D-113](design/V2-SPEC-DEFECTS.md#d-113) · [ADR-127](DECISIONS.md#adr-127) · [ADR-128](DECISIONS.md#adr-128) · [ADR-129](DECISIONS.md#adr-129) |
 | 2026-10-12 | **Transparency pass.** Added *Where the list stands*: of the last list, one row (backup honesty, reading order, named undo) is built and accepted, four are built and not accepted, and six are not built. Added the open known problems in beta.7 (#102, #103, #106) and the owner's report of tester feedback, untriaged. *Planned* gains the Art quality pass; *Exploring* gains the owner's customisation ideas with what blocks each. The public roadmap page moves the two frames to In development, lists what is shipped but not finished checking and the known problems, and names the new ideas as ideas. | [ADR-118](DECISIONS.md#adr-118) · [OWNER-CHECKLIST](OWNER-CHECKLIST.md) |
 | 2026-10-12 | **Two frames merged, not accepted.** PR #119 merged as `7f8980a` on the owner's instruction after three independent reviews (GO WITH FIXES twice, reconciled; then GO). Owed before acceptance: the owner's first-time pass, TalkBack listen and one printed page. In no released APK; no public copy changed. | [Brief 05](planning/BRIEF-05-MATERIALS-FRAMES.md) · [ADR-107](DECISIONS.md#adr-107) · [ADR-124](DECISIONS.md#adr-124) |
 | 2026-10-12 | **Two frames: built, under review.** Snipped border and Round window are implemented from A32's coordinates on branch `feat/d5-frames` (`d910d38`); the Art sheet holds 34 pieces and tap-through names eight. Not merged, not accepted, in no APK; no public copy changed. | [Brief 05](planning/BRIEF-05-MATERIALS-FRAMES.md) · [ADR-107](DECISIONS.md#adr-107) · [ADR-124](DECISIONS.md#adr-124) |

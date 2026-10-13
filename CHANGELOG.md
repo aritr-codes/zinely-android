@@ -103,13 +103,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known limitations
 
-- **Selecting something still makes the page a little smaller**, and it grows back when nothing is selected.
-  The row of move and resize buttons needs the room.
-- **In the fold guide on a small phone, the step counter and the key start above the top edge**; scroll down
-  to see them. Nothing shows that the guide scrolls.
-- **With very large text, two buttons side by side in Preview can be different heights**, and a label can
-  break in the middle of a word.
-- **The photo button row scrolls sideways on narrow phones** with nothing to show it; Delete is at the end.
+- **Selecting something still makes the page smaller**, and it grows back when nothing is selected. The row
+  of move and resize buttons needs the room. On a small phone the page loses about a third of its height,
+  and with larger text its bottom edge can sit under the button row. A change is being explored; nothing is
+  designed or built ([ADR-129](docs/DECISIONS.md#adr-129)).
+- **With larger text on a small phone, the fold guide and the screen after Save PDF scroll.** In the fold
+  guide a step opens at its top and its instruction is below; after a save, the top bar scrolls away with the
+  page. That scroll after a save is animated even when the phone is set to reduce motion.
+- **None of the changes below was listened to with a screen reader.** They were checked by reading the
+  screen's accessibility information, not by ear.
 
 ### Fixed
 
@@ -127,8 +129,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the empty Shelf and the "could not open" Shelf, the zine menu, Move to folder, the Backups sheets, the
   Preview buttons and its page counter, the print legend, the fold guide's instruction, the Add menu and
   the photo-across-two-pages sheet. Sheets keep their title in place and no longer run under the status
-  bar. These were checked in tests at 360 x 640, not on a small phone
-  ([D-113](docs/design/V2-SPEC-DEFECTS.md#d-113)).
+  bar. These were checked in tests and on an emulator set to a small phone (360 x 640), not on a real small
+  phone ([D-113](docs/design/V2-SPEC-DEFECTS.md#d-113)).
+- At ordinary text size the fold guide now shows a whole step at once on a small phone: the drawing gets
+  smaller so the step counter, the key and the instruction all fit. Before, the instruction was below the
+  bottom edge with nothing to show the guide scrolled ([D-113](docs/design/V2-SPEC-DEFECTS.md#d-113)).
+- In Preview, with larger text **Save PDF** and **Share** sit one above the other so neither label is cut or
+  broken inside a word, and the "Ready when you are" title wraps instead of being cut short.
+- The row of photo buttons now fades at the edge when there are more buttons to scroll to. On narrow phones
+  **Delete** was off the end with nothing to show it.
+- A notice in the Library no longer lands on top of the "Moved to folder" message; it waits until that
+  message, and its **Undo**, have gone.
+- The greyed-out **Make folder** button keeps its whole shadow. Its right and bottom edges were cut off.
 - After deleting a zine with a long name, **Undo** keeps its full size; the name wraps instead. Before, Undo
   could be squeezed to a sliver at the edge of the bar.
 - The delete Undo bar and the Library's short notices now sit above **Make a zine** instead of on top of it,

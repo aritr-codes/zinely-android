@@ -579,6 +579,21 @@ class ZineLibraryFoldersTest {
     }
 
     @Test
+    fun `a toast that waited shows once the folder snack has timed out`() {
+        shelf()
+        composeRule.mainClock.autoAdvance = false
+        events.trySend(HomeShelfEvent.FolderSnack("Back on My Shelf", FolderSnackAction.Undo))
+        events.trySend(HomeShelfEvent.Message("Couldn’t copy that zine"))
+        composeRule.mainClock.advanceTimeBy(3_500)
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertExists()
+        composeRule.onNodeWithText("Couldn’t copy that zine").assertDoesNotExist()
+
+        composeRule.mainClock.advanceTimeBy(1_500)
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
+        composeRule.onNodeWithText("Couldn’t copy that zine").assertExists()
+    }
+
+    @Test
     fun `the snack stays four seconds, then goes on its own`() {
         // A28.13.
         shelf()
@@ -606,8 +621,9 @@ class ZineLibraryFoldersTest {
     }
 
     @Test
-    fun `a toast takes the folder snack's place rather than lying on top of it`() {
-        // Both stand eight dp above the dock.
+    fun `a toast waits for the folder snack to leave, so the snack keeps its Undo`() {
+        // Both stand eight dp above the dock, so they cannot be up together. The snack was lowered for
+        // the toast at first, and a failure notice arriving inside its four seconds took Undo with it.
         shelf()
         events.trySend(HomeShelfEvent.FolderSnack("Moved to “Family”", FolderSnackAction.Undo))
         composeRule.waitForIdle()
@@ -615,8 +631,13 @@ class ZineLibraryFoldersTest {
 
         events.trySend(HomeShelfEvent.Message("Couldn’t copy that zine"))
         composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertExists()
+        composeRule.onNodeWithText("Couldn’t copy that zine").assertDoesNotExist()
+
+        composeRule.onNodeWithTag(BenchSnackActionTestTag, useUnmergedTree = true).performClick()
+        composeRule.waitForIdle()
+        assertEquals("Undo still reached the app", 1, snackActions)
         composeRule.onNodeWithText("Couldn’t copy that zine").assertExists()
-        composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
     }
 
     // ---------------------------------------------------------------------------------------------

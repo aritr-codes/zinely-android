@@ -1,28 +1,34 @@
 package com.aritr.zinely.feature.editor
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,7 +39,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -41,21 +46,19 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.PathParser
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -68,6 +71,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -84,6 +88,7 @@ import com.aritr.zinely.ui.components.ZSheet
 import com.aritr.zinely.ui.components.ZSheetClose
 import com.aritr.zinely.ui.components.ZStatusPane
 import com.aritr.zinely.ui.components.zinelyFocusRing
+import com.aritr.zinely.ui.components.zinelyV21Dimmed
 import com.aritr.zinely.ui.components.zinelyV21Frame
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.theme.ZinelyHaptic
@@ -188,8 +193,13 @@ private const val ICON_CHEVRON = "M9 6l6 6-6 6"
 @Composable
 private fun drawerBodyMaxHeight(): Dp {
     val screenHeight = LocalConfiguration.current.screenHeightDp
-    // The frozen drawer's own rule is `max-height: 88%`.
-    return ((screenHeight * 0.88f) - SheetChrome).coerceAtLeast(0f).dp
+    // The frozen drawer's own rule is `max-height: 88%`. On a short phone that rule leaves the fold guide
+    // less than it needs while a strip of desk shows above the drawer for nothing, so the body is
+    // promised [DrawerBodyPromise] whenever the window has it. [ZSheet] keeps the sheet below the status
+    // bar whatever is asked for here.
+    val frozen = screenHeight * 0.88f - SheetChrome
+    val promised = minOf(screenHeight - SheetChrome, DrawerBodyPromise)
+    return maxOf(frozen, promised).coerceAtLeast(0f).dp
 }
 
 /**
@@ -198,6 +208,9 @@ private fun drawerBodyMaxHeight(): Dp {
  * still covers the taller head with 4dp to spare.
  */
 private const val SheetChrome = 110f
+
+/** What a drawer's body is given before the 88% rule is allowed to take less: the fold guide's own need. */
+private const val DrawerBodyPromise = 520f
 
 /**
  * The least the reader is ever given. Below it the surface scrolls rather than shrink the zine further.
@@ -1107,7 +1120,8 @@ private fun ProofReadyRow(
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             BasicText(
                 text = if (saved) Copy.Proof.BEFORE_YOU_PRINT else Copy.Proof.READY_WHEN_YOU_ARE,
-                maxLines = 1,
+                // Two lines: at large text one line cut the title to "Ready when yo…".
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 style = TextStyle(
                     color = colors.ink,
@@ -1202,13 +1216,9 @@ private fun ProofCommitRow(
 ) {
     val anyBusy = busyTarget != null
     val haptics = ZinelyTheme.haptics
-    Row(
-        // `.commit{margin-top:var(--gap-md)}` — and the band's own `spacedBy(12.dp)` already **is** that
-        // 12dp. An extra `gapXs` here made it 16.
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
-    ) {
+    // `.commit{margin-top:var(--gap-md)}` — and the band's own `spacedBy(12.dp)` already **is** that
+    // 12dp. An extra `gapXs` here made it 16.
+    ProofActionPair { grow, rest ->
         val savingNow = busyTarget == ProofExportTarget.SAVE
         val sharingNow = busyTarget == ProofExportTarget.SEND
         ProofBandButton(
@@ -1218,7 +1228,7 @@ private fun ProofCommitRow(
             ring = true,
             enabled = !anyBusy,
             busy = savingNow,
-            modifier = Modifier.weight(1f).testTag(ProofSavePdfTestTag),
+            modifier = grow.testTag(ProofSavePdfTestTag),
             icon = { tint -> StrokedGlyph(ICON_SAVE, tint) },
         )
         ProofBandButton(
@@ -1227,11 +1237,51 @@ private fun ProofCommitRow(
             hero = false,
             enabled = !anyBusy,
             busy = sharingNow,
-            modifier = Modifier.testTag(ProofShareTestTag),
+            modifier = rest.testTag(ProofShareTestTag),
             icon = { tint -> ShareGlyph(tint) },
         )
     }
 }
+
+/**
+ * Two of the band's actions as one pair: side by side at the same height, or, from a text size of 1.5,
+ * one above the other at full width.
+ *
+ * Side by side the pair is as tall as its taller label, so a label that wraps does not leave its
+ * neighbour a shorter pill. From 1.5 a 360dp phone cannot hold two labels on one row without breaking a
+ * word in the middle, and a maker who asked for large text is better served by two wide buttons than by
+ * two narrow ones.
+ *
+ * @param stacks false keeps the pair side by side at every text size. The hand-off pair after a save
+ *   passes it: the band is at its tallest there (ticket, then the pair), and a second row of buttons
+ *   pushes the top bar off a 360x640 phone at text size 2. Its two short labels wrap between words.
+ * @param content receives the modifier for the action that takes the spare width, then the one for the
+ *   action that takes only its own.
+ */
+@Composable
+private fun ProofActionPair(
+    stacks: Boolean = true,
+    content: @Composable (grow: Modifier, rest: Modifier) -> Unit,
+) {
+    if (stacks && LocalDensity.current.fontScale >= ProofPairStacksFrom) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+        ) {
+            content(Modifier.fillMaxWidth(), Modifier.fillMaxWidth())
+        }
+    } else {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+        ) {
+            content(Modifier.weight(1f).fillMaxHeight(), Modifier.fillMaxHeight())
+        }
+    }
+}
+
+private const val ProofPairStacksFrom = 1.5f
 
 /**
  * The frozen `.btn` — a pill with a 1.5dp ink cut and a printed shadow, in one of two fills.
@@ -1273,8 +1323,9 @@ private fun ProofBandButton(
         modifier = modifier
             .heightIn(min = 52.dp)
             // The running control stays at full strength — it is the one thing on screen that IS
-            // happening. Only a button blocked by someone else's render dims.
-            .alpha(if (enabled || busy) 1f else 0.4f)
+            // happening. Only a button blocked by someone else's render dims. Dimmed with its shadow:
+            // `Modifier.alpha` here cut the shadow's right and bottom off.
+            .zinelyV21Dimmed(if (enabled || busy) 1f else 0.4f)
             .semantics {
                 if (busy) stateDescription = Copy.Proof.EXPORT_WORKING
             }
@@ -1311,8 +1362,7 @@ private fun ProofBandButton(
             // say what it does is worse than a tall one. Two lines cover every idle label; a cap of two
             // was tried and still cut "Save PDF" while Share reads "Preparing…" at font scale 2, because
             // Share is unweighted and takes its width first.
-            // ponytail: in that one corner the label breaks mid-word rather than being cut. Stack the
-            // pair when it does not fit if that ever needs to look better.
+            // [ProofActionPair] stacks the pair from 1.5, which is where that corner used to break a word.
             style = TextStyle(
                 color = content,
                 fontFamily = ZinelyTheme.typography.shell,
@@ -1398,11 +1448,7 @@ private fun ProofDoneBlock(
                 ),
             )
         }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
-        ) {
+        ProofActionPair(stacks = false) { grow, _ ->
             if (onOpenSavedPdf != null) {
                 ProofBandButton(
                     text = Copy.Proof.OPEN_PDF,
@@ -1410,7 +1456,7 @@ private fun ProofDoneBlock(
                     hero = false,
                     enabled = true,
                     press = ZinelyV21Press.Raised,
-                    modifier = Modifier.weight(1f).testTag(ProofOpenPdfTestTag),
+                    modifier = grow.testTag(ProofOpenPdfTestTag),
                     icon = { tint -> ProofVectorIcon(ICON_OPEN_PDF, tint) },
                 )
             }
@@ -1426,6 +1472,8 @@ private fun ProofDoneBlock(
                             haptics.perform(ZinelyHaptic.Tick)
                             onFoldItUp()
                         }
+                        // The link keeps its own size and sits centred beside Open PDF.
+                        .wrapContentHeight()
                         .padding(horizontal = 16.dp, vertical = 14.dp)
                         .testTag(ProofFoldItUpTestTag),
                     style = TextStyle(
@@ -1443,7 +1491,9 @@ private fun ProofDoneBlock(
                     hero = true,
                     enabled = true,
                     press = ZinelyV21Press.Raised,
-                    modifier = Modifier.weight(1f).testTag(ProofFoldItUpTestTag),
+                    // `grow`, not a bare `weight`: inside the pair a bare one resolves against the band's
+                    // column and the button is given no height at all.
+                    modifier = grow.testTag(ProofFoldItUpTestTag),
                     icon = { tint -> ProofVectorIcon(ICON_FOLD, tint) },
                 )
             }

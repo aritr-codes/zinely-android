@@ -21,6 +21,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +52,7 @@ import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Grain
 import com.aritr.zinely.ui.theme.rememberZinelyV21GrainBrush
 import com.aritr.zinely.ui.theme.zinelyV21Grain
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -359,14 +361,23 @@ public fun ZineLibraryScreen(
 
                 is HomeShelfEvent.Message -> {
                     val gone = CompletableDeferred<Unit>()
-                    // The toast stands where the folder snack stands, so the snack gives way, as it does to a sheet.
-                    snackUp = false
+                    // The toast stands where the folder snack stands, so it waits for the snack to leave.
+                    // Lowering the snack instead was the first answer, and it took the snack's Undo with
+                    // it: a failure notice that happened to arrive inside those four seconds cost the
+                    // maker the one way back from a move they had just made.
+                    //
+                    // The wait holds this collector, as a showing toast always has, so whatever arrives
+                    // meanwhile comes after the notice. It ends when the snack times out, when its action
+                    // is taken, or when a sheet is raised; while a finger or focus holds the snack up, the
+                    // notice goes on waiting, because the snack is still where it would stand.
+                    snapshotFlow { snackUp }.first { !it }
                     toast = event.text to gone
                     gone.await()
                     toast = null
                 }
 
                 // Not awaited: a newer folder snack replaces this one (A28.12), it does not queue behind it.
+                // It does come after a notice that is showing or waiting above: those hold the collector.
                 is HomeShelfEvent.FolderSnack -> {
                     snack = event
                     snackStep++
