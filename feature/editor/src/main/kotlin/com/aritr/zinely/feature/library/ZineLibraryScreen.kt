@@ -359,6 +359,8 @@ public fun ZineLibraryScreen(
 
                 is HomeShelfEvent.Message -> {
                     val gone = CompletableDeferred<Unit>()
+                    // The toast stands where the folder snack stands, so the snack gives way, as it does to a sheet.
+                    snackUp = false
                     toast = event.text to gone
                     gone.await()
                     toast = null
