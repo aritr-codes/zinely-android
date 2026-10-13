@@ -165,6 +165,20 @@ class ProofSmallPhoneTest {
         tagged(ProofStepHoldingTestTag).assertWhollyVisible("the holding line, once scrolled to")
     }
 
+    /** A step left scrolled to its end must not leave the next one opening there. */
+    @Test
+    @Config(fontScale = 2f)
+    fun `at font scale 2 the next fold step opens at its own top`() {
+        setProof(startDrawer = ProofDrawer.Fold)
+        tagged(ProofStepHoldingTestTag).performScrollTo()
+        composeRule.waitForIdle()
+
+        tagged(ProofStepNextTestTag).performClick()
+        composeRule.waitForIdle()
+
+        tagged(ProofStepTitleTestTag).assertWhollyVisible("step 2's counter")
+    }
+
     /**
      * The first fix anchored the step at its bottom, which showed the sentence and hid the counter and
      * the key above the fold with nothing to say they were there. Now the diagram gives way instead, so
@@ -338,9 +352,20 @@ class ProofSmallPhoneTest {
     @Test
     @Config(fontScale = 1.4f)
     fun `two buttons side by side are the same height at font scale 1_4`() {
-        setProof()
+        // While a share is prepared its label is the long one, and Save PDF wraps in what is left: the
+        // case where the two labels are not the same number of lines.
+        setProof(busyTarget = ProofExportTarget.SEND)
+        assertTrue(
+            "the case needs one label to wrap and the other not",
+            label(Copy.Proof.SAVE_PDF).textLayout().lineCount != label(Copy.Proof.PREPARING_SHARE).textLayout().lineCount,
+        )
         assertEquals(heightDp(ProofSavePdfTestTag), heightDp(ProofShareTestTag), 0.5f)
+    }
 
+    @Test
+    @Config(fontScale = 1.4f)
+    fun `the hand-off pair is the same height at font scale 1_4`() {
+        setProof()
         save()
         assertEquals(heightDp(ProofOpenPdfTestTag), heightDp(ProofFoldItUpTestTag), 0.5f)
     }

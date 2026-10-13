@@ -365,6 +365,11 @@ public fun ZineLibraryScreen(
                     // Lowering the snack instead was the first answer, and it took the snack's Undo with
                     // it: a failure notice that happened to arrive inside those four seconds cost the
                     // maker the one way back from a move they had just made.
+                    //
+                    // The wait holds this collector, as a showing toast always has, so whatever arrives
+                    // meanwhile comes after the notice. It ends when the snack times out, when its action
+                    // is taken, or when a sheet is raised; while a finger or focus holds the snack up, the
+                    // notice goes on waiting, because the snack is still where it would stand.
                     snapshotFlow { snackUp }.first { !it }
                     toast = event.text to gone
                     gone.await()
@@ -372,6 +377,7 @@ public fun ZineLibraryScreen(
                 }
 
                 // Not awaited: a newer folder snack replaces this one (A28.12), it does not queue behind it.
+                // It does come after a notice that is showing or waiting above: those hold the collector.
                 is HomeShelfEvent.FolderSnack -> {
                     snack = event
                     snackStep++

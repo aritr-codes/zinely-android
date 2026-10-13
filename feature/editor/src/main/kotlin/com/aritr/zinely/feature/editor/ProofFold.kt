@@ -169,14 +169,14 @@ internal fun ProofFoldAct(
  * puzzles ([V21-SPEC §5.2](../../../../../../../docs/design/V21-SPEC.md)).
  */
 /**
- * The tallest caption and the tallest holding line, used as an invisible size-setter so the controls
- * beneath them never move between steps. Character count stands in for rendered height: the two texts
+ * The tallest caption and the tallest holding line, measured but never placed, as a size-setter so the
+ * controls beneath them do not move between steps (see [foldStepFit] for when that height is used). Character count stands in for rendered height: the two texts
  * share one style and one width, so the longest string is the tallest block at every font scale.
  */
 private val FOLD_LONGEST_CAPTION: String = Copy.ProofFold.STEP_CAPTIONS.maxBy { it.length }
 private val FOLD_LONGEST_HOLDING: String = Copy.ProofFold.STEP_HOLDING.maxBy { it.length }
 
-/** The `.foldcap` + `.foldnow` pair. Rendered twice per step — once invisibly, to fix the height. */
+/** The `.foldcap` + `.foldnow` pair. Composed twice per step: once to show, once only to be measured. */
 @Composable
 private fun FoldCaptionBlock(
     caption: String,
@@ -253,7 +253,8 @@ private fun FoldGuide(
     // What the shift actually needed was a *constant* control position, not a floor. So the guide now
     // wraps its content (the drawer shrinks to it), and the caption block reserves the tallest caption's
     // height — three lines at 360dp — which holds the nav still across all eight steps without spending
-    // the rest of the screen to do it.
+    // the rest of the screen to do it. (When a step is too tall to fit, at large text, it fills its room
+    // instead, which holds the nav still by other means: [foldStepFit].)
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -273,7 +274,8 @@ private fun FoldGuide(
         // `fill = false`: the content takes only what it needs, and the weight is here purely as a cap.
         // **Invariant: this guide must be given a bounded height.** A weight resolves against the parent's
         // max, so under an unbounded one the whole step body collapses to zero. [ProofScreen]'s drawer
-        // supplies the bound via `drawerBodyMaxHeight()`.
+        // supplies the bound via `drawerBodyMaxHeight()`. And it must never sit under an ancestor that
+        // asks for intrinsic sizes: `BoxWithConstraints` cannot answer them and throws.
         BoxWithConstraints(Modifier.weight(1f, fill = false)) {
         val viewport = constraints.maxHeight
         Layout(
@@ -301,8 +303,8 @@ private fun FoldGuide(
         // .foldcap + .foldnow — one live region, so a step change is announced as one sentence: what to
         // do, then what you should be holding when it is done.
         //
-        // **The block is as tall as the tallest step, always** — that is what holds the nav still, and it
-        // is measured rather than reserved.
+        // **While a step fits, the block is as tall as the tallest step** — that is what holds the nav
+        // still, and it is measured rather than reserved.
         //
         // A `heightIn(min = …)` literal was the first answer and it is the wrong shape of answer. Sized
         // for three lines at fontScale 1.0 it stops holding three lines at about 1.15; sized in `sp` so
@@ -311,7 +313,7 @@ private fun FoldGuide(
         // survives that. `ProofFoldNarrowTest`'s fontScale-1.3 case measured the residue: 41.5dp of shift
         // between steps 1 and 2, i.e. the original defect, in the configuration nothing had tested.
         //
-        // So the longest caption is laid out invisibly underneath the real one and sets the height. It is
+        // So the longest caption is measured beside the real one (never placed) and sets the height. It is
         // the same text, in the same style, at the same width, so it is correct at every font scale, in
         // every locale, for any future caption — and it costs one extra text measurement per step.
         FoldCaptionBlock(
@@ -341,23 +343,18 @@ private fun FoldGuide(
             val legend = measurables[1].measure(loose)
             val sentence = measurables[3].measure(loose)
             val tallestSentence = measurables[4].measure(loose)
-            val fixed = counter.height + legend.height + 3 * gap
-            val leastDiagram = FoldDiagramMinHeight.roundToPx()
-            val bounded = viewport != Constraints.Infinity
-            // The tallest sentence's height is reserved only while the step fits with it. Once the step
-            // has to scroll (large text) the reserve is blank space to scroll through at the very end.
-            // Then the step takes the whole viewport instead, which holds the controls still just as well.
-            val steady = !bounded || fixed + leastDiagram + tallestSentence.height <= viewport
-            val sentenceHeight = if (steady) tallestSentence.height else sentence.height
-            val diagram = measurables[2].measure(
-                if (bounded) {
-                    loose.copy(maxHeight = maxOf(viewport - fixed - sentenceHeight, leastDiagram))
-                } else {
-                    loose
-                },
+            val fit = foldStepFit(
+                viewport = if (viewport == Constraints.Infinity) null else viewport,
+                fixed = counter.height + legend.height + 3 * gap,
+                sentence = sentence.height,
+                tallestSentence = tallestSentence.height,
+                leastDiagram = FoldDiagramMinHeight.roundToPx(),
             )
-            val content = fixed + diagram.height + sentenceHeight
-            layout(scrolled.maxWidth, if (steady) content else maxOf(content, viewport)) {
+            val diagram = measurables[2].measure(
+                if (fit.diagramMax == null) loose else loose.copy(maxHeight = fit.diagramMax),
+            )
+            val content = fit.fixedAndSentence + diagram.height
+            layout(scrolled.maxWidth, if (fit.steady) content else maxOf(content, viewport)) {
                 var y = 0
                 for (item in listOf(counter, legend, diagram, sentence)) {
                     item.place((scrolled.maxWidth - item.width) / 2, y)
@@ -713,6 +710,38 @@ private fun FoldDiagram(step: Int, reduceMotion: Boolean) {
             }
         }
     }
+}
+
+/**
+ * How one fold step shares its room. Pure, so the edges are tested without a layout.
+ *
+ * @property steady true while the step fits with the tallest sentence's height reserved. The controls
+ *   under the step then hold still because every step is the same height. When false the step has to
+ *   scroll: the reserve is dropped (it would be blank space at the end of the scroll) and the step fills
+ *   its viewport, which holds the controls still as well.
+ * @property diagramMax the most height the diagram may take; null when the room is unbounded.
+ * @property fixedAndSentence every part's height but the diagram's, gaps included.
+ */
+internal data class FoldStepFit(val steady: Boolean, val diagramMax: Int?, val fixedAndSentence: Int)
+
+/**
+ * @param viewport the room for the step, or null when it is unbounded.
+ * @param fixed the counter, the legend and the three gaps.
+ * @param sentence this step's sentence.
+ * @param tallestSentence the tallest sentence of any step.
+ * @param leastDiagram the least the diagram is given before the step scrolls instead.
+ */
+internal fun foldStepFit(
+    viewport: Int?,
+    fixed: Int,
+    sentence: Int,
+    tallestSentence: Int,
+    leastDiagram: Int,
+): FoldStepFit {
+    if (viewport == null) return FoldStepFit(steady = true, diagramMax = null, fixedAndSentence = fixed + tallestSentence)
+    val steady = fixed + leastDiagram + tallestSentence <= viewport
+    val text = fixed + if (steady) tallestSentence else sentence
+    return FoldStepFit(steady, maxOf(viewport - text, leastDiagram), text)
 }
 
 /** The gap between the step's four parts. */

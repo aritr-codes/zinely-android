@@ -1,33 +1,34 @@
 package com.aritr.zinely.feature.editor
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,7 +39,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -46,21 +46,19 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.PathParser
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -73,6 +71,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -89,6 +88,7 @@ import com.aritr.zinely.ui.components.ZSheet
 import com.aritr.zinely.ui.components.ZSheetClose
 import com.aritr.zinely.ui.components.ZStatusPane
 import com.aritr.zinely.ui.components.zinelyFocusRing
+import com.aritr.zinely.ui.components.zinelyV21Dimmed
 import com.aritr.zinely.ui.components.zinelyV21Frame
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.theme.ZinelyHaptic
@@ -1323,8 +1323,9 @@ private fun ProofBandButton(
         modifier = modifier
             .heightIn(min = 52.dp)
             // The running control stays at full strength — it is the one thing on screen that IS
-            // happening. Only a button blocked by someone else's render dims.
-            .alpha(if (enabled || busy) 1f else 0.4f)
+            // happening. Only a button blocked by someone else's render dims. Dimmed with its shadow:
+            // `Modifier.alpha` here cut the shadow's right and bottom off.
+            .zinelyV21Dimmed(if (enabled || busy) 1f else 0.4f)
             .semantics {
                 if (busy) stateDescription = Copy.Proof.EXPORT_WORKING
             }
@@ -1447,7 +1448,7 @@ private fun ProofDoneBlock(
                 ),
             )
         }
-        ProofActionPair(stacks = false) { grow, rest ->
+        ProofActionPair(stacks = false) { grow, _ ->
             if (onOpenSavedPdf != null) {
                 ProofBandButton(
                     text = Copy.Proof.OPEN_PDF,
@@ -1471,7 +1472,7 @@ private fun ProofDoneBlock(
                             haptics.perform(ZinelyHaptic.Tick)
                             onFoldItUp()
                         }
-                        // The link keeps its own size and sits centred beside (or under) Open PDF.
+                        // The link keeps its own size and sits centred beside Open PDF.
                         .wrapContentHeight()
                         .padding(horizontal = 16.dp, vertical = 14.dp)
                         .testTag(ProofFoldItUpTestTag),

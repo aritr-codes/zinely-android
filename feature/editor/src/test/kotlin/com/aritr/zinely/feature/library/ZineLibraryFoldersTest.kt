@@ -579,6 +579,21 @@ class ZineLibraryFoldersTest {
     }
 
     @Test
+    fun `a toast that waited shows once the folder snack has timed out`() {
+        shelf()
+        composeRule.mainClock.autoAdvance = false
+        events.trySend(HomeShelfEvent.FolderSnack("Back on My Shelf", FolderSnackAction.Undo))
+        events.trySend(HomeShelfEvent.Message("Couldn’t copy that zine"))
+        composeRule.mainClock.advanceTimeBy(3_500)
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertExists()
+        composeRule.onNodeWithText("Couldn’t copy that zine").assertDoesNotExist()
+
+        composeRule.mainClock.advanceTimeBy(1_500)
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
+        composeRule.onNodeWithText("Couldn’t copy that zine").assertExists()
+    }
+
+    @Test
     fun `the snack stays four seconds, then goes on its own`() {
         // A28.13.
         shelf()

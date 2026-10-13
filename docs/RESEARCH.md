@@ -899,14 +899,16 @@ Neither is on screen before the item is chosen.
 ### R25.2 Other editors put precise positioning one tap deeper — ✅ VERIFIED for Keynote, 🟨 for the rest
 
 [Keynote on iPhone](https://support.apple.com/guide/keynote-iphone/tanb46504b79/ios) reaches exact position
-and size through the Format button and an Arrange tab. Canva's phone editor was reported to do the same
-from a Position entry in its bottom bar; that was read from use, not from a source.
+and size through the Format button and an Arrange tab. The Research Agent for this change (2026-10-13) also
+reported that Canva's phone editor does the same from a Position entry in its bottom bar; it gave no source
+for that, so it is an assumption here.
 
-### R25.3 A layout that moves is a fault only when it is not expected — ✅ VERIFIED (web source)
+### R25.3 A layout that moves is a fault only when it is not expected — ✅ VERIFIED for the quote (web source), 🟦 for its use here
 
 [web.dev on Cumulative Layout Shift](https://web.dev/articles/cls): "A layout shift is only bad if the user
-isn't expecting it." A panel that opens because its button was tapped is expected; a page that changes size
-because it was touched is not.
+isn't expecting it." 🟦 The reading taken here: a panel that opens because its button was tapped is
+expected; a page that changes size because a piece on it was touched is less so. The source does not say
+that. Its own metric treats a shift that follows a tap as expected, which could be read the other way.
 
 ### R25.4 A row that scrolls sideways needs something cut off at its edge — ✅ VERIFIED
 
