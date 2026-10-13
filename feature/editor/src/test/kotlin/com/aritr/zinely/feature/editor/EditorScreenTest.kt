@@ -135,7 +135,9 @@ class EditorScreenTest {
                     store = store,
                     pageSizePt = pageSizePt,
                     imageBytes = imageBytes,
-                    modifier = Modifier.size(300.dp, 400.dp),
+                    // 425, not 400: D-113 made the status strip hold the Saved chip's 25dp at rest, and
+                    // this host is small enough that the canvas (96dp while typing) could not spare it.
+                    modifier = Modifier.size(300.dp, 425.dp),
                     moveResizeHintSeen = moveResizeHintSeen,
                     onMoveResizeHintSeen = onMoveResizeHintSeen,
                     savedSignals = savedSignals,

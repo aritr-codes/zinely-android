@@ -1222,6 +1222,7 @@ public fun EditorScreen(
             val widthPx = constraints.maxWidth.toFloat()
             // Named here because the scopes below are `@LayoutScopeMarker`ed and cannot read it implicitly.
             val canvasHeight: Dp = maxHeight
+            val canvasHeightPx = constraints.maxHeight.toFloat()
             // **The canvas is not as tall as it measures.** `BenchContextBar` floats over the sheet at this
             // Box's bottom edge, so the height the page may actually occupy is the measured height less the
             // band that bar sits in — see [BenchContextBarReservedHeightDp] for why that band is reserved
@@ -1355,8 +1356,14 @@ public fun EditorScreen(
                 // it docks below the popover and the typed line is what must clear. Pre-existing to F-5
                 // (C6 could produce it too), and flagged for a device look rather than ruled on here.
                 val typeBarVisible = styleTarget != null && typeBarOpen && reframing == null
+                // D-113: Reframe has no panel over the page, but its controls are taller than the bar they
+                // replace, so the canvas loses height while the viewport stays frozen (a session is not
+                // Idle) and the page bottom is clipped — with it, possibly, the photo being framed. The
+                // canvas's own bottom edge is the occluder there, and the photo is what must clear it.
+                val reframeTarget = reframing?.before
                 val occludingPanelTopPx = when {
                     editing -> styleRowDockedTopPx
+                    reframeTarget != null -> canvasTopPx + canvasHeightPx
                     inkPopoverVisible -> inkPopoverDockedTopPx
                     else -> typeBarDockedTopPx
                 }
@@ -1365,6 +1372,7 @@ public fun EditorScreen(
                 // site reads, hoisted beside `ctxElement`; one binding, so they cannot name different
                 // elements and the clearance cannot be computed for an element the popover is not about.
                 val occludedElement = editingElement
+                    ?: reframeTarget
                     ?: inkTarget.takeIf { inkPopoverVisible }
                     ?: styleTarget.takeIf { typeBarVisible }
                 // D-113: the two tall panels stop short of the canvas top by the band their element needs
@@ -1400,7 +1408,9 @@ public fun EditorScreen(
                                 } else {
                                     maxOf(-BenchEditPanDp.value, topPx.toDp().value)
                                 },
-                                slackAboveDp = paperY.value,
+                                // A photo already inside the shrunken canvas stays where it is: Reframe
+                                // lifts by the cut alone, never by the free slack.
+                                slackAboveDp = if (reframeTarget != null) 0f else paperY.value,
                                 elementBottomDp = bottomPx.toDp().value,
                                 occluderTopDp = occluderTopCanvasPx.toDp().value,
                             ).dp

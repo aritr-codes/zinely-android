@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -202,7 +203,9 @@ public fun ZSheet(
             }
             AnimatedVisibility(
                 visibleState = visibleState,
-                modifier = Modifier.align(Alignment.BottomCenter),
+                // D-113: a sheet as tall as the window stops under the status bar, not behind it. The
+                // fold guide reached full height at 2x text and put its grip and title under the clock.
+                modifier = Modifier.align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.statusBars),
                 // transform:translateY(103%) -> none. V2 wrote 102%; all three V2.1 files write 103%.
                 enter = slideInVertically(motion.base()) { (it * SheetSlide).roundToInt() },
                 exit = slideOutVertically(motion.base()) { (it * SheetSlide).roundToInt() },

@@ -204,10 +204,15 @@ internal fun BenchStatusStrip(
         // did, and `a_save_signal_shows_the_saved_confirmation` caught it. The alpha half then keeps the
         // node alive through the fade-*out*, after the flag has gone false, so the chip leaves by fading
         // rather than vanishing.
-        if (savedVisible || alpha > 0f) {
+        //
+        // D-113: "composed" means its tag and its words, not its box. The chip is always laid out, so the
+        // strip keeps one height — removed outright it took its 25dp with it, and the page below jumped
+        // on every autosave. The frozen `.saved` only ever changes opacity; it never leaves the flow.
+        val shown = savedVisible || alpha > 0f
+        run {
             Row(
                 modifier = Modifier
-                    .testTag(BenchSavedChipTestTag)
+                    .then(if (shown) Modifier.testTag(BenchSavedChipTestTag) else Modifier)
                     // Opacity and lean on one layer: the frozen `transform:rotate(-1deg)` and the retained
                     // fade. Nothing downstream clips a shadow here — `.saved` casts none.
                     .graphicsLayer {
@@ -222,8 +227,10 @@ internal fun BenchStatusStrip(
                         vertical = BenchSavedPaddingV,
                     )
                     .clearAndSetSemantics {
-                        liveRegion = LiveRegionMode.Polite
-                        contentDescription = BenchSavedSpokenLabel
+                        if (shown) {
+                            liveRegion = LiveRegionMode.Polite
+                            contentDescription = BenchSavedSpokenLabel
+                        }
                     },
                 horizontalArrangement = Arrangement.spacedBy(BenchSavedGap),
                 verticalAlignment = Alignment.CenterVertically,

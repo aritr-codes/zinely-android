@@ -427,9 +427,8 @@ class BenchC4Test {
         // freeze's new `padding:var(--gap-lg) var(--gap-lg) var(--gap-xs)` decorative.
         //
         // `flex:none` survives, and *that* is what "does not grow" now means: the strip is exactly its
-        // padding plus its tallest child. With the chip hidden the child is a zero-height slot, so the
-        // strip measures its own padding — 16 + 4 — and a `flex:1` regression, which would take the whole
-        // residual column, fails it by hundreds of pixels.
+        // padding plus its tallest child, and a `flex:1` regression, which would take the whole residual
+        // column, fails it by hundreds of pixels.
         setScreen(store())
         val strip = bounds(BenchStatusStripTestTag)
         // The frozen scale, stated as values so a silent edit of the constants is caught even on a build
@@ -452,6 +451,29 @@ class BenchC4Test {
         assertTrue(
             "…and the canvas begins directly beneath it",
             bounds(EditorCanvasTestTag).top >= strip.bottom - 0.5f,
+        )
+    }
+
+    @Test
+    fun the_status_strip_keeps_one_height_whether_or_not_saved_is_showing() {
+        // D-113: the chip used to leave the layout when hidden, so the strip lost the chip's height and
+        // the page beneath jumped on every autosave. The frozen `.saved` never leaves the flow.
+        composeRule.mainClock.autoAdvance = false
+        setScreen(store())
+        composeRule.onAllNodesWithTag(BenchSavedChipTestTag).assertCountEquals(0)
+        val quiet = bounds(BenchStatusStripTestTag)
+        val canvasQuiet = bounds(EditorCanvasTestTag)
+
+        composeRule.onNodeWithTag(BenchBarDoneTag).performClick()
+        composeRule.mainClock.advanceTimeBy(100L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
+
+        assertEquals(quiet, bounds(BenchStatusStripTestTag))
+        assertEquals(canvasQuiet, bounds(EditorCanvasTestTag))
+        assertTrue(
+            "the strip holds the chip's height at rest: ${quiet.height}",
+            quiet.height > px(BenchStatusPaddingTop + BenchStatusPaddingBottom) + 1f,
         )
     }
 
