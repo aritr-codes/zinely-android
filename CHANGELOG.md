@@ -103,6 +103,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The Ink panel keeps its title and **Done** in place while the colours scroll. On phones where the panel
+  did not quite fit, scrolling to the Starting palettes left both cut in half at the top
+  ([D-112](docs/design/V2-SPEC-DEFECTS.md#d-112)).
 - The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
   privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
   the files.

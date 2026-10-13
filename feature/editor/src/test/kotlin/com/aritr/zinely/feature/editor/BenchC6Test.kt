@@ -528,14 +528,14 @@ class BenchC6Test {
         val title = bounds(BenchInkTitleTestTag)
         // **Restated, not relaxed.** The old number (V2's `.inkpop{padding:12px 14px 14px}` plus a 1px
         // border = 15dp) described a box that no longer exists, and it failed by exactly the 3dp it was
-        // wrong by. V2.1 freezes `.inkpop{padding:var(--gap-md) var(--gap-md) var(--gap-lg)}`
-        // (`v21-bench.html:238`) — 12dp on the sides — and the 1.5dp ink border adds nothing to that:
+        // wrong by. A16 freezes `.inkpop.ink-a16{padding:var(--gap-md)}` (`v21-bench.html:1964`) — 12dp
+        // on the sides — and the 1.5dp ink border adds nothing to that:
         // Compose's `border` is a DRAW, painted over the first 1.5dp of the padding, where CSS's border
         // is part of the box and pushes the content in. Neither the 1.5dp border nor the Done pill's
         // 2dp resting shadow (also draw-only) is inside any node's bounds. The control was never
         // misplaced — it sits exactly on the content edge — so this is the expectation catching up.
-        // Transcribed from the freeze rather than read from `BenchInkPopoverPadding`, per this file's
-        // rule that the constant and the assertion may not agree with each other on a wrong value.
+        // Transcribed from the freeze rather than read from the composable, per this file's rule that
+        // the code and the assertion may not agree with each other on a wrong value.
         val inset = px(12.dp)
         // Tolerance tightened 2f -> 1f: the padding is whole pixels and `SpaceBetween` puts the last
         // child's right edge on the Row's, so the only slack left is rounding.

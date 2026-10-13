@@ -7283,3 +7283,38 @@ the wording for each failure family; those belong to the derived project-health 
 **Rejected.** A shelf badge or a second “broken zine” card would make a maker diagnose storage before they can
 recognise their work. Hiding the card would make recovery and deletion harder. Removing disabled rows would make
 the action sheet's stable order depend on a failure that the maker did not cause.
+
+---
+
+### D-112 — the Ink tray's title and Done scroll under its own top edge {#d-112}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (`.inkpop.ink-a16`, `:1964`) · `feature/editor/.../BenchInkPopover.kt` |
+| **Found** | 2026-10-13, tester screenshot from `0.9.0-beta.7` on a Samsung phone (about 411 × 891dp) |
+| **Severity** | **Visible UX and trust defect.** The tray reads as broken, and its only exit is half cut off |
+| **Status** | 🟨 **Fixed in Compose 2026-10-13; the frozen HTML still scrolls the whole card — owner ruling owed** |
+
+A16 freezes `max-height:calc(100% - 24px);overflow:auto` on the whole card, so the title row scrolls with the
+pots. With something selected, the accessible bar under the Bench wraps to two rows
+(F-2 made it wrap so no control hides off-screen; see the `EditorContextBar` KDoc) and the canvas is what remains. On the
+tester's phone the text tray came out about 24dp taller than that canvas. Scrolled to the Starting palettes,
+`Ink` and `Done` sat cut in half under the card's top edge.
+
+No one phone size is the cause: a tray one row too tall does this on any screen. The tray is also the same
+height as the canvas there, so it covers the whole page while the maker picks an ink for it. That second
+problem is **not** fixed here.
+
+**Compose fix.** The title row is pinned; everything below it scrolls. A tray that fits is unchanged, which
+is why no golden moved. `BenchInkPopoverScrollTest` fences it: the title's bounds do not change when the
+tray is scrolled to its last action, and neither do `Done`'s.
+
+**Device, 2026-10-13.** Samsung SM-A176B, Android 16, 1080 × 2340 at 450dpi, debug build of this fix under a
+side-by-side package. The text tray overflows there too. Read from the platform tree before and after
+scrolling to the palettes: `Ink` `[68,391][135,463]` and `Done` `[875,399][970,454]` both times. First-time
+reading: the palettes' cut bottom edge is the only hint that the tray scrolls, and nothing marks where the
+colours pass under the title. TalkBack was not listened to.
+
+**Owed.** The frozen sheet and the product now differ in one behaviour, in the product's favour. Either
+A16 is amended to pin the header, or this entry stands as the accepted difference. The tray covering the
+whole page on a common phone needs its own look.
