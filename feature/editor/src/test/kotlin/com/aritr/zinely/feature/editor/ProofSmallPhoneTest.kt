@@ -206,4 +206,33 @@ class ProofSmallPhoneTest {
         tagged(ProofBackTestTag).assertWhollyVisible("Back")
         assertTrue("the reader shrank to ${heightDp(ProofReadBookTestTag)}dp", heightDp(ProofReadBookTestTag) > 300f)
     }
+
+    // ---- P3: the band's buttons keep their words ---------------------------------------------------
+
+    private fun assertLabelWhole(text: String) {
+        val layout = label(text).textLayout()
+        assertFalse("\"$text\" is cut short inside its button: ${layout.describe()}", layout.dropsText())
+    }
+
+    /**
+     * `maxLines = 1` with no ellipsis: a label that did not fit was simply cut off. "Open PDF" went at
+     * 1.5 and "Save PDF" at 2.0 — the two actions this band exists to offer.
+     */
+    private fun assertBandLabelsWhole() {
+        setProof()
+        assertLabelWhole(Copy.Proof.SAVE_PDF)
+        assertLabelWhole(Copy.Proof.SHARE)
+
+        save()
+        assertLabelWhole(Copy.Proof.OPEN_PDF)
+        assertLabelWhole(Copy.Proof.FOLD_IT_UP)
+    }
+
+    @Test
+    @Config(fontScale = 1.5f)
+    fun `the band's buttons show their whole labels at font scale 1_5`() = assertBandLabelsWhole()
+
+    @Test
+    @Config(fontScale = 2f)
+    fun `the band's buttons show their whole labels at font scale 2`() = assertBandLabelsWhole()
 }

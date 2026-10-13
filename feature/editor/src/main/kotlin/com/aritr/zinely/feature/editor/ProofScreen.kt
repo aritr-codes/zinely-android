@@ -1265,19 +1265,28 @@ private fun ProofBandButton(
                 role = Role.Button,
                 onClick = onClick,
             )
-            .padding(horizontal = if (hero) ZinelyV21Dimens.gapMd else ZinelyV21Dimens.gapLg),
+            // The vertical padding is slack at one line (a 52dp pill around ~20dp of text) and only
+            // starts to bind once a large font scale wraps the label, where it keeps the words off the rim.
+            .padding(
+                horizontal = if (hero) ZinelyV21Dimens.gapMd else ZinelyV21Dimens.gapLg,
+                vertical = ZinelyV21Dimens.gapXs,
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm, Alignment.CenterHorizontally),
     ) {
         if (icon != null) Box(Modifier.size(18.dp)) { icon(content) }
         BasicText(
             text = text,
-            maxLines = 1,
+            // Two lines, not one. `maxLines = 1` with no ellipsis simply cut the label off — "Open PDF"
+            // at font scale 1.5 on a 360dp phone, "Save PDF" at 2 — and a button that cannot say what it
+            // does is worse than a button that is two lines tall.
+            maxLines = 2,
             style = TextStyle(
                 color = content,
                 fontFamily = ZinelyTheme.typography.shell,
                 fontSize = if (hero) 15.4.sp else 14.sp,
                 fontWeight = if (hero) FontWeight.Bold else FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
             ),
         )
     }
