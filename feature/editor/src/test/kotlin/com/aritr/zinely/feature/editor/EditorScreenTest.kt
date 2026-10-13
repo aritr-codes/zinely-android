@@ -135,8 +135,9 @@ class EditorScreenTest {
                     store = store,
                     pageSizePt = pageSizePt,
                     imageBytes = imageBytes,
-                    // 425, not 400: D-113 made the status strip hold the Saved chip's 25dp at rest, and
-                    // this host is small enough that the canvas (96dp while typing) could not spare it.
+                    // 425, not 400: D-113 made the status strip hold the Saved chip's 25dp at rest. At
+                    // 400 this host's page scale collapses to nothing (the canvas left after the context
+                    // bar's reserved band is under 25dp), which no phone-sized window comes near.
                     modifier = Modifier.size(300.dp, 425.dp),
                     moveResizeHintSeen = moveResizeHintSeen,
                     onMoveResizeHintSeen = onMoveResizeHintSeen,

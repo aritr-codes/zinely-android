@@ -461,6 +461,8 @@ class BenchC4Test {
         composeRule.mainClock.autoAdvance = false
         setScreen(store())
         composeRule.onAllNodesWithTag(BenchSavedChipTestTag).assertCountEquals(0)
+        // The held box says nothing: no description for a screen reader to find at rest.
+        composeRule.onAllNodesWithContentDescription(BenchSavedSpokenLabel).assertCountEquals(0)
         val quiet = bounds(BenchStatusStripTestTag)
         val canvasQuiet = bounds(EditorCanvasTestTag)
 

@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.EditorModel
@@ -148,6 +149,8 @@ class BenchInkPresetPlatformA11yTest {
         val pills = composeRule.onAllNodesWithTag(BenchInkPresetTestTag)
         assertEquals("the three frozen recipes", 3, pills.fetchSemanticsNodes().size)
         repeat(3) { i ->
+            // D-113 capped the tray's height, so the recipes start below its fold.
+            pills[i].performScrollTo()
             val node = pills[i].platformNode(composeRule.activity)
             assertEquals("preset $i must carry Role.Button to the platform", "android.widget.Button", node.className)
             assertTrue("preset $i must be enabled to the platform", node.isEnabled)

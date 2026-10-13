@@ -16,10 +16,13 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import com.aritr.zinely.core.copy.Copy
@@ -29,6 +32,7 @@ import com.aritr.zinely.feature.editor.ShelfRenameSheet
 import com.aritr.zinely.ui.theme.LocalZinelyMotion
 import com.aritr.zinely.ui.theme.ZinelyMotion
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -67,6 +71,66 @@ class LibrarySmallPhoneTest {
         val retry = composeRule.onNodeWithTag(ZineRetryTestTag)
         assertTrue("Try again is squeezed", retry.fetchSemanticsNode().size.height >= 48)
         retry.performScrollTo().assertIsDisplayed()
+    }
+
+    /**
+     * The two tests above compose the surface alone, which proves it scrolls and nothing about the dock
+     * that sits over it. The dock grows with the text size (and wraps its quiet actions onto a second
+     * row), so the frozen clearance under each surface stops being enough; the measured dock has to win.
+     */
+    @Test
+    fun `on the real screen the empty shelf's last line clears the dock at the largest text`() {
+        setContent(fontScale = 2f) { Screen(LibraryShelfState.Empty) }
+
+        assertEndClearsTheDock(ZineShelfEmptyTestTag)
+    }
+
+    @Test
+    fun `on the real screen Try again clears the dock at the largest text`() {
+        // A pin: without quiet actions the dock is shorter than the frozen 150dp even at 2x, so this
+        // passed before the measured dock was used. The empty shelf above is the one that was red.
+        setContent(fontScale = 2f) { Screen(LibraryShelfState.Error) }
+
+        assertEndClearsTheDock(ZineShelfFailTestTag)
+    }
+
+    /** Scrolls the surface to its end, then asks that nothing in it is still under the dock. */
+    private fun assertEndClearsTheDock(surfaceTag: String) {
+        composeRule.onNodeWithTag(surfaceTag).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, 100_000f) }
+        composeRule.waitForIdle()
+        val dockTop = composeRule.onNodeWithTag(ZineDockTestTag).fetchSemanticsNode().boundsInRoot.top
+        // Unclipped: the dock is drawn over the shelf, so a clipped rectangle would not show the overlap.
+        val lowest = composeRule.onAllNodes(hasAnyAncestor(hasTestTag(surfaceTag)), useUnmergedTree = true)
+            .fetchSemanticsNodes()
+            .maxOf { it.positionInRoot.y + it.size.height }
+        assertTrue("the surface's last content ends at $lowest, under the dock's top $dockTop", lowest <= dockTop + 1f)
+    }
+
+    @Composable
+    private fun Screen(state: LibraryShelfState) {
+        ZineLibraryScreen(
+            state = state,
+            events = emptyFlow(),
+            backupRestoreState = null,
+            lastBackup = null,
+            onOpenZine = {},
+            onShareExport = {},
+            onStartZine = { _, _ -> },
+            onRenameZine = { _, _ -> },
+            onDuplicateZine = {},
+            onDeleteZine = {},
+            onDeleteUndo = {},
+            onDeleteCommit = {},
+            onRetry = {},
+            onStartBackup = {},
+            onStartRestore = {},
+            onDismissBackupRestore = {},
+            onCancelBackupRestore = {},
+            onRetryBackupRestore = {},
+            isDeleteWaiting = { false },
+            checkFolderName = ::plainFolderNameVerdict,
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 
     @Test

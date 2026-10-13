@@ -103,7 +103,7 @@ internal const val ZineRetryTestTag: String = "shelf-retry"
  * @param onRetry ask the store again. The shelf was not *lost*, so this simply re-reads.
  */
 @Composable
-internal fun ZineShelfFail(onRetry: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ZineShelfFail(onRetry: () -> Unit, modifier: Modifier = Modifier, dockHeight: Dp = 0.dp) {
     val colors = ZinelyTheme.v21Colors
 
     Column(
@@ -117,7 +117,8 @@ internal fun ZineShelfFail(onRetry: () -> Unit, modifier: Modifier = Modifier) {
                 start = FailPaddingHorizontal,
                 end = FailPaddingHorizontal,
                 top = FailPaddingTop,
-                bottom = zineDockClearance(FailPaddingBottom),
+                // As the empty shelf: the measured dock wins over the frozen 150dp when it is taller.
+                bottom = maxOf(zineDockClearance(FailPaddingBottom), dockHeight),
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
         // `gap:var(--gap-md)` and `justify-content:center`, as one arrangement.

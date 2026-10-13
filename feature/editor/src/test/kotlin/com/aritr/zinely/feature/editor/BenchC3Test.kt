@@ -104,9 +104,9 @@ class BenchC3Test {
      *
      * | host | canvas | page | slack above the page | the pan it produces |
      * |---|---|---|---|---|
-     * | [SNUG] `300×400` | 132dp tall | fills it | **0dp** | **0dp** — the shipped device's shape |
-     * | [ROOMY] `360×720` | 452dp tall | 360dp | **46dp** | **46dp** — the clamp below the ceiling |
-     * | [CAVERNOUS] `360×1200` | 623dp tall | 360dp | **132dp** | **96dp** — the ceiling itself |
+     * | [SNUG] `300×425` | 132dp tall | fills it | **0dp** | **0dp** — the shipped device's shape |
+     * | [ROOMY] `360×745` | 452dp tall | 360dp | **46dp** | **46dp** — the clamp below the ceiling |
+     * | [CAVERNOUS] `360×1225` | 623dp tall | 360dp | **132dp** | **96dp** — the ceiling itself |
      *
      * `SNUG` is the honest model of a real phone (a portrait page is height-bound, so it fills the canvas
      * and there is nothing above it), which is exactly why D-043 bit there and why the frozen `−96` had
@@ -114,9 +114,11 @@ class BenchC3Test {
      * it is the one that keeps row 3.1's `−96 → −48` mutation alive.
      */
     private object Hosts {
-        val SNUG = 300.dp to 400.dp
-        val ROOMY = 360.dp to 720.dp
-        val CAVERNOUS = 360.dp to 1200.dp
+        // Each is 25dp taller than before D-113: the status strip now holds the Saved chip's height at
+        // rest, and the canvas column of the table above is what these hosts are tuned to.
+        val SNUG = 300.dp to 425.dp
+        val ROOMY = 360.dp to 745.dp
+        val CAVERNOUS = 360.dp to 1225.dp
     }
 
     private fun setScreen(

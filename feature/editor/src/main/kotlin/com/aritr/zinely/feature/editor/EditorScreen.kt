@@ -1381,7 +1381,7 @@ public fun EditorScreen(
                 val panelMaxHeight: Dp = (inkTarget ?: styleTarget)?.let { target ->
                     val elementHeightDp = with(density) { (target.transform.heightPt * paperScale).toFloat().toDp() }
                     canvasHeight - benchPanelPeekDp(canvasHeight.value, elementHeightDp.value).dp
-                } ?: canvasHeight
+                }?.coerceAtLeast(0.dp) ?: canvasHeight
                 val panTargetDp: Dp = if (occludedElement == null) {
                     0.dp
                 } else {
@@ -1397,16 +1397,17 @@ public fun EditorScreen(
                                 .toFloat()
                         // D-113: 96dp is the ceiling for the typing row, whose occluder is a thin row over a
                         // keyboard. The Ink tray and the Text panel are several times taller than 96dp, so
-                        // under that ceiling the element stayed behind them. For those two the page may lift
-                        // as far as the element's own top allows — it reaches the canvas top and stops, so
-                        // the lift can never carry the element out of view the way D-043 did.
+                        // under that ceiling the element stayed behind them. For those two, and for
+                        // Reframe, the ceiling is the element's own top instead: the lift stops when the
+                        // element reaches the canvas top, so it cannot carry it out of view the way D-043
+                        // did. An element taller than the room left keeps its top and loses its bottom.
                         val topPx = ((edited.transform.yPt + paperOffset.y) * paperScale).toFloat()
                         with(density) {
                             -benchEditPanMagnitudeDp(
                                 maxPanDp = if (editing) {
                                     -BenchEditPanDp.value
                                 } else {
-                                    maxOf(-BenchEditPanDp.value, topPx.toDp().value)
+                                    topPx.toDp().value.coerceAtLeast(0f)
                                 },
                                 // A photo already inside the shrunken canvas stays where it is: Reframe
                                 // lifts by the cut alone, never by the free slack.

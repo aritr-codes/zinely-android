@@ -520,12 +520,16 @@ public fun ZineLibraryScreen(
             // Retry answers the hand like every other control on this screen; the failure surface was
             // the one that did not.
             is LibraryShelfState.Error ->
-                ZineShelfFail({ haptics.perform(ZinelyHaptic.Tick); onRetry() }, Modifier.fillMaxSize())
+                ZineShelfFail(
+                    { haptics.perform(ZinelyHaptic.Tick); onRetry() },
+                    Modifier.fillMaxSize(),
+                    with(LocalDensity.current) { dockHeight.toDp() },
+                )
 
             // `body.is-empty{.shelf:none;.empty:flex}`. The shelf and the invitation are alternatives,
             // and the half that matters is the *absence*: a screen that renders both looks correct in a
             // screenshot of either one.
-            is LibraryShelfState.Empty -> ZineShelfEmpty(Modifier.fillMaxSize())
+            is LibraryShelfState.Empty -> ZineShelfEmpty(Modifier.fillMaxSize(), with(LocalDensity.current) { dockHeight.toDp() })
 
             // My Shelf and an open folder are two grids, each with its own scroll position, so going back
             // finds My Shelf where it was left (A28.9).

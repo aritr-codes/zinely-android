@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -230,6 +231,10 @@ internal fun BenchStatusStrip(
                         if (shown) {
                             liveRegion = LiveRegionMode.Polite
                             contentDescription = BenchSavedSpokenLabel
+                        } else {
+                            // A box held for its height only. An alpha-0 node once stayed in the
+                            // platform tree announcing a save; this one says so to the platform.
+                            hideFromAccessibility()
                         }
                     },
                 horizontalArrangement = Arrangement.spacedBy(BenchSavedGap),

@@ -67,6 +67,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -463,6 +464,10 @@ internal fun LibrarySheetSurface(
             Text(
                 text = title,
                 modifier = Modifier.testTag(ZineActionTitleTestTag),
+                // The head is pinned above the scrolling rows, so an uncapped zine name could take the
+                // whole sheet and leave the rows nothing. Three lines, then an ellipsis.
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
                 style = TextStyle(
                     fontFamily = ZinelyV21Fonts.Voice,
                     fontWeight = FontWeight.Bold,

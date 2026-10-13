@@ -95,9 +95,10 @@ internal const val ZineArrowTestTag = "empty-arrow"
  * others. Trimming it would centre the copy under the button.
  *
  * @param modifier the caller's. `position:absolute;inset:0` fills whatever it is placed in.
+ * @param dockHeight the dock as the host measured it; zero when there is none.
  */
 @Composable
-internal fun ZineShelfEmpty(modifier: Modifier = Modifier) {
+internal fun ZineShelfEmpty(modifier: Modifier = Modifier, dockHeight: Dp = 0.dp) {
     val colors = ZinelyTheme.v21Colors
 
     Column(
@@ -112,7 +113,9 @@ internal fun ZineShelfEmpty(modifier: Modifier = Modifier) {
                 start = EmptyPaddingHorizontal,
                 end = EmptyPaddingHorizontal,
                 top = EmptyPaddingTop,
-                bottom = zineDockClearance(EmptyPaddingBottom),
+                // The frozen 206dp assumes the dock at ordinary text. Large text grows the dock (and
+                // wraps its quiet actions onto a second row), so the measured dock wins when it is taller.
+                bottom = maxOf(zineDockClearance(EmptyPaddingBottom), dockHeight),
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
         // `gap:var(--gap-md)` and `justify-content:center` in one arrangement.
