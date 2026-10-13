@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,7 +25,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.liveRegion
@@ -406,6 +407,7 @@ private fun SuccessSheet(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ErrorSheet(
     state: LibraryBackupRestoreUiState.Failed,
@@ -451,8 +453,6 @@ private fun ErrorSheet(
         isBackup -> Copy.LibraryBackup.TRY_AGAIN
         else -> Copy.LibraryBackup.TRY_ANOTHER_BACKUP
     }
-    val stackActions = LocalDensity.current.fontScale >= 1.5f
-
     ZSheet(
         visible = true,
         onDismiss = onDismiss,
@@ -464,24 +464,16 @@ private fun ErrorSheet(
     ) {
         val colors = ZinelyTheme.v21Colors
         Mark("!", colors.paper, colors.jam, colors.onLeaf)
-        val actionsModifier = Modifier
-            .align(Alignment.CenterHorizontally)
-            .padding(top = ZinelyV21Dimens.gapLg)
-        if (stackActions) {
-            Column(
-                modifier = actionsModifier,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
-            ) {
-                ErrorActions(retry, retryFocus, onRetry, onDismiss)
-            }
-        } else {
-            Row(
-                modifier = actionsModifier,
-                horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
-            ) {
-                ErrorActions(retry, retryFocus, onRetry, onDismiss)
-            }
+        // The two sit side by side while both fit whole, and stack when they do not. A fixed text-size
+        // threshold got that wrong between 1.3x and 1.5x on a 360dp phone, where "Got it" broke in two.
+        FlowRow(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(top = ZinelyV21Dimens.gapLg),
+            horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
+        ) {
+            ErrorActions(retry, retryFocus, onRetry, onDismiss)
         }
     }
 }

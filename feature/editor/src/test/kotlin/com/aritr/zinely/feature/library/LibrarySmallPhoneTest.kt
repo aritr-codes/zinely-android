@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -109,6 +112,21 @@ class LibrarySmallPhoneTest {
         composeRule.onNodeWithText(Copy.LibraryBackup.TITLE).assertIsDisplayed()
         // Full height, its top was under the status bar.
         assertTrue(composeRule.onNodeWithTag(KeepSafeSheetTestTag).fetchSemanticsNode().boundsInRoot.top > 0f)
+    }
+
+    @Test
+    fun `beside Try another backup, Got it keeps its words on one line at medium-large text`() {
+        fun failed(kind: LibraryBackupRestoreFailureKind) = LibraryBackupRestoreUiState.Failed(LibraryBackupRestoreMode.Restore, kind)
+        // A failure with nothing to retry shows Got it alone, which is the height its one line makes.
+        var state by mutableStateOf(failed(LibraryBackupRestoreFailureKind.BackupNoneSaved))
+        setContent(fontScale = 1.4f) { LibraryBackupRestoreStateSheet(state, onDismiss = {}, onCancel = {}, onRetry = {}) }
+        val alone = composeRule.onNodeWithTag(BackupRestoreDoneTestTag).fetchSemanticsNode().size.height
+
+        state = failed(LibraryBackupRestoreFailureKind.NewerAppNeeded)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(BackupRestoreRetryTestTag).assertIsDisplayed()
+        assertEquals(alone, composeRule.onNodeWithTag(BackupRestoreDoneTestTag).fetchSemanticsNode().size.height)
     }
 
     // ---------------------------------------------------------------------------------------------
