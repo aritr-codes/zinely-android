@@ -142,6 +142,26 @@ class LibrarySmallPhoneTest {
         composeRule.onNodeWithTag(HomeRenameConfirmTestTag).assertIsDisplayed()
     }
 
+    @Test
+    fun `the dock's quiet actions keep their words on one line at the largest text`() {
+        setContent(fontScale = 2f) {
+            ZineDock(
+                onStart = {},
+                modifier = Modifier.align(Alignment.BottomCenter),
+                secondaryActions = listOf(
+                    ZineDockSecondaryAction(Copy.LibraryBackup.BRING_BACK, onClick = {}),
+                    ZineDockSecondaryAction(Copy.Colophon.ACTION, onClick = {}),
+                ),
+            )
+        }
+
+        // Neither is long enough to need two lines of a 360dp phone, so one that is taller has been broken.
+        assertEquals(
+            composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BRING_BACK)).fetchSemanticsNode().size.height,
+            composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)).fetchSemanticsNode().size.height,
+        )
+    }
+
     // ---------------------------------------------------------------------------------------------
     // Harness
     // ---------------------------------------------------------------------------------------------
