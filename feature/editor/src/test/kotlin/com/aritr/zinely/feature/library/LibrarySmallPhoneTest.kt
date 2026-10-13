@@ -23,6 +23,9 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.feature.editor.HomeRenameConfirmTestTag
+import com.aritr.zinely.feature.editor.HomeRenameFieldTestTag
+import com.aritr.zinely.feature.editor.ShelfRenameSheet
 import com.aritr.zinely.ui.theme.LocalZinelyMotion
 import com.aritr.zinely.ui.theme.ZinelyMotion
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -127,6 +130,16 @@ class LibrarySmallPhoneTest {
 
         composeRule.onNodeWithTag(BackupRestoreRetryTestTag).assertIsDisplayed()
         assertEquals(alone, composeRule.onNodeWithTag(BackupRestoreDoneTestTag).fetchSemanticsNode().size.height)
+    }
+
+    @Test
+    fun `renaming a zine with a very long name keeps the field and Save on screen`() {
+        setContent(fontScale = 2f) {
+            ShelfRenameSheet(visible = true, title = "Letters home ".repeat(30).trim(), onDismiss = {}, onRename = {})
+        }
+
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(HomeRenameConfirmTestTag).assertIsDisplayed()
     }
 
     // ---------------------------------------------------------------------------------------------

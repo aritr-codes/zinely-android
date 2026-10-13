@@ -552,6 +552,8 @@ internal fun ShelfRenameSheet(
         onDismiss = onDismiss,
         title = Copy.Shelf.RENAME,
         sub = title,
+        // A very long name at large text, with the keyboard up, pushed the field and Save off the sheet.
+        subMaxLines = 2,
         modifier = Modifier.testTag(ShelfRenameSheetTestTag),
     ) {
         RenameField(

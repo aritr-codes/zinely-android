@@ -64,6 +64,7 @@ import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -127,6 +128,8 @@ public data class ZSheetClose(val label: String, val onClose: () -> Unit)
  * for deterministic initial focus.
  * @param onHidden runs after the exit animation releases the dialog window. Use it for focus return,
  * never as the user's dismiss action.
+ * @param subMaxLines the most lines a one-paragraph [sub] may take before it ends in an ellipsis. For a
+ * sub that is somebody's own words (a zine's name) rather than copy of a known length.
  * @param scrollBody for a sheet whose words can outgrow a small phone at large text: the grip and title
  * stay, [sub] and the content scroll under them, and the sheet stops at 88% of the screen so its top is
  * clear of the status bar. Off by default, and a sheet that leaves it off is laid out exactly as before.
@@ -142,6 +145,7 @@ public fun ZSheet(
     onShown: (() -> Unit)? = null,
     onHidden: (() -> Unit)? = null,
     scrollBody: Boolean = false,
+    subMaxLines: Int = Int.MAX_VALUE,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val visibleState = remember { MutableTransitionState(false) }
@@ -209,6 +213,7 @@ public fun ZSheet(
                     modifier = modifier,
                     close = close,
                     scrollBody = scrollBody,
+                    subMaxLines = subMaxLines,
                     content = content,
                 )
             }
@@ -234,6 +239,7 @@ public fun ZSheetSurface(
     modifier: Modifier = Modifier,
     close: ZSheetClose? = null,
     scrollBody: Boolean = false,
+    subMaxLines: Int = Int.MAX_VALUE,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -362,7 +368,14 @@ public fun ZSheetSurface(
                 )
                 val paragraphs = sub.split(ZSheetParagraphBreak)
                 if (paragraphs.size == 1) {
-                    BasicText(text = sub, modifier = subModifier, style = subStyle)
+                    BasicText(
+                        text = sub,
+                        modifier = subModifier,
+                        style = subStyle,
+                        // Clip is BasicText's own default, kept for every sheet that sets no limit.
+                        overflow = if (subMaxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis,
+                        maxLines = subMaxLines,
+                    )
                 } else {
                     // `backup-restore.html .work .sheet-copy{gap:8px}`: paragraphs sit gapSm apart, not a blank line
                     // apart. Merged, so TalkBack still reads them in order as one stop, as the single text did.
