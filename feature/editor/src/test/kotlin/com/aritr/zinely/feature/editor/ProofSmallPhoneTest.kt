@@ -5,6 +5,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -50,14 +51,19 @@ class ProofSmallPhoneTest {
      * drawers are `Dialog`-backed, a dialog takes its density from its own window, and a wrapper is
      * silently dropped at that boundary — the drawer tests would run at 1.0 whatever they were named.
      */
-    private fun setProof(startDrawer: ProofDrawer = ProofDrawer.None) {
+    private fun setProof(
+        startDrawer: ProofDrawer = ProofDrawer.None,
+        pageCount: Int = 8,
+        busyTarget: ProofExportTarget? = null,
+    ) {
         composeRule.setContent {
             ZinelyTheme {
                 ProofScreen(
                     onBack = {},
+                    busyTarget = busyTarget,
                     savedSignals = saved,
                     onOpenSavedPdf = {},
-                    pages = (0 until 8).map { i ->
+                    pages = (0 until pageCount).map { i ->
                         Page(index = i, role = if (i == 0) PageRole.FRONT_COVER else PageRole.INTERIOR)
                     },
                     pageSizePt = PtSize(200.0, 300.0),
@@ -93,9 +99,14 @@ class ProofSmallPhoneTest {
         )
     }
 
-    /** Whole once scrolled to — the surface scrolls, so "below the fold" is allowed and "cut" is not. */
+    /**
+     * Whole once scrolled to — "below the fold" is allowed and "cut" is not. The surface's scroller is
+     * switched off while everything fits, so there is only something to scroll to when it does not.
+     */
     private fun assertReachableWhole(tag: String, what: String) {
-        tagged(tag).performScrollTo()
+        val scrolls = generateSequence(tagged(tag).fetchSemanticsNode().parent) { it.parent }
+            .any { hasScrollAction().matches(it) }
+        if (scrolls) tagged(tag).performScrollTo()
         composeRule.waitForIdle()
         tagged(tag).assertWhollyVisible(what)
     }
@@ -167,37 +178,50 @@ class ProofSmallPhoneTest {
 
     // ---- P2: the finished zine survives the band growing ------------------------------------------
 
+    private fun assertZineKeepsItsFloor() {
+        val book = heightDp(ProofReadBookTestTag)
+        assertTrue("the finished zine has ${book}dp left once the save lands", book >= 159f)
+    }
+
     /**
      * This screen answers *"what have I made?"*, so the zine is the one thing the band may not push off
      * it. The band grows when a save lands and again with the font scale, and the reader used to be
-     * whatever was left.
-     */
-    private fun assertZineSurvivesTheSave() {
-        setProof()
-        save()
-
-        val book = heightDp(ProofReadBookTestTag)
-        assertTrue("the finished zine has ${book}dp left once the save lands", book >= 159f)
-        // The floor is paid for by scrolling, so the actions it pushes down must still be reachable.
-        assertReachableWhole(ProofFoldItUpTestTag, "Fold it up")
-        assertReachableWhole(ProofOpenPdfTestTag, "Open PDF")
-        assertTrue("Fold it up is squeezed", heightDp(ProofFoldItUpTestTag) >= 52f)
-    }
-
-    @Test
-    @Config(fontScale = 2f)
-    fun `the zine keeps its place after a save at font scale 2`() = assertZineSurvivesTheSave()
-
-    /**
-     * A phone that is 640dp tall gives the app nearer 568dp once its own bars are taken out — and there
-     * the reader was down to 89dp.
+     * whatever was left: 89dp of this window, which is what a 640dp-tall phone gives the app once its own
+     * bars are taken out.
+     *
+     * The floor is paid for by scrolling, and the save is what makes the band tall — so the save also
+     * has to bring its own hand-off into view, and the way back up has to stay reachable.
      */
     @Test
     @Config(qualifiers = "w360dp-h568dp-xhdpi", fontScale = 2f)
-    fun `the zine keeps its place after a save in a 568dp window at font scale 2`() =
-        assertZineSurvivesTheSave()
+    fun `in a 568dp window at font scale 2 the zine keeps its floor and a save lands on its hand-off`() {
+        setProof()
+        save()
 
-    /** The scroll is the fallback, not the layout: at the default size nothing moves. */
+        assertZineKeepsItsFloor()
+        tagged(ProofFoldItUpTestTag).assertWhollyVisible("Fold it up, as the save lands")
+        tagged(ProofOpenPdfTestTag).assertWhollyVisible("Open PDF, as the save lands")
+        assertTrue("Fold it up is squeezed", heightDp(ProofFoldItUpTestTag) >= 52f)
+        assertReachableWhole(ProofBackTestTag, "Back")
+    }
+
+    /**
+     * A pin, not a proof: this held before the floor existed (161dp, measured). It is here so the floor
+     * stays low enough that a 360x640 window at font scale 2 still shows everything at once.
+     */
+    @Test
+    @Config(fontScale = 2f)
+    fun `a 640dp window at font scale 2 still shows the zine and the hand-off with nothing to scroll`() {
+        setProof()
+        save()
+
+        assertZineKeepsItsFloor()
+        tagged(ProofBackTestTag).assertWhollyVisible("Back")
+        tagged(ProofFoldItUpTestTag).assertWhollyVisible("Fold it up")
+        tagged(ProofOpenPdfTestTag).assertWhollyVisible("Open PDF")
+    }
+
+    /** A pin as well: the scroll is the fallback, not the layout — at the default size nothing moves. */
     @Test
     fun `before a save the reader still takes everything the band leaves`() {
         setProof()
@@ -205,6 +229,22 @@ class ProofSmallPhoneTest {
         tagged(ProofSavePdfTestTag).assertWhollyVisible("Save PDF")
         tagged(ProofBackTestTag).assertWhollyVisible("Back")
         assertTrue("the reader shrank to ${heightDp(ProofReadBookTestTag)}dp", heightDp(ProofReadBookTestTag) > 300f)
+    }
+
+    /**
+     * A document with no pages has no reader, and the band has always sat directly under the bar there —
+     * which is the arrangement `ProofScaffoldGoldenTest` records. The floor is for a reader; it must not
+     * open a gap where there is none.
+     */
+    @Test
+    fun `with no pages the band still sits directly under the top bar`() {
+        setProof(pageCount = 0)
+
+        val bar = tagged(ProofBackTestTag).fetchSemanticsNode()
+        val ready = tagged(ProofReadyTestTag).fetchSemanticsNode()
+        val gapDp = (ready.positionInWindow.y - (bar.positionInWindow.y + bar.size.height)) /
+            bar.layoutInfo.density.density
+        assertTrue("there are ${gapDp}dp between the top bar and the band", gapDp < 40f)
     }
 
     // ---- P3: the band's buttons keep their words ---------------------------------------------------

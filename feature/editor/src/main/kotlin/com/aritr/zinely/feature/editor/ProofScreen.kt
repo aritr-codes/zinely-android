@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
@@ -201,8 +203,8 @@ private const val SheetChrome = 110f
  * The least the reader is ever given. Below it the surface scrolls rather than shrink the zine further.
  *
  * 160dp, because that is what a 360x640 window was already leaving at font scale 2 (161dp, measured) with
- * every action still on screen — so nothing that fitted before scrolls now, and the floor only bites where
- * the zine was genuinely being squeezed out.
+ * every action still on screen — so that window does not start scrolling, and the floor only bites where
+ * the zine was genuinely being squeezed out (shorter windows, taller bands).
  */
 private val ReaderMinHeight = 160.dp
 
@@ -335,6 +337,8 @@ public fun ProofScreen(
     LaunchedEffect(savedSignals) {
         savedSignals.collect { savedName = it; staleFrom = null; folded = false }
     }
+    // The surface's own scroll — see the `Layout` below for when there is anything to scroll.
+    val scroll = rememberScrollState()
 
 
     fun open(target: ProofDrawer) {
@@ -407,10 +411,17 @@ public fun ProofScreen(
         // dp of that came out of the finished zine (89dp left of a 568dp window at font scale 2, and
         // nothing at all a little below that) on the screen whose whole job is to show it. A weight
         // cannot say "the rest, or at least this much", so the three rows are measured by hand. Where
-        // everything fits — every size the goldens are recorded at — it is the same layout the `Column`
-        // produced.
+        // everything fits it is the same layout the `Column` produced — including for a document with no
+        // pages, where there is no reader and the band sits directly under the bar.
+        //
+        // **Invariant: the surface must be given a bounded height** — the viewport is read from the
+        // incoming minimum, which `fillMaxSize` only sets under a bounded maximum.
         Layout(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+            modifier = Modifier
+                .fillMaxSize()
+                // Enabled only while there is something to scroll. An idle scroller still competes for
+                // every drag that starts on it, and the reader's page-turn is a drag.
+                .verticalScroll(scroll, enabled = scroll.canScrollForward || scroll.canScrollBackward),
             content = {
             ProofTopBar(
                 // Null while the error pane stands in for the reader — there is no leaf to name.
@@ -473,8 +484,13 @@ public fun ProofScreen(
             val band = measurables.getOrNull(2)?.measure(wrap)
             val bandHeight = band?.height ?: 0
             val rest = constraints.minHeight - bar.height - bandHeight
+            // No reader and no error pane: nothing to give a floor to.
+            val hasMiddle = failedTarget != null || pages.isNotEmpty()
             val middle = measurables[1].measure(
-                Constraints.fixed(constraints.maxWidth, maxOf(rest, ReaderMinHeight.roundToPx())),
+                Constraints.fixed(
+                    constraints.maxWidth,
+                    if (hasMiddle) maxOf(rest, ReaderMinHeight.roundToPx()) else 0,
+                ),
             )
             layout(constraints.maxWidth, bar.height + middle.height + bandHeight) {
                 bar.place(0, 0)
@@ -905,6 +921,13 @@ private fun ProofBand(
     val card = RoundedCornerShape(ZinelyV21Dimens.radiusLg)
     val inkLine = colors.inkLine
     val hard = ZinelyV21Dimens.hardShadow
+    // **A save brings its own hand-off into view.** `.done` is taller than the `.commit` pair it
+    // replaces, so where the reader's floor is already binding, the row the save exists to offer —
+    // *Open PDF · Fold it up* — would arrive below the fold, at the spot the thumb just pressed, with
+    // nothing to say so. The card is what is asked for, not the surface's end: that is the least scroll
+    // that shows the buttons with the paper under them, and where the card already fits it is none.
+    val intoView = remember { BringIntoViewRequester() }
+    LaunchedEffect(savedName) { if (savedName != null) intoView.bringIntoView() }
     Box(
         // `.band{margin:0 var(--gap-md) var(--gap-md)}` — a card resting on the desk, not a bar welded to
         // the bottom edge. Exactly the frozen margin and no more: an earlier version added `+ hard` "for
@@ -918,6 +941,7 @@ private fun ProofBand(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .bringIntoViewRequester(intoView)
                 // `box-shadow:var(--hard) calc(var(--hard)*-1) 0 var(--ink-line)` — right and **up**, the
                 // one object on the surface lit from below. [zinelyV21HardShadow] offsets both axes
                 // positively by design, so this one is drawn here rather than bent into that modifier for
