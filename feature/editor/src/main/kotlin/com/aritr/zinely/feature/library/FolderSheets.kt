@@ -26,12 +26,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -382,7 +385,24 @@ private fun GoButton(label: String, enabled: Boolean, onClick: () -> Unit) {
     val focused by interaction.collectIsFocusedAsState()
     Box(
         Modifier
-            .alpha(if (enabled) 1f else GoDisabledOpacity)
+            // Dimmed as one piece, in a layer that reaches past the bounds. `Modifier.alpha` composites
+            // inside the bounds, and the hard shadow is drawn outside them: disabled, the button lost
+            // the right and bottom of its shadow (seen on a 360dp phone, 2026-10-13).
+            .drawWithContent {
+                if (enabled) {
+                    drawContent()
+                } else {
+                    val reach = GoShadowReach.toPx()
+                    drawIntoCanvas { canvas ->
+                        canvas.saveLayer(
+                            Rect(0f, 0f, size.width + reach, size.height + reach),
+                            Paint().apply { alpha = GoDisabledOpacity },
+                        )
+                        drawContent()
+                        canvas.restore()
+                    }
+                }
+            }
             // Nothing that clips may sit before the press or the ring: both paint outside the bounds.
             .zinelyV21Pressable(pressed && enabled, ZinelyV21Press.Raised, colors.inkLine, GoShape)
             .zinelyFocusRing(focused, ZinelyV21Dimens.radiusLg, GoFocusOffset)
@@ -408,6 +428,9 @@ private fun GoButton(label: String, enabled: Boolean, onClick: () -> Unit) {
         )
     }
 }
+
+/** How far past its bounds the go button paints: its 3dp hard shadow, and one to spare. */
+private val GoShadowReach = 4.dp
 
 /** Which folder its sheet is open for, and how many zines it holds. */
 internal data class FolderActionsTarget(val name: String, val count: Int)

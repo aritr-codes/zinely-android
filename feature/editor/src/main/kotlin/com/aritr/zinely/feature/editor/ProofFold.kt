@@ -5,13 +5,13 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -24,7 +24,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -52,13 +53,14 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -67,6 +69,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -259,29 +262,24 @@ private fun FoldGuide(
             .testTag(ProofFoldGuideTestTag),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier
-                // `fill = false`: the content takes only what it needs, and the weight is here purely as
-                // a cap — when a large font scale or a landscape window makes the step taller than the
-                // drawer's bound, this column is what gives, and it scrolls. The controls below it are
-                // never the thing that gets pushed off.
-                //
-                // **Invariant: this guide must be given a bounded height.** A weight resolves against the
-                // parent's max, so under an unbounded one — a scrolling ancestor, a preview — `Column`
-                // resolves it against the main-axis *minimum* and the whole step body collapses to zero.
-                // [ProofScreen]'s drawer supplies the bound via `drawerBodyMaxHeight()`.
-                .weight(1f, fill = false)
-                // **Anchored at the bottom, so what overflows is the top.** The sentence is the last
-                // thing in this column and it is the drawer's whole answer; on a 360x640 phone the
-                // column is ~60dp taller than its room (~120dp on the last step), and anchored at the top
-                // that put the sentence below the fold with nothing to say it was there. Pinning the
-                // sentence beside the controls instead was tried and measured: at font scale 2 it took
-                // the dots' row to zero height. This way the controls keep their guarantee, and what
-                // waits above the fold is the step counter and the legend.
-                .verticalScroll(rememberScrollState(), reverseScrolling = true),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
+        // **The diagram gives way first, and only then does anything scroll.** On a 360x640 phone the
+        // step is ~60dp taller than its room (~120dp on the last step). A drawing can be smaller and
+        // still be read; a sentence, a key or a counter cut off above the fold cannot. So the diagram
+        // takes what the others leave, down to [FoldDiagramMinHeight], and the column scrolls only when
+        // even that is not enough (large text). Then it starts at its top, in reading order: the counter,
+        // the key, and a diagram cut by the fold, which is the sign that there is more below. Starting at
+        // the end was tried and read worse on a phone: the step opened in the middle of its sentence.
+        //
+        // `fill = false`: the content takes only what it needs, and the weight is here purely as a cap.
+        // **Invariant: this guide must be given a bounded height.** A weight resolves against the parent's
+        // max, so under an unbounded one the whole step body collapses to zero. [ProofScreen]'s drawer
+        // supplies the bound via `drawerBodyMaxHeight()`.
+        BoxWithConstraints(Modifier.weight(1f, fill = false)) {
+        val viewport = constraints.maxHeight
+        Layout(
+            // Keyed by the step: a new step opens at its own top, not where the last one was left.
+            modifier = Modifier.verticalScroll(remember(step) { ScrollState(0) }),
+            content = {
         // .stepline — the counter, then the legend beneath it. The frozen row puts both on one line, and
         // that stopped fitting once the legend gained its fourth mark: counter plus four chips overruns a
         // 360dp window, and this drawer clips. Stacking is the departure that keeps all five readable.
@@ -316,26 +314,56 @@ private fun FoldGuide(
         // So the longest caption is laid out invisibly underneath the real one and sets the height. It is
         // the same text, in the same style, at the same width, so it is correct at every font scale, in
         // every locale, for any future caption — and it costs one extra text measurement per step.
-        Box(
+        FoldCaptionBlock(
+            caption = Copy.ProofFold.STEP_CAPTIONS[step],
+            holding = Copy.ProofFold.STEP_HOLDING[step],
+            colors = colors,
             modifier = Modifier
                 .widthIn(max = 380.dp)
                 .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
-            contentAlignment = Alignment.TopCenter,
-        ) {
-            // The size-setter. `alpha = 0f` rather than absent, `clearAndSetSemantics` so no screen
-            // reader ever meets it, and the longest caption + longest holding line by rendered length.
-            FoldCaptionBlock(
-                caption = FOLD_LONGEST_CAPTION,
-                holding = FOLD_LONGEST_HOLDING,
-                colors = colors,
-                modifier = Modifier.graphicsLayer { alpha = 0f }.clearAndSetSemantics { },
-                tagged = false,
+        )
+        // The size-setter: the longest caption + longest holding line by rendered length. Measured, never
+        // placed, so it is neither drawn nor met by a screen reader.
+        FoldCaptionBlock(
+            caption = FOLD_LONGEST_CAPTION,
+            holding = FOLD_LONGEST_HOLDING,
+            colors = colors,
+            modifier = Modifier.widthIn(max = 380.dp).clearAndSetSemantics { },
+            tagged = false,
+        )
+            },
+        ) { measurables, scrolled ->
+            // Five children, in order: counter, legend, diagram, sentence, the sentence's size-setter.
+            // `verticalScroll` unbounds the height, so the room is the viewport measured outside it.
+            val gap = FoldStepGap.roundToPx()
+            val loose = Constraints(maxWidth = scrolled.maxWidth)
+            val counter = measurables[0].measure(loose)
+            val legend = measurables[1].measure(loose)
+            val sentence = measurables[3].measure(loose)
+            val tallestSentence = measurables[4].measure(loose)
+            val fixed = counter.height + legend.height + 3 * gap
+            val leastDiagram = FoldDiagramMinHeight.roundToPx()
+            val bounded = viewport != Constraints.Infinity
+            // The tallest sentence's height is reserved only while the step fits with it. Once the step
+            // has to scroll (large text) the reserve is blank space to scroll through at the very end.
+            // Then the step takes the whole viewport instead, which holds the controls still just as well.
+            val steady = !bounded || fixed + leastDiagram + tallestSentence.height <= viewport
+            val sentenceHeight = if (steady) tallestSentence.height else sentence.height
+            val diagram = measurables[2].measure(
+                if (bounded) {
+                    loose.copy(maxHeight = maxOf(viewport - fixed - sentenceHeight, leastDiagram))
+                } else {
+                    loose
+                },
             )
-            FoldCaptionBlock(
-                caption = Copy.ProofFold.STEP_CAPTIONS[step],
-                holding = Copy.ProofFold.STEP_HOLDING[step],
-                colors = colors,
-            )
+            val content = fixed + diagram.height + sentenceHeight
+            layout(scrolled.maxWidth, if (steady) content else maxOf(content, viewport)) {
+                var y = 0
+                for (item in listOf(counter, legend, diagram, sentence)) {
+                    item.place((scrolled.maxWidth - item.width) / 2, y)
+                    y += item.height + gap
+                }
+            }
         }
         }
 
@@ -657,7 +685,8 @@ private fun FoldDiagram(step: Int, reduceMotion: Boolean) {
     ) {
         Canvas(
             modifier = Modifier
-                .fillMaxWidth()
+                // No `fillMaxWidth`: the aspect ratio takes the full width when the height is free, and
+                // follows the height when the step is short of room, so the drawing shrinks whole.
                 .aspectRatio(230f / 172f)
                 .testTag(ProofFoldDiagramTestTag)
                 .graphicsLayer {
@@ -685,6 +714,15 @@ private fun FoldDiagram(step: Int, reduceMotion: Boolean) {
         }
     }
 }
+
+/** The gap between the step's four parts. */
+private val FoldStepGap = 10.dp
+
+/**
+ * The least the diagram's card is given before the step scrolls instead. At 120dp the sheet is drawn about
+ * 145dp wide: the creases, the cut and the page numbers are still told apart; below that they are not.
+ */
+private val FoldDiagramMinHeight = 120.dp
 
 // ---- fold-diagram drawing (the frozen 230×172 STEPS geometry) --------------------------------
 

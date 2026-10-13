@@ -136,8 +136,9 @@
 | [ADR-124](#adr-124) | **Taps pass through the empty part of six holed Art pieces.** For `paper.window`, `paper.hole`, `shape.ring`, `fix.grommet`, `fix.corner` and `mark.registration` the hit area is the drawn ink, read from the outline the renderer draws; resolution is drawn → near (within 8 dp of the ink, yes or no; topmost wins) → box, topmost-first; every other element keeps its box; `core:editor` gains a dependency on `core:render`. Semantics, schema and pixels unchanged | Proposed |
 | [ADR-125](#adr-125) | **Folders on the Shelf: one level, a zine in one place, and a folder is only the name its zines carry.** Every folder action is a row in a sheet, nothing is dragged; a folder is drawn as a banded pile of its zines' own covers and exists only while it holds a zine; taking the zines out puts them back on My Shelf. Stored as a defaulted `folder` name in `meta.json`, carried by a defaulted backup-manifest field; the Room index, `packageVersion` and the document schema are unchanged, older builds restore every zine to My Shelf. ADR-081 ruling 2 (no search, no sort) stands. | **Accepted 2026-10-07** on the owner's approval of the A28 prototype and of the recommended rulings; `v21-library.html` A28 frozen the same day; F-10 (the Tribunal row) still the owner's; storage merged (part 1); the Shelf screens built 2026-10-08 (part 2), shipped in `0.9.0-beta.7` on 2026-10-11, not accepted; a TalkBack listen and owner rulings owed |
 | [ADR-126](#adr-126) | **Two document voices, Book (Fraunces) and Plain (Inter), with no change to the saved format.** `fontFamily` carries the voice; an unknown family is drawn as Inter and kept, so an older build re-wraps and may cut off a Book text but loses nothing; four unmodified upstream static faces; each voice declares its scripts (Book has no Greek or Cyrillic); the editing surface draws the document's own faces; the control is a Font row amended into the frozen type bar (A29). Built and merged to `main` on 2026-10-09 (PR #108); shipped in `0.9.0-beta.7` on 2026-10-11; not accepted. Supersedes two of ADR-055's exclusions: font choice, and font bundling for the four Book faces alone | Proposed |
-| [ADR-127](#adr-127) | **The app is portrait only on phones.** No screen has a landscape layout; a turned phone got the upright layout in a 360dp-tall window. `MainActivity` is locked to portrait. Android 16 ignores the lock on screens 600dp and wider, so tablets are not covered | Proposed |
-| [ADR-128](#adr-128) | **A docked panel leaves the thing it edits in view.** The Ink tray and the Text panel stop short of the canvas top by a band sized to the selected element, and the page lifts the element into it; for those panels and for Reframe the lift stops at the element's own top instead of 96dp. Deviates from frozen A16; recorded in D-113 | Proposed |
+| [ADR-127](#adr-127) | **The app is portrait only on phones.** No screen has a landscape layout; a turned phone got the upright layout in a 360dp-tall window. `MainActivity` is locked to portrait. Android 16 ignores the lock on screens 600dp and wider, so tablets are not covered | Accepted |
+| [ADR-128](#adr-128) | **A docked panel leaves the thing it edits in view.** The Ink tray and the Text panel stop short of the canvas top by a band sized to the selected element, and the page lifts the element into it; for those panels and for Reframe the lift stops at the element's own top instead of 96dp. Deviates from frozen A16; recorded in D-113 | Accepted |
+| [ADR-129](#adr-129) | **Moving a piece by buttons lives in a Move tray, not in a bar that takes rows from the canvas.** The two-row accessible bar (A14) makes the page shrink each time something is selected. The controls move into a tray opened from a Move verb, which follows ADR-128. Direction only: needs an HTML amendment before any Compose | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -15528,8 +15529,10 @@ other change "Text style put back", and the unknown-font state shows the new lin
 
 ### The app is portrait only on phones
 
-**Status:** Proposed, 2026-10-13. **Not accepted** — the owner has not ruled; the choice was made under the
-standing instruction to decide product calls and record them. Built on `fix/bench-canvas-sharing`.
+**Status:** Accepted, 2026-10-13, under the owner's delegation of that day ("move ahead with the best choices
+for the product"); the owner has not ruled on it personally and may overrule it. Proposed the same day and
+merged in PR #125. Checked on an Android 16 emulator: with the system rotation forced sideways the activity
+stayed upright.
 **Relates to:** [D-113](design/V2-SPEC-DEFECTS.md#d-113) (the audit that raised it).
 
 #### Context
@@ -15586,9 +15589,9 @@ is in [D-113](design/V2-SPEC-DEFECTS.md#d-113).
 
 ### A docked panel leaves the thing it edits in view
 
-**Status:** Proposed, 2026-10-13. **Not accepted** — decided under the owner's standing instruction to decide
-product calls and record them; [D-113](design/V2-SPEC-DEFECTS.md#d-113) had listed it as a decision owed
-before code. Built on `fix/bench-canvas-sharing`.
+**Status:** Accepted, 2026-10-13, under the owner's delegation of that day ("move ahead with the best choices
+for the product"); the owner has not ruled on it personally and may overrule it. Proposed the same day and
+merged in PR #125; [D-113](design/V2-SPEC-DEFECTS.md#d-113) had listed it as a decision owed before code.
 **Extends:** [ADR-093](#adr-093) row 3.1 as amended by OD-16 (the page lift is `min(ceiling, slack + clearance)`).
 **Deviates from:** frozen `v21-bench.html` A16 (the Ink tray's height) and the 96dp lift ceiling, for the
 cases below only. The frozen file is not edited; the deviation is recorded in D-113.
@@ -15643,7 +15646,8 @@ flowchart TD
 #### Verification
 
 On the Samsung SM-A176B: with the Ink tray open the text box sat whole above the tray; with the Text panel
-open the words were in view above it. Reframe was not seen on a device. Details in
+open the words were in view above it. Reframe was seen later the same day on a 360 × 640dp emulator, with a
+photo pushed to the bottom of the page: the whole photo stayed in view above the controls. Details in
 [D-113](design/V2-SPEC-DEFECTS.md#d-113).
 
 #### Review
@@ -15652,3 +15656,66 @@ Independent Review Agent, reading only: **GO WITH FIXES**. It found this decisio
 this ADR), the first ceiling `max(96dp, top)` able to push a near-top element out of view (now the element's
 top alone), and the clearance tests unable to fail (rewritten). Reconciled in
 [D-113](design/V2-SPEC-DEFECTS.md#d-113).
+
+## ADR-129 {#adr-129}
+
+### Moving a piece by buttons lives in a Move tray
+
+**Status:** Proposed, 2026-10-13. **Direction only: nothing is built and nothing is frozen.** Decided under the
+owner's delegation of that day, as the answer to item 2 of [D-113](design/V2-SPEC-DEFECTS.md#d-113). It changes
+a control the owner approved (A14, [D-078](design/V2-SPEC-DEFECTS.md#d-078)), so it goes through the
+[HTML-first workflow](../CLAUDE.md#html-first-ui-workflow-mandatory): an amendment to `v21-bench.html`, a
+freeze, then Compose. Until then A14 stands as built.
+**Would amend:** A14 (the in-flow two-row accessible bar). **Follows:** [ADR-128](#adr-128).
+**Evidence:** [RESEARCH R25](RESEARCH.md#r25-selection-controls-that-take-room-from-the-canvas-2026-10-13).
+
+#### Context
+
+- ✅ Selecting anything adds a two-row bar of move, size, turn and order buttons under the bottom bar. Its
+  rows (about 106dp) come out of the canvas, so the page is refitted smaller on every select and larger on
+  every deselect. On a 360 × 640dp screen the page went from about 300dp tall to about 195dp (emulator,
+  2026-10-13); at 2× text its bottom went under the verb bar.
+- ✅ The bar exists so that nothing needs a drag: WCAG 2.5.7 asks for a way to do every dragging action
+  with single taps. It does not ask for that way to be on screen at all times
+  ([R25.1](RESEARCH.md#r25-selection-controls-that-take-room-from-the-canvas-2026-10-13)).
+- 🟦 The Bench screen answers *"how do I change this page?"*. A page that changes size when it is touched
+  reads as the page reacting to the touch, before the maker has done anything.
+
+#### Decision
+
+```mermaid
+flowchart LR
+    S["Select a piece"] --> V["Verb bar\n(floats over the canvas edge, as now)"]
+    V -->|"Move"| T["Move tray\nleft, right, up, down, larger, smaller,\nturn, forward, backward"]
+    T --> P["Page slides the piece into view\nabove the tray (ADR-128)"]
+    T -->|"Done"| V
+```
+
+1. **The two-row bar leaves the layout.** The canvas keeps one size whether or not something is selected.
+2. **A Move verb opens a docked tray** holding the same buttons, with the same labels and the same 48dp
+   targets. It is a tray like Flip and Ink: title and Done pinned, and the page slides so the piece stays
+   in view above it ([ADR-128](#adr-128)).
+3. **Move is the first verb**, so the tap-only path to every action is two taps from a selection.
+4. **Nothing else about the gestures changes.** Dragging, the handles and the turn handle stay.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Keep A14 as built | The resize is the defect; on a small phone the selected page is a third smaller |
+| Reserve the two rows always | A smaller page at rest for everyone, to hold buttons most makers never use |
+| Float the bar over the page | It covers the bottom of the page, which is where the piece often is |
+| Put the buttons where the page strip is | Research ranks it first (R25), but the strip is how a maker changes page with something selected, and swapping it hides that |
+
+#### Consequences
+
+- One more tap for a maker who moves by buttons. The first-run hint and TalkBack's description of the
+  selection must name Move, or the tap-only path is hidden.
+- The verb bar grows by one verb and already scrolls on a 360dp phone; it now shows that it scrolls
+  ([D-113](design/V2-SPEC-DEFECTS.md#d-113) item 6).
+- A14's tests and the goldens of every selected state change.
+
+#### Not decided here
+
+The tray's layout, its wording, and whether the size and turn buttons sit with the move buttons or in a
+second group. Those belong to the HTML amendment.
