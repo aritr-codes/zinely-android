@@ -7443,3 +7443,11 @@ The golden gate (`bash tools/grun.sh gold`) was run and every diff image read be
   edge is now drawn; the old whole-sheet scroll clipped it.
 
 Those twenty were re-recorded on the pinned CI image (`record-goldens.yml`).
+
+CI's byte-for-byte check then named sixteen more that the local gate's threshold had let through, and each
+was looked at before it was re-recorded too:
+
+- **Nine more `voice_*` images** (the Book variants and the bold and italic fields): the same taller strip.
+- **Seven with changes of a pixel or less:** two `proof_scaffold_*` and two `voice_read_*` (a centred label
+  and the page ticket sit a fraction of a pixel differently) and three `v21_folders_name_*` (a sliver of the
+  sheet's bottom shadow). Nothing a person could see at normal size.
