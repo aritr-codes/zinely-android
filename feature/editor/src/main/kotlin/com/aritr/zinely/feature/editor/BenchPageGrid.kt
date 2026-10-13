@@ -441,22 +441,7 @@ internal fun BenchPageGridSurface(
                     }
                 }
             }
-            .testTag(BenchPageGridTestTag)
-            // `padding:0 var(--gap-lg) var(--gap-xl)`, applied **inside** the scroll container.
-            //
-            // ⚠ This is the chain contract, and it is the one that fails as *"the shadow is missing"* on
-            // a device rather than as anything a test would name. `verticalScroll` clips to its viewport
-            // on both axes. Three cards and two 12dp gaps exactly fill the panel's inner width, so with
-            // the inset applied *outside* the scroll the viewport edge lands flush against the right-hand
-            // card and shears its 3dp printed shadow off. Inside, the viewport is the panel's full width
-            // and the inset is content, so every card's shadow has 16dp to fall into. Nothing about the
-            // frozen geometry changes: there is no horizontal scrolling for the padding to slide.
-            .verticalScroll(rememberScrollState())
-            .padding(
-                start = BenchGridPanelPaddingH,
-                end = BenchGridPanelPaddingH,
-                bottom = BenchGridPanelPaddingBottom,
-            ),
+            .testTag(BenchPageGridTestTag),
     ) {
         // `.grip` — decorative, exactly as it is in the frozen file: zero pointer handlers, and the
         // panel has no drag-to-dismiss to hint at.
@@ -473,11 +458,11 @@ internal fun BenchPageGridSurface(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = BenchGridPanelPaddingH)
                 .padding(
                     top = BenchGridHeadPaddingTop,
                     start = BenchGridHeadPaddingH,
                     end = BenchGridHeadPaddingH,
-                    bottom = BenchGridHeadPaddingBottom,
                 ),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
@@ -500,7 +485,30 @@ internal fun BenchPageGridSurface(
         // `repeat(3, 1fr)` — the column width is the panel's inner width less two gaps, measured once
         // and handed to every card, so the last row's cards keep the grid's column width instead of
         // stretching to fill a short row.
-        BoxWithConstraints {
+        // Only the pages scroll. The frozen sheet scrolls whole, and on a 360 x 640 phone that carried
+        // the title and Close off the top with the last row in view — the Ink tray's defect (D-112).
+        //
+        // `padding:0 var(--gap-lg) var(--gap-xl)`, applied **inside** the scroll container, and the
+        // head row's bottom gap with it as the top padding.
+        //
+        // ⚠ This is the chain contract, and it is the one that fails as *"the shadow is missing"* on
+        // a device rather than as anything a test would name. A scroll viewport clips hard at its top
+        // and bottom edges, and whatever a card draws outside its own bounds needs room inside the
+        // viewport: the current page's 3dp ring above the first row (hence the top padding — without
+        // it the ring is cut on pages 1 to 3, at rest), the 3dp printed shadow below the last. The
+        // side inset stays inside too, as it always was, so the right-hand card's shadow has 16dp to
+        // fall into. Nothing about the frozen geometry changes.
+        BoxWithConstraints(
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState())
+                .padding(
+                    start = BenchGridPanelPaddingH,
+                    top = BenchGridHeadPaddingBottom,
+                    end = BenchGridPanelPaddingH,
+                    bottom = BenchGridPanelPaddingBottom,
+                ),
+        ) {
             val cellWidth = (maxWidth - BenchGridGap * (BenchGridColumns - 1)) / BenchGridColumns
             Column {
                 pages.chunked(BenchGridColumns).forEachIndexed { rowIndex, rowPages ->

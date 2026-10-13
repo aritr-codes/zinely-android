@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.editor
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
@@ -22,12 +23,15 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.FlipAxis
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -47,6 +51,35 @@ class FlipTrayTest {
         assetId = "a".repeat(64),
         flippedVertically = true,
     )
+
+    @Test
+    fun `title and Done stay put when a tray taller than its space is scrolled`() {
+        // D-112's defect, third surface. Narrower than 340dp the two choices stack, and 150dp cannot hold them.
+        composeRule.setContent {
+            ZinelyTheme {
+                Box(Modifier.size(width = 300.dp, height = 150.dp)) {
+                    FlipTray(
+                        visible = true,
+                        element = photo,
+                        onToggle = {},
+                        onDone = {},
+                        firstFocusRequester = remember { FocusRequester() },
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+        fun bounds(tag: String) = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
+        val doneBefore = bounds(FlipDoneTestTag)
+        val firstBefore = bounds(FlipLeftRightTestTag)
+
+        composeRule.onNodeWithTag(FlipTopBottomTestTag).performScrollTo()
+        composeRule.waitForIdle()
+
+        // Not vacuous: the choices did scroll.
+        assertNotEquals(firstBefore, bounds(FlipLeftRightTestTag))
+        assertEquals(doneBefore, bounds(FlipDoneTestTag))
+    }
 
     @Test
     fun `tray exposes two immediate toggles and focuses left-right on open`() {

@@ -113,9 +113,11 @@ internal fun FlipTray(
                 shadowElevation = ZinelyV21Dimens.gapXs,
             ) {
                 Column(
-                    modifier = Modifier
-                        .verticalScroll(rememberScrollState())
-                        .padding(ZinelyV21Dimens.gapSm),
+                    modifier = Modifier.padding(
+                        start = ZinelyV21Dimens.gapSm,
+                        top = ZinelyV21Dimens.gapSm,
+                        end = ZinelyV21Dimens.gapSm,
+                    ),
                     verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
                 ) {
                     Row(
@@ -135,54 +137,64 @@ internal fun FlipTray(
                                 .defaultMinSize(minWidth = 64.dp, minHeight = 48.dp),
                         )
                     }
-                    Text(
-                        text = Copy.Editor.FLIP_HELP,
-                        color = colors.ink,
-                        fontFamily = ZinelyV21Fonts.Work,
-                        fontSize = 12.48.sp,
-                        lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                    )
+                    // Only the help and the two choices scroll: the title and Done stay put, so a tray
+                    // taller than the canvas (stacked choices at large text) cannot lose its exit (D-112).
+                    Column(
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = ZinelyV21Dimens.gapSm),
+                        verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+                    ) {
+                        Text(
+                            text = Copy.Editor.FLIP_HELP,
+                            color = colors.ink,
+                            fontFamily = ZinelyV21Fonts.Work,
+                            fontSize = 12.48.sp,
+                            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+                        )
 
-                    val horizontal = element.horizontalFlipOn()
-                    val vertical = element.verticalFlipOn()
-                    val stack = trayWidth < 340.dp || LocalDensity.current.fontScale > 1.3f
-                    if (stack) {
-                        Column(verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm)) {
-                            FlipChoice(
-                                label = Copy.Editor.LEFT_RIGHT,
-                                checked = horizontal,
-                                axis = FlipAxis.HORIZONTAL,
-                                testTag = FlipLeftRightTestTag,
-                                focusRequester = firstFocusRequester,
-                                onToggle = onToggle,
-                            )
-                            FlipChoice(
-                                label = Copy.Editor.TOP_BOTTOM,
-                                checked = vertical,
-                                axis = FlipAxis.VERTICAL,
-                                testTag = FlipTopBottomTestTag,
-                                onToggle = onToggle,
-                            )
-                        }
-                    } else {
-                        Row(horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm)) {
-                            FlipChoice(
-                                label = Copy.Editor.LEFT_RIGHT,
-                                checked = horizontal,
-                                axis = FlipAxis.HORIZONTAL,
-                                testTag = FlipLeftRightTestTag,
-                                focusRequester = firstFocusRequester,
-                                onToggle = onToggle,
-                                modifier = Modifier.weight(1f),
-                            )
-                            FlipChoice(
-                                label = Copy.Editor.TOP_BOTTOM,
-                                checked = vertical,
-                                axis = FlipAxis.VERTICAL,
-                                testTag = FlipTopBottomTestTag,
-                                onToggle = onToggle,
-                                modifier = Modifier.weight(1f),
-                            )
+                        val horizontal = element.horizontalFlipOn()
+                        val vertical = element.verticalFlipOn()
+                        val stack = trayWidth < 340.dp || LocalDensity.current.fontScale > 1.3f
+                        if (stack) {
+                            Column(verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm)) {
+                                FlipChoice(
+                                    label = Copy.Editor.LEFT_RIGHT,
+                                    checked = horizontal,
+                                    axis = FlipAxis.HORIZONTAL,
+                                    testTag = FlipLeftRightTestTag,
+                                    focusRequester = firstFocusRequester,
+                                    onToggle = onToggle,
+                                )
+                                FlipChoice(
+                                    label = Copy.Editor.TOP_BOTTOM,
+                                    checked = vertical,
+                                    axis = FlipAxis.VERTICAL,
+                                    testTag = FlipTopBottomTestTag,
+                                    onToggle = onToggle,
+                                )
+                            }
+                        } else {
+                            Row(horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm)) {
+                                FlipChoice(
+                                    label = Copy.Editor.LEFT_RIGHT,
+                                    checked = horizontal,
+                                    axis = FlipAxis.HORIZONTAL,
+                                    testTag = FlipLeftRightTestTag,
+                                    focusRequester = firstFocusRequester,
+                                    onToggle = onToggle,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                FlipChoice(
+                                    label = Copy.Editor.TOP_BOTTOM,
+                                    checked = vertical,
+                                    axis = FlipAxis.VERTICAL,
+                                    testTag = FlipTopBottomTestTag,
+                                    onToggle = onToggle,
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
                         }
                     }
                 }
