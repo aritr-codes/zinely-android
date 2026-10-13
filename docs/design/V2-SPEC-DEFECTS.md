@@ -7477,6 +7477,12 @@ neither ran Gradle or a device. Both returned **GO WITH FIXES**.
   checklist left out two owed items.
 - **Nothing rejected.**
 
+**Goldens.** The local gate passed at its 2% threshold. All 200 images recorded on the pinned CI image were
+compared byte for byte with the tree: one differs, `v21_folders_name_empty`, and its diff was read before it
+was re-recorded. The old image had recorded the defect (the disabled Make folder button with its shadow cut);
+the new one shows the shadow whole. No golden covers the verb bar's fade, a dimmed Preview button or a fold
+step at large text, so none of those moved.
+
 
 #### Review of the first pass (PR #125)
 
