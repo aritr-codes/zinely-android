@@ -267,4 +267,39 @@ class ProofSmallPhoneTest {
     @Config(fontScale = 2f)
     fun `the honesty legend keeps each phrase on one line at font scale 2`() =
         assertLegendReadsAsPhrases(2f)
+
+    // ---- P5: the page ticket keeps its count -------------------------------------------------------
+
+    /**
+     * "Back cover · 8 of 8" is the longest thing the ticket says, and on one line it ellipsised — losing
+     * the count, which is the half that is the readout. (It fits at 1.3; 2.0 is where it gave way.)
+     */
+    private fun assertBackCoverTicketWhole(fontScale: Float) {
+        setProof()
+
+        val backCover = Copy.ProofRead.leafLabel(8, 8)
+        val ticket = tagged(ProofPageTicketTestTag)
+        repeat(8) {
+            val now = ticket.fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription)
+            if (now?.single() != backCover) {
+                tagged(ProofReadNextTestTag).performClick()
+                composeRule.waitForIdle()
+            }
+        }
+        assertEquals(
+            listOf(backCover),
+            ticket.fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription),
+        )
+
+        val layout = ticket.textLayout()
+        assertFalse(
+            "the ticket dropped part of \"$backCover\" at font scale $fontScale: ${layout.describe()}",
+            layout.dropsText(),
+        )
+        tagged(ProofFoldOpenTestTag).assertWhollyVisible("How to fold")
+    }
+
+    @Test
+    @Config(fontScale = 2f)
+    fun `the back cover's ticket keeps its count at font scale 2`() = assertBackCoverTicketWhole(2f)
 }

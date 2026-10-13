@@ -800,7 +800,9 @@ private fun ProofPageTicket(ticket: String, modifier: Modifier = Modifier) {
     val edge = colors.inkSoft
     BasicText(
         text = ticket.uppercase(Locale.ROOT),
-        maxLines = 1,
+        // Two lines before it gives anything up: on one, "BACK COVER · 8 OF 8" ellipsised at font
+        // scale 2 on a 360dp phone, and what it dropped was the count — the half that is the readout.
+        maxLines = 2,
         overflow = TextOverflow.Ellipsis,
         modifier = modifier
             .testTag(ProofPageTicketTestTag)
@@ -840,6 +842,7 @@ private fun ProofPageTicket(ticket: String, modifier: Modifier = Modifier) {
             fontSize = 11.8.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.08.em,
+            textAlign = TextAlign.Center,
             // `.pcount{font-variant-numeric:tabular-nums}` — without it the ticket changes width between
             // page 9 and page 10, and a stamped ticket that twitches as you read is a label again.
             fontFeatureSettings = "tnum",
