@@ -139,6 +139,9 @@ public fun ZSnackbar(
         ) {
             BasicText(
                 text = message,
+                // The message yields, the action does not: a Row measures unweighted children first,
+                // so a long zine name used to take the whole bar and leave Undo a sliver.
+                modifier = Modifier.weight(1f, fill = false),
                 style = TextStyle(
                     color = colors.ink,
                     fontFamily = ZinelyV21Fonts.Work,

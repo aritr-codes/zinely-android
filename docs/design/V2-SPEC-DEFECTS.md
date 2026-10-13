@@ -7315,6 +7315,74 @@ scrolling to the palettes: `Ink` `[68,391][135,463]` and `Done` `[875,399][970,4
 reading: the palettes' cut bottom edge is the only hint that the tray scrolls, and nothing marks where the
 colours pass under the title. TalkBack was not listened to.
 
-**Owed.** The frozen sheet and the product now differ in one behaviour, in the product's favour. Either
-A16 is amended to pin the header, or this entry stands as the accepted difference. The tray covering the
+**Two more surfaces, same defect, same fix (2026-10-13).** An audit of every panel found the pattern twice
+more, and both are fixed the same way:
+
+- **All pages sheet** (`BenchPageGrid.kt`; frozen `.sheet{max-height:78%;overflow:auto}`). On a 360 × 640
+  phone the eight pages need about 95dp more than the sheet gets, so reaching page 8 carried the title and
+  Close off the top. Now only the pages scroll. Fenced by
+  `BenchC5Test.the_title_and_close_stay_put_when_the_pages_scroll`.
+- **Flip tray** (`FlipTray.kt`). Fits at ordinary sizes; with large text the two choices stack and the tray
+  outgrows a short canvas. Now only the help line and the choices scroll. Fenced by `FlipTrayTest`.
+
+⚠ The first cut of the All pages change clipped the current page's 3dp ring along the top of row one, at
+rest. Review caught it by reading; **the golden gate passed with the ring cut**, although
+`BenchC5GoldenTest` draws exactly that state. The head row's bottom gap now sits inside the scroll as its
+top padding, and the ring was checked whole on a phone (SM-A176B, page 1 current).
+
+Neither was seen broken on a phone: the test phone is too tall to trigger them. They are fixed from the
+arithmetic and the tests.
+
+**Owed.** The frozen sheets and the product now differ in one behaviour, in the product's favour. Either
+the freeze is amended to pin these headers, or this entry stands as the accepted difference. The tray covering the
 whole page on a common phone needs its own look.
+
+---
+
+### D-113 — panels and the page compete for the same canvas; what the 2026-10-13 audit left open {#d-113}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../EditorScreen.kt` · `TypeBar.kt` · `ReframeControls.kt` · `feature/library/` · `ProofScreen.kt` · `ProofFold.kt` |
+| **Found** | 2026-10-13, three read-only audit agents after D-112, then a pass on a Samsung SM-A176B (384 × 832dp, text size 1.0) |
+| **Severity** | Mixed. Two confirmed UX defects; the rest are candidates from code reading |
+| **Status** | ☐ **Open — design decisions first, then code** |
+
+**Confirmed on the phone, not fixed.**
+
+1. **The Text panel covers the words it styles.** Select text, tap Text: the panel hides the text box
+   completely, so size, alignment and bold are changed blind. The Ink tray does the same to the whole page
+   (D-112). The page already slides clear of the typing row and the Ink tray by up to 96dp; the Text panel
+   feeds nothing into that.
+2. **The page resizes on select.** The accessible bar under the Bench takes two rows from the canvas when
+   something is selected, so the page shrinks and grows back on deselect (a text box measured 671px wide
+   unselected, 524px selected).
+
+**Fixed in the same pass, recorded in the changelog:** the delete Undo bar lost its Undo to a long zine
+name, and sat on top of Make a zine.
+
+**Candidates — read from code, sizes added up, not seen on a device.** Ordinary text size unless noted.
+
+| Surface | What would happen | When |
+|---|---|---|
+| Reframe, opened by double-tapping a photo | The controls take 168dp more than the bar they replace and the page is not refitted, so its bottom is cut | Every phone |
+| Flip tray open | "Flipped · Undo" is drawn behind the tray | Every phone |
+| Photo verb bar | Seven verbs need about 380dp; Delete is clipped with no scroll hint | 360dp-wide phones |
+| "Saved" chip in the status strip | The strip grows about 25dp for two seconds and the page rescales | Every phone |
+| Empty shelf · shelf error | Last lines, or Try again, cut off; no scroll | 360 × 640, or large text |
+| Zine action sheet | Delete row cut off; no scroll | 360 × 640 at 1.75× text |
+| Backups sheets | Title scrolls away; the sheet's top goes under the status bar | 1.5× text |
+| Move-to-folder sheet | Zine name scrolls off; New folder below the fold | Four or more folders on 360 × 640 |
+| Preview | The zine shrinks when Save PDF succeeds; thumbnail-sized in landscape | 360 × 640, landscape |
+| Fold guide | The step's instruction sentence is below the visible area | 360 × 640 |
+| Preview buttons · print legend · page ticket | Labels cut or mangled | 1.4× text and up |
+
+The app has no orientation lock, and most no-scroll screens above would also fail in landscape.
+
+One more, introduced by the fix above and accepted for now: the Library's short notices and the folder
+snack now share the slot just above the dock, so the two overlap if both are up at once. The delete Undo
+bar cannot meet the folder snack (a sheet opens in between and lowers it).
+
+**What needs deciding before code.** How a panel shares the canvas with the thing it edits (items 1 and 2,
+Reframe, and the Ink tray's coverage are one question); whether landscape is supported or locked; and
+which of the candidates to confirm on a 360 × 640 emulator first.

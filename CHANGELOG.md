@@ -103,6 +103,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- After deleting a zine with a long name, **Undo** keeps its full size; the name wraps instead. Before, Undo
+  could be squeezed to a sliver at the edge of the bar.
+- The delete Undo bar and the Library's short notices now sit above **Make a zine** instead of on top of it,
+  and the Undo bar no longer runs edge to edge.
+- The All pages sheet keeps its title and Close in place while the pages scroll, and the Flip panel keeps
+  its title and **Done** in place. Both matter on small phones or with large text; neither was seen broken on
+  a phone ([D-112](docs/design/V2-SPEC-DEFECTS.md#d-112)).
 - The Ink panel keeps its title and **Done** in place while the colours scroll. On phones where the panel
   did not quite fit, scrolling to the Starting palettes left both cut in half at the top
   ([D-112](docs/design/V2-SPEC-DEFECTS.md#d-112)).

@@ -1,7 +1,10 @@
 package com.aritr.zinely.ui.components
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
@@ -264,6 +267,26 @@ class ZComponentsTest {
         assertFalse(timedOut)
         composeRule.mainClock.advanceTimeBy(1_000L)
         assertTrue(timedOut)
+    }
+
+    @Test
+    fun `a long snackbar message wraps and leaves the action its full width`() {
+        // A 39-character zine name on a 384dp phone squeezed Undo into a sliver, its letters stacked.
+        // Undo is the only way back from a delete.
+        val message = "Deleted “The neighbourhood cats of our lane in Kolkata”"
+        composeRule.setContent {
+            ZinelyTheme {
+                Box(Modifier.width(320.dp)) {
+                    ZSnackbar(message = message, actionLabel = "Undo", onAction = {}, onTimeout = {})
+                }
+            }
+        }
+        val undo = composeRule.onNodeWithText("Undo").fetchSemanticsNode().boundsInRoot
+        val text = composeRule.onNodeWithText(message).fetchSemanticsNode().boundsInRoot
+        // Undo's own text plus its 12dp side padding twice is about 55px at density 1.
+        assertTrue("Undo is ${undo.width} px wide", undo.width >= 48f)
+        assertTrue("the message stops before Undo", text.right <= undo.left)
+        assertTrue("the message wrapped", text.height > 24f)
     }
 
     @Test

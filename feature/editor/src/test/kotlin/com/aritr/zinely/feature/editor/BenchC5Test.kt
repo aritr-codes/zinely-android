@@ -39,6 +39,7 @@ import com.aritr.zinely.ui.theme.zinelyV2DarkColors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -684,6 +685,24 @@ class BenchC5Test {
      * The badge half (`COVER`/`BACK`) was asserted; the number was not read anywhere, by any test or any
      * mutation — so a grid of unnumbered cells passed the whole suite.
      */
+    @Test
+    fun the_title_and_close_stay_put_when_the_pages_scroll() {
+        // D-112's defect, second surface: the whole sheet scrolled, so reaching page 8 on a short phone
+        // carried the title and Close off the top.
+        setScreen(store(pageCount = 8))
+        composeRule.onNodeWithTag(BenchGridButtonTestTag).performClick()
+        composeRule.waitForIdle()
+        val closeBefore = bounds(BenchPageGridCloseTag)
+        val firstBefore = bounds(benchPageCellTag(1))
+
+        composeRule.onNodeWithTag(benchPageCellTag(8)).performScrollTo()
+        composeRule.waitForIdle()
+
+        // Not vacuous: the pages did scroll.
+        assertNotEquals(firstBefore, bounds(benchPageCellTag(1)))
+        assertEquals(closeBefore, bounds(BenchPageGridCloseTag))
+    }
+
     @Test
     fun every_cell_wears_its_page_number() {
         setScreen(store(pageCount = 8))

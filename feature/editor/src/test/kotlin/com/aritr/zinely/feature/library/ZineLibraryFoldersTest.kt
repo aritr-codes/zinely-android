@@ -525,6 +525,27 @@ class ZineLibraryFoldersTest {
     }
 
     @Test
+    fun `the delete Undo bar sits clear of the dock and in from each side`() {
+        // It sat at a fixed 96dp, inside the 153dp dock, and covered the top of Make a zine on a phone.
+        // A long name, so the bar is as wide as it is allowed to be and the inset is what is measured.
+        val title = "The neighbourhood cats of our lane in Kolkata"
+        shelf()
+        events.trySend(HomeShelfEvent.DeletePrompt("Coffee log", title))
+        composeRule.waitForIdle()
+        val message = composeRule.onNodeWithText(homeDeletedMessage(title), useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+        val undo = composeRule.onNodeWithText("Undo", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val dock = composeRule.onNodeWithTag(ZineDockTestTag).fetchSemanticsNode().boundsInRoot
+        val root = composeRule.onRoot().fetchSemanticsNode().boundsInRoot
+        assertTrue("Undo ends at ${undo.bottom}, dock starts at ${dock.top}", undo.bottom <= dock.top)
+        // 14 of side inset plus the bar's own 16 before its message, and 14 plus its 8 after Undo.
+        // At least: a wrapped message can leave the bar a little narrower than its allowance.
+        assertTrue("message starts ${message.left - root.left} in", message.left - root.left >= 27.5f)
+        assertTrue("Undo ends ${root.right - undo.right} in", root.right - undo.right >= 19.5f)
+        assertTrue(message.right <= undo.left)
+    }
+
+    @Test
     fun `a rename's snack offers nothing, and a stopped one offers Try again`() {
         shelf()
         events.trySend(HomeShelfEvent.FolderSnack("Renamed to “Home”"))

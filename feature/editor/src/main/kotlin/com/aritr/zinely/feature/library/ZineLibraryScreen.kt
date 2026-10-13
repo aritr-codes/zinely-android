@@ -671,21 +671,24 @@ public fun ZineLibraryScreen(
             actionMinHeight = FolderSnackActionMinHeight,
         )
 
-        // Above the dock, never under the thumb that made them — V1's placement, reused with its chrome.
+        // Above the dock, never under the thumb that made them. Measured, not V1's fixed 96dp: the dock
+        // is taller than that now, and the bar sat on top of Make a zine.
+        val aboveDock = with(LocalDensity.current) { dockHeight.toDp() } + FolderSnackGap
         undo?.let { request ->
             ZSnackbar(
                 message = request.message,
                 actionLabel = Copy.Shelf.UNDO,
                 onAction = { haptics.perform(ZinelyHaptic.Tick); request.outcome.complete(true) },
                 onTimeout = { request.outcome.complete(false) },
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = TransientBottomInset),
+                modifier = Modifier.align(Alignment.BottomCenter)
+                    .padding(start = TransientSideInset, end = TransientSideInset, bottom = aboveDock),
             )
         }
         toast?.let { (text, gone) ->
             ZToast(
                 message = text,
                 onTimeout = { gone.complete(Unit) },
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = TransientBottomInset),
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = aboveDock),
             )
         }
     }
@@ -884,9 +887,13 @@ private const val LoadingPlaceholderCount = 4
 /**
  * `.snackbar`/`.toast{bottom:96px}` — V1's transient surfaces at V1's offset, arriving with the flow they
  * belong to. Not a frozen V2 value: the V2 file has no snackbar, because a prototype with six hard-coded
- * zines never deletes one.
+ * zines never deletes one. Only for a screen with no dock (the colophon); over the shelf the bars are
+ * placed from the measured dock.
  */
 private val TransientBottomInset = 96.dp
+
+/** The folder snack's own side inset (`A28.13`), so the two bars line up. */
+private val TransientSideInset = 14.dp
 
 /** `.grainy::before{opacity:.55}` — the effective strength is this times the tile's baked `.42`. */
 private const val DeskGrainOpacity = 0.55f
