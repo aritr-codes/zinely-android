@@ -353,11 +353,14 @@ internal fun BenchInkPopover(
                 .zinelyV21HardShadow(BenchInkPopoverShadowDp, colors.inkLine, shape)
                 .background(colors.surface, shape)
                 .border(BenchInkPopoverBorderDp, colors.ink, shape)
-                // A16's `max-height:calc(100% - 24px);overflow:auto`: decor carries one extra band and
-                // must still expose Starting palettes on a phone-height Bench. The whole tray scrolls,
-                // matching the frozen HTML rather than silently clipping its final action row.
-                .verticalScroll(rememberScrollState())
-                .padding(BenchInkPopoverPadding),
+                // `.inkpop.ink-a16{padding:var(--gap-md)}` (`v21-bench.html:1964`) — 12dp all round.
+                // The bottom padding lives inside the scrolling body below, so the last row scrolls
+                // clear of the card's edge instead of being cut 12dp above it.
+                .padding(
+                    start = ZinelyV21Dimens.gapMd,
+                    top = ZinelyV21Dimens.gapMd,
+                    end = ZinelyV21Dimens.gapMd,
+                ),
         ) {
             // `.inkpop h4{margin:0 0 var(--gap-hair);display:flex;justify-content:space-between;
             // align-items:center}` (`v21-bench.html:242-243`).
@@ -388,61 +391,78 @@ internal fun BenchInkPopover(
                 BenchInkDoneChip(onDone)
             }
 
-            val currentSwatch = selected?.let { value ->
-                bands.asSequence()
-                    .flatMap { it.swatches.asSequence() }
-                    .firstOrNull { it.value == value }
-            }
-            BenchInkCurrent(
-                colour = selected ?: colors.ink,
-                name = currentSwatch?.name ?: Copy.BenchInk.CUSTOM_INK,
-            )
-
-            // The ring belongs to ONE swatch, and colour alone cannot identify one: `Ink #2A251E` is a
-            // member of both the Spot inks band and the Neutrals band (`ZinelyContentInks.kt:219`, `:231` —
-            // the freeze repeats it verbatim in both `INKS` and `NEUT`), and for a text target both bands
-            // are drawn. Ringing by `selected == swatch.value` therefore ringed the element's ink TWICE
-            // and published `Selected` on two RadioButton nodes in one group. The freeze rings exactly
-            // one (`v21-bench.html:722` clears every `.on` before setting one), and the OD-24
-            // amendment log lists that exclusivity under NOTHING ELSE CHANGES.
+            // A16's `max-height:calc(100% - 24px);overflow:auto`: decor carries one extra band and must
+            // still expose Starting palettes on a phone-height Bench, so the tray scrolls.
             //
-            // Resolved to the FIRST occurrence in band order, which is the Spot inks band: `Ink` is a riso
-            // ink that the Neutrals band repeats, not the other way round.
-            val ringed: Pair<Int, Int>? = selected?.let { value ->
-                bands.withIndex().firstNotNullOfOrNull { (bandIndex, band) ->
-                    band.swatches.indexOfFirst { it.value == value }
-                        .takeIf { it >= 0 }
-                        ?.let { bandIndex to it }
+            // ⚠ Everything BELOW the header scrolls; the header does not. The frozen CSS scrolls the whole
+            // card, and that is what first shipped — until a tester's 891dp phone, with the two-row
+            // accessible bar taking its share, left the tray ~24dp short. Scrolled to the palettes, `Ink`
+            // and `Done` sat cut in half under the card's top edge: the tray read as broken and its only
+            // exit was half gone. `weight(fill = false)` keeps a tray that fits at its own height.
+            // It also needs a host with a bounded height: under an unbounded one a weighted child
+            // measures to nothing. The canvas Box is bounded, and so is every test host.
+            Column(
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = ZinelyV21Dimens.gapMd),
+            ) {
+                val currentSwatch = selected?.let { value ->
+                    bands.asSequence()
+                        .flatMap { it.swatches.asSequence() }
+                        .firstOrNull { it.value == value }
                 }
-            }
-            for ((bandIndex, band) in bands.withIndex()) {
-                // No bottom margin on the band itself in V2.1: `.pots` declares none and `.inklbl` owns
-                // the whole rhythm through its own `margin:var(--gap-md) 0 var(--gap-xs)`. Carrying a
-                // band gap as well would double every space between a row of pots and the next label.
-                Column {
-                    BenchInkBandLabel(band.label)
-                    BenchInkSwatchGrid(
-                        swatches = band.swatches,
-                        selectedIndex = ringed?.takeIf { it.first == bandIndex }?.second,
-                        onPick = onPick,
-                    )
-                }
-            }
+                BenchInkCurrent(
+                    colour = selected ?: colors.ink,
+                    name = currentSwatch?.name ?: Copy.BenchInk.CUSTOM_INK,
+                )
 
-            // The fourth band. `openInk` gives it the same `.inklbl` the other three get, so it is a band
-            // like the others — ADR-089 row 6.3 said "three bands" and the freeze emits four (ADR-096 §2).
-            Column {
-                BenchInkBandLabel(Copy.BenchInk.PRESETS)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(BenchInkPresetGapDp),
-                ) {
-                    for (preset in presets) {
-                        BenchInkPresetPill(
-                            preset = preset,
-                            onClick = { onPreset(preset) },
-                            modifier = Modifier.weight(1f),
+                // The ring belongs to ONE swatch, and colour alone cannot identify one: `Ink #2A251E` is a
+                // member of both the Spot inks band and the Neutrals band (`ZinelyContentInks.kt:219`, `:231` —
+                // the freeze repeats it verbatim in both `INKS` and `NEUT`), and for a text target both bands
+                // are drawn. Ringing by `selected == swatch.value` therefore ringed the element's ink TWICE
+                // and published `Selected` on two RadioButton nodes in one group. The freeze rings exactly
+                // one (`v21-bench.html:722` clears every `.on` before setting one), and the OD-24
+                // amendment log lists that exclusivity under NOTHING ELSE CHANGES.
+                //
+                // Resolved to the FIRST occurrence in band order, which is the Spot inks band: `Ink` is a riso
+                // ink that the Neutrals band repeats, not the other way round.
+                val ringed: Pair<Int, Int>? = selected?.let { value ->
+                    bands.withIndex().firstNotNullOfOrNull { (bandIndex, band) ->
+                        band.swatches.indexOfFirst { it.value == value }
+                            .takeIf { it >= 0 }
+                            ?.let { bandIndex to it }
+                    }
+                }
+                for ((bandIndex, band) in bands.withIndex()) {
+                    // No bottom margin on the band itself in V2.1: `.pots` declares none and `.inklbl` owns
+                    // the whole rhythm through its own `margin:var(--gap-md) 0 var(--gap-xs)`. Carrying a
+                    // band gap as well would double every space between a row of pots and the next label.
+                    Column {
+                        BenchInkBandLabel(band.label)
+                        BenchInkSwatchGrid(
+                            swatches = band.swatches,
+                            selectedIndex = ringed?.takeIf { it.first == bandIndex }?.second,
+                            onPick = onPick,
                         )
+                    }
+                }
+
+                // The fourth band. `openInk` gives it the same `.inklbl` the other three get, so it is a band
+                // like the others — ADR-089 row 6.3 said "three bands" and the freeze emits four (ADR-096 §2).
+                Column {
+                    BenchInkBandLabel(Copy.BenchInk.PRESETS)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(BenchInkPresetGapDp),
+                    ) {
+                        for (preset in presets) {
+                            BenchInkPresetPill(
+                                preset = preset,
+                                onClick = { onPreset(preset) },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
                     }
                 }
             }
@@ -786,17 +806,6 @@ internal val BenchInkPopoverBorderDp = 1.5.dp
  * declares no `:active`.
  */
 internal val BenchInkPopoverShadowDp = ZinelyV21Dimens.hardShadow
-
-/**
- * `.inkpop{padding:var(--gap-md) var(--gap-md) var(--gap-lg)}` (`:238`) — CSS shorthand: top 12, sides 12,
- * bottom 16. V2 asked for 12/14/14.
- */
-internal val BenchInkPopoverPadding = PaddingValues(
-    start = ZinelyV21Dimens.gapMd,
-    top = ZinelyV21Dimens.gapMd,
-    end = ZinelyV21Dimens.gapMd,
-    bottom = ZinelyV21Dimens.gapMd,
-)
 
 /**
  * `.inkpop{transition:opacity .18s,transform .18s}` (`:240`). V2 asked for 220ms.
