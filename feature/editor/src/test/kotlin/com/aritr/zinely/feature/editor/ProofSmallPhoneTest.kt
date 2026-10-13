@@ -235,4 +235,36 @@ class ProofSmallPhoneTest {
     @Test
     @Config(fontScale = 2f)
     fun `the band's buttons show their whole labels at font scale 2`() = assertBandLabelsWhole()
+
+    // ---- P4: the honesty legend wraps --------------------------------------------------------------
+
+    /**
+     * The legend was a `Row`, so its last phrase got whatever width the first two left: four lines at
+     * 1.5 and twenty-two — a column one letter wide — at 2.0.
+     */
+    private fun assertLegendReadsAsPhrases(fontScale: Float) {
+        setProof(startDrawer = ProofDrawer.Details)
+
+        listOf(
+            Copy.ProofSheet.LEGEND_FOLD_LINES,
+            Copy.ProofSheet.LEGEND_ONE_CUT,
+            Copy.ProofSheet.LEGEND_PRINTER_REACH,
+        ).forEach { phrase ->
+            assertEquals(
+                "\"$phrase\" was squeezed onto several lines at font scale $fontScale",
+                1,
+                label(phrase).textLayout().lineCount,
+            )
+        }
+    }
+
+    @Test
+    @Config(fontScale = 1.5f)
+    fun `the honesty legend keeps each phrase on one line at font scale 1_5`() =
+        assertLegendReadsAsPhrases(1.5f)
+
+    @Test
+    @Config(fontScale = 2f)
+    fun `the honesty legend keeps each phrase on one line at font scale 2`() =
+        assertLegendReadsAsPhrases(2f)
 }
