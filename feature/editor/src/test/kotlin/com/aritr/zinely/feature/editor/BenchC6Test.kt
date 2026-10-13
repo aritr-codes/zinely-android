@@ -20,6 +20,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.up
 import androidx.compose.ui.unit.Dp
@@ -568,8 +569,11 @@ class BenchC6Test {
         composeRule.mainClock.advanceTimeBy(300)
         composeRule.waitForIdle()
 
-        val note = composeRule.onAllNodesWithTag(BenchInkPresetTestTag, useUnmergedTree = true)
-            .fetchSemanticsNodes().last().boundsInWindow
+        // The band of the card the snack would cover: it docks at the same floor, inside the card's
+        // footprint. Read off the card rather than off the last palette, which since D-113 can sit below
+        // the tray's fold — the tray stops short of the canvas top now.
+        val card = composeRule.onNodeWithTag(BenchInkPopoverTestTag).fetchSemanticsNode().boundsInWindow
+        val note = androidx.compose.ui.geometry.Rect(card.left + 40f, card.bottom - 60f, card.right - 40f, card.bottom - 20f)
         val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
         val paper = zinelyV21LightColors().surface.toArgb()
         val ink = zinelyV21LightColors().ink.toArgb()
@@ -737,7 +741,7 @@ class BenchC6Test {
         val id = openInk(store)
         composeRule.onNodeWithContentDescription(
             Copy.BenchInk.presetLabel(Copy.BenchInk.PRESET_WARM, Copy.BenchInk.BRICK),
-        ).performClick()
+        ).performScrollTo().performClick()
         composeRule.waitForIdle()
         assertEquals("Warm zine's [0], not its accent", ColorRgba(0xB0, 0x50, 0x3F), textOf(store, id).style.color)
     }
@@ -1023,7 +1027,7 @@ class BenchC6Test {
         assertEquals(3, count(BenchInkPresetTestTag))
         composeRule.onNodeWithContentDescription(
             Copy.BenchInk.presetLabel(Copy.BenchInk.PRESET_COOL, Copy.BenchInk.FOREST),
-        ).assertIsDisplayed()
+        ).performScrollTo().assertIsDisplayed()
     }
 
     /** A16 — the current ink is visible, named, and updates through the same document-backed selection. */
@@ -1047,7 +1051,8 @@ class BenchC6Test {
         openInk(store)
         assertEquals(Copy.BenchInk.PRESETS, "Starting palettes")
         listOf(Copy.BenchInk.INK, Copy.BenchInk.BRICK, Copy.BenchInk.FOREST).forEach { ink ->
-            composeRule.onNodeWithText(Copy.BenchInk.apply(ink), useUnmergedTree = true).assertIsDisplayed()
+            composeRule.onNodeWithText(Copy.BenchInk.apply(ink), useUnmergedTree = true)
+                .performScrollTo().assertIsDisplayed()
         }
     }
 

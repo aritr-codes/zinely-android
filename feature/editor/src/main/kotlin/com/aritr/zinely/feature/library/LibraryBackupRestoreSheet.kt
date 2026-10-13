@@ -8,13 +8,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,7 +25,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.liveRegion
@@ -176,9 +175,8 @@ internal fun KeepSafeSheet(
         onHidden = onHidden,
         title = if (canBackup) Copy.LibraryBackup.TITLE else Copy.LibraryBackup.EMPTY_TITLE,
         sub = if (canBackup) Copy.LibraryBackup.SHEET_BODY else Copy.LibraryBackup.EMPTY_BODY,
-        modifier = Modifier
-            .testTag(KeepSafeSheetTestTag)
-            .verticalScroll(rememberScrollState()),
+        modifier = Modifier.testTag(KeepSafeSheetTestTag),
+        scrollBody = true,
     ) {
         // The last-backup fact sits after the body, before the action it explains; an empty shelf doesn't
         // show it (amendment 1a item 1). No note follows it on either shelf (backup-sheet polish: removed, not
@@ -328,11 +326,11 @@ private fun RunningSheet(mode: LibraryBackupRestoreMode, cancellable: Boolean, o
         },
         modifier = Modifier
             .testTag(BackupRestoreRunningSheetTestTag)
-            .verticalScroll(rememberScrollState())
             .semantics {
                 progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
                 stateDescription = Copy.LibraryBackup.RUNNING_STATE_DESCRIPTION
             },
+        scrollBody = true,
     ) {
         Box(
             Modifier
@@ -392,7 +390,8 @@ private fun SuccessSheet(
         title = copy.title,
         // The frozen body / note / more paragraphs, drawn 8dp apart and read by TalkBack in order as one stop.
         sub = copy.paragraphs.joinToString(ZSheetParagraphBreak),
-        modifier = Modifier.testTag(BackupRestoreSuccessSheetTestTag).verticalScroll(rememberScrollState()),
+        modifier = Modifier.testTag(BackupRestoreSuccessSheetTestTag),
+        scrollBody = true,
     ) {
         Mark("✓", colors.paper, colors.leaf, colors.onLeaf)
         ZPrimaryButton(
@@ -408,6 +407,7 @@ private fun SuccessSheet(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ErrorSheet(
     state: LibraryBackupRestoreUiState.Failed,
@@ -453,38 +453,27 @@ private fun ErrorSheet(
         isBackup -> Copy.LibraryBackup.TRY_AGAIN
         else -> Copy.LibraryBackup.TRY_ANOTHER_BACKUP
     }
-    val stackActions = LocalDensity.current.fontScale >= 1.5f
-
     ZSheet(
         visible = true,
         onDismiss = onDismiss,
         onShown = retryFocus::requestFocus,
         title = title,
         sub = body,
-        modifier = Modifier
-            .testTag(BackupRestoreErrorSheetTestTag)
-            .verticalScroll(rememberScrollState()),
+        modifier = Modifier.testTag(BackupRestoreErrorSheetTestTag),
+        scrollBody = true,
     ) {
         val colors = ZinelyTheme.v21Colors
         Mark("!", colors.paper, colors.jam, colors.onLeaf)
-        val actionsModifier = Modifier
-            .align(Alignment.CenterHorizontally)
-            .padding(top = ZinelyV21Dimens.gapLg)
-        if (stackActions) {
-            Column(
-                modifier = actionsModifier,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
-            ) {
-                ErrorActions(retry, retryFocus, onRetry, onDismiss)
-            }
-        } else {
-            Row(
-                modifier = actionsModifier,
-                horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
-            ) {
-                ErrorActions(retry, retryFocus, onRetry, onDismiss)
-            }
+        // The two sit side by side while both fit whole, and stack when they do not. A fixed text-size
+        // threshold got that wrong between 1.3x and 1.5x on a 360dp phone, where "Got it" broke in two.
+        FlowRow(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(top = ZinelyV21Dimens.gapLg),
+            horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
+        ) {
+            ErrorActions(retry, retryFocus, onRetry, onDismiss)
         }
     }
 }

@@ -7303,7 +7303,7 @@ tester's phone the text tray came out about 24dp taller than that canvas. Scroll
 
 No one phone size is the cause: a tray one row too tall does this on any screen. The tray is also the same
 height as the canvas there, so it covers the whole page while the maker picks an ink for it. That second
-problem is **not** fixed here.
+problem is **not** fixed here; it was fixed the same day under [ADR-128](../DECISIONS.md#adr-128) (see [D-113](#d-113), item 3).
 
 **Compose fix.** The title row is pinned; everything below it scrolls. A tray that fits is unchanged, which
 is why no golden moved. `BenchInkPopoverScrollTest` fences it: the title's bounds do not change when the
@@ -7339,50 +7339,115 @@ whole page on a common phone needs its own look.
 
 ---
 
-### D-113 — panels and the page compete for the same canvas; what the 2026-10-13 audit left open {#d-113}
+### D-113 — panels and the page compete for the same canvas; what the 2026-10-13 audit found {#d-113}
 
 | | |
 |---|---|
-| **Artifacts** | `feature/editor/.../EditorScreen.kt` · `TypeBar.kt` · `ReframeControls.kt` · `feature/library/` · `ProofScreen.kt` · `ProofFold.kt` |
+| **Artifacts** | `feature/editor/.../EditorScreen.kt` · `BenchEditingSurface.kt` · `BenchStatusStrip.kt` · `core/ui/.../ZSheet.kt` · `feature/library/` · `ProofScreen.kt` · `ProofFold.kt` · `ProofSheet.kt` · `AndroidManifest.xml` |
 | **Found** | 2026-10-13, three read-only audit agents after D-112, then a pass on a Samsung SM-A176B (384 × 832dp, text size 1.0) |
-| **Severity** | Mixed. Two confirmed UX defects; the rest are candidates from code reading |
-| **Status** | ☐ **Open — design decisions first, then code** |
+| **Severity** | Mixed. Two confirmed UX defects; the rest were candidates from code reading |
+| **Status** | ◐ **Fixed in code 2026-10-13, not accepted.** Decided under the owner's standing instruction to decide and record; the decisions are [ADR-127](../DECISIONS.md#adr-127) and [ADR-128](../DECISIONS.md#adr-128), both Proposed. What was and was not checked on a device is in the last table |
 
-**Confirmed on the phone, not fixed.**
+**How to read this entry.** The first table is every item the audit raised and what happened to it. The
+second is where the Compose build now differs from a frozen HTML file. The third is what is still owed.
 
-1. **The Text panel covers the words it styles.** Select text, tap Text: the panel hides the text box
-   completely, so size, alignment and bold are changed blind. The Ink tray does the same to the whole page
-   (D-112). The page already slides clear of the typing row and the Ink tray by up to 96dp; the Text panel
-   feeds nothing into that.
-2. **The page resizes on select.** The accessible bar under the Bench takes two rows from the canvas when
-   something is selected, so the page shrinks and grows back on deselect (a text box measured 671px wide
-   unselected, 524px selected).
+#### Every item, and its outcome
 
-**Fixed in the same pass, recorded in the changelog:** the delete Undo bar lost its Undo to a long zine
-name, and sat on top of Make a zine.
-
-**Candidates — read from code, sizes added up, not seen on a device.** Ordinary text size unless noted.
-
-| Surface | What would happen | When |
+| # | Item | Outcome |
 |---|---|---|
-| Reframe, opened by double-tapping a photo | The controls take 168dp more than the bar they replace and the page is not refitted, so its bottom is cut | Every phone |
-| Flip tray open | "Flipped · Undo" is drawn behind the tray | Every phone |
-| Photo verb bar | Seven verbs need about 380dp; Delete is clipped with no scroll hint | 360dp-wide phones |
-| "Saved" chip in the status strip | The strip grows about 25dp for two seconds and the page rescales | Every phone |
-| Empty shelf · shelf error | Last lines, or Try again, cut off; no scroll | 360 × 640, or large text |
-| Zine action sheet | Delete row cut off; no scroll | 360 × 640 at 1.75× text |
-| Backups sheets | Title scrolls away; the sheet's top goes under the status bar | 1.5× text |
-| Move-to-folder sheet | Zine name scrolls off; New folder below the fold | Four or more folders on 360 × 640 |
-| Preview | The zine shrinks when Save PDF succeeds; thumbnail-sized in landscape | 360 × 640, landscape |
-| Fold guide | The step's instruction sentence is below the visible area | 360 × 640 |
-| Preview buttons · print legend · page ticket | Labels cut or mangled | 1.4× text and up |
+| 1 | **The Text panel covered the words it styles.** | **Fixed** ([ADR-128](../DECISIONS.md#adr-128)). The panel stops short of the canvas top and the page lifts so the selected text sits above it. Seen on the phone |
+| 2 | **The page resizes on select** (a text box measured 671px wide unselected, 524px selected). | **Not changed, by design.** The cause is the two-row accessible bar the owner approved as A14 ([D-078](#d-078)): it takes its rows from the canvas only while something is selected. Removing the resize means either reserving those rows always (a smaller page at rest) or floating the bar over the page (it would cover the bottom of the page). Neither is better than the resize. Left for the owner to overrule |
+| 3 | **The Ink tray covered the whole page** (recorded under [D-112](#d-112)). | **Fixed**, same rule as item 1. The tray is shorter, so its Neutrals and Starting palettes begin below its fold and are reached by scrolling it. Seen on the phone |
+| 4 | Reframe: the controls are taller than the bar they replace and the page is not refitted, so its bottom is cut. | **Fixed.** The page lifts by what the shorter canvas cuts off the photo being framed, and no further than the photo's own top. A photo taller than the room left keeps its top and loses its bottom. Robolectric only; not seen on a phone (it needs a photo on the device) |
+| 5 | Flip tray open: "Flipped · Undo" was drawn behind the tray. | **Fixed.** The snack sits above the tray. Seen on the phone. One cost, accepted: for its five seconds the snack can cover the lower half of the piece just flipped, when the piece sits right above the tray |
+| 6 | Photo verb bar: seven verbs need about 380dp; Delete is clipped on a 360dp phone. | **Not a defect as described, not changed.** The bar already scrolls sideways, so Delete is reachable. It gives no sign that it scrolls; that is the remaining gap |
+| 7 | "Saved" chip: the status strip grew about 25dp for two seconds and the page moved. | **Fixed.** The chip is always laid out and only its opacity changes, as in the frozen `.saved`, so the strip keeps one height. The cost is 25dp of canvas at all times. Hidden, the chip is marked hidden from accessibility and carries no description. Seen on the phone |
+| 8 | Empty shelf and shelf error: last lines, or Try again, cut off with no scroll. | **Fixed.** Both scroll, and both clear the dock as measured rather than by the frozen 206dp / 150dp (the dock is taller than 206dp at 2× text). Robolectric at 360 × 640, 2× text |
+| 9 | Zine action sheet: Delete row cut off, no scroll. | **Fixed.** The rows scroll under a title that stays put; the sheet is at most 88% of the screen; the title is capped at three lines so a very long zine name cannot take the whole sheet. Robolectric |
+| 10 | Backups sheets: title scrolls away; top goes under the status bar. | **Fixed.** Title pinned, body scrolls, and no sheet now extends under the status bar. Robolectric |
+| 11 | Move-to-folder sheet: zine name scrolls off; New folder below the fold. | **Fixed**, as item 9. Robolectric |
+| 12 | Preview: the zine shrinks when Save PDF succeeds. | **Fixed.** The zine keeps at least 160dp; past that the screen scrolls, and a save scrolls its hand-off row into view. Robolectric |
+| 13 | Fold guide: the step's sentence was below the visible area on 360 × 640. | **Fixed, with a cost that needs the owner's eye.** The step column now opens scrolled to its end, so the sentence, the dots and the buttons are whole; the "Step n of 8" counter and the legend start above the fold, with no sign that the column scrolls. On the last step about 120dp is above the fold. Robolectric |
+| 14 | Preview buttons, print legend, page ticket: labels cut or mangled at large text. | **Fixed.** Labels wrap. Two known rough edges: a pair of buttons can be unequal in height when only one label wraps, and at 2× while Share reads "Preparing…" the Save label breaks mid-word. Robolectric |
+| 15 | Preview's error pane at large text. | **Not reproduced** (413dp tall with 568dp of room at 2×). Not changed; it would be cut only in a window under about 485dp |
+| 16 | No orientation lock; most no-scroll screens fail in landscape. | **Decided: portrait only** ([ADR-127](../DECISIONS.md#adr-127)). Tablets and split-screen are not covered |
+| 17 | The Library's short notices and the folder snack shared one slot and could overlap. | **Fixed.** A notice lowers the folder snack. The cost: a failure notice arriving inside the snack's four seconds takes its Undo with it |
+| 18 | Photo-across-two-pages sheet and the Add chooser had no scroll. | **Fixed.** Both scroll when their content outgrows the sheet. Not exercised at large text |
 
-The app has no orientation lock, and most no-scroll screens above would also fail in landscape.
+Fixed earlier in the same pass ([changelog](../../CHANGELOG.md)): the delete Undo bar lost its Undo to a
+long zine name, and sat on top of Make a zine.
 
-One more, introduced by the fix above and accepted for now: the Library's short notices and the folder
-snack now share the slot just above the dock, so the two overlap if both are up at once. The delete Undo
-bar cannot meet the folder snack (a sheet opens in between and lowers it).
+**Not looked at:** the save-failure banner and the move/resize hint at large text, and the empty-page
+invitation on a 360 × 640 phone. The audit named them in passing; nothing was measured.
 
-**What needs deciding before code.** How a panel shares the canvas with the thing it edits (items 1 and 2,
-Reframe, and the Ink tray's coverage are one question); whether landscape is supported or locked; and
-which of the candidates to confirm on a 360 × 640 emulator first.
+#### Where Compose now differs from a frozen file
+
+None of the frozen files was edited. Each line is a recorded parity deviation awaiting the owner: amend the
+freeze, or accept the difference.
+
+| Frozen file | The freeze | Compose now |
+|---|---|---|
+| `v21-bench.html` A16 | The Ink tray is `max-height:calc(100% - 24px)` | It stops 56–128dp short of the canvas top ([ADR-128](../DECISIONS.md#adr-128)) |
+| `v21-bench.html` `edit()` / F-5 | The page lifts at most 96dp | 96dp while typing; for the Ink tray, the Text panel and Reframe the ceiling is the element's own top |
+| `v21-bench.html` | The snack sits at the floor under the Flip tray | It sits above the tray |
+| `v21-library.html` `.sheet.a28`, zine sheet | The whole sheet scrolls; no height cap | Head pinned, rows scroll, 88% cap, title capped at three lines |
+| `backup-restore.html` `.phone.t200 .sheet` | The whole sheet scrolls | Title pinned, 88% cap, buttons wrap by fit |
+| Proof files | Reader fills what the band leaves; `.pcount` is `nowrap`; `.btn` is one line | 160dp floor then scroll; the ticket wraps to two lines; button labels wrap |
+| Fold drawer | Counter, legend, diagram, sentence, top to bottom from the top | Opens scrolled to its end when it does not fit |
+
+#### Still owed
+
+| What | Why it is owed |
+|---|---|
+| Owner rulings on [ADR-127](../DECISIONS.md#adr-127) and [ADR-128](../DECISIONS.md#adr-128), and on each row of the deviations table | Decided without the owner |
+| A look at item 2 (page resizes on select) | Left as designed; the owner may want it otherwise |
+| Device passes on a small phone or at large text | Items 8–15 and 18 were measured in Robolectric at 360 × 640 only. The owner's phone is 384 × 832 at text size 1.0 and its settings were not changed |
+| Reframe on a phone (item 4) | Needs a photo on the device |
+| TalkBack listen | The fold guide's reversed scroll, the pinned sheet heads, and the hidden Saved chip were not listened to |
+| First-time-user pass on the fold guide (item 13) | A key that starts above the fold with no scroll cue is a likely Pass 2 finding |
+
+#### Review
+
+Two independent Review Agents read the branch on 2026-10-13 (one the Bench half, one the Library and Proof
+half); neither ran Gradle or a device. Both returned **GO WITH FIXES**.
+
+- **Accepted and fixed:** this entry and the owner checklist contradicted the branch; the panel-sharing
+  decision was recorded nowhere (now ADR-128); the clearance tests read a clipped rectangle and could not
+  fail (they now measure the drawn box); the hidden Saved chip was not marked hidden from accessibility;
+  "can never carry the element out of view" was false while the ceiling was `max(96dp, top)` (the ceiling is
+  now the element's top); the peek band had no test; empty and failed shelves cleared a frozen constant, not
+  the dock (the empty shelf was 15dp under it at 2×); a pinned sheet head could starve its rows; ADR-127
+  omitted split-screen.
+- **Partly accepted:** *the test hosts were made 25dp taller to hide a failure.* The failing tests were
+  three in `EditorScreenTest` (300 × 400 host) and three in `BenchC3Test`. In the 300 × 400 host the canvas
+  left after the context bar's reserved band was under 25dp, so the chip's 25dp took the page scale to zero;
+  by arithmetic a 360 × 640 phone leaves it about 245dp (not measured on a device). The hosts were retuned so their canvas is what
+  it was. Dropping the reserved height during typing was tried and rejected: the strip then changes height as
+  the keyboard arrives, which moved the page by 25dp more and broke five tests that measure the lift exactly.
+  What stays true in the finding: typing on a small phone has 25dp less canvas than before.
+- **Recorded, not fixed:** unequal button heights and the mid-word break (item 14); the fold guide's hidden
+  key (item 13); the save hand-off scroll ignores reduce-motion and repeats after a restore; the Preview error
+  pane stays fixed-height (item 15); a notice can take the folder snack's Undo (item 17).
+
+#### Goldens
+
+The golden gate (`bash tools/grun.sh gold`) was run and every diff image read before any re-record.
+
+- **It caught a regression.** With no pages, Preview's top bar and band had moved about 60dp down the
+  screen (four `proof_*` goldens): the new layout reported a height under its minimum and was centred by its
+  parent. Fixed; those four pass unchanged.
+- **Seven Bench goldens moved as intended** (`editor_screen_*`, `bench_editing_state_light`,
+  `bench_page_grid_open_light`, three `voice_*`): the status strip is 25dp taller at rest, so the page
+  starts lower and is drawn slightly smaller.
+- **Thirteen Backups goldens moved as intended** (`backup_restore_*`): the sheet's soft shadow above its top
+  edge is now drawn; the old whole-sheet scroll clipped it.
+
+Those twenty were re-recorded on the pinned CI image (`record-goldens.yml`).
+
+CI's byte-for-byte check then named sixteen more that the local gate's threshold had let through, and each
+was looked at before it was re-recorded too:
+
+- **Nine more `voice_*` images** (the Book variants and the bold and italic fields): the same taller strip.
+- **Seven with changes of a pixel or less:** two `proof_scaffold_*` and two `voice_read_*` (a centred label
+  and the page ticket sit a fraction of a pixel differently) and three `v21_folders_name_*` (a sliver of the
+  sheet's bottom shadow). Nothing a person could see at normal size.

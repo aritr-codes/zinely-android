@@ -101,8 +101,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in the home-page About section. Accessibility remains a site-wide implementation requirement rather than a
   primary navigation destination.
 
+### Known limitations
+
+- **Selecting something still makes the page a little smaller**, and it grows back when nothing is selected.
+  The row of move and resize buttons needs the room.
+- **In the fold guide on a small phone, the step counter and the key start above the top edge**; scroll down
+  to see them. Nothing shows that the guide scrolls.
+- **With very large text, two buttons side by side in Preview can be different heights**, and a label can
+  break in the middle of a word.
+- **The photo button row scrolls sideways on narrow phones** with nothing to show it; Delete is at the end.
+
 ### Fixed
 
+- **Changing a text's look no longer hides the text.** The Text panel and the Ink panel now stop short of
+  the top of the page, and the page slides up so the words or the piece you are changing stay in view above
+  them. Before, the Text panel covered the text box and the Ink panel covered the whole page
+  ([ADR-128](docs/DECISIONS.md#adr-128)).
+- The page no longer jumps down and back each time **Saved** appears.
+- Adjusting a photo that sits low on the page no longer cuts its bottom off.
+- After flipping a piece, the "Flipped" message and its **Undo** show above the Flip panel instead of behind it.
+- The app now stays upright when a phone is turned on its side. No screen was designed for landscape, and
+  turned sideways most of them lost their lower half ([ADR-127](docs/DECISIONS.md#adr-127)). Tablets and
+  split-screen are not covered.
+- On small phones or with large text, these no longer cut off what did not fit; they scroll or wrap instead:
+  the empty Shelf and the "could not open" Shelf, the zine menu, Move to folder, the Backups sheets, the
+  Preview buttons and its page counter, the print legend, the fold guide's instruction, the Add menu and
+  the photo-across-two-pages sheet. Sheets keep their title in place and no longer run under the status
+  bar. These were checked in tests at 360 x 640, not on a small phone
+  ([D-113](docs/design/V2-SPEC-DEFECTS.md#d-113)).
 - After deleting a zine with a long name, **Undo** keeps its full size; the name wraps instead. Before, Undo
   could be squeezed to a sliver at the edge of the bar.
 - The delete Undo bar and the Library's short notices now sit above **Make a zine** instead of on top of it,

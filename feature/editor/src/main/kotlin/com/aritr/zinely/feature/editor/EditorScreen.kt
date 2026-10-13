@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ButtonDefaults
@@ -54,6 +55,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -743,6 +745,8 @@ public fun EditorScreen(
         !flipTrayVisible &&
         spreadPhotoId == null
     var contextBarHeight by remember { mutableStateOf(BenchContextBarReservedHeightDp) }
+    // D-113: the Flip tray's own footprint, so its snack can stand above it. Zero while the tray is away.
+    var flipTrayHeightPx by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(ctxElement?.id) {
         if (ctxElement?.id != flipTrayFor) flipTrayFor = null
@@ -1082,6 +1086,10 @@ public fun EditorScreen(
     // occlusion was paid for. A second edge rather than one shared variable, because the two panels report
     // independently and a single slot would be written by whichever laid out last — including the hidden one.
     var inkPopoverDockedTopPx by remember { mutableFloatStateOf(Float.NaN) }
+    // D-113: and a third. The Text panel docks over the page too and paid nothing — on a phone it hid the
+    // text it was styling completely. Stale while hidden, like the other two, so its reader gates on the
+    // panel's own open flag.
+    var typeBarDockedTopPx by remember { mutableFloatStateOf(Float.NaN) }
     var canvasTopPx by remember { mutableFloatStateOf(Float.NaN) }
 
     // The frozen `.kbstack` is anchored to the PHONE (`left/right/bottom:0; z-index:35`, `:259`) — not to
@@ -1212,6 +1220,9 @@ public fun EditorScreen(
             // Fit the whole page into the measured canvas (contain), top-left anchored (pan stays zero for
             // the MVP host; true centring/zoom is a follow-up). The scale is the single px-per-point source.
             val widthPx = constraints.maxWidth.toFloat()
+            // Named here because the scopes below are `@LayoutScopeMarker`ed and cannot read it implicitly.
+            val canvasHeight: Dp = maxHeight
+            val canvasHeightPx = constraints.maxHeight.toFloat()
             // **The canvas is not as tall as it measures.** `BenchContextBar` floats over the sheet at this
             // Box's bottom edge, so the height the page may actually occupy is the measured height less the
             // band that bar sits in — see [BenchContextBarReservedHeightDp] for why that band is reserved
@@ -1344,13 +1355,33 @@ public fun EditorScreen(
                 // (`EditorA11y.kt`) — neither goes through the bar. The row is the correct occluder there:
                 // it docks below the popover and the typed line is what must clear. Pre-existing to F-5
                 // (C6 could produce it too), and flagged for a device look rather than ruled on here.
-                val occludingPanelTopPx = if (editing) styleRowDockedTopPx else inkPopoverDockedTopPx
+                val typeBarVisible = styleTarget != null && typeBarOpen && reframing == null
+                // D-113: Reframe has no panel over the page, but its controls are taller than the bar they
+                // replace, so the canvas loses height while the viewport stays frozen (a session is not
+                // Idle) and the page bottom is clipped — with it, possibly, the photo being framed. The
+                // canvas's own bottom edge is the occluder there, and the photo is what must clear it.
+                val reframeTarget = reframing?.before
+                val occludingPanelTopPx = when {
+                    editing -> styleRowDockedTopPx
+                    reframeTarget != null -> canvasTopPx + canvasHeightPx
+                    inkPopoverVisible -> inkPopoverDockedTopPx
+                    else -> typeBarDockedTopPx
+                }
                 // The element the panel is about: the one under the session, or — with the popover up —
                 // the selected text it is recolouring. This is the SAME `inkTarget` the popover's own call
                 // site reads, hoisted beside `ctxElement`; one binding, so they cannot name different
                 // elements and the clearance cannot be computed for an element the popover is not about.
                 val occludedElement = editingElement
+                    ?: reframeTarget
                     ?: inkTarget.takeIf { inkPopoverVisible }
+                    ?: styleTarget.takeIf { typeBarVisible }
+                // D-113: the two tall panels stop short of the canvas top by the band their element needs
+                // ([benchPanelPeekDp]); the lift below then brings the element up into that band. Without
+                // the cap there is no band to lift into: on a phone the Ink tray was as tall as the canvas.
+                val panelMaxHeight: Dp = (inkTarget ?: styleTarget)?.let { target ->
+                    val elementHeightDp = with(density) { (target.transform.heightPt * paperScale).toFloat().toDp() }
+                    canvasHeight - benchPanelPeekDp(canvasHeight.value, elementHeightDp.value).dp
+                }?.coerceAtLeast(0.dp) ?: canvasHeight
                 val panTargetDp: Dp = if (occludedElement == null) {
                     0.dp
                 } else {
@@ -1364,10 +1395,23 @@ public fun EditorScreen(
                         val bottomPx =
                             ((edited.transform.yPt + edited.transform.heightPt + paperOffset.y) * paperScale)
                                 .toFloat()
+                        // D-113: 96dp is the ceiling for the typing row, whose occluder is a thin row over a
+                        // keyboard. The Ink tray and the Text panel are several times taller than 96dp, so
+                        // under that ceiling the element stayed behind them. For those two, and for
+                        // Reframe, the ceiling is the element's own top instead: the lift stops when the
+                        // element reaches the canvas top, so it cannot carry it out of view the way D-043
+                        // did. An element taller than the room left keeps its top and loses its bottom.
+                        val topPx = ((edited.transform.yPt + paperOffset.y) * paperScale).toFloat()
                         with(density) {
                             -benchEditPanMagnitudeDp(
-                                maxPanDp = -BenchEditPanDp.value,
-                                slackAboveDp = paperY.value,
+                                maxPanDp = if (editing) {
+                                    -BenchEditPanDp.value
+                                } else {
+                                    topPx.toDp().value.coerceAtLeast(0f)
+                                },
+                                // A photo already inside the shrunken canvas stays where it is: Reframe
+                                // lifts by the cut alone, never by the free slack.
+                                slackAboveDp = if (reframeTarget != null) 0f else paperY.value,
                                 elementBottomDp = bottomPx.toDp().value,
                                 occluderTopDp = occluderTopCanvasPx.toDp().value,
                             ).dp
@@ -1872,7 +1916,7 @@ public fun EditorScreen(
                     },
                     onDone = closeFlipTray,
                     firstFocusRequester = flipFirstFocus,
-                    modifier = ctxModifier.zIndex(1f),
+                    modifier = ctxModifier.zIndex(1f).onSizeChanged { flipTrayHeightPx = it.height },
                 )
 
                 // C6 rows 6.1-6.14: the frozen `.inkpop` (`v2-bench.html:377-390`, markup `:506`).
@@ -1918,7 +1962,7 @@ public fun EditorScreen(
                     // covered the `.inkuse` note; measured on device. Raising the popover rather than
                     // reordering the composition keeps the snack above the verb bar, which is the other
                     // half of the frozen order.
-                    modifier = ctxModifier.zIndex(1f),
+                    modifier = ctxModifier.zIndex(1f).heightIn(max = panelMaxHeight),
                 )
                 }
 
@@ -1951,12 +1995,17 @@ public fun EditorScreen(
                             onPreview = { styleOverride = it },
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
+                                // D-113: leave the styled text its band, and report where the card docks so
+                                // the page can lift the text into it. After the padding below in the chain
+                                // would be wrong for the cap and right for the edge, so the cap comes first.
+                                .heightIn(max = panelMaxHeight)
                                 // bench `.typebar{max-width:calc(100% - 24px)}` — the frozen cap, which the
                                 // first port dropped. On a centred max-content card a symmetric 12dp padding
                                 // IS that cap: it lowers the incoming max constraint, which is what the card's
                                 // `width(IntrinsicSize.Max)` clamps against. Without it the bar has no floor
                                 // under it on a narrow screen or a large font scale.
-                                .padding(start = 12.dp, end = 12.dp, bottom = 8.dp),
+                                .padding(start = 12.dp, end = 12.dp, bottom = 8.dp)
+                                .onGloballyPositioned { typeBarDockedTopPx = it.positionInWindow().y },
                         )
                     }
                 }
@@ -1993,10 +2042,13 @@ public fun EditorScreen(
                     // D-089 / frozen Bench A8: placement raises both surfaces. Keep Undo and the newly
                     // selected element's verbs reachable by stacking the snack one complete bar footprint
                     // above the shared floor; its own 12dp inset becomes the required clear gap.
-                    bottomClearance = if (ctxVisible) {
-                        contextBarHeight + BenchSnackStackRotationAllowance
-                    } else {
-                        0.dp
+                    // D-113: the Flip tray gets the same courtesy. It is drawn above the snack, so a snack
+                    // left at the floor was hidden by the tray whose toggle raised it, Undo and all. The
+                    // Ink tray is not given it: the frozen order puts that tray over its buttonless snack.
+                    bottomClearance = when {
+                        flipTrayVisible -> with(LocalDensity.current) { flipTrayHeightPx.toDp() }
+                        ctxVisible -> contextBarHeight + BenchSnackStackRotationAllowance
+                        else -> 0.dp
                     },
                     step = snackStep,
                     // An undo or redo line was already spoken through the drain; every other snack speaks

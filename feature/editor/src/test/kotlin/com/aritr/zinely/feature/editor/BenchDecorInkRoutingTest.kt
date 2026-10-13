@@ -144,6 +144,21 @@ class BenchDecorInkRoutingTest {
     }
 
     @Test
+    fun the_flip_snack_and_its_undo_sit_above_the_open_flip_tray() {
+        // D-113: the tray is drawn above the snack, and the snack sat inside the tray's footprint — so
+        // "Flipped left-right · Undo" was never seen while the tray that caused it stayed open.
+        render()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.FLIP}").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FlipLeftRightTestTag).performClick()
+        composeRule.waitForIdle()
+
+        val snack = composeRule.onNodeWithTag(BenchSnackTestTag).fetchSemanticsNode().boundsInRoot
+        val tray = composeRule.onNodeWithTag(FlipTrayTestTag).fetchSemanticsNode().boundsInRoot
+        org.junit.Assert.assertTrue("snack $snack must end above the tray $tray", snack.bottom <= tray.top)
+    }
+
+    @Test
     fun a_selected_supply_keeps_the_frozen_verb_bar_and_never_opens_an_empty_popover() {
         render()
         // The bar is the thing the defect made disappear — `ctxVisible` carries `!inkPopoverVisible`.

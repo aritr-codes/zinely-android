@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.model.PaperSize
@@ -205,6 +206,10 @@ class ProofActPaintTest {
                 onNext = {}, onPrev = {}, onGoToStep = {},
             )
         }
+        // This class runs in Robolectric's default 470dp-tall window, whatever `PHONE` says, and the
+        // step column is anchored at its bottom there — so the legend starts above the fold.
+        composeRule.onNodeWithTag(ProofFoldLegendTestTag, useUnmergedTree = true).performScrollTo()
+        composeRule.waitForIdle()
         crop(ProofFoldLegendTestTag).run {
             assertPaints("room-coloured legend labels", Color(0xFFDAD7A0), 20)
             assertPaints("lit crease swatch", Color(0xFF6A452F), 5)

@@ -271,7 +271,14 @@ private fun FoldGuide(
                 // resolves it against the main-axis *minimum* and the whole step body collapses to zero.
                 // [ProofScreen]'s drawer supplies the bound via `drawerBodyMaxHeight()`.
                 .weight(1f, fill = false)
-                .verticalScroll(rememberScrollState()),
+                // **Anchored at the bottom, so what overflows is the top.** The sentence is the last
+                // thing in this column and it is the drawer's whole answer; on a 360x640 phone the
+                // column is ~60dp taller than its room (~120dp on the last step), and anchored at the top
+                // that put the sentence below the fold with nothing to say it was there. Pinning the
+                // sentence beside the controls instead was tried and measured: at font scale 2 it took
+                // the dots' row to zero height. This way the controls keep their guarantee, and what
+                // waits above the fold is the step counter and the legend.
+                .verticalScroll(rememberScrollState(), reverseScrolling = true),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {

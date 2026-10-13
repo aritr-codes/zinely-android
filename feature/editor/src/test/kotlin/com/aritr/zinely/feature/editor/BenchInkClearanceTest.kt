@@ -3,6 +3,10 @@ package com.aritr.zinely.feature.editor
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -52,7 +56,7 @@ import org.robolectric.annotation.Config
  * its first form, which asserted `panned < rest`: the *slack* term alone satisfies that, so a docked edge
  * reported at the canvas bottom — the exact degenerate value the popover's KDoc warns about — passed it
  * while observing nothing. What earns the sentence is the pair of guards plus `lift > slack`, and the box
- * depth chosen so the 96dp ceiling does not bind. Both were verified by mutation: reporting the edge 1000px
+ * depth chosen so the ceiling does not bind. Both were verified by mutation: reporting the edge 1000px
  * low, and un-wiring the popover term, each turn this file red.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -73,8 +77,8 @@ class BenchInkClearanceTest {
      *
      * [needsClearance] sits with its bottom at 35pt of a 100pt page — far enough down to fall below the
      * docked card (so the clearance term is non-zero) and no further, because a box at the page *bottom*
-     * drives `slack + clearance` past the 96dp ceiling and the assertion would then be measuring the clamp
-     * instead of the measurement. [topOfPage] is the opposite branch: nowhere near the card, clearance 0.
+     * drives `slack + clearance` past the ceiling (the box's own top, since D-113) and the assertion would
+     * then be measuring the clamp instead of the measurement. [topOfPage] is the opposite branch: nowhere near the card, clearance 0.
 
      *
      * ⚠ Both depths are load-bearing and neither is arbitrary. [topOfPage]'s bottom sat at 20pt until F-2
@@ -147,7 +151,6 @@ class BenchInkClearanceTest {
         openInk()
         val lift = rest - paperTop()
 
-        // A16's taller, scrollable tray legitimately reaches the 96dp safety ceiling for this low target.
         // The useful invariant is that the measured panel contributes clearance beyond the sheet slack.
         assertTrue("this host must HAVE slack or the assertion is not about clearance (slack $slack)", slack > 1f)
         assertTrue(
@@ -157,23 +160,66 @@ class BenchInkClearanceTest {
     }
 
     @Test
-    fun a_page_top_element_uses_measured_clearance_without_hitting_the_ceiling() {
-        // A16's taller tray begins close enough to the sheet top that even this 7pt-high box needs some
-        // clearance. It must still remain below the 96dp clamp used by a low-page target: otherwise the
-        // implementation has fallen back to the old unconditional maximum pan.
-        placedText(topOfPage)
+    fun the_peek_band_follows_the_element_between_its_floor_and_its_ceiling() {
+        assertEquals("a small element gets the floor", BenchPanelPeekMinDp, benchPanelPeekDp(600f, 10f), 0f)
+        assertEquals("a tall one stops at the ceiling", BenchPanelPeekMaxDp, benchPanelPeekDp(600f, 400f), 0f)
+        assertEquals("in between: the element plus 24", 84f, benchPanelPeekDp(600f, 60f), 0f)
+        assertEquals("a short canvas lowers the ceiling to 30%", 90f, benchPanelPeekDp(300f, 400f), 0f)
+        assertEquals("but never under the floor", BenchPanelPeekMinDp, benchPanelPeekDp(100f, 400f), 0f)
+    }
+
+    @Test
+    fun a_page_top_element_is_already_clear_and_costs_only_the_slack() {
+        // Until D-113 the tray was as tall as the canvas and covered even a box at the very top of the
+        // page, so this test asserted a clearance term here. The tray now stops short of the canvas top,
+        // a top-of-page box is clear of it at rest, and the lift is the free slack alone.
+        val store = placedText(topOfPage)
         val rest = paperTop()
         val slack = rest - composeRule.onNodeWithTag(EditorCanvasTestTag).fetchSemanticsNode().boundsInRoot.top
 
         openInk()
 
-        // Guard before the assertion: on a host silently shrunk to its window the slack is 0 and the whole
-        // thing degrades to `assertEquals(0f, 0f)`, which is the green nothing this suite exists to catch.
         assertTrue("this host must HAVE slack or the assertion proves nothing (slack $slack)", slack > 1f)
-        val lift = rest - paperTop()
-        val ceiling = with(composeRule.density) { 96.dp.toPx() }
-        assertTrue("the measured tray must add clearance beyond slack (slack $slack, lift $lift)", lift > slack + 1f)
-        assertTrue("a top-page target must not hit the 96dp clamp (lift $lift)", lift < ceiling - 1f)
+        assertEquals("a box the tray does not cover is lifted by the slack alone", slack, rest - paperTop(), 1f)
+        assertInViewAbove(BenchInkPopoverTestTag, topOfPage, store)
+    }
+
+    // ── D-113: a docked panel leaves the thing it edits in view ──────────────────────────────────
+
+    private val midPage = Transform(20.0, 55.0, 60.0, 10.0)
+
+    private fun bounds(tag: String): Rect = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
+
+    /**
+     * The box as the page draws it: the lifted paper's own top plus the box's page offset. Not the
+     * element's semantics node, which is clipped to the canvas in `boundsInRoot` and padded out to a
+     * 48dp touch target in `positionInRoot`, so neither is the rectangle a maker sees.
+     */
+    private fun assertInViewAbove(panelTag: String, box: Transform, store: EditorStore) {
+        val scale = store.uiState.value.view.screenPxPerPt
+        val top = paperTop() + (box.yPt * scale).toFloat()
+        val bottom = top + (box.heightPt * scale).toFloat()
+        val canvas = bounds(EditorCanvasTestTag)
+        val panel = bounds(panelTag)
+        assertTrue("the text box must sit above the panel (bottom $bottom, panel $panel)", bottom <= panel.top + 1f)
+        assertTrue("and inside the canvas (top $top, canvas $canvas)", top >= canvas.top - 1f)
+    }
+
+    @Test
+    fun the_ink_tray_leaves_the_text_it_colours_in_view() {
+        // A phone showed the tray as tall as the canvas: a maker picked an ink for words they could not see.
+        val store = placedText(midPage)
+        openInk()
+        assertInViewAbove(BenchInkPopoverTestTag, midPage, store)
+    }
+
+    @Test
+    fun the_text_panel_leaves_the_text_it_styles_in_view() {
+        // Seen on a phone: the panel hid the text box completely, so size and alignment were changed blind.
+        val store = placedText(midPage)
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").performClick()
+        composeRule.waitForIdle()
+        assertInViewAbove(TypeBarTestTag, midPage, store)
     }
 
     @Test

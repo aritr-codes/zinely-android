@@ -111,6 +111,7 @@ internal data class ZineDockSecondaryAction(
  * @param modifier the caller's. `.dock` is `position:absolute;bottom:0` **inside `.phone`** — the app
  *   window — so this composable does not place itself.
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 internal fun ZineDock(
     onStart: () -> Unit,
@@ -141,9 +142,11 @@ internal fun ZineDock(
         ) {
             StartButton(onStart)
             if (secondaryActions.isNotEmpty()) {
-                androidx.compose.foundation.layout.Row(
-                    horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapLg),
-                    verticalAlignment = Alignment.CenterVertically,
+                // Wraps: at the largest text on a 360dp phone the second action was left a sliver of the
+                // row and broke mid-word.
+                androidx.compose.foundation.layout.FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapLg, Alignment.CenterHorizontally),
+                    itemVerticalAlignment = Alignment.CenterVertically,
                 ) {
                     secondaryActions.forEach { QuietAction(it) }
                 }

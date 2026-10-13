@@ -195,7 +195,7 @@ internal fun BenchAddChooser(
     onAddPhoto: () -> Unit,
     onAddArt: () -> Unit,
 ) {
-    ZSheet(visible = visible, onDismiss = onDismiss, title = BenchAddChooserTitle) {
+    ZSheet(visible = visible, onDismiss = onDismiss, title = BenchAddChooserTitle, scrollBody = true) {
         BenchAddChooserBody(
             onAddText = { onDismiss(); onAddText() },
             onAddPhoto = { onDismiss(); onAddPhoto() },

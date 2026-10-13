@@ -112,6 +112,32 @@ class ReframeSessionTest {
         }
     }
 
+    /**
+     * D-113: the Reframe controls are taller than the bar they replace and the viewport is frozen for the
+     * session, so a photo low on the page had its bottom cut by the canvas edge. The page now lifts by
+     * exactly the cut.
+     */
+    @Test
+    fun a_photo_low_on_the_page_is_lifted_whole_into_the_shorter_reframe_canvas() {
+        val s = store()
+        s.dispatch(Intent.CommitAddImage(ImageElement(id = "low", transform = Transform(50.0, 210.0, 100.0, 80.0), assetId = "a")))
+        render(s)
+        s.dispatch(Intent.DoubleTapAt(PtPoint(100.0, 250.0)))
+        composeRule.awaitReframeControls()
+        composeRule.mainClock.advanceTimeBy(1_000L)
+        composeRule.waitForIdle()
+
+        val view = s.uiState.value.view
+        val canvas = composeRule.onNodeWithTag(EditorCanvasTestTag).fetchSemanticsNode().boundsInRoot
+        // The overlay fills the lifted layer, so its unclipped top is the canvas top plus the lift.
+        val layerTop = composeRule.onNodeWithTag(ReframeOverlayTestTag).fetchSemanticsNode().positionInRoot.y
+        val photoBottom = layerTop + ((210.0 + 80.0 + view.pageOffset.y) * view.screenPxPerPt).toFloat()
+        val photoTop = layerTop + ((210.0 + view.pageOffset.y) * view.screenPxPerPt).toFloat()
+        assertTrue("not vacuous: the page had to lift ($layerTop vs ${canvas.top})", layerTop < canvas.top - 1f)
+        assertTrue("photo bottom $photoBottom is inside the canvas ${canvas.bottom}", photoBottom <= canvas.bottom + 1f)
+        assertTrue("photo top $photoTop is inside the canvas ${canvas.top}", photoTop >= canvas.top - 1f)
+    }
+
     @Test
     fun double_tap_on_a_photo_enters_reframe_mode() {
         val s = store()

@@ -100,6 +100,7 @@ internal fun ImageSpreadSheet(
         onDismiss = onDismiss,
         title = Copy.Spread.title(leftPageNumber, rightPageNumber),
         modifier = Modifier.testTag(ImageSpreadSheetTestTag),
+        scrollBody = true,
     ) {
         Text(
             text = Copy.Spread.KEEPS_CONTENT,
