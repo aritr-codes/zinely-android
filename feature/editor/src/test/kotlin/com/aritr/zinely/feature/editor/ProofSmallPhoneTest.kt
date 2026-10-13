@@ -276,6 +276,19 @@ class ProofSmallPhoneTest {
     @Config(fontScale = 2f)
     fun `the band's buttons show their whole labels at font scale 2`() = assertBandLabelsWhole()
 
+    /**
+     * The tight case: Share is not weighted, so its longer busy label is measured first and Save PDF
+     * gets what is left.
+     */
+    @Test
+    @Config(fontScale = 2f)
+    fun `the band's buttons show their whole labels while a share is being prepared at font scale 2`() {
+        setProof(busyTarget = ProofExportTarget.SEND)
+
+        assertLabelWhole(Copy.Proof.PREPARING_SHARE)
+        assertLabelWhole(Copy.Proof.SAVE_PDF)
+    }
+
     // ---- P4: the honesty legend wraps --------------------------------------------------------------
 
     /**

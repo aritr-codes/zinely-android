@@ -1304,10 +1304,13 @@ private fun ProofBandButton(
         if (icon != null) Box(Modifier.size(18.dp)) { icon(content) }
         BasicText(
             text = text,
-            // Two lines, not one. `maxLines = 1` with no ellipsis simply cut the label off — "Open PDF"
-            // at font scale 1.5 on a 360dp phone, "Save PDF" at 2 — and a button that cannot say what it
-            // does is worse than a button that is two lines tall.
-            maxLines = 2,
+            // It wraps, with no line cap. `maxLines = 1` with no ellipsis simply cut the label off —
+            // "Open PDF" at font scale 1.5 on a 360dp phone, "Save PDF" at 2 — and a button that cannot
+            // say what it does is worse than a tall one. Two lines cover every idle label; a cap of two
+            // was tried and still cut "Save PDF" while Share reads "Preparing…" at font scale 2, because
+            // Share is unweighted and takes its width first.
+            // ponytail: in that one corner the label breaks mid-word rather than being cut. Stack the
+            // pair when it does not fit if that ever needs to look better.
             style = TextStyle(
                 color = content,
                 fontFamily = ZinelyTheme.typography.shell,
