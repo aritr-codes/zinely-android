@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -279,10 +280,13 @@ private fun HonestyLegend() {
     // object needs. A key identifies by hue and shape — so the hue is the sheet's and the shape is the
     // sheet's, and the paper-only translucency is not carried across.
     val colors = rememberLitSheetPalette()
-    Row(
+    // Wrapping, as the fold guide's legend already does and for the same reason. As a `Row` the last
+    // phrase got whatever width the first two left: two lines on a 360dp phone at the default size, and a
+    // column one letter wide — twenty-two lines of it — at font scale 2.
+    FlowRow(
         modifier = Modifier.semantics(mergeDescendants = true) { },
         horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         LegendItem(Copy.ProofSheet.LEGEND_FOLD_LINES) {
             Canvas(Modifier.size(16.dp, 8.dp)) {

@@ -17,6 +17,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -49,6 +53,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -194,6 +200,15 @@ private fun drawerBodyMaxHeight(): Dp {
 private const val SheetChrome = 110f
 
 /**
+ * The least the reader is ever given. Below it the surface scrolls rather than shrink the zine further.
+ *
+ * 160dp, because that is what a 360x640 window was already leaving at font scale 2 (161dp, measured) with
+ * every action still on screen — so that window does not start scrolling, and the floor only bites where
+ * the zine was genuinely being squeezed out (shorter windows, taller bands).
+ */
+private val ReaderMinHeight = 160.dp
+
+/**
  * The unified Proof surface — one screen answering *what did I make?*, with printing and folding reachable
  * from it rather than stacked in front of it.
  *
@@ -322,6 +337,8 @@ public fun ProofScreen(
     LaunchedEffect(savedSignals) {
         savedSignals.collect { savedName = it; staleFrom = null; folded = false }
     }
+    // The surface's own scroll — see the `Layout` below for when there is anything to scroll.
+    val scroll = rememberScrollState()
 
 
     fun open(target: ProofDrawer) {
@@ -388,7 +405,24 @@ public fun ProofScreen(
             .background(colors.desk)
             .testTag(ProofScreenTestTag),
     ) {
-        Column(Modifier.fillMaxSize()) {
+        // **The reader takes what the bar and the band leave, but never less than [ReaderMinHeight] — past
+        // that the surface scrolls instead.** This was a `Column` with the reader at `weight(1f)`, and a
+        // weight has no floor: the band grows when a save lands and again with the font scale, and every
+        // dp of that came out of the finished zine (89dp left of a 568dp window at font scale 2, and
+        // nothing at all a little below that) on the screen whose whole job is to show it. A weight
+        // cannot say "the rest, or at least this much", so the three rows are measured by hand. Where
+        // everything fits it is the same layout the `Column` produced — including for a document with no
+        // pages, where there is no reader and the band sits directly under the bar.
+        //
+        // **Invariant: the surface must be given a bounded height** — the viewport is read from the
+        // incoming minimum, which `fillMaxSize` only sets under a bounded maximum.
+        Layout(
+            modifier = Modifier
+                .fillMaxSize()
+                // Enabled only while there is something to scroll. An idle scroller still competes for
+                // every drag that starts on it, and the reader's page-turn is a drag.
+                .verticalScroll(scroll, enabled = scroll.canScrollForward || scroll.canScrollBackward),
+            content = {
             ProofTopBar(
                 // Null while the error pane stands in for the reader — there is no leaf to name.
                 ticket = if (failedTarget != null || pages.isEmpty()) {
@@ -404,17 +438,15 @@ public fun ProofScreen(
                 onOpenFold = { open(ProofDrawer.Fold) },
             )
 
+            // Always exactly one node, so the measure block below can count on the order: the reader emits
+            // nothing at all for a document with no pages.
+            Box(propagateMinConstraints = true) {
             if (failedTarget != null) {
                 // Replaces the reader AND the band so there is exactly one recovery action; the top bar's
                 // loss-safe back stays available. This carries forward the retired ExportScreen's error
                 // surfacing — a failed render must never be silent — and is why the band needs no failure
                 // state of its own (ADR-101 §3 item 1).
-                ProofErrorPane(
-                    onRetry = onRetryExport,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                )
+                ProofErrorPane(onRetry = onRetryExport, modifier = Modifier.fillMaxWidth())
             } else {
                 ProofReadAct(
                     pages = pages,
@@ -422,11 +454,12 @@ public fun ProofScreen(
                     defaults = defaults,
                     imageBytes = imageBytes,
                     onLeafChange = { leafPage = it },
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                 )
+            }
+            }
 
+            if (failedTarget == null) {
                 ProofBand(
                     pageCount = pages.size,
                     paper = paper,
@@ -442,6 +475,27 @@ public fun ProofScreen(
                     // hand-off means "now fold this sheet", not "resume the sheet you were folding".
                     onFoldItUp = { foldStep = 0; open(ProofDrawer.Fold) },
                 )
+            }
+            },
+        ) { measurables, constraints ->
+            // `verticalScroll` unbounds the max and keeps the min, so `minHeight` is the viewport.
+            val wrap = constraints.copy(minHeight = 0)
+            val bar = measurables[0].measure(wrap)
+            val band = measurables.getOrNull(2)?.measure(wrap)
+            val bandHeight = band?.height ?: 0
+            val rest = constraints.minHeight - bar.height - bandHeight
+            // No reader and no error pane: nothing to give a floor to.
+            val hasMiddle = failedTarget != null || pages.isNotEmpty()
+            val middle = measurables[1].measure(
+                Constraints.fixed(
+                    constraints.maxWidth,
+                    if (hasMiddle) maxOf(rest, ReaderMinHeight.roundToPx()) else 0,
+                ),
+            )
+            layout(constraints.maxWidth, bar.height + middle.height + bandHeight) {
+                bar.place(0, 0)
+                middle.place(0, bar.height)
+                band?.place(0, bar.height + middle.height)
             }
         }
     }
@@ -762,7 +816,9 @@ private fun ProofPageTicket(ticket: String, modifier: Modifier = Modifier) {
     val edge = colors.inkSoft
     BasicText(
         text = ticket.uppercase(Locale.ROOT),
-        maxLines = 1,
+        // Two lines before it gives anything up: on one, "BACK COVER · 8 OF 8" ellipsised at font
+        // scale 2 on a 360dp phone, and what it dropped was the count — the half that is the readout.
+        maxLines = 2,
         overflow = TextOverflow.Ellipsis,
         modifier = modifier
             .testTag(ProofPageTicketTestTag)
@@ -802,6 +858,7 @@ private fun ProofPageTicket(ticket: String, modifier: Modifier = Modifier) {
             fontSize = 11.8.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.08.em,
+            textAlign = TextAlign.Center,
             // `.pcount{font-variant-numeric:tabular-nums}` — without it the ticket changes width between
             // page 9 and page 10, and a stamped ticket that twitches as you read is a label again.
             fontFeatureSettings = "tnum",
@@ -864,6 +921,13 @@ private fun ProofBand(
     val card = RoundedCornerShape(ZinelyV21Dimens.radiusLg)
     val inkLine = colors.inkLine
     val hard = ZinelyV21Dimens.hardShadow
+    // **A save brings its own hand-off into view.** `.done` is taller than the `.commit` pair it
+    // replaces, so where the reader's floor is already binding, the row the save exists to offer —
+    // *Open PDF · Fold it up* — would arrive below the fold, at the spot the thumb just pressed, with
+    // nothing to say so. The card is what is asked for, not the surface's end: that is the least scroll
+    // that shows the buttons with the paper under them, and where the card already fits it is none.
+    val intoView = remember { BringIntoViewRequester() }
+    LaunchedEffect(savedName) { if (savedName != null) intoView.bringIntoView() }
     Box(
         // `.band{margin:0 var(--gap-md) var(--gap-md)}` — a card resting on the desk, not a bar welded to
         // the bottom edge. Exactly the frozen margin and no more: an earlier version added `+ hard` "for
@@ -877,6 +941,7 @@ private fun ProofBand(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .bringIntoViewRequester(intoView)
                 // `box-shadow:var(--hard) calc(var(--hard)*-1) 0 var(--ink-line)` — right and **up**, the
                 // one object on the surface lit from below. [zinelyV21HardShadow] offsets both axes
                 // positively by design, so this one is drawn here rather than bent into that modifier for
@@ -1227,19 +1292,31 @@ private fun ProofBandButton(
                 role = Role.Button,
                 onClick = onClick,
             )
-            .padding(horizontal = if (hero) ZinelyV21Dimens.gapMd else ZinelyV21Dimens.gapLg),
+            // The vertical padding is slack at one line (a 52dp pill around ~20dp of text) and only
+            // starts to bind once a large font scale wraps the label, where it keeps the words off the rim.
+            .padding(
+                horizontal = if (hero) ZinelyV21Dimens.gapMd else ZinelyV21Dimens.gapLg,
+                vertical = ZinelyV21Dimens.gapXs,
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm, Alignment.CenterHorizontally),
     ) {
         if (icon != null) Box(Modifier.size(18.dp)) { icon(content) }
         BasicText(
             text = text,
-            maxLines = 1,
+            // It wraps, with no line cap. `maxLines = 1` with no ellipsis simply cut the label off —
+            // "Open PDF" at font scale 1.5 on a 360dp phone, "Save PDF" at 2 — and a button that cannot
+            // say what it does is worse than a tall one. Two lines cover every idle label; a cap of two
+            // was tried and still cut "Save PDF" while Share reads "Preparing…" at font scale 2, because
+            // Share is unweighted and takes its width first.
+            // ponytail: in that one corner the label breaks mid-word rather than being cut. Stack the
+            // pair when it does not fit if that ever needs to look better.
             style = TextStyle(
                 color = content,
                 fontFamily = ZinelyTheme.typography.shell,
                 fontSize = if (hero) 15.4.sp else 14.sp,
                 fontWeight = if (hero) FontWeight.Bold else FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
             ),
         )
     }
