@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -49,6 +51,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -192,6 +196,15 @@ private fun drawerBodyMaxHeight(): Dp {
  * still covers the taller head with 4dp to spare.
  */
 private const val SheetChrome = 110f
+
+/**
+ * The least the reader is ever given. Below it the surface scrolls rather than shrink the zine further.
+ *
+ * 160dp, because that is what a 360x640 window was already leaving at font scale 2 (161dp, measured) with
+ * every action still on screen — so nothing that fitted before scrolls now, and the floor only bites where
+ * the zine was genuinely being squeezed out.
+ */
+private val ReaderMinHeight = 160.dp
 
 /**
  * The unified Proof surface — one screen answering *what did I make?*, with printing and folding reachable
@@ -388,7 +401,17 @@ public fun ProofScreen(
             .background(colors.desk)
             .testTag(ProofScreenTestTag),
     ) {
-        Column(Modifier.fillMaxSize()) {
+        // **The reader takes what the bar and the band leave, but never less than [ReaderMinHeight] — past
+        // that the surface scrolls instead.** This was a `Column` with the reader at `weight(1f)`, and a
+        // weight has no floor: the band grows when a save lands and again with the font scale, and every
+        // dp of that came out of the finished zine (89dp left of a 568dp window at font scale 2, and
+        // nothing at all a little below that) on the screen whose whole job is to show it. A weight
+        // cannot say "the rest, or at least this much", so the three rows are measured by hand. Where
+        // everything fits — every size the goldens are recorded at — it is the same layout the `Column`
+        // produced.
+        Layout(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+            content = {
             ProofTopBar(
                 // Null while the error pane stands in for the reader — there is no leaf to name.
                 ticket = if (failedTarget != null || pages.isEmpty()) {
@@ -404,17 +427,15 @@ public fun ProofScreen(
                 onOpenFold = { open(ProofDrawer.Fold) },
             )
 
+            // Always exactly one node, so the measure block below can count on the order: the reader emits
+            // nothing at all for a document with no pages.
+            Box(propagateMinConstraints = true) {
             if (failedTarget != null) {
                 // Replaces the reader AND the band so there is exactly one recovery action; the top bar's
                 // loss-safe back stays available. This carries forward the retired ExportScreen's error
                 // surfacing — a failed render must never be silent — and is why the band needs no failure
                 // state of its own (ADR-101 §3 item 1).
-                ProofErrorPane(
-                    onRetry = onRetryExport,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                )
+                ProofErrorPane(onRetry = onRetryExport, modifier = Modifier.fillMaxWidth())
             } else {
                 ProofReadAct(
                     pages = pages,
@@ -422,11 +443,12 @@ public fun ProofScreen(
                     defaults = defaults,
                     imageBytes = imageBytes,
                     onLeafChange = { leafPage = it },
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                 )
+            }
+            }
 
+            if (failedTarget == null) {
                 ProofBand(
                     pageCount = pages.size,
                     paper = paper,
@@ -442,6 +464,22 @@ public fun ProofScreen(
                     // hand-off means "now fold this sheet", not "resume the sheet you were folding".
                     onFoldItUp = { foldStep = 0; open(ProofDrawer.Fold) },
                 )
+            }
+            },
+        ) { measurables, constraints ->
+            // `verticalScroll` unbounds the max and keeps the min, so `minHeight` is the viewport.
+            val wrap = constraints.copy(minHeight = 0)
+            val bar = measurables[0].measure(wrap)
+            val band = measurables.getOrNull(2)?.measure(wrap)
+            val bandHeight = band?.height ?: 0
+            val rest = constraints.minHeight - bar.height - bandHeight
+            val middle = measurables[1].measure(
+                Constraints.fixed(constraints.maxWidth, maxOf(rest, ReaderMinHeight.roundToPx())),
+            )
+            layout(constraints.maxWidth, bar.height + middle.height + bandHeight) {
+                bar.place(0, 0)
+                middle.place(0, bar.height)
+                band?.place(0, bar.height + middle.height)
             }
         }
     }

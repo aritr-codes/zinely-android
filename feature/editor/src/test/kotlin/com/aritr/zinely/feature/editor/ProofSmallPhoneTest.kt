@@ -164,4 +164,46 @@ class ProofSmallPhoneTest {
         tagged(ProofStepDotsTestTag).assertWhollyVisible("the step dots")
         tagged(ProofPrimaryTestTag).assertWhollyVisible("the finish button")
     }
+
+    // ---- P2: the finished zine survives the band growing ------------------------------------------
+
+    /**
+     * This screen answers *"what have I made?"*, so the zine is the one thing the band may not push off
+     * it. The band grows when a save lands and again with the font scale, and the reader used to be
+     * whatever was left.
+     */
+    private fun assertZineSurvivesTheSave() {
+        setProof()
+        save()
+
+        val book = heightDp(ProofReadBookTestTag)
+        assertTrue("the finished zine has ${book}dp left once the save lands", book >= 159f)
+        // The floor is paid for by scrolling, so the actions it pushes down must still be reachable.
+        assertReachableWhole(ProofFoldItUpTestTag, "Fold it up")
+        assertReachableWhole(ProofOpenPdfTestTag, "Open PDF")
+        assertTrue("Fold it up is squeezed", heightDp(ProofFoldItUpTestTag) >= 52f)
+    }
+
+    @Test
+    @Config(fontScale = 2f)
+    fun `the zine keeps its place after a save at font scale 2`() = assertZineSurvivesTheSave()
+
+    /**
+     * A phone that is 640dp tall gives the app nearer 568dp once its own bars are taken out — and there
+     * the reader was down to 89dp.
+     */
+    @Test
+    @Config(qualifiers = "w360dp-h568dp-xhdpi", fontScale = 2f)
+    fun `the zine keeps its place after a save in a 568dp window at font scale 2`() =
+        assertZineSurvivesTheSave()
+
+    /** The scroll is the fallback, not the layout: at the default size nothing moves. */
+    @Test
+    fun `before a save the reader still takes everything the band leaves`() {
+        setProof()
+
+        tagged(ProofSavePdfTestTag).assertWhollyVisible("Save PDF")
+        tagged(ProofBackTestTag).assertWhollyVisible("Back")
+        assertTrue("the reader shrank to ${heightDp(ProofReadBookTestTag)}dp", heightDp(ProofReadBookTestTag) > 300f)
+    }
 }
