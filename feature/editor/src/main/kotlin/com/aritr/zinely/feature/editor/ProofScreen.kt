@@ -492,7 +492,9 @@ public fun ProofScreen(
                     if (hasMiddle) maxOf(rest, ReaderMinHeight.roundToPx()) else 0,
                 ),
             )
-            layout(constraints.maxWidth, bar.height + middle.height + bandHeight) {
+            // Never shorter than the viewport: a layout under its minimum is centred by its parent, which
+            // moved the bar and the band down the screen when there was no reader to fill the middle.
+            layout(constraints.maxWidth, maxOf(bar.height + middle.height + bandHeight, constraints.minHeight)) {
                 bar.place(0, 0)
                 middle.place(0, bar.height)
                 band?.place(0, bar.height + middle.height)

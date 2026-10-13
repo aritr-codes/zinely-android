@@ -137,6 +137,7 @@
 | [ADR-125](#adr-125) | **Folders on the Shelf: one level, a zine in one place, and a folder is only the name its zines carry.** Every folder action is a row in a sheet, nothing is dragged; a folder is drawn as a banded pile of its zines' own covers and exists only while it holds a zine; taking the zines out puts them back on My Shelf. Stored as a defaulted `folder` name in `meta.json`, carried by a defaulted backup-manifest field; the Room index, `packageVersion` and the document schema are unchanged, older builds restore every zine to My Shelf. ADR-081 ruling 2 (no search, no sort) stands. | **Accepted 2026-10-07** on the owner's approval of the A28 prototype and of the recommended rulings; `v21-library.html` A28 frozen the same day; F-10 (the Tribunal row) still the owner's; storage merged (part 1); the Shelf screens built 2026-10-08 (part 2), shipped in `0.9.0-beta.7` on 2026-10-11, not accepted; a TalkBack listen and owner rulings owed |
 | [ADR-126](#adr-126) | **Two document voices, Book (Fraunces) and Plain (Inter), with no change to the saved format.** `fontFamily` carries the voice; an unknown family is drawn as Inter and kept, so an older build re-wraps and may cut off a Book text but loses nothing; four unmodified upstream static faces; each voice declares its scripts (Book has no Greek or Cyrillic); the editing surface draws the document's own faces; the control is a Font row amended into the frozen type bar (A29). Built and merged to `main` on 2026-10-09 (PR #108); shipped in `0.9.0-beta.7` on 2026-10-11; not accepted. Supersedes two of ADR-055's exclusions: font choice, and font bundling for the four Book faces alone | Proposed |
 | [ADR-127](#adr-127) | **The app is portrait only on phones.** No screen has a landscape layout; a turned phone got the upright layout in a 360dp-tall window. `MainActivity` is locked to portrait. Android 16 ignores the lock on screens 600dp and wider, so tablets are not covered | Proposed |
+| [ADR-128](#adr-128) | **A docked panel leaves the thing it edits in view.** The Ink tray and the Text panel stop short of the canvas top by a band sized to the selected element, and the page lifts the element into it; for those panels and for Reframe the lift stops at the element's own top instead of 96dp. Deviates from frozen A16; recorded in D-113 | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -15563,6 +15564,8 @@ standing instruction to decide product calls and record them. Built on `fix/benc
   ([Android 16 behaviour changes](https://developer.android.com/about/versions/16/behavior-changes-16#ignore-orientation)).
   A tablet or unfolded foldable can still show the app in landscape. The app is not designed or verified for
   tablets at all; that is a separate gap, not closed here.
+- **Split-screen is not covered either.** The manifest does not set `resizeableActivity`, so a phone in
+  multi-window still gives the app a short window, with the same failures as landscape.
 - Lint's `LockedOrientationActivity` and `DiscouragedApi` warnings are suppressed on the activity, with this
   ADR as the reason.
 - 🔭 Reversing this is one manifest attribute, but only after landscape layouts exist.
@@ -15575,4 +15578,77 @@ auto-rotate setting was left as the owner had it.
 
 #### Review
 
-Reviewed with the rest of the D-113 change; the outcome is recorded in [D-113](design/V2-SPEC-DEFECTS.md#d-113).
+Reviewed with the rest of the D-113 change by an independent Review Agent (reading only): the Android 16
+and `targetSdk` claims checked out; split-screen was missing and is now under Consequences. The full outcome
+is in [D-113](design/V2-SPEC-DEFECTS.md#d-113).
+
+## ADR-128 {#adr-128}
+
+### A docked panel leaves the thing it edits in view
+
+**Status:** Proposed, 2026-10-13. **Not accepted** — decided under the owner's standing instruction to decide
+product calls and record them; [D-113](design/V2-SPEC-DEFECTS.md#d-113) had listed it as a decision owed
+before code. Built on `fix/bench-canvas-sharing`.
+**Extends:** [ADR-093](#adr-093) row 3.1 as amended by OD-16 (the page lift is `min(ceiling, slack + clearance)`).
+**Deviates from:** frozen `v21-bench.html` A16 (the Ink tray's height) and the 96dp lift ceiling, for the
+cases below only. The frozen file is not edited; the deviation is recorded in D-113.
+
+#### Context
+
+- ✅ On a common phone (384 × 832dp) the Ink tray was as tall as the canvas and the Text panel covered the
+  selected text box completely, so colour, size, alignment and bold were changed without seeing the result
+  (seen on a Samsung SM-A176B, 2026-10-13).
+- ✅ The page already lifts clear of the typing row by up to 96dp. The Ink tray fed that rule; the Text panel
+  fed nothing into it; and 96dp is far less than either panel's height, so the lift could not clear them.
+- 🟦 A panel exists to change one element. If the element is not on screen while the panel is, the panel is
+  not doing its job, whatever its own layout.
+
+#### Decision
+
+```mermaid
+flowchart TD
+    A["Ink tray or Text panel opens\nfor a selected element"] --> B["Panel height is capped:\ncanvas height minus a peek band"]
+    B --> C["Peek band = element height + 24dp,\nbetween 56dp and min(128dp, 30% of canvas)"]
+    C --> D["Page lifts by min(slack + clearance,\nelement's own top)"]
+    D --> E["Element sits in the band above the panel"]
+```
+
+1. **The Ink tray and the Text panel stop short of the canvas top** by a peek band sized to the element:
+   its height plus 24dp, never under 56dp and never over 128dp or 30% of the canvas. What no longer fits
+   scrolls inside the panel, under a header that stays put ([D-112](design/V2-SPEC-DEFECTS.md#d-112)).
+2. **The Text panel now feeds the page lift**, as the typing row and the Ink tray do.
+3. **For these two panels, and for Reframe, the lift's ceiling is the element's own top** instead of 96dp.
+   The lift stops when the element reaches the canvas top, so it cannot carry it out of view. While typing
+   the ceiling is still the frozen 96dp.
+4. **Reframe** uses the same rule with the canvas's bottom edge as the occluder, because its controls are
+   taller than the bar they replace and the page is not refitted during a session.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Redesign the panels as short strips | A new frozen design for two surfaces; large, and not needed to make the element visible |
+| Refit (rescale) the page when a panel opens | The viewport is deliberately frozen during a session so gestures are not restarted; and a shrinking page is the very thing item 2 of D-113 complains about |
+| Raise the 96dp ceiling everywhere | While typing, a higher ceiling brings back [D-043](design/V2-SPEC-DEFECTS.md#d-043): the page leaving the canvas |
+| Leave the tray full height and lift more | There is no band to lift into when the tray is as tall as the canvas |
+
+#### Consequences
+
+- The Ink tray shows less at once: on the 384 × 832dp phone its Neutrals and Starting palettes begin below
+  the fold. Three tests needed a scroll to reach them.
+- An element taller than the peek band is partly covered: its top shows, its bottom is behind the panel.
+- The rule is pure arithmetic (`benchPanelPeekDp`, `benchEditPanMagnitudeDp`) and is unit-tested; the wiring
+  is tested through the editor host in `BenchInkClearanceTest` and `ReframeSessionTest`.
+
+#### Verification
+
+On the Samsung SM-A176B: with the Ink tray open the text box sat whole above the tray; with the Text panel
+open the words were in view above it. Reframe was not seen on a device. Details in
+[D-113](design/V2-SPEC-DEFECTS.md#d-113).
+
+#### Review
+
+Independent Review Agent, reading only: **GO WITH FIXES**. It found this decision recorded nowhere (hence
+this ADR), the first ceiling `max(96dp, top)` able to push a near-top element out of view (now the element's
+top alone), and the clearance tests unable to fail (rewritten). Reconciled in
+[D-113](design/V2-SPEC-DEFECTS.md#d-113).
