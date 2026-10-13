@@ -2,6 +2,7 @@ package com.aritr.zinely.feature.library
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -17,6 +18,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
+import com.aritr.zinely.ui.theme.LocalZinelyMotion
+import com.aritr.zinely.ui.theme.ZinelyMotion
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -48,15 +51,34 @@ class LibrarySmallPhoneTest {
         body.performScrollTo().assertIsDisplayed()
     }
 
+    @Test
+    fun `the shelf that did not open keeps Try again whole and reachable at the largest text`() {
+        setContent(fontScale = 2f) { ZineShelfFail(onRetry = {}) }
+
+        val retry = composeRule.onNodeWithTag(ZineRetryTestTag)
+        assertTrue("Try again is squeezed", retry.fetchSemanticsNode().size.height >= 48)
+        retry.performScrollTo().assertIsDisplayed()
+    }
+
     // ---------------------------------------------------------------------------------------------
     // Harness
     // ---------------------------------------------------------------------------------------------
 
-    private fun setContent(fontScale: Float, content: @Composable () -> Unit) {
+    private fun setContent(fontScale: Float, content: @Composable BoxScope.() -> Unit) {
+        // A Dialog reads the text size from its own context, not from `LocalDensity`, so a sheet is only
+        // at this size if the activity is.
+        composeRule.activity.resources.run {
+            configuration.fontScale = fontScale
+            @Suppress("DEPRECATION")
+            updateConfiguration(configuration, displayMetrics)
+        }
         composeRule.setContent {
             ZinelyTheme {
-                CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale)) {
-                    Box(Modifier.fillMaxSize()) { content() }
+                CompositionLocalProvider(
+                    LocalZinelyMotion provides ZinelyMotion(reduceMotion = true),
+                    LocalDensity provides Density(LocalDensity.current.density, fontScale),
+                ) {
+                    Box(Modifier.fillMaxSize(), content = content)
                 }
             }
         }
