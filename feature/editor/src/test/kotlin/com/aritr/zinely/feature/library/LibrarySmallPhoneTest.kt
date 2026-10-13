@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.Density
 import com.aritr.zinely.ui.theme.LocalZinelyMotion
 import com.aritr.zinely.ui.theme.ZinelyMotion
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -60,6 +62,34 @@ class LibrarySmallPhoneTest {
         retry.performScrollTo().assertIsDisplayed()
     }
 
+    @Test
+    fun `the zine sheet keeps Delete whole and reachable under a title that stays put`() {
+        setContent(fontScale = 2f) {
+            Box(Modifier.align(Alignment.BottomCenter)) {
+                ZineActionSheetSurface(ZineActionTarget(LONG_TITLE, "A4 · today", inFolder = true), onAction = {})
+            }
+        }
+
+        val open = composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Open)).fetchSemanticsNode().size.height
+        val delete = composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Delete))
+        assertEquals("Delete is squeezed", open, delete.fetchSemanticsNode().size.height)
+        delete.performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(ZineActionTitleTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun `the Move sheet keeps its title while a long list of folders scrolls`() {
+        val folders = (1..10).associate { "Folder $it" to it }
+        setContent(fontScale = 1f) {
+            Box(Modifier.align(Alignment.BottomCenter)) {
+                FolderMoveSheetSurface(FolderMoveTarget("Letters home", "Folder 1", folders), onMove = {}, onNewFolder = {})
+            }
+        }
+
+        composeRule.onNodeWithTag(FolderMoveNewTestTag).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(ZineActionTitleTestTag).assertIsDisplayed()
+    }
+
     // ---------------------------------------------------------------------------------------------
     // Harness
     // ---------------------------------------------------------------------------------------------
@@ -94,5 +124,6 @@ class LibrarySmallPhoneTest {
 
     private companion object {
         const val EMPTY_BODY = "One sheet of paper becomes"
+        const val LONG_TITLE = "Letters home from the long summer we spent at the lake"
     }
 }

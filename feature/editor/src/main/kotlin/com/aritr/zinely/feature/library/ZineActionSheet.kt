@@ -376,8 +376,11 @@ internal fun ZineActionSheetSurface(
  * sheet holds. Shared by the zine sheet and the three A28 sheets.
  *
  * @param paneTitle the frozen `aria-label` on `role="dialog"`: what TalkBack says on entering the sheet.
- * @param scrolls `.sheet.a28{max-height:88%;overflow-y:auto}`. The zine sheet is not an `.a28` sheet and
- *   keeps its own height.
+ *
+ * `.sheet.a28{max-height:88%;overflow-y:auto}` scrolls the whole sheet, head and all. Here the head stays
+ * and what the sheet holds scrolls under it, so a long list of folders cannot carry away the name of the
+ * zine being moved. The zine sheet is not an `.a28` sheet, and takes the same limit for the same reason:
+ * at the largest text on a small phone its six rows do not fit, and Delete was the one cut off.
  */
 @Composable
 internal fun LibrarySheetSurface(
@@ -385,7 +388,6 @@ internal fun LibrarySheetSurface(
     subtitle: String,
     paneTitle: String,
     modifier: Modifier = Modifier,
-    scrolls: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -393,13 +395,7 @@ internal fun LibrarySheetSurface(
     Column(
         modifier
             .fillMaxWidth()
-            .then(
-                if (scrolls) {
-                    Modifier.heightIn(max = (LocalConfiguration.current.screenHeightDp * A28MaxHeight).dp)
-                } else {
-                    Modifier
-                },
-            )
+            .heightIn(max = (LocalConfiguration.current.screenHeightDp * A28MaxHeight).dp)
             // `box-shadow:0 -16px 40px -18px var(--soft-shadow)` — upward, which is the one shadow in
             // the corpus that is not the hard offset. A sheet rising off the screen is the exception
             // §5.1 allows: it is not a printed object resting on the desk, it is chrome above it.
@@ -439,9 +435,9 @@ internal fun LibrarySheetSurface(
                 }
                 drawPath(edge, color = colors.ink, style = Stroke(width = 2 * w))
             }
-            // The safe area first, then `padding:0 0 var(--gap-xl)` on top of it — outermost-first, so the
-            // frozen 24dp is measured from the top of the navigation bar rather than from the screen edge
-            // underneath it.
+            // The safe area first, then `padding:0 0 var(--gap-xl)` on top of it (inside the scroll, below)
+            // — outermost-first, so the frozen 24dp is measured from the top of the navigation bar rather
+            // than from the screen edge underneath it.
             //
             // **Device Pass 1 found this, and it was the destructive row that paid.** A browser has no
             // gesture bar, so the frozen file writes no `env(safe-area-inset-bottom)` here — and a sheet
@@ -456,11 +452,9 @@ internal fun LibrarySheetSurface(
                     .union(WindowInsets.displayCutout)
                     .only(WindowInsetsSides.Bottom),
             )
-            .padding(bottom = ZinelyV21Dimens.gapXl)
             // `role="dialog" aria-label="Zine actions"`. The Dialog window carries the modality; this
             // carries the name TalkBack announces on entering it.
-            .semantics { this.paneTitle = paneTitle }
-            .then(if (scrolls) Modifier.verticalScroll(rememberScrollState()) else Modifier),
+            .semantics { this.paneTitle = paneTitle },
     ) {
         ZineActionGrab()
 
@@ -517,7 +511,16 @@ internal fun LibrarySheetSurface(
                 },
         )
 
-        content()
+        // The sheet's bottom padding is inside the scroll: a scroll clips at its edge, and the name
+        // sheet's button draws its shadow below itself.
+        Column(
+            Modifier
+                .weight(1f, fill = false)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = ZinelyV21Dimens.gapXl),
+            content = content,
+        )
     }
 }
 

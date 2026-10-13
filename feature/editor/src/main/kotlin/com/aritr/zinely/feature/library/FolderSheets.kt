@@ -118,7 +118,6 @@ internal fun FolderMoveSheetSurface(drawn: FolderMoveTarget, onMove: (String?) -
         subtitle = drawn.current?.let(Copy.Folders::inFolderMoveTo) ?: Copy.Folders.ON_MY_SHELF_MOVE_TO,
         paneTitle = Copy.Folders.MOVE_PANE,
         modifier = Modifier.testTag(FolderMoveSheetTestTag),
-        scrolls = true,
     ) {
         if (drawn.current != null) {
             SheetRow(
@@ -251,7 +250,6 @@ internal fun FolderNameSheetSurface(
         subtitle = if (renaming == null) Copy.Folders.forZine(drawn.zineTitle) else pluralZineCount(drawn.count),
         paneTitle = title,
         modifier = Modifier.testTag(FolderNameSheetTestTag),
-        scrolls = true,
     ) {
         Column(
             Modifier.padding(
@@ -444,7 +442,6 @@ internal fun FolderActionsSheetSurface(
         subtitle = Copy.Folders.folderSubtitle(pluralZineCount(drawn.count)),
         paneTitle = Copy.Folders.FOLDER_ACTIONS,
         modifier = Modifier.testTag(FolderActionsSheetTestTag),
-        scrolls = true,
     ) {
         SheetRow(
             label = Copy.Folders.OPEN_FOLDER,
