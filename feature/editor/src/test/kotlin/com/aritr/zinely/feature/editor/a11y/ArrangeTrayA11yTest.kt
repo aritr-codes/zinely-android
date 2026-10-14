@@ -1,11 +1,8 @@
 package com.aritr.zinely.feature.editor.a11y
 
-import androidx.compose.ui.test.assert
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.remember
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -99,8 +96,10 @@ class ArrangeTrayA11yTest {
         renderTray()
         listOf(Copy.Editor.ARRANGE_MOVE, Copy.Editor.ARRANGE_SIZE, Copy.Editor.ARRANGE_TURN, Copy.Editor.ARRANGE_LAYER)
             .forEach { name ->
-                composeRule.onNodeWithText(name)
-                    .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
+                assertTrue(
+                    "$name must be a heading on the platform tree",
+                    composeRule.onNodeWithText(name).platformNode(composeRule.activity).isHeading,
+                )
             }
     }
 }

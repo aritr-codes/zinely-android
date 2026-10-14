@@ -15766,3 +15766,15 @@ flowchart LR
 Independent Review Agent, reading only, 2026-10-13: **GO WITH FIXES** for the documentation of the proposal.
 It found: "decided" used of a Proposed record; the rulings it would reverse (OD-11, ADR-092, the Issue #54
 threshold) not cited; layout and wording details decided that the HTML amendment owns. All three were taken.
+
+Two independent Review Agents, reading only, 2026-10-14, on the built change:
+- **Docs: GO WITH FIXES.** Three required fixes, all taken: a blockquote swallowing the paragraph after the
+  OD-11 note, a stale OWNER-CHECKLIST row, ARCHITECTURE naming the removed Text style control. It also
+  narrowed this record's research claim (taken) and the NN/g citation in R28.4 (taken).
+- **Code: GO WITH FIXES.** Its required fix (goldens not yet recorded) was already done on CI. Taken: the tray
+  now yields to Ink and Flip, which an element's own TalkBack action can open over it; tests for the lift,
+  for nudging without re-lifting, for focus returning to Arrange and for a page change; headings read off the
+  platform tree. Partly taken: it judged the loosened `BenchInkClearanceTest` bound harmless but imprecise;
+  the bound stays, because the in-view assertion beside it is the real guard. Not taken: it read "Accepted"
+  as premature while device passes were owed. ADR-127 and ADR-128 set the precedent under the same
+  delegation, and the owner's checks are listed in OWNER-CHECKLIST.

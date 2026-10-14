@@ -210,6 +210,31 @@ class BenchInkClearanceTest {
         assertTrue("and inside the canvas (top $top, canvas $canvas)", top >= canvas.top - 1f)
     }
 
+    private fun openArrange() {
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ARRANGE}").performClick()
+        composeRule.waitForIdle()
+    }
+
+    @Test
+    fun the_arrange_tray_leaves_the_piece_it_moves_in_view() {
+        val store = placedText(midPage)
+        openArrange()
+        assertInViewAbove(ArrangeTrayTestTag, midPage, store)
+    }
+
+    @Test
+    fun nudging_under_the_open_tray_does_not_slide_the_page() {
+        // ADR-129 point 5: the lift is measured from where the piece stood when the tray opened. A re-lift on
+        // every nudge would slide the page under a piece that seems to stand still.
+        val store = placedText(midPage)
+        openArrange()
+        val opened = paperTop()
+        composeRule.onNodeWithTag("$ArrangeTrayTestTag-${Copy.A11y.MOVE_DOWN}").performClick()
+        composeRule.waitForIdle()
+        assertEquals(midPage.yPt + EditorA11y.NUDGE_STEP_PT, store.uiState.value.document.pages[0].elements.single().transform.yPt, 1e-9)
+        assertEquals("the page must not move when the piece does", opened, paperTop(), 1f)
+    }
+
     @Test
     fun the_ink_tray_leaves_the_text_it_colours_in_view() {
         // A phone showed the tray as tall as the canvas: a maker picked an ink for words they could not see.

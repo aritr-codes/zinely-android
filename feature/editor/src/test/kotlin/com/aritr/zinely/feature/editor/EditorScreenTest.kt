@@ -18,6 +18,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.click
 import androidx.compose.ui.unit.dp
@@ -1030,6 +1032,44 @@ class EditorScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(ArrangeTrayTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ARRANGE}").assertIsDisplayed()
+    }
+
+    @Test
+    fun Done_returns_focus_to_the_Arrange_verb() {
+        // Keyboard input mode, as `FlipTrayTest` does: in touch mode a `clickable` is not focusable, and the
+        // return exists for a keyboard or switch user.
+        lateinit var inputMode: androidx.compose.ui.input.InputModeManager
+        val store = selectedText()
+        composeRule.setContent {
+            ZinelyTheme {
+                inputMode = androidx.compose.ui.platform.LocalInputModeManager.current
+                EditorScreen(store = store, pageSizePt = pageSizePt, modifier = Modifier.size(300.dp, 425.dp))
+            }
+        }
+        composeRule.runOnUiThread { inputMode.requestInputMode(androidx.compose.ui.input.InputMode.Keyboard) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ARRANGE}")
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ArrangeDoneTestTag)
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ARRANGE}").assertIsFocused()
+    }
+
+    @Test
+    fun a_page_change_closes_the_tray() {
+        val store = selectedText()
+        store.dispatch(Intent.AddPage)
+        store.dispatch(Intent.GoToPage(0))
+        store.dispatch(Intent.Select(store.uiState.value.document.pages[0].elements.single().id))
+        setScreen(store)
+        composeRule.waitForIdle()
+        openArrange()
+
+        store.dispatch(Intent.GoToPage(1))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ArrangeTrayTestTag).assertDoesNotExist()
     }
 
     @Test

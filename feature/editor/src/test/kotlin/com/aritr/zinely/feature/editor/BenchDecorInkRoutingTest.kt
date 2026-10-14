@@ -214,6 +214,21 @@ class BenchDecorInkRoutingTest {
     }
 
     @Test
+    fun the_arrange_tray_yields_to_Ink_opened_by_the_supplys_own_action() {
+        // A TalkBack user can run `Change ink` while the Arrange tray is up; two cards must not stack in the
+        // one docked slot (code review of ADR-129, RI-1).
+        render(selected = true)
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ARRANGE}").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ArrangeTrayTestTag).assertExists()
+
+        invokeA11yAction(Copy.A11y.CHANGE_INK)
+
+        composeRule.onNodeWithTag(BenchInkPopoverTestTag).assertExists()
+        composeRule.onNodeWithTag(ArrangeTrayTestTag).assertDoesNotExist()
+    }
+
+    @Test
     fun both_of_section_8s_decor_actions_are_advertised_and_neither_is_a_dead_action() {
         // §8's table of 13, asserted where TalkBack would read it. Both actions earned their place by
         // doing something; `EditorA11y` withholds either one whose callback is absent.

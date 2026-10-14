@@ -737,21 +737,22 @@ public fun EditorScreen(
     // the term the freeze writes and this call site did not: `showSheet` removes `.ctx`
     // (`v2-bench.html:847`). Nothing regressed by adding it — the Add chooser is a Dialog, so the bar it
     // now suppresses was already behind another window; the point is that the rule lives in the model
-    // rather than being delegated to a platform accident. (`showDelete = !ctxVisible` below therefore
-    // offers Delete on the transform bar while the chooser is up — also behind the Dialog. That "behind a
-    // Dialog ⇒ unreachable" premise is exactly the merged-semantics assumption ADR-059/CI-26 distrusts,
-    // so it is on the device Pass 1 platform-tree checklist rather than settled by this comment.)
+    // rather than being delegated to a platform accident. (Until ADR-129 a `showDelete = !ctxVisible` term
+    // offered Delete on the transform bar while the chooser was up; that bar is gone.)
     // `addChooserOpen || artSheetOpen`: the Art sheet's frozen caption is a variant of the Adding one, so
     // both sheets are the same Bench state. See `artSheetOpen`'s declaration.
     val benchState = benchStateOf(uiState.selection, uiState.interaction, addChooserOpen || artSheetOpen)
+    // Ink and Flip can be opened over it by the element's own custom actions (TalkBack), and the three share
+    // one docked slot, so the tray yields: it closes rather than stacking under the other card.
     val arrangeTrayVisible = arrangeOpen && ctxElement != null && benchState == BenchState.Selected &&
-        reframing == null
+        reframing == null && !inkPopoverVisible && !flipTrayVisible
     val closeArrangeTray = {
         arrangeOpen = false
         arrangeReturnPending = true
     }
     BackHandler(enabled = arrangeTrayVisible) { closeArrangeTray() }
-    // Deselect, a text session, Add, Reframe and a page change close it; moving to another piece does not.
+    // Deselect, a text session, Add, Reframe, a page change, Ink and Flip close it; moving to another piece
+    // does not.
     LaunchedEffect(arrangeOpen, arrangeTrayVisible) {
         if (arrangeOpen && !arrangeTrayVisible) arrangeOpen = false
     }
