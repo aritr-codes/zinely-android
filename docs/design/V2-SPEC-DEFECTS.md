@@ -7683,6 +7683,67 @@ The owner's Samsung (its largest font and bold-font settings) was not tested.
 
 ---
 
+### D-117 — the Art pieces look like four hands at once; critique of all thirty-four {#d-117}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (the literal lists `SUP`, `ART_FIRST_WAVE`, `ART_D5_FRAMES`) · `core/render/.../SupplyCatalog.kt` (the same geometry, held to it by `BenchArtSheetParityTest`) |
+| **Found** | 2026-10-12, a tester: the Art "looks amateurish". Critiqued 2026-10-14 by rendering all 34 at 24, 46 and 120px and at their landing sizes (§5.2, a 74mm page); the renders are working files, not committed. The bench's A34 section shows shipped and redrawn side by side |
+| **Severity** | Product quality, not correctness. Every piece draws as specified; the specification is the problem |
+| **Status** | **Design frozen 2026-10-14 under the owner's delegation; not built.** The redraw is [`v21-bench.html`](mockups/v21-bench.html) A34, the rules are [SUPPLIES-SPEC §4.4](SUPPLIES-SPEC.md#house-style), the decision is [ADR-132](../DECISIONS.md#adr-132) (Proposed). The app still draws the shipped set until the Compose wave |
+
+**Why the set reads as amateurish.** Not one bad piece but four voices with nothing in common:
+
+1. **Weights.** Walls and lines run from 1 unit (crop marks, registration arms) through 2–3 (staple, clip,
+   window, border) to 4–4.6 (ring, eyelet). ✅ IBM: mixed weights "look like a mistake" (R27.1).
+2. **The tear voice is a regular zig-zag.** Torn tape, Torn strip, Marker underline, Deckle edge and Torn
+   hole all use near-even teeth of near-even depth. It reads as pinking shears or clip-art, not torn paper.
+3. **Two kinds of geometry side by side.** Ruler-perfect squares and circles sit beside 7- to 14-sided
+   polygons standing in for curves (Torn hole, Round window, Paper clip's corners).
+4. **Three pieces do not read as their names.** Pointing hand is a block with notches (a sword or a key);
+   Push pin is a funnel; Copier streak is three wedges (legs, or a barcode).
+
+**Every piece.** "Keeps" means the concept stays and only the house rules are applied.
+
+| Piece | Shipped, as seen | A34 |
+|---|---|---|
+| Torn tape | Ends are an even zig-zag | Straight factory edges, both ends torn in the tear voice |
+| Photo corner | Sound; legs and hypotenuse one weight, triangle hole | Keeps; legs W, folded edge 2W |
+| Staple | Square bracket, wall about 2.7, square bends | Side view, wire W, round bends and ends |
+| Paper clip | Faceted polygon, reads as a clip only when large | A true Gem: one wire, three nested turns, never crossing |
+| Star | Ruler-perfect, generic | Keeps; points cut a little unequal |
+| Arrow | Block arrow, the most clip-art piece in the set | A drawn arrow: curved shaft, round tail, swept head |
+| Halftone dots | Square grid graded by column; reads as polka dots | 45° screen graded across the diagonal (R27.5) |
+| Registration cross | Thin ring, arms stop at it; a hairline among bold pieces | Ring and full cross through it at W; four quarter holes |
+| Torn strip | Zig-zag on both long edges | Long edges in the tear voice; ends cut |
+| Window frame | Sound | Keeps; band 2W, cut voice |
+| Speech tag | Sound | Keeps; cut voice |
+| Marker underline | A zig-zag band: a tear, not a pen | A marker swipe: round ends, gentle wave |
+| Rectangle, Circle, Triangle, Straight rule | Ruler-perfect; fine alone, mechanical beside the rest | Keep; cut voice, up to 0.5 units off true |
+| Masking tape | A plain rectangle, the same as Rectangle | Crepe edges, finely torn ends |
+| Saddle stitch | Two long bars ("pause") | Three thread stitches down the spine |
+| Eyelet | A thick ring, near-identical to Ring | Flange and barrel, each W, a 1.5 gap between: two rings, so it differs from Ring. Risk: may read as a target (Pass 2) |
+| Push pin | Funnel and spike | Side elevation: cap, grip, collar, needle |
+| Pointing hand | Unreadable block | Manicule: cuff, fist, three knuckles, index finger |
+| Crop marks | L-brackets at 1 unit | As a printer sets them: short lines outside each trim corner (trim 6.5–17.5), not touching it (R27.5). Risk: less quick to read than brackets (Pass 2) |
+| Colour bar | Sound | Keeps; on the grid, 2-unit gutters |
+| Copier streak | Three wedges | Three unequal toner streaks, one broken, one fading |
+| Perforation | Square dashes, uneven | Five even slits, square-cut |
+| Starburst | Twelve long spikes; a sale sticker drawn by a ruler | Fourteen-point seal, cut by hand |
+| Ticket stub | Notched both ends; a whole ticket, not a stub | Punched notch on one end, torn where it left the ticket on the other |
+| Postage stamp | Zig-zag edge (pinking shears) | Half-round perforation bites, exact |
+| Deckle edge | A wavy blob | Fine feathered tear on all four sides |
+| Torn hole | Heptagon scrap with heptagon hole | Torn scrap with a torn hole, both in the tear voice |
+| Folded corner | A clipped corner; nothing folded | The fold shows: the flap lies over the sheet, 2 units clear of it |
+| Ring | Sound, wall about 4.6 | Keeps; wall 2W, cut voice |
+| Snipped border (A32) | Sound; band about 2.2 | Keeps its three snips a side; band W |
+| Round window (A32) | Hole is a fourteen-sided polygon | Hole is a smooth hand-cut curve |
+
+**What is not claimed.** That the redraw is better *printed*: nothing has been printed, photocopied or seen on
+a phone. ADR-132 lists those checks as owed.
+
+---
+
 ### D-118 — more paper sizes: what the engine pass found {#d-118}
 
 | | |

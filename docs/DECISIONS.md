@@ -140,6 +140,7 @@
 | [ADR-128](#adr-128) | **A docked panel leaves the thing it edits in view.** The Ink tray and the Text panel stop short of the canvas top by a band sized to the selected element, and the page lifts the element into it; for those panels and for Reframe the lift stops at the element's own top instead of 96dp. Deviates from frozen A16; recorded in D-113 | Accepted |
 | [ADR-129](#adr-129) | **Moving a piece by buttons lives in a Move tray, not in a bar that takes rows from the canvas.** The two-row accessible bar (A14) makes the page shrink each time something is selected. Proposed: the controls move into a tray opened from the verb bar, which follows ADR-128. It would reverse OD-11, so it needs the owner and an HTML amendment before any Compose | Proposed |
 | [ADR-130](#adr-130) | **The typing-time notice says "prints in a font from your phone" for what the phone draws.** The check asks `Paint.hasGlyph` on the face the renderer resolves, which walks the same fallback chain; a script every character of which the phone draws gets the new line, anything else keeps ADR-070's "can't print yet". Amends ADR-070 (issue #103, D-115) | Accepted |
+| [ADR-132](#adr-132) | **The Art pieces are drawn by one hand.** One line weight (2.5 of 24 units), flat views, a fixed margin, and an edge that says what made it (cut, torn, drawn, metal, printer's mark); torn edges read one hand-written tear table, never a zig-zag. All 34 redrawn as bench A34, design frozen under the owner's delegation; ids, names, sizes and the eight holed pieces unchanged. The Compose redraw and every Art golden are a later wave | Proposed |
 | [ADR-133](#adr-133) | **Paper is a closed, named set; the imposition engine takes any sheet.** Answers the paper half of ADR-016. A person picks a size by name and the file stores the name; `Imposer.layout` also takes any portrait sheet, proved by properties. US Legal and A5 are the next sizes, in their own schema bump after v4, chosen at the start of a zine only; half-Letter, A3 and Tabloid are not | Accepted (engine and closed set); sizes decided, not built |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
@@ -15829,6 +15830,88 @@ this review was not recorded; the status did not name the owed checks; the evide
 stronger or weaker than the evidence; the "other" rule had no home; ADR-028 §4.2 was not named. Not taken:
 moving the font resolver out of the session (it costs what the page preview already pays; noted in the
 code). Details in [D-115](design/V2-SPEC-DEFECTS.md#d-115).
+
+## ADR-132 {#adr-132}
+
+### The Art pieces are drawn by one hand
+
+**Status:** Proposed, 2026-10-14. **The design is frozen** as [`v21-bench.html`](design/mockups/v21-bench.html)
+A34, under the owner's delegation of 2026-10-12 ("decide, do not ask"); the owner has not ruled on it
+personally and may overrule it. The ADR stays Proposed until the Compose wave builds it and the checks below
+are done.
+**Extends:** [SUPPLIES-SPEC §4.1](design/SUPPLIES-SPEC.md#41-authoring-rule-binding) (authoring rule) with §4.4 (house style).
+**Keeps:** [ADR-107](#adr-107) R2 (no randomisation), [ADR-124](#adr-124)'s tap-through list, A16's sheet,
+A32's two frames as named and ordered, the landing sizes of SUPPLIES-SPEC §5.2.
+**Defect:** [D-117](design/V2-SPEC-DEFECTS.md#d-117). **Evidence:** [RESEARCH R27](RESEARCH.md#r27-one-hand-for-a-set-of-single-ink-pieces-2026-10-14).
+
+#### Context
+
+- ✅ A tester said the Art looks amateurish (2026-10-12). Rendered together, the 34 pieces use walls from 1
+  to 4.6 units, a regular zig-zag for every tear, ruler-perfect shapes beside rough polygons, and three
+  pieces that do not read as their names ([D-117](design/V2-SPEC-DEFECTS.md#d-117)).
+- ✅ Mixed weights and mixed levels of detail are what design systems name as making a set look like a
+  mistake (R27.1).
+- The Art is a frozen HTML spec held to the catalogue by `BenchArtSheetParityTest`, and one renderer draws
+  it on all four surfaces. A redraw is therefore an HTML amendment first and a Compose wave second, and the
+  second re-records every Art golden.
+
+#### Decision
+
+```mermaid
+flowchart LR
+    A["SUPPLIES-SPEC §4.4\nhouse rules H1–H9"] --> B["v21-bench.html A34\nART_A34: 34 literal paths"]
+    B --> C["Design frozen\n(owner's delegation)"]
+    C --> D["Compose wave (later):\nSupplyCatalog ← ART_A34\nparity test → ART_A34\nre-record Art goldens"]
+```
+
+1. **One house style** ([SUPPLIES-SPEC §4.4](design/SUPPLIES-SPEC.md#house-style)): one line weight W = 2.5
+   units, bands of paper 2W; no ink under 2 units and no gap under 1.5; flat views; a 0.5-unit margin; five
+   edge voices (cut, torn, drawn, metal, printer's mark), each piece using only its own; one hand-written
+   tear table; at most three ideas per piece.
+2. **All 34 are redrawn**, not replaced: every id, name, family, order, tag and landing size is unchanged.
+   The same eight pieces have holes.
+3. **The bench shows A34; the parity test keeps the shipped set.** A34's script redraws each tile as the
+   sheet draws it and leaves the literal lists alone, so `BenchArtSheetParityTest` keeps holding the
+   shipped catalogue to the shipped drawings until the Compose wave. That wave switches the test to the
+   literal `ART_A34` list in the same change that transcribes it into `SupplyCatalog` (A34 says how).
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Fix only the three unreadable pieces | Leaves the mixed weights and the zig-zag, which are most of what reads as amateurish |
+| Make every edge hand-drawn, printer's marks included | A wobbly registration mark or halftone pretends a hand made what a machine makes; the exactness is the meaning (R27.5) |
+| One weight in millimetres after landing, not in units | The landing sizes are an unverified reading (§5.2) and makers resize; the sheet, where the whole set is seen together, shows equal units |
+| Seeded noise for the torn edges | Fixed after authoring, but it reads as the randomisation ADR-107 refuses and cannot be reviewed coordinate by coordinate |
+| Replace pieces that do not work (an arrow for the hand) | Changes the set the owner ruled on; every piece could be redrawn to read |
+
+#### Consequences
+
+- The Compose wave rewrites the 34 outlines in `SupplyCatalog`, switches the parity test and re-records
+  every Art and Decor golden, reading each diff first. Hit areas follow the drawn ink (ADR-124), so the new
+  registration cross passes taps through its four quarter holes and the eyelet through its ring gap.
+- Until then the bench and the app draw different Art. A34 says so in the file.
+- The A32 text's "fourteen snips" for Round window is superseded by a smooth hand-cut hole; Snipped border
+  keeps its snips.
+
+#### Owed before Accepted
+
+- The Compose redraw and the switch-over above, with the golden re-record.
+- A printed page and a second-generation photocopy of all 34 at their landing sizes: no hole may fill in
+  (R27.2, R27.4).
+- Both device passes, including whether Pointing hand, Push pin, Saddle stitch and Crop marks read as their
+  names to a first-time user.
+
+#### Review
+
+Two independent Review Agents, 2026-10-14, both **GO WITH FIXES**. Design lens: the margin rule (H4) was
+false for many pieces and four crossed it, and the Eyelet's bands (3 and 2 units) broke H1. Both fixed: H4
+now says what is drawn (nothing crosses the margin), the four were moved in, and the Eyelet is two W bands. It
+also found Crop marks, Saddle stitch and Eyelet less quick to read than the shipped pieces. Crop marks got a
+wider trim and Saddle stitch was centred; all three stay as drawn and are named for the first-time device
+pass. Torn strip and Torn hole were given a slow wave so they no longer read as a sawtooth or a gear. Docs
+lens: the same margin finding; the tear table was not in the repository (it is now printed in A34's
+comment); one link lacked its anchor (fixed). Reconciled item by item in the PR.
 
 ## ADR-133 {#adr-133}
 
