@@ -7607,14 +7607,14 @@ of the current metadata.
 | | |
 |---|---|
 | **Artifacts** | `docs/design/mockups/v21-bench.html` (the literal lists `SUP`, `ART_FIRST_WAVE`, `ART_D5_FRAMES`) · `core/render/.../SupplyCatalog.kt` (the same geometry, held to it by `BenchArtSheetParityTest`) |
-| **Found** | 2026-10-12, a tester: the Art "looks amateurish". Critiqued 2026-10-14 by rendering all 34 at 24, 46 and 120px and at their landing sizes (§5.2, a 74mm page) |
+| **Found** | 2026-10-12, a tester: the Art "looks amateurish". Critiqued 2026-10-14 by rendering all 34 at 24, 46 and 120px and at their landing sizes (§5.2, a 74mm page); the renders are working files, not committed. The bench's A34 section shows shipped and redrawn side by side |
 | **Severity** | Product quality, not correctness. Every piece draws as specified; the specification is the problem |
 | **Status** | **Design frozen 2026-10-14 under the owner's delegation; not built.** The redraw is [`v21-bench.html`](mockups/v21-bench.html) A34, the rules are [SUPPLIES-SPEC §4.4](SUPPLIES-SPEC.md#house-style), the decision is [ADR-132](../DECISIONS.md#adr-132) (Proposed). The app still draws the shipped set until the Compose wave |
 
 **Why the set reads as amateurish.** Not one bad piece but four voices with nothing in common:
 
 1. **Weights.** Walls and lines run from 1 unit (crop marks, registration arms) through 2–3 (staple, clip,
-   window, border) to 4–4.6 (ring, eyelet). ✅ IBM: mixed weights "look like a mistake" (R26.1).
+   window, border) to 4–4.6 (ring, eyelet). ✅ IBM: mixed weights "look like a mistake" (R27.1).
 2. **The tear voice is a regular zig-zag.** Torn tape, Torn strip, Marker underline, Deckle edge and Torn
    hole all use near-even teeth of near-even depth. It reads as pinking shears or clip-art, not torn paper.
 3. **Two kinds of geometry side by side.** Ruler-perfect squares and circles sit beside 7- to 14-sided
@@ -7632,7 +7632,7 @@ of the current metadata.
 | Paper clip | Faceted polygon, reads as a clip only when large | A true Gem: one wire, three nested turns, never crossing |
 | Star | Ruler-perfect, generic | Keeps; points cut a little unequal |
 | Arrow | Block arrow, the most clip-art piece in the set | A drawn arrow: curved shaft, round tail, swept head |
-| Halftone dots | Square grid graded by column; reads as polka dots | 45° screen graded across the diagonal (R26.5) |
+| Halftone dots | Square grid graded by column; reads as polka dots | 45° screen graded across the diagonal (R27.5) |
 | Registration cross | Thin ring, arms stop at it; a hairline among bold pieces | Ring and full cross through it at W; four quarter holes |
 | Torn strip | Zig-zag on both long edges | Long edges in the tear voice; ends cut |
 | Window frame | Sound | Keeps; band 2W, cut voice |
@@ -7641,10 +7641,10 @@ of the current metadata.
 | Rectangle, Circle, Triangle, Straight rule | Ruler-perfect; fine alone, mechanical beside the rest | Keep; cut voice, up to 0.5 units off true |
 | Masking tape | A plain rectangle, the same as Rectangle | Crepe edges, finely torn ends |
 | Saddle stitch | Two long bars ("pause") | Three thread stitches down the spine |
-| Eyelet | A thick ring, near-identical to Ring | Flange and barrel: two rings, so it differs from Ring |
+| Eyelet | A thick ring, near-identical to Ring | Flange and barrel, each W, a 1.5 gap between: two rings, so it differs from Ring. Risk: may read as a target (Pass 2) |
 | Push pin | Funnel and spike | Side elevation: cap, grip, collar, needle |
 | Pointing hand | Unreadable block | Manicule: cuff, fist, three knuckles, index finger |
-| Crop marks | L-brackets at 1 unit | As a printer sets them: short lines outside each trim corner, not touching it (R26.5) |
+| Crop marks | L-brackets at 1 unit | As a printer sets them: short lines outside each trim corner (trim 6.5–17.5), not touching it (R27.5). Risk: less quick to read than brackets (Pass 2) |
 | Colour bar | Sound | Keeps; on the grid, 2-unit gutters |
 | Copier streak | Three wedges | Three unequal toner streaks, one broken, one fading |
 | Perforation | Square dashes, uneven | Five even slits, square-cut |

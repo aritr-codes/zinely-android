@@ -15751,10 +15751,10 @@ three are taken above.
 A34, under the owner's delegation of 2026-10-12 ("decide, do not ask"); the owner has not ruled on it
 personally and may overrule it. The ADR stays Proposed until the Compose wave builds it and the checks below
 are done.
-**Extends:** [SUPPLIES-SPEC §4.1](design/SUPPLIES-SPEC.md) (authoring rule) with §4.4 (house style).
+**Extends:** [SUPPLIES-SPEC §4.1](design/SUPPLIES-SPEC.md#41-authoring-rule-binding) (authoring rule) with §4.4 (house style).
 **Keeps:** [ADR-107](#adr-107) R2 (no randomisation), [ADR-124](#adr-124)'s tap-through list, A16's sheet,
 A32's two frames as named and ordered, the landing sizes of SUPPLIES-SPEC §5.2.
-**Defect:** [D-117](design/V2-SPEC-DEFECTS.md#d-117). **Evidence:** [RESEARCH R26](RESEARCH.md#r26-one-hand-for-a-set-of-single-ink-pieces-2026-10-14).
+**Defect:** [D-117](design/V2-SPEC-DEFECTS.md#d-117). **Evidence:** [RESEARCH R27](RESEARCH.md#r27-one-hand-for-a-set-of-single-ink-pieces-2026-10-14).
 
 #### Context
 
@@ -15762,7 +15762,7 @@ A32's two frames as named and ordered, the landing sizes of SUPPLIES-SPEC §5.2.
   to 4.6 units, a regular zig-zag for every tear, ruler-perfect shapes beside rough polygons, and three
   pieces that do not read as their names ([D-117](design/V2-SPEC-DEFECTS.md#d-117)).
 - ✅ Mixed weights and mixed levels of detail are what design systems name as making a set look like a
-  mistake (R26.1).
+  mistake (R27.1).
 - The Art is a frozen HTML spec held to the catalogue by `BenchArtSheetParityTest`, and one renderer draws
   it on all four surfaces. A redraw is therefore an HTML amendment first and a Compose wave second, and the
   second re-records every Art golden.
@@ -15792,7 +15792,7 @@ flowchart LR
 | Option | Why not |
 |---|---|
 | Fix only the three unreadable pieces | Leaves the mixed weights and the zig-zag, which are most of what reads as amateurish |
-| Make every edge hand-drawn, printer's marks included | A wobbly registration mark or halftone pretends a hand made what a machine makes; the exactness is the meaning (R26.5) |
+| Make every edge hand-drawn, printer's marks included | A wobbly registration mark or halftone pretends a hand made what a machine makes; the exactness is the meaning (R27.5) |
 | One weight in millimetres after landing, not in units | The landing sizes are an unverified reading (§5.2) and makers resize; the sheet, where the whole set is seen together, shows equal units |
 | Seeded noise for the torn edges | Fixed after authoring, but it reads as the randomisation ADR-107 refuses and cannot be reviewed coordinate by coordinate |
 | Replace pieces that do not work (an arrow for the hand) | Changes the set the owner ruled on; every piece could be redrawn to read |
@@ -15810,10 +15810,17 @@ flowchart LR
 
 - The Compose redraw and the switch-over above, with the golden re-record.
 - A printed page and a second-generation photocopy of all 34 at their landing sizes: no hole may fill in
-  (R26.2, R26.4).
+  (R27.2, R27.4).
 - Both device passes, including whether Pointing hand, Push pin, Saddle stitch and Crop marks read as their
   names to a first-time user.
 
 #### Review
 
-Recorded in the PR that adds this ADR.
+Two independent Review Agents, 2026-10-14, both **GO WITH FIXES**. Design lens: the margin rule (H4) was
+false for many pieces and four crossed it, and the Eyelet's bands (3 and 2 units) broke H1. Both fixed: H4
+now says what is drawn (nothing crosses the margin), the four were moved in, and the Eyelet is two W bands. It
+also found Crop marks, Saddle stitch and Eyelet less quick to read than the shipped pieces. Crop marks got a
+wider trim and Saddle stitch was centred; all three stay as drawn and are named for the first-time device
+pass. Torn strip and Torn hole were given a slow wave so they no longer read as a sawtooth or a gear. Docs
+lens: the same margin finding; the tear table was not in the repository (it is now printed in A34's
+comment); one link lacked its anchor (fixed). Reconciled item by item in the PR.
