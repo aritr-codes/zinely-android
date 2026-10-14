@@ -1313,10 +1313,11 @@ internal class RoomProjectRepository(
         val updatedAt = max(indexed?.updatedAtEpochMs ?: 0L, fileMtimeOrNull(docFile) ?: clock())
         return ProjectShelfEntry.Unavailable(
             id = id,
-            title = indexed?.title ?: meta?.title ?: DEFAULT_TITLE,
+            // Files win (ADR-042 §3, D-116): the readable sidecar first, the row only when it can't be read.
+            title = meta?.title ?: indexed?.title ?: DEFAULT_TITLE,
             paperSize = indexed?.paperSizeOrNull() ?: wire.paperSize,
             updatedAtEpochMs = updatedAt,
-            cover = indexed?.coverRecipe() ?: meta?.coverRecipe(),
+            cover = meta?.coverRecipe() ?: indexed?.coverRecipe(),
             reason = reason,
             folder = folder,
         )

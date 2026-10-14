@@ -7576,11 +7576,12 @@ cannot be read, the row is left alone, because it is the best copy left and the 
 place it was saved was the file that broke. That is the designed recovery: Zinely does not save a second copy
 of the current metadata.
 
-**Tests.** Two new JVM tests in `RoomProjectRepositoryTest`, both failing on `origin/main`:
+**Tests.** Three new JVM tests in `RoomProjectRepositoryTest`; the first two fail on `origin/main`:
 
 - the issue's case: rename, break `meta.json`, start a new repository on the same index; the Shelf,
-  `getProject` and `observeProjects` all show the title the repaired file holds;
+  `getProject` and `observeProjects` all show the title the repaired file holds, and the row keeps its `updatedAtEpochMs`;
 - a rename whose row write fails; the next reconcile shows the new title.
+- an unreadable document with a repaired `meta.json`; the unavailable card shows the file's title.
 
 **Known limits.**
 
@@ -7590,5 +7591,14 @@ of the current metadata.
   process.
 - The maker is not told that a title went back to an earlier one. The issue raised this; it would be a UI
   change and is not part of this fix.
-- Every scan now reads each zine's `meta.json` once. These are small files, and the Shelf already reads all of
+- In the failed-rename case the row keeps its old `updatedAtEpochMs`, so the renamed zine does not move up the
+  Shelf. Recency still follows the document's own save time (ADR-042 §7).
+- If the `.bak` predates a legacy zine's first cover (D-026 backfill), repairing from it gives the file no cover,
+  and the re-derive draws a new one. That breaks D-017's "same cover" promise, but only when a legacy zine's
+  `meta.json` also breaks before any other write. Accepted as rare.
+- If the zine's `document.json` cannot be read either, the row cannot be rebuilt (it needs the document). The
+  Shelf's unavailable card now takes its title and cover from the readable `meta.json` first, so it still shows
+  the file's title; the scan stays marked unfinished and runs again on the next use, as it already did for an
+  unreadable zine with no row.
+- Every scan now reads each zine's `meta.json` once and looks up its row (one query per zine). These are small files, and the Shelf already reads all of
   them each time it is drawn (folders, [ADR-125](../DECISIONS.md#adr-125)).

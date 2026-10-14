@@ -446,6 +446,8 @@ class RoomProjectRepositoryTest {
         repo().renameProject(id, "Pressed Ferns")
         // and, with the app stopped, meta.json is broken (the issue's hand-made invalid escape)
         Files.write(metaFile(id), """{"title":"\x"}""".toByteArray())
+        val rowUpdatedAt = db.projectDao().findById(id)!!.updatedAtEpochMs
+        now += 50
 
         // When — a new process starts against the same index
         val restarted = repo()
@@ -457,6 +459,24 @@ class RoomProjectRepositoryTest {
         assertEquals("My zine", shelf.title)
         assertEquals("My zine", restarted.getProject(id).getOrNull()!!.title)
         assertEquals("My zine", restarted.observeProjects().first().single().title)
+        // and the re-derive is not a metadata op: the row keeps its recency
+        assertEquals(rowUpdatedAt, db.projectDao().findById(id)!!.updatedAtEpochMs)
+    }
+
+    @Test
+    fun `given an unreadable document and a repaired meta json, then the unavailable shelf entry shows the file's title`() = runTest {
+        // Given — renamed, so meta.json.bak holds the old title; then both the document and meta.json break
+        val id = repo().createProject("My zine", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER).getOrNull()!!.id
+        repo().renameProject(id, "Pressed Ferns")
+        Files.write(documentFile(id), "not json".toByteArray())
+        Files.write(metaFile(id), """{"title":"\x"}""".toByteArray())
+
+        // When — the row cannot be re-derived (the document does not load)
+        val shelf = repo().observeShelfProjects().first().single()
+
+        // Then — the shelf still names the zine from the file, not the stale row
+        assertTrue(shelf is ProjectShelfEntry.Unavailable)
+        assertEquals("My zine", shelf.title)
     }
 
     @Test
