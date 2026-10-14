@@ -7597,3 +7597,12 @@ emulator pass covers them.
   it went. The two Layer glyphs (stacked squares) do not say which is backward without trying one. "Arrange"
   with the four-way arrow read as "move things"; whether it also says "size and turn" to a first-timer is the
   owner's small-phone pass.
+
+**Emulator, 2026-10-14.** Medium_Phone_API_36.1 at 360 × 640dp (1080 × 1920 at 480dpi), text size 2.0, same
+build. The page measured the same on screen selected and unselected (paper edges at identical pixels); D-113
+had it shrinking from about 300dp to about 195dp tall here. The tray fits without scrolling at this size,
+all ten controls at 144 × 144px (48dp), with the piece above it. The text verb bar scrolls, its edge fade
+cutting Delete, as D-113 intended. Found, not caused by this change, filed as
+[#134](https://github.com/aritr-codes/zinely-android/issues/134): the first-run hint wraps to five lines in its
+stadium shape and the curved ends clip its first and last words. The emulator is not a real small phone; that
+pass stays the owner's.
