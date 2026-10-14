@@ -98,7 +98,9 @@ public object ZinelyV2Fonts {
      * content never draws with this family: the render engine and, while a text is typed, the editing
      * surface both use the document's own faces from `render-android` assets (`EditingFontFamily.kt`,
      * ADR-126), where Book's italic now lives. So bundling an italic cut here would only make it
-     * reachable from chrome, which no frozen spec does. See **D-004**.
+     * reachable from chrome, which no frozen spec does. See **D-004**. *(2026-10-14: one exception since:
+     * frozen `v21-typebar.html` sets the Italic toggle's "I" in serif italic, `.tytog .i`; shipped
+     * draws it in Inter, a difference that file reports to the owner in its block B, item 1.)*
      */
     public val Voice: FontFamily = FontFamily(
         Font(R.font.fraunces_regular, FontWeight.Normal),

@@ -675,7 +675,7 @@ The file even measured the five ink fills against that dark ground and called it
 |---|---|---|---|
 | The page · page thumbnails | ✅ | paper | **correct** |
 | `ReframeControls` | ❌ outside | room | **correct** |
-| `TypeBar` ([`EditorScreen.kt:1380`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt)) | ✅ inside, no opt-out | **room** (spec: `v21-typebar.html`, the canvas block's *"the room is the Bench's"* comment) | **parity defect** |
+| `TypeBar` ([`EditorScreen.kt:1380`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt)) | ✅ inside, no opt-out | **room** (spec: `v21-typebar.html`, `<div class="typebar">` a sibling of `.page`) | **parity defect** |
 | `BenchSnack` (`EditorScreen.kt:1407`) | ✅ inside, **after** the opt-out provider closes at `:1365` | **room** — §D maps it as *"a note slid over"* | **parity defect, missed by my first draft** |
 | `ProofFoldAct`'s sheet diagram | ❌ | **paper** | **deferred, not unnoticed** — OD-12 says *"`v2-proof.html` … is NOT amended here … it is Phase D's to amend, under this ruling"* ([`V2-SPEC-DEFECTS.md:4389`](V2-SPEC-DEFECTS.md)) |
 
@@ -735,7 +735,7 @@ correction directly. The corrected position is the opposite, and it is *better f
 
 | My claimed blocker | What the file actually says |
 |---|---|
-| *"`v21-typebar.html` specifies the card in the light island palette"* | **False.** `:392` places `.typebar` as a **sibling** of `.page` (which closes at `:388`), and `:698-700` says in prose that the card *"floats on the **bench** and not inside the sheet island."* The spec already says what Ruling A concluded. |
+| *"`v21-typebar.html` specifies the card in the light island palette"* | **False.** the `<div class="typebar">` that follows `.canvasArea` in State 1 places `.typebar` as a **sibling** of `.page`, and the ink-fills caption at `3c3d152` (*2026-10-14: rewritten 2026-08-25 in `ecb7c17`*) says in prose that the card *"floats on the **bench** and not inside the sheet island."* The spec already says what Ruling A concluded. |
 | *"`v21-reframe.html` contains the rule-of-thirds guides"* | **False.** `grep -i "third\|rule-of\|composition"` over all 362 lines returns **zero matches**. The thirds exist only in Compose, at `ReframeOverlay.kt:203`, whose own comment already says *"the V2.1 Reframe spec has no thirds grid."* |
 | *"Both invent uppercase tracked labels V21-SPEC is silent on"* | **Half false.** V21-SPEC *is* silent (verified — zero hits for casing/tracking/ramp). But the pattern is not an invention: [`ZinelyV2Typography.kt:154`](../../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyV2Typography.kt) already ships a shared `sectionLabel` described as *"the one genuinely recurring chrome pattern, **appearing six times** across the Bench and Proof."* |
 
