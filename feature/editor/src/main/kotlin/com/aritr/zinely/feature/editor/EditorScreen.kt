@@ -1748,7 +1748,10 @@ public fun EditorScreen(
                 val gesturing = live != null || resizeOverride != null
                 val showMoveResizeHint =
                     !editing && !gesturing && uiState.selection.size == 1 &&
-                        !moveResizeHintDismissed && moveResizeHintSeen == false && !saveErrorVisible
+                        !moveResizeHintDismissed && moveResizeHintSeen == false && !saveErrorVisible &&
+                        // The Type bar opens under the top of the canvas too; at large text the hint (which
+                        // names Arrange since ADR-129) grew tall enough to cover its Font row and take its taps.
+                        !typeBarVisible
                 // Room palette, like the verb bar below: the hint is chrome over the page, and inside the
                 // island it took the light `ink` onto the room's dark card at night (found on device, 2026-10-14).
                 if (showMoveResizeHint) CompositionLocalProvider(

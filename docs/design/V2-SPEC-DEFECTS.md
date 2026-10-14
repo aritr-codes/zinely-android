@@ -7607,6 +7607,10 @@ cutting Delete, as D-113 intended. Found, not caused by this change, filed as
 stadium shape and the curved ends clip its first and last words. The emulator is not a real small phone; that
 pass stays the owner's.
 
+**Merging main, 2026-10-14.** The same tall hint, at text size 2 on a 360 × 800dp host, covered the Type bar's
+Font row and took the tap meant for Plain (`TypeBarFontRowTest`, 360 × 800 case). The hint now steps aside
+while the Type bar is open and comes back when it closes, as it already does for a save failure.
+
 ---
 
 ### D-116 — a repaired `meta.json` brings back an older title while the Shelf keeps the newer one {#d-116}
