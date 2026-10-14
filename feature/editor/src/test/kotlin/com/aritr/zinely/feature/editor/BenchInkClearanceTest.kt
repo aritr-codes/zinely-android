@@ -169,18 +169,23 @@ class BenchInkClearanceTest {
     }
 
     @Test
-    fun a_page_top_element_is_already_clear_and_costs_only_the_slack() {
+    fun a_page_top_element_costs_the_slack_and_at_most_its_own_height() {
         // Until D-113 the tray was as tall as the canvas and covered even a box at the very top of the
         // page, so this test asserted a clearance term here. The tray now stops short of the canvas top,
-        // a top-of-page box is clear of it at rest, and the lift is the free slack alone.
+        // so a top-of-page box costs the free slack plus, at most, the sliver of itself the tray reaches.
+        // (Before ADR-129 the transform bar shortened the canvas and the sliver was zero; the taller canvas
+        // centres the page lower, so on this host the tray now reaches ~3px into the box.)
         val store = placedText(topOfPage)
         val rest = paperTop()
         val slack = rest - composeRule.onNodeWithTag(EditorCanvasTestTag).fetchSemanticsNode().boundsInRoot.top
+        val boxPx = (topOfPage.heightPt * store.uiState.value.view.screenPxPerPt).toFloat()
 
         openInk()
 
+        val lift = rest - paperTop()
         assertTrue("this host must HAVE slack or the assertion proves nothing (slack $slack)", slack > 1f)
-        assertEquals("a box the tray does not cover is lifted by the slack alone", slack, rest - paperTop(), 1f)
+        assertTrue("the lift spends the slack first (lift $lift, slack $slack)", lift >= slack - 1f)
+        assertTrue("and no more than the box itself beyond it (lift $lift, box $boxPx)", lift <= slack + boxPx + 1f)
         assertInViewAbove(BenchInkPopoverTestTag, topOfPage, store)
     }
 
@@ -203,6 +208,31 @@ class BenchInkClearanceTest {
         val panel = bounds(panelTag)
         assertTrue("the text box must sit above the panel (bottom $bottom, panel $panel)", bottom <= panel.top + 1f)
         assertTrue("and inside the canvas (top $top, canvas $canvas)", top >= canvas.top - 1f)
+    }
+
+    private fun openArrange() {
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ARRANGE}").performClick()
+        composeRule.waitForIdle()
+    }
+
+    @Test
+    fun the_arrange_tray_leaves_the_piece_it_moves_in_view() {
+        val store = placedText(midPage)
+        openArrange()
+        assertInViewAbove(ArrangeTrayTestTag, midPage, store)
+    }
+
+    @Test
+    fun nudging_under_the_open_tray_does_not_slide_the_page() {
+        // ADR-129 point 5: the lift is measured from where the piece stood when the tray opened. A re-lift on
+        // every nudge would slide the page under a piece that seems to stand still.
+        val store = placedText(midPage)
+        openArrange()
+        val opened = paperTop()
+        composeRule.onNodeWithTag("$ArrangeTrayTestTag-${Copy.A11y.MOVE_DOWN}").performClick()
+        composeRule.waitForIdle()
+        assertEquals(midPage.yPt + EditorA11y.NUDGE_STEP_PT, store.uiState.value.document.pages[0].elements.single().transform.yPt, 1e-9)
+        assertEquals("the page must not move when the piece does", opened, paperTop(), 1f)
     }
 
     @Test

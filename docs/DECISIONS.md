@@ -138,7 +138,7 @@
 | [ADR-126](#adr-126) | **Two document voices, Book (Fraunces) and Plain (Inter), with no change to the saved format.** `fontFamily` carries the voice; an unknown family is drawn as Inter and kept, so an older build re-wraps and may cut off a Book text but loses nothing; four unmodified upstream static faces; each voice declares its scripts (Book has no Greek or Cyrillic); the editing surface draws the document's own faces; the control is a Font row amended into the frozen type bar (A29). Built and merged to `main` on 2026-10-09 (PR #108); shipped in `0.9.0-beta.7` on 2026-10-11; not accepted. Supersedes two of ADR-055's exclusions: font choice, and font bundling for the four Book faces alone | Proposed |
 | [ADR-127](#adr-127) | **The app is portrait only on phones.** No screen has a landscape layout; a turned phone got the upright layout in a 360dp-tall window. `MainActivity` is locked to portrait. Android 16 ignores the lock on screens 600dp and wider, so tablets are not covered | Accepted |
 | [ADR-128](#adr-128) | **A docked panel leaves the thing it edits in view.** The Ink tray and the Text panel stop short of the canvas top by a band sized to the selected element, and the page lifts the element into it; for those panels and for Reframe the lift stops at the element's own top instead of 96dp. Deviates from frozen A16; recorded in D-113 | Accepted |
-| [ADR-129](#adr-129) | **Moving a piece by buttons lives in a Move tray, not in a bar that takes rows from the canvas.** The two-row accessible bar (A14) makes the page shrink each time something is selected. Proposed: the controls move into a tray opened from the verb bar, which follows ADR-128. It would reverse OD-11, so it needs the owner and an HTML amendment before any Compose | Proposed |
+| [ADR-129](#adr-129) | **Moving a piece by buttons lives in an Arrange tray, not in a bar that takes rows from the canvas.** The two-row accessible bar (A14) made the page shrink each time something was selected. The ten controls now open from an Arrange verb on the verb bar, in a tray that follows ADR-128 (Bench A33). Reverses OD-11 and ADR-092's reading of it; decided under the owner's delegation, which the owner may overrule | Accepted |
 | [ADR-130](#adr-130) | **The typing-time notice says "prints in a font from your phone" for what the phone draws.** The check asks `Paint.hasGlyph` on the face the renderer resolves, which walks the same fallback chain; a script every character of which the phone draws gets the new line, anything else keeps ADR-070's "can't print yet". Amends ADR-070 (issue #103, D-115) | Accepted |
 | [ADR-132](#adr-132) | **The Art pieces are drawn by one hand.** One line weight (2.5 of 24 units), flat views, a fixed margin, and an edge that says what made it (cut, torn, drawn, metal, printer's mark); torn edges read one hand-written tear table, never a zig-zag. All 34 redrawn as bench A34, design frozen under the owner's delegation; ids, names, sizes and the eight holed pieces unchanged. The Compose redraw and every Art golden are a later wave | Proposed |
 | [ADR-133](#adr-133) | **Paper is a closed, named set; the imposition engine takes any sheet.** Answers the paper half of ADR-016. A person picks a size by name and the file stores the name; `Imposer.layout` also takes any portrait sheet, proved by properties. US Legal and A5 are the next sizes, in their own schema bump after v4, chosen at the start of a zine only; half-Letter, A3 and Tabloid are not | Accepted (engine and closed set); sizes decided, not built |
@@ -556,7 +556,7 @@
   3. **Pure reducer; I/O on a side-effect channel.** `reduce` is pure/synchronous and returns `Reduction(model, List<Effect>)`; `Effect = Autosave(document) | PickAndDecodeImage | Announce`. `Autosave` is emitted **only** by document-mutating intents; **debounce/conflation/cancellation live in the runner** (the S2B [ADR-009](#adr-009) binder owns write timing), never the reducer (Codex required-fix #5). Image pick/decode failure is an explicit path, not a silent no-op (Codex rec #6).
   4. **Undo = command objects with field-level mementos** ([ADR-005](#adr-005), [R5.1](RESEARCH.md#r51-undoredo)) — `TransformCommand`/`ReorderCommand`/`DeleteCommand`/`PlaceCommand`/`EditTextCommand`/`AddPageCommand`/`DeletePageCommand`, each storing only touched fields; **no per-frame snapshots, no deep clones** (the [R9.3](RESEARCH.md#r93-layering-undo-imposition) perf trap). One gesture / one text session / one a11y tap = **one** command (begin/update/commit, [R5.3](RESEARCH.md#r53-coalescing-a-drag-into-one-undo-step)). Page edits are undoable; undo of an off-current-page command **navigates to that page and announces** rather than silently mutating off-screen (Codex required-fix #8 + obs). Asset GC reachability = **document ∪ history mementos** (a deleted image is still referenced by its `DeleteCommand`) (Codex required-fix #7).
   5. **Gesture → `AffineTransform2D`.** `detectTransformGestures` yields **one** `{pan,zoom,rotation}` callback → a single ephemeral preview through `Modifier.graphicsLayer{}` (frames skip the reducer, [R5.3](RESEARCH.md#r53-coalescing-a-drag-into-one-undo-step)); on end, **bake** centre-stable into committed `Transform` (uniform pinch keeps aspect; pan in **page space**; uniform-scale and centre-rotation commute, so `rotation ≠ 0` is correct). `:core:render` derives the matrix. **Anchors are input-dependent:** pinch/`ScaleBy` → element **centre**; corner/edge handles hold the **opposite anchor fixed in page space** (the only place rotation threads through resize) (Codex required-fix #2). Hit-test needs **no matrix inverse** (decomposed model): subtract centre, un-rotate, AABB — iterating `(zIndex desc, listIndex desc)` to mirror the renderer's stable draw order (Codex required-fix #3). Snap threshold `≈ 8px / screenPxPerPt` → points, preview-applied/commit-baked, guides render-only ([R5.4](RESEARCH.md#r54-scene-model-hit-testing-snapping)). `zIndex` is normalised to dense unique `0..n-1` on editor load so reorder is well-defined (Codex required-fix #4). `BeginTransform` is reducer-owned (single-source `before` snapshot) and a monotonic `token` rejects stale commits after nav/cancel (Codex required-fix #1 + rec #2). Groups: commit operates on `Map<id,Transform>` about the group-bbox centre — multi-select is additive; **MVP selects one**.
-  6. **Accessibility is load-bearing on the intent set** ([R10](RESEARCH.md#r10-editor-accessibility--wcag-22-aa--androidmaterial-3-guidelines)). `Nudge`/`ScaleBy`/`RotateBy` are **first-class intents sharing the gesture commit path** (WCAG 2.5.7 dragging alternative — TalkBack/Switch-Access cannot pinch/rotate), surfaced as contextbar steppers + per-element `semantics{customActions}`; plus focusable per-element semantics on the silent Canvas, ≥48dp hit targets, `md-outline` (≥3:1) boundaries, real button/list/heading semantics, and edge-to-edge `WindowInsets`. The text-edit session is race-safe: draft text is feature-ephemeral, force-committed on `ON_PAUSE` so autosave persists the latest string before a kill (Codex required-fix #6).
+  6. **Accessibility is load-bearing on the intent set** ([R10](RESEARCH.md#r10-editor-accessibility--wcag-22-aa--androidmaterial-3-guidelines)). `Nudge`/`ScaleBy`/`RotateBy` are **first-class intents sharing the gesture commit path** (WCAG 2.5.7 dragging alternative — TalkBack/Switch-Access cannot pinch/rotate), surfaced as contextbar steppers (since [ADR-129](#adr-129), an Arrange tray opened from the verb bar) + per-element `semantics{customActions}`; plus focusable per-element semantics on the silent Canvas, ≥48dp hit targets, `md-outline` (≥3:1) boundaries, real button/list/heading semantics, and edge-to-edge `WindowInsets`. The text-edit session is race-safe: draft text is feature-ephemeral, force-committed on `ON_PAUSE` so autosave persists the latest string before a kill (Codex required-fix #6).
 - **Consequences:** The highest-complexity component gets atomic semantic undo at O(touched-fields) memory, 60–120fps drags (frames bypass the reducer), and **pure, unit-testable geometry** (reducer/hitTest/snap/bake are JVM-tested in `:core:editor`, no Android). Preview↔export parity is preserved by construction — the editor only ever writes decomposed `Transform`, and the proven `SceneRenderer`/`CanvasReplayer`/`PagePreview` path renders it. Costs: one new pure module + the gated feature module; multi-select/groups, duplicate/clipboard, and rapid-nudge coalescing are designed-in but **deferred past MVP** (single-select ships first).
 - **Alternatives considered:**
   - **Fork a new editor-local geometry model** (e.g. stored matrices): rejected — re-introduces stored-matrix drift [R9.4](RESEARCH.md#r94-recommendation) warns against and a second source of truth vs the persisted `Transform`; the renderer already derives the matrix.
@@ -1377,6 +1377,9 @@ This is a reversible product decision, not a claim that discoverability is perfe
 first-time task observation shows that makers cannot find a relevant existing action after the current labels and
 coach. Any proposal then starts as a canonical `v21-bench.html` variant, compares the existing toolbar with the
 candidate interaction, and passes accessibility and device review before Compose changes.
+
+**Later, 2026-10-14:** [ADR-129](#adr-129) moved the transform controls into an Arrange tray. It does not claim this
+threshold was met: its reason is that the page changed size on every select, which was measured.
 
 ## ADR-054 {#adr-054}
 
@@ -3619,6 +3622,7 @@ correct and regression-tested; what is outstanding is a judgement, and it is [D-
 ### 4. What C2b must not do
 
 - **must not** remove, gate, re-skin or re-order `EditorContextBar` or any of its eight transform verbs — [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling), [ADR-029 §6](#adr-029), WCAG 2.5.7.
+  - ✎ **Reversed by [ADR-129](#adr-129), 2026-10-14** (under the owner's delegation): the ten controls now open from the verb bar's `Arrange`, in a tray, so they are one tap away rather than always on screen. Left as the record of C2b.
   - ✎ **Amended by [OD-14](design/V2-SPEC-DEFECTS.md#d-039-ruling), 2026-08-02.** `Delete` — which is **not** one of the eight, and was never a gesture, so never needed a single-pointer twin — is withheld from that bar for exactly as long as the frozen bar offers it, and returns the instant the frozen bar stands down. The eight transform verbs and the `Style` disclosure are untouched in every state. The gate is on **presentation**; no capability is ever off-screen, which is the thing OD-11 and WCAG 2.5.7 actually protect.
 - **must not** remove the `ReframeAffordanceChip` or its coach-mark, however redundant the `Reframe` verb makes it — §2.
   - ✎ **Amended by [OD-14](design/V2-SPEC-DEFECTS.md#d-039-ruling), 2026-08-02**, on the same presentation-vs-capability argument as the bullet above. The chip and its coach-mark are **not removed**: they are withheld for exactly as long as the frozen bar offers `Reframe` by name, and return the instant it stands down. `Reframe` is never off-screen — what changes is which control carries it, which is what the ruling asked for.
@@ -15662,88 +15666,121 @@ top alone), and the clearance tests unable to fail (rewritten). Reconciled in
 
 ## ADR-129 {#adr-129}
 
-### Moving a piece by buttons lives in a Move tray
+### Moving a piece by buttons lives in an Arrange tray
 
-**Status:** Proposed, 2026-10-13. **A proposed direction only: nothing is built, nothing is frozen, and it is
-not decided.** Written under the owner's delegation of that day as the answer to item 2 of
-[D-113](design/V2-SPEC-DEFECTS.md#d-113). The delegation covered the rulings that were open; this proposal
-would reverse a ruling the owner already made (below), so it stays Proposed until the owner has seen it as
-an HTML amendment, per the [HTML-first workflow](../CLAUDE.md#html-first-ui-workflow-mandatory). Until then
-the bar stands as built.
-**Would amend or reverse:**
-- A14 and [D-078](design/V2-SPEC-DEFECTS.md#d-078): the in-flow two-row accessible bar.
-- [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling) and [ADR-092](#adr-092): the owner ruled that the shipped
-  transform bar is kept beside the frozen verb bar, and ADR-092 reads that ruling as "no capability is ever
-  off-screen". A tray opened by a tap puts the transform buttons one tap away. That is a reversal, not a
-  reading.
-- The [Issue #54 evaluation](#issue-54-evaluation--retain-the-visible-element-toolbar-2026-09-10), which kept
-  the visible toolbar and set a first-time task round showing repeated failure as the threshold for
-  reconsidering it. **That threshold is not met:** no such round has been run. This proposal rests on a
-  different finding (the page resizing, measured) and does not claim the toolbar is hard to find.
+**Status:** Accepted, 2026-10-14, under the owner's delegation of 2026-10-12 ("you dont have to ask for my
+calls … find solution which is best for the overall product and the end customers"); the owner has not ruled
+on it personally and may overrule it. Proposed 2026-10-13 as a direction only. Designed and frozen as
+[`v21-bench.html` A33](design/mockups/v21-bench.html) and built in the same change.
+**Owner checks still owed:** a TalkBack listen and a pass on a real small phone (see
+[OWNER-CHECKLIST](OWNER-CHECKLIST.md)).
 
-**Follows:** [ADR-128](#adr-128).
-**Evidence:** [RESEARCH R25](RESEARCH.md#r25-selection-controls-that-take-room-from-the-canvas-2026-10-13).
+**Reverses, stated rather than hidden:**
+- [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling) and [ADR-092](#adr-092): the owner ruled on 2026-08-02 that
+  the shipped transform bar is kept beside the verb bar, and ADR-092 §4 read that as "no capability is ever
+  off-screen". The capability stays; it is now one tap away. That is a reversal of the reading, not a new
+  reading of the ruling. OD-11's own condition was "during a parity phase", and that phase is over; that is
+  context, not the reason.
+- A14 and [D-078](design/V2-SPEC-DEFECTS.md#d-078): the in-flow bar that wraps "toward the page". A33
+  supersedes A14; A14 is not rewritten.
+- The [Issue #54 evaluation](#issue-54-evaluation--retain-the-visible-element-toolbar-2026-09-10) set a
+  first-time round showing repeated failure as the threshold for reconsidering the visible toolbar. **That
+  threshold is not met and is not claimed.** This decision rests on a different, measured finding: the page
+  changes size when anything is selected.
+
+**Follows:** [ADR-128](#adr-128). **Evidence:**
+[RESEARCH R25](RESEARCH.md#r25-selection-controls-that-take-room-from-the-canvas-2026-10-13) and
+[R28](RESEARCH.md#r28-tap-only-arrange-controls-one-step-away-and-what-to-call-them-2026-10-14).
 
 #### Context
 
-- ✅ Selecting anything adds a two-row bar of move, size, turn and order buttons under the bottom bar. Its
-  rows (about 106dp) come out of the canvas, so the page is refitted smaller on every select and larger on
+- ✅ Selecting anything added a two-row bar of move, size, turn and layer buttons under the bottom bar. Its
+  rows (about 106dp) came out of the canvas, so the page was refitted smaller on every select and larger on
   every deselect. On a 360 × 640dp screen the page went from about 300dp tall to about 195dp (emulator,
   2026-10-13); at 2× text its bottom went under the verb bar.
-- ✅ The bar exists so that nothing needs a drag: WCAG 2.5.7 asks for a way to do every dragging action
-  with single taps. Its own examples reveal that way after a selection or from a menu
-  ([R25.1](RESEARCH.md#r25-selection-controls-that-take-room-from-the-canvas-2026-10-13)).
-- 🟦 The Bench screen answers *"how do I change this page?"*. A page that changes size when it is touched
-  reads as the page reacting to the touch, before the maker has done anything.
-- 🟨 Nobody has been watched using the bar or looking for it. How many makers move pieces by buttons is
-  not known.
+- ✅ The bar exists so that nothing needs a drag (WCAG 2.5.7). W3C's own examples reveal the tap-only way
+  after a selection or from a menu (R25.1, R28.2).
+- ✅ None of the official editor sources checked keeps a nudge bar in the layout; they put exact or layer
+  controls one step away (R28.1; Word's source is desktop, Canva and Adobe Express are 🟨). 🟦 That the page
+  therefore keeps one size there is an inference, not a measurement.
+- ✅ Screen-reader and switch users never depended on the bar: every element already carries the same
+  ten actions as custom accessibility actions (`EditorA11y.elementCustomActions`). The bar is the path for
+  someone who taps without assistive technology.
+- ⚠️ The web.dev layout-shift argument the proposal leaned on cuts both ways (R28.3), so it is not used.
+- 🟨 Nobody has been watched using the bar. How many makers move pieces by buttons is not known.
 
-#### Proposal
+#### Decision
 
 ```mermaid
 flowchart LR
-    S["Select a piece"] --> V["Verb bar\n(floats over the canvas edge, as now)"]
-    V -->|"one verb"| T["Tray with the transform buttons"]
+    S["Select a piece"] --> V["Verb bar\n(floats over the canvas edge, as before)"]
+    V -->|"Arrange"| T["Arrange tray\nMove · Size · Turn · Layer"]
     T --> P["Page slides the piece into view\nabove the tray (ADR-128)"]
-    T -->|"Done"| V
+    T -->|"Done or Back"| V
+    T -->|"tap another piece"| T
+    T -->|"tap empty page, edit text, Reframe, page change"| R["Tray closes"]
 ```
 
-1. **The two-row bar leaves the layout.** The canvas keeps one size whether or not something is selected.
-2. **One verb in the verb bar opens a docked tray** holding the same actions. The tray behaves like the
-   Flip and Ink trays, and the page slides so the piece stays in view above it ([ADR-128](#adr-128)).
-3. **Nothing about the gestures changes.** Dragging, the handles and the turn handle stay.
-
-Constraints the design must meet, whatever it looks like: every action the bar has today is still reachable
-by taps alone; each target is at least 48dp; the first-run hint and the spoken description of a selection
-name the way in.
+1. **The two-row bar leaves the layout.** The page keeps one size whether or not something is selected
+   (`EditorScreenTest.selecting_a_piece_does_not_change_the_page_size`).
+2. **An `Arrange` verb, second on every kind's verb bar**, opens a tray that replaces the bar the way the
+   Flip tray does (A22). Second, so it is in view on the narrowest phone without scrolling: an always-visible
+   label is what keeps the cost of one step small (R28.4).
+3. **The tray holds the same ten buttons, in four labelled groups:** Move (left, up, down, right), Size
+   (smaller, larger), Turn (counterclockwise, clockwise), Layer (backward, forward). Same intents, same steps,
+   one undo step per tap, same spoken labels. Group names are visible text and headings.
+4. **The tray stays open when another piece is selected**, so arranging several pieces costs one Arrange tap,
+   not one per piece. Done and Back close it and return focus to Arrange; a tap on empty page, a text
+   session, Add, Reframe and a page change close it.
+5. **The page lifts the piece above the tray by ADR-128's rule**, measured from where the piece stood when the
+   tray opened, not from where each nudge leaves it. Re-lifting on every nudge would slide the page under a
+   piece that seems to stand still, which reads as the opposite of "Move down".
+6. **No Delete and no Text-style control in the tray.** Delete is on the verb bar; the verb bar's `Text`
+   already opens the text card that the old bar's `Text style` toggle opened.
+7. **The first-run hint names Arrange** instead of "the arrows below".
 
 #### Alternatives considered
 
 | Option | Why not |
 |---|---|
-| Keep the bar as built | The resize is the defect; on a small phone the selected page is a third smaller |
+| Keep the bar as built (keep OD-11's reading) | The resize is the defect, for every maker on every select; the bar serves a smaller group whom the tray still serves, one tap later |
 | Reserve the two rows always | A smaller page at rest for everyone, to hold buttons most makers may never use |
 | Float the bar over the page | It covers the bottom of the page, which is where the piece often is |
-| Put the buttons where the page strip is | Research ranks it first (R25), but the strip is how a maker changes page with something selected, and swapping it hides that |
+| Put the buttons where the page strip is | Research ranks it first (R25), but the strip is how a maker changes page with something selected |
+| Name it "Move" | Names a quarter of what the tray does (R28.5) |
+| A "speak the way in" announcement on every selection | Screen-reader users already have the ten actions on the element itself; a second announcement on each select is noise. ADR-129's proposal asked for it; this is where it was answered |
 
 #### Consequences
 
-- One more tap for a maker who moves by buttons, and a capability that is on screen today is one tap away.
-- The verb bar grows by one verb and already scrolls on a 360dp phone; it now shows that it scrolls
-  ([D-113](design/V2-SPEC-DEFECTS.md#d-113) item 6).
-- The bar's tests and the goldens of every selected state change.
-
-#### Not decided here
-
-The verb's name and place in the bar, the tray's layout and wording, and whether size and turn sit with
-move or apart. Those belong to the HTML amendment.
+- One more tap for a maker who moves by buttons, once per arranging session rather than once per piece.
+- The verb bar grows by one verb: a photo has eight, so on a 384dp phone it now scrolls, with D-113's edge
+  fade showing that it does.
+- **The visible way to close the text card while keeping the selection was the old bar's `Text style`
+  toggle.** Back still closes it and keeps the selection; tapping empty page closes it with the selection.
+  The text card's own close question (v21-typebar.html, "How the panel closes") stays open and is the owner's.
+- While the tray is open the bottom bar's Done is still live and still means "finish": two controls named
+  Done, as with the Flip tray (A22). Recorded, not changed here.
+- The bar's tests became the tray's tests; the goldens of every selected state change.
+- Multi-selection is not reachable from the interface. The old bar handled it; the tray is for one piece.
+  If multi-selection is ever built, it needs its own ruling.
 
 #### Review
 
-Independent Review Agent, reading only, 2026-10-13: **GO WITH FIXES** for the documentation of this change.
-For this ADR it found: "decided" used of a Proposed record; the rulings it would reverse (OD-11, ADR-092,
-the Issue #54 threshold) not cited; layout and wording details decided that the HTML amendment owns. All
-three are taken above.
+Independent Review Agent, reading only, 2026-10-13: **GO WITH FIXES** for the documentation of the proposal.
+It found: "decided" used of a Proposed record; the rulings it would reverse (OD-11, ADR-092, the Issue #54
+threshold) not cited; layout and wording details decided that the HTML amendment owns. All three were taken.
+
+Two independent Review Agents, reading only, 2026-10-14, on the built change:
+- **Docs: GO WITH FIXES.** Three required fixes, all taken: a blockquote swallowing the paragraph after the
+  OD-11 note, a stale OWNER-CHECKLIST row, ARCHITECTURE naming the removed Text style control. It also
+  narrowed this record's research claim (taken) and the NN/g citation in R28.4 (taken).
+- **Code: GO WITH FIXES.** Its required fix (goldens not yet recorded) was already done on CI. Taken: the tray
+  now yields to Ink and Flip, which an element's own TalkBack action can open over it; tests for the lift,
+  for nudging without re-lifting, for focus returning to Arrange and for a page change; headings read off the
+  platform tree. Partly taken: it judged the loosened `BenchInkClearanceTest` bound harmless but imprecise;
+  the bound stays, because the in-view assertion beside it is the real guard. Not taken: it read "Accepted"
+  as premature while device passes were owed. ADR-127 and ADR-128 set the precedent under the same
+  delegation, and the owner's checks are listed in OWNER-CHECKLIST.
 
 ## ADR-130 {#adr-130}
 

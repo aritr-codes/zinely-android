@@ -1035,3 +1035,61 @@ line features distort across photocopy generations, "much more pronounced… bey
   most readers know.
 
 🟦 Applied in the *printer's mark* voice of §4.4: these are drawn exact, not by hand.
+
+## R28. Tap-only arrange controls one step away, and what to call them (2026-10-14)
+
+Asked before deciding [ADR-129](DECISIONS.md#adr-129): does any evidence argue for keeping the bar that
+shrinks the page, and what should the way in be called? Research Agent pass, 2026-10-14. R25 is the first
+pass and is not repeated here.
+
+### R28.1 Mainstream editors put exact controls one step away, not in a bar in the layout — ✅ VERIFIED, 🟨 for Canva and Adobe Express
+
+- [Google Slides on Android](https://support.google.com/docs/answer/1696521?hl=en&co=GENIE.Platform%3DAndroid):
+  move, resize and turn are drags; layer order is behind the selection menu's More.
+- [Keynote on iPhone](https://support.apple.com/guide/keynote-iphone/tanb46504b79/ios): nudging is a
+  multi-finger gesture; exact position is in Format > **Arrange**.
+- [Procreate](https://help.procreate.com/procreate/handbook/transform/transform-interface-gestures): tap-only
+  nudges exist, but only inside Transform mode, opened from a button. The closest precedent found for
+  single-tap nudges one step away.
+- [Word](https://support.microsoft.com/en-us/office/align-or-arrange-objects-bfd91078-2078-4b35-8672-f6270690b3b8):
+  layer order sits in an **Arrange** group that appears only when a shape is selected (desktop).
+- 🟨 Canva's phone editor: third-party guides describe a Position entry in the selection toolbar; Canva's own
+  pages refused the fetch. Adobe Express mobile: one user report only.
+- None of the official sources keeps a nudge bar in the layout.
+
+### R28.2 The tap-only path may sit one step away; the element's own screen-reader actions do not replace it — ✅ VERIFIED, 🟦 for the inference
+
+- [WCAG 2.5.7 Understanding](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html): the
+  alternative "does not have to be the same component, so long as the functionality is equivalent"; its
+  examples are select-then-arrow-buttons and a menu. The same page says keyboard equivalence alone does not
+  meet the criterion.
+- [Android accessibility principles](https://developer.android.com/guide/topics/ui/accessibility/principles):
+  expose gestures as custom actions for TalkBack, Voice Access and Switch Access. Zinely already does, on
+  every element (`EditorA11y.elementCustomActions`).
+- 🟦 Inference: custom actions serve assistive-technology users; a person tapping without one never sees them.
+  The visible tap path must stay, which is why the tray exists rather than nothing.
+
+### R28.3 The layout-shift argument cuts both ways — ⚠️ DISPUTED
+
+[web.dev on CLS](https://web.dev/articles/cls) also says shifts in response to a user's own input "are
+generally fine, as long as the shift occurs close enough to the interaction that the relationship is clear".
+By that standard the shrink on select is not clearly a fault. So ADR-129 does not rest on CLS. It rests on
+the size of the loss (about a third of the page's height on a 360 × 640dp phone, at the moment the maker is
+judging the layout) and on R28.1.
+
+### R28.4 Hiding controls has a measured cost — ✅ VERIFIED
+
+[NN/g, "Hamburger Menus and Hidden Navigation Hurt UX Metrics"](https://www.nngroup.com/articles/hamburger-menus/)
+(with its follow-up, [Find navigation on mobile](https://www.nngroup.com/articles/find-navigation-mobile-even-hamburger/)):
+hidden menus were found less often and used more slowly on phones. 🟦 That study is website navigation, not
+editor tools; the analogy is ours. That is the case for keeping the bar. It is why
+the way in is a labelled verb that is always on the verb bar, never in an overflow, and why the tray stays
+open while the maker moves from piece to piece.
+
+### R28.5 The name — 🟦 RECOMMENDATION
+
+"Arrange" has two first-party precedents for a group of position, size and layer controls (Keynote, Office).
+"Position" is Canva's (unverified on phones). "Transform" is Procreate's and too technical for beginners.
+"Move" names a quarter of what the tray does. "Adjust" means colour and light in photo apps. Taken:
+**Arrange**. Whether beginners understand it is a first-time-user question for the device pass; no study
+compares these words.

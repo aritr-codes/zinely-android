@@ -145,7 +145,7 @@ internal val LocalReframePhotoLoader = staticCompositionLocalOf { ProductionRefr
  *     so they sit above the gesture surface and win the hit-test without racing it.
  *  4. [ElementSemanticsLayer] — the accessible mirror (semantics-only, consumes nothing).
  *  5. The [EditTextSession] overlay when an [Interaction.EditingText] is open (IME-padded sheet).
- * The [EditorContextBar] (the visible 2.5.7 single-pointer twins) sits below the canvas, shown on selection.
+ * The [ArrangeTray] (the visible 2.5.7 single-pointer twins) opens from the verb bar's Arrange (ADR-129).
  *
  * Stateless beyond the two gesture accumulators: [store] is hoisted (constructed with its effect runner at
  * the DI/app layer). The model is collected with `collectAsStateWithLifecycle`; the gesture/handle layers
@@ -576,6 +576,12 @@ public fun EditorScreen(
     var flipReturnPending by remember { mutableStateOf(false) }
     val flipVerbFocus = remember { FocusRequester() }
     val flipFirstFocus = remember { FocusRequester() }
+    // Bench A33 / ADR-129: the Arrange tray. A flag, not an id like Flip's: the tray stays open when the
+    // selection moves to another piece, so arranging several pieces costs one Arrange tap, not one each.
+    var arrangeOpen by remember { mutableStateOf(false) }
+    var arrangeReturnPending by remember { mutableStateOf(false) }
+    val arrangeVerbFocus = remember { FocusRequester() }
+    val arrangeFirstFocus = remember { FocusRequester() }
     // Back stands the panel down instead of leaving the editor — the same rule the page grid and the ink
     // popover already follow, and the same reason: a prototype has no Back, so the freeze cannot specify
     // it, and an overlay you summoned is one Android expects Back to dismiss.
@@ -631,8 +637,12 @@ public fun EditorScreen(
     // every one of them returns the moment the frozen bar does not (an open session, an open Type bar, a
     // Reframe, a multi-selection, or a kind with no frozen verb set).
     //
-    // Hoisted this high because the three sites it governs are in three different scopes: the chip inside
-    // the sheet island, the frozen bar inside the canvas, the transform bar below both.
+    // ⚠ Bench A33 / ADR-129 (2026-10-14) moved the transform verbs into the Arrange tray, opened from the
+    // frozen bar. The bar below the page is gone, so nothing here is presented twice any more; the history
+    // above is the record of why the split existed.
+    //
+    // Hoisted this high because the sites it governs are in different scopes: the chip inside the sheet
+    // island, the frozen bar and the Arrange tray inside the canvas.
     val ctxElement = uiState.selection.singleOrNull()?.let { id ->
         uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id }
     }
@@ -727,13 +737,25 @@ public fun EditorScreen(
     // the term the freeze writes and this call site did not: `showSheet` removes `.ctx`
     // (`v2-bench.html:847`). Nothing regressed by adding it — the Add chooser is a Dialog, so the bar it
     // now suppresses was already behind another window; the point is that the rule lives in the model
-    // rather than being delegated to a platform accident. (`showDelete = !ctxVisible` below therefore
-    // offers Delete on the transform bar while the chooser is up — also behind the Dialog. That "behind a
-    // Dialog ⇒ unreachable" premise is exactly the merged-semantics assumption ADR-059/CI-26 distrusts,
-    // so it is on the device Pass 1 platform-tree checklist rather than settled by this comment.)
+    // rather than being delegated to a platform accident. (Until ADR-129 a `showDelete = !ctxVisible` term
+    // offered Delete on the transform bar while the chooser was up; that bar is gone.)
     // `addChooserOpen || artSheetOpen`: the Art sheet's frozen caption is a variant of the Adding one, so
     // both sheets are the same Bench state. See `artSheetOpen`'s declaration.
     val benchState = benchStateOf(uiState.selection, uiState.interaction, addChooserOpen || artSheetOpen)
+    // Ink and Flip can be opened over it by the element's own custom actions (TalkBack), and the three share
+    // one docked slot, so the tray yields: it closes rather than stacking under the other card.
+    val arrangeTrayVisible = arrangeOpen && ctxElement != null && benchState == BenchState.Selected &&
+        reframing == null && !inkPopoverVisible && !flipTrayVisible
+    val closeArrangeTray = {
+        arrangeOpen = false
+        arrangeReturnPending = true
+    }
+    BackHandler(enabled = arrangeTrayVisible) { closeArrangeTray() }
+    // Deselect, a text session, Add, Reframe, a page change, Ink and Flip close it; moving to another piece
+    // does not.
+    LaunchedEffect(arrangeOpen, arrangeTrayVisible) {
+        if (arrangeOpen && !arrangeTrayVisible) arrangeOpen = false
+    }
     val ctxVisible = benchState == BenchState.Selected &&
         ctxKind != null &&
         reframing == null &&
@@ -743,10 +765,12 @@ public fun EditorScreen(
         // always the one that is up.
         !inkPopoverVisible &&
         !flipTrayVisible &&
+        !arrangeTrayVisible &&
         spreadPhotoId == null
     var contextBarHeight by remember { mutableStateOf(BenchContextBarReservedHeightDp) }
     // D-113: the Flip tray's own footprint, so its snack can stand above it. Zero while the tray is away.
     var flipTrayHeightPx by remember { mutableIntStateOf(0) }
+    var arrangeTrayHeightPx by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(ctxElement?.id) {
         if (ctxElement?.id != flipTrayFor) flipTrayFor = null
@@ -755,6 +779,12 @@ public fun EditorScreen(
         if (ctxVisible && flipReturnPending) {
             runCatching { flipVerbFocus.requestFocus() }
             flipReturnPending = false
+        }
+    }
+    LaunchedEffect(ctxVisible, arrangeReturnPending) {
+        if (ctxVisible && arrangeReturnPending) {
+            runCatching { arrangeVerbFocus.requestFocus() }
+            arrangeReturnPending = false
         }
     }
 
@@ -1090,6 +1120,8 @@ public fun EditorScreen(
     // text it was styling completely. Stale while hidden, like the other two, so its reader gates on the
     // panel's own open flag.
     var typeBarDockedTopPx by remember { mutableFloatStateOf(Float.NaN) }
+    // ADR-129: and a fourth, the Arrange tray.
+    var arrangeTrayDockedTopPx by remember { mutableFloatStateOf(Float.NaN) }
     var canvasTopPx by remember { mutableFloatStateOf(Float.NaN) }
 
     // The frozen `.kbstack` is anchored to the PHONE (`left/right/bottom:0; z-index:35`, `:259`) — not to
@@ -1361,10 +1393,18 @@ public fun EditorScreen(
                 // Idle) and the page bottom is clipped — with it, possibly, the photo being framed. The
                 // canvas's own bottom edge is the occluder there, and the photo is what must clear it.
                 val reframeTarget = reframing?.before
+                // ADR-129: the Arrange tray lifts the page by ADR-128's rule, from where the piece stood
+                // when the tray opened (or when another piece was selected under it). Not from where it
+                // stands now: re-lifting on every nudge would slide the page under a piece that seems to
+                // stay still, which is the opposite of what Move down should look like.
+                val arrangeAnchor = remember(ctxElement?.id, arrangeTrayVisible) {
+                    ctxElement.takeIf { arrangeTrayVisible }
+                }
                 val occludingPanelTopPx = when {
                     editing -> styleRowDockedTopPx
                     reframeTarget != null -> canvasTopPx + canvasHeightPx
                     inkPopoverVisible -> inkPopoverDockedTopPx
+                    arrangeAnchor != null -> arrangeTrayDockedTopPx
                     else -> typeBarDockedTopPx
                 }
                 // The element the panel is about: the one under the session, or — with the popover up —
@@ -1374,11 +1414,12 @@ public fun EditorScreen(
                 val occludedElement = editingElement
                     ?: reframeTarget
                     ?: inkTarget.takeIf { inkPopoverVisible }
+                    ?: arrangeAnchor
                     ?: styleTarget.takeIf { typeBarVisible }
                 // D-113: the two tall panels stop short of the canvas top by the band their element needs
                 // ([benchPanelPeekDp]); the lift below then brings the element up into that band. Without
                 // the cap there is no band to lift into: on a phone the Ink tray was as tall as the canvas.
-                val panelMaxHeight: Dp = (inkTarget ?: styleTarget)?.let { target ->
+                val panelMaxHeight: Dp = (arrangeAnchor ?: inkTarget ?: styleTarget)?.let { target ->
                     val elementHeightDp = with(density) { (target.transform.heightPt * paperScale).toFloat().toDp() }
                     canvasHeight - benchPanelPeekDp(canvasHeight.value, elementHeightDp.value).dp
                 }?.coerceAtLeast(0.dp) ?: canvasHeight
@@ -1707,8 +1748,16 @@ public fun EditorScreen(
                 val gesturing = live != null || resizeOverride != null
                 val showMoveResizeHint =
                     !editing && !gesturing && uiState.selection.size == 1 &&
-                        !moveResizeHintDismissed && moveResizeHintSeen == false && !saveErrorVisible
-                if (showMoveResizeHint) {
+                        !moveResizeHintDismissed && moveResizeHintSeen == false && !saveErrorVisible &&
+                        // The Type bar opens under the top of the canvas too; at large text the hint (which
+                        // names Arrange since ADR-129) grew tall enough to cover its Font row and take its taps.
+                        !typeBarVisible
+                // Room palette, like the verb bar below: the hint is chrome over the page, and inside the
+                // island it took the light `ink` onto the room's dark card at night (found on device, 2026-10-14).
+                if (showMoveResizeHint) CompositionLocalProvider(
+                    LocalZinelyV2Colors provides roomColors,
+                    LocalZinelyV21Colors provides roomColors21,
+                ) {
                     EditorMoveResizeHint(
                         photo = uiState.selection.singleOrNull()?.let { id ->
                             currentPage.elements.firstOrNull { it.id == id }
@@ -1770,9 +1819,9 @@ public fun EditorScreen(
                         .padding(top = 8.dp),
                 )
 
-                // The frozen contextual verb bar — .ctx (ADR-092). ADDED beside EditorContextBar, never
-                // in place of it: OD-11 ruled the frozen bar additive, because the shipped one is the
-                // WCAG 2.5.7 single-pointer path (ADR-029 §6) and a parity phase does not remove one.
+                // The frozen contextual verb bar — .ctx (ADR-092). It was ADDED beside EditorContextBar
+                // under OD-11; since Bench A33 / ADR-129 that bar's controls open from this one's
+                // Arrange verb, in the [ArrangeTray], instead of taking height from the page.
                 //
                 // It hides while the Type bar is open, and that is the freeze's own pattern rather than
                 // an invention: opening the ink popover runs ctx.classList.remove('show') and closing it
@@ -1821,6 +1870,10 @@ public fun EditorScreen(
                         val id = ctxElement?.id
                         when (verb.label) {
                             Copy.BenchVerbs.EDIT -> if (id != null) dispatch(Intent.BeginEditText(id))
+                            Copy.BenchVerbs.ARRANGE -> if (id != null) {
+                                arrangeOpen = true
+                                arrangeReturnPending = false
+                            }
                             // OD-9 routed this verb (then named Size) to the shipped Type bar, and it stays there.
                             Copy.BenchVerbs.TEXT -> typeBarOpen = true
                             // C6 (ADR-096 row 6.1): Ink now opens the frozen `.inkpop`, which is what
@@ -1876,7 +1929,11 @@ public fun EditorScreen(
                         contextBarHeight = maxOf(BenchContextBarReservedHeightDp, measured)
                     },
                     focusRequesterForLabel = { label ->
-                        flipVerbFocus.takeIf { label == Copy.BenchVerbs.FLIP }
+                        when (label) {
+                            Copy.BenchVerbs.FLIP -> flipVerbFocus
+                            Copy.BenchVerbs.ARRANGE -> arrangeVerbFocus
+                            else -> null
+                        }
                     },
                     modifier = ctxModifier,
                 )
@@ -1917,6 +1974,21 @@ public fun EditorScreen(
                     onDone = closeFlipTray,
                     firstFocusRequester = flipFirstFocus,
                     modifier = ctxModifier.zIndex(1f).onSizeChanged { flipTrayHeightPx = it.height },
+                )
+
+                // Bench A33 / ADR-129: the tap-only move, size, turn and layer controls, one tap away
+                // instead of in the layout, so selecting never resizes the page.
+                ArrangeTray(
+                    visible = arrangeTrayVisible,
+                    elementId = ctxElement?.id,
+                    dispatch = dispatch,
+                    onDone = closeArrangeTray,
+                    firstFocusRequester = arrangeFirstFocus,
+                    modifier = ctxModifier
+                        .zIndex(1f)
+                        .heightIn(max = panelMaxHeight)
+                        .onSizeChanged { arrangeTrayHeightPx = it.height }
+                        .onGloballyPositioned { arrangeTrayDockedTopPx = it.positionInWindow().y },
                 )
 
                 // C6 rows 6.1-6.14: the frozen `.inkpop` (`v2-bench.html:377-390`, markup `:506`).
@@ -2047,6 +2119,7 @@ public fun EditorScreen(
                     // Ink tray is not given it: the frozen order puts that tray over its buttonless snack.
                     bottomClearance = when {
                         flipTrayVisible -> with(LocalDensity.current) { flipTrayHeightPx.toDp() }
+                        arrangeTrayVisible -> with(LocalDensity.current) { arrangeTrayHeightPx.toDp() }
                         ctxVisible -> contextBarHeight + BenchSnackStackRotationAllowance
                         else -> 0.dp
                     },
@@ -2206,34 +2279,6 @@ public fun EditorScreen(
             onConfirm = confirmSpread,
         )
 
-        // The transform context bar is hidden during a Reframe session — the Reframe controls take over.
-        // "During a session" means a *presented* one: while readability is still resolving, and for a
-        // session that is refused outright, the bar stays put so the editor is visually untouched by a
-        // session the user never sees (M7-01 / RF-4).
-        if (reframing == null || reframeReadable != true) {
-            EditorContextBar(
-                selection = uiState.selection,
-                dispatch = dispatch,
-                modifier = Modifier.fillMaxWidth(),
-                // Style is offered only where it can act (FR-3, ADR-055): a single, non-blank text box,
-                // outside an inline edit session. Anything else — a photo, a multi-selection, a
-                // still-blank box the reducer would refuse anyway — gets the bar exactly as before.
-                //
-                // D-039 deliberately does NOT touch this one. `Text` (named `Size` until A31) and `Ink` on the frozen bar open the
-                // same Type bar, so it is tempting to call Style a third door onto one room — but the
-                // ruling is about *identical actions presented twice*, and the evidence Pass 2 produced was
-                // two controls wearing the same word (`Delete`, `Reframe`). "Text style" is a different
-                // offer that happens to share a destination, so standing it down is beyond the minimum the
-                // ruling asks for. (An earlier draft of this comment also claimed withholding Style would
-                // strand the open panel with no toggle. Review showed that is false — Style would only be
-                // withheld while `ctxVisible`, which requires `!typeBarOpen`, i.e. only while the panel is
-                // already closed. The sentence is gone: a wrong invariant in a comment is worse than none.)
-                onStyle = styleTarget?.let { { typeBarOpen = !typeBarOpen } },
-                styleOpen = typeBarOpen,
-                // Same rule for Delete, the one verb the two bars have always shared (ADR-092 row 2.13d).
-                showDelete = !ctxVisible,
-            )
-        }
     }
         // Frozen `.kbstack` — `left/right/bottom:0; z-index:35` on the phone (`:259`), so it overlays the
         // supply tray rather than sitting above it in the flow. The row itself carries `imePadding()`, so

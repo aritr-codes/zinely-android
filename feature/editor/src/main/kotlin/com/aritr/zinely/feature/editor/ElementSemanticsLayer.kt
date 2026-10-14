@@ -48,7 +48,7 @@ public const val ElementNodeTagPrefix: String = "element-node-"
  * restates that same order — so child order and traversal order agree, and neither follows the paint order,
  * which a restack or a spread changes without moving anything.
  *
- * Stateless: the host hoists [uiState] and [dispatch]. The visible [EditorContextBar] reuses the same
+ * Stateless: the host hoists [uiState] and [dispatch]. The visible [ArrangeTray] reuses the same
  * intents on the current selection.
  *
  * @param uiState the history-free editor projection (current page, selection, view scale/offset).

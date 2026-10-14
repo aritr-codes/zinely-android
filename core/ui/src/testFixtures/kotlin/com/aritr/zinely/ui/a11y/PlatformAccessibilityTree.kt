@@ -114,6 +114,11 @@ public data class PlatformA11yNode(
      * platform — which is exactly the shape of the defect [stateDescription] was added for.
      */
     val isSelected: Boolean,
+    /**
+     * `AccessibilityNodeInfo.isHeading()` — what TalkBack's heading navigation reads. Added for the Arrange
+     * tray's group names (ADR-129), whose merged-tree `Heading` key says nothing about this bit.
+     */
+    val isHeading: Boolean = false,
 ) {
     /** True when the platform bounds have positive area — a laid-out, hit-testable control. */
     val hasNonEmptyBounds: Boolean
@@ -175,6 +180,7 @@ public fun SemanticsNodeInteraction.platformNode(activity: Activity): PlatformA1
                 null
             },
             isSelected = info.isSelected,
+            isHeading = info.isHeading,
         )
     } finally {
         // Robolectric retains each framework object until it is explicitly recycled. Lazy-list platform

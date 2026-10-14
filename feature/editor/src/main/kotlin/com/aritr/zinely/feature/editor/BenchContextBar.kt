@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Flip
 import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.Grain
+import androidx.compose.material.icons.filled.OpenWith
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.ViewWeek
@@ -130,6 +131,13 @@ internal data class BenchVerb(
 )
 
 /**
+ * `Arrange` (`v21-bench.html` A33, [ADR-129](../../../../../../../../docs/DECISIONS.md#adr-129)): second on
+ * every kind's bar, after its first verb, so it is in view on the narrowest phone without scrolling. It
+ * opens the [ArrangeTray], the tap-only way to move, size, turn and layer (WCAG 2.5.7).
+ */
+private val ARRANGE_VERB = BenchVerb(Copy.BenchVerbs.ARRANGE, Icons.Filled.OpenWith)
+
+/**
  * The frozen verb sets, one per kind (`v21-bench.html:656-660`). Pure, so the *sets* are asserted
  * directly rather than through a composition — and asserted as **set-equality plus order**, because a
  * permutation would satisfy "each verb exists" and still be the wrong bar.
@@ -141,6 +149,7 @@ internal fun benchContextVerbs(
 ): List<BenchVerb> = when (kind) {
     BenchVerbKind.TEXT -> listOf(
         BenchVerb(Copy.BenchVerbs.EDIT, Icons.Filled.Edit),
+        ARRANGE_VERB,
         // [styleable] is false for a still-blank box, which the reducer refuses to style (ADR-055) — so
         // these two remain drawn and inert for that selection. Found by
         // review, not by a test: with them live, tapping either on a blank box set `typeBarOpen`, which
@@ -165,6 +174,7 @@ internal fun benchContextVerbs(
     )
     BenchVerbKind.PHOTO -> listOf(
         BenchVerb(Copy.BenchVerbs.REFRAME, Icons.Filled.Crop),
+        ARRANGE_VERB,
         BenchVerb(Copy.BenchVerbs.FLIP, Icons.Filled.Flip),
         // ADR-109 / frozen Bench A19: this is an edit to a selected photo, not another thing in Add.
         // The confirmation and crop transaction are owned by the host/reducer; the bar names only entry.
@@ -208,6 +218,7 @@ internal fun benchContextVerbs(
             Icons.Filled.SwapHoriz,
             spokenLabel = Copy.A11y.REPLACE_SUPPLY,
         ),
+        ARRANGE_VERB,
         BenchVerb(Copy.BenchVerbs.INK, Icons.Filled.Palette),
         BenchVerb(Copy.BenchVerbs.FLIP, Icons.Filled.Flip),
         BenchVerb(Copy.BenchVerbs.DUPLICATE, Icons.Filled.ContentCopy),
@@ -307,15 +318,13 @@ internal fun benchVerbKindOf(element: Element): BenchVerbKind = when (element) {
  * is why `Delete` is wider than `Ink` where the two used to measure the same.
  *
 
- * **This is an addition, not a re-skin.** [EditorContextBar] is the WCAG 2.5.7 single-pointer twin of
- * the drag gestures ([ADR-029](../../../../../../../../docs/DECISIONS.md#adr-029) §6);
- * [OD-11](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-034-ruling) ruled that the frozen bar is
- * *additive*, because a parity phase does not remove an accessibility path. `Delete` is the one verb both
- * bars name, and under
- * [OD-14](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-039-ruling) only **one of them shows it at
- * a time**: while this bar is up, [EditorContextBar] withholds its `Delete` and the on-canvas reframe chip
- * withholds itself. A presentation switch, never a capability one — both return the instant this bar stands
- * down, and its eight transform verbs are untouched in every state.
+ * **This was an addition, not a re-skin.** [OD-11](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-034-ruling)
+ * kept the shipped transform bar, the WCAG 2.5.7 single-pointer twin of the drag gestures
+ * ([ADR-029](../../../../../../../../docs/DECISIONS.md#adr-029) §6), beside this one. Since Bench A33
+ * ([ADR-129](../../../../../../../../docs/DECISIONS.md#adr-129)) those controls open from this bar's
+ * `Arrange` verb in the [ArrangeTray], so the page no longer shrinks on select. While this bar is up the
+ * on-canvas reframe chip withholds itself
+ * ([OD-14](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-039-ruling)).
  *
  * The bar floats over the canvas, 12dp off its bottom edge and centred on it — never over the
  * element ([IA §C.3](../../../../../../../../docs/design/V2-BENCH-IA-INTERACTION.md)) — so the host
