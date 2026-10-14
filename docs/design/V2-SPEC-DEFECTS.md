@@ -7648,8 +7648,8 @@ was not listened to.
 | Check | Before (`main`) | After |
 |---|---|---|
 | `font_scale 2.0`, 360 × 640dp: `Right` | 48 × 130dp, three lines | 77 × 54dp, one line, below `ALIGN` (label at 208dp, choices at 242dp) |
-| `font_scale 1.0`, same screen: Align row | not measured | `ALIGN` and the 48dp choices on one line, as before (no golden moved; see below) |
-| Text `Hi 中 ก ﬁ`, editing | not re-measured; issue #103 recorded "Unsupported, Chinese and Thai characters can't print yet …" on `0.9.0-beta.6` | the phone-font line, naming Chinese and Thai |
+| `font_scale 1.0`, same screen: Align row | not measured | `ALIGN` and the 48dp choices on one line, as before |
+| Text `Hi 中 ก ﬁ`, editing | not re-measured; issue #103 recorded "Unsupported, Chinese and Thai characters can't print yet …" on `0.9.0-beta.6` | "Chinese, Thai and other characters print in a font from your phone, so they may look different on another phone." |
 | Text `Hi 中 U+10FFFD ก` | — | the phone-font line for Chinese and Thai, then "Unsupported characters can't print yet …" |
 
 A private-use character (U+E000) was drawn by a font on the emulator, so it is told it prints: the check is
@@ -7659,6 +7659,23 @@ as wide as the phone.
 Size and Style sit at the right beside theirs. It reads as a different row, not as a broken one; every word
 is whole. The notice: the first build named the no-script characters "Unsupported" in the line that says
 they print, which read as a contradiction before the reason was known. Hence "other".
+
+**Goldens.** Four moved, as intended, all at font scale 2 on a 360dp room:
+`type_bar_font_scale2_{plain,book_unavailable,unknown,unknown_scrolling}`. Each had drawn "Ri / g / ht";
+each now draws the Align choices on one line under their label, and the card is shorter. The
+`_compare` images were read before the four were re-recorded on the pinned CI image (`record-goldens.yml`);
+the other 196 images came back byte-identical, so at ordinary sizes nothing moved.
+
+**Review, 2026-10-14.** Two independent Review Agents, reading only. Code: **GO WITH FIXES**. Its one
+Required Fix was the four goldens above, which still showed the defect (taken). It also asked for a test
+that the session really passes the phone check (taken: `EditTextSessionCoverageTest.the_session_asks_the_phone_what_it_draws`)
+and for the font resolver to move out of the session (not taken: it costs what the page preview already
+pays, and the code says where to hoist it). Documents: **GO WITH FIXES**. Its two Required Fixes were a
+"see below" that pointed at nothing and an ADR-130 review section that pointed here before this paragraph
+existed (both taken). Also taken: ADR-130's status names the owed checks; evidence labels corrected (one
+emulator, not "phones"; only `NotoSansThai` is named in the PDF; the fallback was measured with Plain only);
+the "other" rule written into ADR-130 and VOICE; ADR-028 §4.2 named. Owed, not done: an amendment to
+`v21-typebar.html` that draws the stacked Align row, so the frozen page stops showing the defect.
 
 **Not done here.** The check still runs only while a text is open for editing (listed under
 [ADR-126](../DECISIONS.md#adr-126)); Read, Save PDF and Print details still say nothing about phone fonts.
