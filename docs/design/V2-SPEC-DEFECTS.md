@@ -4837,7 +4837,7 @@ behavior ahead of its governing artifact.
 
 | | |
 |---|---|
-| **Artifacts** | [`v21-bench.html`](mockups/v21-bench.html) `:824`, `:873` · [`v21-library.html`](mockups/v21-library.html) `:306-307`, `:466` · [`v21-proof.html`](mockups/v21-proof.html) `:593`, `:1019` · [`EditorEmptyState.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorEmptyState.kt) `:170-186` · [`Copy.kt`](../../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt) `:364` |
+| **Artifacts** | [`v21-bench.html`](mockups/v21-bench.html) `:824`, `:873` · [`v21-library.html`](mockups/v21-library.html) `.empty .pv` and its `<p class="pv">` (both removed 2026-08-24, `b0a25c0`) · [`v21-proof.html`](mockups/v21-proof.html) `:593`, `:1019` · [`EditorEmptyState.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorEmptyState.kt) `:170-186` · [`Copy.kt`](../../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt) `:364` |
 | **Found** | 2026-08-16, reconciling [BETA-UX-REVIEW.md F-11](../BETA-UX-REVIEW.md) against the frozen files |
 | **Severity** | No function is lost. It is a **voice** defect, and the rule it breaks is one the owner adopted six days ago |
 | **Status** | ✅ **CLOSED + IMPLEMENTED 2026-08-24 — owner chose option (b); Colophon DESIGN FROZEN** |
@@ -4855,9 +4855,9 @@ and the split matters because the two halves need different remedies.
 
 | # | String | Screen | Frozen source | Class |
 |---|---|---|---|---|
-| 1 | `works offline · stays on your phone` | Editor, empty page | **none** — `v21-bench.html` draws no empty state; the CSS was transcribed from `v21-library.html:306-307` | **parity failure** |
+| 1 | `works offline · stays on your phone` | Editor, empty page | **none** — `v21-bench.html` draws no empty state; the CSS was transcribed from `v21-library.html`'s `.empty .pv` | **parity failure** |
 | 2 | `From your phone — it never leaves the device` | Add sheet, Photo row | `v21-bench.html` §`openSupply()`, `:828` | spec |
-| 3 | `Everything stays on your phone — no account, nothing uploaded.` | Library, empty shelf | `v21-library.html:466` | spec |
+| 3 | `Everything stays on your phone — no account, nothing uploaded.` | Library, empty shelf | `v21-library.html` `<p class="pv">` | spec |
 | 4 | `… · A4 · stays on your phone` | Proof, ready row | `v21-proof.html:593`, `:1019` | spec |
 | 5 | `Saved on this device` | Editor status chip | **none** — the freeze says only `Saved` | implementation addition, **spoken only** |
 
@@ -7605,6 +7605,84 @@ of the current metadata.
 
 ---
 
+### D-115 — at the largest text "Right" breaks across three lines, and the typing-time notice says what prints "can't print yet" {#d-115}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../TypeBar.kt` (`TypeRow`) · `core/model/.../TextCoverage.kt` · `feature/editor/.../EditTextSession.kt` · `feature/editor/.../EditorCoverageNotice.kt` · `core/copy/.../Copy.kt` (`Coverage.phoneFont`) · frozen `docs/design/mockups/v21-typebar.html` (not edited) |
+| **Found** | 2026-10-07, emulator, `0.9.0-beta.6`: [issue #102](https://github.com/aritr-codes/zinely-android/issues/102) and [issue #103](https://github.com/aritr-codes/zinely-android/issues/103) |
+| **Severity** | **Visible UX defect** (#102: a control unreadable at an accessibility setting) and **trust defect** (#103: the app says something false about the maker's words) |
+| **Status** | ✓ **Fixed 2026-10-14** in Compose, under the owner's delegation of 2026-10-12. #103's wording is [ADR-130](../DECISIONS.md#adr-130). The owner may overrule either |
+
+**1. "Right" (issue #102).** Checked first against `main` after [D-113](#d-113) (PRs #123–#126): **not fixed
+there.** Emulator, Android 16, 360 × 640dp (`wm size 1080x1920`, `wm density 480`), `font_scale 2.0`, debug
+build of `017f747` under a side-by-side package: `Right` was a 48 × 130dp button at `[856,693][1000,1083]`,
+drawn "Ri / g / ht". The card stops at its 336dp limit, and the plain `Row` in `TypeRow` then squeezed the
+choices.
+
+The other half of the issue is already mended: since D-113 the card scrolls inside itself (A29 rule 11), and
+all the Colour swatches were reached by scrolling in the same session (`Ink`, `Coral`, `Teal`, `Blue` at
+48 × 48dp; `0.9.0-beta.7` already noted this).
+
+**Compose fix.** `TypeRow` is a `FlowRow`: when label and choices do not fit on one line the choices drop
+below the label, as the Colour row always does. A `FlowRow` reports the same one-line width to the card's
+`IntrinsicSize.Max`, so wherever a row fits, nothing moves. Fenced by
+`TypeBarTest.right_stays_on_one_line_at_the_largest_font_scale_on_a_360dp_phone`, which failed before the
+change.
+
+The frozen page draws this defect on purpose (its `.fs2` rule: "That defect is the app's today, not this
+row's") and does not say what should replace it. The frozen file is not edited; the stacked Align row at the
+largest text is the accepted difference, recorded here.
+
+**2. "Can't print yet" (issue #103).** The bundled faces fall back to the phone's own fonts, so `ﬁ`, `中` and
+`ก` printed while the notice said they could not. The check now also asks `Paint.hasGlyph` on the face the
+renderer resolves (the same fallback chain), and a script every character of which the phone draws gets a
+new line: "Chinese and Thai characters print in a font from your phone, so they may look different on
+another phone." Anything no font draws keeps "can't print yet". Characters of no named script are called
+"other" there, since "Unsupported characters print" contradicts itself. The decision is
+[ADR-130](../DECISIONS.md#adr-130).
+
+**Device, 2026-10-14.** Emulator only (Android 16, `Medium_Phone_API_36.1`), not the owner's phone. TalkBack
+was not listened to.
+
+| Check | Before (`main`) | After |
+|---|---|---|
+| `font_scale 2.0`, 360 × 640dp: `Right` | 48 × 130dp, three lines | 77 × 54dp, one line, below `ALIGN` (label at 208dp, choices at 242dp) |
+| `font_scale 1.0`, same screen: Align row | not measured | `ALIGN` and the 48dp choices on one line, as before |
+| Text `Hi 中 ก ﬁ`, editing | not re-measured; issue #103 recorded "Unsupported, Chinese and Thai characters can't print yet …" on `0.9.0-beta.6` | "Chinese, Thai and other characters print in a font from your phone, so they may look different on another phone." |
+| Text `Hi 中 U+10FFFD ก` | — | the phone-font line for Chinese and Thai, then "Unsupported characters can't print yet …" |
+
+A private-use character (U+E000) was drawn by a font on the emulator, so it is told it prints: the check is
+as wide as the phone.
+
+**First-time reading.** With the largest text the Align choices sit at the left under their label while
+Size and Style sit at the right beside theirs. It reads as a different row, not as a broken one; every word
+is whole. The notice: the first build named the no-script characters "Unsupported" in the line that says
+they print, which read as a contradiction before the reason was known. Hence "other".
+
+**Goldens.** Four moved, as intended, all at font scale 2 on a 360dp room:
+`type_bar_font_scale2_{plain,book_unavailable,unknown,unknown_scrolling}`. Each had drawn "Ri / g / ht";
+each now draws the Align choices on one line under their label, and the card is shorter. The
+`_compare` images were read before the four were re-recorded on the pinned CI image (`record-goldens.yml`);
+the other 196 images came back byte-identical, so at ordinary sizes nothing moved.
+
+**Review, 2026-10-14.** Two independent Review Agents, reading only. Code: **GO WITH FIXES**. Its one
+Required Fix was the four goldens above, which still showed the defect (taken). It also asked for a test
+that the session really passes the phone check (taken: `EditTextSessionCoverageTest.the_session_asks_the_phone_what_it_draws`)
+and for the font resolver to move out of the session (not taken: it costs what the page preview already
+pays, and the code says where to hoist it). Documents: **GO WITH FIXES**. Its two Required Fixes were a
+"see below" that pointed at nothing and an ADR-130 review section that pointed here before this paragraph
+existed (both taken). Also taken: ADR-130's status names the owed checks; evidence labels corrected (one
+emulator, not "phones"; only `NotoSansThai` is named in the PDF; the fallback was measured with Plain only);
+the "other" rule written into ADR-130 and VOICE; ADR-028 §4.2 named. Owed, not done: an amendment to
+`v21-typebar.html` that draws the stacked Align row, so the frozen page stops showing the defect.
+
+**Not done here.** The check still runs only while a text is open for editing (listed under
+[ADR-126](../DECISIONS.md#adr-126)); Read, Save PDF and Print details still say nothing about phone fonts.
+The owner's Samsung (its largest font and bold-font settings) was not tested.
+
+---
+
 ### D-117 — the Art pieces look like four hands at once; critique of all thirty-four {#d-117}
 
 | | |
@@ -7663,3 +7741,47 @@ of the current metadata.
 
 **What is not claimed.** That the redraw is better *printed*: nothing has been printed, photocopied or seen on
 a phone. ADR-132 lists those checks as owed.
+
+---
+
+### D-118 — more paper sizes: what the engine pass found {#d-118}
+
+| | |
+|---|---|
+| **Artifacts** | `core/imposition/.../Imposer.kt` · `SingleSheet8Imposer.kt` · `ImpositionLayout.kt` · `core/model/.../ModelEnums.kt` · `core/model/src/test/resources/schema-shape-v3.txt` · `feature/editor/.../ShelfSheets.kt` |
+| **Found** | 2026-10-14, while building the engine half of "more paper sizes" (lane F of the parallel wave) |
+| **Severity** | No user-visible defect. One plan gap, one latent UI leak, two engine gaps |
+| **Status** | ✓ **Engine closed 2026-10-14** under [ADR-133](../DECISIONS.md#adr-133) (Accepted under the owner's delegation). The sizes themselves are not added: that waits on a schema bump and A35 |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **A new paper size is a change of the saved format.** The wave's handoff planned the sizes as an engine change with "existing zines open unchanged". They would open unchanged, but `DocumentSchemaShapeTest` records the `PaperSize` values, so adding one needs a schema bump, and v4 is reserved for plan step 6, alone. | **Planned, not built.** ADR-133 gives the sizes their own bump after v4. Nothing in the file format changed in this pass, so the frozen fixtures and `schema-shape-v3.txt` still pass untouched |
+| 2 | **`shelfPaperChoices` lists `PaperSize.entries`.** The Shelf's chooser would offer any new size the day the enum grows, before A35 is frozen. The Print switch and the Colophon already use explicit lists. | **Recorded in ADR-133's consequences** as work for the change that adds the sizes. Not changed now: with the enum unchanged, no screen can reach a new size |
+| 3 | **The engine was only proved on two sheets.** Its geometry came from the sheet, but every test and property drew from Letter and A4, and the property's inset range (up to 95 pt) only suited those two. | **Fixed.** `Imposer.layout(format, sheetPortrait)` takes any sheet; two properties cover sheets from 4 in to 18 in a side; Legal and A5 have exact tests |
+| 4 | **`ImpositionLayout.paper` had no reader.** | **Removed.** The layout keeps `sheet`, which the validator and every consumer read |
+
+#### Review
+
+Two independent Review Agents, reading only, 2026-10-14.
+
+**Code lens: GO.**
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| The `sheetPortrait` overload does not check orientation | Recommended | **Accepted.** The KDoc now says a wide sheet is laid tall and the properties cover both |
+| The A5 test compared with A4 / √2 only, not A5's own panel | Recommended | **Accepted.** An exact assertion (148.819 × 209.764 pt) is added |
+| "A named paper imposes as its portrait sheet does" cannot fail today | Observation | **Rejected.** Kept: it pins the delegation, which is the one line a later edit could break |
+| `Imposer`'s class KDoc still named "format/paper" as the only refusal | Observation | **Accepted.** It now names format, zero side and inset |
+| The new overload has no production caller | Observation | **Rejected.** It is what proves the engine for sizes not yet in the set (ADR-133 decision 2); +18 lines |
+
+**Documents lens: GO WITH FIXES.**
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| "Every home printer checked takes Legal" contradicts R26.1's own HP DeskJet D2600 source | Required | **Accepted.** ADR-133 and R26.7 now name the exception |
+| The older-build reasoning was wrong: the document migrator refuses a newer schema before any size is read, so a closed set is not safer than an open one; and shipped builds decode a backup manifest's `paperSize` before their version check, so they call such a backup damaged | Required | **Accepted.** The forward-safety reason is withdrawn from decision 1; the backup behaviour is recorded as a Known Limitation for the release that adds the sizes, with the mitigation |
+| Three labels (`choiceName`, `choiceDimensions`, the Colophon's) fall back to "US Letter" with no compile error | Recommended | **Accepted.** Added to ADR-133's owed work |
+| Half-Letter was rejected for the very page size A5 is chosen with; no maker demand for A5 was found | Recommended | **Accepted.** The clause is dropped; A5's case is marked 🟨 as printer support and shape, not demand |
+| PRD §7, ROADMAP and ADR-016's status will be stale | Recommended | **Partly accepted.** Nothing ships, so PRD scope is unchanged; the ROADMAP lines and ADR-016's status go to the main session in the PR body |
+| The index cell should say what is built | Recommended | **Accepted.** "Accepted (engine and closed set); sizes decided, not built" |
+| Review placeholders unfilled | Recommended | **Accepted.** Filled |

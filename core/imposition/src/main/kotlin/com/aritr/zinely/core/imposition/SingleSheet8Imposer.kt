@@ -1,10 +1,10 @@
 package com.aritr.zinely.core.imposition
 
 import com.aritr.zinely.core.model.AffineTransform2D
-import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.PtLine
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtRect
+import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Rotation
 import com.aritr.zinely.core.model.ZineFormat
 import kotlin.math.min
@@ -13,7 +13,7 @@ import kotlin.math.min
  * Imposer for the classic single-sheet 8-page mini-zine, using the canonical
  * [SingleSheet8.TOP_ROW_ROTATED] convention (docs/RESEARCH.md R1.2).
  *
- * Pure and deterministic: it derives all geometry from the paper size and the convention table,
+ * Pure and deterministic: it derives all geometry from the sheet size and the convention table,
  * and emits each panel's [PanelPlacement.contentToSheet] transform so a renderer never re-derives
  * rotation. The sheet is laid landscape; content is authored upright in each panel's local space.
  */
@@ -25,12 +25,15 @@ public class SingleSheet8Imposer : Imposer {
 
     override fun layout(
         format: ZineFormat,
-        paper: PaperSize,
+        sheetPortrait: PtSize,
         safeAreaInsetPt: Double,
     ): ImpositionLayout {
         require(format in supportedFormats) { "Unsupported format: $format" }
+        // PtSize already refuses negative and non-finite sides; a zero side would divide into empty panels.
+        require(sheetPortrait.width > 0.0 && sheetPortrait.height > 0.0) { "sheet has a zero side: $sheetPortrait" }
 
-        val sheet = paper.landscape()
+        // Laid landscape: the long side runs across the four columns.
+        val sheet = PtSize(width = sheetPortrait.height, height = sheetPortrait.width)
         val w = sheet.width
         val h = sheet.height
         val cols = format.cols
@@ -87,7 +90,6 @@ public class SingleSheet8Imposer : Imposer {
 
         return ImpositionLayout(
             format = format,
-            paper = paper,
             sheet = sheet,
             conventionName = convention.name,
             panels = panels,

@@ -95,8 +95,12 @@ public object ZinelyV2Fonts {
      * No italic. Italic Fraunces appears only in *mock zine content* — the Proof's cover subtitle
      * (`:111`), pull-quote (`:114`) and back cover (`:123`), all inside the block the file itself
      * labels `/* zine content (real, not lorem) */`. Never in chrome, in any of the three files. Zine
-     * content is drawn by the render engine rather than by Compose, so bundling an italic cut here
-     * would only make it reachable from chrome, which no frozen spec does. See **D-004**.
+     * content never draws with this family: the render engine and, while a text is typed, the editing
+     * surface both use the document's own faces from `render-android` assets (`EditingFontFamily.kt`,
+     * ADR-126), where Book's italic now lives. So bundling an italic cut here would only make it
+     * reachable from chrome, which no frozen spec does. See **D-004**. *(2026-10-14: one exception since:
+     * frozen `v21-typebar.html` sets the Italic toggle's "I" in serif italic, `.tytog .i`; shipped
+     * draws it in Inter, a difference that file reports to the owner in its block B, item 1.)*
      */
     public val Voice: FontFamily = FontFamily(
         Font(R.font.fraunces_regular, FontWeight.Normal),

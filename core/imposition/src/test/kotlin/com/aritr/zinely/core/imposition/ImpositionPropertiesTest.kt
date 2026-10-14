@@ -3,6 +3,7 @@ package com.aritr.zinely.core.imposition
 import com.aritr.zinely.core.model.AffineTransform2D
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.PtPoint
+import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.ZineFormat
 import net.jqwik.api.Arbitraries
 import net.jqwik.api.Arbitrary
@@ -11,8 +12,10 @@ import net.jqwik.api.Property
 import net.jqwik.api.Provide
 import net.jqwik.api.constraints.DoubleRange
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import kotlin.math.abs
+import kotlin.math.min
 
 /**
  * Property-based invariants (jqwik). These assert the engine and the affine algebra hold across a
@@ -56,6 +59,40 @@ class ImpositionPropertiesTest {
             assertTrue(abs(xs.maxOf { it.y } - p.bounds.bottom) <= eps)
         }
     }
+
+    // --- Any sheet (ADR-133) ----------------------------------------------------------------------
+    // The engine is open over geometry: these hold for every sheet from a 4 × 6 in card to past
+    // Tabloid, in either orientation, so a size joining PaperSize needs no engine change.
+
+    @Property
+    fun `any sheet with any inset under the half-panel limit validates clean`(
+        @ForAll @DoubleRange(min = 288.0, max = 1300.0) width: Double,
+        @ForAll @DoubleRange(min = 288.0, max = 1300.0) height: Double,
+        @ForAll @DoubleRange(min = 0.0, max = 0.99) fraction: Double,
+    ) {
+        val inset = fraction * halfPanelLimit(width, height)
+        val layout = imposer.layout(ZineFormat.SINGLE_SHEET_8, PtSize(width, height), inset)
+        assertEquals(emptyList<ValidationIssue>(), validator.validate(layout))
+        assertEquals(PtSize(height, width), layout.sheet)
+        for (p in layout.panels) {
+            assertEquals(height / 4, p.panelLocalBounds.width, eps)
+            assertEquals(width / 2, p.panelLocalBounds.height, eps)
+        }
+    }
+
+    @Property
+    fun `any sheet rejects an inset at or past the half-panel limit`(
+        @ForAll @DoubleRange(min = 288.0, max = 1300.0) width: Double,
+        @ForAll @DoubleRange(min = 288.0, max = 1300.0) height: Double,
+        @ForAll @DoubleRange(min = 1.0, max = 3.0) factor: Double,
+    ) {
+        assertThrows(IllegalArgumentException::class.java) {
+            imposer.layout(ZineFormat.SINGLE_SHEET_8, PtSize(width, height), factor * halfPanelLimit(width, height))
+        }
+    }
+
+    /** Half the panel's short side: the inset at which the safe area vanishes. */
+    private fun halfPanelLimit(width: Double, height: Double): Double = min(height / 4, width / 2) / 2
 
     // --- Affine algebra --------------------------------------------------------------------------
 

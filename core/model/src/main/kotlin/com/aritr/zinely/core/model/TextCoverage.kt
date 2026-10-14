@@ -8,11 +8,16 @@ package com.aritr.zinely.core.model
  * @param sampleCharacters up to [TextCoverage.MAX_SAMPLES] of the offending characters, in
  *   first-appearance order, for showing the user exactly which ones.
  * @param unsupportedCount how many characters are affected in total.
+ * @param phoneFontScripts the scripts in [unsupportedScripts] whose every character here the phone's own
+ *   fonts draw ([ADR-130](../../../../../../../../docs/DECISIONS.md#adr-130)). Those print, on screen and
+ *   in the PDF, in a face Zinely does not ship. A script with even one character no font on the phone
+ *   draws stays out of this list, so it is still reported as unable to print.
  */
 public data class TextCoverage(
     public val unsupportedScripts: List<Script>,
     public val sampleCharacters: List<String>,
     public val unsupportedCount: Int,
+    public val phoneFontScripts: List<Script> = emptyList(),
 ) {
     /** Whether every character is in the ratified script set — i.e. the text will print as typed. */
     public val isFullyCovered: Boolean get() = unsupportedCount == 0
@@ -52,12 +57,24 @@ public data class TextCoverage(
  * ([DocumentVoice.drawnAs]). With the default, with Plain, or with a family this build does not know (Inter
  * draws it) the answer is exactly what it was before voices existed. For Book, Greek and Cyrillic are
  * reported too, because the Book faces hold neither.
+ *
+ * **What the phone draws ([ADR-130](../../../../../../../../docs/DECISIONS.md#adr-130), issue #103).** The
+ * bundled faces are loaded with the platform's default fallback, so a character they lack is drawn, on
+ * screen and in the exported PDF, from a font on the phone when one has it. [phoneDraws] is asked about each
+ * character outside the voice, and only those. The default answers no, which is the conservative reading:
+ * reported as unable to print. Pure code cannot ask a font, so the editor passes the platform's answer.
  */
-public fun analyzeTextCoverage(text: String, fontFamily: String = DocumentVoice.PLAIN.familyName): TextCoverage {
+public fun analyzeTextCoverage(
+    text: String,
+    fontFamily: String = DocumentVoice.PLAIN.familyName,
+    phoneDraws: (codePoint: Int) -> Boolean = { false },
+): TextCoverage {
     if (text.isEmpty()) return TextCoverage.Covered
     val supported = DocumentVoice.drawnAs(fontFamily).scripts
 
     val scripts = LinkedHashSet<Script>()
+    val drawn = LinkedHashSet<Script>()
+    val undrawn = HashSet<Script>()
     val samples = LinkedHashSet<String>()
     var count = 0
     var i = 0
@@ -66,7 +83,9 @@ public fun analyzeTextCoverage(text: String, fontFamily: String = DocumentVoice.
         val width = Character.charCount(cp)
         if (SupportedScripts.scriptOf(cp) !in supported) {
             count++
-            scripts += SupportedScripts.scriptOf(cp)
+            val script = SupportedScripts.scriptOf(cp)
+            scripts += script
+            if (phoneDraws(cp)) drawn += script else undrawn += script
             if (samples.size < TextCoverage.MAX_SAMPLES) samples += text.substring(i, i + width)
         }
         i += width
@@ -79,6 +98,7 @@ public fun analyzeTextCoverage(text: String, fontFamily: String = DocumentVoice.
             unsupportedScripts = scripts.toList(),
             sampleCharacters = samples.toList(),
             unsupportedCount = count,
+            phoneFontScripts = drawn.filter { it !in undrawn },
         )
     }
 }

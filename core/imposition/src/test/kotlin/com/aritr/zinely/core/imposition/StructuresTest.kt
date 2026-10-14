@@ -33,7 +33,6 @@ class StructuresTest {
 
         val layout = ImpositionLayout(
             format = ZineFormat.SINGLE_SHEET_8,
-            paper = PaperSize.LETTER,
             sheet = PaperSize.LETTER.landscape(),
             conventionName = SingleSheet8.TOP_ROW_ROTATED.name,
             panels = listOf(panel),
