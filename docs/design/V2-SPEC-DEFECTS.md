@@ -7602,6 +7602,9 @@ of the current metadata.
   unreadable zine with no row.
 - Every scan now reads each zine's `meta.json` once and looks up its row (one query per zine). These are small files, and the Shelf already reads all of
   them each time it is drawn (folders, [ADR-125](../DECISIONS.md#adr-125)).
+
+---
+
 ### D-118 — more paper sizes: what the engine pass found {#d-118}
 
 | | |
