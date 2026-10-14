@@ -1063,7 +1063,8 @@ internal class RoomProjectRepository(
 
     /**
      * Reconcile the index against the on-disk project set (ADR-042 seeding: adopts pre-Room
-     * projects — the S4 `"default"` seed becomes an ordinary row — and drops rows without files).
+     * projects — the S4 `"default"` seed becomes an ordinary row — re-derives rows whose readable
+     * `meta.json` disagrees with them (D-116), and drops rows without files).
      * Idempotent and re-runnable; repair, not a gate: a failed scan leaves [reconciled] false so the
      * next repository use retries, while the current call proceeds against the existing index
      * (files stay the truth regardless).
@@ -1091,17 +1092,22 @@ internal class RoomProjectRepository(
             val onDisk = listProjectIds()
             val indexed = dao.ids().toSet()
             for (id in onDisk) {
-                if (id !in indexed) {
-                    val docFile = paths.documentFile(id) ?: continue
-                    // Unreadable documents (Corrupt/SchemaTooNew) return Failure here and are
-                    // skipped — invisible to the shelf, bytes left for a future repair path.
-                    when (val synced = syncRowFromDisk(id, updatedAtEpochMs = fileMtimeOrNull(docFile) ?: clock())) {
-                        is DataResult.Failure -> {
-                            fullyReconciled = false
-                            if (id in requiredProjectIds) return synced
-                        }
-                        is DataResult.Success -> Unit
+                val docFile = paths.documentFile(id) ?: continue
+                val row = if (id in indexed) dao.findById(id) else null
+                // D-116: an indexed row is re-derived when its readable sidecar says something else — a
+                // rename whose row write failed, or a meta.json the store just put back from its older
+                // `.bak` (this read is what repairs it). Files win (ADR-042 §3). An unreadable or missing
+                // sidecar leaves the row alone: it is the best copy left and the bytes stay for repair.
+                if (row != null && !row.disagreesWith(readMetaOrNull(id))) continue
+                // Unreadable documents (Corrupt/SchemaTooNew) return Failure here and are
+                // skipped — invisible to the shelf, bytes left for a future repair path.
+                val updatedAt = row?.updatedAtEpochMs ?: fileMtimeOrNull(docFile) ?: clock()
+                when (val synced = syncRowFromDisk(id, updatedAtEpochMs = updatedAt)) {
+                    is DataResult.Failure -> {
+                        fullyReconciled = false
+                        if (id in requiredProjectIds) return synced
                     }
+                    is DataResult.Success -> Unit
                 }
             }
             val onDiskSet = onDisk.toSet()
@@ -1232,6 +1238,12 @@ internal class RoomProjectRepository(
         val metaFile = paths.metaFile(id) ?: throw IOException("unsafe project id '$id'")
         store.write(metaFile, json.encodeToString(ProjectMeta.serializer(), meta).encodeToByteArray())
     }
+
+    /** True when [meta] is readable and any field the row mirrors from it differs (D-116). */
+    private fun ProjectEntity.disagreesWith(meta: ProjectMeta?): Boolean = meta != null && (
+        meta.title != title || meta.createdAtEpochMs != createdAtEpochMs ||
+            meta.coverSurface != coverSurface || meta.coverStamp != coverStamp
+        )
 
     private fun decodeMeta(bytes: ByteArray): ProjectMeta =
         json.decodeFromString(ProjectMeta.serializer(), bytes.decodeToString())
