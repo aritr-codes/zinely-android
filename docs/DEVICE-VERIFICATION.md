@@ -211,8 +211,9 @@ there is no UI for it.
   newline; `KEYCODE_BACK` only hides the keyboard. Tap the keyboard's Done key by pixel.
 - **Scrollable rows hide controls.** The `EditorContextBar` transform row scrolls; "Text style" and
   "Delete" sit off-screen until it is swiped. A node clipped to e.g. `12×48dp` at a screen edge is scroll
-  clipping, **not** a touch-target defect. *(Retired by the F-2 wrap — the row no longer scrolls. Kept
-  because the reasoning generalises to any scrolling row.)*
+  clipping, **not** a touch-target defect. *(Retired by the F-2 wrap, and the bar itself is gone since
+  [ADR-129](DECISIONS.md#adr-129): its controls are in the Arrange tray. Still live for the verb bar, which
+  scrolls with eight photo verbs on a 384dp phone, and for the tray, which scrolls on a short canvas.)*
 - **A synthetic `am start … ACTION_SEND` is not a share, and it fails in both directions.** It cannot
   *grant* what a real share grants — `--grant-read-uri-permission` on a `content://media/…` URI still
   yields `SecurityException: com.aritr.zinely has no access to …` in the app's own log, because the shell

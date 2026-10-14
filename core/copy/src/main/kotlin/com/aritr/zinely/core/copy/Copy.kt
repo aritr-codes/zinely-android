@@ -116,7 +116,7 @@ public object Copy {
 
     /**
      * The editor's accessibility vocabulary (`EditorA11y.kt`, CI-85) — the discrete single-pointer twins
-     * of every gesture transform. Shared verbatim by the visible context bar (`EditorContextBar.kt`), which
+     * of every gesture transform. Shared verbatim by the visible Arrange tray (`ArrangeTray.kt`), which
      * dispatches the same reducer intents. Changing any of these changes the accessible product; verify on
      * the platform tree, not merged semantics (CI-26).
      */
@@ -209,6 +209,9 @@ public object Copy {
      */
     public object BenchVerbs {
         public const val EDIT: String = "Edit"
+
+        /** Opens the Arrange tray: move, size, turn and layer by taps (`v21-bench.html` A33, ADR-129). */
+        public const val ARRANGE: String = "Arrange"
         public const val FONT: String = "Font"
         /** Opens the text card. Named "Size" until `v21-bench.html` A31 (2026-10-09): the card now
          *  also holds the font, and "Size" named one row of five. */
@@ -761,10 +764,12 @@ public object Copy {
         public const val PREVIEW: String = "Preview"
         public const val PREVIEW_LABEL: String = "Preview  ›"
 
-        /** Context-bar-only strings (`EditorContextBar.kt`). Transform verbs come from [A11y]. */
-        public const val TEXT_STYLE: String = "Text style"
-        public const val SHOWING: String = "Showing"
-        public const val HIDDEN: String = "Hidden"
+        /** The Arrange tray's group names (`ArrangeTray.kt`, `v21-bench.html` A33). Its buttons speak [A11y]'s
+         *  transform labels; its title is [BenchVerbs.ARRANGE]. */
+        public const val ARRANGE_MOVE: String = "Move"
+        public const val ARRANGE_SIZE: String = "Size"
+        public const val ARRANGE_TURN: String = "Turn"
+        public const val ARRANGE_LAYER: String = "Layer"
 
         /** Compact selected-piece tray (ADR-113 / frozen Bench A22). */
         public const val FLIP: String = "Flip"
@@ -795,9 +800,9 @@ public object Copy {
     /** The move/resize coach hint (`EditorMoveResizeHint.kt`). Dismiss label is [Common.GOT_IT]. */
     public object MoveResizeHint {
         public const val TEXT: String =
-            "Drag to move. Pull a handle to resize. Turn it with the arrows below."
+            "Drag to move. Pull a handle to resize. Or tap Arrange to use buttons."
         public const val PHOTO_TEXT: String =
-            "Drag to move. Pull a handle to resize. Turn it below; Reframe crops inside."
+            "Drag to move. Pull a handle to resize. Arrange uses buttons; Reframe crops inside."
     }
 
     /** Save-failure banner copy (`EditorSaveFailure.kt`). */

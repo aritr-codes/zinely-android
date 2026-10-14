@@ -1,5 +1,6 @@
 package com.aritr.zinely.feature.editor
 
+import com.aritr.zinely.core.copy.Copy
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
@@ -116,7 +117,7 @@ class TypeBarFontRowTest {
                 }
             }
         }
-        composeRule.onNodeWithContentDescription("Text style").performClick()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").performClick()
         composeRule.waitForIdle()
     }
 

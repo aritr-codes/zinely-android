@@ -123,6 +123,7 @@ class BenchContextBarTest {
         assertEquals(
             listOf(
                 Copy.BenchVerbs.EDIT,
+                Copy.BenchVerbs.ARRANGE,
                 Copy.BenchVerbs.TEXT,
                 Copy.BenchVerbs.INK,
                 Copy.BenchVerbs.DUPLICATE,
@@ -139,6 +140,7 @@ class BenchContextBarTest {
         assertEquals(
             listOf(
                 Copy.BenchVerbs.REFRAME,
+                Copy.BenchVerbs.ARRANGE,
                 Copy.BenchVerbs.FLIP,
                 Copy.BenchVerbs.ACROSS_FOLD,
                 Copy.BenchVerbs.COPIER,
@@ -251,12 +253,15 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `the universal Duplicate and Delete are the only verbs shared by text and photo`() {
+    fun `Arrange Duplicate and Delete are the only verbs shared by text and photo`() {
         val text = benchContextVerbs(BenchVerbKind.TEXT).map { it.label }.toSet()
         val photo = benchContextVerbs(BenchVerbKind.PHOTO).map { it.label }.toSet()
-        // The premise of OD-11's "keep both bars": these vocabularies barely overlap, and the one verb
-        // they share with the transform bar is the same one they share with each other.
-        assertEquals(setOf(Copy.BenchVerbs.DUPLICATE, Copy.BenchVerbs.DELETE), text intersect photo)
+        // These vocabularies barely overlap: the universal verbs, plus Arrange since ADR-129 put the
+        // transform controls behind it for every kind.
+        assertEquals(
+            setOf(Copy.BenchVerbs.ARRANGE, Copy.BenchVerbs.DUPLICATE, Copy.BenchVerbs.DELETE),
+            text intersect photo,
+        )
     }
 
     /**
@@ -277,6 +282,7 @@ class BenchContextBarTest {
         assertEquals(
             listOf(
                 Copy.BenchVerbs.REPLACE,
+                Copy.BenchVerbs.ARRANGE,
                 Copy.BenchVerbs.INK,
                 Copy.BenchVerbs.FLIP,
                 Copy.BenchVerbs.DUPLICATE,
@@ -360,7 +366,7 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `five text actions fit a 320dp host without shrinking touch floors`() {
+    fun `six text actions fit a 320dp host without shrinking touch floors`() {
         host(benchContextVerbs(BenchVerbKind.TEXT), widthDp = 320)
         val bounds = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
         val floor = with(composeRule.density) { 48.dp.toPx() }
@@ -373,7 +379,7 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `five text actions remain reachable at 320dp and font scale 1_8`() {
+    fun `six text actions remain reachable at 320dp and font scale 1_8`() {
         host(benchContextVerbs(BenchVerbKind.TEXT), fontScale = 1.8f, widthDp = 320)
         val bounds = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
         val floor = with(composeRule.density) { 48.dp.toPx() }
@@ -442,10 +448,11 @@ class BenchContextBarTest {
         }
         val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
         val hostB = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
-        // The card is its five verbs plus four A21 1dp gaps plus 4dp of padding a side — still less than
-        // the 360dp host. Under V2's `flex:1` strip it would be the host less 24dp.
+        // The card is its verbs plus one A21 1dp gap between each pair plus 4dp of padding a side — still
+        // less than the 360dp host. Under V2's `flex:1` strip it would be the host less 24dp.
+        val gaps = widths.size - 1
         val sum = widths.values.sum() +
-            with(composeRule.density) { (BenchContextBarGapDp * 4 + BenchContextBarPaddingDp * 2).toPx() }
+            with(composeRule.density) { (BenchContextBarGapDp * gaps + BenchContextBarPaddingDp * 2).toPx() }
         assertEquals("the card is exactly its content", sum.toDouble(), bar.width.toDouble(), 1.5)
         assertTrue(
             "the card measures ${bar.width}px against a ${hostB.width}px host — it is still a strip",
@@ -475,15 +482,10 @@ class BenchContextBarTest {
 
         val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
         val minButtonHeight = with(composeRule.density) { BenchContextBarButtonHeightDp.toPx() }
-        listOf(
-            Copy.BenchVerbs.REPLACE,
-            Copy.BenchVerbs.INK,
-            Copy.BenchVerbs.FLIP,
-            Copy.BenchVerbs.DUPLICATE,
-            Copy.BenchVerbs.DELETE,
-        ).forEach { label ->
+        // Six verbs at 1.8× overflow the host, so each is scrolled into view before it is measured (D-113).
+        benchContextVerbs(BenchVerbKind.DECOR).map { it.label }.forEach { label ->
             val button = composeRule.onNodeWithTag("$BenchContextBarTestTag-$label")
-                .fetchSemanticsNode().boundsInWindow
+                .performScrollTo().fetchSemanticsNode().boundsInWindow
             assertTrue(
                 "$label should grow beyond the 50dp resting minimum at fontScale 1.8; got $button",
                 button.height > minButtonHeight + 1.5f,
@@ -541,7 +543,7 @@ class BenchContextBarTest {
         val rightGap = hostBounds.right - barBounds.right
         assertEquals("the card is centred, so its two side gaps are equal", leftGap.toDouble(), rightGap.toDouble(), 1.0)
         assertTrue(
-            "A24's five-action card remains content-width rather than becoming a full strip: leftGap=$leftGap",
+            "A24's text card remains content-width rather than becoming a full strip: leftGap=$leftGap",
             leftGap > 0f,
         )
 

@@ -17,6 +17,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.click
 import androidx.compose.ui.unit.dp
@@ -280,16 +281,29 @@ class EditorScreenTest {
         assertTrue(store.uiState.value.view.screenPxPerPt > 1f)
     }
 
+    /**
+     * ADR-129 / Bench A33, the reason the transform bar left the layout: selecting a piece must not change
+     * the page's size. With the two-row bar in the column the canvas lost its height on every select and
+     * the page was refitted smaller (D-113 item 2).
+     */
     @Test
-    fun the_contextbar_tracks_selection() {
+    fun selecting_a_piece_does_not_change_the_page_size() {
         val store = store()
         store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects
-        setScreen(store)
-        composeRule.onNodeWithTag(EditorContextBarTestTag).assertIsDisplayed()
-
         store.dispatch(Intent.ClearSelection)
+        setScreen(store)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorContextBarTestTag).assertDoesNotExist()
+        val atRest = store.uiState.value.view
+
+        store.dispatch(Intent.Select(store.uiState.value.document.pages[0].elements.single().id))
+        composeRule.waitForIdle()
+        assertEquals(atRest, store.uiState.value.view)
+
+        // ...and opening the tray does not refit it either: the tray floats over the page.
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ARRANGE}").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ArrangeTrayTestTag).assertIsDisplayed()
+        assertEquals(atRest, store.uiState.value.view)
     }
 
     @Test
@@ -944,29 +958,90 @@ class EditorScreenTest {
             composeRule.onAllNodesWithContentDescription(Copy.BenchVerbs.DELETE).fetchSemanticsNodes().size,
         )
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertExists()
-        composeRule.onNodeWithTag("$EditorContextBarTestTag-${Copy.A11y.DELETE}").assertDoesNotExist()
     }
 
-    /**
-     * The other half, and the one that keeps the ruling honest: *"no functionality is removed."* The
-     * transform bar's Delete is withheld only while another visible control offers it. Open the Type bar
-     * and the frozen bar stands down — so Delete must come straight back, or this would be a capability
-     * lost rather than a presentation assigned.
-     */
+    // ── ADR-129 / Bench A33 — the Arrange tray ────────────────────────────────────────────────────
+
+    private val transformLabels = listOf(
+        Copy.A11y.MOVE_LEFT, Copy.A11y.MOVE_RIGHT, Copy.A11y.MOVE_UP, Copy.A11y.MOVE_DOWN,
+        Copy.A11y.MAKE_LARGER, Copy.A11y.MAKE_SMALLER,
+        Copy.A11y.ROTATE_CLOCKWISE, Copy.A11y.ROTATE_COUNTERCLOCKWISE,
+        Copy.A11y.BRING_FORWARD, Copy.A11y.SEND_BACKWARD,
+    )
+
+    private fun openArrange() {
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ARRANGE}").performClick()
+        composeRule.waitForIdle()
+    }
+
     @Test
-    fun the_transform_bar_takes_Delete_back_the_moment_the_frozen_bar_stands_down() {
+    fun Arrange_replaces_the_verb_bar_with_the_tray_and_Done_brings_it_back() {
+        setScreen(selectedText())
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ArrangeTrayTestTag).assertDoesNotExist()
+        openArrange()
+
+        composeRule.onNodeWithTag(ArrangeTrayTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}").assertDoesNotExist()
+        composeRule.onNodeWithTag(ArrangeDoneTestTag).performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(ArrangeTrayTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}").assertIsDisplayed()
+    }
+
+    @Test
+    fun Back_closes_the_tray_and_keeps_the_selection() {
         val store = selectedText()
         setScreen(store)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").performClick()
+        openArrange()
+
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertDoesNotExist()
-        composeRule.onNodeWithTag("$EditorContextBarTestTag-${Copy.A11y.DELETE}").assertExists()
-        assertEquals(
-            1,
-            composeRule.onAllNodesWithContentDescription(Copy.A11y.DELETE).fetchSemanticsNodes().size,
-        )
+        composeRule.onNodeWithTag(ArrangeTrayTestTag).assertDoesNotExist()
+        assertEquals(1, store.uiState.value.selection.size)
+    }
+
+    @Test
+    fun the_tray_stays_open_for_another_piece_and_closes_on_deselect() {
+        val store = selectedText()
+        store.dispatch(Intent.PlaceText(Transform(50.0, 50.0, 20.0, 20.0), "Two"))
+        val (first, second) = store.uiState.value.document.pages[0].elements.map { it.id }
+        setScreen(store)
+        composeRule.waitForIdle()
+        openArrange()
+
+        store.dispatch(Intent.Select(first))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ArrangeTrayTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag("$ArrangeTrayTestTag-${Copy.A11y.MOVE_RIGHT}").performClick()
+        composeRule.waitForIdle()
+        val elements = store.uiState.value.document.pages[0].elements
+        assertEquals(20.0 + EditorA11y.NUDGE_STEP_PT, elements.single { it.id == first }.transform.xPt, 1e-9)
+        assertEquals(50.0, elements.single { it.id == second }.transform.xPt, 1e-9)
+
+        store.dispatch(Intent.ClearSelection)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ArrangeTrayTestTag).assertDoesNotExist()
+        // Closed, not hidden: a fresh selection gets the verb bar, not the tray.
+        store.dispatch(Intent.Select(second))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ArrangeTrayTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ARRANGE}").assertIsDisplayed()
+    }
+
+    @Test
+    fun a_text_session_closes_the_tray() {
+        val store = selectedText()
+        setScreen(store)
+        composeRule.waitForIdle()
+        openArrange()
+
+        store.dispatch(Intent.BeginEditText(store.uiState.value.selection.single()))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ArrangeTrayTestTag).assertDoesNotExist()
     }
 
     private fun selectedPhoto(onEffect: (Effect) -> Unit = {}): EditorStore = store(onEffect).also {
@@ -1049,7 +1124,8 @@ class EditorScreenTest {
         val source = store.uiState.value.document.pages.single().elements.single() as ImageElement
         setScreen(store)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DUPLICATE}").performClick()
+        // A photo has eight verbs since ADR-129, so on a narrow host Duplicate is scrolled to, as a maker would.
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DUPLICATE}").performScrollTo().performClick()
         composeRule.waitForIdle()
 
         val elements = store.uiState.value.document.pages.single().elements
@@ -1106,10 +1182,6 @@ class EditorScreenTest {
     }
 
     /**
-     * The ruling protects the transform verbs absolutely — they are what ADR-029 §6 exists for, being the
-     * verbs `drag` has no single-pointer twin for. Whatever the frozen bar is doing, all ten stay put.
-     */
-    /**
      * D-040 — the dead end review found, which no test covered and Pass 2 would have.
      *
      * `benchVerbKindOf` keys on element *type*, so a still-blank box got the full text set. Tapping `Size`
@@ -1131,16 +1203,18 @@ class EditorScreenTest {
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertIsEnabled()
     }
 
+    /**
+     * What ADR-029 §6 and WCAG 2.5.7 protect: every drag has a tap-only twin. Since ADR-129 the ten are one
+     * Arrange tap away rather than always on screen, and this is the test whose mutation is "delete them".
+     */
     @Test
-    fun the_ten_transform_verbs_are_never_withheld() {
+    fun the_ten_transform_verbs_are_one_Arrange_tap_away() {
         setScreen(selectedPhoto())
         composeRule.waitForIdle()
-        listOf(
-            Copy.A11y.MOVE_LEFT, Copy.A11y.MOVE_RIGHT, Copy.A11y.MOVE_UP, Copy.A11y.MOVE_DOWN,
-            Copy.A11y.MAKE_LARGER, Copy.A11y.MAKE_SMALLER,
-            Copy.A11y.ROTATE_CLOCKWISE, Copy.A11y.ROTATE_COUNTERCLOCKWISE,
-            Copy.A11y.BRING_FORWARD, Copy.A11y.SEND_BACKWARD,
-        ).forEach { composeRule.onNodeWithTag("$EditorContextBarTestTag-$it").assertExists() }
+        openArrange()
+        // On a short host the tray scrolls (its height is capped so the piece stays in view, ADR-128):
+        // reachable, not necessarily all on screen at once.
+        transformLabels.forEach { composeRule.onNodeWithTag("$ArrangeTrayTestTag-$it").performScrollTo().assertIsDisplayed() }
     }
 
 

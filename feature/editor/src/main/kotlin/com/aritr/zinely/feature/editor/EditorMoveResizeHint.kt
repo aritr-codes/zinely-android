@@ -40,8 +40,8 @@ private val HintMaxWidth = 320.dp
 
 /**
  * The one-time **move/resize hint** (docs/design/VOICE.md §3 "Hints"). When a beginner first selects a
- * placed element the resize handles and lower transform controls appear, but their meaning is easy to miss.
- * This gentle note names the handles and turn controls already on screen, then gets out of the way. For a
+ * placed element the resize handles and the verb bar appear, but their meaning is easy to miss. This
+ * gentle note names the handles and the Arrange verb (Bench A33, ADR-129), then gets out of the way. For a
  * photo it also distinguishes resizing its frame from [ReframeAffordanceChip]'s crop-inside action.
  *
  * ### ⚠ Unfrozen surface — the analogy is `.snack`, and it replaces V2's invented sticky

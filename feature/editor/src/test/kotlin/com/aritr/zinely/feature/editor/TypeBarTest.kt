@@ -1,5 +1,7 @@
 package com.aritr.zinely.feature.editor
 
+import com.aritr.zinely.core.copy.Copy
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Offset
@@ -65,7 +67,7 @@ import org.robolectric.annotation.GraphicsMode
  * The FR-3 Type bar (ADR-055) end-to-end against a **real** [EditorStore]: every control must land as a
  * committed `Intent.StyleText` in the document, because the bar deliberately owns no styling state.
  *
- * Robolectric NATIVE, same tier as [EditorContextBarTest] / [ReframeA11yTest].
+ * Robolectric NATIVE, same tier as [ArrangeTrayTest] / [ReframeA11yTest].
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -147,14 +149,17 @@ class TypeBarTest {
         s.uiState.value.document.pages[0].elements.first { it is TextElement } as TextElement
 
     /**
-     * Open the Type bar via the Style control — the only path a user has.
-     *
-     * The `performScrollTo` this used to carry is gone with F-2: the transform row wraps instead of
-     * scrolling, so there is no scrollable ancestor and the call threw *"Semantic Node has no parent layout
-     * with a Scroll SemanticsAction"*. The control is simply on screen now, which is the point.
+     * Open the Type bar via the verb bar's `Text` — the only path a user has since Bench A33 (ADR-129) took
+     * the transform bar, and its Style toggle, out of the layout.
      */
     private fun openTypeBar() {
-        composeRule.onNodeWithContentDescription("Text style").performClick()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").performClick()
+        composeRule.waitForIdle()
+    }
+
+    /** Back closes the Type bar and keeps the selection (F-15). */
+    private fun closeTypeBar() {
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeRule.waitForIdle()
     }
 
@@ -206,10 +211,10 @@ class TypeBarTest {
 
     @Test
     fun the_style_control_is_offered_for_text_and_withheld_from_a_photo() {
-        // Text: Style is on the bar.
+        // Text: the verb bar's Text opens the Type bar.
         val s = storeWithText()
         render(s)
-        composeRule.onNodeWithContentDescription("Text style").assertExists()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").assertIsEnabled()
 
         // Photo: the bar is exactly what it always was — no Style, and no sixth-tool stand-in. The
         // frozen "Ink ↔ Style" swap has no Ink hat in Compose to swap against (it was never built), so
@@ -222,14 +227,8 @@ class TypeBarTest {
         )
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithContentDescription("Text style").assertDoesNotExist()
-        composeRule.onNodeWithContentDescription("Move right").assertExists()
-        // Delete is deliberately NOT asserted here any more. C2b put a Delete on the frozen `.ctx` bar too,
-        // and D-039 then ruled that one capability gets one visible presentation at a time — so with a
-        // photo selected the frozen bar owns Delete and this bar withholds it. The claim this test makes
-        // is about *Style*, and the transform verbs around it, which are untouched in every case; whether
-        // Delete is here or there is EditorScreenTest's subject, not this file's.
-        composeRule.onNodeWithTag("$EditorContextBarTestTag-Delete").assertDoesNotExist()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").assertDoesNotExist()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ARRANGE}").assertExists()
         composeRule.onNodeWithTag(TypeBarTestTag).assertDoesNotExist()
     }
 
@@ -238,7 +237,7 @@ class TypeBarTest {
         // The reducer refuses to style a blank box (it would break the fresh-blank-place undo
         // coalescing), so the surface must not advertise a control that would silently no-op.
         render(storeWithText(text = "   "))
-        composeRule.onNodeWithContentDescription("Text style").assertDoesNotExist()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").assertIsNotEnabled()
     }
 
     @Test
@@ -249,7 +248,7 @@ class TypeBarTest {
         openTypeBar()
         composeRule.onNodeWithTag(TypeBarTestTag).assertIsDisplayed()
 
-        openTypeBar()
+        closeTypeBar()
         composeRule.onNodeWithTag(TypeBarTestTag).assertDoesNotExist()
     }
 
@@ -471,8 +470,7 @@ class TypeBarTest {
         composeRule.onNodeWithContentDescription("Size 14 point").assertExists()
 
         // Close well inside the settle window.
-        composeRule.onNodeWithContentDescription("Text style").performClick()
-        composeRule.waitForIdle()
+        closeTypeBar()
         composeRule.onNodeWithTag(TypeBarTestTag).assertDoesNotExist()
 
         settleSize { textOf(s).style.sizePt == 14.0 }

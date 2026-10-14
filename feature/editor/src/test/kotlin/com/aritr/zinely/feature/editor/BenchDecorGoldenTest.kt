@@ -155,13 +155,13 @@ class BenchDecorGoldenTest {
     // =================================================================================================
 
     /**
-     * The frozen decor row — `Replace · Ink · Flip · Duplicate · Delete` (Bench A22) — drawn at
+     * The frozen decor row — `Replace · Arrange · Ink · Flip · Duplicate · Delete` (Bench A22, A33) — drawn at
      * **full strength**.
      *
      * [assertVerbAtFullStrength] carries the measurement and explains it; this test's job is the set.
      */
     @Test
-    fun the_decor_verb_row_draws_its_five_frozen_verbs_and_none_of_them_is_dim() {
+    fun the_decor_verb_row_draws_its_six_frozen_verbs_and_none_of_them_is_dim() {
         decorBar(darkTheme = false)
 
         // ⚠ **Asserted per verb, not over the card.** The first cut counted `inkSoft` across the whole
@@ -173,11 +173,12 @@ class BenchDecorGoldenTest {
         // to `disabledAlpha` and the other's pixels cover for it.
         val bar = full()
         assertEquals(
-            "the frozen decor set is Replace · Ink · Flip · Duplicate · Delete",
-            5,
+            "the frozen decor set is Replace · Arrange · Ink · Flip · Duplicate · Delete",
+            6,
             benchContextVerbs(BenchVerbKind.DECOR).size,
         )
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.REPLACE, inkSoftArgb)
+        assertVerbAtFullStrength(bar, Copy.BenchVerbs.ARRANGE, inkSoftArgb)
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.INK, inkSoftArgb)
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.FLIP, inkSoftArgb)
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.DUPLICATE, inkSoftArgb)
@@ -195,6 +196,7 @@ class BenchDecorGoldenTest {
         decorBar(darkTheme = true)
         val bar = full()
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.REPLACE, inkSoftArgb)
+        assertVerbAtFullStrength(bar, Copy.BenchVerbs.ARRANGE, inkSoftArgb)
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.INK, inkSoftArgb)
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.FLIP, inkSoftArgb)
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.DUPLICATE, inkSoftArgb)

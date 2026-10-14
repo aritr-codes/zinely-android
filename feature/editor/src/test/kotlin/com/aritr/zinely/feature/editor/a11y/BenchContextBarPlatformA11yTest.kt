@@ -59,9 +59,9 @@ class BenchContextBarPlatformA11yTest {
     }
 
     @Test
-    fun authored_text_exposes_exactly_five_live_actions_in_order_and_dispatches_them() {
+    fun authored_text_exposes_exactly_six_live_actions_in_order_and_dispatches_them() {
         render(BenchVerbKind.TEXT)
-        val expected = listOf("Edit", "Text", "Ink", "Duplicate", "Delete")
+        val expected = listOf("Edit", "Arrange", "Text", "Ink", "Duplicate", "Delete")
         assertEquals(expected, platformTraversalStops(composeRule.activity).map { it.label })
         composeRule.onNodeWithContentDescription(Copy.BenchVerbs.FONT).assertDoesNotExist()
         for (label in expected) {

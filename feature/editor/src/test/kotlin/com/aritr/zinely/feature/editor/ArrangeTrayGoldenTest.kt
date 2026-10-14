@@ -4,9 +4,11 @@ import android.graphics.Bitmap
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -27,21 +29,20 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * **CI-25** golden net for [EditorContextBar], light + dark (roadmap §C1; the frozen [TypeBarGoldenTest]
- * two-proof shape). A single-selection bar (reorder + delete controls present) is captured. The bar is only
- * composed for a non-empty selection, so the golden pins the full single-selection control set.
+ * Golden net for the [ArrangeTray] (Bench A33, ADR-129), light and dark, at the 360dp width A33 lays out
+ * for: Move and Size on the first line, Turn and Layer on the second.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w430dp-h932dp-xhdpi")
-class EditorContextBarGoldenTest {
+class ArrangeTrayGoldenTest {
 
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     private companion object {
         const val GOLDEN_DIR = "src/test/roborazzi"
-        const val HOST_TAG = "editorContextBarGoldenHost"
+        const val HOST_TAG = "arrangeTrayGoldenHost"
 
         fun aa() = RoborazziOptions(
             compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.02f),
@@ -50,50 +51,38 @@ class EditorContextBarGoldenTest {
 
     private var deskArgb = 0
 
-    private fun host(darkTheme: Boolean, content: @Composable () -> Unit) {
+    private fun capture(name: String, darkTheme: Boolean) {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
                 deskArgb = ZinelyTheme.colors.desk.toArgb()
                 Box(
                     Modifier
                         .testTag(HOST_TAG)
-                        .background(ZinelyTheme.colors.desk)
-                        .padding(16.dp),
-                ) { content() }
+                        .width(360.dp)
+                        .background(ZinelyTheme.colors.desk),
+                ) {
+                    ArrangeTray(
+                        visible = true,
+                        elementId = "t1",
+                        dispatch = {},
+                        onDone = {},
+                        firstFocusRequester = remember { FocusRequester() },
+                    )
+                }
             }
         }
         composeRule.waitForIdle()
-    }
-
-    private fun hostBitmap(): Bitmap {
+        // Non-vacuity: the tray's own node must be present, so a blanked tray fails here.
+        composeRule.onNodeWithTag(ArrangeTrayTestTag).assertExists()
         val bounds = composeRule.onNodeWithTag(HOST_TAG).fetchSemanticsNode().boundsInRoot
-        val full = composeRule.activity.window.decorView.rasterizeToBitmap()
-        return cropToBounds(full, bounds)
-    }
-
-    private fun capture(name: String, darkTheme: Boolean, content: @Composable () -> Unit) {
-        host(darkTheme, content)
-        // Non-vacuity (the real guard): the component's own node must be present. A blanked component
-        // in a later re-record fails here — a desk-pixel count on a desk-backed host would still pass.
-        composeRule.onNodeWithTag(EditorContextBarTestTag).assertExists()
-        val bmp = hostBitmap()
-        // Secondary sanity: the host raster is non-empty (the desk ground painted).
-        assertTrue(
-            "the host desk did not paint ($name)",
-            bmp.pixelCountOf(deskArgb) > 100,
-        )
+        val bmp: Bitmap = cropToBounds(composeRule.activity.window.decorView.rasterizeToBitmap(), bounds)
+        assertTrue("the host desk did not paint ($name)", bmp.pixelCountOf(deskArgb) > 100)
         bmp.captureRoboImage("$GOLDEN_DIR/$name.png", aa())
     }
 
     @Test
-    fun editor_context_bar_light() =
-        capture("editor_context_bar_light", darkTheme = false) {
-            EditorContextBar(selection = setOf("t1"), dispatch = {})
-        }
+    fun arrange_tray_light() = capture("arrange_tray_light", darkTheme = false)
 
     @Test
-    fun editor_context_bar_dark() =
-        capture("editor_context_bar_dark", darkTheme = true) {
-            EditorContextBar(selection = setOf("t1"), dispatch = {})
-        }
+    fun arrange_tray_dark() = capture("arrange_tray_dark", darkTheme = true)
 }

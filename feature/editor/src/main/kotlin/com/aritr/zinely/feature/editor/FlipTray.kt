@@ -296,7 +296,7 @@ private fun FlipChoice(
 }
 
 @Composable
-private fun FlipDoneButton(
+internal fun FlipDoneButton(
     onClick: () -> Unit,
     testTag: String,
     modifier: Modifier = Modifier,

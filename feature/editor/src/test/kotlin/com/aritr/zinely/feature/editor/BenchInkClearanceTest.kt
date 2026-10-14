@@ -169,18 +169,23 @@ class BenchInkClearanceTest {
     }
 
     @Test
-    fun a_page_top_element_is_already_clear_and_costs_only_the_slack() {
+    fun a_page_top_element_costs_the_slack_and_at_most_its_own_height() {
         // Until D-113 the tray was as tall as the canvas and covered even a box at the very top of the
         // page, so this test asserted a clearance term here. The tray now stops short of the canvas top,
-        // a top-of-page box is clear of it at rest, and the lift is the free slack alone.
+        // so a top-of-page box costs the free slack plus, at most, the sliver of itself the tray reaches.
+        // (Before ADR-129 the transform bar shortened the canvas and the sliver was zero; the taller canvas
+        // centres the page lower, so on this host the tray now reaches ~3px into the box.)
         val store = placedText(topOfPage)
         val rest = paperTop()
         val slack = rest - composeRule.onNodeWithTag(EditorCanvasTestTag).fetchSemanticsNode().boundsInRoot.top
+        val boxPx = (topOfPage.heightPt * store.uiState.value.view.screenPxPerPt).toFloat()
 
         openInk()
 
+        val lift = rest - paperTop()
         assertTrue("this host must HAVE slack or the assertion proves nothing (slack $slack)", slack > 1f)
-        assertEquals("a box the tray does not cover is lifted by the slack alone", slack, rest - paperTop(), 1f)
+        assertTrue("the lift spends the slack first (lift $lift, slack $slack)", lift >= slack - 1f)
+        assertTrue("and no more than the box itself beyond it (lift $lift, box $boxPx)", lift <= slack + boxPx + 1f)
         assertInViewAbove(BenchInkPopoverTestTag, topOfPage, store)
     }
 

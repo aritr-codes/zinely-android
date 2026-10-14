@@ -176,7 +176,7 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | ~~[**D-038**](#d-038)~~ | ✅ **CLOSED + VERIFIED 2026-08-31** | The frozen photo bar's **Replace** verb dispatches `RequestReplaceImage(id)`. The reducer verifies the selected current-page `ImageElement` and emits the existing picker effect carrying that id; the existing pipeline dispatches `ReplaceImage(id, decodedAssetId)` on success. Add remains `CommitAddImage`; cancellation/failure leave document, selection and history unchanged. The existing reducer command swaps only `assetId`, preserving every other image property with one undoable autosave-backed edit; same-asset replacement is a no-op. Focused and broad suites, pinned CI/goldens, two Samsung readers, and a repaired platform-label rerun are recorded in [the device verification](../reviews/2026-08-31-replace-photo-device-verification.md). |
 | [**D-036**](#d-036) | 🟦 **OPEN — documentation only, fences nothing** | the frozen Bench draws **four** resize handles; the editor has **eight**, and the extra four carry axis-constrained resize. C2a kept all eight under [OD-11](#d-034-ruling) (*the frozen vocabulary is additive; no existing capability is removed*), which the review confirmed is the right reading. What is owed is the **canonical file catching up** with that ruling — recommendation **(a)**, draw eight |
 | ~~[**D-035**](#d-035)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-035-ruling), OD-12 | the dark theme dimmed the sheet while the document's content ink stayed black — correctly, because it prints — leaving the user's own words at **1.60:1**. Ruled: **the artifact does not dim; the room around it may.** The frozen `.page` becomes a light-theme island of eight restated light tokens; `.phone` still dims |
-| ~~[**D-034**](#d-034)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-034-ruling), OD-11 | the frozen `.ctx` is a **verb** bar and the shipped `EditorContextBar` is the **WCAG 2.5.7** single-pointer twin of the drag gestures — **and they are not mutually exclusive.** The frozen bar is **additive**; the transform controls stay, because a parity phase does not remove an accessibility path. C2 splits into **C2a** (unblocked) and **C2b** (`.ctx*`) |
+| ~~[**D-034**](#d-034)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-034-ruling), OD-11 | the frozen `.ctx` is a **verb** bar and the shipped `EditorContextBar` is the **WCAG 2.5.7** single-pointer twin of the drag gestures — **and they are not mutually exclusive.** The frozen bar is **additive**; the transform controls stay, because a parity phase does not remove an accessibility path. *Reversed 2026-10-14 by [ADR-129](../DECISIONS.md#adr-129): the controls open from the verb bar, in the Arrange tray ([D-114](#d-114)).* C2 splits into **C2a** (unblocked) and **C2b** (`.ctx*`) |
 | ~~[**D-032**](#d-032)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-032-ruling), OD-10 (C1 half) | the keep-clear warn state was never triggered in the freeze; the ruling makes it **transient interaction guidance**, so no content analysis is needed |
 | ~~[**D-033**](#d-033)~~ | ✅ **RESOLVED 2026-08-01** — [the frozen Bench amended](#d-033-amendment) | the frozen page was not the document's panel and the 16px cue was not the 17pt safe area; the page is now 229×324 and the cue a truthful uniform 18.5px |
 | [**D-023**](#d-023) | ⏳ **an owner ruling** | the Library labels its primary button `--paper` where the corpus publishes `--on-matcha` — the fourth of the D-005/D-011/D-022 set |
@@ -4521,6 +4521,8 @@ five text inks are AA-tuned against `#F7F2E7`; none of them was tuned against `#
 >
 > Also accept the review recommendation — **option (e)**: split C2 into **C2a** (selection, handles, focus state, the contextual selection framework) and **C2b** (the contextual toolbar, `.ctx*`). The fence applies **only to rows 2.10–2.13**. **C2a is fully unblocked.**
 
+
+> ⚠ **Reversed in part, 2026-10-14, by [ADR-129](../DECISIONS.md#adr-129)** under the owner's delegation of 2026-10-12, which the owner may overrule. The transform controls are kept and still reachable by taps alone; they open from the verb bar's `Arrange`, in a tray, instead of being on screen whenever something is selected ([D-114](#d-114)). The owner's words above are unchanged.
 **What this settles.** The premise the entry could not decide for itself — whether two bars in one slot is a parity failure or a parity *requirement* — is answered: during a phase whose objective is parity, an accessibility path already in the product is not a candidate for removal, and a frozen surface that omits it was never describing it. This is the same reasoning OD-9 used to keep redo, now applied to a conformance path rather than a convenience, which is why it lands the same way and harder.
 
 **Consequence for the packages.**
@@ -4778,7 +4780,7 @@ rather than by implementation**, and the first entry since Phase A to reach the 
 | **Artifacts** | [`v21-bench.html`](mockups/v21-bench.html) (DESIGN-FROZEN, ADR-099) · [`EditorContextBar.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorContextBar.kt) `:160-195` · the [**D-034** ruling (OD-11)](#d-034) |
 | **Found** | 2026-08-15, during **device Pass 2** on SM-A176B (Android 16, density 420) — [BETA-UX-REVIEW.md F-2](../BETA-UX-REVIEW.md) |
 | **Severity** | **One control is unreachable to sight and one is an 8dp touch target.** Does not block: the row is scrollable, so no function is lost to a screen reader |
-| **Status** | ✅ **RESOLVED — A14 ratifies the shipped wrapping transform bar** (2026-08-24) |
+| **Status** | ✅ **RESOLVED — A14 ratifies the shipped wrapping transform bar** (2026-08-24). **Superseded 2026-10-14** by `v21-bench.html` A33 / [ADR-129](../DECISIONS.md#adr-129): the bar left the layout for the Arrange tray ([D-114](#d-114)) |
 
 **This is a consequence of OD-11, not a new disagreement.** [D-034](#d-034) established that the frozen
 `.ctx` is a **verb** bar (`Edit · Font · Size · Ink · Delete`) while the shipped `EditorContextBar` is a
@@ -7356,7 +7358,7 @@ second is where the Compose build now differs from a frozen HTML file. The third
 | # | Item | Outcome |
 |---|---|---|
 | 1 | **The Text panel covered the words it styles.** | **Fixed** ([ADR-128](../DECISIONS.md#adr-128)). The panel stops short of the canvas top and the page lifts so the selected text sits above it. Seen on the phone |
-| 2 | **The page resizes on select** (a text box measured 671px wide unselected, 524px selected). | **Not fixed; direction decided, not built** ([ADR-129](../DECISIONS.md#adr-129), Proposed). The cause is the two-row accessible bar approved as A14 ([D-078](#d-078)): it takes its rows from the canvas only while something is selected. The decided direction is to move those controls into a Move tray opened from the verb bar, so the canvas keeps one size. It needs an HTML amendment first, so nothing was built. On the 360 × 640dp emulator this is at its worst: the page is drawn about 300dp tall at rest and about 195dp tall with a photo selected, and at 2× text its bottom goes under the verb bar |
+| 2 | **The page resizes on select** (a text box measured 671px wide unselected, 524px selected). | **Fixed 2026-10-14** by [ADR-129](../DECISIONS.md#adr-129) and [D-114](#d-114): the controls moved into the Arrange tray. *What follows is the record of 2026-10-13:* **Not fixed; direction decided, not built** ([ADR-129](../DECISIONS.md#adr-129), Proposed). The cause is the two-row accessible bar approved as A14 ([D-078](#d-078)): it takes its rows from the canvas only while something is selected. The decided direction is to move those controls into a Move tray opened from the verb bar, so the canvas keeps one size. It needs an HTML amendment first, so nothing was built. On the 360 × 640dp emulator this is at its worst: the page is drawn about 300dp tall at rest and about 195dp tall with a photo selected, and at 2× text its bottom goes under the verb bar |
 | 3 | **The Ink tray covered the whole page** (recorded under [D-112](#d-112)). | **Fixed**, same rule as item 1. The tray is shorter, so its Neutrals and Starting palettes begin below its fold and are reached by scrolling it. Seen on the phone |
 | 4 | Reframe: the controls are taller than the bar they replace and the page is not refitted, so its bottom is cut. | **Fixed.** The page lifts by what the shorter canvas cuts off the photo being framed, and no further than the photo's own top. A photo taller than the room left keeps its top and loses its bottom. Seen on the 360 × 640dp emulator with a photo pushed to the bottom of the page: the whole photo stayed in view |
 | 5 | Flip tray open: "Flipped · Undo" was drawn behind the tray. | **Fixed.** The snack sits above the tray. Seen on the phone. One cost, accepted: for its five seconds the snack can cover the lower half of the piece just flipped, when the piece sits right above the tray |
@@ -7410,7 +7412,7 @@ implementer; the owner has seen none of them. The owner may ask for any freeze t
 | Reduce motion on the save hand-off | The scroll to the hand-off row after Save PDF is animated whatever the setting, and repeats when the screen is restored. Recorded at the first review; still open |
 | A real small phone | The close-out pass was on an emulator (Android 16, set to 360 × 640dp), not a phone. The owner's phone is 384 × 832 at text size 1.0 and its settings were not changed |
 | The save-failure banner at large text | Not reachable on an emulator |
-| Item 2 | Not fixed. [ADR-129](../DECISIONS.md#adr-129) has to go through an HTML amendment before any Compose |
+| Item 2 | ~~Not fixed.~~ Fixed 2026-10-14 ([D-114](#d-114)) |
 | Split-screen and tablets | [ADR-127](../DECISIONS.md#adr-127) does not cover them |
 
 #### The close-out pass, 2026-10-13
@@ -7534,3 +7536,40 @@ was looked at before it was re-recorded too:
 - **Seven with changes of a pixel or less:** two `proof_scaffold_*` and two `voice_read_*` (a centred label
   and the page ticket sit a fraction of a pixel differently) and three `v21_folders_name_*` (a sliver of the
   sheet's bottom shadow). Nothing a person could see at normal size.
+
+---
+
+### D-114 — the Arrange tray as built (Bench A33) {#d-114}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (A33) · `feature/editor/.../ArrangeTray.kt` · `BenchContextBar.kt` · `EditorScreen.kt` · `core/copy/.../Copy.kt` |
+| **Found** | 2026-10-13, [D-113](#d-113) item 2: the page changed size on every select |
+| **Severity** | Visible UX defect on every select, for every maker |
+| **Status** | ✓ **Built 2026-10-14** under [ADR-129](../DECISIONS.md#adr-129) (Accepted under the owner's delegation). Owner checks owed: a TalkBack listen and a real small phone ([OWNER-CHECKLIST](../OWNER-CHECKLIST.md)) |
+
+The two-row transform bar (`EditorContextBar`) is gone from the layout. Its ten controls open from an
+`Arrange` verb, second on every kind's verb bar, in a tray that takes the verb bar's place the way the Flip
+tray does (A22). The page keeps one size whether or not something is selected
+(`EditorScreenTest.selecting_a_piece_does_not_change_the_page_size`).
+
+**Where Compose differs from A33, and why.**
+
+- **The page lift.** A33 draws the tray over a still page. Compose lifts the page by
+  [ADR-128](../DECISIONS.md#adr-128)'s rule so the selected piece stays above the tray, measured from where the
+  piece stood when the tray opened (ADR-129 point 5). Same rule as the Ink and Type panels; A33 does not
+  model it.
+- **The glyphs.** A33 draws its own stroke SVGs (`ICON.arrange`, a four-way cross); Compose uses the Material
+  glyphs the old bar already used (`Icons.Filled.*`, `OpenWith` for the verb). Same meaning, same spoken labels.
+- **Two controls named Done** while the tray is open: the tray's and the bottom bar's. A22 already accepts the
+  same pair for Flip. Recorded, not changed.
+- **On a short canvas the tray scrolls.** Its height is capped by ADR-128's peek band, so on a small phone at
+  large text the Layer group can sit below the fold of the tray. Reachable by scrolling; A33 does not freeze a
+  height.
+
+**What moved with it.** The first-run hint names Arrange. The old bar's `Text style` toggle is gone; the verb
+bar's `Text` opens the same card, and Back closes it with the selection kept. The bar's tests became the
+tray's (`ArrangeTrayTest`, `ArrangeTrayA11yTest`, `ArrangeTrayGoldenTest`); every selected-state golden moved.
+
+**Not reachable, recorded.** Multi-selection: the old bar handled it, but nothing in the interface makes one.
+The tray is for one piece.
