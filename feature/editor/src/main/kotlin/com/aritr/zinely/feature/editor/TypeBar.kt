@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
@@ -586,19 +587,27 @@ internal fun TypeBar(
  * widest row's label butt against its control. As padding it is measured into the label, so the intrinsic
  * stays honest and the gap keeps the CSS meaning it has under `space-between`: a floor, exactly 14dp on
  * the widest row and wider on the rest.
+ *
+ * **When label and controls do not fit on one line, the controls drop below the label** (D-115, issue
+ * #102), the way the Colour row always stacks. At the largest text on a 360dp screen the card stops at its
+ * width limit, and a plain `Row` then squeezed the controls until "Right" broke across three lines. A
+ * `FlowRow` reports the same one-line max-content width to the `IntrinsicSize.Max` query, so wherever the
+ * row fits nothing moves; it only wraps where the `Row` would have squeezed.
  */
 @Composable
 private fun TypeRow(label: String, control: @Composable () -> Unit) {
-    Row(
+    FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapXs),
     ) {
         TypeRowLabel(
             label = label,
-            modifier = Modifier.padding(end = ZinelyV21Dimens.gapLg),
+            modifier = Modifier
+                .align(Alignment.CenterVertically)
+                .padding(end = ZinelyV21Dimens.gapLg),
         )
-        control()
+        Box(Modifier.align(Alignment.CenterVertically)) { control() }
     }
 }
 
@@ -730,10 +739,9 @@ private fun SizeStepper(
  * collapses to one `android.widget.Button` carrying label, role and disabled state together. Compose's own
  * test tree cannot see it — `assertIsNotEnabled` passes under either arrangement.
  *
- * The spec's `.tysize button` declares `font-family`/`font-size`/`font-weight` for a text `&minus;`/`+`
- * where the `.zoom button` it cites uses an `<svg>`; that is an undeclared divergence in the proposal, and
- * this file resolves it toward the cited source. `v21-typebar.html` needs the same correction before it is
- * frozen.
+ * The glyph follows `.tysize svg` in the frozen `v21-typebar.html`, as `.zoom button` does in the source it
+ * cites. An earlier proposal drew a text `&minus;`/`+`; the page was corrected before it was frozen on
+ * 2026-10-06.
  *
  * **[cant] is not [enabled] = false (A29 rule 9, ADR-126).** Smaller on a Book text at Book's smallest
  * size cannot be used, but it stays enabled and clickable so a tap can say why: `.tysize button.cant` is

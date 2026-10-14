@@ -139,6 +139,7 @@
 | [ADR-127](#adr-127) | **The app is portrait only on phones.** No screen has a landscape layout; a turned phone got the upright layout in a 360dp-tall window. `MainActivity` is locked to portrait. Android 16 ignores the lock on screens 600dp and wider, so tablets are not covered | Accepted |
 | [ADR-128](#adr-128) | **A docked panel leaves the thing it edits in view.** The Ink tray and the Text panel stop short of the canvas top by a band sized to the selected element, and the page lifts the element into it; for those panels and for Reframe the lift stops at the element's own top instead of 96dp. Deviates from frozen A16; recorded in D-113 | Accepted |
 | [ADR-129](#adr-129) | **Moving a piece by buttons lives in a Move tray, not in a bar that takes rows from the canvas.** The two-row accessible bar (A14) makes the page shrink each time something is selected. Proposed: the controls move into a tray opened from the verb bar, which follows ADR-128. It would reverse OD-11, so it needs the owner and an HTML amendment before any Compose | Proposed |
+| [ADR-130](#adr-130) | **The typing-time notice says "prints in a font from your phone" for what the phone draws.** The check asks `Paint.hasGlyph` on the face the renderer resolves, which walks the same fallback chain; a script every character of which the phone draws gets the new line, anything else keeps ADR-070's "can't print yet". Amends ADR-070 (issue #103, D-115) | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -1912,7 +1913,7 @@ The enabling fact is that the cost is far lower than the `ProofSheet` deferral i
   6. **Accessibility: polite.** Unlike the save-failure banner (assertive — a loss that already happened), this is *preventive*: nothing is lost yet. A `LiveRegionMode.Polite` region announces without barging over speech, and because the rendered text changes only when the *set* of unprintable scripts changes, it does not re-announce on every keystroke of the same script.
 - **Consequences:** **The single-silent-loss failure DoD 4 exists to prevent is closed** — no character can reach paper blank without the user first being told, specifically, that it will. **No render, export, or PDF code is touched**, so `preview == export` and reproducible-vector-PDF output are preserved **by construction** — there is nothing in this change that can alter a drawn pixel of document content. Affected modules: `:core:copy` (new `Copy.Coverage`), `:feature:editor` (detection in `EditTextSession`, the new notice, the host mount), and docs (VOICE §Errors, this ADR). `:core:model` is **unchanged** — `analyzeTextCoverage` already existed and was already tested; this ADR gives it its first production consumer. **This behaviour is load-bearing and permanent:** any future script-support work (Direction B) may *narrow what the notice fires on*, but **may not weaken or remove the guarantee** that an unprintable character is always announced before it is lost. **No README edit.**
 - **Review:** Independent Review Agent to falsify, specifically: (a) that **no render/export/PDF path is touched** — grep the diff for any change under `render-android`/export/`CanvasReplayer`/`BundledFontResolver`; if the set is empty the `preview == export` and reproducible-PDF claims hold, and if it is not, this ADR's central claim is wrong; (b) that the character is **genuinely retained** through commit (the `committing_retains_the_unsupported_character` test proves no silent loss — confirm it asserts the *committed document*, not the draft); (c) that the notice **auto-narrows** — that it is keyed off `Script` names/`BUNDLED_SCRIPTS`, not a hardcoded list, so it cannot rot when the set grows; (d) that detection covers **both** pre-existing/seed text and typed text, not only one; (e) that the save-failure **precedence** holds and the two never stack; (f) that the notice introduces **no new visual language** (it reuses the frozen `.snackbar` treatment) and so does not breach the design freeze; and (g) golden discipline — that **every pre-existing editor golden stays byte-identical** (the notice is hidden by default) and that the one new notice golden is recorded on the pinned CI image ([ADR-058](#adr-058)). Supersedes nothing.
-
+- **Amended 2026-10-14 by [ADR-130](#adr-130):** the context above is wrong on one point. The bundled faces do fall back to the phone's fonts, so a character the phone draws prints. The notice now says so for those; "can't print yet" stays for the rest.
 ---
 
 ## ADR-071 {#adr-071}
@@ -15741,3 +15742,89 @@ Independent Review Agent, reading only, 2026-10-13: **GO WITH FIXES** for the do
 For this ADR it found: "decided" used of a Proposed record; the rulings it would reverse (OD-11, ADR-092,
 the Issue #54 threshold) not cited; layout and wording details decided that the HTML amendment owns. All
 three are taken above.
+
+## ADR-130 {#adr-130}
+
+### The typing-time notice says "prints in a font from your phone" for what the phone draws
+
+**Status:** Accepted with documented device-verification limitations, 2026-10-14, under the owner's
+delegation of 2026-10-12 ("decide, do not ask"); the owner has not ruled on it personally and may overrule
+it. Checked on an Android 16 emulator only: the owner's phone, a TalkBack listen and a printed page are owed. Raised by
+[issue #103](https://github.com/aritr-codes/zinely-android/issues/103); recorded in
+[D-115](design/V2-SPEC-DEFECTS.md#d-115).
+**Amends:** [ADR-070](#adr-070) (its "no system-font fallback" context and the single "can't print yet" line).
+ADR-070's rule stands: no character reaches paper without the maker being told first.
+
+#### Context
+
+- ✅ `BundledFontResolver` loads each bundled face with `Typeface.createFromAsset`, which gives the face the
+  platform's default fallback. A character the face lacks is drawn from a font on the phone. Measured on an
+  Android 16 emulator with Plain (Inter): `ﬁ`, `中` and `ก` were drawn on every surface and were in the
+  exported PDF; the PDF names only `NotoSansThai`, so which fonts supplied the other two is not known
+  ([Brief 02](planning/BRIEF-02-THREE-VOICES.md#measured-on-2026-10-07)).
+- ✅ The notice still said they "can't print yet". That is false where the phone draws them, and a notice
+  that is wrong teaches makers to ignore it.
+- ✅ What the phone draws is the phone's face, so the same zine can look different, and wrap differently,
+  on another phone. Nothing said so.
+- ✅ `Paint.hasGlyph` on a resolved face answers for that face and its fallback chain (measured 2026-10-14,
+  same emulator: `中` and `ก` reported drawn and drawn; U+E000 reported drawn and drawn, by some emulator
+  font; U+10FFFD reported not drawn). `FontCoverage` rejects it for the opposite question (does *our* file
+  hold the glyph); for "will this print here" it is the right one.
+- ✅ The premise ADR-070 took from [ADR-028](#adr-028) §4.2, that the bundled resolver never reaches a system
+  font, holds only for the characters the bundled faces carry. Outside them preview and export still match
+  on one phone, because both draw through the same resolver, but they can differ between phones.
+
+#### Decision
+
+```mermaid
+flowchart TD
+    A["A character outside the text's voice"] --> B{"Paint.hasGlyph on the face\nthe renderer resolves"}
+    B -->|"yes"| C["'… characters print in a font from your phone,\nso they may look different on another phone.'"]
+    B -->|"no"| D["'… characters can't print yet — but they're saved…'\n(ADR-070, unchanged)"]
+```
+
+1. **The typing-time check asks the phone.** `analyzeTextCoverage` takes a `phoneDraws` predicate, asked
+   only about characters outside the voice. The editor passes `Paint.hasGlyph` on the face
+   `BundledFontResolver` resolves for the text's family, bold and italic. Pure callers get "no", which keeps
+   ADR-070's line.
+2. **A script is "drawn by the phone" only if every one of its characters in the text is.** One character
+   no font draws keeps the whole script on the "can't print yet" line, so the notice never under-warns.
+3. **The new line** (`Copy.Coverage.phoneFont`): "Chinese and Thai characters print in a font from your
+   phone, so they may look different on another phone." Both lines can show at once. Characters of no named
+   script are called "other" and named last ("Chinese and other characters print …"), because "Unsupported
+   characters print" contradicts itself.
+4. **Book's Greek and Cyrillic keep their own line** ([ADR-126](#adr-126), A29 rule 13), whatever the phone
+   draws: the way out is the matching face, Plain.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Stop warning about what the phone draws | The face is the phone's, so another phone can print it differently; ADR-070 forbids weakening the notice |
+| Keep "can't print yet" | False on the emulator measured, and on any phone whose fonts draw the character |
+| Turn the fallback off so these really do not print | Silently drops the maker's words from paper, the failure ADR-070 exists to prevent |
+| Bundle the scripts | ADR-070 Direction B, a separate and much larger owner decision |
+
+#### Consequences
+
+- The notice is now device-dependent: the same text can get the phone-font line on one phone and "can't print
+  yet" on another. That is the truth on each phone.
+- Only the typing-time notice changes. Read, Save PDF and Print details still carry no warning, and the
+  check still does not run on open, restore or export (already listed under [ADR-126](#adr-126)).
+- `FontCoverage` and the bundled-font guard are untouched; no render, export or PDF code changes.
+
+#### Verification
+
+Five of the new pure tests failed before the change (three in `TextCoverageTest`, two in
+`EditorCoverageNoticeTest`); the others pin the default, Book's line and the copy. `EditTextSessionCoverageTest`
+checks that the session really passes the phone check. The emulator check is in
+[D-115](design/V2-SPEC-DEFECTS.md#d-115).
+
+#### Review
+
+Two independent Review Agents, reading only, 2026-10-14: code **GO WITH FIXES**, documents **GO WITH
+FIXES**. Taken: the Type bar goldens at font scale 2 had to be re-recorded; a session-level test was missing;
+this review was not recorded; the status did not name the owed checks; the evidence labels above were
+stronger or weaker than the evidence; the "other" rule had no home; ADR-028 §4.2 was not named. Not taken:
+moving the font resolver out of the session (it costs what the page preview already pays; noted in the
+code). Details in [D-115](design/V2-SPEC-DEFECTS.md#d-115).

@@ -7602,3 +7602,81 @@ of the current metadata.
   unreadable zine with no row.
 - Every scan now reads each zine's `meta.json` once and looks up its row (one query per zine). These are small files, and the Shelf already reads all of
   them each time it is drawn (folders, [ADR-125](../DECISIONS.md#adr-125)).
+
+---
+
+### D-115 — at the largest text "Right" breaks across three lines, and the typing-time notice says what prints "can't print yet" {#d-115}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../TypeBar.kt` (`TypeRow`) · `core/model/.../TextCoverage.kt` · `feature/editor/.../EditTextSession.kt` · `feature/editor/.../EditorCoverageNotice.kt` · `core/copy/.../Copy.kt` (`Coverage.phoneFont`) · frozen `docs/design/mockups/v21-typebar.html` (not edited) |
+| **Found** | 2026-10-07, emulator, `0.9.0-beta.6`: [issue #102](https://github.com/aritr-codes/zinely-android/issues/102) and [issue #103](https://github.com/aritr-codes/zinely-android/issues/103) |
+| **Severity** | **Visible UX defect** (#102: a control unreadable at an accessibility setting) and **trust defect** (#103: the app says something false about the maker's words) |
+| **Status** | ✓ **Fixed 2026-10-14** in Compose, under the owner's delegation of 2026-10-12. #103's wording is [ADR-130](../DECISIONS.md#adr-130). The owner may overrule either |
+
+**1. "Right" (issue #102).** Checked first against `main` after [D-113](#d-113) (PRs #123–#126): **not fixed
+there.** Emulator, Android 16, 360 × 640dp (`wm size 1080x1920`, `wm density 480`), `font_scale 2.0`, debug
+build of `017f747` under a side-by-side package: `Right` was a 48 × 130dp button at `[856,693][1000,1083]`,
+drawn "Ri / g / ht". The card stops at its 336dp limit, and the plain `Row` in `TypeRow` then squeezed the
+choices.
+
+The other half of the issue is already mended: since D-113 the card scrolls inside itself (A29 rule 11), and
+all the Colour swatches were reached by scrolling in the same session (`Ink`, `Coral`, `Teal`, `Blue` at
+48 × 48dp; `0.9.0-beta.7` already noted this).
+
+**Compose fix.** `TypeRow` is a `FlowRow`: when label and choices do not fit on one line the choices drop
+below the label, as the Colour row always does. A `FlowRow` reports the same one-line width to the card's
+`IntrinsicSize.Max`, so wherever a row fits, nothing moves. Fenced by
+`TypeBarTest.right_stays_on_one_line_at_the_largest_font_scale_on_a_360dp_phone`, which failed before the
+change.
+
+The frozen page draws this defect on purpose (its `.fs2` rule: "That defect is the app's today, not this
+row's") and does not say what should replace it. The frozen file is not edited; the stacked Align row at the
+largest text is the accepted difference, recorded here.
+
+**2. "Can't print yet" (issue #103).** The bundled faces fall back to the phone's own fonts, so `ﬁ`, `中` and
+`ก` printed while the notice said they could not. The check now also asks `Paint.hasGlyph` on the face the
+renderer resolves (the same fallback chain), and a script every character of which the phone draws gets a
+new line: "Chinese and Thai characters print in a font from your phone, so they may look different on
+another phone." Anything no font draws keeps "can't print yet". Characters of no named script are called
+"other" there, since "Unsupported characters print" contradicts itself. The decision is
+[ADR-130](../DECISIONS.md#adr-130).
+
+**Device, 2026-10-14.** Emulator only (Android 16, `Medium_Phone_API_36.1`), not the owner's phone. TalkBack
+was not listened to.
+
+| Check | Before (`main`) | After |
+|---|---|---|
+| `font_scale 2.0`, 360 × 640dp: `Right` | 48 × 130dp, three lines | 77 × 54dp, one line, below `ALIGN` (label at 208dp, choices at 242dp) |
+| `font_scale 1.0`, same screen: Align row | not measured | `ALIGN` and the 48dp choices on one line, as before |
+| Text `Hi 中 ก ﬁ`, editing | not re-measured; issue #103 recorded "Unsupported, Chinese and Thai characters can't print yet …" on `0.9.0-beta.6` | "Chinese, Thai and other characters print in a font from your phone, so they may look different on another phone." |
+| Text `Hi 中 U+10FFFD ก` | — | the phone-font line for Chinese and Thai, then "Unsupported characters can't print yet …" |
+
+A private-use character (U+E000) was drawn by a font on the emulator, so it is told it prints: the check is
+as wide as the phone.
+
+**First-time reading.** With the largest text the Align choices sit at the left under their label while
+Size and Style sit at the right beside theirs. It reads as a different row, not as a broken one; every word
+is whole. The notice: the first build named the no-script characters "Unsupported" in the line that says
+they print, which read as a contradiction before the reason was known. Hence "other".
+
+**Goldens.** Four moved, as intended, all at font scale 2 on a 360dp room:
+`type_bar_font_scale2_{plain,book_unavailable,unknown,unknown_scrolling}`. Each had drawn "Ri / g / ht";
+each now draws the Align choices on one line under their label, and the card is shorter. The
+`_compare` images were read before the four were re-recorded on the pinned CI image (`record-goldens.yml`);
+the other 196 images came back byte-identical, so at ordinary sizes nothing moved.
+
+**Review, 2026-10-14.** Two independent Review Agents, reading only. Code: **GO WITH FIXES**. Its one
+Required Fix was the four goldens above, which still showed the defect (taken). It also asked for a test
+that the session really passes the phone check (taken: `EditTextSessionCoverageTest.the_session_asks_the_phone_what_it_draws`)
+and for the font resolver to move out of the session (not taken: it costs what the page preview already
+pays, and the code says where to hoist it). Documents: **GO WITH FIXES**. Its two Required Fixes were a
+"see below" that pointed at nothing and an ADR-130 review section that pointed here before this paragraph
+existed (both taken). Also taken: ADR-130's status names the owed checks; evidence labels corrected (one
+emulator, not "phones"; only `NotoSansThai` is named in the PDF; the fallback was measured with Plain only);
+the "other" rule written into ADR-130 and VOICE; ADR-028 §4.2 named. Owed, not done: an amendment to
+`v21-typebar.html` that draws the stacked Align row, so the frozen page stops showing the defect.
+
+**Not done here.** The check still runs only while a text is open for editing (listed under
+[ADR-126](../DECISIONS.md#adr-126)); Read, Save PDF and Print details still say nothing about phone fonts.
+The owner's Samsung (its largest font and bold-font settings) was not tested.

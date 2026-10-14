@@ -8,8 +8,10 @@ import androidx.compose.ui.test.onNodeWithText
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.Script
 import com.aritr.zinely.core.model.TextCoverage
+import com.aritr.zinely.core.model.analyzeTextCoverage
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -94,5 +96,33 @@ class EditorCoverageNoticeTest {
             Copy.Coverage.bookLacks("Cyrillic") + " " + Copy.Coverage.unsupported(listOf("Bengali")),
             coverageNoticeLine(coverage(Script.CYRILLIC, Script.BENGALI)),
         )
+    }
+
+    // ── ADR-130 (issue #103): what the phone draws prints, so it is never "can't print yet" ──────────
+
+    @Test
+    fun characters_the_phone_draws_are_told_they_print_in_a_phone_font_not_that_they_cannot_print() {
+        val line = coverageNoticeLine(analyzeTextCoverage("fi ﬁ α ж 中 ก") { true })
+        assertEquals(
+            "Chinese, Thai and other characters print in a font from your phone, " +
+                "so they may look different on another phone.",
+            line,
+        )
+        assertFalse(line.contains("can’t print"))
+    }
+
+    @Test
+    fun drawn_and_undrawn_scripts_each_get_their_own_sentence() {
+        val line = coverageNoticeLine(analyzeTextCoverage("中 ก") { it == '中'.code })
+        assertEquals(
+            Copy.Coverage.phoneFont(listOf("Chinese")) + " " + Copy.Coverage.unsupported(listOf("Thai")),
+            line,
+        )
+    }
+
+    @Test
+    fun a_Book_text_keeps_the_way_out_for_Greek_even_when_the_phone_draws_it() {
+        val line = coverageNoticeLine(analyzeTextCoverage("α", "Fraunces") { true })
+        assertEquals(Copy.Coverage.bookLacks("Greek"), line)
     }
 }

@@ -1,5 +1,6 @@
 package com.aritr.zinely.feature.editor
 
+import android.graphics.Paint
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -21,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 // NB: compose-ui's LocalLifecycleOwner is deprecated in favour of lifecycle-runtime-compose's, but moving
 // homes means bumping the graph-wide lifecycle version (catalog is on 2.6.1 ktx) — deferred to a dep-bump.
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -67,8 +69,10 @@ public const val EditTextSessionTestTag: String = "edit-text-session"
  * text opened from an import or a prior session) and on every keystroke — and reported out via
  * [onCoverageChanged] for the host to surface as the [EditorCoverageNotice]. This stays out of the
  * reducer for the same reason the draft does: it is per-keystroke feature state, not a document mutation.
- * The analysis ([analyzeTextCoverage]) is pure and allocation-light, so running it per key is cheap and
- * touches no font, canvas, or device. On dispose the report resets to [TextCoverage.Covered] so the
+ * The analysis ([analyzeTextCoverage]) is pure and allocation-light, so running it per key is cheap. Only
+ * for characters outside the text's voice does it ask the platform, through `Paint.hasGlyph` on the face the
+ * renderer resolves, whether the phone's fallback fonts draw them ([ADR-130](../DECISIONS.md#adr-130)).
+ * On dispose the report resets to [TextCoverage.Covered] so the
  * notice clears with the session; the character itself is **never stripped** from the draft.
  *
  * @param session the open edit session (its `id`/`token` scope the commit).
@@ -127,8 +131,18 @@ public fun EditTextSession(
     // allocation-light, so per-key is cheap; the host raises the EditorCoverageNotice from the result.
     // ADR-126: checked against the text's own voice, so a Greek letter typed into a Book text is reported
     // (Book has none) where the same letter in a Plain text is not.
-    LaunchedEffect(session.token, draft.text, element.style.fontFamily) {
-        latestOnCoverage(analyzeTextCoverage(draft.text, element.style.fontFamily))
+    // ADR-130: and against what the phone actually draws. The renderer's bundled faces fall back to the
+    // phone's fonts for a character they lack, so the face the renderer resolves for this text is asked
+    // (Paint.hasGlyph walks that same fallback chain); a character it draws prints, from a phone font.
+    // ponytail: the resolver loads every bundled face once per session; hoist it if session start shows jank.
+    val assets = LocalContext.current.assets
+    val fonts = remember(assets) { previewFontResolver(assets) }
+    val style = element.style
+    LaunchedEffect(session.token, draft.text, style.fontFamily, style.bold, style.italic) {
+        val paint = Paint().apply { typeface = fonts.resolve(style.fontFamily, style.bold, style.italic) }
+        latestOnCoverage(
+            analyzeTextCoverage(draft.text, style.fontFamily) { paint.hasGlyph(String(Character.toChars(it))) },
+        )
     }
 
     fun commit(notifyHost: Boolean = true) {

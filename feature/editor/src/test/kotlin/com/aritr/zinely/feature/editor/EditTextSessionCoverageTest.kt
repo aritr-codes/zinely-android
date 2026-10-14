@@ -147,6 +147,20 @@ class EditTextSessionCoverageTest {
     }
 
     @Test
+    fun the_session_asks_the_phone_what_it_draws() {
+        // ADR-130: Fraunces has no Greek, but the platform fallback behind the resolved Book face does, so
+        // the session must report Greek as drawn by the phone. A noncharacter no font maps stays undrawn.
+        // If the session stopped passing its Paint.hasGlyph check, the first assertion would fail.
+        val noFont = String(Character.toChars(0x10FFFD))
+        var book: TextCoverage = TextCoverage.Covered
+        setSession(store(initialText = "hello", family = "Fraunces")) { book = it }
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("Καλημέρα $noFont")
+        composeRule.waitForIdle()
+        assertEquals(listOf(Script.GREEK, Script.OTHER), book.unsupportedScripts)
+        assertEquals(listOf(Script.GREEK), book.phoneFontScripts)
+    }
+
+    @Test
     fun a_font_this_build_does_not_have_is_checked_as_the_Plain_it_is_drawn_in() {
         val kalimera = "Καλημέρα"
         var latest: TextCoverage = TextCoverage.Covered
