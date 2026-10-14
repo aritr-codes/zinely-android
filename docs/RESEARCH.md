@@ -922,3 +922,60 @@ left cut off. R24.4 above reached the same advice for panels that scroll down.
 
 Ranked by the research pass: swap the page strip for the buttons; a Move entry opening a docked tray; float
 the bar; reserve the rows always; keep as built. ADR-129 takes the second, and says why not the first.
+
+---
+
+## R26. One hand for a set of single-ink pieces (2026-10-14)
+
+Evidence for the Art house style ([SUPPLIES-SPEC §4.4](design/SUPPLIES-SPEC.md#house-style),
+[ADR-132](DECISIONS.md#adr-132), [D-117](design/V2-SPEC-DEFECTS.md#d-117)). Gathered by a Research Agent on
+2026-10-14. Sources it could not open (Material Design's icon pages, Shopify Polaris, MoMA on Matisse) are
+not cited.
+
+### R26.1 A set reads as one hand when weight, detail and view agree — ✅ VERIFIED
+
+- [IBM UI icons](https://www.ibm.com/design/language/iconography/ui-icons/design/): "no icon should appear
+  heavier or lighter than another… A single icon shouldn't contain a mix of different stroke weights…
+  They'll feel unbalanced and look like a mistake." [IBM pictograms](https://www.ibm.com/design/language/iconography/pictograms/design/)
+  fix one stroke for the whole set and say "Avoid using perspective… Create depth through flat layers".
+- [Apple HIG, Icons](https://developer.apple.com/design/human-interface-guidelines/icons): icons "need to use a
+  consistent size, level of detail, stroke thickness (or weight), and perspective", and "Too many details can
+  make an interface icon confusing or unreadable."
+- [Atlassian iconography](https://atlassian.design/foundations/iconography): "Use simplified shapes with the
+  minimum detail required to express a metaphor."
+
+🟦 Applied as H1 (one weight), H3 (flat views), H4 (one margin) and H8 (three ideas at most).
+
+### R26.2 Knockouts need more room than ink — ✅ VERIFIED, with a 🟨 house number
+
+[Onlineprinters on line weight](https://www.onlineprinters.ie/c/print-files/line-weight): positive lines at
+least 0.25pt, negative (knocked-out) lines at least 0.5pt. 🟨 No source gives a minimum counter for filled
+icon sets, so H2's 1.5-unit gap is a house number, set at about twice the printer's floor at the smallest
+landing size. It should be checked by printing and photocopying (owed, ADR-132).
+
+### R26.3 Torn paper is irregular at more than one scale — ✅ VERIFIED (physics), 🟨 for the reading
+
+[Alava et al., arXiv cond-mat/0608052](https://arxiv.org/abs/cond-mat/0608052): paper fracture lines show
+multiscaling at small scales and self-affine scaling at larger ones. [Wikipedia, Deckle edge](https://en.wikipedia.org/wiki/Deckle_edge)
+says machine deckles are cut "into patterns" and are valued for "the impression that it is handmade" (marked
+"citation needed" there). 🟨 That a regular zig-zag reads as clip-art is an assumption consistent with both;
+no perception study was found. Applied as H6: a slow bow plus an uneven fine jag, from one hand-written table.
+
+### R26.4 Print and photocopy floors — ✅ VERIFIED
+
+[Tradeprint on hairlines](https://help.tradeprint.co.uk/hairlines): hairlines "print differently on different
+printers… use at least 0.25pt." [Kumar et al., AJFSFM](https://journals.nauss.edu.sa/index.php/AJFSFM/article/view/1825):
+line features distort across photocopy generations, "much more pronounced… beyond the second generation".
+🟦 H2's 2-unit ink (about 1mm at stamp size) and 1.5-unit gap (about 0.74mm) sit far above both floors.
+
+### R26.5 Printer's marks have conventional forms — ✅ VERIFIED
+
+- Crop marks are "short, thin, solid, horizontal and vertical lines, placed outside of the trim area at each
+  corner" ([University of Melbourne print room](https://ms-kb.msd.unimelb.edu.au/print-room/file-preperation/bleed-and-crop-marks)).
+- A registration mark is printed on every separation; its usual form is a ring with a cross
+  ([Wikipedia, Registration mark](https://en.wikipedia.org/wiki/Registration_mark), shown in its illustration).
+- A halftone is a regular grid of dots that vary in size ([Wikipedia, Halftone](https://en.wikipedia.org/wiki/Halftone)).
+  ⚠️ DISPUTED: screen-printing sources differ on 45° versus 22.5° for the angle. A34 uses 45°, the angle
+  most readers know.
+
+🟦 Applied in the *printer's mark* voice of §4.4: these are drawn exact, not by hand.

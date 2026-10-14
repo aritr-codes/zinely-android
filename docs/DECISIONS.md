@@ -139,6 +139,7 @@
 | [ADR-127](#adr-127) | **The app is portrait only on phones.** No screen has a landscape layout; a turned phone got the upright layout in a 360dp-tall window. `MainActivity` is locked to portrait. Android 16 ignores the lock on screens 600dp and wider, so tablets are not covered | Accepted |
 | [ADR-128](#adr-128) | **A docked panel leaves the thing it edits in view.** The Ink tray and the Text panel stop short of the canvas top by a band sized to the selected element, and the page lifts the element into it; for those panels and for Reframe the lift stops at the element's own top instead of 96dp. Deviates from frozen A16; recorded in D-113 | Accepted |
 | [ADR-129](#adr-129) | **Moving a piece by buttons lives in a Move tray, not in a bar that takes rows from the canvas.** The two-row accessible bar (A14) makes the page shrink each time something is selected. Proposed: the controls move into a tray opened from the verb bar, which follows ADR-128. It would reverse OD-11, so it needs the owner and an HTML amendment before any Compose | Proposed |
+| [ADR-132](#adr-132) | **The Art pieces are drawn by one hand.** One line weight (2.5 of 24 units), flat views, a fixed margin, and an edge that says what made it (cut, torn, drawn, metal, printer's mark); torn edges read one hand-written tear table, never a zig-zag. All 34 redrawn as bench A34, design frozen under the owner's delegation; ids, names, sizes and the eight holed pieces unchanged. The Compose redraw and every Art golden are a later wave | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -15741,3 +15742,78 @@ Independent Review Agent, reading only, 2026-10-13: **GO WITH FIXES** for the do
 For this ADR it found: "decided" used of a Proposed record; the rulings it would reverse (OD-11, ADR-092,
 the Issue #54 threshold) not cited; layout and wording details decided that the HTML amendment owns. All
 three are taken above.
+
+## ADR-132 {#adr-132}
+
+### The Art pieces are drawn by one hand
+
+**Status:** Proposed, 2026-10-14. **The design is frozen** as [`v21-bench.html`](design/mockups/v21-bench.html)
+A34, under the owner's delegation of 2026-10-12 ("decide, do not ask"); the owner has not ruled on it
+personally and may overrule it. The ADR stays Proposed until the Compose wave builds it and the checks below
+are done.
+**Extends:** [SUPPLIES-SPEC §4.1](design/SUPPLIES-SPEC.md) (authoring rule) with §4.4 (house style).
+**Keeps:** [ADR-107](#adr-107) R2 (no randomisation), [ADR-124](#adr-124)'s tap-through list, A16's sheet,
+A32's two frames as named and ordered, the landing sizes of SUPPLIES-SPEC §5.2.
+**Defect:** [D-117](design/V2-SPEC-DEFECTS.md#d-117). **Evidence:** [RESEARCH R26](RESEARCH.md#r26-one-hand-for-a-set-of-single-ink-pieces-2026-10-14).
+
+#### Context
+
+- ✅ A tester said the Art looks amateurish (2026-10-12). Rendered together, the 34 pieces use walls from 1
+  to 4.6 units, a regular zig-zag for every tear, ruler-perfect shapes beside rough polygons, and three
+  pieces that do not read as their names ([D-117](design/V2-SPEC-DEFECTS.md#d-117)).
+- ✅ Mixed weights and mixed levels of detail are what design systems name as making a set look like a
+  mistake (R26.1).
+- The Art is a frozen HTML spec held to the catalogue by `BenchArtSheetParityTest`, and one renderer draws
+  it on all four surfaces. A redraw is therefore an HTML amendment first and a Compose wave second, and the
+  second re-records every Art golden.
+
+#### Decision
+
+```mermaid
+flowchart LR
+    A["SUPPLIES-SPEC §4.4\nhouse rules H1–H9"] --> B["v21-bench.html A34\nART_A34: 34 literal paths"]
+    B --> C["Design frozen\n(owner's delegation)"]
+    C --> D["Compose wave (later):\nSupplyCatalog ← ART_A34\nparity test → ART_A34\nre-record Art goldens"]
+```
+
+1. **One house style** ([SUPPLIES-SPEC §4.4](design/SUPPLIES-SPEC.md#house-style)): one line weight W = 2.5
+   units, bands of paper 2W; no ink under 2 units and no gap under 1.5; flat views; a 0.5-unit margin; five
+   edge voices (cut, torn, drawn, metal, printer's mark), each piece using only its own; one hand-written
+   tear table; at most three ideas per piece.
+2. **All 34 are redrawn**, not replaced: every id, name, family, order, tag and landing size is unchanged.
+   The same eight pieces have holes.
+3. **The bench shows A34; the parity test keeps the shipped set.** A34's script redraws each tile as the
+   sheet draws it and leaves the literal lists alone, so `BenchArtSheetParityTest` keeps holding the
+   shipped catalogue to the shipped drawings until the Compose wave. That wave switches the test to the
+   literal `ART_A34` list in the same change that transcribes it into `SupplyCatalog` (A34 says how).
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Fix only the three unreadable pieces | Leaves the mixed weights and the zig-zag, which are most of what reads as amateurish |
+| Make every edge hand-drawn, printer's marks included | A wobbly registration mark or halftone pretends a hand made what a machine makes; the exactness is the meaning (R26.5) |
+| One weight in millimetres after landing, not in units | The landing sizes are an unverified reading (§5.2) and makers resize; the sheet, where the whole set is seen together, shows equal units |
+| Seeded noise for the torn edges | Fixed after authoring, but it reads as the randomisation ADR-107 refuses and cannot be reviewed coordinate by coordinate |
+| Replace pieces that do not work (an arrow for the hand) | Changes the set the owner ruled on; every piece could be redrawn to read |
+
+#### Consequences
+
+- The Compose wave rewrites the 34 outlines in `SupplyCatalog`, switches the parity test and re-records
+  every Art and Decor golden, reading each diff first. Hit areas follow the drawn ink (ADR-124), so the new
+  registration cross passes taps through its four quarter holes and the eyelet through its ring gap.
+- Until then the bench and the app draw different Art. A34 says so in the file.
+- The A32 text's "fourteen snips" for Round window is superseded by a smooth hand-cut hole; Snipped border
+  keeps its snips.
+
+#### Owed before Accepted
+
+- The Compose redraw and the switch-over above, with the golden re-record.
+- A printed page and a second-generation photocopy of all 34 at their landing sizes: no hole may fill in
+  (R26.2, R26.4).
+- Both device passes, including whether Pointing hand, Push pin, Saddle stitch and Crop marks read as their
+  names to a first-time user.
+
+#### Review
+
+Recorded in the PR that adds this ADR.
