@@ -342,6 +342,8 @@ flowchart TD
 
 **Print correctness ([ADR-012](DECISIONS.md#adr-012)):** export at **exact paper size**; keep all geometry inside a ~6 mm/0.25" **safe area**; print a 1 in / 50 mm **calibration ruler** (accepted design, **not yet shipped** — deferred with cause, [ADR-039](DECISIONS.md#adr-039): the edge-to-edge grid leaves no margin; the "Actual size" note carries the guidance); surface **"print at 100% / Actual size, Fit-to-page OFF"**. No network at any step.
 
+**Paper ([ADR-133](DECISIONS.md#adr-133)):** a person chooses, and a file stores, a size from a closed, named set (`PaperSize`: A4 and US Letter today; US Legal and A5 are chosen next and wait on their own schema bump). `core:imposition` is open over geometry: `Imposer.layout(format, sheetPortrait)` takes any portrait sheet in points, the `PaperSize` overload delegates to it, and the jqwik properties hold for every sheet from 4 in to 18 in a side, so adding a size needs no engine change.
+
 **Export sequence (PDF):**
 
 ```mermaid

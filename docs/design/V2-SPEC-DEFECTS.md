@@ -7680,3 +7680,47 @@ the "other" rule written into ADR-130 and VOICE; ADR-028 §4.2 named. Owed, not 
 **Not done here.** The check still runs only while a text is open for editing (listed under
 [ADR-126](../DECISIONS.md#adr-126)); Read, Save PDF and Print details still say nothing about phone fonts.
 The owner's Samsung (its largest font and bold-font settings) was not tested.
+
+---
+
+### D-118 — more paper sizes: what the engine pass found {#d-118}
+
+| | |
+|---|---|
+| **Artifacts** | `core/imposition/.../Imposer.kt` · `SingleSheet8Imposer.kt` · `ImpositionLayout.kt` · `core/model/.../ModelEnums.kt` · `core/model/src/test/resources/schema-shape-v3.txt` · `feature/editor/.../ShelfSheets.kt` |
+| **Found** | 2026-10-14, while building the engine half of "more paper sizes" (lane F of the parallel wave) |
+| **Severity** | No user-visible defect. One plan gap, one latent UI leak, two engine gaps |
+| **Status** | ✓ **Engine closed 2026-10-14** under [ADR-133](../DECISIONS.md#adr-133) (Accepted under the owner's delegation). The sizes themselves are not added: that waits on a schema bump and A35 |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **A new paper size is a change of the saved format.** The wave's handoff planned the sizes as an engine change with "existing zines open unchanged". They would open unchanged, but `DocumentSchemaShapeTest` records the `PaperSize` values, so adding one needs a schema bump, and v4 is reserved for plan step 6, alone. | **Planned, not built.** ADR-133 gives the sizes their own bump after v4. Nothing in the file format changed in this pass, so the frozen fixtures and `schema-shape-v3.txt` still pass untouched |
+| 2 | **`shelfPaperChoices` lists `PaperSize.entries`.** The Shelf's chooser would offer any new size the day the enum grows, before A35 is frozen. The Print switch and the Colophon already use explicit lists. | **Recorded in ADR-133's consequences** as work for the change that adds the sizes. Not changed now: with the enum unchanged, no screen can reach a new size |
+| 3 | **The engine was only proved on two sheets.** Its geometry came from the sheet, but every test and property drew from Letter and A4, and the property's inset range (up to 95 pt) only suited those two. | **Fixed.** `Imposer.layout(format, sheetPortrait)` takes any sheet; two properties cover sheets from 4 in to 18 in a side; Legal and A5 have exact tests |
+| 4 | **`ImpositionLayout.paper` had no reader.** | **Removed.** The layout keeps `sheet`, which the validator and every consumer read |
+
+#### Review
+
+Two independent Review Agents, reading only, 2026-10-14.
+
+**Code lens: GO.**
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| The `sheetPortrait` overload does not check orientation | Recommended | **Accepted.** The KDoc now says a wide sheet is laid tall and the properties cover both |
+| The A5 test compared with A4 / √2 only, not A5's own panel | Recommended | **Accepted.** An exact assertion (148.819 × 209.764 pt) is added |
+| "A named paper imposes as its portrait sheet does" cannot fail today | Observation | **Rejected.** Kept: it pins the delegation, which is the one line a later edit could break |
+| `Imposer`'s class KDoc still named "format/paper" as the only refusal | Observation | **Accepted.** It now names format, zero side and inset |
+| The new overload has no production caller | Observation | **Rejected.** It is what proves the engine for sizes not yet in the set (ADR-133 decision 2); +18 lines |
+
+**Documents lens: GO WITH FIXES.**
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| "Every home printer checked takes Legal" contradicts R26.1's own HP DeskJet D2600 source | Required | **Accepted.** ADR-133 and R26.7 now name the exception |
+| The older-build reasoning was wrong: the document migrator refuses a newer schema before any size is read, so a closed set is not safer than an open one; and shipped builds decode a backup manifest's `paperSize` before their version check, so they call such a backup damaged | Required | **Accepted.** The forward-safety reason is withdrawn from decision 1; the backup behaviour is recorded as a Known Limitation for the release that adds the sizes, with the mitigation |
+| Three labels (`choiceName`, `choiceDimensions`, the Colophon's) fall back to "US Letter" with no compile error | Recommended | **Accepted.** Added to ADR-133's owed work |
+| Half-Letter was rejected for the very page size A5 is chosen with; no maker demand for A5 was found | Recommended | **Accepted.** The clause is dropped; A5's case is marked 🟨 as printer support and shape, not demand |
+| PRD §7, ROADMAP and ADR-016's status will be stale | Recommended | **Partly accepted.** Nothing ships, so PRD scope is unchanged; the ROADMAP lines and ADR-016's status go to the main session in the PR body |
+| The index cell should say what is built | Recommended | **Accepted.** "Accepted (engine and closed set); sizes decided, not built" |
+| Review placeholders unfilled | Recommended | **Accepted.** Filled |
