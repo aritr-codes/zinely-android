@@ -912,6 +912,34 @@ class EditorScreenTest {
     }
 
     /**
+     * The same defect a second time, found on SM-A176B (Android 16, dark) during ADR-129's device pass: the
+     * first-run hint is composed inside [BenchSheetIsland] too, so at night it drew the island's light-theme
+     * `ink` on the room's dark `surfaceSoft` — dark words on a dark card. Its own golden is rendered outside
+     * the island and could not see it. Same measurement as the verb bar's, for the same reason.
+     */
+    @Test
+    @Config(qualifiers = "night")
+    fun the_move_resize_hint_is_legible_at_night() {
+        setScreen(selectedText(), moveResizeHintSeen = false)
+        composeRule.waitForIdle()
+        val hint = composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).fetchSemanticsNode().boundsInWindow
+        val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
+        // The card's own fill, just inside its left end, clear of the 2dp border and of the words.
+        val fill = bmp.getPixel(hint.left.toInt() + 24, hint.center.y.toInt())
+        var widest = 0
+        for (y in hint.top.toInt() + 6 until hint.bottom.toInt() - 6) {
+            for (x in hint.left.toInt() + 24 until hint.center.x.toInt()) {
+                val p = bmp.getPixel(x, y)
+                val d = listOf(0, 8, 16).sumOf { s ->
+                    kotlin.math.abs(((p shr s) and 0xFF) - ((fill shr s) and 0xFF))
+                }
+                if (d > widest) widest = d
+            }
+        }
+        assertTrue("the hint's words must be legible against its card (was $widest)", widest > 150)
+    }
+
+    /**
      * The second one the device found, and the one no single package could have predicted.
      *
      * C2a made a tap outside the selection dismiss it (OD-13); C2b floated a card over the canvas. Their

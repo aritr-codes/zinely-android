@@ -1749,7 +1749,12 @@ public fun EditorScreen(
                 val showMoveResizeHint =
                     !editing && !gesturing && uiState.selection.size == 1 &&
                         !moveResizeHintDismissed && moveResizeHintSeen == false && !saveErrorVisible
-                if (showMoveResizeHint) {
+                // Room palette, like the verb bar below: the hint is chrome over the page, and inside the
+                // island it took the light `ink` onto the room's dark card at night (found on device, 2026-10-14).
+                if (showMoveResizeHint) CompositionLocalProvider(
+                    LocalZinelyV2Colors provides roomColors,
+                    LocalZinelyV21Colors provides roomColors21,
+                ) {
                     EditorMoveResizeHint(
                         photo = uiState.selection.singleOrNull()?.let { id ->
                             currentPage.elements.firstOrNull { it.id == id }

@@ -7576,3 +7576,24 @@ tray's (`ArrangeTrayTest`, `ArrangeTrayA11yTest`, `ArrangeTrayGoldenTest`); ever
 
 **Not reachable, recorded.** Multi-selection: the old bar handled it, but nothing in the interface makes one.
 The tray is for one piece.
+
+**Device, 2026-10-14.** Samsung SM-A176B, Android 16, 384 × 832dp, dark, text size 1.0, debug build under a
+side-by-side package (since uninstalled). Large text and a small screen were not tried on this phone; the
+emulator pass covers them.
+
+- *Pass 1.* Platform tree read with `uiautomator`: Arrange second on the text and decor bars; all ten tray
+  controls are `Button`, clickable and enabled, at 135 × 135px (48dp). The page did not change size on
+  select. Move down, Make larger, Rotate clockwise and Bring forward did what they say; Done and Back closed
+  the tray with the piece still selected; selecting another piece kept the tray open and lifted the page for
+  the new one; a tap on empty page closed it. With the keyboard up, the text style row rides on the keyboard,
+  so the golden's style row over the Add button is the test host's missing keyboard, not the layout.
+- *Found and fixed in the same change:* **the first-run hint was unreadable in dark mode.** It is composed
+  inside the page's light island, so it drew the island's dark `ink` on the room's dark card, the D-035
+  defect again. It now takes the room palette like the verb bar
+  (`EditorScreenTest.the_move_resize_hint_is_legible_at_night`, red before the fix at 77, threshold 150).
+  Not caused by this change; its golden is drawn outside the island and could not show it.
+- *Pass 2, recorded for the owner, not changed:* repeated Move down carries the piece under the tray, because
+  the page is lifted once, when the tray opens (ADR-129 point 5); a maker has to close the tray to see where
+  it went. The two Layer glyphs (stacked squares) do not say which is backward without trying one. "Arrange"
+  with the four-way arrow read as "move things"; whether it also says "size and turn" to a first-timer is the
+  owner's small-phone pass.
