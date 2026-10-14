@@ -7534,3 +7534,71 @@ was looked at before it was re-recorded too:
 - **Seven with changes of a pixel or less:** two `proof_scaffold_*` and two `voice_read_*` (a centred label
   and the page ticket sit a fraction of a pixel differently) and three `v21_folders_name_*` (a sliver of the
   sheet's bottom shadow). Nothing a person could see at normal size.
+
+---
+
+### D-116 — a repaired `meta.json` brings back an older title while the Shelf keeps the newer one {#d-116}
+
+| | |
+|---|---|
+| **Artifacts** | `data-android/.../RoomProjectRepository.kt` (`reconcileLocked`) · `core/data-storage/.../AtomicFileStore.kt` (`read`) · `RoomProjectRepositoryTest` |
+| **Found** | 2026-10-07, the folders storage phone check (Samsung SM-A176B, Android 16); filed as [issue #106](https://github.com/aritr-codes/zinely-android/issues/106) |
+| **Severity** | **Data consistency defect.** No pages are lost. The Shelf and the file disagree about a zine's title, and the next rewrite of the row from disk changes the title the maker sees without warning |
+| **Status** | ✓ **Fixed 2026-10-14** in the data layer. No UI, no goldens. Not checked on a phone |
+
+**What happened.** A zine was renamed from "My zine" to "Pressed Ferns", so `meta.json` held the new title
+and `meta.json.bak` the old one. With the app stopped, `meta.json` was broken by hand. On the next launch the
+store found the file unreadable and put the backup back (`AtomicFileStore.read`), so the file said "My zine".
+The Shelf still said "Pressed Ferns", because it draws the title from the Room row.
+
+**Cause.** The reconcile scan only added rows for zines the index did not have and dropped rows whose files
+were gone. It never looked again at a row it already had. So a row could only change through a mutation. Two
+cases left a row out of step with its file for good:
+
+- a `meta.json` put back from its `.bak`, which is the previous version of the file, not a copy of the current
+  one;
+- a rename whose file write succeeded and whose row write then failed. [ADR-042](../DECISIONS.md#adr-042) §5
+  already promised that the next reconcile would bring the row back in line, but for a row that already
+  existed it did not.
+
+**Which copy is right.** The file. [ADR-042](../DECISIONS.md#adr-042) §3 makes `meta.json` the authority for
+title and createdAt (and, since B5, the cover) and the Room row a rebuildable index: "on disagreement, files
+win". No new decision was needed, so there is no ADR.
+
+**Fix.** One change in the one scan every repository use goes through (`reconcileLocked`). For a zine that is
+already indexed, the scan now reads its `meta.json`. That read is also what repairs a broken file from its
+`.bak`. If the file reads and its title, createdAt or cover differ from the row, the row is rebuilt through the
+same `syncRowFromDisk` path every mutation uses, keeping its `updatedAtEpochMs`. If the file is missing or
+cannot be read, the row is left alone, because it is the best copy left and the bytes stay for repair
+(ADR-042 §4). Errors still return as `DataResult` failures; nothing new is caught.
+
+**After the fix.** The Shelf shows "My zine" in the issue's case. The newer title is gone, because the only
+place it was saved was the file that broke. That is the designed recovery: Zinely does not save a second copy
+of the current metadata.
+
+**Tests.** Three new JVM tests in `RoomProjectRepositoryTest`; the first two fail on `origin/main`:
+
+- the issue's case: rename, break `meta.json`, start a new repository on the same index; the Shelf,
+  `getProject` and `observeProjects` all show the title the repaired file holds, and the row keeps its `updatedAtEpochMs`;
+- a rename whose row write fails; the next reconcile shows the new title.
+- an unreadable document with a repaired `meta.json`; the unavailable card shows the file's title.
+
+**Known limits.**
+
+- The scan runs once per process start, and again after anything flags that the index may have drifted. A
+  `meta.json` broken by something outside the app *while the app is running* is repaired on its next read, but
+  the row catches up only at the next scan. Zinely's own writes cannot cause that, because a crash ends the
+  process.
+- The maker is not told that a title went back to an earlier one. The issue raised this; it would be a UI
+  change and is not part of this fix.
+- In the failed-rename case the row keeps its old `updatedAtEpochMs`, so the renamed zine does not move up the
+  Shelf. Recency still follows the document's own save time (ADR-042 §7).
+- If the `.bak` predates a legacy zine's first cover (D-026 backfill), repairing from it gives the file no cover,
+  and the re-derive draws a new one. That breaks D-017's "same cover" promise, but only when a legacy zine's
+  `meta.json` also breaks before any other write. Accepted as rare.
+- If the zine's `document.json` cannot be read either, the row cannot be rebuilt (it needs the document). The
+  Shelf's unavailable card now takes its title and cover from the readable `meta.json` first, so it still shows
+  the file's title; the scan stays marked unfinished and runs again on the next use, as it already did for an
+  unreadable zine with no row.
+- Every scan now reads each zine's `meta.json` once and looks up its row (one query per zine). These are small files, and the Shelf already reads all of
+  them each time it is drawn (folders, [ADR-125](../DECISIONS.md#adr-125)).
