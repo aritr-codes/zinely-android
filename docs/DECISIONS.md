@@ -3282,7 +3282,7 @@ smoothed over, because each one would have sent a fix somewhere wrong:
 
 **Recommended: (a).** It is the reading the code already implements on every surface, which is the weakest
 claim that explains all five rows and the only one that costs nothing to adopt. It also states the thing
-`v21-reframe.html:160` asks for — *other page elements recede* — as permitted rather than forbidden, which
+`v21-reframe.html`'s `.frame` comment asks for — *other page elements recede* — (*2026-10-14: its `.page .other` rule is marked not shipped and outside the 2026-10-06 freeze, header item 6*) as permitted rather than forbidden, which
 matters because `a80cc07`'s own message records that recession as **implemented by nothing** and an open
 Pass 2 risk.
 

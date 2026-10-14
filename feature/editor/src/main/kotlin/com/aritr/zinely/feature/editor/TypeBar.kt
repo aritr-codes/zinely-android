@@ -711,7 +711,7 @@ private fun SizeStepper(
 
 /**
  * A 40dp stepper button — `.tysize button`, which the spec declares IS the Reframe pad's `.zoom button`
- * (`v21-reframe.html:192-196`), the control ADR-055 §4 already named as this one's precedent. So it is
+ * (`v21-reframe.html`'s `.zoom button` rules), the control ADR-055 §4 already named as this one's precedent. So it is
  * built as [ZoomButton] is built, down to the disabled convention: `opacity:.35` on the WHOLE chip and the
  * shadow dropped, so a control that cannot act does not sit proud of the card. V1 faded to `.4`, which is
  * the same gesture at a V1 number.
