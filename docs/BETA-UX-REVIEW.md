@@ -758,8 +758,8 @@ are wrong, and the last one changes what the fix may legally be.
    is not evidence that this surface's freeze encodes it.
 3. **The count is five, across four screens, and only one of them is a parity failure.** The `works offline
    · stays on your phone` pill has *no frozen source on its own surface at all* — `v21-bench.html` draws no
-   empty state, and the CSS behind it was transcribed from `v21-library.html:306-307`, another screen's
-   spec. The other four are drawn by the freeze itself (`v21-bench.html:837-841`, `v21-library.html:466`,
+   empty state, and the CSS behind it was transcribed from `v21-library.html`'s `.empty .pv` rule (removed 2026-08-24 in `b0a25c0`, D-079), another screen's
+   spec. The other four are drawn by the freeze itself (`v21-bench.html:837-841`, `v21-library.html`'s `<p class="pv">` line (removed with it),
    `v21-proof.html:593`), plus one that exists **only in the accessibility tree** (`Saved on this device`,
    which the freeze renders as `Saved` alone) — so a screen-reader user hears the promise once more than a
    sighted user sees it. The freeze also specifies a sixth instance Compose never built.
@@ -872,7 +872,7 @@ Working through them one surface at a time narrowed this considerably:
 
 **Two corrections, one of them to a correction.** The first draft said F-6 proved the panel's dismissal was
 never designed. The second draft over-corrected, concluding the Type bar therefore had *no* open interaction
-question and could freeze as-is. Both are wrong, and the file itself says so — `v21-typebar.html:739-748`
+question and could freeze as-is. Both are wrong, and the file itself says so — `v21-typebar.html`'s *"Two questions this file does not answer"* caption
 carries *"Two questions this file does not answer, because they are the owner's,"* and **question 1 is "How
 the panel closes."** Re-attributing the *two-pills* defect to the Bench settles how the **ink popover**
 closes; it says nothing about the Type bar panel, whose premise is different (`Size` opens it, and the
@@ -921,7 +921,7 @@ rather than holding both back for tidiness.
 
 Both files carry
 `STATUS. PROPOSAL. The owner freezes; nothing here is authoritative until…`
-(`v21-typebar.html:50`, `v21-reframe.html:56`), so declaring a freeze is not this session's act to make —
+(the `STATUS.` line in each file's header block; *2026-10-14: both now read ❄️ DESIGN FROZEN — 2026-10-06, commit `237a16f`*), so declaring a freeze is not this session's act to make —
 this section recommends and the owner rules. Editing those two files is **revision**, not *amendment*:
 [V2-CONSTITUTION.md §VI](design/V2-CONSTITUTION.md) reserves "amendment" for owner acts against **frozen**
 surfaces, and neither of these is frozen. `V21-SPEC.md` §3.4 confirms the frozen corpus is Library / Bench /
@@ -944,7 +944,7 @@ the other side.
 ## F-14 · Answering the Type bar's "Coral" question — and a defect found while answering it
 
 *Added 2026-08-15. This was not a device finding; it came from measuring the two palettes against each
-other after Pass 2 raised F-7. It answers one of the two owner questions `v21-typebar.html:746-748` leaves
+other after Pass 2 raised F-7. It answers one of the two owner questions `v21-typebar.html`'s *"Two questions this file does not answer"* caption leaves
 open, and it supersedes this document's earlier confusion about the word.*
 
 ### The measurement
@@ -1003,7 +1003,7 @@ must be re-measured, not accepted from this note.
 ### Cost, unchanged from what the spec already states
 
 Renaming touches `Copy.Type.INK_CORAL`, the announcement it composes, the test tag derived from it, and the
-copy tests that assert it — the same cost `v21-typebar.html:746-748` records. Renaming three instead of one
+copy tests that assert it — the same cost `v21-typebar.html` records under *"2. The word 'Coral'"*. Renaming three instead of one
 multiplies that cost but not its kind. **Recommendation: take `Coral → Brick` now** (it answers the asked
 question and carries the measurement behind it), fix Teal's **value** as a separate accessibility change, and
 hold `Teal → Aqua` / `Blue → Cornflower` until the rule above is ruled on — so the renames land once, under a

@@ -119,6 +119,34 @@ class TextCoverageTest {
         assertEquals(2, result.unsupportedCount)
     }
 
+    // ── ADR-130 (issue #103): a character the phone's own fonts draw is not "can't print" ──────────────
+
+    @Test
+    fun `a script the phone draws is reported as drawn by the phone`() {
+        val result = analyzeTextCoverage("hello 中 ก") { true }
+        assertEquals(listOf(Script.HAN, Script.THAI), result.unsupportedScripts)
+        assertEquals(listOf(Script.HAN, Script.THAI), result.phoneFontScripts)
+        assertFalse(result.isFullyCovered) // still named: another phone can draw it differently
+    }
+
+    @Test
+    fun `a script with any character the phone cannot draw is not reported as drawn by the phone`() {
+        val result = analyzeTextCoverage("中 ก 世") { it != '世'.code }
+        assertEquals(listOf(Script.THAI), result.phoneFontScripts)
+    }
+
+    @Test
+    fun `without a phone check nothing is assumed drawn`() {
+        assertEquals(emptyList<Script>(), analyzeTextCoverage("中 ก").phoneFontScripts)
+    }
+
+    @Test
+    fun `the phone check is asked only about characters outside the voice`() {
+        val asked = mutableListOf<Int>()
+        analyzeTextCoverage("Hi Привет 中") { asked += it; true }
+        assertEquals(listOf('中'.code), asked)
+    }
+
     @Test
     fun `the promise stops where the bundled fonts do`() {
         // Cyrillic Supplement (Komi/Abkhaz) and polytonic Greek are NOT promised: 47 of the 48 assigned
