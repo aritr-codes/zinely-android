@@ -139,7 +139,7 @@
 | [ADR-127](#adr-127) | **The app is portrait only on phones.** No screen has a landscape layout; a turned phone got the upright layout in a 360dp-tall window. `MainActivity` is locked to portrait. Android 16 ignores the lock on screens 600dp and wider, so tablets are not covered | Accepted |
 | [ADR-128](#adr-128) | **A docked panel leaves the thing it edits in view.** The Ink tray and the Text panel stop short of the canvas top by a band sized to the selected element, and the page lifts the element into it; for those panels and for Reframe the lift stops at the element's own top instead of 96dp. Deviates from frozen A16; recorded in D-113 | Accepted |
 | [ADR-129](#adr-129) | **Moving a piece by buttons lives in a Move tray, not in a bar that takes rows from the canvas.** The two-row accessible bar (A14) makes the page shrink each time something is selected. Proposed: the controls move into a tray opened from the verb bar, which follows ADR-128. It would reverse OD-11, so it needs the owner and an HTML amendment before any Compose | Proposed |
-| [ADR-133](#adr-133) | **Paper is a closed, named set; the imposition engine takes any sheet.** Answers the paper half of ADR-016. A person picks a size by name and the file stores the name; `Imposer.layout` also takes any portrait sheet, proved by properties. US Legal and A5 are the next sizes, in their own schema bump after v4, chosen at the start of a zine only; half-Letter, A3 and Tabloid are not | Accepted |
+| [ADR-133](#adr-133) | **Paper is a closed, named set; the imposition engine takes any sheet.** Answers the paper half of ADR-016. A person picks a size by name and the file stores the name; `Imposer.layout` also takes any portrait sheet, proved by properties. US Legal and A5 are the next sizes, in their own schema bump after v4, chosen at the start of a zine only; half-Letter, A3 and Tabloid are not | Accepted (engine and closed set); sizes decided, not built |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -15784,9 +15784,9 @@ flowchart LR
 
 1. **Closed at the product and the file.** A person picks a size by name, and the file stores that name.
    No custom sizes. Reasons: printers and Android's print framework name their sizes too, and the name is
-   what a person matches in the print dialog to print at actual size (R26.5); a beginner should not be
-   asked for dimensions; and a named value that an older build does not know fails loudly when that build
-   opens the file, where a pair of numbers would open and print on the wrong paper.
+   what a person matches in the print dialog to print at actual size (R26.5); and a beginner should not be
+   asked for dimensions. Forward safety is not a reason either way: an open size would reach the file
+   through a schema bump too, and older builds refuse a newer schema before they read any size.
 2. **Open in the engine.** `Imposer.layout(format, sheetPortrait: PtSize)` imposes any sheet; the
    `PaperSize` overload delegates to it. Properties now hold for every sheet from 4 in to 18 in a side, in
    either orientation, so a size joining the set needs no engine work. `ImpositionLayout.paper` is gone; it
@@ -15795,11 +15795,11 @@ flowchart LR
 
    | Size | Sheet | Page | Why |
    |---|---|---|---|
-   | **US Legal** | 8.5 × 14 in | 3.5 × 4.25 in | Every home printer checked takes it (some Canon models only in the rear tray), and it is the largest sheet an ordinary Letter or A4 printer takes (R26.1, R26.3). Makers already sell 8-page minis drawn for it (R26.2). The page is 27% wider than Letter's |
-   | **A5** | 148 × 210 mm | 52.5 × 74 mm | Most home printers checked take it (R26.1; one HP listing does not). It keeps A4's shape exactly (R26.4), so it is the small zine for people outside North America. Its page has half the area of A4's |
+   | **US Legal** | 8.5 × 14 in | 3.5 × 4.25 in | Every home printer checked takes it except an older HP DeskJet whose page does not list it (some Canon models take it only in the rear tray), and it is the largest sheet an ordinary Letter or A4 printer takes (R26.1, R26.3). Makers already sell 8-page minis drawn for it (R26.2). The page is 27% wider than Letter's |
+   | **A5** | 148 × 210 mm | 52.5 × 74 mm | Most home printers checked take it (R26.1; one HP listing does not). It keeps A4's shape exactly (R26.4), so it is the small zine for people outside North America. Its page has half the area of A4's. 🟨 No maker was found asking for it; the case is printer support and shape, not demand |
 
-   **Not chosen:** half-Letter (5.5 × 8.5 in) is missing from the printer lists checked, its page is the same
-   micro size as A5's, and makers would cut it from Letter by hand (R26.6). A3 and Tabloid would make a
+   **Not chosen:** half-Letter (5.5 × 8.5 in) is missing from the printer lists checked, so makers would cut
+   it from Letter by hand (R26.6). A3 and Tabloid would make a
    bigger zine, but need a wide-format printer, which the PRD's home printing does not assume (R26.3).
 4. **The new sizes ship together, in their own schema bump after v4** (v5 as the plan stands), never inside
    another change. The migrator is the identity: no saved file contains them.
@@ -15826,12 +15826,20 @@ flowchart LR
   (`Copy.Paper`, and "A5" in `TAKES_AN`, since it is said *ay-five*); the preferred-paper store's
   encode/decode; and the A35 picker. **`shelfPaperChoices` builds its list from `PaperSize.entries`**, so
   the day the enum grows, the Shelf's chooser offers every size before A35 is frozen. That change must pin
-  the chooser to a list. The other screens that show paper already use explicit lists.
+  the chooser to a list. The Print switch and the Colophon already use explicit lists. **Three labels fall
+  back to Letter with no compile error:** `choiceName` and `choiceDimensions` in `ShelfSheets.kt` and the
+  Colophon's paper label are `if (A4) … else Letter`, so a new size would be called "US Letter". The
+  `when`s in `ProofPrint.kt` and `HomeViewModel.kt` will fail to compile instead, which is safe.
 - A5's page is the smallest Zinely would make: inside the keep-clear it leaves 40 × 62 mm. Text at Book's
   12 pt floor fits, with short lines. A35 should show the page size before a person chooses it.
-- Older builds cannot read a zine saved on Legal or A5: the size name does not decode, so they fail to
-  open it rather than print it on the wrong sheet. A backup holding such a zine restores only into a build that knows the
-  size.
+- Older builds refuse every zine saved after the bump, Legal or not: the document migrator refuses a newer
+  schema before any field is read. That is true of any bump.
+- **Known Limitation for the release that adds the sizes: a backup holding a Legal or A5 zine is called
+  damaged by builds already shipped.** `ZineLibraryBackupStager` decodes the manifest, whose `paperSize` is
+  the enum, before it checks for a newer version, so the unknown name fails as `INVALID_MANIFEST` and the
+  person is told the backup is corrupt rather than that they need a newer app. Shipped builds cannot be
+  changed. Checking the versions before decoding the names, in a build before the sizes ship, narrows it
+  to builds older than that one.
 
 #### Verification
 
@@ -15842,4 +15850,8 @@ No screen changed, so no golden moved and no device pass applies.
 
 #### Review
 
-Recorded in [D-118](design/V2-SPEC-DEFECTS.md#d-118).
+Two independent Review Agents, reading only, 2026-10-14. Code: **GO**, with two improvements (say the sheet
+is not checked for orientation; assert A5's panel exactly), both taken. Documents: **GO WITH FIXES**. It
+found the Legal claim contradicted by R26's own HP source, and the older-build reasoning wrong (the schema
+version refuses first, and shipped builds call such a backup damaged); both corrected above. Each finding
+and its reconciliation is in [D-118](design/V2-SPEC-DEFECTS.md#d-118).

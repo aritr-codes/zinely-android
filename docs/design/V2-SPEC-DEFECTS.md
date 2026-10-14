@@ -7620,4 +7620,26 @@ of the current metadata.
 
 #### Review
 
-Reconciled findings are listed below as they come in.
+Two independent Review Agents, reading only, 2026-10-14.
+
+**Code lens: GO.**
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| The `sheetPortrait` overload does not check orientation | Recommended | **Accepted.** The KDoc now says a wide sheet is laid tall and the properties cover both |
+| The A5 test compared with A4 / √2 only, not A5's own panel | Recommended | **Accepted.** An exact assertion (148.819 × 209.764 pt) is added |
+| "A named paper imposes as its portrait sheet does" cannot fail today | Observation | **Rejected.** Kept: it pins the delegation, which is the one line a later edit could break |
+| `Imposer`'s class KDoc still named "format/paper" as the only refusal | Observation | **Accepted.** It now names format, zero side and inset |
+| The new overload has no production caller | Observation | **Rejected.** It is what proves the engine for sizes not yet in the set (ADR-133 decision 2); +18 lines |
+
+**Documents lens: GO WITH FIXES.**
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| "Every home printer checked takes Legal" contradicts R26.1's own HP DeskJet D2600 source | Required | **Accepted.** ADR-133 and R26.7 now name the exception |
+| The older-build reasoning was wrong: the document migrator refuses a newer schema before any size is read, so a closed set is not safer than an open one; and shipped builds decode a backup manifest's `paperSize` before their version check, so they call such a backup damaged | Required | **Accepted.** The forward-safety reason is withdrawn from decision 1; the backup behaviour is recorded as a Known Limitation for the release that adds the sizes, with the mitigation |
+| Three labels (`choiceName`, `choiceDimensions`, the Colophon's) fall back to "US Letter" with no compile error | Recommended | **Accepted.** Added to ADR-133's owed work |
+| Half-Letter was rejected for the very page size A5 is chosen with; no maker demand for A5 was found | Recommended | **Accepted.** The clause is dropped; A5's case is marked 🟨 as printer support and shape, not demand |
+| PRD §7, ROADMAP and ADR-016's status will be stale | Recommended | **Partly accepted.** Nothing ships, so PRD scope is unchanged; the ROADMAP lines and ADR-016's status go to the main session in the PR body |
+| The index cell should say what is built | Recommended | **Accepted.** "Accepted (engine and closed set); sizes decided, not built" |
+| Review placeholders unfilled | Recommended | **Accepted.** Filled |

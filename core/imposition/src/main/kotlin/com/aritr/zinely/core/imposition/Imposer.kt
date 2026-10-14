@@ -8,7 +8,8 @@ import com.aritr.zinely.core.model.ZineFormat
  * Maps the logical pages of a zine format onto a physical sheet.
  *
  * Implementations are **pure and deterministic**: identical inputs yield identical output.
- * They throw [IllegalArgumentException] only on programmer error (an unsupported format/paper).
+ * They throw [IllegalArgumentException] only on programmer error (an unsupported format, a sheet with a
+ * zero side, or an inset too large for the panel).
  */
 public interface Imposer {
 
@@ -52,6 +53,9 @@ public interface Imposer {
      * ([ADR-133](../../../../../../../../docs/DECISIONS.md#adr-133)): [PaperSize] is the set a person
      * can choose and a file can store, and this overload is how the engine is proved for any sheet
      * before a size joins that set.
+     *
+     * The sheet is not checked for orientation: its sides are swapped to lay it landscape, so a sheet
+     * passed wide is laid tall. The properties cover both.
      *
      * @throws IllegalArgumentException if [format] is not in [supportedFormats], or the sheet has a zero
      *   side.

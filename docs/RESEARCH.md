@@ -975,6 +975,6 @@ searched: Epson and Brother spec sheets.
 
 ### R26.7 Zinely application — 🟦 RECOMMENDATION
 
-US Legal first (every printer checked takes it, and makers use it) and A5 second (most printers checked
-take it, and it is the small zine on A-series paper). Not half-Letter, A3 or Tabloid. Keep the sizes a
+US Legal first (every printer checked but one older HP takes it, and makers use it) and A5 second (most
+printers checked take it, and it is the small zine on A-series paper; 🟨 no maker demand was found). Not half-Letter, A3 or Tabloid. Keep the sizes a
 named set. ADR-133 records the decision.

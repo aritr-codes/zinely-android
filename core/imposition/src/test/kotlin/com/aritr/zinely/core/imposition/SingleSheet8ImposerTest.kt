@@ -155,6 +155,7 @@ class SingleSheet8ImposerTest {
     @Test
     fun `A5 imposes the A4 page scaled by one over root two and validates clean`() {
         val a5 = imposer.layout(ZineFormat.SINGLE_SHEET_8, A5).page(1).panelLocalBounds
+        assertTrue(a5.approxEquals(PtRect(0.0, 0.0, 595.276 / 4, 419.528 / 2))) // 148.819 x 209.764
         val a4 = layout(PaperSize.A4).page(1).panelLocalBounds
         // ISO 216: A5 is A4 halved, so it keeps A4's shape. Within 1 pt, not exactly: the standard rounds
         // A5's short side down to 148 mm from half of A4's 297 mm, which moves the page height by 0.7 pt.
