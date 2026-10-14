@@ -4523,6 +4523,7 @@ five text inks are AA-tuned against `#F7F2E7`; none of them was tuned against `#
 
 
 > ⚠ **Reversed in part, 2026-10-14, by [ADR-129](../DECISIONS.md#adr-129)** under the owner's delegation of 2026-10-12, which the owner may overrule. The transform controls are kept and still reachable by taps alone; they open from the verb bar's `Arrange`, in a tray, instead of being on screen whenever something is selected ([D-114](#d-114)). The owner's words above are unchanged.
+
 **What this settles.** The premise the entry could not decide for itself — whether two bars in one slot is a parity failure or a parity *requirement* — is answered: during a phase whose objective is parity, an accessibility path already in the product is not a candidate for removal, and a frozen surface that omits it was never describing it. This is the same reasoning OD-9 used to keep redo, now applied to a conformance path rather than a convenience, which is why it lands the same way and harder.
 
 **Consequence for the packages.**
@@ -7194,6 +7195,8 @@ element model and make text, Art and photos manipulate differently.
 1. the typing hand-off says `Align, size & more after Done`, explicitly naming the two tools the stakeholder sought;
 2. the first selected element says `Drag to move. Pull a handle to resize. Turn it with the arrows below.`; and
 3. when that first selection is a photo, the last sentence becomes `Turn it below; Reframe crops inside.`
+
+*Hint wording superseded 2026-10-14 by `v21-bench.html` A33 / [ADR-129](../DECISIONS.md#adr-129): the arrows below are gone, so the hint names Arrange ([D-114](#d-114)). The rest of this ruling stands.*
 
 The hint retains its existing persisted one-time gate, non-modal support-scrap treatment and `Got it` dismissal.
 There is no tutorial, new onboarding state, gesture change, crop-handle mode or document/rendering change. The

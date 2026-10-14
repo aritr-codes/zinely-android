@@ -15697,8 +15697,9 @@ on it personally and may overrule it. Proposed 2026-10-13 as a direction only. D
   2026-10-13); at 2× text its bottom went under the verb bar.
 - ✅ The bar exists so that nothing needs a drag (WCAG 2.5.7). W3C's own examples reveal the tap-only way
   after a selection or from a menu (R25.1, R28.2).
-- ✅ Every phone editor checked keeps the page one size and puts exact or layer controls one step away
-  (R28.1).
+- ✅ None of the official editor sources checked keeps a nudge bar in the layout; they put exact or layer
+  controls one step away (R28.1; Word's source is desktop, Canva and Adobe Express are 🟨). 🟦 That the page
+  therefore keeps one size there is an inference, not a measurement.
 - ✅ Screen-reader and switch users never depended on the bar: every element already carries the same
   ten actions as custom accessibility actions (`EditorA11y.elementCustomActions`). The bar is the path for
   someone who taps without assistive technology.
@@ -15727,7 +15728,7 @@ flowchart LR
    one undo step per tap, same spoken labels. Group names are visible text and headings.
 4. **The tray stays open when another piece is selected**, so arranging several pieces costs one Arrange tap,
    not one per piece. Done and Back close it and return focus to Arrange; a tap on empty page, a text
-   session, Reframe and a page change close it.
+   session, Add, Reframe and a page change close it.
 5. **The page lifts the piece above the tray by ADR-128's rule**, measured from where the piece stood when the
    tray opened, not from where each nudge leaves it. Re-lifting on every nudge would slide the page under a
    piece that seems to stand still, which reads as the opposite of "Move down".

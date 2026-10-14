@@ -929,7 +929,7 @@ Asked before deciding [ADR-129](DECISIONS.md#adr-129): does any evidence argue f
 shrinks the page, and what should the way in be called? Research Agent pass, 2026-10-14. R25 is the first
 pass and is not repeated here.
 
-### R28.1 Mainstream phone editors keep the page one size and put exact controls one step away — ✅ VERIFIED, 🟨 for Canva and Adobe Express
+### R28.1 Mainstream editors put exact controls one step away, not in a bar in the layout — ✅ VERIFIED, 🟨 for Canva and Adobe Express
 
 - [Google Slides on Android](https://support.google.com/docs/answer/1696521?hl=en&co=GENIE.Platform%3DAndroid):
   move, resize and turn are drags; layer order is behind the selection menu's More.
@@ -966,8 +966,10 @@ judging the layout) and on R28.1.
 
 ### R28.4 Hiding controls has a measured cost — ✅ VERIFIED
 
-[NN/g on hidden navigation](https://www.nngroup.com/articles/find-navigation-mobile-even-hamburger/): hidden
-menus were found less often and used more slowly on phones. That is the case for keeping the bar. It is why
+[NN/g, "Hamburger Menus and Hidden Navigation Hurt UX Metrics"](https://www.nngroup.com/articles/hamburger-menus/)
+(with its follow-up, [Find navigation on mobile](https://www.nngroup.com/articles/find-navigation-mobile-even-hamburger/)):
+hidden menus were found less often and used more slowly on phones. 🟦 That study is website navigation, not
+editor tools; the analogy is ours. That is the case for keeping the bar. It is why
 the way in is a labelled verb that is always on the verb bar, never in an overflow, and why the tray stays
 open while the maker moves from piece to piece.
 
