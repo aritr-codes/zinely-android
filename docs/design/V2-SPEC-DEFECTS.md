@@ -4837,7 +4837,7 @@ behavior ahead of its governing artifact.
 
 | | |
 |---|---|
-| **Artifacts** | [`v21-bench.html`](mockups/v21-bench.html) `:824`, `:873` · [`v21-library.html`](mockups/v21-library.html) `:306-307`, `:466` · [`v21-proof.html`](mockups/v21-proof.html) `:593`, `:1019` · [`EditorEmptyState.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorEmptyState.kt) `:170-186` · [`Copy.kt`](../../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt) `:364` |
+| **Artifacts** | [`v21-bench.html`](mockups/v21-bench.html) `:824`, `:873` · [`v21-library.html`](mockups/v21-library.html) `.empty .pv` and its `<p class="pv">` (both removed 2026-08-24, `b0a25c0`) · [`v21-proof.html`](mockups/v21-proof.html) `:593`, `:1019` · [`EditorEmptyState.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorEmptyState.kt) `:170-186` · [`Copy.kt`](../../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt) `:364` |
 | **Found** | 2026-08-16, reconciling [BETA-UX-REVIEW.md F-11](../BETA-UX-REVIEW.md) against the frozen files |
 | **Severity** | No function is lost. It is a **voice** defect, and the rule it breaks is one the owner adopted six days ago |
 | **Status** | ✅ **CLOSED + IMPLEMENTED 2026-08-24 — owner chose option (b); Colophon DESIGN FROZEN** |
@@ -4855,9 +4855,9 @@ and the split matters because the two halves need different remedies.
 
 | # | String | Screen | Frozen source | Class |
 |---|---|---|---|---|
-| 1 | `works offline · stays on your phone` | Editor, empty page | **none** — `v21-bench.html` draws no empty state; the CSS was transcribed from `v21-library.html:306-307` | **parity failure** |
+| 1 | `works offline · stays on your phone` | Editor, empty page | **none** — `v21-bench.html` draws no empty state; the CSS was transcribed from `v21-library.html`'s `.empty .pv` | **parity failure** |
 | 2 | `From your phone — it never leaves the device` | Add sheet, Photo row | `v21-bench.html` §`openSupply()`, `:828` | spec |
-| 3 | `Everything stays on your phone — no account, nothing uploaded.` | Library, empty shelf | `v21-library.html:466` | spec |
+| 3 | `Everything stays on your phone — no account, nothing uploaded.` | Library, empty shelf | `v21-library.html` `<p class="pv">` | spec |
 | 4 | `… · A4 · stays on your phone` | Proof, ready row | `v21-proof.html:593`, `:1019` | spec |
 | 5 | `Saved on this device` | Editor status chip | **none** — the freeze says only `Saved` | implementation addition, **spoken only** |
 

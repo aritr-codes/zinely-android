@@ -657,7 +657,7 @@ frozen corpus falsifies it three times over:**
    part of the sheet, so it must not inherit the sheet's palette … measured at 1.05:1 on a device, an invisible
    toolbar that every Robolectric test passed."*
 
-**And the spec already ruled on the Type bar specifically.** [`v21-typebar.html:698-700`](mockups/v21-typebar.html):
+**And the spec already ruled on the Type bar specifically.** [`v21-typebar.html`](mockups/v21-typebar.html), the ink-fills caption as it stood at `3c3d152` (*2026-10-14: rewritten on 2026-08-25 in `ecb7c17`; the caption is now "The five ink fills stay physical on a chrome card"*):
 
 > "this card floats on the **bench** and not inside the sheet island ([ADR-102 §12.1](../DECISIONS.md)), which is
 > what keeps page text on light paper in both themes"
@@ -675,7 +675,7 @@ The file even measured the five ink fills against that dark ground and called it
 |---|---|---|---|
 | The page · page thumbnails | ✅ | paper | **correct** |
 | `ReframeControls` | ❌ outside | room | **correct** |
-| `TypeBar` ([`EditorScreen.kt:1380`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt)) | ✅ inside, no opt-out | **room** (spec: `v21-typebar.html:392`) | **parity defect** |
+| `TypeBar` ([`EditorScreen.kt:1380`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt)) | ✅ inside, no opt-out | **room** (spec: `v21-typebar.html`, `<div class="typebar">` a sibling of `.page`) | **parity defect** |
 | `BenchSnack` (`EditorScreen.kt:1407`) | ✅ inside, **after** the opt-out provider closes at `:1365` | **room** — §D maps it as *"a note slid over"* | **parity defect, missed by my first draft** |
 | `ProofFoldAct`'s sheet diagram | ❌ | **paper** | **deferred, not unnoticed** — OD-12 says *"`v2-proof.html` … is NOT amended here … it is Phase D's to amend, under this ruling"* ([`V2-SPEC-DEFECTS.md:4389`](V2-SPEC-DEFECTS.md)) |
 
@@ -694,7 +694,7 @@ two lines `BenchContextBar` already uses. Not a re-skin, not a redesign: **a mis
 untouched. The Proof diagram stays Phase D's.
 
 **Cost, corrected:** far lower than I first said. The contrast question is largely *already answered* —
-`v21-typebar.html:698-702` measured the five ink fills against `#332B22`. What still needs measuring is the card's
+`v21-typebar.html`'s ink-fills caption measured the five ink fills against `#332B22` (at `3c3d152`; *2026-10-14: since `ecb7c17` the card is themed `--surface` and the caption no longer gives ratios*). What still needs measuring is the card's
 **chrome** tokens on `bench`, because `inkFaint` strokes clear 1.4.11 by only 0.04 and *"any of them moving onto
 `bench` fails"* ([`V21-SPEC.md:370-373`](V21-SPEC.md)). Plus two golden re-records.
 
@@ -735,7 +735,7 @@ correction directly. The corrected position is the opposite, and it is *better f
 
 | My claimed blocker | What the file actually says |
 |---|---|
-| *"`v21-typebar.html` specifies the card in the light island palette"* | **False.** `:392` places `.typebar` as a **sibling** of `.page` (which closes at `:388`), and `:698-700` says in prose that the card *"floats on the **bench** and not inside the sheet island."* The spec already says what Ruling A concluded. |
+| *"`v21-typebar.html` specifies the card in the light island palette"* | **False.** the `<div class="typebar">` that follows `.canvasArea` in State 1 places `.typebar` as a **sibling** of `.page`, and the ink-fills caption at `3c3d152` (*2026-10-14: rewritten 2026-08-25 in `ecb7c17`*) says in prose that the card *"floats on the **bench** and not inside the sheet island."* The spec already says what Ruling A concluded. |
 | *"`v21-reframe.html` contains the rule-of-thirds guides"* | **False.** `grep -i "third\|rule-of\|composition"` over all 362 lines returns **zero matches**. The thirds exist only in Compose, at `ReframeOverlay.kt:203`, whose own comment already says *"the V2.1 Reframe spec has no thirds grid."* |
 | *"Both invent uppercase tracked labels V21-SPEC is silent on"* | **Half false.** V21-SPEC *is* silent (verified — zero hits for casing/tracking/ramp). But the pattern is not an invention: [`ZinelyV2Typography.kt:154`](../../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyV2Typography.kt) already ships a shared `sectionLabel` described as *"the one genuinely recurring chrome pattern, **appearing six times** across the Bench and Proof."* |
 
@@ -766,7 +766,7 @@ because I trusted my summary of a file instead of opening it.
 ### Now — if the direction is approved
 | # | Work | Why now | Risk |
 |---|---|---|---|
-| J1 | **Measure Type bar *chrome* contrast on `bench`** | Gates J4. `inkFaint` clears AA by 0.04 and *"any of them moving onto `bench` fails"*. The five **ink fills** are already measured at `v21-typebar.html:698-702` | none — measurement only |
+| J1 | **Measure Type bar *chrome* contrast on `bench`** | Gates J4. `inkFaint` clears AA by 0.04 and *"any of them moving onto `bench` fails"*. The five **ink fills** are already measured in `v21-typebar.html`'s ink-fills caption (at `3c3d152`; *2026-10-14: removed by `ecb7c17`*) | none — measurement only |
 | J2 | **Freeze `v21-typebar.html` and `v21-reframe.html`** | Reversed from my first draft — the freeze is what makes J4 a permitted parity fix ([Ruling C](#ruling-c--the-html-freezes)) | low |
 | J3 | Declare in `V21-SPEC.md`: the **line alphabet** (§E.2), the **stamped-label rule** (§E.4), the **tilt law** (§E.3), the **four motion causes** (§E.7) | Three conventions and one shipped-but-undeclared style become grammar | low — documentation |
 | J4 | Give `TypeBar` and `BenchSnack` the **existing** `CompositionLocalProvider` opt-out; delete thirds from `ReframeOverlay` | Parity fix, authorised by J2. Two lines each — the ones `BenchContextBar` already uses | low |
