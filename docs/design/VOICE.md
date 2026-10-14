@@ -198,7 +198,7 @@ expose a code.
 | autosave couldn't save (transient) | **"Couldn't save your latest change just now. It'll try again next time you make a change."** |
 | out of storage on save | **"Your phone is low on storage. Free up a little space, then keep editing — it'll save."** |
 | a character can't be printed (unsupported script) | **"Bengali characters can't print yet — but they're saved with your zine, so nothing's lost."** (the script name is filled in from what was typed; two or more read "Bengali and Tamil …", "Bengali, Tamil and Thai …") |
-| a character prints only from a font on the phone ([ADR-130](../DECISIONS.md#adr-130)) | **"Chinese characters print in a font from your phone, so they may look different on another phone."** (named the same way; shown instead of the line above for a script the phone draws) |
+| a character prints only from a font on the phone ([ADR-130](../DECISIONS.md#adr-130)) | **"Chinese characters print in a font from your phone, so they may look different on another phone."** (named the same way, except that characters of no named script are "other", named last: "Chinese and other characters print …"; shown instead of the line above for a script the phone draws) |
 | export couldn't write file | **"Couldn't finish the file just now. Try Print & fold again?"** |
 | unexpected hiccup | **"Something hiccuped. Your work is safe — try that again?"** |
 
