@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Art house style and redraw designed: all 34 Art pieces redrawn to one hand in the bench spec (A34, ADR-132
+  Proposed). Not in the app yet; the app still draws the current Art.
 - Two new pieces in Art, at the end of Cut paper: **Snipped border**, a thin border cut with scissors, and
   **Round window**, a square of paper with a round hole. Each is one ink, and each can be flipped, stretched,
   duplicated and replaced like any other piece. A tap in the hole reaches the photo or words underneath; a tap
@@ -68,6 +70,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The page keeps its size when something is selected.** The move, size, turn and layer buttons are now
+  behind one **Arrange** button in the bar under the page, instead of in a bar of their own that shrank the
+  page each time a piece was selected (on a small phone, by about a third of its height). Arrange opens a
+  tray with the same buttons; it stays open while you pick other pieces, and Done or Back closes it. The
+  first-run hint now names Arrange, is readable in dark mode, and steps aside while the Type bar is open
+  ([`v21-bench.html` A33](docs/design/mockups/v21-bench.html), [ADR-129](docs/DECISIONS.md#adr-129), decided
+  under the owner's delegation; it reverses the owner's OD-11 ruling, which the owner can overrule). Known
+  limitation: at the largest text size the first-run hint still clips its first and last words
+  ([#134](https://github.com/aritr-codes/zinely-android/issues/134)).
+- Internal: the imposition engine now lays out any sheet size, property-tested from 4 to 18 in a side; US Legal
+  and A5 are chosen as the next paper sizes ([ADR-133](docs/DECISIONS.md#adr-133)). No paper size a person can choose has
+  changed.
+- Docs: ZINE-DIRECTION notes the two-voice ruling (Book and Plain, ADR-126 Proposed) beside its four "three
+  voices" lines; 21 drifted line citations into the frozen type bar, Reframe and Library pages re-pointed to
+  named blocks or pinned commits (#97, #98).
 - The public website now offers 0.9.0-beta.5 as the current download: version, size, versionCode 10, the APK
   link and its published SHA-256 on the Download page; a beta.5 entry in What's new with its known limitations;
   a short "New in 0.9.0-beta.5" note on the homepage; and the roadmap moves beta.5 to Available. Google Play
@@ -115,6 +132,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A zine's title on the Shelf now always matches its saved metadata file. Before, if the file was restored
+  from its backup copy after damage (it holds the previous version), the Shelf could keep showing the newer
+  title until something rewrote it (D-116, [#106](https://github.com/aritr-codes/zinely-android/issues/106)).
+- At the largest text size, "Right" in the Type bar's Align row no longer breaks across three lines on a
+  small phone: when a row does not fit beside its label, its choices move under it
+  ([#102](https://github.com/aritr-codes/zinely-android/issues/102), D-115).
+- The notice shown while typing no longer says characters "can't print yet" when your phone's own fonts
+  draw them. It now says they print in a font from your phone and may look different on another phone;
+  characters no font on the phone has still get "can't print yet" ([#103](https://github.com/aritr-codes/zinely-android/issues/103), ADR-130).
 - **Changing a text's look no longer hides the text.** The Text panel and the Ink panel now stop short of
   the top of the page, and the page slides up so the words or the piece you are changing stay in view above
   them. Before, the Text panel covered the text box and the Ink panel covered the whole page

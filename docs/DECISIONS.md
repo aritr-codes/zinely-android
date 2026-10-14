@@ -26,7 +26,7 @@
 | [ADR-013](#adr-013) | App architecture = Clean + single Activity + Compose + Hilt | Accepted |
 | [ADR-014](#adr-014) | Geometry & transform public-API stability (finite guarantees, `times()` visibility) | Proposed |
 | [ADR-015](#adr-015) | Validation result contract — document validation returns a structured `ValidationResult`; imposition keeps its list until a unification pass | Accepted |
-| [ADR-016](#adr-016) | Format & paper extensibility (closed enums vs open specs) | Proposed |
+| [ADR-016](#adr-016) | Format & paper extensibility (closed enums vs open specs) | Proposed (paper half answered by ADR-133) |
 | [ADR-017](#adr-017) | Bleed, clip & safe-area semantics | Proposed |
 | [ADR-018](#adr-018) | Imposition convention & guide-ID versioning | Proposed |
 | [ADR-019](#adr-019) | Domain-layer threshold — no `:core:domain` until ViewModels outgrow repositories | Accepted |
@@ -264,7 +264,7 @@
 
 ## ADR-016 {#adr-016}
 **Extensibility of paper sizes and zine formats — closed enums vs open specs.**
-- **Status:** Proposed (2026-06-19) — raised by the [ADR-007 RC audit](#adr-007).
+- **Status:** Proposed (2026-06-19) — raised by the [ADR-007 RC audit](#adr-007). **Paper half answered 2026-10-14 by [ADR-133](#adr-133)** (closed, named set; the engine takes any sheet). The format half stays open until the second imposition format.
 - **Context / rationale:** `PaperSize` (Letter, A4) and `ZineFormat` (`SINGLE_SHEET_8`) are enums — a closed world. This is correct and safe for the MVP's "one great format" scope, but it forecloses custom paper (e.g. Legal, B5, user-defined) and new formats (4-page, 16-page saddle-stitch — [ROADMAP V2](ROADMAP.md#v2--more-formats--expression)) without a source change to the core model.
 - **Options under consideration:** keep enums through MVP/V1; or introduce open `PaperSpec(widthPt, heightPt)` / `FormatSpec(rows, cols, pageCount, convention)` value types when the second format lands, with the enums kept as canonical presets.
 - **Risks:** Premature generalization adds surface and validation burden now for value not realized until V2. Conversely, retrofitting open specs after several call sites assume the enum is churn. The `Imposer.convention: ConventionSpec` shape (one named convention per imposer) is workable but not elegant for multi-convention families.
