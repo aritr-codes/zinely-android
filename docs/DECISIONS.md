@@ -139,6 +139,9 @@
 | [ADR-127](#adr-127) | **The app is portrait only on phones.** No screen has a landscape layout; a turned phone got the upright layout in a 360dp-tall window. `MainActivity` is locked to portrait. Android 16 ignores the lock on screens 600dp and wider, so tablets are not covered | Accepted |
 | [ADR-128](#adr-128) | **A docked panel leaves the thing it edits in view.** The Ink tray and the Text panel stop short of the canvas top by a band sized to the selected element, and the page lifts the element into it; for those panels and for Reframe the lift stops at the element's own top instead of 96dp. Deviates from frozen A16; recorded in D-113 | Accepted |
 | [ADR-129](#adr-129) | **Moving a piece by buttons lives in an Arrange tray, not in a bar that takes rows from the canvas.** The two-row accessible bar (A14) made the page shrink each time something was selected. The ten controls now open from an Arrange verb on the verb bar, in a tray that follows ADR-128 (Bench A33). Reverses OD-11 and ADR-092's reading of it; decided under the owner's delegation, which the owner may overrule | Accepted |
+| [ADR-130](#adr-130) | **The typing-time notice says "prints in a font from your phone" for what the phone draws.** The check asks `Paint.hasGlyph` on the face the renderer resolves, which walks the same fallback chain; a script every character of which the phone draws gets the new line, anything else keeps ADR-070's "can't print yet". Amends ADR-070 (issue #103, D-115) | Accepted |
+| [ADR-132](#adr-132) | **The Art pieces are drawn by one hand.** One line weight (2.5 of 24 units), flat views, a fixed margin, and an edge that says what made it (cut, torn, drawn, metal, printer's mark); torn edges read one hand-written tear table, never a zig-zag. All 34 redrawn as bench A34, design frozen under the owner's delegation; ids, names, sizes and the eight holed pieces unchanged. The Compose redraw and every Art golden are a later wave | Proposed |
+| [ADR-133](#adr-133) | **Paper is a closed, named set; the imposition engine takes any sheet.** Answers the paper half of ADR-016. A person picks a size by name and the file stores the name; `Imposer.layout` also takes any portrait sheet, proved by properties. US Legal and A5 are the next sizes, in their own schema bump after v4, chosen at the start of a zine only; half-Letter, A3 and Tabloid are not | Accepted (engine and closed set); sizes decided, not built |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -891,7 +894,7 @@ The MVP requires real projects (create/open/duplicate/delete on a Home shelf), b
 1. **Layering ([ADR-025](#adr-025)).** Room entities/DAO/database + `RoomProjectRepository` live in `:data-android`; the `:core:data` contract is untouched. Catalog pins: Room 2.8.4 (runtime + KSP compiler; Room 2.7+ folds coroutines/Flow into `room-runtime`, so no `room-ktx`) + the `androidx.room` Gradle plugin exporting schemas to `data-android/schemas` (checked in, `exportSchema = true`).
 2. **Schema v1.** Table `projects(id TEXT PK, title, format TEXT enum-name, paperSize TEXT enum-name, createdAtEpochMs, updatedAtEpochMs, documentSchemaVersion)`, index on `updatedAtEpochMs`; DB `zinely.db`, version 1, no `fallbackToDestructiveMigration`. The [ADR-022](#adr-022) asset index table is **not** created — it is deferred with the GC.
 3. **Source-of-truth split ([ADR-003](#adr-003) kept honest).** `document.json` stays the sole authority for content + format/paperSize/schemaVersion. Shelf-only metadata that the document cannot carry — **title, createdAt** — gets a per-project sidecar `projects/<id>/meta.json`, written atomically via the existing `AtomicFileStore` (inherits `.bak` recovery). **Room stays a pure rebuildable index** of (document.json + meta.json); on disagreement, files win. This *refines* ADR-003's "metadata is a derived cache": Tier-C metadata (title/createdAt) is authoritative in the **sidecar file**, never in Room. Alternatives rejected: title only in Room (Room becomes an authority; a rebuilt index loses every title); title inside `ZineDocument` (shelf rename would rewrite the document outside the editor's MVI/undo/autosave path and race its snapshot saves).
-4. **Seeding = idempotent, re-runnable reconcile scan (no destructive migration).** On first repository use (and again whenever the index may have diverged): `projects/` dirs containing a `document.json` and absent from Room are **adopted** — format/paperSize/schemaVersion read from the document, title/createdAt from `meta.json` (a **missing** sidecar is backfilled with a fallback title and createdAt = document mtime, never scan time; a **present-but-unreadable** one is *never overwritten* — fallback title in the row only, bytes left for repair); rows without backing files are dropped. The S4 `"default"` project becomes an ordinary row with zero special-casing, and `EditorRoute("default")` keeps working unchanged. Unreadable documents (Corrupt/SchemaTooNew) are **skipped** by reconcile — bytes untouched; the shelf-recovery surface for them is a later amendment below.
+4. **Seeding = idempotent, re-runnable reconcile scan (no destructive migration).** On first repository use (and again whenever the index may have diverged): `projects/` dirs containing a `document.json` and absent from Room are **adopted** — format/paperSize/schemaVersion read from the document, title/createdAt from `meta.json` (a **missing** sidecar is backfilled with a fallback title and createdAt = document mtime, never scan time; a **present-but-unreadable** one is *never overwritten* — fallback title in the row only, bytes left for repair); rows without backing files are dropped. The S4 `"default"` project becomes an ordinary row with zero special-casing, and `EditorRoute("default")` keeps working unchanged. Unreadable documents (Corrupt/SchemaTooNew) are **skipped** by reconcile — bytes untouched; the shelf-recovery surface for them is a later amendment below. *2026-10-14, [D-116](design/V2-SPEC-DEFECTS.md#d-116):* the scan also re-derives an **indexed** row whose readable `meta.json` disagrees with it (title, createdAt, cover), keeping the row's `updatedAtEpochMs`; an unreadable or missing sidecar leaves the row alone. Before this, §5's "the index converges to file truth" held only for a project with no row yet.
 5. **Mutations: files are the transaction; the row is derived.** All ops run under one repository mutex on the injected IO dispatcher (injected `clock`/`newId` for tests) and end by re-deriving the affected row through the **single `syncRowFromDisk` path** the scan also uses. `create` = save a blank document (via `DocumentRepository` — atomic, validated, path-safe) → write meta → sync row; `duplicate` = `load(src)` → `save(newId)` → meta `"<title> copy"` → sync; `rename` = atomic meta rewrite (the commit) → sync; `delete` = remove `document.json` **first** (the commit that releases the project's GC roots), then the dir, then the row (idempotent). A **returned failure cleans up partial files** — no adoptable orphans from failed calls; crash windows heal at the next reconcile (crash-recovery semantics, not API semantics). An index write failing *after* a committed file change returns `DataError.Io` and flags a re-reconcile, so the index converges to file truth. Path safety: the whitelist/normalise/containment chokepoint is **extracted to a shared `ProjectPaths`** used by both `DocumentRepositoryImpl` and the project store (no drift; Codex R8).
 6. **GC live-roots ([ADR-022](#adr-022)) — wired by construction.** The live set derives from project *documents*, not from Room: `duplicate` creates a new document referencing the **same content hashes** (a new live root over shared blobs — blobs are never copied), `delete` removes the document (its roots vanish; orphans become reclaimable by the future sweep). **No sweeper ships here** — [ADR-031](#adr-031) §2's no-sweeper-until-pinned invariant is untouched; when the `GcWorker` lands it enumerates roots from the on-disk project documents this store maintains.
 7. **Recency without autosave coupling.** Content autosaves write `document.json` without touching Room, so the row's `updatedAtEpochMs` records only metadata ops; `observeProjects()` emits `max(row.updatedAt, document mtime)` and sorts newest-first at read. An autosave **is** a durable file write, so its mtime is the honest recency signal. *Scope caveat (Codex):* valid under the current nav assumptions (a fresh subscription on shelf entry; shelf and editor never simultaneously active) — not a general live-ordering mechanism.
@@ -910,7 +913,7 @@ Home/My-zines UI; thumbnails; create/duplicate/delete UI; nav changes (start des
 
 ### Testing
 
-TDD, Given-When-Then. `ProjectPaths` traversal/whitelist tests (plain JVM). `RoomProjectRepositoryTest` runs Room on the JVM via **Robolectric + `inMemoryDatabaseBuilder`** (no emulator — matches the repo's no-emulator CI; Robolectric precedent from `:feature:editor`/`:render-android`) against the **real** `DocumentRepositoryImpl` + `AtomicFileStore` over a temp dir: adoption of the on-disk `"default"` seed (fallback title, mtime createdAt, sidecar backfill), empty store, stale-row drop, corrupt-document **and newer-schema** skip with bytes untouched, unreadable-sidecar fallback without overwrite, create (blank doc shape + metadata), get/rename/duplicate/delete round-trips through `observeProjects()`, delete idempotency, and mtime-driven recency ordering. The §5 failure semantics are fault-injected and runtime-proven: a `meta.json` write failure on create/duplicate returns `Io` and cleans up the partial files (a `FileSystemOps` seam fails the sidecar's atomic commit only), and a DAO upsert failure *after* the file commit returns `Io`, leaves the files as truth, and the next reconcile re-derives the row from disk. No migration tests at v1 (no migrations exist).
+TDD, Given-When-Then. `ProjectPaths` traversal/whitelist tests (plain JVM). `RoomProjectRepositoryTest` runs Room on the JVM via **Robolectric + `inMemoryDatabaseBuilder`** (no emulator — matches the repo's no-emulator CI; Robolectric precedent from `:feature:editor`/`:render-android`) against the **real** `DocumentRepositoryImpl` + `AtomicFileStore` over a temp dir: adoption of the on-disk `"default"` seed (fallback title, mtime createdAt, sidecar backfill), empty store, stale-row drop, corrupt-document **and newer-schema** skip with bytes untouched, unreadable-sidecar fallback without overwrite, create (blank doc shape + metadata), get/rename/duplicate/delete round-trips through `observeProjects()`, delete idempotency, and mtime-driven recency ordering. The §5 failure semantics are fault-injected and runtime-proven: a `meta.json` write failure on create/duplicate returns `Io` and cleans up the partial files (a `FileSystemOps` seam fails the sidecar's atomic commit only), and a DAO upsert failure *after* the file commit returns `Io`, leaves the files as truth, and the next reconcile re-derives the row from disk (proven for create; for rename and for a `meta.json` repaired from its `.bak` only since [D-116](design/V2-SPEC-DEFECTS.md#d-116)). No migration tests at v1 (no migrations exist).
 
 ### Review (2026-07-02)
 
@@ -1915,7 +1918,7 @@ The enabling fact is that the cost is far lower than the `ProofSheet` deferral i
   6. **Accessibility: polite.** Unlike the save-failure banner (assertive — a loss that already happened), this is *preventive*: nothing is lost yet. A `LiveRegionMode.Polite` region announces without barging over speech, and because the rendered text changes only when the *set* of unprintable scripts changes, it does not re-announce on every keystroke of the same script.
 - **Consequences:** **The single-silent-loss failure DoD 4 exists to prevent is closed** — no character can reach paper blank without the user first being told, specifically, that it will. **No render, export, or PDF code is touched**, so `preview == export` and reproducible-vector-PDF output are preserved **by construction** — there is nothing in this change that can alter a drawn pixel of document content. Affected modules: `:core:copy` (new `Copy.Coverage`), `:feature:editor` (detection in `EditTextSession`, the new notice, the host mount), and docs (VOICE §Errors, this ADR). `:core:model` is **unchanged** — `analyzeTextCoverage` already existed and was already tested; this ADR gives it its first production consumer. **This behaviour is load-bearing and permanent:** any future script-support work (Direction B) may *narrow what the notice fires on*, but **may not weaken or remove the guarantee** that an unprintable character is always announced before it is lost. **No README edit.**
 - **Review:** Independent Review Agent to falsify, specifically: (a) that **no render/export/PDF path is touched** — grep the diff for any change under `render-android`/export/`CanvasReplayer`/`BundledFontResolver`; if the set is empty the `preview == export` and reproducible-PDF claims hold, and if it is not, this ADR's central claim is wrong; (b) that the character is **genuinely retained** through commit (the `committing_retains_the_unsupported_character` test proves no silent loss — confirm it asserts the *committed document*, not the draft); (c) that the notice **auto-narrows** — that it is keyed off `Script` names/`BUNDLED_SCRIPTS`, not a hardcoded list, so it cannot rot when the set grows; (d) that detection covers **both** pre-existing/seed text and typed text, not only one; (e) that the save-failure **precedence** holds and the two never stack; (f) that the notice introduces **no new visual language** (it reuses the frozen `.snackbar` treatment) and so does not breach the design freeze; and (g) golden discipline — that **every pre-existing editor golden stays byte-identical** (the notice is hidden by default) and that the one new notice golden is recorded on the pinned CI image ([ADR-058](#adr-058)). Supersedes nothing.
-
+- **Amended 2026-10-14 by [ADR-130](#adr-130):** the context above is wrong on one point. The bundled faces do fall back to the phone's fonts, so a character the phone draws prints. The notice now says so for those; "can't print yet" stays for the rest.
 ---
 
 ## ADR-071 {#adr-071}
@@ -3284,9 +3287,9 @@ smoothed over, because each one would have sent a fix somewhere wrong:
 
 **Recommended: (a).** It is the reading the code already implements on every surface, which is the weakest
 claim that explains all five rows and the only one that costs nothing to adopt. It also states the thing
-`v21-reframe.html:160` asks for — *other page elements recede* — as permitted rather than forbidden, which
+`v21-reframe.html`'s `.frame` comment asks for — *other page elements recede* — as permitted rather than forbidden, which
 matters because `a80cc07`'s own message records that recession as **implemented by nothing** and an open
-Pass 2 risk.
+Pass 2 risk. *(2026-10-14: the 2026-10-06 freeze marks that file's `.page .other` rule not shipped and outside the contract, block B6.)*
 
 **Where an adopted change would actually land** {#adr-090-amendment-scrim-where}
 
@@ -15778,3 +15781,284 @@ Two independent Review Agents, reading only, 2026-10-14, on the built change:
   the bound stays, because the in-view assertion beside it is the real guard. Not taken: it read "Accepted"
   as premature while device passes were owed. ADR-127 and ADR-128 set the precedent under the same
   delegation, and the owner's checks are listed in OWNER-CHECKLIST.
+
+## ADR-130 {#adr-130}
+
+### The typing-time notice says "prints in a font from your phone" for what the phone draws
+
+**Status:** Accepted with documented device-verification limitations, 2026-10-14, under the owner's
+delegation of 2026-10-12 ("decide, do not ask"); the owner has not ruled on it personally and may overrule
+it. Checked on an Android 16 emulator only: the owner's phone, a TalkBack listen and a printed page are owed. Raised by
+[issue #103](https://github.com/aritr-codes/zinely-android/issues/103); recorded in
+[D-115](design/V2-SPEC-DEFECTS.md#d-115).
+**Amends:** [ADR-070](#adr-070) (its "no system-font fallback" context and the single "can't print yet" line).
+ADR-070's rule stands: no character reaches paper without the maker being told first.
+
+#### Context
+
+- ✅ `BundledFontResolver` loads each bundled face with `Typeface.createFromAsset`, which gives the face the
+  platform's default fallback. A character the face lacks is drawn from a font on the phone. Measured on an
+  Android 16 emulator with Plain (Inter): `ﬁ`, `中` and `ก` were drawn on every surface and were in the
+  exported PDF; the PDF names only `NotoSansThai`, so which fonts supplied the other two is not known
+  ([Brief 02](planning/BRIEF-02-THREE-VOICES.md#measured-on-2026-10-07)).
+- ✅ The notice still said they "can't print yet". That is false where the phone draws them, and a notice
+  that is wrong teaches makers to ignore it.
+- ✅ What the phone draws is the phone's face, so the same zine can look different, and wrap differently,
+  on another phone. Nothing said so.
+- ✅ `Paint.hasGlyph` on a resolved face answers for that face and its fallback chain (measured 2026-10-14,
+  same emulator: `中` and `ก` reported drawn and drawn; U+E000 reported drawn and drawn, by some emulator
+  font; U+10FFFD reported not drawn). `FontCoverage` rejects it for the opposite question (does *our* file
+  hold the glyph); for "will this print here" it is the right one.
+- ✅ The premise ADR-070 took from [ADR-028](#adr-028) §4.2, that the bundled resolver never reaches a system
+  font, holds only for the characters the bundled faces carry. Outside them preview and export still match
+  on one phone, because both draw through the same resolver, but they can differ between phones.
+
+#### Decision
+
+```mermaid
+flowchart TD
+    A["A character outside the text's voice"] --> B{"Paint.hasGlyph on the face\nthe renderer resolves"}
+    B -->|"yes"| C["'… characters print in a font from your phone,\nso they may look different on another phone.'"]
+    B -->|"no"| D["'… characters can't print yet — but they're saved…'\n(ADR-070, unchanged)"]
+```
+
+1. **The typing-time check asks the phone.** `analyzeTextCoverage` takes a `phoneDraws` predicate, asked
+   only about characters outside the voice. The editor passes `Paint.hasGlyph` on the face
+   `BundledFontResolver` resolves for the text's family, bold and italic. Pure callers get "no", which keeps
+   ADR-070's line.
+2. **A script is "drawn by the phone" only if every one of its characters in the text is.** One character
+   no font draws keeps the whole script on the "can't print yet" line, so the notice never under-warns.
+3. **The new line** (`Copy.Coverage.phoneFont`): "Chinese and Thai characters print in a font from your
+   phone, so they may look different on another phone." Both lines can show at once. Characters of no named
+   script are called "other" and named last ("Chinese and other characters print …"), because "Unsupported
+   characters print" contradicts itself.
+4. **Book's Greek and Cyrillic keep their own line** ([ADR-126](#adr-126), A29 rule 13), whatever the phone
+   draws: the way out is the matching face, Plain.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Stop warning about what the phone draws | The face is the phone's, so another phone can print it differently; ADR-070 forbids weakening the notice |
+| Keep "can't print yet" | False on the emulator measured, and on any phone whose fonts draw the character |
+| Turn the fallback off so these really do not print | Silently drops the maker's words from paper, the failure ADR-070 exists to prevent |
+| Bundle the scripts | ADR-070 Direction B, a separate and much larger owner decision |
+
+#### Consequences
+
+- The notice is now device-dependent: the same text can get the phone-font line on one phone and "can't print
+  yet" on another. That is the truth on each phone.
+- Only the typing-time notice changes. Read, Save PDF and Print details still carry no warning, and the
+  check still does not run on open, restore or export (already listed under [ADR-126](#adr-126)).
+- `FontCoverage` and the bundled-font guard are untouched; no render, export or PDF code changes.
+
+#### Verification
+
+Five of the new pure tests failed before the change (three in `TextCoverageTest`, two in
+`EditorCoverageNoticeTest`); the others pin the default, Book's line and the copy. `EditTextSessionCoverageTest`
+checks that the session really passes the phone check. The emulator check is in
+[D-115](design/V2-SPEC-DEFECTS.md#d-115).
+
+#### Review
+
+Two independent Review Agents, reading only, 2026-10-14: code **GO WITH FIXES**, documents **GO WITH
+FIXES**. Taken: the Type bar goldens at font scale 2 had to be re-recorded; a session-level test was missing;
+this review was not recorded; the status did not name the owed checks; the evidence labels above were
+stronger or weaker than the evidence; the "other" rule had no home; ADR-028 §4.2 was not named. Not taken:
+moving the font resolver out of the session (it costs what the page preview already pays; noted in the
+code). Details in [D-115](design/V2-SPEC-DEFECTS.md#d-115).
+
+## ADR-132 {#adr-132}
+
+### The Art pieces are drawn by one hand
+
+**Status:** Proposed, 2026-10-14. **The design is frozen** as [`v21-bench.html`](design/mockups/v21-bench.html)
+A34, under the owner's delegation of 2026-10-12 ("decide, do not ask"); the owner has not ruled on it
+personally and may overrule it. The ADR stays Proposed until the Compose wave builds it and the checks below
+are done.
+**Extends:** [SUPPLIES-SPEC §4.1](design/SUPPLIES-SPEC.md#41-authoring-rule-binding) (authoring rule) with §4.4 (house style).
+**Keeps:** [ADR-107](#adr-107) R2 (no randomisation), [ADR-124](#adr-124)'s tap-through list, A16's sheet,
+A32's two frames as named and ordered, the landing sizes of SUPPLIES-SPEC §5.2.
+**Defect:** [D-117](design/V2-SPEC-DEFECTS.md#d-117). **Evidence:** [RESEARCH R27](RESEARCH.md#r27-one-hand-for-a-set-of-single-ink-pieces-2026-10-14).
+
+#### Context
+
+- ✅ A tester said the Art looks amateurish (2026-10-12). Rendered together, the 34 pieces use walls from 1
+  to 4.6 units, a regular zig-zag for every tear, ruler-perfect shapes beside rough polygons, and three
+  pieces that do not read as their names ([D-117](design/V2-SPEC-DEFECTS.md#d-117)).
+- ✅ Mixed weights and mixed levels of detail are what design systems name as making a set look like a
+  mistake (R27.1).
+- The Art is a frozen HTML spec held to the catalogue by `BenchArtSheetParityTest`, and one renderer draws
+  it on all four surfaces. A redraw is therefore an HTML amendment first and a Compose wave second, and the
+  second re-records every Art golden.
+
+#### Decision
+
+```mermaid
+flowchart LR
+    A["SUPPLIES-SPEC §4.4\nhouse rules H1–H9"] --> B["v21-bench.html A34\nART_A34: 34 literal paths"]
+    B --> C["Design frozen\n(owner's delegation)"]
+    C --> D["Compose wave (later):\nSupplyCatalog ← ART_A34\nparity test → ART_A34\nre-record Art goldens"]
+```
+
+1. **One house style** ([SUPPLIES-SPEC §4.4](design/SUPPLIES-SPEC.md#house-style)): one line weight W = 2.5
+   units, bands of paper 2W; no ink under 2 units and no gap under 1.5; flat views; a 0.5-unit margin; five
+   edge voices (cut, torn, drawn, metal, printer's mark), each piece using only its own; one hand-written
+   tear table; at most three ideas per piece.
+2. **All 34 are redrawn**, not replaced: every id, name, family, order, tag and landing size is unchanged.
+   The same eight pieces have holes.
+3. **The bench shows A34; the parity test keeps the shipped set.** A34's script redraws each tile as the
+   sheet draws it and leaves the literal lists alone, so `BenchArtSheetParityTest` keeps holding the
+   shipped catalogue to the shipped drawings until the Compose wave. That wave switches the test to the
+   literal `ART_A34` list in the same change that transcribes it into `SupplyCatalog` (A34 says how).
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Fix only the three unreadable pieces | Leaves the mixed weights and the zig-zag, which are most of what reads as amateurish |
+| Make every edge hand-drawn, printer's marks included | A wobbly registration mark or halftone pretends a hand made what a machine makes; the exactness is the meaning (R27.5) |
+| One weight in millimetres after landing, not in units | The landing sizes are an unverified reading (§5.2) and makers resize; the sheet, where the whole set is seen together, shows equal units |
+| Seeded noise for the torn edges | Fixed after authoring, but it reads as the randomisation ADR-107 refuses and cannot be reviewed coordinate by coordinate |
+| Replace pieces that do not work (an arrow for the hand) | Changes the set the owner ruled on; every piece could be redrawn to read |
+
+#### Consequences
+
+- The Compose wave rewrites the 34 outlines in `SupplyCatalog`, switches the parity test and re-records
+  every Art and Decor golden, reading each diff first. Hit areas follow the drawn ink (ADR-124), so the new
+  registration cross passes taps through its four quarter holes and the eyelet through its ring gap.
+- Until then the bench and the app draw different Art. A34 says so in the file.
+- The A32 text's "fourteen snips" for Round window is superseded by a smooth hand-cut hole; Snipped border
+  keeps its snips.
+
+#### Owed before Accepted
+
+- The Compose redraw and the switch-over above, with the golden re-record.
+- A printed page and a second-generation photocopy of all 34 at their landing sizes: no hole may fill in
+  (R27.2, R27.4).
+- Both device passes, including whether Pointing hand, Push pin, Saddle stitch and Crop marks read as their
+  names to a first-time user.
+
+#### Review
+
+Two independent Review Agents, 2026-10-14, both **GO WITH FIXES**. Design lens: the margin rule (H4) was
+false for many pieces and four crossed it, and the Eyelet's bands (3 and 2 units) broke H1. Both fixed: H4
+now says what is drawn (nothing crosses the margin), the four were moved in, and the Eyelet is two W bands. It
+also found Crop marks, Saddle stitch and Eyelet less quick to read than the shipped pieces. Crop marks got a
+wider trim and Saddle stitch was centred; all three stay as drawn and are named for the first-time device
+pass. Torn strip and Torn hole were given a slow wave so they no longer read as a sawtooth or a gear. Docs
+lens: the same margin finding; the tear table was not in the repository (it is now printed in A34's
+comment); one link lacked its anchor (fixed). Reconciled item by item in the PR.
+
+## ADR-133 {#adr-133}
+
+### Paper is a closed, named set; the imposition engine takes any sheet. US Legal and A5 come next
+
+**Status:** Accepted, 2026-10-14, under the owner's delegation of 2026-10-12 ("decide, do not ask"); the
+owner has not ruled on it personally and may overrule it. It answers the paper half of
+[ADR-016](#adr-016). The format half (`ZineFormat`) stays with ADR-016, whose trigger, the second
+imposition format, has not arrived.
+**Builds:** the engine change only (below). No size a person can choose has changed, nothing in the saved
+file has changed, and no screen has changed. The new sizes need a schema bump and a frozen bench amendment
+(A35) first.
+**Evidence:** [RESEARCH R26](RESEARCH.md#r26-which-paper-a-home-printer-takes-2026-10-14).
+**Findings:** [D-118](design/V2-SPEC-DEFECTS.md#d-118).
+
+#### Context
+
+- ✅ The owner asked for more paper sizes on 2026-10-06 ([ROADMAP](ROADMAP.md#current-priorities)). Which
+  ones was left open, behind ADR-016's question: keep `PaperSize` a closed enum, or store an open
+  `PaperSpec(widthPt, heightPt)`.
+- ✅ A zine is one sheet folded into eight pages, so the sheet is the paper the printer takes and the page is
+  an eighth of it. A Letter page is 2.75 × 4.25 in; an A4 page is 74 × 105 mm.
+- ✅ The saved document stores the size by name (`"letter"`, `"a4"`), and Room stores the enum name.
+  `DocumentSchemaShapeTest` records every enum value reachable from the document, so a new size is a change
+  of the saved format and cannot ship without a `CURRENT_SCHEMA_VERSION` bump.
+- ✅ The next bump, v4, is reserved for the photo-description step of the 1.x plan, alone
+  ([plan step 6](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md)).
+- ✅ The engine already derived every line from the sheet's two dimensions, but it was only ever run on two
+  sheets, and its properties drew from those two.
+
+#### Decision
+
+```mermaid
+flowchart LR
+    U["Person chooses a size\n(closed set: PaperSize)"] --> F["Saved file stores its name\n(schema guarded)"]
+    U --> E["Imposer.layout(format, paper)"]
+    E --> O["Imposer.layout(format, sheetPortrait: PtSize)\n(open: any sheet)"]
+    O --> L["ImpositionLayout\npanels, folds, cut"]
+```
+
+1. **Closed at the product and the file.** A person picks a size by name, and the file stores that name.
+   No custom sizes. Reasons: printers and Android's print framework name their sizes too, and the name is
+   what a person matches in the print dialog to print at actual size (R26.5); and a beginner should not be
+   asked for dimensions. Forward safety is not a reason either way: an open size would reach the file
+   through a schema bump too, and older builds refuse a newer schema before they read any size.
+2. **Open in the engine.** `Imposer.layout(format, sheetPortrait: PtSize)` imposes any sheet; the
+   `PaperSize` overload delegates to it. Properties now hold for every sheet from 4 in to 18 in a side, in
+   either orientation, so a size joining the set needs no engine work. `ImpositionLayout.paper` is gone; it
+   had no reader.
+3. **US Legal and A5 are the next two sizes.**
+
+   | Size | Sheet | Page | Why |
+   |---|---|---|---|
+   | **US Legal** | 8.5 × 14 in | 3.5 × 4.25 in | Every home printer checked takes it except an older HP DeskJet whose page does not list it (some Canon models take it only in the rear tray), and it is the largest sheet an ordinary Letter or A4 printer takes (R26.1, R26.3). Makers already sell 8-page minis drawn for it (R26.2). The page is 27% wider than Letter's |
+   | **A5** | 148 × 210 mm | 52.5 × 74 mm | Most home printers checked take it (R26.1; one HP listing does not). It keeps A4's shape exactly (R26.4), so it is the small zine for people outside North America. Its page has half the area of A4's. 🟨 No maker was found asking for it; the case is printer support and shape, not demand |
+
+   **Not chosen:** half-Letter (5.5 × 8.5 in) is missing from the printer lists checked, so makers would cut
+   it from Letter by hand (R26.6). A3 and Tabloid would make a
+   bigger zine, but need a wide-format printer, which the PRD's home printing does not assume (R26.3).
+4. **The new sizes ship together, in their own schema bump after v4** (v5 as the plan stands), never inside
+   another change. The migrator is the identity: no saved file contains them.
+5. **They are chosen when a zine is started, never by the Print screen's paper switch.** That switch
+   ([ADR-052](#adr-052)) re-imposes the pages as authored, without scaling. Between A4 and Letter the pages
+   differ by 12.5 pt across and 8.4 pt down, inside the 17 pt keep-clear, so nothing that matters is cut.
+   Legal's page is 54 pt wider than Letter's and A5's is 62 pt narrower than A4's: a switch to either would
+   cut into the work or leave a band of empty paper. A35 may design a scaled switch; until then it is not
+   offered.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Open `PaperSpec` in the file, any size | Custom dimensions burden beginners; an older build would print an unknown size wrongly instead of refusing it; the validation surface grows for sizes nobody asked for |
+| Keep the engine on the enum only | Every new size would need new engine tests; the properties would still cover two sheets |
+| Add the two enum values now | It changes the saved format, which needs a schema bump; v4 is reserved for plan step 6, alone |
+| A5 and half-Letter (the handoff's guess) | Half-Letter fails the printer check above; Legal is the size US makers actually have |
+
+#### Consequences
+
+- The work owed for the two sizes, in one later change: the enum entries with `@SerialName("legal")` and
+  `@SerialName("a5")`; the schema bump with `schema-shape-v5.txt` and a fixture; display names
+  (`Copy.Paper`, and "A5" in `TAKES_AN`, since it is said *ay-five*); the preferred-paper store's
+  encode/decode; and the A35 picker. **`shelfPaperChoices` builds its list from `PaperSize.entries`**, so
+  the day the enum grows, the Shelf's chooser offers every size before A35 is frozen. That change must pin
+  the chooser to a list. The Print switch and the Colophon already use explicit lists. **Three labels fall
+  back to Letter with no compile error:** `choiceName` and `choiceDimensions` in `ShelfSheets.kt` and the
+  Colophon's paper label are `if (A4) … else Letter`, so a new size would be called "US Letter". The
+  `when`s in `ProofPrint.kt` and `HomeViewModel.kt` will fail to compile instead, which is safe.
+- A5's page is the smallest Zinely would make: inside the keep-clear it leaves 40 × 62 mm. Text at Book's
+  12 pt floor fits, with short lines. A35 should show the page size before a person chooses it.
+- Older builds refuse every zine saved after the bump, Legal or not: the document migrator refuses a newer
+  schema before any field is read. That is true of any bump.
+- **Known Limitation for the release that adds the sizes: a backup holding a Legal or A5 zine is called
+  damaged by builds already shipped.** `ZineLibraryBackupStager` decodes the manifest, whose `paperSize` is
+  the enum, before it checks for a newer version, so the unknown name fails as `INVALID_MANIFEST` and the
+  person is told the backup is corrupt rather than that they need a newer app. Shipped builds cannot be
+  changed. Checking the versions before decoding the names, in a build before the sizes ship, narrows it
+  to builds older than that one.
+
+#### Verification
+
+`:core:imposition` tests: the two sheets' exact page sizes and a clean validation; every named size imposes
+as its portrait sheet does; a non-finite or non-positive sheet is refused; and two jqwik properties over
+any sheet (validates clean under any inset below the half-panel limit, and refuses any inset at or past it).
+No screen changed, so no golden moved and no device pass applies.
+
+#### Review
+
+Two independent Review Agents, reading only, 2026-10-14. Code: **GO**, with two improvements (say the sheet
+is not checked for orientation; assert A5's panel exactly), both taken. Documents: **GO WITH FIXES**. It
+found the Legal claim contradicted by R26's own HP source, and the older-build reasoning wrong (the schema
+version refuses first, and shipped builds call such a backup damaged); both corrected above. Each finding
+and its reconciliation is in [D-118](design/V2-SPEC-DEFECTS.md#d-118).

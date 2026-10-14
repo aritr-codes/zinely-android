@@ -820,6 +820,29 @@ class TypeBarTest {
     }
 
     /**
+     * D-115 (issue #102): at the largest text on a 360dp phone the Align row does not fit beside its label.
+     * It used to be squeezed until "Right" broke across three lines in a 48 x 130dp button; now the choices
+     * drop below the label, and "Right" is one line, the same height as "Left".
+     */
+    @Test
+    @Config(qualifiers = "w360dp-h780dp-xhdpi")
+    fun right_stays_on_one_line_at_the_largest_font_scale_on_a_360dp_phone() {
+        render(storeWithText(), fontScale = 2f)
+        openTypeBar()
+
+        val left = composeRule.onNodeWithText("Left", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val right = composeRule.onNodeWithText("Right", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        with(composeRule.density) {
+            assertEquals(
+                "\"Right\" is ${right.height.toDp()} tall against \"Left\" at ${left.height.toDp()}: it has wrapped",
+                left.height.toDp().value,
+                right.height.toDp().value,
+                0.5f,
+            )
+        }
+    }
+
+    /**
      * **Every control in the card must report at least 48 x 48 dp to the PLATFORM accessibility tree.**
      *
      * This replaces an assertion that could not fail. The old one read

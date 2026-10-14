@@ -73,7 +73,7 @@ The café was doing two jobs — supplying the *feeling* and supplying the *plac
 | **A document** | **One zine** — a small edition of one title, of which you can print many copies | Never "project" or "file". Duplicating a zine is *a new title*, not a backup |
 | **A page** | **One panel of the folded sheet.** Fixed at eight, because the fold says eight | The fixed count is the form, like a sonnet's fourteen lines. Page 9 is not a missing feature; it is a different fold |
 | **A tool** | **Something you pick up, use, and put down.** Type bar, Ink pots, Reframe, Supplies | Tools appear at thumb reach in a fixed position, do one job, and leave. A tool that stays on screen is clutter, not a tool |
-| **A material** | **Stock you place and cannot un-invent.** Photos, words, tape, stamps, cut paper | Materials are finite, named, and authored. Five inks, three voices, sixteen supplies. Never a picker over infinity |
+| **A material** | **Stock you place and cannot un-invent.** Photos, words, tape, stamps, cut paper | Materials are finite, named, and authored. Five inks, three voices, sixteen supplies. Never a picker over infinity — *2026-10-14: two document voices, Book and Plain ([ADR-126](../DECISIONS.md#adr-126), Proposed); see principle 3* |
 | **Importing** | **Bringing stock to the bench** — from the drawer (gallery), from the camera, from another app | Import is not "upload". It never leaves the phone, so it is a *reach*, not a *transfer* |
 | **Exporting** | **The press run.** Ink meets paper; a sheet exists that did not before | The primary output is a foldable sheet. Page images are offcuts you may also keep |
 | **Settings** | **The colophon**, presented as **About Zinely** — the printer's note at the back of a book saying how it was made | See §2.3. The concept fits the metaphor and solves a legal obligation; the maker-facing name stays plain |
@@ -143,7 +143,7 @@ Ten principles. Each is a *test you can fail*, not an aspiration.
 
 1. **The page is the hero; the tool is a guest.** Chrome arrives when needed and leaves. If two rows of controls are permanently visible below the page, the screen has stopped being a bench.
 2. **The sheet is under the lamp.** Light means the thing you are making; dark means the room you stand in. There is no third case. Tools never become paper, however close they float. *(ADR-090)*
-3. **Materials are finite, named, and authored.** Five inks, three voices, sixteen supplies. A picker over infinity is an abdication — curation *is* the design work.
+3. **Materials are finite, named, and authored.** Five inks, three voices, sixteen supplies. A picker over infinity is an abdication — curation *is* the design work. *(2026-10-14: two document voices, Book and Plain, by the owner's 2026-09-26 ruling ([ADR-126](../DECISIONS.md#adr-126), Proposed). The principle stands; the count is the direction as first written.)*
 4. **Imperfection is intentional and quantified.** Tape tilts 1.4° because a hand stuck it down. Randomness may set an initial value; it may **never** be a running behaviour. Nothing re-rolls.
 5. **Every mark names its physical cause.** If you cannot say what object made it, it does not ship. This governs texture, shadow, motion and decor alike.
 6. **Show, don't explain.** A confident product states a thing once, where it matters. Repeated reassurance reads as anxiety.
@@ -350,7 +350,7 @@ Step 14 of the walkthrough is *export/share*. **But the loop does not end there 
 |---|---|---|
 | World metaphor = small press | **BUILD** (ADR-103 + Amendment 2) | Only candidate explaining the vocabulary law, the FINISHING north star, ADR-090, one focal zone, and "what is a Type bar?" |
 | Colophon (settings/licences/paper default) | **BUILD** | Verified absent; discharges the OFL obligation; the metaphor's best fit |
-| Font as three named voices | **FINISH** | ⚠ needs 8 static TTFs sourced — *not* "asset cost already paid". Decision holds because a dead control is a launch blocker |
+| Font as three named voices | **FINISH** | ⚠ needs 8 static TTFs sourced — *not* "asset cost already paid". Decision holds because a dead control is a launch blocker — *2026-10-14: superseded in count and assets. Two voices, Book and Plain (owner ruling 2026-09-26), from four unmodified Fraunces faces plus the bundled Inter ([Brief 02](../planning/BRIEF-02-THREE-VOICES.md#the-four-faces)); built under [ADR-126](../DECISIONS.md#adr-126), still Proposed* |
 | Replace image | **COMPLETE** | Targeted picker reuses the existing reducer command; D-038 verified and closed 2026-08-31 |
 | Decor / DecorElement | **BUILD** | §9. Half-built, freeze-anticipated, and the product contradicts itself without it |
 | Duplicate element | **BUILD** | Verified absent; `PlaceCommand` generalises to it |
@@ -736,7 +736,7 @@ The line alphabet · the tilt law · the stamped-label rule · the four motion c
 | X3b | **Photocopier filter** ↑ *promoted from X13* — 1-bit Floyd–Steinberg over a downscaled bitmap. ⚠ **BUILT 2026-08-16, not accepted** — [ADR-106](../DECISIONS.md#adr-106) is `Proposed`, the dot size and the control's place are unspecified ([D-082](V2-SPEC-DEFECTS.md#d-082)), and **neither device pass has run** | X3 | ✅ as costed: pure Kotlin in `core:render`, one flag on `ImageElement`, one `if` in the single replayer. The cost the estimate missed is not code — it is that no frozen file draws the control, so the Bench's photo bar was amended to gain one |
 | X4 | **Duplicate element** — one verb over `PlaceCommand` | A3 | ✅ |
 | X5 | **Replace image** — implemented 2026-08-30, verified 2026-08-31 | — | ✅ targeted picker and reducer flow complete; two-reader Samsung pass recorded |
-| X6 | **Font as three named voices** | A4 | ✅ **Source and place 8 static TTFs — no subsetting.** Averia carries RFNs `'Averia'`/`'Averia Libre'`; subsetting makes a Modified Version and clause 5 voids the licence on breach, so unmodified statics are both safer and less work (§16.5). ~840KB. No schema change (`TextStyle.fontFamily` exists) |
+| X6 | **Font as three named voices** | A4 | ✅ **Source and place 8 static TTFs — no subsetting.** Averia carries RFNs `'Averia'`/`'Averia Libre'`; subsetting makes a Modified Version and clause 5 voids the licence on breach, so unmodified statics are both safer and less work (§16.5). ~840KB. No schema change (`TextStyle.fontFamily` exists) — *2026-10-14: superseded. The owner ruled two document voices, Book (Fraunces) and Plain (Inter), on 2026-09-26; Averia is deferred as a document voice and stays the interface voice. The asset work is the four unmodified Fraunces faces in [Brief 02](../planning/BRIEF-02-THREE-VOICES.md#the-four-faces), not 8 TTFs; built under [ADR-126](../DECISIONS.md#adr-126), still Proposed* |
 | X7 | **Page grid draws content**; current page `leaf` → `berry` | A5 | ✅ breaks 2 tests — budgeted |
 | X8 | **Page reorder** (+ non-drag a11y actions) **and page duplicate** | X7, A6 | ✅ reorder is parity |
 | X9 | **Spreads — all four** | X7 | ✅ geometry proven; ⚠ per-edge safe-area is the one engine change |

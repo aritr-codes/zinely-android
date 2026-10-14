@@ -923,6 +923,119 @@ left cut off. R24.4 above reached the same advice for panels that scroll down.
 Ranked by the research pass: swap the page strip for the buttons; a Move entry opening a docked tray; float
 the bar; reserve the rows always; keep as built. ADR-129 takes the second, and says why not the first.
 
+## R26. Which paper a home printer takes (2026-10-14)
+
+Asked for [ADR-133](DECISIONS.md#adr-133): which sizes after A4 and US Letter, and whether paper should stay
+a closed, named set. Web research, one pass, 2026-10-14. Model lists differ by region and by tray, so these
+are samples, not a census.
+
+### R26.1 Home printers take Legal and, mostly, A5 — ✅ VERIFIED for the models named
+
+- Canon's spec pages for the [PIXMA TR8550](https://www.canon-europe.com/printers/pixma-tr8550/specifications/)
+  and [TR7550](https://www.canon-europe.com/printers/pixma-tr7550/specifications/) list the rear tray as
+  "A4, A5, B5, LTR, LGL, …"; their front cassettes take A4, A5, B5 and Letter, not Legal.
+  [TR4550](https://www.canon.co.uk/printers/pixma-tr4550/specifications/): A4, A5, B5, LTR, LGL.
+- 🟨 Retailer listings, not the maker's: the [Canon G1230](https://www.dell.com/en-us/shop/canon-pixma-megatank-g1230-inkjet-printer/apd/ac461205/printers-ink-toner)
+  takes Letter, Legal, A4, A5, B5 and A6; the [HP DeskJet 4355](https://www.shi.com/product/51015669/HP-Deskjet-4355-All-in-One)
+  takes Letter, Legal, A4, B5 and A6, and A5 is not listed; the [HP DeskJet 3755](https://www.shi.com/product/32321488/HP-Deskjet-3755-All-in-One)
+  gives Legal as its largest size. HP's own [DeskJet D2600 page](https://support.hp.com/ca-en/product/hp-deskjet-d2600-printer-series/3742933)
+  lists A4, A5, A6 and B5.
+
+### R26.2 Makers draw 8-page minis for Legal — ✅ VERIFIED
+
+The *CATS* minizines ([vol. 5](https://mrnabbles.itch.io/cats-vol-5-minizine)) and
+[*How to be a Punk*](https://mrnabbles.itch.io/how-to-be-a-punk) are sold as 8-page foldable zines "best
+printed on Legal size paper", and there is a [free 8-page template for Legal](https://lincodega.itch.io/8-16-page-zine-template/purchase).
+Most guides, such as [Niagara County Community College's](https://libguides.niagaracc.suny.edu/zines/makezines),
+assume ordinary printer paper, Letter or A4.
+
+### R26.3 A3 and Tabloid need a wide-format printer — ✅ VERIFIED (vendor sources)
+
+[Sharp](https://business.sharpusa.com/a3-vs-a4-printers-whats-the-difference) and
+[Loffler](https://www.loffler.com/blog/a3-vs-a4-printers) describe A4-class printers as unable to take A3,
+Tabloid or Ledger, some taking Legal at most. Both sell office printers, so the framing is commercial.
+
+### R26.4 A5 is A4 halved and keeps its shape — ✅ VERIFIED
+
+[ISO 216](https://en.wikipedia.org/wiki/ISO_216): A-series sheets
+have sides in the ratio √2, so halving one gives the next with the same shape; A4 is 210 × 297 mm, A5
+148 × 210 mm. A Zinely page on A5 is the A4 page at 1/√2, within a point.
+
+### R26.5 Android names its print sizes and allows custom ones — ✅ VERIFIED
+
+[`PrintAttributes.MediaSize`](https://developer.android.com/reference/android/print/PrintAttributes.MediaSize)
+has named constants, among them `NA_LETTER`, `NA_LEGAL` (8.5 × 14 in), `ISO_A4` and `ISO_A5` (148 × 210 mm),
+and a public constructor for a custom size in thousandths of an inch. The platform keeps a named list and
+an escape hatch, the shape ADR-133 takes: named for people, any size for the engine.
+
+### R26.6 Half-Letter is not on the lists checked — 🟨 ASSUMPTION (an absence)
+
+5.5 × 8.5 in does not appear in any list above. A maker wanting it would cut Letter in half by hand. Not
+searched: Epson and Brother spec sheets.
+
+### R26.7 Zinely application — 🟦 RECOMMENDATION
+
+US Legal first (every printer checked but one older HP takes it, and makers use it) and A5 second (most
+printers checked take it, and it is the small zine on A-series paper; 🟨 no maker demand was found). Not half-Letter, A3 or Tabloid. Keep the sizes a
+named set. ADR-133 records the decision.
+
+---
+
+## R27. One hand for a set of single-ink pieces (2026-10-14)
+
+Evidence for the Art house style ([SUPPLIES-SPEC §4.4](design/SUPPLIES-SPEC.md#house-style),
+[ADR-132](DECISIONS.md#adr-132), [D-117](design/V2-SPEC-DEFECTS.md#d-117)). Gathered by a Research Agent on
+2026-10-14. Sources it could not open (Material Design's icon pages, Shopify Polaris, MoMA on Matisse) are
+not cited.
+
+### R27.1 A set reads as one hand when weight, detail and view agree — ✅ VERIFIED
+
+- [IBM UI icons](https://www.ibm.com/design/language/iconography/ui-icons/design/): "no icon should appear
+  heavier or lighter than another… A single icon shouldn't contain a mix of different stroke weights…
+  They'll feel unbalanced and look like a mistake." [IBM pictograms](https://www.ibm.com/design/language/iconography/pictograms/design/)
+  fix one stroke for the whole set and say "Avoid using perspective… Create depth through flat layers".
+- [Apple HIG, Icons](https://developer.apple.com/design/human-interface-guidelines/icons): icons "need to use a
+  consistent size, level of detail, stroke thickness (or weight), and perspective", and "Too many details can
+  make an interface icon confusing or unreadable."
+- [Atlassian iconography](https://atlassian.design/foundations/iconography): "Use simplified shapes with the
+  minimum detail required to express a metaphor."
+
+🟦 Applied as H1 (one weight), H3 (flat views), H4 (one margin) and H8 (three ideas at most).
+
+### R27.2 Knockouts need more room than ink — ✅ VERIFIED, with a 🟨 house number
+
+[Onlineprinters on line weight](https://www.onlineprinters.ie/c/print-files/line-weight): positive lines at
+least 0.25pt, negative (knocked-out) lines at least 0.5pt. 🟨 No source gives a minimum counter for filled
+icon sets, so H2's 1.5-unit gap is a house number, set at about twice the printer's floor at the smallest
+landing size. It should be checked by printing and photocopying (owed, ADR-132).
+
+### R27.3 Torn paper is irregular at more than one scale — ✅ VERIFIED (physics), 🟨 for the reading
+
+[Alava et al., arXiv cond-mat/0608052](https://arxiv.org/abs/cond-mat/0608052): paper fracture lines show
+multiscaling at small scales and self-affine scaling at larger ones. [Wikipedia, Deckle edge](https://en.wikipedia.org/wiki/Deckle_edge)
+says machine deckles are cut "into patterns" and are valued for "the impression that it is handmade" (marked
+"citation needed" there). 🟨 That a regular zig-zag reads as clip-art is an assumption consistent with both;
+no perception study was found. Applied as H6: a slow bow plus an uneven fine jag, from one hand-written table.
+
+### R27.4 Print and photocopy floors — ✅ VERIFIED
+
+[Tradeprint on hairlines](https://help.tradeprint.co.uk/hairlines): hairlines "print differently on different
+printers… use at least 0.25pt." [Kumar et al., AJFSFM](https://journals.nauss.edu.sa/index.php/AJFSFM/article/view/1825):
+line features distort across photocopy generations, "much more pronounced… beyond the second generation".
+🟦 H2's 2-unit ink (about 1mm at stamp size) and 1.5-unit gap (about 0.74mm) sit far above both floors.
+
+### R27.5 Printer's marks have conventional forms — ✅ VERIFIED
+
+- Crop marks are "short, thin, solid, horizontal and vertical lines, placed outside of the trim area at each
+  corner" ([University of Melbourne print room](https://ms-kb.msd.unimelb.edu.au/print-room/file-preperation/bleed-and-crop-marks)).
+- A registration mark is printed on every separation; its usual form is a ring with a cross
+  ([Wikipedia, Registration mark](https://en.wikipedia.org/wiki/Registration_mark), shown in its illustration).
+- A halftone is a regular grid of dots that vary in size ([Wikipedia, Halftone](https://en.wikipedia.org/wiki/Halftone)).
+  ⚠️ DISPUTED: screen-printing sources differ on 45° versus 22.5° for the angle. A34 uses 45°, the angle
+  most readers know.
+
+🟦 Applied in the *printer's mark* voice of §4.4: these are drawn exact, not by hand.
+
 ## R28. Tap-only arrange controls one step away, and what to call them (2026-10-14)
 
 Asked before deciding [ADR-129](DECISIONS.md#adr-129): does any evidence argue for keeping the bar that

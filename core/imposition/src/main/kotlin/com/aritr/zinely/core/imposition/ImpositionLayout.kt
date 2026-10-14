@@ -3,7 +3,6 @@ package com.aritr.zinely.core.imposition
 import com.aritr.zinely.core.model.AffineTransform2D
 import com.aritr.zinely.core.model.GridCell
 import com.aritr.zinely.core.model.PageRole
-import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.PtLine
 import com.aritr.zinely.core.model.PtRect
 import com.aritr.zinely.core.model.PtSize
@@ -49,7 +48,6 @@ public data class CutLine(
 /** The complete imposition for one sheet: panel placements plus fold/cut guides, all in points. */
 public data class ImpositionLayout(
     val format: ZineFormat,
-    val paper: PaperSize,
     val sheet: PtSize,
     val conventionName: String,
     val panels: List<PanelPlacement>,

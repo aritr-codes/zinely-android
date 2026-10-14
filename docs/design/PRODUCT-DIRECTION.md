@@ -386,7 +386,7 @@ including the 180° row-0 trap — and falsified the following, each of which I 
 
 | Finding | Outcome |
 |---|---|
-| `v21-typebar.html` already specifies the **bench**, not the island (`:392` sibling of `.page`; `:698-700` in prose) | **ACCEPTED.** Ruling C reversed from "do not freeze" to **"freeze both"**; Ruling A reframed as a parity defect |
+| `v21-typebar.html` already specifies the **bench**, not the island (`<div class="typebar">` a sibling of `.page`; the ink-fills caption at `3c3d152` in prose, *2026-10-14: rewritten in `ecb7c17`*) | **ACCEPTED.** Ruling C reversed from "do not freeze" to **"freeze both"**; Ruling A reframed as a parity defect |
 | `v21-reframe.html` contains **no** rule-of-thirds (zero matches, 362 lines) | **ACCEPTED.** Ruling B scoped to Compose only |
 | The island membership rule, its test, and the opt-out mechanism **all already exist** | **ACCEPTED.** J6 cut entirely |
 | `ZineActionSheet` Delete is **already `jamText`** | **ACCEPTED.** Finding withdrawn |

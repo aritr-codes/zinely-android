@@ -900,6 +900,17 @@ public object Copy {
                 "but they’re saved with your zine, so nothing’s lost."
 
         /**
+         * Characters outside the bundled fonts that the phone's own fonts draw (ADR-130, issue #103).
+         * They print, on screen and in the PDF, so "can't print" would be false; but the face is the
+         * phone's, so the same zine can look different on another phone, and the maker is told that.
+         * [others] stands for characters of no named script: "Unsupported characters print" would
+         * contradict itself, so they are called "other" and named last.
+         */
+        public fun phoneFont(scripts: List<String>, others: Boolean = false): String =
+            joinScripts(if (others) scripts + "other" else scripts).replaceFirstChar { it.uppercaseChar() } +
+                " characters print in a font from your phone, so they may look different on another phone."
+
+        /**
          * Typing a letter Book does not have into a Book text (frozen `v21-typebar.html` A29 rule 13).
          * [script] is "Greek", "Cyrillic" or "Greek and Cyrillic" ([Type.bookScripts]). It names the font
          * and the way out; the font is never switched for the maker.

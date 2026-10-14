@@ -4840,7 +4840,7 @@ behavior ahead of its governing artifact.
 
 | | |
 |---|---|
-| **Artifacts** | [`v21-bench.html`](mockups/v21-bench.html) `:824`, `:873` · [`v21-library.html`](mockups/v21-library.html) `:306-307`, `:466` · [`v21-proof.html`](mockups/v21-proof.html) `:593`, `:1019` · [`EditorEmptyState.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorEmptyState.kt) `:170-186` · [`Copy.kt`](../../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt) `:364` |
+| **Artifacts** | [`v21-bench.html`](mockups/v21-bench.html) `:824`, `:873` · [`v21-library.html`](mockups/v21-library.html) `.empty .pv` and its `<p class="pv">` (both removed 2026-08-24, `b0a25c0`) · [`v21-proof.html`](mockups/v21-proof.html) `:593`, `:1019` · [`EditorEmptyState.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorEmptyState.kt) `:170-186` · [`Copy.kt`](../../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt) `:364` |
 | **Found** | 2026-08-16, reconciling [BETA-UX-REVIEW.md F-11](../BETA-UX-REVIEW.md) against the frozen files |
 | **Severity** | No function is lost. It is a **voice** defect, and the rule it breaks is one the owner adopted six days ago |
 | **Status** | ✅ **CLOSED + IMPLEMENTED 2026-08-24 — owner chose option (b); Colophon DESIGN FROZEN** |
@@ -4858,9 +4858,9 @@ and the split matters because the two halves need different remedies.
 
 | # | String | Screen | Frozen source | Class |
 |---|---|---|---|---|
-| 1 | `works offline · stays on your phone` | Editor, empty page | **none** — `v21-bench.html` draws no empty state; the CSS was transcribed from `v21-library.html:306-307` | **parity failure** |
+| 1 | `works offline · stays on your phone` | Editor, empty page | **none** — `v21-bench.html` draws no empty state; the CSS was transcribed from `v21-library.html`'s `.empty .pv` | **parity failure** |
 | 2 | `From your phone — it never leaves the device` | Add sheet, Photo row | `v21-bench.html` §`openSupply()`, `:828` | spec |
-| 3 | `Everything stays on your phone — no account, nothing uploaded.` | Library, empty shelf | `v21-library.html:466` | spec |
+| 3 | `Everything stays on your phone — no account, nothing uploaded.` | Library, empty shelf | `v21-library.html` `<p class="pv">` | spec |
 | 4 | `… · A4 · stays on your phone` | Proof, ready row | `v21-proof.html:593`, `:1019` | spec |
 | 5 | `Saved on this device` | Editor status chip | **none** — the freeze says only `Saved` | implementation addition, **spoken only** |
 
@@ -7606,3 +7606,254 @@ cutting Delete, as D-113 intended. Found, not caused by this change, filed as
 [#134](https://github.com/aritr-codes/zinely-android/issues/134): the first-run hint wraps to five lines in its
 stadium shape and the curved ends clip its first and last words. The emulator is not a real small phone; that
 pass stays the owner's.
+
+---
+
+### D-116 — a repaired `meta.json` brings back an older title while the Shelf keeps the newer one {#d-116}
+
+| | |
+|---|---|
+| **Artifacts** | `data-android/.../RoomProjectRepository.kt` (`reconcileLocked`) · `core/data-storage/.../AtomicFileStore.kt` (`read`) · `RoomProjectRepositoryTest` |
+| **Found** | 2026-10-07, the folders storage phone check (Samsung SM-A176B, Android 16); filed as [issue #106](https://github.com/aritr-codes/zinely-android/issues/106) |
+| **Severity** | **Data consistency defect.** No pages are lost. The Shelf and the file disagree about a zine's title, and the next rewrite of the row from disk changes the title the maker sees without warning |
+| **Status** | ✓ **Fixed 2026-10-14** in the data layer. No UI, no goldens. Not checked on a phone |
+
+**What happened.** A zine was renamed from "My zine" to "Pressed Ferns", so `meta.json` held the new title
+and `meta.json.bak` the old one. With the app stopped, `meta.json` was broken by hand. On the next launch the
+store found the file unreadable and put the backup back (`AtomicFileStore.read`), so the file said "My zine".
+The Shelf still said "Pressed Ferns", because it draws the title from the Room row.
+
+**Cause.** The reconcile scan only added rows for zines the index did not have and dropped rows whose files
+were gone. It never looked again at a row it already had. So a row could only change through a mutation. Two
+cases left a row out of step with its file for good:
+
+- a `meta.json` put back from its `.bak`, which is the previous version of the file, not a copy of the current
+  one;
+- a rename whose file write succeeded and whose row write then failed. [ADR-042](../DECISIONS.md#adr-042) §5
+  already promised that the next reconcile would bring the row back in line, but for a row that already
+  existed it did not.
+
+**Which copy is right.** The file. [ADR-042](../DECISIONS.md#adr-042) §3 makes `meta.json` the authority for
+title and createdAt (and, since B5, the cover) and the Room row a rebuildable index: "on disagreement, files
+win". No new decision was needed, so there is no ADR.
+
+**Fix.** One change in the one scan every repository use goes through (`reconcileLocked`). For a zine that is
+already indexed, the scan now reads its `meta.json`. That read is also what repairs a broken file from its
+`.bak`. If the file reads and its title, createdAt or cover differ from the row, the row is rebuilt through the
+same `syncRowFromDisk` path every mutation uses, keeping its `updatedAtEpochMs`. If the file is missing or
+cannot be read, the row is left alone, because it is the best copy left and the bytes stay for repair
+(ADR-042 §4). Errors still return as `DataResult` failures; nothing new is caught.
+
+**After the fix.** The Shelf shows "My zine" in the issue's case. The newer title is gone, because the only
+place it was saved was the file that broke. That is the designed recovery: Zinely does not save a second copy
+of the current metadata.
+
+**Tests.** Three new JVM tests in `RoomProjectRepositoryTest`; the first two fail on `origin/main`:
+
+- the issue's case: rename, break `meta.json`, start a new repository on the same index; the Shelf,
+  `getProject` and `observeProjects` all show the title the repaired file holds, and the row keeps its `updatedAtEpochMs`;
+- a rename whose row write fails; the next reconcile shows the new title.
+- an unreadable document with a repaired `meta.json`; the unavailable card shows the file's title.
+
+**Known limits.**
+
+- The scan runs once per process start, and again after anything flags that the index may have drifted. A
+  `meta.json` broken by something outside the app *while the app is running* is repaired on its next read, but
+  the row catches up only at the next scan. Zinely's own writes cannot cause that, because a crash ends the
+  process.
+- The maker is not told that a title went back to an earlier one. The issue raised this; it would be a UI
+  change and is not part of this fix.
+- In the failed-rename case the row keeps its old `updatedAtEpochMs`, so the renamed zine does not move up the
+  Shelf. Recency still follows the document's own save time (ADR-042 §7).
+- If the `.bak` predates a legacy zine's first cover (D-026 backfill), repairing from it gives the file no cover,
+  and the re-derive draws a new one. That breaks D-017's "same cover" promise, but only when a legacy zine's
+  `meta.json` also breaks before any other write. Accepted as rare.
+- If the zine's `document.json` cannot be read either, the row cannot be rebuilt (it needs the document). The
+  Shelf's unavailable card now takes its title and cover from the readable `meta.json` first, so it still shows
+  the file's title; the scan stays marked unfinished and runs again on the next use, as it already did for an
+  unreadable zine with no row.
+- Every scan now reads each zine's `meta.json` once and looks up its row (one query per zine). These are small files, and the Shelf already reads all of
+  them each time it is drawn (folders, [ADR-125](../DECISIONS.md#adr-125)).
+
+---
+
+### D-115 — at the largest text "Right" breaks across three lines, and the typing-time notice says what prints "can't print yet" {#d-115}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../TypeBar.kt` (`TypeRow`) · `core/model/.../TextCoverage.kt` · `feature/editor/.../EditTextSession.kt` · `feature/editor/.../EditorCoverageNotice.kt` · `core/copy/.../Copy.kt` (`Coverage.phoneFont`) · frozen `docs/design/mockups/v21-typebar.html` (not edited) |
+| **Found** | 2026-10-07, emulator, `0.9.0-beta.6`: [issue #102](https://github.com/aritr-codes/zinely-android/issues/102) and [issue #103](https://github.com/aritr-codes/zinely-android/issues/103) |
+| **Severity** | **Visible UX defect** (#102: a control unreadable at an accessibility setting) and **trust defect** (#103: the app says something false about the maker's words) |
+| **Status** | ✓ **Fixed 2026-10-14** in Compose, under the owner's delegation of 2026-10-12. #103's wording is [ADR-130](../DECISIONS.md#adr-130). The owner may overrule either |
+
+**1. "Right" (issue #102).** Checked first against `main` after [D-113](#d-113) (PRs #123–#126): **not fixed
+there.** Emulator, Android 16, 360 × 640dp (`wm size 1080x1920`, `wm density 480`), `font_scale 2.0`, debug
+build of `017f747` under a side-by-side package: `Right` was a 48 × 130dp button at `[856,693][1000,1083]`,
+drawn "Ri / g / ht". The card stops at its 336dp limit, and the plain `Row` in `TypeRow` then squeezed the
+choices.
+
+The other half of the issue is already mended: since D-113 the card scrolls inside itself (A29 rule 11), and
+all the Colour swatches were reached by scrolling in the same session (`Ink`, `Coral`, `Teal`, `Blue` at
+48 × 48dp; `0.9.0-beta.7` already noted this).
+
+**Compose fix.** `TypeRow` is a `FlowRow`: when label and choices do not fit on one line the choices drop
+below the label, as the Colour row always does. A `FlowRow` reports the same one-line width to the card's
+`IntrinsicSize.Max`, so wherever a row fits, nothing moves. Fenced by
+`TypeBarTest.right_stays_on_one_line_at_the_largest_font_scale_on_a_360dp_phone`, which failed before the
+change.
+
+The frozen page draws this defect on purpose (its `.fs2` rule: "That defect is the app's today, not this
+row's") and does not say what should replace it. The frozen file is not edited; the stacked Align row at the
+largest text is the accepted difference, recorded here.
+
+**2. "Can't print yet" (issue #103).** The bundled faces fall back to the phone's own fonts, so `ﬁ`, `中` and
+`ก` printed while the notice said they could not. The check now also asks `Paint.hasGlyph` on the face the
+renderer resolves (the same fallback chain), and a script every character of which the phone draws gets a
+new line: "Chinese and Thai characters print in a font from your phone, so they may look different on
+another phone." Anything no font draws keeps "can't print yet". Characters of no named script are called
+"other" there, since "Unsupported characters print" contradicts itself. The decision is
+[ADR-130](../DECISIONS.md#adr-130).
+
+**Device, 2026-10-14.** Emulator only (Android 16, `Medium_Phone_API_36.1`), not the owner's phone. TalkBack
+was not listened to.
+
+| Check | Before (`main`) | After |
+|---|---|---|
+| `font_scale 2.0`, 360 × 640dp: `Right` | 48 × 130dp, three lines | 77 × 54dp, one line, below `ALIGN` (label at 208dp, choices at 242dp) |
+| `font_scale 1.0`, same screen: Align row | not measured | `ALIGN` and the 48dp choices on one line, as before |
+| Text `Hi 中 ก ﬁ`, editing | not re-measured; issue #103 recorded "Unsupported, Chinese and Thai characters can't print yet …" on `0.9.0-beta.6` | "Chinese, Thai and other characters print in a font from your phone, so they may look different on another phone." |
+| Text `Hi 中 U+10FFFD ก` | — | the phone-font line for Chinese and Thai, then "Unsupported characters can't print yet …" |
+
+A private-use character (U+E000) was drawn by a font on the emulator, so it is told it prints: the check is
+as wide as the phone.
+
+**First-time reading.** With the largest text the Align choices sit at the left under their label while
+Size and Style sit at the right beside theirs. It reads as a different row, not as a broken one; every word
+is whole. The notice: the first build named the no-script characters "Unsupported" in the line that says
+they print, which read as a contradiction before the reason was known. Hence "other".
+
+**Goldens.** Four moved, as intended, all at font scale 2 on a 360dp room:
+`type_bar_font_scale2_{plain,book_unavailable,unknown,unknown_scrolling}`. Each had drawn "Ri / g / ht";
+each now draws the Align choices on one line under their label, and the card is shorter. The
+`_compare` images were read before the four were re-recorded on the pinned CI image (`record-goldens.yml`);
+the other 196 images came back byte-identical, so at ordinary sizes nothing moved.
+
+**Review, 2026-10-14.** Two independent Review Agents, reading only. Code: **GO WITH FIXES**. Its one
+Required Fix was the four goldens above, which still showed the defect (taken). It also asked for a test
+that the session really passes the phone check (taken: `EditTextSessionCoverageTest.the_session_asks_the_phone_what_it_draws`)
+and for the font resolver to move out of the session (not taken: it costs what the page preview already
+pays, and the code says where to hoist it). Documents: **GO WITH FIXES**. Its two Required Fixes were a
+"see below" that pointed at nothing and an ADR-130 review section that pointed here before this paragraph
+existed (both taken). Also taken: ADR-130's status names the owed checks; evidence labels corrected (one
+emulator, not "phones"; only `NotoSansThai` is named in the PDF; the fallback was measured with Plain only);
+the "other" rule written into ADR-130 and VOICE; ADR-028 §4.2 named. Owed, not done: an amendment to
+`v21-typebar.html` that draws the stacked Align row, so the frozen page stops showing the defect.
+
+**Not done here.** The check still runs only while a text is open for editing (listed under
+[ADR-126](../DECISIONS.md#adr-126)); Read, Save PDF and Print details still say nothing about phone fonts.
+The owner's Samsung (its largest font and bold-font settings) was not tested.
+
+---
+
+### D-117 — the Art pieces look like four hands at once; critique of all thirty-four {#d-117}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (the literal lists `SUP`, `ART_FIRST_WAVE`, `ART_D5_FRAMES`) · `core/render/.../SupplyCatalog.kt` (the same geometry, held to it by `BenchArtSheetParityTest`) |
+| **Found** | 2026-10-12, a tester: the Art "looks amateurish". Critiqued 2026-10-14 by rendering all 34 at 24, 46 and 120px and at their landing sizes (§5.2, a 74mm page); the renders are working files, not committed. The bench's A34 section shows shipped and redrawn side by side |
+| **Severity** | Product quality, not correctness. Every piece draws as specified; the specification is the problem |
+| **Status** | **Design frozen 2026-10-14 under the owner's delegation; not built.** The redraw is [`v21-bench.html`](mockups/v21-bench.html) A34, the rules are [SUPPLIES-SPEC §4.4](SUPPLIES-SPEC.md#house-style), the decision is [ADR-132](../DECISIONS.md#adr-132) (Proposed). The app still draws the shipped set until the Compose wave |
+
+**Why the set reads as amateurish.** Not one bad piece but four voices with nothing in common:
+
+1. **Weights.** Walls and lines run from 1 unit (crop marks, registration arms) through 2–3 (staple, clip,
+   window, border) to 4–4.6 (ring, eyelet). ✅ IBM: mixed weights "look like a mistake" (R27.1).
+2. **The tear voice is a regular zig-zag.** Torn tape, Torn strip, Marker underline, Deckle edge and Torn
+   hole all use near-even teeth of near-even depth. It reads as pinking shears or clip-art, not torn paper.
+3. **Two kinds of geometry side by side.** Ruler-perfect squares and circles sit beside 7- to 14-sided
+   polygons standing in for curves (Torn hole, Round window, Paper clip's corners).
+4. **Three pieces do not read as their names.** Pointing hand is a block with notches (a sword or a key);
+   Push pin is a funnel; Copier streak is three wedges (legs, or a barcode).
+
+**Every piece.** "Keeps" means the concept stays and only the house rules are applied.
+
+| Piece | Shipped, as seen | A34 |
+|---|---|---|
+| Torn tape | Ends are an even zig-zag | Straight factory edges, both ends torn in the tear voice |
+| Photo corner | Sound; legs and hypotenuse one weight, triangle hole | Keeps; legs W, folded edge 2W |
+| Staple | Square bracket, wall about 2.7, square bends | Side view, wire W, round bends and ends |
+| Paper clip | Faceted polygon, reads as a clip only when large | A true Gem: one wire, three nested turns, never crossing |
+| Star | Ruler-perfect, generic | Keeps; points cut a little unequal |
+| Arrow | Block arrow, the most clip-art piece in the set | A drawn arrow: curved shaft, round tail, swept head |
+| Halftone dots | Square grid graded by column; reads as polka dots | 45° screen graded across the diagonal (R27.5) |
+| Registration cross | Thin ring, arms stop at it; a hairline among bold pieces | Ring and full cross through it at W; four quarter holes |
+| Torn strip | Zig-zag on both long edges | Long edges in the tear voice; ends cut |
+| Window frame | Sound | Keeps; band 2W, cut voice |
+| Speech tag | Sound | Keeps; cut voice |
+| Marker underline | A zig-zag band: a tear, not a pen | A marker swipe: round ends, gentle wave |
+| Rectangle, Circle, Triangle, Straight rule | Ruler-perfect; fine alone, mechanical beside the rest | Keep; cut voice, up to 0.5 units off true |
+| Masking tape | A plain rectangle, the same as Rectangle | Crepe edges, finely torn ends |
+| Saddle stitch | Two long bars ("pause") | Three thread stitches down the spine |
+| Eyelet | A thick ring, near-identical to Ring | Flange and barrel, each W, a 1.5 gap between: two rings, so it differs from Ring. Risk: may read as a target (Pass 2) |
+| Push pin | Funnel and spike | Side elevation: cap, grip, collar, needle |
+| Pointing hand | Unreadable block | Manicule: cuff, fist, three knuckles, index finger |
+| Crop marks | L-brackets at 1 unit | As a printer sets them: short lines outside each trim corner (trim 6.5–17.5), not touching it (R27.5). Risk: less quick to read than brackets (Pass 2) |
+| Colour bar | Sound | Keeps; on the grid, 2-unit gutters |
+| Copier streak | Three wedges | Three unequal toner streaks, one broken, one fading |
+| Perforation | Square dashes, uneven | Five even slits, square-cut |
+| Starburst | Twelve long spikes; a sale sticker drawn by a ruler | Fourteen-point seal, cut by hand |
+| Ticket stub | Notched both ends; a whole ticket, not a stub | Punched notch on one end, torn where it left the ticket on the other |
+| Postage stamp | Zig-zag edge (pinking shears) | Half-round perforation bites, exact |
+| Deckle edge | A wavy blob | Fine feathered tear on all four sides |
+| Torn hole | Heptagon scrap with heptagon hole | Torn scrap with a torn hole, both in the tear voice |
+| Folded corner | A clipped corner; nothing folded | The fold shows: the flap lies over the sheet, 2 units clear of it |
+| Ring | Sound, wall about 4.6 | Keeps; wall 2W, cut voice |
+| Snipped border (A32) | Sound; band about 2.2 | Keeps its three snips a side; band W |
+| Round window (A32) | Hole is a fourteen-sided polygon | Hole is a smooth hand-cut curve |
+
+**What is not claimed.** That the redraw is better *printed*: nothing has been printed, photocopied or seen on
+a phone. ADR-132 lists those checks as owed.
+
+---
+
+### D-118 — more paper sizes: what the engine pass found {#d-118}
+
+| | |
+|---|---|
+| **Artifacts** | `core/imposition/.../Imposer.kt` · `SingleSheet8Imposer.kt` · `ImpositionLayout.kt` · `core/model/.../ModelEnums.kt` · `core/model/src/test/resources/schema-shape-v3.txt` · `feature/editor/.../ShelfSheets.kt` |
+| **Found** | 2026-10-14, while building the engine half of "more paper sizes" (lane F of the parallel wave) |
+| **Severity** | No user-visible defect. One plan gap, one latent UI leak, two engine gaps |
+| **Status** | ✓ **Engine closed 2026-10-14** under [ADR-133](../DECISIONS.md#adr-133) (Accepted under the owner's delegation). The sizes themselves are not added: that waits on a schema bump and A35 |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **A new paper size is a change of the saved format.** The wave's handoff planned the sizes as an engine change with "existing zines open unchanged". They would open unchanged, but `DocumentSchemaShapeTest` records the `PaperSize` values, so adding one needs a schema bump, and v4 is reserved for plan step 6, alone. | **Planned, not built.** ADR-133 gives the sizes their own bump after v4. Nothing in the file format changed in this pass, so the frozen fixtures and `schema-shape-v3.txt` still pass untouched |
+| 2 | **`shelfPaperChoices` lists `PaperSize.entries`.** The Shelf's chooser would offer any new size the day the enum grows, before A35 is frozen. The Print switch and the Colophon already use explicit lists. | **Recorded in ADR-133's consequences** as work for the change that adds the sizes. Not changed now: with the enum unchanged, no screen can reach a new size |
+| 3 | **The engine was only proved on two sheets.** Its geometry came from the sheet, but every test and property drew from Letter and A4, and the property's inset range (up to 95 pt) only suited those two. | **Fixed.** `Imposer.layout(format, sheetPortrait)` takes any sheet; two properties cover sheets from 4 in to 18 in a side; Legal and A5 have exact tests |
+| 4 | **`ImpositionLayout.paper` had no reader.** | **Removed.** The layout keeps `sheet`, which the validator and every consumer read |
+
+#### Review
+
+Two independent Review Agents, reading only, 2026-10-14.
+
+**Code lens: GO.**
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| The `sheetPortrait` overload does not check orientation | Recommended | **Accepted.** The KDoc now says a wide sheet is laid tall and the properties cover both |
+| The A5 test compared with A4 / √2 only, not A5's own panel | Recommended | **Accepted.** An exact assertion (148.819 × 209.764 pt) is added |
+| "A named paper imposes as its portrait sheet does" cannot fail today | Observation | **Rejected.** Kept: it pins the delegation, which is the one line a later edit could break |
+| `Imposer`'s class KDoc still named "format/paper" as the only refusal | Observation | **Accepted.** It now names format, zero side and inset |
+| The new overload has no production caller | Observation | **Rejected.** It is what proves the engine for sizes not yet in the set (ADR-133 decision 2); +18 lines |
+
+**Documents lens: GO WITH FIXES.**
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| "Every home printer checked takes Legal" contradicts R26.1's own HP DeskJet D2600 source | Required | **Accepted.** ADR-133 and R26.7 now name the exception |
+| The older-build reasoning was wrong: the document migrator refuses a newer schema before any size is read, so a closed set is not safer than an open one; and shipped builds decode a backup manifest's `paperSize` before their version check, so they call such a backup damaged | Required | **Accepted.** The forward-safety reason is withdrawn from decision 1; the backup behaviour is recorded as a Known Limitation for the release that adds the sizes, with the mitigation |
+| Three labels (`choiceName`, `choiceDimensions`, the Colophon's) fall back to "US Letter" with no compile error | Recommended | **Accepted.** Added to ADR-133's owed work |
+| Half-Letter was rejected for the very page size A5 is chosen with; no maker demand for A5 was found | Recommended | **Accepted.** The clause is dropped; A5's case is marked 🟨 as printer support and shape, not demand |
+| PRD §7, ROADMAP and ADR-016's status will be stale | Recommended | **Partly accepted.** Nothing ships, so PRD scope is unchanged; the ROADMAP lines and ADR-016's status go to the main session in the PR body |
+| The index cell should say what is built | Recommended | **Accepted.** "Accepted (engine and closed set); sizes decided, not built" |
+| Review placeholders unfilled | Recommended | **Accepted.** Filled |
