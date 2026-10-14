@@ -2623,3 +2623,171 @@ const ART_D5_TAGS={
 ART_FIRST_WAVE.push(...ART_D5_FRAMES);
 Object.assign(ART_TAGS,ART_D5_TAGS);
 </script>
+
+<!-- ===========================================================================
+A33 · 2026-10-14 · FROZEN under the owner's delegation of 2026-10-12 ("decide, do not
+ask"), ADR-129.  The owner has not ruled on it personally and may overrule it.
+The buttons that move, size, turn and layer a piece leave the screen's layout and
+open from an Arrange verb, in a tray.  Selecting a piece no longer changes the size
+of the page.
+
+WHY.  A14 let the transform bar grow "vertically toward the page".  On a 360 x 640dp
+phone its two rows took the page from about 300dp tall to about 195dp the moment
+anything was selected, and gave it back on every deselect (D-113 item 2).  The page
+the maker is judging changed size because they touched it.  Evidence: RESEARCH R25
+and R26.
+
+THIS REVERSES A RULING, STATED RATHER THAN HIDDEN.  OD-11 (2026-08-02) kept the
+transform bar on screen beside the verb bar, and ADR-092 read that as "no capability
+is ever off-screen".  Here the capability stays and one tap is added: Arrange is on
+the verb bar whenever a single piece is selected.  A14 is superseded by this block,
+not rewritten.  The Issue #54 threshold (a first-time round showing makers fail) is
+not met and is not claimed; the reason here is the page resizing, which was measured.
+
+THE VERB.  "Arrange", with the four-arrow glyph below, second on every bar, after the
+kind's first verb, so it is in view on the narrowest phone without scrolling:
+  text  : Edit / Arrange / Text / Ink / Duplicate / Delete
+  photo : Reframe / Arrange / Flip / Across fold / Copier / Replace / Duplicate / Delete
+  decor : Replace / Arrange / Ink / Flip / Duplicate / Delete
+A22's rule (Flip early, never scrolled away) still holds: Flip moves one place right
+and stays in view.
+
+THE TRAY.  It replaces the verb bar exactly as A22's Flip tray does: same card, same
+heading row, same leaf Done pill.  Title "Arrange".  Four labelled groups of the same
+glyph buttons A14 froze, each at least 48dp, each spoken as before:
+  Move  : Move left, Move up, Move down, Move right   (4pt a tap)
+  Size  : Make smaller, Make larger                   (x1.1 a tap)
+  Turn  : Rotate counterclockwise, Rotate clockwise   (15 degrees a tap)
+  Layer : Send backward, Bring forward
+The group names are visible text, and headings to a screen reader.  The groups flow:
+on a 360dp phone Move and Size share the first line, Turn and Layer the second; at
+large text they wrap further and the tray scrolls under its heading.  Every tap is one
+undo step, as before.  No Delete and no Text-style control in the tray: Delete is on
+the verb bar, and the Text verb already opens the text card.
+
+HOW IT CLOSES.  Done and Back close it and return focus to Arrange.  A tap on empty
+page clears the selection and closes it.  A tap on another piece selects that piece
+and the tray STAYS OPEN, so arranging several pieces costs one Arrange tap, not one
+per piece.  A page change closes it.
+
+THE PAGE.  Its size never changes on select or deselect.  In the app the page slides
+so the selected piece stays in view above the tray, by ADR-128's rule (this file draws
+no slide for any tray; that is ADR-128's recorded deviation, and it applies here).
+
+THE HINT.  The first-run move/resize hint names Arrange instead of "the arrows below":
+  text  : "Drag to move. Pull a handle to resize. Or tap Arrange to use buttons."
+  photo : "Drag to move. Pull a handle to resize. Arrange uses buttons; Reframe crops inside."
+
+WHAT DOES NOT CHANGE.  Dragging, the handles and the turn handle.  The step sizes.  The
+element's own screen-reader actions (move, size, turn, layer, delete), which never
+depended on the bar.  Every other verb, tray and panel.  Multi-selection is not
+reachable from the app's interface today; if it ever is, it needs its own ruling.
+=========================================================================== -->
+<style>
+.arr-pop{position:absolute;left:12px;right:12px;bottom:12px;z-index:42;
+  max-height:calc(100% - 24px);overflow:auto;padding:var(--gap-sm);
+  background:var(--surface);color:var(--ink);border:1.5px solid var(--ink);
+  border-radius:var(--br-lg);box-shadow:var(--hard) var(--hard) 0 var(--ink-line);
+  opacity:0;transform:translateY(10px);pointer-events:none;
+  transition:opacity .18s,transform .18s}
+.arr-pop.show{opacity:1;transform:none;pointer-events:auto}
+.arr-pop h4{display:flex;align-items:center;justify-content:space-between;gap:var(--gap-md);
+  margin:0 0 var(--gap-sm);font:700 1.02rem var(--voice)}
+.arr-done{min-width:64px;min-height:48px;padding:0 var(--gap-md);border:1.5px solid var(--ink);
+  border-radius:var(--br-pill);background:var(--leaf);color:var(--on-leaf);
+  font:700 .78rem var(--sans);cursor:pointer}
+.arr-groups{display:flex;flex-wrap:wrap;gap:var(--gap-sm) var(--gap-md)}
+.arr-group h5{margin:0;color:var(--ink-soft);font:600 .62rem/1.2 var(--sans)}
+.arr-row{display:flex;gap:var(--gap-hair)}
+.arr-row button{min-width:48px;min-height:48px;display:grid;place-items:center;border:0;
+  border-radius:var(--br-pill);background:none;color:var(--ink-soft);cursor:pointer}
+.arr-row button:hover{background:var(--butter-tint)}
+.arr-row svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+.arr-row button:focus-visible,.arr-done:focus-visible{outline:3px solid var(--berry);outline-offset:2px}
+.el{translate:var(--arr-x,0) var(--arr-y,0);scale:var(--arr-s,1);rotate:var(--arr-r,0deg)}
+</style>
+<script>
+ICON.arrange=svg('<path d="M12 3v18M3 12h18"/><path d="m9 6 3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/>');
+const toolsForBeforeA33=toolsFor;
+toolsFor=function(kind){
+  const tools=toolsForBeforeA33(kind);
+  return [...tools.slice(0,1),['Arrange',ICON.arrange,openArrange],...tools.slice(1)];
+};
+
+const ARR_GROUPS=[
+  ['Move',[['Move left','<path d="m14 6-6 6 6 6"/>',el=>nudge(el,-4,0)],
+           ['Move up','<path d="m6 14 6-6 6 6"/>',el=>nudge(el,0,-4)],
+           ['Move down','<path d="m6 10 6 6 6-6"/>',el=>nudge(el,0,4)],
+           ['Move right','<path d="m10 6 6 6-6 6"/>',el=>nudge(el,4,0)]]],
+  ['Size',[['Make smaller','<path d="M6 12h12"/>',el=>step(el,'--arr-s',1/1.1)],
+           ['Make larger','<path d="M6 12h12M12 6v12"/>',el=>step(el,'--arr-s',1.1)]]],
+  ['Turn',[['Rotate counterclockwise','<path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v4h4"/>',el=>step(el,'--arr-r',-15)],
+           ['Rotate clockwise','<path d="M20 12a8 8 0 1 1-3-6.2"/><path d="M20 4v4h-4"/>',el=>step(el,'--arr-r',15)]]],
+  ['Layer',[['Send backward','<rect x="9" y="9" width="11" height="11" rx="1"/><path d="M15 9V4H4v11h5"/>',el=>layer(el,-1)],
+            ['Bring forward','<rect x="4" y="4" width="11" height="11" rx="1"/><path d="M15 9h5v11H9v-5"/>',el=>layer(el,1)]]]
+];
+function nudge(el,dx,dy){
+  el.style.setProperty('--arr-x',(parseFloat(el.style.getPropertyValue('--arr-x'))||0)+dx+'px');
+  el.style.setProperty('--arr-y',(parseFloat(el.style.getPropertyValue('--arr-y'))||0)+dy+'px');
+}
+function step(el,prop,by){
+  const now=parseFloat(el.style.getPropertyValue(prop));
+  el.style.setProperty(prop,prop==='--arr-s'?(isNaN(now)?1:now)*by:(isNaN(now)?0:now)+by+'deg');
+}
+function layer(el,by){ el.style.zIndex=String((+el.style.zIndex||0)+by); }
+
+const arrPanel=document.createElement('section');
+arrPanel.className='arr-pop'; arrPanel.id='arrPanel';
+arrPanel.setAttribute('role','dialog');
+arrPanel.setAttribute('aria-modal','false');
+arrPanel.setAttribute('aria-labelledby','arrTitle');
+arrPanel.innerHTML='<h4 id="arrTitle">Arrange<button type="button" class="arr-done">Done</button></h4>'
+  +'<div class="arr-groups">'+ARR_GROUPS.map(([name,buttons])=>
+    '<div class="arr-group" role="group" aria-label="'+name+'"><h5>'+name+'</h5><div class="arr-row">'
+    +buttons.map(([label,d],i)=>'<button type="button" aria-label="'+label+'" data-g="'+name+'" data-i="'+i+'">'+svg(d)+'</button>').join('')
+    +'</div></div>').join('')+'</div>';
+$('phone').appendChild(arrPanel);
+arrPanel.onclick=e=>e.stopPropagation();
+arrPanel.querySelectorAll('.arr-row button').forEach(button=>button.onclick=e=>{
+  e.stopPropagation(); if(!sel)return;
+  ARR_GROUPS.find(g=>g[0]===button.dataset.g)[1][+button.dataset.i][2](sel);
+});
+
+function closeArrange(returnFocus){
+  if(!arrPanel.classList.contains('show'))return;
+  arrPanel.classList.remove('show');
+  if(sel){buildCtx(sel.dataset.kind);$('ctx').classList.add('show');}
+  if(returnFocus&&sel){
+    requestAnimationFrame(()=>{
+      const button=[...$('ctx').querySelectorAll('button')].find(x=>x.textContent.trim()==='Arrange');
+      if(button)button.focus();
+    });
+  }
+}
+function openArrange(){
+  if(!sel)return;
+  $('ctx').classList.remove('show'); $('inkpop').classList.remove('show');
+  arrPanel.classList.add('show');
+  arrPanel.querySelector('.arr-row button').focus();
+  cap('Arrange · '+ELS[+sel.dataset.i].label,
+    'Each tap moves, sizes, turns or layers it a little. Tap another piece and the tray stays.');
+}
+arrPanel.querySelector('.arr-done').onclick=e=>{e.stopPropagation();closeArrange(true);};
+
+const selectBeforeA33=select;
+select=function(node){
+  const open=arrPanel.classList.contains('show');
+  selectBeforeA33(node);
+  if(open){$('ctx').classList.remove('show');}
+};
+const deselectBeforeA33=deselect;
+deselect=function(){arrPanel.classList.remove('show');deselectBeforeA33();};
+// The phone's own click handler holds the deselect of :735, not this wrapper, so the tray closes on its own listener.
+$('phone').addEventListener('click',()=>arrPanel.classList.remove('show'));
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&arrPanel.classList.contains('show')){
+    e.preventDefault();e.stopImmediatePropagation();closeArrange(true);
+  }
+},true);
+</script>
