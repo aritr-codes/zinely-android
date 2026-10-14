@@ -922,3 +922,59 @@ left cut off. R24.4 above reached the same advice for panels that scroll down.
 
 Ranked by the research pass: swap the page strip for the buttons; a Move entry opening a docked tray; float
 the bar; reserve the rows always; keep as built. ADR-129 takes the second, and says why not the first.
+
+## R26. Which paper a home printer takes (2026-10-14)
+
+Asked for [ADR-133](DECISIONS.md#adr-133): which sizes after A4 and US Letter, and whether paper should stay
+a closed, named set. Web research, one pass, 2026-10-14. Model lists differ by region and by tray, so these
+are samples, not a census.
+
+### R26.1 Home printers take Legal and, mostly, A5 — ✅ VERIFIED for the models named
+
+- Canon's spec pages for the [PIXMA TR8550](https://www.canon-europe.com/printers/pixma-tr8550/specifications/)
+  and [TR7550](https://www.canon-europe.com/printers/pixma-tr7550/specifications/) list the rear tray as
+  "A4, A5, B5, LTR, LGL, …"; their front cassettes take A4, A5, B5 and Letter, not Legal.
+  [TR4550](https://www.canon.co.uk/printers/pixma-tr4550/specifications/): A4, A5, B5, LTR, LGL.
+- 🟨 Retailer listings, not the maker's: the [Canon G1230](https://www.dell.com/en-us/shop/canon-pixma-megatank-g1230-inkjet-printer/apd/ac461205/printers-ink-toner)
+  takes Letter, Legal, A4, A5, B5 and A6; the [HP DeskJet 4355](https://www.shi.com/product/51015669/HP-Deskjet-4355-All-in-One)
+  takes Letter, Legal, A4, B5 and A6, and A5 is not listed; the [HP DeskJet 3755](https://www.shi.com/product/32321488/HP-Deskjet-3755-All-in-One)
+  gives Legal as its largest size. HP's own [DeskJet D2600 page](https://support.hp.com/ca-en/product/hp-deskjet-d2600-printer-series/3742933)
+  lists A4, A5, A6 and B5.
+
+### R26.2 Makers draw 8-page minis for Legal — ✅ VERIFIED
+
+The *CATS* minizines ([vol. 5](https://mrnabbles.itch.io/cats-vol-5-minizine)) and
+[*How to be a Punk*](https://mrnabbles.itch.io/how-to-be-a-punk) are sold as 8-page foldable zines "best
+printed on Legal size paper", and there is a [free 8-page template for Legal](https://lincodega.itch.io/8-16-page-zine-template/purchase).
+Most guides, such as [Niagara County Community College's](https://libguides.niagaracc.suny.edu/zines/makezines),
+assume ordinary printer paper, Letter or A4.
+
+### R26.3 A3 and Tabloid need a wide-format printer — ✅ VERIFIED (vendor sources)
+
+[Sharp](https://business.sharpusa.com/a3-vs-a4-printers-whats-the-difference) and
+[Loffler](https://www.loffler.com/blog/a3-vs-a4-printers) describe A4-class printers as unable to take A3,
+Tabloid or Ledger, some taking Legal at most. Both sell office printers, so the framing is commercial.
+
+### R26.4 A5 is A4 halved and keeps its shape — ✅ VERIFIED
+
+[ISO 216](https://en.wikipedia.org/wiki/ISO_216): A-series sheets
+have sides in the ratio √2, so halving one gives the next with the same shape; A4 is 210 × 297 mm, A5
+148 × 210 mm. A Zinely page on A5 is the A4 page at 1/√2, within a point.
+
+### R26.5 Android names its print sizes and allows custom ones — ✅ VERIFIED
+
+[`PrintAttributes.MediaSize`](https://developer.android.com/reference/android/print/PrintAttributes.MediaSize)
+has named constants, among them `NA_LETTER`, `NA_LEGAL` (8.5 × 14 in), `ISO_A4` and `ISO_A5` (148 × 210 mm),
+and a public constructor for a custom size in thousandths of an inch. The platform keeps a named list and
+an escape hatch, the shape ADR-133 takes: named for people, any size for the engine.
+
+### R26.6 Half-Letter is not on the lists checked — 🟨 ASSUMPTION (an absence)
+
+5.5 × 8.5 in does not appear in any list above. A maker wanting it would cut Letter in half by hand. Not
+searched: Epson and Brother spec sheets.
+
+### R26.7 Zinely application — 🟦 RECOMMENDATION
+
+US Legal first (every printer checked takes it, and makers use it) and A5 second (most printers checked
+take it, and it is the small zine on A-series paper). Not half-Letter, A3 or Tabloid. Keep the sizes a
+named set. ADR-133 records the decision.

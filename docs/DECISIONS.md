@@ -139,6 +139,7 @@
 | [ADR-127](#adr-127) | **The app is portrait only on phones.** No screen has a landscape layout; a turned phone got the upright layout in a 360dp-tall window. `MainActivity` is locked to portrait. Android 16 ignores the lock on screens 600dp and wider, so tablets are not covered | Accepted |
 | [ADR-128](#adr-128) | **A docked panel leaves the thing it edits in view.** The Ink tray and the Text panel stop short of the canvas top by a band sized to the selected element, and the page lifts the element into it; for those panels and for Reframe the lift stops at the element's own top instead of 96dp. Deviates from frozen A16; recorded in D-113 | Accepted |
 | [ADR-129](#adr-129) | **Moving a piece by buttons lives in a Move tray, not in a bar that takes rows from the canvas.** The two-row accessible bar (A14) makes the page shrink each time something is selected. Proposed: the controls move into a tray opened from the verb bar, which follows ADR-128. It would reverse OD-11, so it needs the owner and an HTML amendment before any Compose | Proposed |
+| [ADR-133](#adr-133) | **Paper is a closed, named set; the imposition engine takes any sheet.** Answers the paper half of ADR-016. A person picks a size by name and the file stores the name; `Imposer.layout` also takes any portrait sheet, proved by properties. US Legal and A5 are the next sizes, in their own schema bump after v4, chosen at the start of a zine only; half-Letter, A3 and Tabloid are not | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -15741,3 +15742,104 @@ Independent Review Agent, reading only, 2026-10-13: **GO WITH FIXES** for the do
 For this ADR it found: "decided" used of a Proposed record; the rulings it would reverse (OD-11, ADR-092,
 the Issue #54 threshold) not cited; layout and wording details decided that the HTML amendment owns. All
 three are taken above.
+
+## ADR-133 {#adr-133}
+
+### Paper is a closed, named set; the imposition engine takes any sheet. US Legal and A5 come next
+
+**Status:** Accepted, 2026-10-14, under the owner's delegation of 2026-10-12 ("decide, do not ask"); the
+owner has not ruled on it personally and may overrule it. It answers the paper half of
+[ADR-016](#adr-016). The format half (`ZineFormat`) stays with ADR-016, whose trigger, the second
+imposition format, has not arrived.
+**Builds:** the engine change only (below). No size a person can choose has changed, nothing in the saved
+file has changed, and no screen has changed. The new sizes need a schema bump and a frozen bench amendment
+(A35) first.
+**Evidence:** [RESEARCH R26](RESEARCH.md#r26-which-paper-a-home-printer-takes-2026-10-14).
+**Findings:** [D-118](design/V2-SPEC-DEFECTS.md#d-118).
+
+#### Context
+
+- ✅ The owner asked for more paper sizes on 2026-10-06 ([ROADMAP](ROADMAP.md#current-priorities)). Which
+  ones was left open, behind ADR-016's question: keep `PaperSize` a closed enum, or store an open
+  `PaperSpec(widthPt, heightPt)`.
+- ✅ A zine is one sheet folded into eight pages, so the sheet is the paper the printer takes and the page is
+  an eighth of it. A Letter page is 2.75 × 4.25 in; an A4 page is 74 × 105 mm.
+- ✅ The saved document stores the size by name (`"letter"`, `"a4"`), and Room stores the enum name.
+  `DocumentSchemaShapeTest` records every enum value reachable from the document, so a new size is a change
+  of the saved format and cannot ship without a `CURRENT_SCHEMA_VERSION` bump.
+- ✅ The next bump, v4, is reserved for the photo-description step of the 1.x plan, alone
+  ([plan step 6](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md)).
+- ✅ The engine already derived every line from the sheet's two dimensions, but it was only ever run on two
+  sheets, and its properties drew from those two.
+
+#### Decision
+
+```mermaid
+flowchart LR
+    U["Person chooses a size\n(closed set: PaperSize)"] --> F["Saved file stores its name\n(schema guarded)"]
+    U --> E["Imposer.layout(format, paper)"]
+    E --> O["Imposer.layout(format, sheetPortrait: PtSize)\n(open: any sheet)"]
+    O --> L["ImpositionLayout\npanels, folds, cut"]
+```
+
+1. **Closed at the product and the file.** A person picks a size by name, and the file stores that name.
+   No custom sizes. Reasons: printers and Android's print framework name their sizes too, and the name is
+   what a person matches in the print dialog to print at actual size (R26.5); a beginner should not be
+   asked for dimensions; and a named value that an older build does not know fails loudly when that build
+   opens the file, where a pair of numbers would open and print on the wrong paper.
+2. **Open in the engine.** `Imposer.layout(format, sheetPortrait: PtSize)` imposes any sheet; the
+   `PaperSize` overload delegates to it. Properties now hold for every sheet from 4 in to 18 in a side, in
+   either orientation, so a size joining the set needs no engine work. `ImpositionLayout.paper` is gone; it
+   had no reader.
+3. **US Legal and A5 are the next two sizes.**
+
+   | Size | Sheet | Page | Why |
+   |---|---|---|---|
+   | **US Legal** | 8.5 × 14 in | 3.5 × 4.25 in | Every home printer checked takes it (some Canon models only in the rear tray), and it is the largest sheet an ordinary Letter or A4 printer takes (R26.1, R26.3). Makers already sell 8-page minis drawn for it (R26.2). The page is 27% wider than Letter's |
+   | **A5** | 148 × 210 mm | 52.5 × 74 mm | Most home printers checked take it (R26.1; one HP listing does not). It keeps A4's shape exactly (R26.4), so it is the small zine for people outside North America. Its page has half the area of A4's |
+
+   **Not chosen:** half-Letter (5.5 × 8.5 in) is missing from the printer lists checked, its page is the same
+   micro size as A5's, and makers would cut it from Letter by hand (R26.6). A3 and Tabloid would make a
+   bigger zine, but need a wide-format printer, which the PRD's home printing does not assume (R26.3).
+4. **The new sizes ship together, in their own schema bump after v4** (v5 as the plan stands), never inside
+   another change. The migrator is the identity: no saved file contains them.
+5. **They are chosen when a zine is started, never by the Print screen's paper switch.** That switch
+   ([ADR-052](#adr-052)) re-imposes the pages as authored, without scaling. Between A4 and Letter the pages
+   differ by 12.5 pt across and 8.4 pt down, inside the 17 pt keep-clear, so nothing that matters is cut.
+   Legal's page is 54 pt wider than Letter's and A5's is 62 pt narrower than A4's: a switch to either would
+   cut into the work or leave a band of empty paper. A35 may design a scaled switch; until then it is not
+   offered.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Open `PaperSpec` in the file, any size | Custom dimensions burden beginners; an older build would print an unknown size wrongly instead of refusing it; the validation surface grows for sizes nobody asked for |
+| Keep the engine on the enum only | Every new size would need new engine tests; the properties would still cover two sheets |
+| Add the two enum values now | It changes the saved format, which needs a schema bump; v4 is reserved for plan step 6, alone |
+| A5 and half-Letter (the handoff's guess) | Half-Letter fails the printer check above; Legal is the size US makers actually have |
+
+#### Consequences
+
+- The work owed for the two sizes, in one later change: the enum entries with `@SerialName("legal")` and
+  `@SerialName("a5")`; the schema bump with `schema-shape-v5.txt` and a fixture; display names
+  (`Copy.Paper`, and "A5" in `TAKES_AN`, since it is said *ay-five*); the preferred-paper store's
+  encode/decode; and the A35 picker. **`shelfPaperChoices` builds its list from `PaperSize.entries`**, so
+  the day the enum grows, the Shelf's chooser offers every size before A35 is frozen. That change must pin
+  the chooser to a list. The other screens that show paper already use explicit lists.
+- A5's page is the smallest Zinely would make: inside the keep-clear it leaves 40 × 62 mm. Text at Book's
+  12 pt floor fits, with short lines. A35 should show the page size before a person chooses it.
+- Older builds cannot read a zine saved on Legal or A5: the size name does not decode, so they fail to
+  open it rather than print it on the wrong sheet. A backup holding such a zine restores only into a build that knows the
+  size.
+
+#### Verification
+
+`:core:imposition` tests: the two sheets' exact page sizes and a clean validation; every named size imposes
+as its portrait sheet does; a non-finite or non-positive sheet is refused; and two jqwik properties over
+any sheet (validates clean under any inset below the half-panel limit, and refuses any inset at or past it).
+No screen changed, so no golden moved and no device pass applies.
+
+#### Review
+
+Recorded in [D-118](design/V2-SPEC-DEFECTS.md#d-118).

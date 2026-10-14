@@ -3,6 +3,7 @@ package com.aritr.zinely.core.imposition
 import com.aritr.zinely.core.model.GridCell
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtRect
+import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Rotation
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineFormat
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.math.sqrt
 
 class SingleSheet8ImposerTest {
     private val imposer = SingleSheet8Imposer()
@@ -132,8 +134,52 @@ class SingleSheet8ImposerTest {
         assertEquals(layout(PaperSize.A4), layout(PaperSize.A4))
     }
 
+    @Test
+    fun `a named paper imposes exactly as its portrait sheet does`() {
+        for (paper in PaperSize.entries) {
+            assertEquals(layout(paper), imposer.layout(ZineFormat.SINGLE_SHEET_8, paper.portrait), "$paper")
+        }
+    }
+
+    // ADR-133 chose US Legal and A5 as the next sizes. They are not in [PaperSize] yet (adding them is a
+    // schema change), so the engine is proved on their sheets here, by size.
+
+    @Test
+    fun `US Legal imposes 252 x 306 pt pages and validates clean`() {
+        val l = imposer.layout(ZineFormat.SINGLE_SHEET_8, LEGAL) // landscape 1008 x 612
+        assertTrue(l.page(1).panelLocalBounds.approxEquals(PtRect(0.0, 0.0, 252.0, 306.0)))
+        assertTrue(l.page(1).safeLocalBounds.approxEquals(PtRect(17.0, 17.0, 218.0, 272.0)))
+        assertEquals(emptyList<ValidationIssue>(), LayoutValidator().validate(l))
+    }
+
+    @Test
+    fun `A5 imposes the A4 page scaled by one over root two and validates clean`() {
+        val a5 = imposer.layout(ZineFormat.SINGLE_SHEET_8, A5).page(1).panelLocalBounds
+        val a4 = layout(PaperSize.A4).page(1).panelLocalBounds
+        // ISO 216: A5 is A4 halved, so it keeps A4's shape. Within 1 pt, not exactly: the standard rounds
+        // A5's short side down to 148 mm from half of A4's 297 mm, which moves the page height by 0.7 pt.
+        assertEquals(a4.width / sqrt(2.0), a5.width, 1.0)
+        assertEquals(a4.height / sqrt(2.0), a5.height, 1.0)
+        assertEquals(emptyList<ValidationIssue>(), LayoutValidator().validate(imposer.layout(ZineFormat.SINGLE_SHEET_8, A5)))
+    }
+
+    @Test
+    fun `rejects a sheet with a zero side`() {
+        for (bad in listOf(PtSize(0.0, 792.0), PtSize(612.0, 0.0))) {
+            assertThrows(IllegalArgumentException::class.java, { imposer.layout(ZineFormat.SINGLE_SHEET_8, bad) }, "$bad")
+        }
+    }
+
     private fun assertPoint(ex: Double, ey: Double, p: PtPoint) {
         assertEquals(ex, p.x, eps, "x")
         assertEquals(ey, p.y, eps, "y")
+    }
+
+    private companion object {
+        /** US Legal, 8.5 × 14 in. */
+        val LEGAL = PtSize(width = 612.0, height = 1008.0)
+
+        /** A5, 148 × 210 mm. */
+        val A5 = PtSize(width = 419.528, height = 595.276)
     }
 }

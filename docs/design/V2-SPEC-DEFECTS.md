@@ -7602,3 +7602,22 @@ of the current metadata.
   unreadable zine with no row.
 - Every scan now reads each zine's `meta.json` once and looks up its row (one query per zine). These are small files, and the Shelf already reads all of
   them each time it is drawn (folders, [ADR-125](../DECISIONS.md#adr-125)).
+### D-118 — more paper sizes: what the engine pass found {#d-118}
+
+| | |
+|---|---|
+| **Artifacts** | `core/imposition/.../Imposer.kt` · `SingleSheet8Imposer.kt` · `ImpositionLayout.kt` · `core/model/.../ModelEnums.kt` · `core/model/src/test/resources/schema-shape-v3.txt` · `feature/editor/.../ShelfSheets.kt` |
+| **Found** | 2026-10-14, while building the engine half of "more paper sizes" (lane F of the parallel wave) |
+| **Severity** | No user-visible defect. One plan gap, one latent UI leak, two engine gaps |
+| **Status** | ✓ **Engine closed 2026-10-14** under [ADR-133](../DECISIONS.md#adr-133) (Accepted under the owner's delegation). The sizes themselves are not added: that waits on a schema bump and A35 |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **A new paper size is a change of the saved format.** The wave's handoff planned the sizes as an engine change with "existing zines open unchanged". They would open unchanged, but `DocumentSchemaShapeTest` records the `PaperSize` values, so adding one needs a schema bump, and v4 is reserved for plan step 6, alone. | **Planned, not built.** ADR-133 gives the sizes their own bump after v4. Nothing in the file format changed in this pass, so the frozen fixtures and `schema-shape-v3.txt` still pass untouched |
+| 2 | **`shelfPaperChoices` lists `PaperSize.entries`.** The Shelf's chooser would offer any new size the day the enum grows, before A35 is frozen. The Print switch and the Colophon already use explicit lists. | **Recorded in ADR-133's consequences** as work for the change that adds the sizes. Not changed now: with the enum unchanged, no screen can reach a new size |
+| 3 | **The engine was only proved on two sheets.** Its geometry came from the sheet, but every test and property drew from Letter and A4, and the property's inset range (up to 95 pt) only suited those two. | **Fixed.** `Imposer.layout(format, sheetPortrait)` takes any sheet; two properties cover sheets from 4 in to 18 in a side; Legal and A5 have exact tests |
+| 4 | **`ImpositionLayout.paper` had no reader.** | **Removed.** The layout keeps `sheet`, which the validator and every consumer read |
+
+#### Review
+
+Reconciled findings are listed below as they come in.
