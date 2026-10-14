@@ -54,4 +54,18 @@ class CoverageCopyTest {
         val line = Copy.Coverage.unsupported(emptyList())
         assertTrue(line.startsWith("Some characters"), "empty-list fallback: $line")
     }
+
+    @Test
+    fun `what the phone draws is said to print, never to fail, and other characters are named last`() {
+        // ADR-130: these characters print, from a phone font, so the line must not say they cannot.
+        assertEquals(
+            "Chinese and Thai characters print in a font from your phone, so they may look different on another phone.",
+            Copy.Coverage.phoneFont(listOf("Chinese", "Thai")),
+        )
+        assertEquals(
+            "Other characters print in a font from your phone, so they may look different on another phone.",
+            Copy.Coverage.phoneFont(emptyList(), others = true),
+        )
+        assertTrue(Copy.Coverage.phoneFont(listOf("Chinese"), others = true).startsWith("Chinese and other characters"))
+    }
 }
