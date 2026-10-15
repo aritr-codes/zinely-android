@@ -788,7 +788,7 @@ And `DECISIONS.md:2795` records the state:
 
 ## 16.2 Decision
 
-> ## Model D — curated + generative + personal. Bundled-only for everything that ships.
+> ## Model D — curated + variation + personal. Bundled-only for everything that ships.
 >
 > Zinely's material library has **three sources**:
 >
