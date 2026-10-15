@@ -49,6 +49,8 @@ amendment (gates 3, 7, 8).
    fixtures are a writer-produced v2 archive plus v1–v3 `document.json`, all fictional and frozen.
 7. **B needs Read semantics designed first.** Design work: Read speaks nothing from the page today ([Problem 4](#problem)).
    The design comes with its own HTML amendment.
+   ✅ **Designed 2026-10-15:** `v21-proof.html` A38 (frozen) and [ADR-135](../DECISIONS.md#adr-135) (Proposed until
+   built). It settles B's two open questions below: `Photo: <description>`, and undescribed Art is decoration in Read.
 8. **B needs a Describe verb amendment** to `v21-bench.html` `toolsFor()` (`:694`). The owner approves the amended HTML.
 
 ## Problem
@@ -296,6 +298,7 @@ row tops interleaves them. A2's relative phrases and the maker's own arrangement
 - Open, to be decided by a listen:
   - "Photo: <description>" or the description alone;
   - whether Art can be marked decorative (skipped in Read, still reachable on the Bench).
+  - → **Decided** in [ADR-135](../DECISIONS.md#adr-135): `Photo: <description>`; Art with no description is skipped in Read, with no flag. The owner's TalkBack listen is still owed.
 
 ## Current architecture touchpoints
 
