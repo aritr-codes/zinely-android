@@ -7861,3 +7861,23 @@ Two independent Review Agents, reading only, 2026-10-14.
 | PRD §7, ROADMAP and ADR-016's status will be stale | Recommended | **Partly accepted.** Nothing ships, so PRD scope is unchanged; the ROADMAP lines and ADR-016's status go to the main session in the PR body |
 | The index cell should say what is built | Recommended | **Accepted.** "Accepted (engine and closed set); sizes decided, not built" |
 | Review placeholders unfilled | Recommended | **Accepted.** Filled |
+
+### D-122 — Read says nothing from the page, and the frozen Read makes the whole leaf a live region {#d-122}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-proof.html` (`#book`, `aria-live="polite"`; DOM order book, Previous, Next) · `feature/editor/.../ProofRead.kt` (the leaf and stack edges `clearAndSetSemantics {}`; declared Previous, leaf, Next) · `ProofScreen.kt` (`.pcount`, the only live region) |
+| **Found** | Brief 04 Problem 4 (2026-09-25); confirmed 2026-10-15 against `origin/main` `3577e31` by the wave's lane F |
+| **Severity** | Accessibility: a TalkBack reader of Read hears the page's number and two buttons, and none of the zine's words or photos. No sighted effect |
+| **Status** | **Designed, not built.** [`v21-proof.html` A38](mockups/v21-proof.html) frozen 2026-10-15 under the owner's delegation; [ADR-135](../DECISIONS.md#adr-135) Proposed |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **Read speaks nothing from the page.** The leaf is cleared of semantics, so text, photos and Art are silent. The freeze never said what Read speaks. | **A38 specifies the stops**: text as written, `Photo` / `Photo: <description>`, described Art by its name, undescribed Art silent, an empty-page stop; in the Bench's spatial order. Built in two parts (ADR-135 decision 8) |
+| 2 | **The freeze and the build disagree about live regions.** `#book aria-live="polite"` would read the whole new leaf on every turn, beside the ticket the build announces. The build is right: one speaker (ADR-101 P5/P6). | **A38 supersedes `#book`'s live region.** The ticket stays the only one |
+| 3 | **Neither order suits a listener who turns pages.** The DOM puts the book before both buttons; the build puts the leaf between them. With stops in either place, the swipe after pressing Next page misses the new page or reads it backwards, because focus stays on the button. | **A38 declares Previous, Next, then the page.** Needs the device listen (ADR-135, owed item 3) |
+| 4 | **Nothing tells a maker that descriptions never reach paper or the PDF.** | **A38 fixes one helper line** for the future Describe field: *"Zinely reads this aloud in Read. It isn’t printed or put in the PDF."* Its drawing belongs to the Bench's Describe amendment |
+
+#### Review
+
+Recorded after the lane's independent review.
