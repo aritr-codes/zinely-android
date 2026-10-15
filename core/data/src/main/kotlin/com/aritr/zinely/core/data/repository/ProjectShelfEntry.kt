@@ -26,10 +26,18 @@ public sealed interface ProjectShelfEntry {
      */
     public val folder: String?
 
+    /**
+     * Set while this zine's details wait to be told: its `meta.json` was put back from its earlier copy and the
+     * maker has not pressed *Got it* ([ADR-134](docs/DECISIONS.md#adr-134)). Read from a marker beside the zine's
+     * files each time the Shelf lists, so it survives the app being stopped.
+     */
+    public val restored: RestoredDetails?
+
     /** A project whose authoritative document is readable right now. */
     public data class Available(
         val summary: ProjectSummary,
         override val folder: String? = null,
+        override val restored: RestoredDetails? = null,
     ) : ProjectShelfEntry {
         override val id: String get() = summary.id
         override val title: String get() = summary.title
@@ -52,8 +60,17 @@ public sealed interface ProjectShelfEntry {
         override val cover: ZineCoverRecipe?,
         val reason: ProjectUnavailableReason,
         override val folder: String? = null,
+        override val restored: RestoredDetails? = null,
     ) : ProjectShelfEntry
 }
+
+/**
+ * A zine whose details went back to their earlier copy (ADR-134).
+ *
+ * @property previousTitle the title the Shelf showed before the repair, or `null` when it is not known (the zine
+ *   had no index row). The screen decides whether the name went back: both known and different.
+ */
+public data class RestoredDetails(val previousTitle: String?)
 
 public enum class ProjectUnavailableReason {
     CORRUPT,
