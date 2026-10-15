@@ -16069,7 +16069,7 @@ The picker this ADR asked for is drawn and frozen as [`v21-library.html` A35](de
 under the owner's delegation of 2026-10-12. It lives on the Shelf, not the Bench as "Builds" above says: a
 zine is started from "Make a zine" ([D-121](design/V2-SPEC-DEFECTS.md#d-121) #1). It lists the four sizes,
 with the paper set in About first; each row shows the sheet at one scale with its eight pages, the size, and
-the page size; US Legal and A5 say "Check that your printer takes …" ([R29](RESEARCH.md#r29-how-apps-ask-for-paper-size-and-when-2026-10-15)).
+the page size; US Legal and A5 say that the zine prints on that paper only and that the printer must take it ([R29](RESEARCH.md#r29-how-apps-ask-for-paper-size-and-when-2026-10-15)).
 The open question in decision 5 is answered: **no scaled switch.** A US Legal or A5 zine shows its paper at
 Print as a fact, so "nothing shrinks to fit" stays true (A35.8). Nothing is built. A35 ships in the same
 change as the schema bump and enum entries listed under Consequences, after v4, and that change also amends
