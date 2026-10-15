@@ -8021,3 +8021,35 @@ FIXES**.
 | "A zine keeps the paper it starts on" is stricter than an A4 or US Letter zine's Print switch | Observation | **Kept.** True of the stored paper and errs safe; left for the build's Pass 2 |
 | ADR-133's "Builds" line still says "bench amendment" | Observation | **Kept** (an ADR body is not rewritten); the note corrects it, and the main session may fix the index row |
 | Append-only, numbering, anchors, cited code facts, large-text render, other R29 citations | Observation | **Confirmed** by the reviewers |
+
+---
+
+### D-120 — a zine's details can go back to an earlier copy and nobody is told {#d-120}
+
+| | |
+|---|---|
+| **Artifacts** | `core/data-storage/.../AtomicFileStore.kt` (`read`) · `data-android/.../RoomProjectRepository.kt` (`readMetaOrNull`) · `docs/design/mockups/v21-library.html` A37 (appended; nothing above it edited) |
+| **Found** | 2026-10-14, as D-116's second known limit (PR #127); filed as [issue #128](https://github.com/aritr-codes/zinely-android/issues/128) |
+| **Severity** | **Trust defect.** No pages are lost. After a repair, the Shelf shows a zine under its earlier name, cover or folder with no word of why, so a maker can believe a zine is missing or that the app undid their rename |
+| **Status** | **Designed 2026-10-15** under [ADR-134](../DECISIONS.md#adr-134) (Accepted under the owner's delegation); A37 frozen. **Not built**: the Kotlin follows in its own change |
+
+**What happens.** A zine's `meta.json` holds its title, createdAt, cover and folder. Each write keeps the
+previous file as `meta.json.bak`. If `meta.json` is found damaged, `AtomicFileStore.read` puts the `.bak`
+back, and since D-116 the Shelf shows what it says. The `.bak` is the file before the last change, so a
+rename, a move to a folder or a new cover made just before the damage is undone. Nothing on screen says so.
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **The maker is never told.** D-116 fixed the data and listed this as a known limit. | **Designed.** Library A37: one paper note under the My Shelf heading, exact words in A37.3, dismissed only by "Got it", once per repair and kept until seen (ADR-134 decisions 1–3) |
+| 2 | **The store cannot say that it used the `.bak`.** `read` returns the same bytes either way, so no caller can tell a repaired read from a clean one. | **Contract decided** (ADR-134 decision 4): a sealed result from `read`; `readMetaOrNull` records the waiting note; nothing new is caught. Built with the Kotlin |
+| 3 | **"Backup" is already taken on this screen.** Backups is a dock action that means library backups; "restored from a backup" would send the maker there. | **Designed around.** A37.4 bans the word; the note says "the copy from before your last change" |
+| 4 | **A page document put back from its own `.bak` is silent too.** `DocumentRepositoryImpl` reads `document.json` through the same `read` (ADR-021). Each autosave rewrites it, so the `.bak` is one autosave old and the maker may lose the last edits made before the damage, without a word. | **Not decided here; outside #128.** Proposed as its own issue for the main session. The sealed result of item 2 makes it cheap to report later |
+| 5 | **The prototype had no way to show font scale 2 at 360dp.** A28's large-text control is 1.8× on a 390px phone. | **Added** an A37 control, "text 2× at 360dp". With the four-zine note it fills most of the first screen at that size; every word shows and the note scrolls away with the zines (A37.8) |
+
+**Measured, 2026-10-15.** The amended page and `origin/main`'s were rendered in headless Chromium at
+390 × 812 in gallery mode, with no note raised, in the content, dark, folders and empty states: all four
+screenshots are byte-identical. The frozen Shelf is unchanged until a note is raised.
+
+**Owed** (with the build, ADR-134 consequences): both device passes on the phone with a hand-damaged
+`meta.json` in the QA package's own storage, including whether TalkBack speaks a note that arrives already
+filled; the owner's first-time reading of the words.
