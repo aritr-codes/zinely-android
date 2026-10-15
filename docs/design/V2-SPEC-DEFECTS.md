@@ -7861,3 +7861,25 @@ Two independent Review Agents, reading only, 2026-10-14.
 | PRD §7, ROADMAP and ADR-016's status will be stale | Recommended | **Partly accepted.** Nothing ships, so PRD scope is unchanged; the ROADMAP lines and ADR-016's status go to the main session in the PR body |
 | The index cell should say what is built | Recommended | **Accepted.** "Accepted (engine and closed set); sizes decided, not built" |
 | Review placeholders unfilled | Recommended | **Accepted.** Filled |
+
+### D-121 — the paper chooser had no V2.1 drawing, and two-size words sit in three frozen files {#d-121}
+
+| | |
+|---|---|
+| **Artifacts** | `v21-library.html` (A35, appended) · `v1/shelf.html` `#createSheet` · `v21-proof.html` `.paperseg` · `v21-colophon.html` "Paper for new zines" · `feature/editor/.../ShelfSheets.kt` |
+| **Found** | 2026-10-15, while designing the picker for [ADR-133](../DECISIONS.md#adr-133)'s four sizes (lane E of the 2026-10-15 wave) |
+| **Severity** | No user-visible defect today: the app offers A4 and US Letter only. One design gap, closed by A35; three frozen files with two-size words, owed to the build that adds the sizes |
+| **Status** | ✓ **Design gap closed 2026-10-15** by [`v21-library.html` A35](mockups/v21-library.html), frozen under the owner's delegation of 2026-10-12. Items 3–5 stay open until the schema bump that adds US Legal and A5 (ADR-133 decision 4) |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **The chooser had no V2.1 home.** A new zine is started from the Shelf's "Make a zine", but neither `v2-library.html` nor `v21-library.html` drew the sheet it raises. The only frozen drawing was V1's `#createSheet` (`v1/shelf.html`, amended by ADR-088); the app paints it from `v21-proof.html`'s `.paperseg`, as `ShelfSheets.kt` says. ADR-133 called A35 "a frozen bench amendment", but the Bench never starts a zine. | **Closed.** A35 is drawn in `v21-library.html`, the file that owns "Make a zine". ADR-133 carries a note saying so |
+| 2 | **The shipped sentence stops being true.** The sheet says "Choose your paper. You can print it at home on either." With four sizes there is no "either", and US Legal and A5 print only on themselves. | **Closed in the design.** A35.5: "Which paper will you print on? A zine keeps the paper it starts on." `Copy.Shelf.CHOOSE_PAPER_SUB` changes with the build |
+| 3 | **The Print switch would offer the wrong papers for a US Legal or A5 zine.** `v21-proof.html`'s `.paperseg` is a two-way A4 / US Letter switch. ADR-133 decision 5 keeps it out of reach of the new sizes and left a scaled switch to A35. | **Decided in A35.8: no scaled switch.** "Nothing shrinks to fit" is the Print panel's promise, and scaling Legal onto Letter breaks it. A US Legal or A5 zine shows its paper as a fact, not a control. `v21-proof.html` still draws only the switch; it is lane F's file this wave, so the build that adds the sizes amends it to point at A35.8. **Open** |
+| 4 | **About says "the other one".** `v21-colophon.html` lists two papers and says "You can always choose the other one." | **Decided in A35.9:** four, in the fixed order, and "You can always choose another." The file is amended by the build. **Open** |
+| 5 | **The frozen Shelf's postmark says "Letter"; the app says "US Letter".** `v21-library.html`'s covers stamp `Letter` and its `data-sub` reads "Letter · today"; the app takes `Copy.Paper.LETTER` = "US Letter" for both. Beside "US Legal", a bare "Letter" would be ambiguous. | **Decided in A35.7:** the postmark and the sheet line use the full names. The app already does; the frozen covers above A35 are left as drawn (append-only). **Open** as a note for the next redraw of that file |
+| 6 | **"×" may be spoken badly.** The shipped tiles carry "210 × 297 mm" as visible text, and nothing measured what TalkBack says for it. | **Designed around in A35.11:** each row's spoken name spells the units ("210 by 297 millimetres"). What TalkBack says for the shipped tiles today is **not measured**: owed to the device pass of the build |
+
+#### Review
+
+Filled after the design review below.
