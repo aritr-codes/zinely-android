@@ -1093,3 +1093,92 @@ open while the maker moves from piece to piece.
 "Move" names a quarter of what the tray does. "Adjust" means colour and light in photo apps. Taken:
 **Arrange**. Whether beginners understand it is a first-time-user question for the device pass; no study
 compares these words.
+
+## R29. How apps ask for paper size, and when (2026-10-15)
+
+Asked for [A35](design/mockups/v21-library.html) (the paper chooser for [ADR-133](DECISIONS.md#adr-133)'s
+four sizes): where comparable apps ask for paper, whether it can change later, how a default is set, and
+what large text and screen readers need. One web pass, 2026-10-15. Canva's help pages refused the fetch
+(HTTP 403, again on a second pass) and the tutorials that describe its Resize disagree on which plans have
+it, so Canva is not cited; Procreate and Affinity Publisher stand in for apps that set a canvas when the work
+is created (R29.1).
+
+### R29.1 Document and canvas apps let size change later, and say the work may not survive it — ✅ VERIFIED (Apple, Procreate, Affinity), 🟨 (Word)
+
+- Apple Pages sets paper size per document, on Mac in the Document sidebar and on iPhone or iPad in
+  Document Setup, and it can be changed in an existing document; it advises "choose US Letter" for
+  standard US printer paper ([Apple, "Set paper size, page orientation, and margins in Pages"](https://support.apple.com/119612)).
+- 🟨 Microsoft Word changes size from Layout › Size
+  ([How-To Geek](https://www.howtogeek.com/445123/how-to-change-the-paper-size-in-microsoft-word/)).
+  [Office Watch](https://office-watch.com/2024/paper-sizing-tricks-in-microsoft-word/) warns that
+  "Changing paper sizes changes the margins, header/footer etc." and "Positioning of objects like images,
+  tables and charts can go awry". Third-party guides; no Microsoft page was found in the pass.
+- 🟨 An Apple Community thread reports an A4 template that still "prints off the page" after Page Setup was
+  set to US Letter; the answer given is to rebuild on a Letter document
+  ([discussions.apple.com](https://discussions.apple.com/thread/2797098)). A forum, not a measurement.
+- Procreate, a drawing app whose work is placed by hand on a canvas: the size is set when a canvas is
+  created, in pixels or a physical measurement, and changed later only through Crop and Resize, where "The
+  edges of this box represent the new edges of your canvas", with a warning that resampling "can create
+  unexpected results" ([Procreate Handbook, Canvas](https://help.procreate.com/procreate/handbook/actions/actions-canvas)).
+- Affinity Publisher: "You can modify your document's setup at any time", but a page-size change makes the
+  person choose between content that stays "the same size" and content rescaled "in relation to the new
+  page size" ([Affinity Publisher 2 Help, Document Setup](https://affinity.help/publisher2/en-US.lproj/pages/Pages/DocumentSetup.html)).
+
+A document that reflows can afford a later change. The canvas apps, whose work is placed by hand as a
+zine's is, ask at creation and turn a later change into a choice between cutting and shrinking the work. A
+zine is laid out on eight fixed panels, and a beginner should not meet that choice, which is why ADR-133
+decision 5 asks once, at the start.
+
+### R29.2 The default comes from a setting the person controls, and changes only new work — ✅ VERIFIED
+
+- macOS: the default paper size set in Printers & Scanners "is also used as the page size whenever you
+  create a new document in an app, such as Pages", and "Changing the default size affects only new
+  documents; it doesn't change previously created documents"
+  ([Apple, Mac User Guide](https://support.apple.com/en-asia/guide/mac-help/mh26678/12.0/mac)).
+- Google Docs: in File › Page setup, "Set as default" applies the settings "to any new documents you
+  create" ([Google Docs Help](https://support.google.com/docs/answer/10296604)).
+
+This is the shape Zinely already has: About › "Paper for new zines" leads the chooser and never rewrites
+an existing zine (`v21-colophon.html`).
+
+### R29.3 Zine tools offer two sizes, sometimes a custom one — ✅ VERIFIED (each tool's own page)
+
+- [ZineArranger](https://nashhigh.itch.io/zinearranger), a browser tool that imposes a PDF as a zine:
+  "Paper size (US Letter / A4 / Custom)".
+- [EZZINE](https://apps.apple.com/app/id6758923332), an iOS mini-zine maker: "Supports A4 or Letter
+  format"; its version 2.2 notes say Letter was added as an option. Where the choice is made is not said.
+- Electric Zine Maker's beta notes (2019): "printing reverts to US Letter and that makes it difficult for
+  A4 folks", with a promise of settings to choose better
+  ([Nathalie Lawhead](https://www.nathalielawhead.com/candybox/?p=4178)). Whether it shipped was not found.
+
+None found offers Legal or A5 by name. 🟨 With four sizes Zinely offers more than these peers; the two
+less common ones need a line that says some printers do not take them (R26.1 names an older HP DeskJet
+without Legal, an HP DeskJet 4355 listing without A5, and Canon models that take Legal only in the rear
+tray), so they are not read as everyday paper.
+
+### R29.4 Large text and spoken names — ✅ VERIFIED
+
+- Android 14 scales fonts up to 200%, on a nonlinear curve so large text grows less than small text, and
+  asks apps to test at the maximum "to ensure that your app … can accommodate larger font sizes without
+  impacting usability" ([Android 14 features](https://developer.android.com/about/versions/14/features)).
+  A flat 200% is therefore the worst case for a layout check.
+- WCAG 2.5.3 Label in Name: the accessible name "contains the text that is presented visually", and "a
+  best practice is to have the text of the label at the start of the name"
+  ([W3C, Understanding 2.5.3](https://www.w3.org/WAI/WCAG22/Understanding/label-in-name.html)).
+
+### R29.5 Where each paper is everyday — ✅ VERIFIED (encyclopedic source)
+
+[Wikipedia, "Paper size"](https://en.wikipedia.org/wiki/Paper_size): ISO 216 "has been adopted by all
+countries in the world except the United States and Canada", while US Letter is "still in common use" in
+Mexico, Costa Rica, Colombia, Venezuela, Chile and the Philippines. A35's lines ("the everyday paper in most
+of the world" for A4, "in North America" for US Letter) rest on this; the Letter line undersells its reach
+into Latin America and the Philippines, which is the safe direction.
+
+### R29.6 Zinely application — 🟦 RECOMMENDATION
+
+Ask once, when the zine is started, and keep it: the work is laid out by hand and a later change would cut
+or shrink it (R29.1; ADR-133 decision 5). Let the About setting lead the list and change only new zines
+(R29.2). Name all four, say each sheet's page size, and on US Legal and A5 say that the zine prints on
+that paper only and that the printer must take it (R29.3, R26.1), and say where each everyday
+paper is everyday (R29.5). Lay rows out so they grow at a flat 200% and start each spoken name with the
+paper's name, units said in full (R29.4). A35 does this.
