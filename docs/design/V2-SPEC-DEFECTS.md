@@ -7757,6 +7757,8 @@ the "other" rule written into ADR-130 and VOICE; ADR-028 §4.2 named. Owed, not 
 [ADR-126](../DECISIONS.md#adr-126)); Read, Save PDF and Print details still say nothing about phone fonts.
 The owner's Samsung (its largest font and bold-font settings) was not tested.
 
+**Drawn, 2026-10-15.** The owed amendment is [`v21-typebar.html`](mockups/v21-typebar.html#a36) A36, frozen as built and checked against the four goldens above; the frozen page no longer draws "Right" across three lines. This supersedes the "(not edited)" in the Artifacts row and the "accepted difference" paragraph above: the file is now amended (A36, appended, no frozen byte changed), and the stacked row is its spec, not a difference.
+
 ---
 
 ### D-117 — the Art pieces look like four hands at once; critique of all thirty-four {#d-117}
