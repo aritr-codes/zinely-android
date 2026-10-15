@@ -1141,8 +1141,9 @@ an existing zine (`v21-colophon.html`).
   ([Nathalie Lawhead](https://www.nathalielawhead.com/candybox/?p=4178)). Whether it shipped was not found.
 
 None found offers Legal or A5 by name. 🟨 With four sizes Zinely offers more than these peers; the two
-less common ones need a line that says a printer may not take them (R26.1), so they are not read as
-everyday paper.
+less common ones need a line that says some printers do not take them (R26.1 names an older HP DeskJet
+without Legal, an HP DeskJet 4355 listing without A5, and Canon models that take Legal only in the rear
+tray), so they are not read as everyday paper.
 
 ### R29.4 Large text and spoken names — ✅ VERIFIED
 
@@ -1154,10 +1155,18 @@ everyday paper.
   best practice is to have the text of the label at the start of the name"
   ([W3C, Understanding 2.5.3](https://www.w3.org/WAI/WCAG22/Understanding/label-in-name.html)).
 
-### R29.5 Zinely application — 🟦 RECOMMENDATION
+### R29.5 Where each paper is everyday — ✅ VERIFIED (encyclopedic source)
+
+[Wikipedia, "Paper size"](https://en.wikipedia.org/wiki/Paper_size): ISO 216 "has been adopted by all
+countries in the world except the United States and Canada", while US Letter is "still in common use" in
+Mexico, Costa Rica, Colombia, Venezuela, Chile and the Philippines. A35's lines ("the everyday paper in most
+of the world" for A4, "in North America" for US Letter) rest on this; the Letter line undersells its reach
+into Latin America and the Philippines, which is the safe direction.
+
+### R29.6 Zinely application — 🟦 RECOMMENDATION
 
 Ask once, when the zine is started, and keep it: the work is laid out by hand and a later change would cut
 or shrink it (R29.1; ADR-133 decision 5). Let the About setting lead the list and change only new zines
 (R29.2). Name all four, say each sheet's page size, and say "check that your printer takes …" on US Legal
-and A5 (R29.3, R26.1). Lay rows out so they grow at a flat 200% and start each spoken name with the
+and A5 (R29.3, R26.1), and say where each everyday paper is everyday (R29.5). Lay rows out so they grow at a flat 200% and start each spoken name with the
 paper's name, units said in full (R29.4). A35 does this.
