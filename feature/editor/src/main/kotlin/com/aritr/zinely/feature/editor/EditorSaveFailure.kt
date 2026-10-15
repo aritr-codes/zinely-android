@@ -87,7 +87,8 @@ internal val NoticeBorder = 1.5.dp
  * Invariant (D-119, issue #134): the curve never reaches a line of text. A pill's ends grow with its height,
  * and at the largest text on a small phone the move/resize hint wraps to five lines; an end over 100dp then
  * cut into its first and last words. The cap keeps the corner of the first line (inset 16dp × 12dp by the
- * padding) inside the 1.5dp border. Every notice in the goldens is under 80dp tall, so none of them changes.
+ * padding) inside the 1.5dp border. Every notice in the goldens (430dp wide, text size 1) is under 80dp tall, so
+ * none of them changes; any notice past 80dp, on a narrower screen or at a larger text size, takes the cap.
  * Shared by all three notices because all three wrap. Fenced by `EditorMoveResizeHintLargeTextTest`.
  */
 internal val NoticeShape: Shape = RoundedCornerShape(
@@ -98,9 +99,11 @@ internal val NoticeShape: Shape = RoundedCornerShape(
 )
 
 /**
- * The largest end [NoticeShape] draws. At least 39.6dp, half the tallest notice at text size 1 (three lines:
- * the photo hint, the save failure), so none of them changes; at most 43.9dp, where the curve would meet the
- * first line's corner inside the border.
+ * The largest end [NoticeShape] draws: a round number inside the measured range. At least 39.6dp, half the
+ * tallest notice golden (three lines: the photo hint, the save failure, 79.2dp at 430dp wide), so no golden
+ * changes; at most 43.9dp, where the curve would meet the first line's corner inside the border. The upper
+ * bound is derived from [NoticePaddingStart], [NoticePaddingV] and [NoticeBorder]
+ * ((r-16)² + (r-12)² ≤ (r-1.5)²): shrinking either padding can make 40dp unsafe.
  */
 internal val NoticeMaxRadius = 40.dp
 
