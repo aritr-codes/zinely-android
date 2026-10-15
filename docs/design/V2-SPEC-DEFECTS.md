@@ -7881,18 +7881,28 @@ corner (the padding), well inside the curve, and the clip took their first lette
 
 **The cause** is the shape, not the hint. All three canvas notices share `NoticeShape` (the hint, the
 save failure and the coverage notice), all three wrap, and the same geometry would cut any of them once it
-runs past three lines. The frozen `.snack` does the same in a browser (a pill radius is clamped to half the
-height, never below it), but the prototype never wraps it, so the freeze does not say what a tall one
-should look like. Issue #134 asked for an amendment; this fix needs none, because it changes nothing the
+runs past three lines. The frozen `.snack` draws the same stadium in a browser (a pill radius is clamped to
+half the height), but it has no `overflow:hidden`, so there the words would cross its curved border rather
+than be cut; the cut is Compose's `.clip(NoticeShape)`. The prototype never wraps it, so the freeze does not
+say what a tall one should look like. Issue #134 asked for an amendment; this fix needs none, because it changes nothing the
 freeze draws.
 
 **The fix.** `NoticeShape` keeps ends of half the height up to `NoticeMaxRadius` (40dp) and stops there, so
-a tall notice becomes a rounded card instead of a stadium. The bound is measured, not chosen:
+a tall notice becomes a rounded card instead of a stadium. The range is measured; 40dp is a round number
+inside it:
 
 | Bound | Value | Why |
 |---|---|---|
-| At least | 39.6dp | half the tallest notice at text size 1 (three lines: the photo hint and the save failure, 79.2dp), so every existing look is unchanged |
-| At most | 43.9dp | the radius at which the curve, inside its 1.5dp border, meets the first line's corner (16dp, 12dp in) |
+| At least | 39.6dp | half the tallest notice golden (three lines: the photo hint and the save failure, 79.2dp; goldens are 430dp wide at text size 1), so every golden is unchanged |
+| At most | 43.9dp | the radius at which the curve, inside its 1.5dp border, meets the first line's corner (16dp, 12dp in): (r−16)² + (r−12)² ≤ (r−1.5)² |
+
+What does change: any notice taller than 80dp takes the cap, whatever made it tall. That includes a
+notice at text size 1 on a narrower screen (the save failure has no width cap, and its longer
+out-of-space line has no golden), and notices 80–88dp tall that the old shape did not yet clip. None of
+these is drawn by the freeze. The margin over the goldens is 0.4dp: a font-metric, padding or copy
+change that pushes the photo hint or the save failure past 80dp will move their goldens from a stadium
+to a rounded card, and the exact golden job will flag it. The upper bound depends on the 16dp and 12dp
+padding; shrinking either can make 40dp unsafe (the KDoc on `NoticeMaxRadius` says so).
 
 Fixed in the shared shape rather than in the hint alone: the three notices are one surface on purpose
 (the block comment above `NoticeGap` says why), and a hint-only shape would be the drift it warns about.
@@ -7903,7 +7913,18 @@ Fixed in the shared shape rather than in the hint alone: the three notices are o
   four corners of the line box must lie inside the shape's border, measured in the hint's own unrotated
   frame. It requires at least four lines, so it cannot pass on a short hint. **Red before the fix**, both
   cases at the first line's corner (32, 24)px: generic hint 640 × 416px with a 208px radius, photo hint
-  640 × 493px with a 246.5px radius. Green after.
+  640 × 493px with a 246.5px radius. Green after. A third case, added after review, fences the save
+  failure (out-of-space line, two buttons) the same way, on a 360dp-wide screen made tall enough to hold
+  it (see the finding below). It is red on the old shape too (a 656px-wide pill, 328px radius, same
+  corner) and green on the fix. The coverage notice shares the same 16 × 12dp inset and is covered by
+  the geometry, not a test.
+- **A separate defect, found by that case and not fixed here.** At text size 2 on a 360dp screen the save
+  failure's two buttons ("Try now", "Got it") squeeze its line into a narrow column that runs to 16 lines,
+  taller than the 608dp a 640dp screen leaves it: in the test's host its last line falls below the
+  notice, where the clip cuts it. That is the notice's layout (buttons beside the text, as `.snack`
+  draws them), not its shape; stacking the buttons under the text is a design change and needs a
+  `v21-bench.html` amendment first. It goes to the main session as a follow-up. Not seen on a device:
+  forcing a save failure on the emulator was outside this pass.
 - The eight notice goldens (`editor_move_resize_hint_*`, `editor_photo_move_resize_hint_*`,
   `editor_save_failure_*`, `editor_coverage_notice_*`) measure 59–79dp tall, all under the 80dp at which
   the cap starts to act.

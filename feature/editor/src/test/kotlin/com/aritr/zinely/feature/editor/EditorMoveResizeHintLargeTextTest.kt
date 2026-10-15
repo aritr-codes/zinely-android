@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.editor
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
@@ -27,9 +28,10 @@ import kotlin.math.hypot
 /**
  * Issue #134 / D-119 (`docs/design/V2-SPEC-DEFECTS.md`): at the largest text on
  * a small phone the hint wraps to five lines, and a pill's ends (radius = half the height) cut into its first
- * and last words. Every corner of every laid-out line must sit inside the shape's ink border.
+ * and last words. Every corner of every laid-out line must sit inside the shape's ink border. The save failure
+ * is fenced too: it shares the shape and the inset the bound in [NoticeMaxRadius] is derived from.
  *
- * Measured in the hint's own (unrotated) frame: the Row's inner coordinates are inside its `-0.6°` layer, as
+ * Measured in the notice's own (unrotated) frame: the Row's inner coordinates are inside its `-0.6°` layer, as
  * the text is, so the lean drops out; the shape is then built at the pill's real size.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -40,27 +42,42 @@ class EditorMoveResizeHintLargeTextTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun every_word_clears_the_curved_ends_at_text_size_2_on_a_360dp_phone() = assertWordsInside(photo = false)
+    fun every_word_clears_the_curved_ends_at_text_size_2_on_a_360dp_phone() =
+        assertWordsInside(EditorMoveResizeHintTestTag, MoveResizeHintText) {
+            EditorMoveResizeHint(photo = false, onDismiss = {})
+        }
 
     @Test
     fun every_word_of_the_photo_line_clears_the_curved_ends_at_text_size_2_on_a_360dp_phone() =
-        assertWordsInside(photo = true)
+        assertWordsInside(EditorMoveResizeHintTestTag, PhotoMoveResizeHintText) {
+            EditorMoveResizeHint(photo = true, onDismiss = {})
+        }
 
-    private fun assertWordsInside(photo: Boolean) {
+    /**
+     * The save failure shares [NoticeShape] and its 16 / 12dp inset, with two buttons beside the text. Same
+     * width, taller screen: at 640dp its 16-line column outgrows the host (a separate layout defect, D-119),
+     * and this case fences the shape, not that.
+     */
+    @Test
+    @Config(qualifiers = "w360dp-h1400dp-xhdpi")
+    fun every_word_of_the_save_failure_clears_the_curved_ends_at_text_size_2_on_a_360dp_phone() =
+        assertWordsInside(EditorSaveFailureTestTag, SaveFailureOutOfSpaceText) {
+            EditorSaveFailure(visible = true, onDismiss = {}, kind = SaveErrorKind.OutOfSpace, reduceMotion = true)
+        }
+
+    private fun assertWordsInside(tag: String, text: String, notice: @Composable () -> Unit) {
         composeRule.setContent {
             ZinelyTheme {
-                Box(Modifier.fillMaxSize().padding(16.dp)) { EditorMoveResizeHint(photo = photo, onDismiss = {}) }
+                Box(Modifier.fillMaxSize().padding(16.dp)) { notice() }
             }
         }
-        val row = composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).fetchSemanticsNode().layoutInfo.coordinates
-        val textNode = composeRule
-            .onNodeWithText(if (photo) PhotoMoveResizeHintText else MoveResizeHintText, useUnmergedTree = true)
-            .fetchSemanticsNode()
+        val row = composeRule.onNodeWithTag(tag).fetchSemanticsNode().layoutInfo.coordinates
+        val textNode = composeRule.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode()
         val layout = mutableListOf<TextLayoutResult>()
             .also { textNode.config[SemanticsActions.GetTextLayoutResult].action!!.invoke(it) }
             .single()
         // Non-vacuity: this is the wrapped case the issue reports, not the short one.
-        assertTrue("expected the wrapped hint, got ${layout.lineCount} lines", layout.lineCount >= 4)
+        assertTrue("expected the wrapped notice, got ${layout.lineCount} lines", layout.lineCount >= 4)
 
         val density = composeRule.density
         with(density) {
