@@ -132,9 +132,10 @@
      Written after the code, which HTML-first forbids; it is here so this page stops drawing
      "Right" across three lines as though that were the app.  Drawn at the foot of the file,
      after A29's script: its own <style>, markup and rules, all marked A36.  It adds one pointer
-     paragraph under the title.  It changes no frozen byte; its CSS overrides two rules by
-     cascade: every labelled row may wrap, and A29's large-text simulation stops breaking
-     words.  Its rules are cited as A36.1 to A36.5. -->
+     paragraph under the title.  It changes no frozen byte; its CSS overrides A29 by cascade
+     in three ways: every labelled row may wrap, A29's large-text simulation stops breaking
+     words, and A29's large-text Colour row returns to the 4 px label gap the app uses
+     (A29 drew 8).  Its rules are cited as A36.1 to A36.5. -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1357,7 +1358,9 @@ rows above, the arrow keys do not move between the choices here.</p>
 /* A36.1 — a labelled row that does not fit on one line puts its choices on a second line,
    under the label, at the start, --gap-xs below it.  `TypeRow` is a FlowRow with
    `verticalArrangement = spacedBy(gapXs)`; under `space-between` a line holding one item
-   starts at the left, as a FlowRow's does.  The `.fs2` copy beats A29's `.fs2 .tyrow`. */
+   starts at the left, as a FlowRow's does.  The `.fs2` copy beats A29's `.fs2 .tyrow`; it
+   also sets the large-text Colour row (a column) back to 4 px under its label, where A29's
+   `.fs2 .tyrow{gap:8px}` had made it 8 — `TypeColourRow` is `spacedBy(gapXs)`. */
 .tyrow,.fs2 .tyrow{flex-wrap:wrap;row-gap:var(--gap-xs)}
 /* A36.3 — a word on a choice never breaks inside itself.  This overrides A29's `.fs2` rule,
    which broke the words on purpose to draw the defect the app had on 2026-10-07. */
@@ -1481,6 +1484,7 @@ this block.</p>
 <tr><td>Card width</td><td>336 dp, its limit</td><td>336 px</td></tr>
 <tr><td>Where the choices start</td><td>At the left, 16 dp inside the card's edge, under the label</td><td>At the left, under the label: 16 px padding inside a 1.5 px edge</td></tr>
 <tr><td>Space between label and choices</td><td>4 dp (<code>spacedBy(gapXs)</code>)</td><td>4 px (--gap-xs)</td></tr>
+<tr><td>Space beside the label, which decides when a row stacks</td><td>16 dp (<code>padding(end = gapLg)</code>) at every text size</td><td>16 px at usual text; 8 px at large text, A29's <code>.fs2 .tyrow</code></td></tr>
 <tr><td>Left, Center, Right</td><td>About 60, 93 and 75 dp wide, 8 dp apart (golden); Right 77 × 54 dp on the emulator</td><td>64.5, 99.7 and 80.5 px wide, 8 px apart</td></tr>
 <tr><td>Height of each choice</td><td>About 53 to 54 dp</td><td>48 px</td></tr>
 <tr><td>Every word whole, on one line</td><td>Yes</td><td>Yes</td></tr>
@@ -1488,8 +1492,10 @@ this block.</p>
 </table>
 <p class="cap">The sizes differ because this page draws large text by doubling font sizes only, as A29 does; in
 the app a word's button also grows with its line. That difference belongs to the drawing, not to A36's rules,
-and it is accepted. What A36 decides (which row stacks, where its choices go, and that no word breaks) matches
-the app.</p>
+and it is accepted. So does the 8 px beside the label at large text: a row with between 8 and 16 px to spare
+would stay on one line here and stack in the app. No row drawn here comes close: Font, Size and Style have
+50, 82 and 120 px to spare, and Align is 39 px short, so it stacks with either gap. For the states drawn, what A36 decides (which row stacks, where its choices go,
+and that no word breaks) matches the app.</p>
 
 <p class="cap"><b>What A36 does not do.</b> It does not settle the seven differences listed at the top of this
 file (the Italic "I" is one of them, and it shows in these goldens), how the panel closes, or the name "Coral".
