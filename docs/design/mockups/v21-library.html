@@ -1268,15 +1268,18 @@ waits for the format change that adds the two sizes; the app still offers A4 and
                   US Letter  8.5 × 11 in
                              Pages 2.75 × 4.25 in. The everyday paper in North America.
                   US Legal   8.5 × 14 in
-                             Pages 3.5 × 4.25 in, wider than Letter’s. Check that your
-                             printer takes Legal.
+                             Pages 3.5 × 4.25 in, wider than Letter’s. Prints on US
+                             Legal paper only, so check that your printer takes it.
                   A5         148 × 210 mm
-                             Pages 52.5 × 74 mm, the smallest zine. Check that your
-                             printer takes A5.
+                             Pages 52.5 × 74 mm, the smallest zine. Prints on A5 paper
+                             only, so check that your printer takes it.
                 Each line is true of the paper, not of the maker: no "best", no
-                "popular" (where each paper is everyday: RESEARCH R29.5).  "Check
-                that your printer takes …" is on the two sizes some printers checked
-                do not list: an older HP DeskJet omits Legal, an HP DeskJet 4355
+                "popular" (where each paper is everyday: RESEARCH R29.5).  The two
+                less common papers say, at the moment of choosing, the two things a
+                home printer needs: that the zine prints on that paper only (A35.8;
+                an A4 or US Letter zine can still print on the other, these cannot),
+                so the house must have it, and that the printer must take it, since
+                some printers checked do not list them: an older HP DeskJet omits Legal, an HP DeskJet 4355
                 listing omits A5, and some Canon models take Legal only in the rear
                 tray (RESEARCH R26.1).  At A5's drawn size the ruled pages are
                 texture; the words carry the page size.
@@ -1292,6 +1295,10 @@ waits for the format change that adds the two sizes; the app still offers A4 and
   A35.6  [stated] A zine's paper never changes.  No row in the zine sheet, nothing
                 on the Bench.  Duplicate keeps the paper.  To use another paper,
                 start a new zine.  Restoring a backup keeps each zine's paper.
+                A wrong tap is mended as today: the new zine opens on the Bench,
+                Back returns to the Shelf, and the zine (newest first, named "My
+                zine") is deleted from its sheet with the Shelf's Undo; then start
+                again.  Nothing else is lost, because nothing else was made.
   A35.7  [shown]  Later, the paper shows by its full name on the cover's postmark
                 (A4 · US LETTER · US LEGAL · A5, the stamp's own capitals), as the
                 app's postmark already does for A4 and US Letter.
@@ -1333,18 +1340,28 @@ waits for the format change that adds the two sizes; the app still offers A4 and
                   "US Letter, 8.5 by 11 inches. Pages 2.75 by 4.25 inches. The
                    everyday paper in North America."
                   "US Legal, 8.5 by 14 inches. Pages 3.5 by 4.25 inches, wider than
-                   Letter’s. Check that your printer takes Legal."
+                   Letter’s. Prints on US Legal paper only, so check that your
+                   printer takes it."
                   "A5, 148 by 210 millimetres. Pages 52.5 by 74 millimetres, the
-                   smallest zine. Check that your printer takes A5."
+                   smallest zine. Prints on A5 paper only, so check that your
+                   printer takes it."
                 No "selected" and no position ("1 of 4"): nothing is selected, the
                 rows are buttons and not a list of choices, and a position would
                 promise a choice to be confirmed.  At
                 Print the fixed paper is one text node, not a button, read as its
-                name, size and sentence.  The cover tile's name stays the zine's
-                name; the postmark is not spoken on the tile, and the zine sheet's
-                line says the paper.
-  A35.12 [stated] Focus.  Raising the sheet puts accessibility focus on its title;
-                closing it without a choice returns focus to "Make a zine".  After a
+                name, size and sentence.  On the Shelf, an A4 or US Letter tile's
+                name stays the zine's name (the shipped narrowing: a shelf that
+                says its paper on every tile cannot be skimmed by ear).  A US
+                Legal or A5 tile adds its paper after the name, "Camping trip, US
+                Legal", because that zine prints on nothing else and the eye
+                gets it from the postmark; the name still starts with the
+                visible title (WCAG 2.5.3).  The zine sheet's line says the paper
+                for every zine.
+  A35.12 [stated] Focus.  Raising the sheet starts TalkBack on its title, as
+                ZSheet's sheets do today (Compose cannot move accessibility focus
+                directly; the build checks this on a device, not by a new
+                mechanism); closing it without a choice returns focus to "Make a
+                zine".  After a
                 choice the Bench opens as it does today.
   A35.13 [stated] When.  A35 ships with the schema bump that adds US Legal and A5
                 (ADR-133 decision 4), in the same change, never before it.  Until
@@ -1367,11 +1384,11 @@ waits for the format change that adds the two sizes; the app still offers A4 and
               note: 'Pages 2.75' + X + '4.25' + NB + 'in. The everyday paper in North America.',
               say:  'US Letter, 8.5 by 11 inches. Pages 2.75 by 4.25 inches. The everyday paper in North America.' },
     legal:  { name: 'US Legal',  cls: 'legal',  size: '8.5' + X + '14' + NB + 'in',
-              note: 'Pages 3.5' + X + '4.25' + NB + 'in, wider than Letter’s. Check that your printer takes Legal.',
-              say:  'US Legal, 8.5 by 14 inches. Pages 3.5 by 4.25 inches, wider than Letter’s. Check that your printer takes Legal.' },
+              note: 'Pages 3.5' + X + '4.25' + NB + 'in, wider than Letter’s. Prints on US Legal paper only, so check that your printer takes it.',
+              say:  'US Legal, 8.5 by 14 inches. Pages 3.5 by 4.25 inches, wider than Letter’s. Prints on US Legal paper only, so check that your printer takes it.' },
     a5:     { name: 'A5',        cls: 'a5',     size: '148' + X + '210' + NB + 'mm',
-              note: 'Pages 52.5' + X + '74' + NB + 'mm, the smallest zine. Check that your printer takes A5.',
-              say:  'A5, 148 by 210 millimetres. Pages 52.5 by 74 millimetres, the smallest zine. Check that your printer takes A5.' },
+              note: 'Pages 52.5' + X + '74' + NB + 'mm, the smallest zine. Prints on A5 paper only, so check that your printer takes it.',
+              say:  'A5, 148 by 210 millimetres. Pages 52.5 by 74 millimetres, the smallest zine. Prints on A5 paper only, so check that your printer takes it.' },
   };
   const ORDER = ['a4', 'letter', 'legal', 'a5'];         // A35.2: written out, fixed
   let preferred = 'a4', made = 0, snackTimer = 0;
@@ -1412,6 +1429,7 @@ waits for the format change that adds the two sizes; the app still offers A4 and
     const z = node('article', 'a35-zine'), c = node('div', 'cover paper-s');
     c.append(node('span', 'tape'), node('div', 'fill'), node('div', 'spine'), node('span', 'stamp', p.name));
     z.append(c, node('p', 'name', 'My zine'), node('p', 'sub', 'just now'));
+    z.setAttribute('aria-label', k === 'legal' || k === 'a5' ? 'My zine, ' + p.name : 'My zine');   // A35.11
     $('a35Shelf').querySelector('.shelf-head').after(z);   // newest first
     $('a35Count').textContent = (4 + made) + ' zines';
     const s = $('a35Snack'); s.inert = false; $('a35SnackText').textContent = 'New ' + p.name + ' zine. In the app the Bench opens here.';
