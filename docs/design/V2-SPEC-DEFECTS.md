@@ -7879,7 +7879,27 @@ Two independent Review Agents, reading only, 2026-10-14.
 | 4 | **About says "the other one".** `v21-colophon.html` lists two papers and says "You can always choose the other one." | **Decided in A35.9:** four, in the fixed order, and "You can always choose another." The file is amended by the build. **Open** |
 | 5 | **The frozen Shelf's postmark says "Letter"; the app says "US Letter".** `v21-library.html`'s covers stamp `Letter` and its `data-sub` reads "Letter · today"; the app takes `Copy.Paper.LETTER` = "US Letter" for both. Beside "US Legal", a bare "Letter" would be ambiguous. | **Decided in A35.7:** the postmark and the sheet line use the full names. The app already does; the frozen covers above A35 are left as drawn (append-only). **Open** as a note for the next redraw of that file |
 | 6 | **"×" may be spoken badly.** The shipped tiles carry "210 × 297 mm" as visible text, and nothing measured what TalkBack says for it. | **Designed around in A35.11:** each row's spoken name spells the units ("210 by 297 millimetres"). What TalkBack says for the shipped tiles today is **not measured**: owed to the device pass of the build |
+| 7 | **A KDoc says the cover carries no paper; the V2.1 cover does.** `HomeViewModel.kt`'s `toLibraryZine` KDoc says the subtitle "is composed here, not on the cover" and quotes V2's "not stamped on every card". Under V2.1 the subtitle's first half *is* the cover's postmark: `ZineOnShelf.kt` passes `zineShelfStampLabel(zine.subtitle)` to `ZineV21Cover`, which draws it uppercased. The design review read the KDoc as the truth and called A35.7 a reversal. | **Recorded.** A35.7 describes what ships. The stale KDoc is a code comment, left for the build that touches the file. **Open** |
 
 #### Review
 
-Filled after the design review below.
+One independent Review Agent, design and documents lens, reading only, 2026-10-15 (a separate Claude Code
+session; the Codex reviewer could not sign in). **GO WITH FIXES.** It confirmed the append is one hunk with
+nothing above changed, the four stock sizes and page sizes, the cited frozen values, and that A35's script
+shares no global name or selector with the frozen page's.
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| A35.11 cited "ADR-087 §3" for the platform not counting items; ADR-087 says nothing of the kind | Required | **Accepted.** The citation is gone; "no position" is now the design's own reason (buttons, not a list of choices) |
+| A35.7 and #5 say the app stamps the paper on the cover; `HomeViewModel.kt` says it does not | Required | **Rejected, with evidence.** `ZineOnShelf.kt` passes `zineShelfStampLabel(zine.subtitle)` as the cover's `stampLabel` and `ZineV21Cover.kt` draws it; the KDoc is the stale part. Recorded as #7 |
+| Three rules claimed `[shown]` for things the page does not show (inside a folder, swipe down, the zine sheet's line) | Recommended | **Accepted.** Each is now `[stated]` |
+| The build shrinks the shipped stocks and turns two tiles into four rows, unsaid | Recommended | **Accepted.** A35.4 says so for the build, with the numbers |
+| "Check that your printer takes …" cited R26.1, whose heading says printers do take them | Recommended | **Accepted.** A35.4 and R29.3 name the absences R26.1 records |
+| "Everyday paper in most of the world / North America" had no source | Recommended | **Accepted.** R29.5 cites where each is standard |
+| About's four radios at font scale 2 were not designed | Recommended | **Accepted.** A35.9: one radio per row at every text size |
+| The prototype's snack stayed inert, so a screen reader would never hear it | Recommended | **Accepted.** Fixed: un-inert before showing, inert again when it goes |
+| The new strings had no stated home | Recommended | **Accepted.** A35.13: `core:copy`, beside `Copy.Paper` / `Copy.Shelf` / `Copy.ProofPrint` |
+| A5's ruled pages are texture at 23 × 33 px | Observation | **Accepted.** A35.4 says the words carry the page size |
+| The Print picture moves "nothing shrinks to fit" under the switch, draws spans, and closing it returns no focus | Observation | **Kept.** It is labelled a picture of `v21-proof.html`; no rule depends on it |
+| `.a35-shelf` restates `.shelf` | Observation | **Kept.** Append-only forces it |
+| D-119 and D-120 are absent on `main` | Observation | **Expected.** Lanes A and C of the same wave hold them |
