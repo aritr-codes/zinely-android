@@ -7907,3 +7907,28 @@ Fixed in the shared shape rather than in the hint alone: the three notices are o
 - The eight notice goldens (`editor_move_resize_hint_*`, `editor_photo_move_resize_hint_*`,
   `editor_save_failure_*`, `editor_coverage_notice_*`) measure 59–79dp tall, all under the 80dp at which
   the cap starts to act.
+
+**Device verification, 2026-10-15.** Emulator AVD `Medium_Phone_API_36.1`, Android 16, set to 360 × 640dp
+(`wm size 1080x1920`, `wm density 480`). Debug build of `2291b37`, installed fresh. The hint was reached as a
+first-timer would reach it: Make a zine, A4, Add, Art, Photo corner. The photo hint came from Add, Photo,
+using a test image pushed under a distinctive name; it was the only image on the device. Screenshots and
+`uiautomator` dumps were read for each step.
+
+| Text size | Hint | What the screen showed |
+|---|---|---|
+| 2.0 | generic | Five lines in a rounded card with the ends capped. "Drag to move." and "buttons." are whole and well clear of the corners. "Got it" is a clickable 88 × 49dp node, centred on the right |
+| 2.0 | photo | Six lines, ending "Reframe crops inside.". The first and last words are whole |
+| 1.3 | generic | Three lines in a card about 97dp tall, so the cap applies. "Drag" and "use buttons." are whole |
+| 1.0 | generic | Two lines in a full stadium about 72dp tall, unchanged from the frozen look |
+
+- **Pass 1 (built right): PASS.** No word is clipped at any of the three text sizes. The platform tree
+  carries the whole sentence as one `TextView`. "Got it" dismisses the hint.
+- **Pass 2 (would a first-timer understand it): PASS on legibility, with one finding outside this fix.** At
+  2.0 the hint reads easily, and the capped ends look like a note card from the same family as the pill.
+  Nothing suggests a fault. What felt wrong before I knew the reason was the request to "drag" a piece I
+  could not see. On this screen the 210–245dp hint covers almost the whole page, including the piece just
+  placed and its handles, so the hint has to be dismissed before its advice can be followed. That is
+  placement, not shape: the hint sits in the canvas's top region (`EditorScreen.kt`, which is outside this
+  fix), and moving it is a design change that needs an HTML amendment first. It goes to the main session
+  as a follow-up. A smaller pre-existing observation: at 2.0 the verb bar cuts its last label ("Duplica…",
+  "Across fol…").
