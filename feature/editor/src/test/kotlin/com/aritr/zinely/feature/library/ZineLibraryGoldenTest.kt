@@ -3,8 +3,11 @@ package com.aritr.zinely.feature.library
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -85,6 +88,32 @@ class ZineLibraryGoldenTest {
     @Test
     fun `the library with folders and the folder snack dark`() = folders("dark", dark = true)
 
+    /**
+     * A37 / ADR-134: the restored-details note under the My Shelf heading, one zine whose name went back. Paper
+     * and ink are pinned, so dark differs only in the desk and the note's shadow.
+     */
+    @Test
+    fun `the library with the restored note light`() = viewport("restored_light", restored(1), dark = false)
+
+    @Test
+    fun `the library with the restored note dark`() = viewport("restored_dark", restored(1), dark = true)
+
+    /** A37.8: five zines on the narrowest phone at twice the text size; *Got it* stays under the words. */
+    @Test
+    @Config(qualifiers = "w360dp-h812dp")
+    fun `the restored note for five zines at 360dp and twice the text size`() =
+        viewport("restored_five_360_2x", restored(5), dark = false, fontScale = 2f)
+
+    private fun restored(count: Int): LibraryShelfState.Content {
+        val zines = content().zines
+        return LibraryShelfState.Content(
+            zines,
+            restored = zines.take(count).mapIndexed { i, zine ->
+                RestoredZine(zine.id, zine.title, previousTitle = if (i == 0) "Letters to Gran" else null)
+            },
+        )
+    }
+
     private fun folders(name: String, dark: Boolean) {
         val inFolder = mapOf(0 to "For the stall", 4 to "For the stall", 5 to "For the stall", 1 to "Family", 3 to "Family")
         val seeded = LibraryShelfState.Content(content().zines.mapIndexed { i, zine -> zine.copy(folder = inFolder[i]) })
@@ -92,8 +121,22 @@ class ZineLibraryGoldenTest {
         viewport("folders_snack_$name", seeded, dark, flowOf(snack))
     }
 
-    private fun viewport(name: String, state: LibraryShelfState, dark: Boolean, events: Flow<HomeShelfEvent> = emptyFlow()) {
-        composeRule.setContent { Screen(state, dark, events) }
+    private fun viewport(
+        name: String,
+        state: LibraryShelfState,
+        dark: Boolean,
+        events: Flow<HomeShelfEvent> = emptyFlow(),
+        fontScale: Float? = null,
+    ) {
+        composeRule.setContent {
+            if (fontScale == null) {
+                Screen(state, dark, events)
+            } else {
+                CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale)) {
+                    Screen(state, dark, events)
+                }
+            }
+        }
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(VIEWPORT).captureRoboImage("$GOLDEN_DIR/v21_library_$name.png", aa())
     }

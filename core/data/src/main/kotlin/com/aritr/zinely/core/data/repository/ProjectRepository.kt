@@ -87,4 +87,11 @@ public interface ProjectRepository {
      * Safe to run again, and may be partial like [renameFolder].
      */
     public suspend fun unpackFolder(name: String): DataResult<FolderChange>
+
+    /**
+     * The maker pressed *Got it* on the restored-details note ([ADR-134](docs/DECISIONS.md#adr-134)): the zines
+     * [ids] stop waiting to be told, and the Shelf lists again. Every id is tried; fails with [DataError.Io] if a
+     * waiting note could not be removed, and that zine is then still told next time.
+     */
+    public suspend fun dismissRestoredDetails(ids: Collection<String>): DataResult<Unit>
 }

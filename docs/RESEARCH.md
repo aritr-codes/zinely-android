@@ -1093,3 +1093,83 @@ open while the maker moves from piece to piece.
 "Move" names a quarter of what the tray does. "Adjust" means colour and light in photo apps. Taken:
 **Arrange**. Whether beginners understand it is a first-time-user question for the device pass; no study
 compares these words.
+
+## R29. Telling someone their work went back to an earlier copy (2026-10-15)
+
+Asked before deciding [ADR-134](DECISIONS.md#adr-134) and freezing library A37
+([D-120](design/V2-SPEC-DEFECTS.md#d-120), issue #128): where should an app say that it repaired a damaged
+file from an earlier copy, in what words, and how does a screen-reader user hear it? Pages that would not
+load in the fetcher (material.io's banner and snackbar pages, Apple's HIG on alerts, the Compose
+`LiveRegionMode` reference) are not cited.
+
+### R29.1 A message the person must see stays until they dismiss it; a snackbar, by default, does not — ✅ VERIFIED
+
+- Material's banner, as Flutter's implementation documents it
+  ([MaterialBanner](https://api.flutter.dev/flutter/material/MaterialBanner-class.html)): "A banner displays
+  an important, succinct message, and provides actions for users to address (or dismiss the banner). A user
+  action is required for it to be dismissed." and "Banners should be displayed at the top of the screen,
+  below a top app bar."
+- Android's own snackbar guidance
+  ([Compose snackbar](https://developer.android.com/develop/ui/compose/components/snackbar)): "a brief
+  notification … It provides feedback about an operation or action without interrupting the user
+  experience", and "Snackbars disappear after a few seconds." Its examples are confirmations (Undo after a
+  delete), offline status and "saved". The same page documents `SnackbarDuration.Indefinite`, which "Keeps
+  the snackbar displayed until the user or program dismisses it", so a snackbar *can* stay; its purpose is
+  still feedback on an operation, which a repair at start is not.
+- ✅ The banner guidance comes from Material 2: the `androidx.compose.material3` 1.4.0 artifact this build
+  resolves (Compose BOM 2026.02.01) has no `Banner` class (checked in the local Gradle cache, 2026-10-15).
+  It is cited for where a must-see message goes and how it leaves, not as a Material 3 component.
+- 🟦 So a repair the maker did not ask for, and which may have undone their last change, is banner-shaped,
+  not snackbar-shaped: it is about their work, it was not the result of anything they just did, and a
+  message that leaves by itself at app start is easily missed. Zinely has no Material banner component; A37
+  draws one in the Shelf's own material (a paper note) under the heading, which is where the Material 2 banner
+  guidance puts it.
+
+### R29.2 Recovery is told after the fact, plainly, and kept until reviewed — ✅ VERIFIED
+
+- Microsoft Office's Document Recovery ([Recover your Word files and documents](https://support.microsoft.com/topic/5851ef9c-dcd6-4c42-9364-ad3416d8497d)):
+  "Document Recovery automatically opens the next time you open the Office app to help you get your file
+  back", and closing it before every file is reviewed offers "Yes, I want to view these files later (safest
+  option)" or "No, remove the files. I have saved the files I need". The recovery is told at the next start,
+  and it stays until the person says they are done with it.
+- 🟦 Office asks the person to choose between versions because it keeps several. Zinely keeps one earlier
+  copy of `meta.json` and the newer one is gone (D-116), so there is nothing to choose: the note informs
+  and is dismissed. A dialog would interrupt for a decision that does not exist.
+
+### R29.3 How to word it — ✅ VERIFIED
+
+- [Microsoft, Error Message Guidelines](https://learn.microsoft.com/en-us/windows/win32/debug/error-message-guidelines):
+  a well-written message says "What happened and why?", "What is the end result for the user?" and "What can
+  the user do to prevent it from happening again?"; "Do not use
+  technical jargon"; "Do not make the user feel at fault"; "Use complete but simple sentences"; "You can use
+  past tense to describe a distinct event that occurred in the past"; and "Avoid the word 'please'."
+- [Nielsen Norman Group, Error-Message Guidelines](https://www.nngroup.com/articles/error-message-guidelines/):
+  "Concisely and precisely describe the issue", "Avoid technical jargon and use language familiar to your
+  users instead", "Take a positive tone and don't blame the user", and "Merely stating the problem is also not
+  enough; offer some potential remedies."
+- 🟦 Applied in A37.3: what happened (a small file was damaged), why the name changed (the copy from before
+  the last change was used) and the end result (named: "is called … again"). When the name went back the
+  note gives the one remedy, "You can rename it again." (NN/g's "offer some potential remedies"); the zine's
+  own Rename row is where it always is. Microsoft's third question, how to prevent it, has no answer the maker
+  can act on (storage damage is not their doing) and is left out rather than invented. The note makes no
+  claim about the pages: a page document can be put back from its own earlier copy silently (D-120 item 4),
+  so "its pages weren't touched" could be false. No "backup" (Zinely's Backups are library backups, [ADR-120](DECISIONS.md#adr-120)), no "error",
+  "corrupt" or file names, no "please" and no apology.
+
+### R29.4 A status message is spoken without moving focus — ✅ VERIFIED
+
+- [WCAG 2.2, Understanding 4.1.3 Status Messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html),
+  a web rule ("In content implemented using markup languages, …") applied here to Android by analogy:
+  "status messages can be programmatically determined through role or properties such that they can be
+  presented to the user by assistive technologies without receiving focus." A status message is a "change
+  in content that is not a change of context".
+- Flutter's semantics reference ([SemanticsProperties.liveRegion](https://api.flutter.dev/flutter/semantics/SemanticsProperties/liveRegion.html))
+  says that on Android a live region produces a polite announcement even when the widget does not have
+  accessibility focus, and that "This announcement may not be spoken if the OS accessibility services are
+  already announcing something else."
+- 🟦 Applied in A37.10: the words are a polite live region announced only when the note arrives on a Shelf
+  already showing its zines; a note present when the Shelf draws is read in order, and later changes to its
+  words are silent, so it is spoken once. The note is also in reading order right after the heading, so a
+  dropped announcement still leaves it found. 🟨 Whether TalkBack speaks a live region that
+  is *added* already filled, rather than one whose text changes, is not settled by these sources: that is the
+  device pass's question (ADR-134, owed).

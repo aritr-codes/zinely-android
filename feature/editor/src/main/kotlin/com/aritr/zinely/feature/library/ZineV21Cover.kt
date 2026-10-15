@@ -236,34 +236,7 @@ internal fun ZineV21Cover(
                     .offset(y = TapeOffsetY),
             ) {
                 val centre = maxWidth * tapeFractionFor(index)
-                Box(
-                    Modifier
-                        .offset(x = centre - TapeWidth / 2)
-                        .size(width = TapeWidth, height = TapeHeight)
-                        .graphicsLayer { rotationZ = tapeRotationFor(index) }
-                        // `box-shadow:0 1px 2px rgba(0,0,0,.12)` — the one soft shadow in a language
-                        // of hard ones, because tape lifts off the paper rather than printing on it.
-                        .shadow(TapeShadowElevation, clip = false)
-                        .background(TapeFilm)
-                        // `border-left`/`border-right:1px dashed rgba(255,255,255,.5)` — the torn
-                        // edges. Without them the strip reads as a yellow rectangle rather than as
-                        // tape, which is what a review found it doing.
-                        .drawBehind {
-                            val w = TapeEdgeWidth.toPx()
-                            val dash = PathEffect.dashPathEffect(
-                                floatArrayOf(TapeDashOn.toPx(), TapeDashOff.toPx()),
-                            )
-                            listOf(w / 2f, size.width - w / 2f).forEach { x ->
-                                drawLine(
-                                    color = TapeEdge,
-                                    start = Offset(x, 0f),
-                                    end = Offset(x, size.height),
-                                    strokeWidth = w,
-                                    pathEffect = dash,
-                                )
-                            }
-                        },
-                )
+                ZineTape(tapeRotationFor(index), Modifier.offset(x = centre - TapeWidth / 2))
             }
 
             // `.stamp` — the paper size as a postmark, hanging off the bottom-right corner.
@@ -289,6 +262,41 @@ internal fun ZineV21Cover(
             )
         }
     }
+}
+
+/**
+ * `.tape` — a translucent strip holding paper to the desk, turned by [rotation] degrees. The cover's, and the
+ * restored-details note's (A37), which carries the same `.tape` at its own place.
+ */
+@Composable
+internal fun ZineTape(rotation: Float, modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .size(width = TapeWidth, height = TapeHeight)
+            .graphicsLayer { rotationZ = rotation }
+            // `box-shadow:0 1px 2px rgba(0,0,0,.12)` — the one soft shadow in a language
+            // of hard ones, because tape lifts off the paper rather than printing on it.
+            .shadow(TapeShadowElevation, clip = false)
+            .background(TapeFilm)
+            // `border-left`/`border-right:1px dashed rgba(255,255,255,.5)` — the torn
+            // edges. Without them the strip reads as a yellow rectangle rather than as
+            // tape, which is what a review found it doing.
+            .drawBehind {
+                val w = TapeEdgeWidth.toPx()
+                val dash = PathEffect.dashPathEffect(
+                    floatArrayOf(TapeDashOn.toPx(), TapeDashOff.toPx()),
+                )
+                listOf(w / 2f, size.width - w / 2f).forEach { x ->
+                    drawLine(
+                        color = TapeEdge,
+                        start = Offset(x, 0f),
+                        end = Offset(x, size.height),
+                        strokeWidth = w,
+                        pathEffect = dash,
+                    )
+                }
+            },
+    )
 }
 
 /** `border-radius: var(--br-xs) var(--br-md) var(--br-md) var(--br-xs)` — 4 / 14 / 14 / 4. */
@@ -349,9 +357,9 @@ private fun tapeRotationFor(index: Int): Float = when (index % 3) {
     else -> -2f
 }
 
-private val TapeWidth: Dp = 56.dp
+internal val TapeWidth: Dp = 56.dp
 private val TapeHeight: Dp = 19.dp
-private val TapeOffsetY: Dp = (-11).dp
+internal val TapeOffsetY: Dp = (-11).dp
 
 /**
  * `rgba(246,178,44,.55)` — hardcoded in the frozen file and **theme-invariant on purpose**. It is an

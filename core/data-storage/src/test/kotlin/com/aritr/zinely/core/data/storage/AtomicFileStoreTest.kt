@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.IOException
@@ -187,6 +188,46 @@ class AtomicFileStoreTest {
         // A normal subsequent write keeps the good content recoverable.
         store.write(target, "good three".toByteArray())
         assertArrayEquals("good three".toByteArray(), store.read(target, isGood))
+    }
+
+    @Test
+    fun `a read says which copy it used, and a damaged file is a repair once (ADR-134)`(@TempDir dir: Path) {
+        val target = dir.resolve("meta.json")
+        val isGood = { bytes: ByteArray -> bytes.decodeToString().startsWith("good") }
+        assertNull(store.readReporting(target, isGood))
+        store.write(target, "good".toByteArray())
+        store.write(target, "good two".toByteArray()) // .bak now holds "good"
+
+        assertTrue(store.readReporting(target, isGood) is StoreRead.Read)
+
+        Files.write(target, "corruptXX".toByteArray())
+        val repaired = store.readReporting(target, isGood)
+        assertTrue(repaired is StoreRead.Restored) { "a present, damaged file put back from .bak: $repaired" }
+        assertArrayEquals("good".toByteArray(), repaired!!.bytes)
+        // Repaired on disk, so the next read is the file itself.
+        assertTrue(store.readReporting(target, isGood) is StoreRead.Read)
+    }
+
+    @Test
+    fun `a repair that cannot be written is reported once, then the lone backup is BackupOnly`(@TempDir dir: Path) {
+        val target = dir.resolve("meta.json")
+        val isGood = { bytes: ByteArray -> bytes.decodeToString().startsWith("good") }
+        store.write(target, "good".toByteArray())
+        store.write(target, "good two".toByteArray())
+        Files.write(target, "corruptXX".toByteArray())
+        val diskFull = AtomicFileStore(
+            object : FileSystemOps by NioFileSystemOps {
+                override fun atomicReplace(source: Path, replacing: Path) {
+                    if (replacing == target) throw IOException("disk full")
+                    NioFileSystemOps.atomicReplace(source, replacing)
+                }
+            },
+        )
+
+        assertTrue(diskFull.readReporting(target, isGood) is StoreRead.Restored)
+        assertFalse(Files.exists(target)) { "the damaged file is quarantined" }
+        // Every later read of the lone .bak is the same repair, not a new one.
+        repeat(2) { assertTrue(diskFull.readReporting(target, isGood) is StoreRead.BackupOnly) }
     }
 
     @Test

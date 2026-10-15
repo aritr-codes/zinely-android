@@ -1172,6 +1172,47 @@ public object Copy {
             "Some zines didn’t go back. They’re on My Shelf, nothing is lost"
     }
 
+    /**
+     * The restored-details note on My Shelf: the words of the frozen `v21-library.html` A37.3, exactly
+     * ([ADR-134](docs/DECISIONS.md#adr-134)). Never *backup*, *restore*, *error*, *corrupt*, *metadata* or a file
+     * name (A37.4): Backups is a dock action that means library backups. No claim about the pages.
+     */
+    public object Restored {
+        public const val GOT_IT: String = Common.GOT_IT
+
+        /**
+         * The note's title and body for [zines], each `now to was` in Shelf order: `now` is the title its tile
+         * shows, `was` the one My Shelf showed before the repair, or `null` when not known. The name went back
+         * only when both are known and differ. Up to four names in full; past four, three and "and {k} more",
+         * so k is always 2 or more.
+         */
+        public fun note(zines: List<Pair<String, String?>>): Pair<String, String> {
+            require(zines.isNotEmpty()) { "a note names at least one zine" }
+            val wentBack = zines.map { (now, was) -> now to was?.takeIf { it != now } }
+            if (wentBack.size == 1) {
+                val (now, was) = wentBack.single()
+                return (if (was != null) "“$was” is called “$now” again" else "Zinely repaired “$now”") to
+                    ONE_BODY + (if (was != null) RENAME_AGAIN else "")
+            }
+            val names = wentBack.map { (now, was) -> if (was != null) "“$now” (was “$was”)" else "“$now”" }
+            val list = if (names.size > 4) {
+                names.take(3).joinToString(", ") + " and ${names.size - 3} more"
+            } else {
+                names.dropLast(1).joinToString(", ") + " and " + names.last()
+            }
+            return "Zinely repaired ${zines.size} zines" to "$list. $SEVERAL_BODY"
+        }
+
+        /** What TalkBack reads: the title and body as one node (A37.10). */
+        public fun spoken(title: String, body: String): String = "$title. $body"
+
+        private const val ONE_BODY: String = "A small file that holds its name, cover and folder was damaged, " +
+            "so Zinely used the copy from before the last change to them."
+        private const val RENAME_AGAIN: String = " You can rename it again."
+        private const val SEVERAL_BODY: String = "Small files that hold their names, covers and folders were " +
+            "damaged, so Zinely used the copies from before the last changes to them."
+    }
+
     /** Paper-size display names, shared by the shelf chooser and the print recipe. */
     public object Paper {
         public const val A4: String = "A4"
