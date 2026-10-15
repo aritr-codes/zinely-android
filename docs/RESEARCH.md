@@ -1114,7 +1114,8 @@ and the PDF carry? Research pass, 2026-10-15. Brief 04's sources are not repeate
   alt = “” or role = “presentation” … so that it can be ignored by assistive technology."
 - [Apple Books Asset Guide, Accessibility](https://help.apple.com/itc/booksassetguide/en.lproj/itcc20886c20.html):
   alt text "should contain what you would put in prose if the image were not included"; "Don’t use the word
-  "image" in the alt text"; an empty `alt=""` hides a decorative image from VoiceOver.
+  "image" in the alt text"; for a decorative image, "use the empty attribute `alt=""`" "to suppress irrelevant
+  information for VoiceOver users."
 - [DAISY Knowledge Base, Image descriptions](https://kb.daisy.org/publishing/docs/html/images-desc.html): users
   "only want a very brief description of an image in its alternative text"; "If an image is purely decorative,
   the alt attribute should be left empty."
@@ -1147,6 +1148,11 @@ SM-A176B ran 16.2 ([ADR-119](DECISIONS.md#adr-119)). 🟨 The open-source tree m
 - A node with no role reports no class TalkBack names, so TalkBack speaks the label alone (`getNodeRoleName`
   returns "" outside its list). The Bench's element nodes are buttons, so a photo there is "Photo" and then
   "Button" (`EditorA11y.label`; `ElementSemanticsLayer` sets `Role.Button`, since a Bench stop selects).
+- **A double tap on a node with no click action still taps the screen.** `FocusActor.clickNode` performs
+  `ACTION_CLICK` when the node has it; otherwise it asks the platform to click at the focused node
+  (`TouchInteractionController.performClick()`), and as a last resort dispatches a tap gesture at the centre of
+  the node's bounds (`simulateClickOnNode`, `rect.centerX(), rect.centerY()`). So "no click" on a node does not
+  make a double tap inert: whatever takes taps under the node's centre receives one.
 
 ### R31.3 Paged readers: words in reading order, and a page of pictures without words is "not readable" — ✅ VERIFIED
 

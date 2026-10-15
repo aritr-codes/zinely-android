@@ -1224,13 +1224,20 @@ if (prototypeParams.get('gallery') === 'fold') {
           Text with no words ...... no stop.
           Photo, described ........ "Photo: " + the description.
           Photo, not described .... "Photo".
+          A description of only spaces counts as none.
           Art, described .......... the piece's name + ": " + the description
                                     ("Pointing hand: this way to the flower end").
           Art, not described ...... no stop. It is decoration (WCAG 1.1.1).
-          Anything wholly off the page .. no stop (Read does not draw it).
-          A page with no stops and no Art ..... one stop: "Blank page".
-          A page with no stops but some Art ... one stop: "Only Art on this page".
-        A double tap on a stop does nothing.
+          Anything wholly off the page .. no stop (Read does not draw it), and it is
+                                    left out before the two empty-page rows below.
+          A page with no stops and no Art drawn on it ... one stop: "Blank page".
+          A page with no stops but Art drawn on it ...... one stop: "Only Art on this page".
+        A double tap on a stop does nothing. "No click" alone does not ensure it: with
+        no click action TalkBack taps the stop's centre (FocusActor.clickNode, R31.2),
+        and the outer fifth of the leaf on each side lies inside a turn edge. So while
+        touch exploration is on, a turn edge ignores taps inside the leaf's bounds and
+        the stops sit above the edges for touch; the edges' own click actions still
+        turn the page, and with TalkBack off tap-to-turn is unchanged.
      2. Stops come in the Bench's reading order (ZINELY-DESIGN-SYSTEM §4.5, ADR-119):
         a piece taller than six tenths of the page first, then rows top to bottom,
         left to right in a row. Declared in that order; traversalIndex restates it.
@@ -1288,16 +1295,17 @@ if (prototypeParams.get('gallery') === 'fold') {
       <tr><td>Text</td><td class="said">its words, as typed: <q>Before seven</q></td></tr>
       <tr><td>Text with no words</td><td class="none">no stop</td></tr>
       <tr><td>Photo with a description</td><td class="said">Photo: a trestle table heaped with red and green chillies under a striped awning</td></tr>
-      <tr><td>Photo with no description</td><td class="said">Photo</td></tr>
+      <tr><td>Photo with no description, or one of only spaces</td><td class="said">Photo</td></tr>
       <tr><td>Art with a description</td><td class="said">Pointing hand: this way to the flower end</td></tr>
       <tr><td>Art with no description</td><td class="none">no stop: it is decoration</td></tr>
       <tr><td>Anything wholly off the page</td><td class="none">no stop: Read does not draw it</td></tr>
-      <tr><td>A page with none of the above, and no Art</td><td class="said">Blank page</td></tr>
-      <tr><td>A page with none of the above, but some Art</td><td class="said">Only Art on this page</td></tr>
+      <tr><td>A page with none of the above, and no Art drawn on it</td><td class="said">Blank page</td></tr>
+      <tr><td>A page with none of the above, but Art drawn on it</td><td class="said">Only Art on this page</td></tr>
       <tr><td>Turning a page</td><td class="said">the ticket only: <q>Page 3 of 8</q></td></tr>
     </tbody>
   </table>
-  <p class="cap">Stops are given no role, and a double tap on one does nothing. The word <b>Photo</b> is how a
+  <p class="cap">Stops are given no role, and a double tap on one does nothing, even near the page’s edge,
+  where a turn zone lies under it. The word <b>Photo</b> is how a
   listener tells the maker’s description from the words printed on the page. By TalkBack’s source a labelled
   stop with no role gets no “Image” after it and no description of TalkBack’s own; the listen confirms it.</p>
 

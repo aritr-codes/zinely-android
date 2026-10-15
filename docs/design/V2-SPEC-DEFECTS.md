@@ -7877,6 +7877,7 @@ Two independent Review Agents, reading only, 2026-10-14.
 | 2 | **The freeze and the build disagree about what a turn announces.** `#book aria-live="polite"` would read the whole new leaf on every turn, beside the ticket the build announces. The build is right: one announcement per turn (ADR-101 P5/P6). | **A38 supersedes `#book`'s live region.** The band's own live lines (`#stale`, the saved notice) are untouched |
 | 3 | **Where a swipe lands after a turn is unknown.** With the page between Previous and Next, a listener whose focus stays on Next page after a double tap would pass the new page or read it backwards. | **Kept as §4.5's visual row; the listen decides** (ADR-135 decision 4, owed item 3). The remedy, Next page declared first, is named, not taken |
 | 4 | **Nothing tells a maker that descriptions never reach paper or the PDF.** | **A38 fixes one helper line** for the future Describe field: *"Zinely reads this aloud in Read. It isn’t printed or put in the PDF."* The Bench's Describe amendment draws it |
+| 5 | **A double tap on a stop could turn the page.** A node with no click action is still tapped at its centre by TalkBack (`FocusActor.clickNode` → `simulateClickOnNode`, `google/talkback` `229212f`); the turn edges (`TAP_EDGE_FRACTION = 0.30f`, full height) cover the outer ~22% of the leaf (`LEAF_WIDTH_FRACTION = 0.71f`), which takes no taps. | **A38 / ADR-135 decision 1:** while touch exploration is on, a turn edge ignores taps inside the leaf's bounds and the stops sit above the edges for touch. Owed item 1 adds an injected-tap test |
 
 #### Review
 
@@ -7921,3 +7922,25 @@ second reviewer, could not sign in.
 | Decided without the listen | Observation | Same as the first table's fifth row |
 | "Page-tall" vs six tenths | Observation | Same as the first table's thirteenth row |
 | The §11 link has no anchor | Observation | **Moot.** The link left with the order change |
+
+**Second round, on `e3a9ac5`. Accessibility and design lens: GO WITH FIXES.**
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| "A double tap on a stop does nothing" is frozen with no mechanism; TalkBack taps a click-less node's centre, and a stop near the leaf's side sits over a turn edge, so the page would turn; the planned "no click" test would pass while it shipped | Required | **Accepted.** Verified in `FocusActor.java` at `229212f` (`clickNode`, `simulateClickOnNode`) and `ProofRead.kt` (`TapEdge`, `TAP_EDGE_FRACTION`, `LEAF_WIDTH_FRACTION`). Decision 1 and A38 rule 1 name the mechanism; owed item 1 adds an injected tap at an edge-side stop's centre with touch exploration on; R31.2 records the fallback; finding 5 above |
+| "Only Art on this page" is unclear when the Art is wholly off the page | Recommended | **Accepted.** "Art drawn on it"; off-page pieces are left out before the empty-page test |
+| Apple Books line paraphrased; the Kindle page is on `digprjsurvey.amazon.com` | Observation | **Partly accepted.** The Apple Books line now quotes the page. The Kindle URL stays: it is the page Amazon's own help search returns, and no `amazon.com` copy was found |
+| R31 depends on lanes E and C merging first | Observation | **No change here.** The merge note is in the PR for the main session |
+| Repository facts confirmed | Observation | No change |
+
+**Documents and evidence lens: GO.**
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| A double tap on a role-less stop may fall through to Next page; touch exploration over the edge lands on Next page | Recommended | **Accepted** with the first table's first row, which also puts the stops above the edges for touch |
+| No rule for a blank description (Brief 04 criterion 17) | Recommended | **Accepted.** A description of only spaces counts as none (ADR-135 table, A38); owed item 2 tests it |
+| Brief 04's readiness line still lists "a Read-semantics design" as a blocker, and its change log has no row | Recommended | **Accepted.** Readiness line and change-log row updated |
+| The "one announcement per turn" citation should point at ADR-101 §6 P1 item 1 | Observation | **Accepted.** Linked |
+| R31 relies on lane C renumbering | Observation | Same as above |
+| Duplicate also carries the description | Observation | **Accepted.** Decision 6: Duplicate keeps it; owed item 2 tests it |
+| Verified claims | Observation | No change |
