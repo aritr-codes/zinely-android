@@ -12,12 +12,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
@@ -29,6 +31,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
@@ -77,8 +80,29 @@ internal val NoticeGap = ZinelyV21Dimens.gapMd
  */
 internal val NoticeBorder = 1.5.dp
 
-/** `.snack{border-radius:var(--br-pill)}`, as a percent shape so the outline stays exact at any height. */
-internal val NoticeShape: Shape = RoundedCornerShape(percent = 50)
+/**
+ * `.snack{border-radius:var(--br-pill)}`: ends of half the height, so the outline stays a pill at any height
+ * **up to [NoticeMaxRadius]**, and only rounded corners past it.
+ *
+ * Invariant (D-119, issue #134): the curve never reaches a line of text. A pill's ends grow with its height,
+ * and at the largest text on a small phone the move/resize hint wraps to five lines; an end over 100dp then
+ * cut into its first and last words. The cap keeps the corner of the first line (inset 16dp × 12dp by the
+ * padding) inside the 1.5dp border. Every notice in the goldens is under 80dp tall, so none of them changes.
+ * Shared by all three notices because all three wrap. Fenced by `EditorMoveResizeHintLargeTextTest`.
+ */
+internal val NoticeShape: Shape = RoundedCornerShape(
+    object : CornerSize {
+        override fun toPx(shapeSize: Size, density: Density): Float =
+            minOf(shapeSize.minDimension / 2, with(density) { NoticeMaxRadius.toPx() })
+    },
+)
+
+/**
+ * The largest end [NoticeShape] draws. At least 39.6dp, half the tallest notice at text size 1 (three lines:
+ * the photo hint, the save failure), so none of them changes; at most 43.9dp, where the curve would meet the
+ * first line's corner inside the border.
+ */
+internal val NoticeMaxRadius = 40.dp
 
 /** `.snack{padding:var(--gap-md) var(--gap-sm) var(--gap-md) var(--gap-lg)}` — 12 / 8 / 12 / 16. */
 internal val NoticePaddingStart = ZinelyV21Dimens.gapLg
