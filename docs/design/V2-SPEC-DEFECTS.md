@@ -7861,3 +7861,49 @@ Two independent Review Agents, reading only, 2026-10-14.
 | PRD §7, ROADMAP and ADR-016's status will be stale | Recommended | **Partly accepted.** Nothing ships, so PRD scope is unchanged; the ROADMAP lines and ADR-016's status go to the main session in the PR body |
 | The index cell should say what is built | Recommended | **Accepted.** "Accepted (engine and closed set); sizes decided, not built" |
 | Review placeholders unfilled | Recommended | **Accepted.** Filled |
+
+---
+
+### D-119 — at the largest text the first-run hint's rounded ends cut off its first and last words {#d-119}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../EditorSaveFailure.kt` (`NoticeShape`, `NoticeMaxRadius`) · `EditorMoveResizeHint.kt` · `EditorCoverageNotice.kt` · `EditorMoveResizeHintLargeTextTest.kt` · frozen `docs/design/mockups/v21-bench.html` `.snack` (not edited) |
+| **Found** | 2026-10-14, the emulator pass in [D-114](#d-114): [issue #134](https://github.com/aritr-codes/zinely-android/issues/134) |
+| **Severity** | **Visible UX defect** at an accessibility setting: words of a teaching line cannot be read |
+| **Status** | ✓ **Fixed 2026-10-15** in Compose, as a legibility bug fix inside the freeze (no amendment). The owner's real small phone is still owed |
+
+**The defect.** On a 360 × 640dp screen at text size 2.0 the move/resize hint wraps to five lines. Its
+shape draws `.snack{border-radius:var(--br-pill)}` as `RoundedCornerShape(percent = 50)`: each end is half
+the height, so a 208dp-tall hint has 104dp ends. The first and last lines start 16dp × 12dp in from the
+corner (the padding), well inside the curve, and the clip took their first letters: "rag to move." and
+"uttons." were what showed.
+
+**The cause** is the shape, not the hint. All three canvas notices share `NoticeShape` (the hint, the
+save failure and the coverage notice), all three wrap, and the same geometry would cut any of them once it
+runs past three lines. The frozen `.snack` does the same in a browser (a pill radius is clamped to half the
+height, never below it), but the prototype never wraps it, so the freeze does not say what a tall one
+should look like. Issue #134 asked for an amendment; this fix needs none, because it changes nothing the
+freeze draws.
+
+**The fix.** `NoticeShape` keeps ends of half the height up to `NoticeMaxRadius` (40dp) and stops there, so
+a tall notice becomes a rounded card instead of a stadium. The bound is measured, not chosen:
+
+| Bound | Value | Why |
+|---|---|---|
+| At least | 39.6dp | half the tallest notice at text size 1 (three lines: the photo hint and the save failure, 79.2dp), so every existing look is unchanged |
+| At most | 43.9dp | the radius at which the curve, inside its 1.5dp border, meets the first line's corner (16dp, 12dp in) |
+
+Fixed in the shared shape rather than in the hint alone: the three notices are one surface on purpose
+(the block comment above `NoticeGap` says why), and a hint-only shape would be the drift it warns about.
+
+**Evidence.**
+
+- `EditorMoveResizeHintLargeTextTest` (360 × 640dp, xhdpi, font scale 2): for every laid-out line, all
+  four corners of the line box must lie inside the shape's border, measured in the hint's own unrotated
+  frame. It requires at least four lines, so it cannot pass on a short hint. **Red before the fix**, both
+  cases at the first line's corner (32, 24)px: generic hint 640 × 416px with a 208px radius, photo hint
+  640 × 493px with a 246.5px radius. Green after.
+- The eight notice goldens (`editor_move_resize_hint_*`, `editor_photo_move_resize_hint_*`,
+  `editor_save_failure_*`, `editor_coverage_notice_*`) measure 59–79dp tall, all under the 80dp at which
+  the cap starts to act.
