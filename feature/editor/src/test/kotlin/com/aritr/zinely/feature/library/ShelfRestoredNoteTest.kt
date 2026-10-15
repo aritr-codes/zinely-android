@@ -195,7 +195,7 @@ class ShelfRestoredNoteTest {
     @Test
     @Config(qualifiers = "w360dp-h800dp")
     fun `at text size 2 on a 360dp phone every word shows and Got it stays under them, 48dp tall`() {
-        val five = listOf("Letters home", "Riso tests", "Mum’s garden", "Tiny poems", "Coffee log")
+        val five = listOf("Letters home", LONG_NAME, "Mum’s garden", "Tiny poems", "Coffee log")
             .map { RestoredZine(it, it, if (it == "Letters home") "Letters to Gran" else null) }
         show(LibraryShelfState.Content(ZINES, five), fontScale = 2f)
 
@@ -209,7 +209,9 @@ class ShelfRestoredNoteTest {
         assertTrue("48dp tall", ok.height >= 48.dp)
         // Every word: the note's one node carries all five, three named and "and 2 more" (A37.3), and the text has
         // no line limit, so it is as tall as its words need.
-        assertTrue(said()!!.contains("“Letters home” (was “Letters to Gran”), “Riso tests”, “Mum’s garden” and 2 more."))
+        assertTrue(said()!!.contains("“Letters home” (was “Letters to Gran”), “$LONG_NAME”, “Mum’s garden” and 2 more."))
+        // A37.8: a name with no space in it breaks anywhere; the words stay inside the note.
+        assertTrue("the words stay inside the note", text.left >= note.left && text.right <= note.right)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -297,6 +299,9 @@ class ShelfRestoredNoteTest {
             subtitle = "A4 · today",
             cover = ZineCoverRecipe(ZineCoverSurface.MatchaInk, ZineCoverStamp.Sun),
         )
+
+        /** 40 characters, the longest a title can be, with nowhere to break but anywhere. */
+        const val LONG_NAME = "Risotestsfromthelibrarybasementzineszz12"
 
         val ZINES = listOf("Letters home", "Riso tests", "Mum’s garden", "Tiny poems", "Coffee log", "Sunday market")
             .map(::zine)

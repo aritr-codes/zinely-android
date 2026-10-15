@@ -179,6 +179,11 @@ private sealed interface FocusWish {
  * (a `SideEffect`), so [armed] means "the last My Shelf put on screen had no note". The composition in which the
  * note first appears on an armed Shelf leaves one announcement [pending]; the note [take]s it once, as it is first
  * composed, so a note scrolled away and back, or recomposed with new words, never takes a second one.
+ *
+ * ponytail: the take happens when the note's lazy cell first composes. A note that arrives while My Shelf is
+ * scrolled past its first row is therefore announced when the maker scrolls back up and it comes into view, not
+ * at the moment the store found the repair. Taking it at screen level would need the grid's visible range read
+ * in composition; do that only if the device pass finds the late announcement confusing.
  */
 private class NoteArrival {
     private var armed = false

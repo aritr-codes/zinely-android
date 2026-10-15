@@ -297,6 +297,8 @@ internal fun ZineShelf(
             )
         }
 
+        if (note != null) item(key = ShelfNoteKey, span = { GridItemSpan(maxLineSpan) }) { note() }
+
         // `.ph` — the loading placeholders, which the amended freeze puts INSIDE this grid, after the
         // heading, as ordinary cells (`:184`). They are cells rather than a separate skeleton screen for
         // the reason the amendment states: *the head's cell stays up, so the screen does not restructure
@@ -304,8 +306,6 @@ internal fun ZineShelf(
         // drops the text, which is what the block above transcribes; an earlier version of this line
         // quoted the amendment as "the heading stays up" and so read as the opposite of what ships.
         // See [ZineLibraryScreen] for why they are never shown beside real zines.
-        if (note != null) item(key = ShelfNoteKey, span = { GridItemSpan(maxLineSpan) }) { note() }
-
         items(placeholders) { ShelfPlaceholder() }
 
         // No `key`: position is the identity a list that cannot reorder actually has. B5 supplies the
