@@ -1117,7 +1117,7 @@ is created (R29.1).
   set to US Letter; the answer given is to rebuild on a Letter document
   ([discussions.apple.com](https://discussions.apple.com/thread/2797098)). A forum, not a measurement.
 - Procreate, a drawing app whose work is placed by hand on a canvas: the size is set when a canvas is
-  created ("Enter your size and tap Create"), and changed later only through Crop and Resize, where "The
+  created, in pixels or a physical measurement, and changed later only through Crop and Resize, where "The
   edges of this box represent the new edges of your canvas", with a warning that resampling "can create
   unexpected results" ([Procreate Handbook, Canvas](https://help.procreate.com/procreate/handbook/actions/actions-canvas)).
 - Affinity Publisher: "You can modify your document's setup at any time", but a page-size change makes the
