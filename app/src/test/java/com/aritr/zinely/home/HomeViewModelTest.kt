@@ -7,6 +7,7 @@ import com.aritr.zinely.core.data.repository.ProjectShelfEntry
 import com.aritr.zinely.core.data.repository.FolderChange
 import com.aritr.zinely.core.data.repository.FolderNames
 import com.aritr.zinely.core.data.repository.ProjectRepository
+import com.aritr.zinely.core.data.repository.RestoredDetails
 import com.aritr.zinely.core.data.repository.ProjectSummary
 import com.aritr.zinely.core.data.repository.ProjectUnavailableReason
 import com.aritr.zinely.core.copy.Copy
@@ -107,7 +108,15 @@ class HomeViewModelTest {
         val folders = mutableMapOf<String, String?>()
 
         var shelfProjection: (List<ProjectSummary>) -> List<ProjectShelfEntry> =
-            { items -> items.map { ProjectShelfEntry.Available(it, folders[it.id]) } }
+            { items ->
+                items.map { summary ->
+                    ProjectShelfEntry.Available(
+                        summary,
+                        folders[summary.id],
+                        restored = if (summary.id in restored) RestoredDetails(restored[summary.id]) else null,
+                    )
+                }
+            }
 
         override fun observeShelfProjects(): Flow<List<ProjectShelfEntry>> = flow {
             observeCollections++
@@ -203,6 +212,22 @@ class HomeViewModelTest {
         override suspend fun unpackFolder(name: String): DataResult<FolderChange> {
             calls += "unpack $name"
             return changeFolder(name, null)
+        }
+
+        // ---- ADR-134: zines whose details went back to their earlier copy, waiting to be told.
+
+        /** Each waiting zine's previous title (null = not known), as its marker file would hold it. */
+        val restored = mutableMapOf<String, String?>()
+
+        /** When set, [dismissRestoredDetails] removes nothing and fails. */
+        var dismissFailure = false
+
+        override suspend fun dismissRestoredDetails(ids: Collection<String>): DataResult<Unit> {
+            calls += "dismiss restored ${ids.joinToString()}"
+            if (dismissFailure) return DataResult.Failure(DataError.Io("marker could not be removed"))
+            ids.forEach { restored.remove(it) }
+            listAgain()
+            return DataResult.Success(Unit)
         }
     }
 
