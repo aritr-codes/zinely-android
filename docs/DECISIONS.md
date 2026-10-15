@@ -16268,7 +16268,7 @@ step 6), alone.
 **Findings:** [D-122](design/V2-SPEC-DEFECTS.md#d-122).
 **Narrows:** [ADR-058](#adr-058) (Read) by giving the leaf stops. **Keeps:**
 [ZINELY-DESIGN-SYSTEM §4.5](ZINELY-DESIGN-SYSTEM.md#45-reading-order) and [ADR-119](#adr-119)'s order; Read's
-"Previous, leaf, Next" declaration; one announcement per page turn (ADR-101 P5/P6).
+"Previous, leaf, Next" declaration; one announcement per page turn ([ADR-101 §6 P1](#adr-101-p1) item 1, P5/P6).
 **Decided at the desk:** Brief 04 left two of these calls "to be decided by a listen" (`Photo: …` or the
 description alone; whether Art can be decorative). They are decided here from research under the delegation;
 the owner's listen is still owed and may overturn them.
@@ -16300,8 +16300,15 @@ flowchart LR
 
 1. **Each page in Read gets stops**, one per thing that carries meaning, on a semantics-only layer over the
    leaf (as the Bench's `ElementSemanticsLayer` sits over the canvas). The leaf stays cleared; nothing drawn
-   changes, so no golden moves. A stop has **no role, no click and no actions**; a double tap on it does
-   nothing (it must not reach a turn edge underneath).
+   changes, so no golden moves. A stop has **no role, no click and no actions**, and a double tap on it does
+   nothing. **"No click" alone does not make that true.** When the focused node has no click action, TalkBack
+   asks the platform to click at it and, failing that, taps the centre of its bounds (`FocusActor.clickNode`,
+   R31.2). In Read the turn edges are 30% of the stage each and full height, and the leaf is 71% wide and takes
+   no taps, so the outer fifth of the leaf on each side lies in a turn zone: a double tap on a stop centred there
+   would turn the page. So, **while touch exploration is on, a turn edge ignores a tap that lands inside the
+   leaf's bounds**, and the stops layer sits above the edges for touch exploration, so touching the page finds
+   its stops, not Next page. The edges keep their own click action, so a double tap on Previous or Next page
+   still turns; with TalkBack off, tap-to-turn is unchanged.
 2. **What each stop says**, exactly (words in `core:copy`):
 
    | On the page | Read says |
@@ -16310,11 +16317,15 @@ flowchart LR
    | Text with no words (blank or spaces) | no stop |
    | Photo with a description | `Photo: ` + the description |
    | Photo with no description | `Photo` (today's `Copy.A11y.PHOTO`) |
+   | A description that is empty or only spaces | counts as no description (Brief 04 criterion 17) |
    | Art with a description | its piece's name + `: ` + the description, e.g. `Pointing hand: this way to the flower end` |
    | Art with no description | no stop: decoration (WCAG 1.1.1) |
    | Anything with no part on the page | no stop: Read does not draw it |
-   | A page with no stops and no Art | one stop: `Blank page` |
-   | A page with no stops but some Art | one stop: `Only Art on this page` |
+   | A page with no stops and no Art drawn on it | one stop: `Blank page` |
+   | A page with no stops but Art drawn on it | one stop: `Only Art on this page` |
+
+   Pieces wholly off the page are left out before the empty-page test: a page whose only Art is off it is
+   `Blank page`, as Read draws it.
 
    **Why "Photo" in the label, against Android's "don't include an element's type":** the description sits
    among the printed words, and the listener must hear which is which. The `Image` role would say "Image" only
@@ -16344,7 +16355,8 @@ flowchart LR
    **replacing an Art piece keeps it** (the words say what the mark means; the name in the label follows the
    new piece). Both reducer paths build the new element with `copy()` (`EditorReducer.kt`, Replace photo and
    Replace supply), which would carry the field, so step 7 must clear it in the photo path. Whether keeping it
-   for Art surprises a maker is a Pass 2 question.
+   for Art surprises a maker is a Pass 2 question. **Duplicate keeps the description** (the copy shows the same
+   thing; `duplicateElement` also builds with `copy()`), and step 7 tests it.
 7. **Paper and PDF carry nothing, and say nothing.** No tagged PDF, no second PDF library ([ADR-001](#adr-001)),
    no new words in Proof's band or print drawer. The helper line in 6 is the one place the limit is stated.
    No public claim that zines are readable by people who cannot see them (Brief 04 criterion 18,
@@ -16382,14 +16394,20 @@ flowchart LR
   change of the test, not loosen §4.5.
 - 🟨 The shipped TalkBack may differ from the open-source tree (R31.2); the listen checks that no machine
   description is offered on a stop.
+- Part 1 makes Read's turn edges read the touch-exploration state (decision 1), a first for Proof; the seam
+  already exists in tests (`ShadowAccessibilityManager.setTouchExplorationEnabled`, `NamedUndoSnackTest`).
 
 #### Owed before Accepted
 
 1. Part 1 built, with platform-tree tests (`SurfaceTraversalOrderTest` harness): each table row's label; no
    stop for blank text, undescribed Art or an off-page piece; both empty-page stops; the order top bar →
    Previous → stops → Next → band; the stops in `SpatialOrder` with a matching `traversalIndex`; a turn
-   announcing the ticket only; no role and no click on a stop. `gold` and CI's exact goldens unchanged.
-2. Part 2 built with step 7: the description rows, the Bench label, the Describe amendment frozen first.
+   announcing the ticket only; no role and no click on a stop. **With touch exploration on, a tap injected at
+   the centre of a stop near each side of the leaf does not turn the page**, while a tap on a turn edge outside
+   the leaf and the edges' click actions still do; with it off, tap-to-turn over the leaf's sides is unchanged.
+   `gold` and CI's exact goldens unchanged.
+2. Part 2 built with step 7: the description rows, the Bench label, the Describe amendment frozen first; a
+   blank description speaks as none; Make-spread and Duplicate carry the description, Replace photo clears it.
 3. Both device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)), and the owner's TalkBack
    listen on the SM-A176B: where a swipe after a turn lands (decision 4); that a double tap on a stop does
    nothing; nothing is said twice; how a long description sounds; no "Describe image" on a stop. A sighted
@@ -16403,3 +16421,9 @@ back to §4.5's visual row, with "Next page first" kept as the named remedy; `tr
 order as on the Bench; the empty-page stop split in two; "only live region" narrowed to what a turn
 announces; the role rationale corrected against TalkBack's source; R29 renumbered R31 to clear two sibling
 lanes. Each finding and its reconciliation is in [D-122](design/V2-SPEC-DEFECTS.md#d-122).
+
+Second round, on the branch head `e3a9ac5`: accessibility and design, **GO WITH FIXES**; documents and
+evidence, **GO**. The Required Fix: "a double tap on a stop does nothing" was frozen with no mechanism, and
+TalkBack's fallback taps the stop's centre, which can lie in a turn edge; decision 1 now names the mechanism and
+owed item 1 the test. Also taken: a blank description counts as none; off-page Art is left out before the
+empty-page test; Duplicate keeps the description. Reconciled in D-122.
