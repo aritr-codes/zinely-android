@@ -50,6 +50,13 @@ if (new URLSearchParams(location.search).has('gallery')) {
      │  exists only while it holds a zine.  No drag gesture.  With A28 the         │
      │  unavailable zine's sheet has six rows, not the five D-111 names: Move to   │
      │  a folder is live for it, as Rename is.                                     │
+     │                                                                             │
+     │  A37 RESTORED-DETAILS NOTE · FROZEN 2026-10-15 under the owner's            │
+     │  delegation of 2026-10-12 ("decide, do not ask"), ADR-134.  The owner       │
+     │  has not ruled on it personally and may overrule it.  When a zine's         │
+     │  meta.json was put back from its earlier copy (D-116), My Shelf shows       │
+     │  one paper note under its heading until the maker presses "Got it".         │
+     │  Marked A37 in the CSS, markup and script below; nothing above changed.     │
      └─────────────────────────────────────────────────────────────────────────────┘ -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -507,6 +514,37 @@ body{
 :root[data-large="on"]{font-size:180%}
 /* ===================== end of A28 CSS ===================== */
 
+/* ============================================================================
+   A37 · RESTORED-DETAILS NOTE — FROZEN 2026-10-15 under the owner's delegation
+   (ADR-134).  Rules A37.1–A37.12 are in the A37 script at the end of this file.
+   No rule above this line changed; with no note raised the Shelf is the frozen Shelf.
+   ============================================================================ */
+/* A note pinned to the desk: the maker's paper, PINNED in both themes with its ink, like
+   the name field and the paper stocks.  It is a full-width row of the grid, so it scrolls
+   with the zines and never covers one.  Not a snack: a snack goes by itself, and this
+   says something changed in the maker's work (R29.1). */
+.restored{grid-column:1/-1;position:relative;display:flex;flex-direction:column;gap:var(--gap-xs);
+  background:#FFF6E8;color:#27270F;border:1.5px solid #27270F;
+  border-radius:var(--br-sm) var(--br-md) var(--br-md) var(--br-sm);
+  box-shadow:var(--hard) var(--hard) 0 var(--ink-line);
+  padding:var(--gap-lg) var(--gap-lg) var(--gap-xs);margin:var(--gap-sm) 0 var(--gap-xs);
+  transform:rotate(-.5deg)}
+.restored[hidden]{display:none}
+.restored .tape{left:22%}
+.rs-ttl{margin:0;font-family:var(--voice);font-weight:700;font-size:1.05rem;line-height:1.2;overflow-wrap:anywhere}
+/* #6A452F on the pinned paper is 7.8:1 */
+.rs-body{margin:0;font-size:.86rem;line-height:1.45;color:#6A452F;overflow-wrap:anywhere}
+/* the snack's text button, pinned ink: 48px tall at any text size, below the words, never beside them */
+.rs-ok{align-self:flex-end;min-height:48px;padding:var(--gap-xs) var(--gap-md);border:0;background:none;
+  border-radius:var(--br-pill);cursor:pointer;color:#27270F;font:700 .86rem/1.2 var(--sans);
+  text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.rs-ok:active{background:rgba(39,39,15,.10)}
+.rs-ok:focus-visible{outline:2px solid #27270F;outline-offset:2px}
+/* prototype-only: Android font scale 2 on a 360dp phone, the size A37 is judged at */
+:root[data-a37big="on"]{font-size:200%}
+:root[data-a37big="on"] .phone{width:360px}
+/* ===================== end of A37 CSS ===================== */
+
 /* ============================== dev controls ============================== */
 .controls{display:flex;flex-wrap:wrap;gap:var(--gap-sm);justify-content:center;max-width:640px}
 .ctl{font-family:var(--sans);font-size:.78rem;font-weight:600;background:var(--surface);
@@ -536,6 +574,12 @@ out. There is one level, a zine sits in one place, and a folder exists only whil
 dragged. With no folder made, this is the frozen Shelf plus that one row. <b>Make a zine</b> pressed inside a
 folder puts the new zine in that folder (stated; this page has no Bench to make one on). The <b>folders</b>
 buttons below jump to each state.</p>
+<!-- A37 -->
+<p class="cap"><span class="badge">A37 restored details · frozen 2026-10-15 · not built</span><br>
+<b>When a zine’s details went back to an earlier copy (ADR-134).</b> A zine’s name, cover and folder live in
+a small file. If that file is damaged, Zinely uses the copy it kept from before the last change to them, and the
+Shelf now says so: one paper note under the heading, until <b>Got it</b>. Pages are never part of it. The
+<b>restored details</b> buttons below raise each form of the note.</p>
 
 <div class="phone grainy">
   <div class="shelf" id="shelf">
@@ -700,6 +744,12 @@ buttons below jump to each state.</p>
   <button class="ctl" id="fo4">new-folder sheet</button>
   <button class="ctl" id="fo5">folder actions</button>
   <button class="ctl" id="lg">large text (1.8×)</button>
+  <span class="grp">restored details — A37</span>
+  <button class="ctl on" id="rs0">no note</button>
+  <button class="ctl" id="rs1">one zine, name went back</button>
+  <button class="ctl" id="rs2">one zine, same name</button>
+  <button class="ctl" id="rs3">four zines</button>
+  <button class="ctl" id="rs4">text 2× at 360dp</button>
   <span class="grp">direction — judge each move on its own</span>
   <button class="ctl on" data-t="hard">hard offset shadow</button>
   <button class="ctl on" data-t="tilt">resting at an angle</button>
@@ -1065,4 +1115,146 @@ $('lg').onclick = () => {
   R.setAttribute('data-large', on ? 'on' : 'off'); $('lg').classList.toggle('on', on);
 };
 /* ===================== end of A28 script ===================== */
+</script>
+
+<script>
+/* ============================================================================
+   A37 · RESTORED-DETAILS NOTE — FROZEN 2026-10-15 under the owner's delegation of
+   2026-10-12 ("decide, do not ask"), ADR-134.  The owner has not ruled on it personally
+   and may overrule it.  Defect record: D-120.  Evidence: RESEARCH R29.
+
+   WHY.  A zine's name, cover and folder live in meta.json.  When that file is damaged,
+   the store puts back meta.json.bak, which is the file as it was BEFORE the last change
+   to it (ADR-021 open-time recovery).  Since D-116 the Shelf shows what the repaired file
+   says, so a renamed zine can come back under its old name, in its old folder, and
+   nobody says why (issue #128).  A maker looking for "Letters to Gran" finds no such zine.
+
+   THE RULES.  Cited as A37.n.  [shown] = this page performs it; [stated] = written down
+   only; both kinds are the amendment.  ADR-134 owns the signal and the storage; this page
+   owns what is on screen: the place, the words, dismissal, focus and the drawing.
+
+  A37.1  [stated] WHEN.  A zine joins the note when its meta.json was read from the earlier
+                copy, whatever that copy changed.  Not for the D-116 re-sync of a row after
+                a failed rename (the file is the maker's newest choice), not for a page
+                document recovered from its own copy (D-120 item 4), not for a library
+                backup restored through Backups (ADR-121: new zines, nothing went back).
+  A37.2  [shown]  WHERE.  On My Shelf only: one full-width paper note directly under the
+                heading and its count, above the first zine.  It scrolls with the zines and
+                never covers one.  Not inside a folder (it waits on My Shelf), and not in the
+                loading, empty or error states.  Not a snack: a snack leaves by itself, and
+                this tells the maker their work changed (R29.1).  Not a dialog: there is
+                nothing to decide (R29.2).
+  A37.3  [shown]  ONE NOTE, however many zines.  Its words, exactly:
+                one zine, name went back ... “{was}” is called “{now}” again
+                one zine, otherwise ......... Zinely repaired “{now}”
+                  body: A small file that holds its name, cover and folder was damaged,
+                  so Zinely used the copy from before your last change to them. Its pages
+                  weren’t touched.
+                several zines ............... Zinely repaired {n} zines
+                  body: {list}. Small files that hold their names, covers and folders were
+                  damaged, so Zinely used the copies from before your last changes to them.
+                  Their pages weren’t touched.
+                {list}: each zine as “{now}”, or “{now}” (was “{was}”) when its name went
+                back; in Shelf order; joined with ", " and a final " and "; past three,
+                the first three and then " and {k} more".
+                button ...................... Got it
+                {now} is the title in the repaired file, the one its tile shows.  {was} is
+                the title My Shelf showed before the repair; "name went back" means both are
+                known and differ.  When {was} is unknown the zine takes the plain form.
+  A37.4  [shown]  NEVER the words backup, restore, error, corrupt, metadata or file names.
+                "Backups" is a dock action that means library backups (ADR-120); this note
+                is not about them, and saying "backup" would send the maker there.
+  A37.5  [shown]  DISMISSED only by Got it.  Not by scrolling, opening a zine, Back, a
+                timer, or leaving the app.  Got it clears every zine the note names, and
+                focus goes to the "My Shelf" heading.
+  A37.6  [stated] ONCE PER REPAIR.  The note survives the app being stopped and started
+                until Got it.  A later repair, of the same zine or another, raises it again.
+                A zine leaves the note when it is deleted (once its undo has passed), or
+                when the maker renames it or moves it: they have acted on it.  When no zine
+                is left the note goes, without a word.
+  A37.7  [shown]  NO MARK ON THE TILE and no change to the zine sheet: D-111's "no shelf
+                badge" holds.  The note names the zines; the tiles stay the maker's objects.
+  A37.8  [shown]  LARGE TEXT.  At font scale 2 on a 360dp phone ("text 2× at 360dp" below)
+                every word shows: no line limit, no ellipsis, names break anywhere.  Got it
+                stays at least 48dp tall, under the words at the end edge, never beside them.
+  A37.9  [shown]  PAPER AND INK ARE PINNED in both themes, like the name field: the note is
+                a piece of paper on the desk.  Its tape follows the tape toggle.
+ A37.10  [shown]  TALKBACK.  The title and body are ONE node, read as "{title}. {body}", the
+                next stop after the count; Got it is the stop after it, "Got it, button".
+                The words are a polite live region, and Got it is outside it (A28.13's
+                rule: an action is not a button inside a status region).  Not a heading.
+                [stated] If the note arrives while My Shelf is already on screen (the start
+                scan finished after the first draw), TalkBack speaks it once.  Its words
+                never change while it is up, so it is never spoken twice.  If it is there
+                when the Shelf opens it is read in order, not announced.  The device pass
+                must hear the one announcement, and must hear no second one.
+ A37.11  [stated] THE SIGNAL.  The store says which copy it read, as a sealed result; nothing
+                new is caught or swallowed.  The waiting note is kept per zine, beside its
+                files, so a repair found just before the app is stopped is still told; it
+                never travels in a Duplicate or a library backup.  ADR-134 owns this.
+ A37.12  [stated] The words live in core:copy, transcribed from A37.3 exactly.
+   ============================================================================ */
+const rsNote = el('div', 'restored');
+rsNote.id = 'restored'; rsNote.hidden = true;
+const rsTape = el('span', 'tape'); rsTape.setAttribute('aria-hidden', 'true');
+const rsText = el('div', 'rs-text');
+rsText.setAttribute('role', 'status'); rsText.setAttribute('aria-live', 'polite');  // A37.10
+const rsTtl = el('p', 'rs-ttl'), rsBody = el('p', 'rs-body');
+rsText.append(rsTtl, rsBody);
+const rsOk = el('button', 'rs-ok', 'Got it');
+rsNote.append(rsTape, rsText, rsOk);
+head.after(rsNote);                                                        // A37.2
+
+let restored = [];                       // [{ name, was }] in Shelf order
+const q = s => '“' + s + '”';
+function rsList(items){                                                     // A37.3 {list}
+  const w = items.map(z => z.was ? q(z.name) + ' (was ' + q(z.was) + ')' : q(z.name));
+  if(w.length > 3) return w.slice(0, 3).join(', ') + ' and ' + (w.length - 3) + ' more';
+  return w.length < 2 ? w[0] : w.slice(0, -1).join(', ') + ' and ' + w[w.length - 1];
+}
+function rsWords(items){                                                    // A37.3
+  if(items.length === 1){
+    const z = items[0];
+    return [z.was ? q(z.was) + ' is called ' + q(z.name) + ' again' : 'Zinely repaired ' + q(z.name),
+      'A small file that holds its name, cover and folder was damaged, so Zinely used the copy from ' +
+      'before your last change to them. Its pages weren’t touched.'];
+  }
+  return ['Zinely repaired ' + items.length + ' zines',
+    rsList(items) + '. Small files that hold their names, covers and folders were damaged, so Zinely ' +
+    'used the copies from before your last changes to them. Their pages weren’t touched.'];
+}
+function rsSync(){                                                          // A37.2
+  const loading = $('ld').classList.contains('on');
+  rsNote.hidden = !restored.length || !!openFolder || shelf.style.display === 'none' || loading;
+}
+function rsOn(id){ ['rs0', 'rs1', 'rs2', 'rs3'].forEach(b => $(b).classList.toggle('on', b === id)); }
+/* The words are put in a moment after the note is placed, so the live region is announced
+   once when the note ARRIVES (A37.10); they do not change again while it is up. */
+function raiseNote(items, id){
+  restored = items; rsTtl.textContent = ''; rsBody.textContent = ''; rsSync(); rsOn(id);
+  if(!items.length) return;
+  const [t, b] = rsWords(items);
+  setTimeout(() => { rsTtl.textContent = t; rsBody.textContent = b; }, 150);
+}
+rsOk.onclick = () => { restored = []; rsSync(); rsOn('rs0'); h1.focus({ preventScroll: true }); };   // A37.5
+
+/* the note follows the Shelf's state and folder view; the frozen functions are wrapped,
+   not edited */
+const a37State = state;  state  = s => { a37State(s); rsSync(); };
+const a37Render = render; render = () => { a37Render(); rsSync(); };
+
+const byName = n => lib.find(z => z.name === n);
+$('rs0').onclick = () => raiseNote([], 'rs0');
+$('rs1').onclick = () => { state('content'); raiseNote([{ name: 'Letters home', was: 'Letters to Gran' }], 'rs1'); };
+$('rs2').onclick = () => { state('content'); raiseNote([{ name: 'Coffee log', was: null }], 'rs2'); };
+$('rs3').onclick = () => {
+  state('content');
+  raiseNote(['Letters home', 'Riso tests', 'Tiny poems', 'Coffee log'].filter(byName)
+    .map(n => ({ name: n, was: n === 'Letters home' ? 'Letters to Gran' : null })), 'rs3');
+};
+$('rs4').onclick = () => {
+  const on = R.getAttribute('data-a37big') !== 'on';
+  R.setAttribute('data-a37big', on ? 'on' : 'off'); $('rs4').classList.toggle('on', on);
+};
+/* ===================== end of A37 script ===================== */
 </script>
