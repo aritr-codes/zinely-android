@@ -142,6 +142,7 @@
 | [ADR-130](#adr-130) | **The typing-time notice says "prints in a font from your phone" for what the phone draws.** The check asks `Paint.hasGlyph` on the face the renderer resolves, which walks the same fallback chain; a script every character of which the phone draws gets the new line, anything else keeps ADR-070's "can't print yet". Amends ADR-070 (issue #103, D-115) | Accepted |
 | [ADR-132](#adr-132) | **The Art pieces are drawn by one hand.** One line weight (2.5 of 24 units), flat views, a fixed margin, and an edge that says what made it (cut, torn, drawn, metal, printer's mark); torn edges read one hand-written tear table, never a zig-zag. All 34 redrawn as bench A34, design frozen under the owner's delegation; ids, names, sizes and the eight holed pieces unchanged. The Compose redraw and every Art golden are a later wave | Proposed |
 | [ADR-133](#adr-133) | **Paper is a closed, named set; the imposition engine takes any sheet.** Answers the paper half of ADR-016. A person picks a size by name and the file stores the name; `Imposer.layout` also takes any portrait sheet, proved by properties. US Legal and A5 are the next sizes, in their own schema bump after v4, chosen at the start of a zine only; half-Letter, A3 and Tabloid are not | Accepted (engine and closed set); sizes decided, not built |
+| [ADR-134](#adr-134) | **When a zine's details go back to their earlier copy, My Shelf says so once.** A paper note under the heading names the zine (“Letters to Gran” is called “Letters home” again), says its pages were not touched, and stays until “Got it”. The store reports a repaired read as a sealed result; the waiting note is kept per zine. Library A37 | Accepted 2026-10-15 under delegation (design; Kotlin not built) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -16062,3 +16063,108 @@ is not checked for orientation; assert A5's panel exactly), both taken. Document
 found the Legal claim contradicted by R26's own HP source, and the older-build reasoning wrong (the schema
 version refuses first, and shipped builds call such a backup damaged); both corrected above. Each finding
 and its reconciliation is in [D-118](design/V2-SPEC-DEFECTS.md#d-118).
+
+---
+
+## ADR-134 {#adr-134}
+
+### When a zine's details go back to their earlier copy, My Shelf says so once, in a note the maker dismisses
+
+**Status:** Accepted, 2026-10-15, under the owner's delegation of 2026-10-12 ("decide, do not ask"); the
+owner has not ruled on it personally and may overrule it.
+**Builds:** the design only (library amendment A37, frozen). The Kotlin follows in its own change, under
+the contract below; until it lands the app behaves as D-116 left it.
+**Evidence:** [RESEARCH R29](RESEARCH.md#r29-telling-someone-their-work-went-back-to-an-earlier-copy-2026-10-15).
+**Findings:** [D-120](design/V2-SPEC-DEFECTS.md#d-120). **Spec:** `docs/design/mockups/v21-library.html` A37
+(rules A37.1–A37.12). **Issue:** [#128](https://github.com/aritr-codes/zinely-android/issues/128).
+
+#### Context
+
+- ✅ A zine's title, createdAt, cover and folder live in its `meta.json` ([ADR-042](#adr-042) §3,
+  [ADR-125](#adr-125)). Every write keeps the previous file as `meta.json.bak`, and a read that finds
+  `meta.json` damaged puts the `.bak` back (`AtomicFileStore.read`, [ADR-021](#adr-021)). The `.bak` is the
+  file *before the last change*, not a copy of the current one.
+- ✅ Since [D-116](design/V2-SPEC-DEFECTS.md#d-116) (PR #127) the Shelf shows what the repaired file says.
+  So after a repair a renamed zine is back under its old name, in its old folder, and nothing says why. D-116
+  listed this as a known limit; issue #128 asked for it to be told.
+- ✅ The store does not report that it used the `.bak`: `read` returns the bytes either way, and
+  `readMetaOrNull` cannot tell a repaired read from a clean one.
+- ✅ The Shelf's question is "which zine do I want?". A maker looking for "Letters to Gran" who finds only
+  "Letters home" is answering it with wrong information.
+
+#### Decision
+
+```mermaid
+sequenceDiagram
+    participant S as AtomicFileStore.read
+    participant R as RoomProjectRepository
+    participant M as waiting note (per zine)
+    participant V as My Shelf
+    S-->>R: Restored(bytes), not Read(bytes)
+    R->>M: record it, with the title the row showed (if any)
+    R->>R: D-116 re-sync of the row from the file
+    V->>R: observe zines and waiting notes
+    R-->>V: one note naming every waiting zine
+    V->>R: Got it
+    R->>M: clear those zines
+```
+
+1. **Tell it on My Shelf, in one paper note under the heading, dismissed only by "Got it"** (A37.2, A37.5).
+   Not a snackbar: it leaves by itself and is meant for the result of something the person just did
+   (R29.1). Not a dialog: there is nothing to choose, because the newer details are gone (R29.2). Not a mark
+   on the tile: D-111's "no shelf badge" holds, and a mark would need its own explanation anyway.
+2. **The words are A37.3's, exactly**, transcribed into `core:copy`. When the Shelf had shown a different
+   title before the repair, the note leads with it: “Letters to Gran” is called “Letters home” again.
+   Otherwise: Zinely repaired “Letters home”. The body says what happened, what went back and that the pages
+   were not touched. Never "backup": Backups is a dock action that means library backups
+   ([ADR-120](#adr-120)), and the word would send the maker there (A37.4).
+3. **Once per repair, kept until seen.** A zine joins the note every time its `meta.json` is read from the
+   `.bak`, whatever that changed: the folder and cover cannot always be compared with what the Shelf showed,
+   and a repair is rare enough that telling it is cheaper than judging it. The waiting note survives the app
+   being stopped. "Got it" clears it; a zine leaves it when it is deleted (after its undo) or when the maker
+   renames or moves it. A later repair raises the note again (A37.6).
+4. **The signal is a sealed result, not a side channel.** `AtomicFileStore.read` reports which copy it
+   returned (for example `Read(bytes)`, `Restored(bytes)`, or nothing); callers that only want bytes keep a
+   one-line wrapper. Nothing new is caught. A repair whose write fails still quarantines the damaged file as
+   today and still returns the backup's bytes, as `Restored`. `readMetaOrNull` is the one place every
+   `meta.json` read goes through, so it records the waiting note there. The title the index row held is
+   attached before the D-116 re-sync overwrites it, when the zine has a row.
+5. **The waiting note is kept per zine, beside its files**, not only in Room: the index is rebuildable
+   ([ADR-042](#adr-042)), and a repair found by the start scan must still be told if the process dies before
+   the Shelf draws. How is the Kotlin change's choice (a small marker file next to `meta.json` is the
+   expected shape), under three constraints: written atomically; never copied by Duplicate, into a library
+   backup or by a restore; and gone with the zine's directory.
+6. **TalkBack** (A37.10): the title and body are one node, read right after the count, then "Got it,
+   button". The words are a polite live region and the button is outside it. The words never change while the
+   note is up, so a note that arrives while the Shelf is showing is spoken once and never twice.
+7. **Scope.** Only `meta.json`. A page document put back from its own `.bak` (ADR-021) is not told; that is
+   D-120 item 4, a separate question not decided here. Neither the D-116 re-sync after a failed rename (the
+   file holds the maker's newest choice) nor a library restore (new zines) raises the note.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| A snackbar at start | Gone in seconds, at the moment the maker is least likely to be reading; Android's own guidance keeps snackbars for feedback on an action (R29.1) |
+| A dialog at start | Interrupts with nothing to decide; the newer details cannot be offered back |
+| A mark on the repaired tile | Breaks D-111's "no shelf badge"; a mark alone does not say what happened |
+| Show the note only when something visible changed | The folder and cover cannot always be compared with what the Shelf showed; a wrong "nothing changed" is worse than a note the maker dismisses |
+| Keep a second copy of the current details so nothing goes back | A storage change for a rare event; ADR-021's one `.bak` stays the design (D-116 "After the fix") |
+| Say "restored from backup" | "Backups" already names library backups on the same screen (A37.4) |
+
+#### Consequences
+
+- The Kotlin change owes, in one PR: the sealed read result and its callers; the waiting note and its
+  clearing (Got it, rename, move, delete); the Shelf note and its words in `core:copy`; a JVM test that a
+  repaired read raises exactly one waiting note and a clean read none; Compose and platform-tree tests for the
+  words, the single live-region node, the 48dp button and focus to the heading after "Got it"; a font scale 2
+  at 360dp test that nothing is cut; goldens recorded on CI.
+- **Owed before the build is accepted:** both device passes on the phone with a hand-damaged `meta.json` in
+  the QA package's own storage (never the owner's app), including whether TalkBack speaks a note that arrives
+  already filled (R29.4 leaves that open); and the owner's first-time reading of the words.
+- `DocumentRepositoryImpl` keeps the bytes-only wrapper; whether a page document's repair is told is D-120
+  item 4.
+
+#### Review
+
+See [D-120](design/V2-SPEC-DEFECTS.md#d-120) § Review.
