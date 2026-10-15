@@ -1171,6 +1171,9 @@ internal class RoomProjectRepository(
     /**
      * The one place every `meta.json` read goes through. A read that put the file back from its earlier copy
      * ([StoreRead.Restored]) is told to the maker, once ([noteRepair], [ADR-134](docs/DECISIONS.md#adr-134)).
+     *
+     * **Callers hold [mutex].** Since ADR-134 this read can write: the waiting-note marker and, through
+     * [syncRowFromDisk], the index row. [Mutex] is not re-entrant, so nothing reached from here takes it.
      */
     private suspend fun readMetaOrNull(id: String): ProjectMeta? {
         val metaFile = paths.metaFile(id) ?: return null
@@ -1402,7 +1405,9 @@ internal class RoomProjectRepository(
                 // ADR-125 rule 14: the folder is read here, from the file, for a zine that opens and for one
                 // that does not. Missing or unreadable metadata is My Shelf. Under the lock, because this read
                 // can repair the file from its backup copy and must not race a folder operation's write.
-                val (meta, restored) = mutex.withLock { readMetaOrNull(id) to waitingNoteOf(id) }
+                // Read together, in this order and under one lock: a repair this very read finds is recorded by
+        // readMetaOrNull, so the same listing that shows the repaired title also carries its note.
+        val (meta, restored) = mutex.withLock { readMetaOrNull(id) to waitingNoteOf(id) }
                 val folder = FolderNames.clean(meta?.folder)
                 // ADR-134 decision 4: a repair this read found has re-synced the row, so the tile is read from
                 // the row as it is now, and the tile and the note name the zine the same way.
