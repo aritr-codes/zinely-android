@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -118,8 +119,16 @@ public sealed interface LibraryShelfState {
     /** The **store** is empty, which is the invitation — `body.is-empty`. */
     public data object Empty : LibraryShelfState
 
-    /** Zines, in the order the repository gave them. No sort is applied here; see [ZineLibraryScreen]. */
-    public data class Content(val zines: List<LibraryZine>) : LibraryShelfState
+    /**
+     * Zines, in the order the repository gave them. No sort is applied here; see [ZineLibraryScreen].
+     *
+     * @property restored the zines whose details went back to their earlier copy and wait to be told, in Shelf
+     *   order ([ADR-134](docs/DECISIONS.md#adr-134)). My Shelf shows one note for all of them (A37).
+     */
+    public data class Content(
+        val zines: List<LibraryZine>,
+        val restored: List<RestoredZine> = emptyList(),
+    ) : LibraryShelfState
 }
 
 /** Which of the screen's own surfaces is open over the shelf. */
@@ -159,6 +168,31 @@ private sealed interface FocusWish {
 
     /** After an action: the tile that now holds this zine, once the zine is in [folder]. */
     data class Zine(val id: String, val folder: String?) : FocusWish
+}
+
+/**
+ * Whether the restored-details note is announced (A37.10): only when it **arrives** on a My Shelf that has already
+ * drawn its zines in this visit. Back from the Bench, out of a folder or the About page, the note is there as the
+ * Shelf draws and is read in order.
+ *
+ * Plain fields, not state, on purpose: nothing recomposes for them. [applied] runs after each applied composition
+ * (a `SideEffect`), so [armed] means "the last My Shelf put on screen had no note". The composition in which the
+ * note first appears on an armed Shelf leaves one announcement [pending]; the note [take]s it once, as it is first
+ * composed, so a note scrolled away and back, or recomposed with new words, never takes a second one.
+ */
+private class NoteArrival {
+    private var armed = false
+    private var pending = false
+
+    fun compose(noteUp: Boolean) {
+        if (!noteUp) pending = false else if (armed) pending = true
+    }
+
+    fun applied(onMyShelf: Boolean, noteUp: Boolean) {
+        armed = onMyShelf && !noteUp
+    }
+
+    fun take(): Boolean = pending.also { pending = false }
 }
 
 /** What the undo snackbar is waiting to be told: `true` = the user pressed Undo. V1's shape, reused. */
@@ -241,6 +275,7 @@ private class UndoRequest(val id: String, val message: String, val outcome: Comp
  * @param onDeleteUndo the window closed with Undo pressed.
  * @param onDeleteCommit the window closed without it — only now is the zine really deleted.
  * @param onRetry the shelf failed to open; ask the store again.
+ * @param onDismissRestored *Got it* on the restored-details note, with every zine it names (A37.5).
  */
 @Composable
 public fun ZineLibraryScreen(
@@ -272,6 +307,7 @@ public fun ZineLibraryScreen(
     isDeleteWaiting: (String) -> Boolean,
     checkFolderName: (String) -> FolderNameVerdict,
     modifier: Modifier = Modifier,
+    onDismissRestored: (List<String>) -> Unit = {},
 ) {
     val colors = ZinelyTheme.v21Colors
     val haptics = ZinelyTheme.haptics
@@ -391,6 +427,15 @@ public fun ZineLibraryScreen(
     val zines = (state as? LibraryShelfState.Content)?.zines.orEmpty()
     val folders = shelfFolders(zines)
     val tiles = shelfTiles(zines, openFolder)
+
+    // A37: the restored-details note, on My Shelf only (A37.2). It is ANNOUNCED only when it arrives on a My Shelf
+    // that has already drawn its zines in this visit (A37.10). See [NoteArrival].
+    val restored = (state as? LibraryShelfState.Content)?.restored.orEmpty()
+    val noteUp = restored.isNotEmpty() && openFolder == null
+    val onMyShelf = state is LibraryShelfState.Content && openFolder == null && !showColophon
+    val arrival = remember { NoteArrival() }
+    arrival.compose(noteUp)
+    SideEffect { arrival.applied(onMyShelf, noteUp) }
 
     // A28.3: a folder exists only while it holds a zine, so an open folder whose last zine left or was
     // deleted returns to My Shelf. Only once the Shelf has answered: while it is still loading there are
@@ -584,6 +629,31 @@ public fun ZineLibraryScreen(
                     state = if (openFolder == null) shelfGrid else folderGrid,
                     focus = shelfFocus,
                     focusTile = focusTile,
+                    note = if (!noteUp) {
+                        null
+                    } else {
+                        {
+                            val (title, body) = Copy.Restored.note(restored.map { it.title to it.previousTitle })
+                            ShelfRestoredNote(
+                                title = title,
+                                body = body,
+                                announce = remember { arrival.take() },
+                                onGotIt = {
+                                    haptics.perform(ZinelyHaptic.Tick)
+                                    onDismissRestored(restored.map { it.id })
+                                    // A37.5: focus goes to the "My Shelf" heading, brought on screen if the note
+                                    // was long enough to push it off.
+                                    scope.launch {
+                                        if (runCatching { shelfFocus.heading.requestFocus() }.isFailure) {
+                                            shelfGrid.scrollToItem(0)
+                                            withFrameNanos { }
+                                            runCatching { shelfFocus.heading.requestFocus() }
+                                        }
+                                    }
+                                },
+                            )
+                        }
+                    },
                 )
             }
         }

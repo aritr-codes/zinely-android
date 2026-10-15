@@ -224,6 +224,8 @@ internal const val ZineShelfHeadTestTag: String = "shelf-head"
  * @param state the grid's scroll position. The caller keeps one per view, so going back finds My Shelf
  *   where it was left (A28.9).
  * @param focusTile the position of the tile [focus]'s tile requester is attached to, or `-1`.
+ * @param note a full-width cell directly under the heading and its count, above the first zine: the
+ *   restored-details note (A37.2). It scrolls with the zines and never covers one.
  */
 @Composable
 internal fun ZineShelf(
@@ -238,6 +240,7 @@ internal fun ZineShelf(
     state: LazyGridState = rememberLazyGridState(),
     focus: ShelfFocus = remember { ShelfFocus() },
     focusTile: Int = -1,
+    note: (@Composable () -> Unit)? = null,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(ShelfColumns),
@@ -301,6 +304,8 @@ internal fun ZineShelf(
         // drops the text, which is what the block above transcribes; an earlier version of this line
         // quoted the amendment as "the heading stays up" and so read as the opposite of what ships.
         // See [ZineLibraryScreen] for why they are never shown beside real zines.
+        if (note != null) item(key = ShelfNoteKey, span = { GridItemSpan(maxLineSpan) }) { note() }
+
         items(placeholders) { ShelfPlaceholder() }
 
         // No `key`: position is the identity a list that cannot reorder actually has. B5 supplies the
@@ -640,6 +645,9 @@ private fun ShelfPlaceholder() {
 // The 132px is the exception and stays a literal, because it is not on the scale: it is the height of
 // the dock plus its clearance, which is a measurement of another component, not a spacing choice.
 // ---------------------------------------------------------------------------------------------
+
+/** The restored-details note's cell, keyed so it keeps its own state while the zines below it change (A37). */
+private const val ShelfNoteKey = "restored-note"
 
 /** `grid-template-columns:1fr 1fr` — still no breakpoint anywhere in the corpus. See D-020. */
 private const val ShelfColumns = 2

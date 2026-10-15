@@ -251,6 +251,7 @@ private fun HomeDestination(
         isDeleteWaiting = viewModel::isDeleteWaiting,
         checkFolderName = ::folderNameVerdict,
         modifier = Modifier.fillMaxSize(),
+        onDismissRestored = viewModel::dismissRestored,
     )
 }
 
@@ -288,7 +289,7 @@ private fun HomeUiState.toLibraryShelfState(): LibraryShelfState = when (this) {
     is HomeUiState.Loading -> LibraryShelfState.Loading
     is HomeUiState.Error -> LibraryShelfState.Error
     is HomeUiState.Empty -> LibraryShelfState.Empty
-    is HomeUiState.Content -> LibraryShelfState.Content(zines)
+    is HomeUiState.Content -> LibraryShelfState.Content(zines, restored)
 }
 
 /**
