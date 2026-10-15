@@ -142,6 +142,7 @@
 | [ADR-130](#adr-130) | **The typing-time notice says "prints in a font from your phone" for what the phone draws.** The check asks `Paint.hasGlyph` on the face the renderer resolves, which walks the same fallback chain; a script every character of which the phone draws gets the new line, anything else keeps ADR-070's "can't print yet". Amends ADR-070 (issue #103, D-115) | Accepted |
 | [ADR-132](#adr-132) | **The Art pieces are drawn by one hand.** One line weight (2.5 of 24 units), flat views, a fixed margin, and an edge that says what made it (cut, torn, drawn, metal, printer's mark); torn edges read one hand-written tear table, never a zig-zag. All 34 redrawn as bench A34, design frozen under the owner's delegation; ids, names, sizes and the eight holed pieces unchanged. The Compose redraw and every Art golden are a later wave | Proposed |
 | [ADR-133](#adr-133) | **Paper is a closed, named set; the imposition engine takes any sheet.** Answers the paper half of ADR-016. A person picks a size by name and the file stores the name; `Imposer.layout` also takes any portrait sheet, proved by properties. US Legal and A5 are the next sizes, in their own schema bump after v4, chosen at the start of a zine only; half-Letter, A3 and Tabloid are not | Accepted (engine and closed set); sizes decided, not built |
+| [ADR-135](#adr-135) | **Read speaks the page.** One stop per meaningful thing, in the Bench's spatial order, between Previous and Next page: text as written, a photo as `Photo` or `Photo: <description>`, Art only when described (by its name), `Blank page` / `Only Art on this page`; no role on a stop; a turn announces the ticket only. The PDF and paper carry no description, said once in the Describe field. `v21-proof.html` A38 frozen; part 1 needs no schema, part 2 is plan step 7 | Proposed (design frozen under the owner's delegation; not built) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -16062,3 +16063,181 @@ is not checked for orientation; assert A5's panel exactly), both taken. Document
 found the Legal claim contradicted by R26's own HP source, and the older-build reasoning wrong (the schema
 version refuses first, and shipped builds call such a backup damaged); both corrected above. Each finding
 and its reconciliation is in [D-118](design/V2-SPEC-DEFECTS.md#d-118).
+
+
+---
+
+## ADR-135 {#adr-135}
+
+### Read speaks the page: words as written, a photo as "Photo" or its maker's description, Art only when described
+
+**Status:** Proposed, 2026-10-15. The design is decided under the owner's delegation of 2026-10-12 ("decide,
+do not ask") and frozen as [`v21-proof.html` A38](design/mockups/v21-proof.html); the owner may overrule
+it. It becomes Accepted only when it is built and the items under *Owed before Accepted* are done.
+Zinely 1.x plan step 7's prerequisite ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing);
+[Brief 04](planning/BRIEF-04-READING-ORDER-AND-ALT-TEXT.md) gate 7).
+**Builds:** nothing yet. No Kotlin, no schema change; the `description` field arrives with the v4 bump (plan
+step 6), alone.
+**Evidence:** [RESEARCH R31](RESEARCH.md#r31-how-a-screen-reader-should-meet-a-described-photo-in-a-paged-reader-2026-10-15).
+**Findings:** [D-122](design/V2-SPEC-DEFECTS.md#d-122).
+**Narrows:** [ADR-058](#adr-058) (Read) by giving the leaf stops. **Keeps:**
+[ZINELY-DESIGN-SYSTEM §4.5](ZINELY-DESIGN-SYSTEM.md#45-reading-order) and [ADR-119](#adr-119)'s order; Read's
+"Previous, leaf, Next" declaration; one announcement per page turn ([ADR-101 §6 P1](#adr-101-p1) item 1, P5/P6).
+**Decided at the desk:** Brief 04 left two of these calls "to be decided by a listen" (`Photo: …` or the
+description alone; whether Art can be decorative). They are decided here from research under the delegation;
+the owner's listen is still owed and may overturn them.
+
+#### Context
+
+- ✅ Read speaks nothing from the page. `ProofRead.kt` clears the leaf with `clearAndSetSemantics {}`; a
+  TalkBack user hears the top bar with the page ticket ("Page 3 of 8", announced on each turn by
+  `ProofScreen.kt`), Previous page and Next page, and none of the zine's words or photos.
+- ✅ The frozen `v21-proof.html` makes `#book` `aria-live="polite"`, which the build does not do and should
+  not ([D-122](design/V2-SPEC-DEFECTS.md#d-122)).
+- ✅ On the Bench every photo is "Photo", Art speaks its piece's name, and text is "Text: …"; each is a button
+  (`EditorA11y.label`, `ElementSemanticsLayer`).
+- ✅ Plan step 6 adds an optional `description` to `ImageElement` and `DecorElement` (v4); step 7 gives it a
+  UI. A maker will write it on the Bench; a reader needs Read to say it.
+- ✅ The PDF is `PdfDocument`, which has no tag, structure or alt-text API, and it is the imposed sheet
+  ([ADR-001](#adr-001), R31.4).
+- ✅ TalkBack says "Image" after an image node's label while the listener keeps element types on; says
+  "Unlabelled" for a node with nothing to say; and lets its menu describe any image node with its own model,
+  on the phone or on Google's server. A labelled node with no role is not offered for description (R31.2).
+
+#### Decision
+
+```mermaid
+flowchart LR
+    T["Top bar\nBack · ticket · How to fold"] --> P["Previous page"] --> S["The page's stops\nspatial order (§4.5)"]
+    S --> N["Next page"] --> B["Print details band"]
+```
+
+1. **Each page in Read gets stops**, one per thing that carries meaning, on a semantics-only layer over the
+   leaf (as the Bench's `ElementSemanticsLayer` sits over the canvas). The leaf stays cleared; nothing drawn
+   changes, so no golden moves. A stop has **no role, no click and no actions**, and a double tap on it does
+   nothing. **"No click" alone does not make that true.** When the focused node has no click action, TalkBack
+   asks the platform to click at it and, failing that, taps the centre of its bounds (`FocusActor.clickNode`,
+   R31.2). In Read the turn edges are 30% of the stage each and full height, and the leaf is 71% wide and takes
+   no taps, so the outer fifth of the leaf on each side lies in a turn zone: a double tap on a stop centred there
+   would turn the page. So, **while touch exploration is on, a turn edge ignores a tap that lands inside the
+   leaf's bounds**, and the stops layer sits above the edges for touch exploration, so touching the page finds
+   its stops, not Next page. The edges keep their own click action, so a double tap on Previous or Next page
+   still turns; with TalkBack off, tap-to-turn is unchanged.
+2. **What each stop says**, exactly (words in `core:copy`):
+
+   | On the page | Read says |
+   |---|---|
+   | Text with words | the words as typed, exposed as text so TalkBack's reading controls (by word, by character) work. No "Text:" prefix: in Read the words are the page |
+   | Text with no words (blank or spaces) | no stop |
+   | Photo with a description | `Photo: ` + the description |
+   | Photo with no description | `Photo` (today's `Copy.A11y.PHOTO`) |
+   | A description that is empty or only spaces | counts as no description (Brief 04 criterion 17) |
+   | Art with a description | its piece's name + `: ` + the description, e.g. `Pointing hand: this way to the flower end` |
+   | Art with no description | no stop: decoration (WCAG 1.1.1) |
+   | Anything with no part on the page | no stop: Read does not draw it |
+   | A page with no stops and no Art drawn on it | one stop: `Blank page` |
+   | A page with no stops but Art drawn on it | one stop: `Only Art on this page` |
+
+   Pieces wholly off the page are left out before the empty-page test: a page whose only Art is off it is
+   `Blank page`, as Read draws it.
+
+   **Why "Photo" in the label, against Android's "don't include an element's type":** the description sits
+   among the printed words, and the listener must hear which is which. The `Image` role would say "Image" only
+   while the listener keeps element types on; an undescribed photo would still need a label ("Photo, Image"),
+   since with none TalkBack says "Unlabelled" or speaks its own caption; and an image node stays offered for
+   TalkBack's machine description from its menu, where a labelled node with no role is not (R31.2).
+   Descriptions are the maker's own and are never generated (Brief 04). With no role nothing else names the
+   kind, so the label does.
+3. **Order on the page:** [ZINELY-DESIGN-SYSTEM §4.5](ZINELY-DESIGN-SYSTEM.md#45-reading-order)'s spatial
+   order, through the same `SpatialOrder` the Bench uses ([ADR-119](#adr-119)), so the Bench and Read never
+   disagree. A piece taller than six tenths of the page (a full-page photo, a spread half) is read first, as
+   the ground. As on the Bench, the stops are declared in that order and `traversalIndex` restates it.
+4. **Order on the screen is the visual row, unchanged:** top bar, Previous page, the page's stops, Next page,
+   then the band. The stops layer takes the leaf's place between the two edges. 🟨 After a double tap on
+   Next page, if TalkBack keeps focus there, the next swipe forward passes the new page and a swipe back
+   reads it from its end; the listener can touch the page or use TalkBack's "read from top". This is the
+   listen's first question (owed item 3). If it is heard as a fault, the remedy is a §4.5 amendment, by ADR,
+   that declares Next page before the page for Read's two turn controls; it is named here, not taken.
+5. **One speaker per turn.** A turn says the ticket ("Page 4 of 8") and nothing from the page; the listener
+   swipes in. The frozen `#book` live region is not built. Programmatic focus stays out (Brief 04).
+6. **On the Bench**, a selected photo or Art piece offers **Describe**, the field Brief 04 part B specifies.
+   Its drawing, at 360dp and 200% text, belongs to its own `v21-bench.html` amendment (Brief 04 gate 8). A38
+   owns two of its details, which that amendment quotes: the field's helper line, *"Zinely reads this aloud
+   in Read. It isn’t printed or put in the PDF."*; and the Bench node then saying the same words as Read
+   (`Photo: …`, still a button), so the maker hears what a reader will.
+   🟨 **Replace photo clears the description** (its words were about the old picture; Undo brings both back);
+   **replacing an Art piece keeps it** (the words say what the mark means; the name in the label follows the
+   new piece). Both reducer paths build the new element with `copy()` (`EditorReducer.kt`, Replace photo and
+   Replace supply), which would carry the field, so step 7 must clear it in the photo path. Whether keeping it
+   for Art surprises a maker is a Pass 2 question. **Duplicate keeps the description** (the copy shows the same
+   thing; `duplicateElement` also builds with `copy()`), and step 7 tests it.
+7. **Paper and PDF carry nothing, and say nothing.** No tagged PDF, no second PDF library ([ADR-001](#adr-001)),
+   no new words in Proof's band or print drawer. The helper line in 6 is the one place the limit is stated.
+   No public claim that zines are readable by people who cannot see them (Brief 04 criterion 18,
+   [ADR-118](#adr-118)).
+8. **Built in two parts.** Part 1, everything except descriptions (the stops for text and "Photo", the order,
+   the two empty-page stops), needs no schema change and may be built on v3 at any time. Part 2, the
+   descriptions and Describe, is plan step 7, after v4.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| `Role.Image` with the description as label (the platform's grammar: "…, Image") | With element types off, a description sounds like printed words; an undescribed photo becomes "Photo, Image"; every photo stays offered for TalkBack's machine description (R31.2) |
+| The description alone, no kind word, no role | Indistinguishable from the zine's printed words |
+| Skip undescribed photos | Hides content: the listener cannot know a photo is there (R31.1; Kindle's "partially readable", R31.3) |
+| "Photo, no description" | Longer on every undescribed photo and reads as a nag; the Bench already says "Photo" |
+| Read the whole page on each turn (the frozen `#book` live region) | A second announcement beside the ticket; long pages talk over the listener and repeat on every turn |
+| Next page before the page, now | Departs from §4.5 on a premise (where TalkBack's focus rests after a turn) nobody has heard; kept as the named remedy in decision 4 |
+| One empty-page string, "No words or photos on this page" | On an Art-only page it suggests the page is blank while a drawing sits on it |
+| A "decorative" flag on Art | A field beyond v4's one; an Art piece with no description already is decoration in Read and stays reachable on the Bench |
+| Descriptions in the PDF | `PdfDocument` cannot tag; another library breaks ADR-001 and the dependency allow-list; the PDF is the imposed sheet, read by printers. A plain-text reader's edition is the later route 🔭 |
+
+#### Consequences
+
+- A blind reader of Read hears the zine's words for the first time, in order, and knows where each photo is.
+  That part (part 1) is independent of v4. Photos say only "Photo" until their makers describe them.
+- The Bench and Read share one order and, for a photo, one label.
+- A listener with "speak element type" off loses nothing: the kind is in the label.
+- A photo across the fold is two elements on two pages; each speaks its own description. Make-spread copies
+  the element, so the description should travel to the partner; step 7 must prove it with a test.
+- **`SurfaceTraversalOrderTest`'s pairwise row check will not hold for every page as it stands.** It checks
+  that each stop starts right of the one before on a shared row; the turn edges are full-height zones over
+  the leaf's sides, so a piece drawn at the leaf's right edge starts right of Next page's left. Part 1 must
+  check the page's stops against `SpatialOrder` and the edges against the page as a whole, and record that
+  change of the test, not loosen §4.5.
+- 🟨 The shipped TalkBack may differ from the open-source tree (R31.2); the listen checks that no machine
+  description is offered on a stop.
+- Part 1 makes Read's turn edges read the touch-exploration state (decision 1), a first for Proof; the seam
+  already exists in tests (`ShadowAccessibilityManager.setTouchExplorationEnabled`, `NamedUndoSnackTest`).
+
+#### Owed before Accepted
+
+1. Part 1 built, with platform-tree tests (`SurfaceTraversalOrderTest` harness): each table row's label; no
+   stop for blank text, undescribed Art or an off-page piece; both empty-page stops; the order top bar →
+   Previous → stops → Next → band; the stops in `SpatialOrder` with a matching `traversalIndex`; a turn
+   announcing the ticket only; no role and no click on a stop. **With touch exploration on, a tap injected at
+   the centre of a stop near each side of the leaf does not turn the page**, while a tap on a turn edge outside
+   the leaf and the edges' click actions still do; with it off, tap-to-turn over the leaf's sides is unchanged.
+   `gold` and CI's exact goldens unchanged.
+2. Part 2 built with step 7: the description rows, the Bench label, the Describe amendment frozen first; a
+   blank description speaks as none; Make-spread and Duplicate carry the description, Replace photo clears it.
+3. Both device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)), and the owner's TalkBack
+   listen on the SM-A176B: where a swipe after a turn lands (decision 4); that a double tap on a stop does
+   nothing; nothing is said twice; how a long description sounds; no "Describe image" on a stop. A sighted
+   listen is proxy evidence; add a blind or low-vision tester if one can be found.
+
+#### Review
+
+Two independent Review Agents (headless Claude Code sessions, reading only), 2026-10-15: accessibility and
+design, **GO WITH FIXES**; documents and evidence, **GO WITH FIXES**. The main changes: the screen order went
+back to §4.5's visual row, with "Next page first" kept as the named remedy; `traversalIndex` restates the
+order as on the Bench; the empty-page stop split in two; "only live region" narrowed to what a turn
+announces; the role rationale corrected against TalkBack's source; R29 renumbered R31 to clear two sibling
+lanes. Each finding and its reconciliation is in [D-122](design/V2-SPEC-DEFECTS.md#d-122).
+
+Second round, on the branch head `e3a9ac5`: accessibility and design, **GO WITH FIXES**; documents and
+evidence, **GO**. The Required Fix: "a double tap on a stop does nothing" was frozen with no mechanism, and
+TalkBack's fallback taps the stop's centre, which can lie in a turn edge; decision 1 now names the mechanism and
+owed item 1 the test. Also taken: a blank description counts as none; off-page Art is left out before the
+empty-page test; Duplicate keeps the description. Reconciled in D-122.
