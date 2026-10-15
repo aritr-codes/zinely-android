@@ -1066,3 +1066,373 @@ $('lg').onclick = () => {
 };
 /* ===================== end of A28 script ===================== */
 </script>
+
+<!-- ============================================================================
+     A35 · PAPER AT THE START — FROZEN 2026-10-15 under the owner's delegation of
+     2026-10-12 ("decide, do not ask"); the owner may overrule it.  Designed for
+     ADR-133 (US Legal and A5 join A4 and US Letter).  Defects and findings: D-121.
+     Evidence: RESEARCH R29.  NOT BUILT: it ships only with the schema bump that adds
+     the two sizes, after v4 (ADR-133 decision 4).  Until then the app keeps its
+     two-size chooser.
+
+     Everything from here to the end of the file is the amendment.  Nothing above
+     this line changed.  It has its own phone, controls and script, below the
+     frozen page's controls, and touches no element, class rule or script of the
+     frozen Shelf (its own classes start a35-; the paint it borrows is the frozen
+     .shelf-head, .cover, .stamp, .dock, .start and .snack rules, unchanged).
+
+     WHERE THIS LIVES.  A new zine is started from "Make a zine" on the Shelf, so
+     the chooser is a Shelf surface and this file owns it.  It was frozen only once
+     before, as V1's #createSheet (docs/design/v1/shelf.html, amended by ADR-088);
+     no V2 or V2.1 file drew it, and the app paints it from v21-proof.html's
+     .paperseg.  A35 is the first V2.1 drawing of it.  ADR-133 called A35 "a frozen
+     bench amendment"; the Bench never starts a zine (D-121 #1).
+     ============================================================================ -->
+<style>
+/* ============================================================================
+   A35 CSS.  Sizes are in em against the phone's own 16px, so the large-text
+   control can set the phone to 32px (font scale 2) and every A35 word grows while
+   the drawn paper does not.  At scale 1 they equal the frozen rem values cited.
+   ============================================================================ */
+.a35-phone{font-size:16px}
+.a35-phone.big{width:360px;font-size:32px}
+.a35-shelf{position:absolute;inset:0;overflow:auto;padding:var(--gap-xl) var(--gap-lg) 132px;
+  display:grid;grid-template-columns:1fr 1fr;gap:var(--gap-xl) var(--gap-lg);align-content:start}
+.a35-zine{display:flex;flex-direction:column;gap:var(--gap-sm);min-width:0}
+.a35-zine:nth-of-type(odd) .cover{transform:rotate(var(--tiltA))}
+.a35-zine:nth-of-type(even) .cover{transform:rotate(var(--tiltB))}
+.a35-zine .name,.a35-zine .sub{overflow-wrap:anywhere}
+
+/* the sheet: the frozen .sheet's paint under its own name, so the frozen page's
+   close() and inert handling (which address every .sheet) never reach it */
+.a35-scrim{position:absolute;inset:0;z-index:44;background:rgba(39,39,15,.44);opacity:0;
+  pointer-events:none;transition:opacity .22s cubic-bezier(.2,0,0,1)}
+.a35-scrim.show{opacity:1;pointer-events:auto}
+.a35-sheet{position:absolute;left:0;right:0;bottom:0;z-index:46;background:var(--surface);
+  border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);
+  transform:translateY(103%);transition:transform .26s cubic-bezier(.05,.7,.1,1);
+  max-height:88%;overflow-y:auto;padding:0 0 var(--gap-xl)}
+.a35-sheet.show{transform:translateY(0);box-shadow:0 -16px 40px -18px var(--soft-shadow)}
+.a35-grab{width:44px;height:5px;border-radius:var(--br-pill);background:var(--ink-faint);
+  margin:var(--gap-md) auto var(--gap-xs);opacity:.5}
+.a35-head{padding:var(--gap-xs) var(--gap-xl) var(--gap-md);border-bottom:1.5px dashed var(--hair)}
+/* = .sh-ttl (1.22rem) and .sh-sub (.78rem), in em */
+.a35-ttl{font-family:var(--voice);font-size:1.22em;font-weight:700;line-height:1.15;margin:0}
+.a35-sub{font-size:.78em;color:var(--ink-soft);margin:var(--gap-hair) 0 0;font-weight:500;line-height:1.45}
+/* focus is put on the headings by script (A35.12); the ring is for keyboard focus on controls */
+.a35-ttl:focus,.a35-dh:focus{outline:none}
+
+/* a row is one button: the drawn sheet, then three lines */
+.a35-row{display:flex;align-items:flex-start;gap:var(--gap-lg);width:100%;min-height:48px;text-align:left;
+  background:none;border:0;border-bottom:1.5px dashed var(--hair);padding:var(--gap-md) var(--gap-xl);
+  font:inherit;font-family:var(--sans);   /* a button does not inherit font-size by itself */
+  color:var(--ink);cursor:pointer}
+.a35-row:active{background:var(--leaf-tint);color:var(--on-leaf)}
+.a35-row:focus-visible{outline:2px solid var(--ink);outline-offset:-4px;border-radius:var(--br-sm)}
+/* the drawn sheet: px, never em; one scale for all four, 56px = US Legal's 1008pt,
+   so 0.05556 px/pt.  Bottom-aligned in a 56px slot so heights compare at a glance. */
+.a35-slot{flex:none;width:36px;height:56px;display:flex;align-items:flex-end;justify-content:center}
+.a35-stock{position:relative;background:#FFF6E8;border:1.5px solid #27270F;border-radius:var(--br-xs);
+  box-shadow:2px 2px 0 #27270F}
+/* the eight pages ruled on it: two columns, four rows (the sheet stands upright here) */
+.a35-stock::before,.a35-stock::after{content:"";position:absolute;inset:2px;pointer-events:none}
+.a35-stock::before{background:linear-gradient(to right,transparent calc(50% - .5px),rgba(39,39,15,.28) calc(50% - .5px),rgba(39,39,15,.28) calc(50% + .5px),transparent calc(50% + .5px))}
+.a35-stock::after{background:repeating-linear-gradient(to bottom,transparent 0,transparent calc(25% - 1px),rgba(39,39,15,.28) calc(25% - 1px),rgba(39,39,15,.28) 25%)}
+.a35-stock.a4{width:33px;height:47px}       /* 595.276 x 841.890pt */
+.a35-stock.letter{width:34px;height:44px}   /* 612 x 792pt */
+.a35-stock.legal{width:34px;height:56px}    /* 612 x 1008pt */
+.a35-stock.a5{width:23px;height:33px}       /* 419.528 x 595.276pt */
+.a35-tx{display:flex;flex-direction:column;gap:var(--gap-hair);min-width:0;flex:1;overflow-wrap:anywhere}
+/* name = .paperseg button (.9rem, 600); size and note = .opt .tx span (.73rem) */
+.a35-nm{font-size:.9em;font-weight:600;line-height:1.3}
+.a35-dm{font-size:.73em;font-weight:600;color:var(--ink-soft);line-height:1.4}
+.a35-nt{font-size:.73em;font-weight:500;color:var(--ink-soft);line-height:1.45}
+.a35-foot{font-size:.76em;color:var(--ink-soft);text-align:center;margin:var(--gap-md) var(--gap-xl) 0;line-height:1.5}
+
+/* the Print panel's paper section, for a Legal or A5 zine (v21-proof.html .drawer
+   paint, .sect label).  A fact, not a control: no border-shadow press, no button. */
+.a35-drawer{position:absolute;left:0;right:0;bottom:0;z-index:46;background:var(--surface);
+  border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);
+  transform:translateY(103%);transition:transform .3s cubic-bezier(.05,.7,.1,1);
+  max-height:88%;overflow-y:auto;padding:0 var(--gap-lg) var(--gap-xl)}
+.a35-drawer.show{transform:translateY(0);box-shadow:0 -16px 40px -18px var(--soft-shadow)}
+.a35-dh{font-family:var(--voice);font-weight:700;font-size:1.2em;margin:0;padding:var(--gap-xs) 0 var(--gap-md);
+  border-bottom:1.5px dashed var(--hair)}
+.a35-sect{font-size:.66em;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-soft);
+  margin:var(--gap-lg) 0 var(--gap-sm)}
+.a35-fixed{display:flex;align-items:flex-start;gap:var(--gap-md);background:var(--paper);color:#27270F;
+  border:1.5px solid #27270F;border-radius:var(--br-md);padding:var(--gap-md)}
+.a35-fixed .a35-nm,.a35-fixed .a35-dm,.a35-fixed .a35-nt{color:#27270F}
+.a35-seg{display:flex;gap:var(--gap-sm)}
+.a35-seg span{flex:1;text-align:center;font-size:.9em;font-weight:600;padding:var(--gap-md) var(--gap-sm);
+  border-radius:var(--br-md);border:1.5px solid var(--ink);background:var(--surface);color:var(--ink-soft);
+  box-shadow:3px 3px 0 var(--ink-line)}
+.a35-seg span.on{background:var(--leaf);color:var(--on-leaf)}
+.a35-hint{font-size:.76em;color:var(--ink-soft);margin:var(--gap-sm) var(--gap-hair) 0;line-height:1.5}
+/* ===================== end of A35 CSS ===================== */
+</style>
+
+<p class="cap"><span class="badge">A35 paper at the start · frozen 2026-10-15 · not built</span><br>
+<b>Four papers, chosen once (ADR-133).</b> Press <b>Make a zine</b>. The sheet lists A4, US Letter, US Legal and A5,
+each drawn to one scale with its eight pages ruled on it, its size, and one honest line. One tap starts the zine
+on that paper. A zine keeps its paper: the cover’s postmark and the zine sheet name it, and nothing changes it.
+At Print, an A4 or US Letter zine keeps the switch; a US Legal or A5 zine shows its paper as a fact. The
+controls below show the paper set in About leading the list, font scale 2 at 360dp, and the Print panel. This
+waits for the format change that adds the two sizes; the app still offers A4 and US Letter.</p>
+
+<div class="phone grainy a35-phone" id="a35Phone">
+  <div class="a35-shelf" id="a35Shelf">
+    <div class="shelf-head">
+      <div>
+        <h1>My Shelf</h1>
+        <svg viewBox="0 0 132 9" fill="none" aria-hidden="true"><path d="M2 6.2c22-3.4 46-4.6 74-3.2 18 .9 33 2.4 54 1.1" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>
+      </div>
+      <span class="count" id="a35Count">4 zines</span>
+    </div>
+    <article class="a35-zine"><div class="cover ink-leaf"><span class="tape"></span><div class="fill"></div><div class="spine"></div><span class="stamp">A4</span></div>
+      <p class="name">Corner shop</p><p class="sub">2 days ago</p></article>
+    <article class="a35-zine"><div class="cover paper-s"><span class="tape"></span><div class="fill"></div><div class="spine"></div><span class="stamp">US Letter</span></div>
+      <p class="name">Letters home</p><p class="sub">today</p></article>
+    <article class="a35-zine"><div class="cover ink-berry"><span class="tape"></span><div class="fill"></div><div class="spine"></div><span class="stamp">US Legal</span></div>
+      <p class="name">Long walk</p><p class="sub">5 days ago</p></article>
+    <article class="a35-zine"><div class="cover paper-c"><span class="tape"></span><div class="fill"></div><div class="spine"></div><span class="stamp">A5</span></div>
+      <p class="name">Tiny poems</p><p class="sub">2 weeks ago</p></article>
+  </div>
+
+  <div class="dock">
+    <button class="start" id="a35Start"><span class="plus" aria-hidden="true">＋</span> Make a zine</button>
+  </div>
+
+  <div class="a35-scrim" id="a35Scrim"></div>
+  <div class="a35-sheet" id="a35Sheet" role="dialog" aria-modal="true" aria-labelledby="a35Ttl" inert>
+    <div class="a35-grab"></div>
+    <div class="a35-head">
+      <h2 class="a35-ttl" id="a35Ttl" tabindex="-1">Start a zine</h2>
+      <p class="a35-sub">Which paper will you print on? A zine keeps the paper it starts on.</p>
+    </div>
+    <div id="a35Rows"></div>
+    <p class="a35-foot">Eight pages from one folded sheet.</p>
+  </div>
+
+  <div class="a35-drawer" id="a35Drawer" role="dialog" aria-modal="true" aria-labelledby="a35Dh" inert>
+    <div class="a35-grab"></div>
+    <h3 class="a35-dh" id="a35Dh" tabindex="-1">Print details</h3>
+    <div class="a35-sect">What paper is in your printer?</div>
+    <div id="a35PrintPaper"></div>
+  </div>
+
+  <div class="snack" id="a35Snack" role="status" aria-live="polite"><span id="a35SnackText"></span></div>
+</div>
+
+<div class="controls">
+  <span class="grp">paper at the start — A35</span>
+  <button class="ctl" id="a35Open">start sheet</button>
+  <span class="grp">paper set in About (leads the list)</span>
+  <button class="ctl on" data-a35-pref="a4">A4</button>
+  <button class="ctl" data-a35-pref="letter">US Letter</button>
+  <button class="ctl" data-a35-pref="legal">US Legal</button>
+  <button class="ctl" data-a35-pref="a5">A5</button>
+  <span class="grp">later — Print details for a zine on…</span>
+  <button class="ctl" data-a35-print="a4">A4 (switch kept)</button>
+  <button class="ctl" data-a35-print="legal">US Legal (fixed)</button>
+  <button class="ctl" data-a35-print="a5">A5 (fixed)</button>
+  <span class="grp">size</span>
+  <button class="ctl" id="a35Big">font scale 2 at 360dp</button>
+</div>
+
+<script>
+/* ============================================================================
+   A35 · PAPER AT THE START — FROZEN 2026-10-15 under the owner's delegation.
+   THE RULES, cited as A35.n.  [shown] = this page draws it; [stated] = it is
+   written here and binds the build, though this page cannot show it.
+
+  A35.1  [shown]  One place.  "Make a zine" raises the Start a zine sheet, on My
+                Shelf or inside a folder (A28.6).  It is the only place a zine's
+                paper is chosen.  The empty Shelf has no button of its own; the dock
+                stands in every state, as before.
+  A35.2  [shown]  Four rows: A4, US Letter, US Legal, A5.  The paper set in About
+                ("Paper for new zines") leads; the other three follow in that fixed
+                order.  The list is written out in the build, never taken from the
+                enum's entries (ADR-133; D-118 #2).
+  A35.3  [shown]  Choosing is the action.  One tap starts the zine on that paper
+                and opens the Bench, as today.  No selected state, no ring, no
+                confirm, no "recommended": the rows are equals.  Back, a tap on the
+                scrim or a swipe down closes the sheet and starts nothing.
+  A35.4  [shown]  Each row, left to right: the sheet, drawn upright at one scale
+                for all four (56px = US Legal's 14 in; ADR-088's rule, rescaled so
+                the tallest fits) with its eight pages ruled on it; then the name,
+                the sheet's size in its own unit, and one line.  Words, exactly:
+                  A4         210 × 297 mm
+                             Pages 74 × 105 mm. The everyday paper in most of the world.
+                  US Letter  8.5 × 11 in
+                             Pages 2.75 × 4.25 in. The everyday paper in North America.
+                  US Legal   8.5 × 14 in
+                             Pages 3.5 × 4.25 in, wider than Letter’s. Check that your
+                             printer takes Legal.
+                  A5         148 × 210 mm
+                             Pages 52.5 × 74 mm, the smallest zine. Check that your
+                             printer takes A5.
+                Each line is true of the paper, not of the maker: no "best", no
+                "popular".  "Check that your printer takes …" is on the two sizes a
+                home printer may not take (RESEARCH R26.1).
+  A35.5  [shown]  Head: "Start a zine" / "Which paper will you print on? A zine
+                keeps the paper it starts on."  Foot: "Eight pages from one folded
+                sheet."  The shipped line "You can print it at home on either." goes:
+                with four papers there is no "either".
+  A35.6  [stated] A zine's paper never changes.  No row in the zine sheet, nothing
+                on the Bench.  Duplicate keeps the paper.  To use another paper,
+                start a new zine.  Restoring a backup keeps each zine's paper.
+  A35.7  [shown]  Later, the paper shows in two places, by its full name: the
+                cover's postmark (A4 · US LETTER · US LEGAL · A5, the stamp's own
+                capitals) and the zine sheet's line ("US Legal · today").  Every
+                cover keeps the Shelf's 3:4, whatever the paper: the postmark names
+                the paper, the cover does not draw it.
+  A35.8  [shown]  At Print ("What paper is in your printer?"): an A4 or US Letter
+                zine keeps the frozen two-way switch, because each prints on the
+                other within the keep-clear (ADR-133 decision 5).  A US Legal or A5
+                zine gets no switch and no scaled print — "nothing shrinks to fit"
+                stays true — and the section shows its paper as a fact:
+                  US Legal   8.5 × 14 in
+                             This zine was made for US Legal, so it prints on US Legal
+                             only. Put US Legal paper in your printer before you print.
+                (A5 the same, with its own name and size.)  The recipe's Paper row
+                names it.  Not a disabled control: a control that can never be used
+                is noise to a screen reader and to the eye.
+  A35.9  [stated] About → "Paper for new zines" offers the four, in the fixed order
+                A4, US Letter, US Legal, A5, as the radio group it is now.  Its line
+                becomes "We’ll suggest this paper when you start. You can always
+                choose another."  v21-colophon.html still draws two; the build that
+                adds the sizes amends it to point here (D-121 #4).
+  A35.10 [shown]  Large text.  At font scale 2 on a 360dp phone (the control below:
+                a 32px base at 360px, the flat worst case; Android's own curve grows
+                large text less than 2×) every row grows and nothing is cut or
+                ellipsised.  The drawn sheet keeps its size, at the top of its row.
+                A number never parts from its "×" or its unit (no-break spaces).
+                The sheet scrolls inside 88% of the screen and its head scrolls with
+                the rows.  The postmark keeps its frozen fixed size, as today.
+  A35.11 [stated] TalkBack.  The sheet is a dialog whose title is "Start a zine".
+                Reading order: the title, the line under it, the four rows top to
+                bottom, the foot line.  Each row is ONE node, role button, its
+                drawing hidden, its name the row's words in order with units said
+                in full and the paper's name first (WCAG 2.5.3):
+                  "A4, 210 by 297 millimetres. Pages 74 by 105 millimetres. The
+                   everyday paper in most of the world."
+                  "US Letter, 8.5 by 11 inches. Pages 2.75 by 4.25 inches. The
+                   everyday paper in North America."
+                  "US Legal, 8.5 by 14 inches. Pages 3.5 by 4.25 inches, wider than
+                   Letter’s. Check that your printer takes Legal."
+                  "A5, 148 by 210 millimetres. Pages 52.5 by 74 millimetres, the
+                   smallest zine. Check that your printer takes A5."
+                No "selected", no "1 of 4" (nothing is selected; and a Compose role
+                does not reach the platform as a counted item, ADR-087 §3).  At
+                Print the fixed paper is one text node, not a button, read as its
+                name, size and sentence.  The cover tile's name stays the zine's
+                name; the postmark is not spoken on the tile, and the zine sheet's
+                line says the paper.
+  A35.12 [stated] Focus.  Raising the sheet puts accessibility focus on its title;
+                closing it without a choice returns focus to "Make a zine".  After a
+                choice the Bench opens as it does today.
+  A35.13 [stated] When.  A35 ships with the schema bump that adds US Legal and A5
+                (ADR-133 decision 4), in the same change, never before it.  Until
+                then the app keeps the two-tile chooser it ships; A35 does not
+                restyle it early.  The three labels that fall back to US Letter
+                (ADR-133 Consequences) must name all four by then.
+   ============================================================================ */
+(() => {
+  const $ = id => document.getElementById(id);
+  const NB = ' ';                                   // A35.10: a number never parts from its unit
+  const X = NB + '×' + NB;
+  const PAPERS = {
+    a4:     { name: 'A4',        cls: 'a4',     size: '210' + X + '297' + NB + 'mm',
+              note: 'Pages 74' + X + '105' + NB + 'mm. The everyday paper in most of the world.',
+              say:  'A4, 210 by 297 millimetres. Pages 74 by 105 millimetres. The everyday paper in most of the world.' },
+    letter: { name: 'US Letter', cls: 'letter', size: '8.5' + X + '11' + NB + 'in',
+              note: 'Pages 2.75' + X + '4.25' + NB + 'in. The everyday paper in North America.',
+              say:  'US Letter, 8.5 by 11 inches. Pages 2.75 by 4.25 inches. The everyday paper in North America.' },
+    legal:  { name: 'US Legal',  cls: 'legal',  size: '8.5' + X + '14' + NB + 'in',
+              note: 'Pages 3.5' + X + '4.25' + NB + 'in, wider than Letter’s. Check that your printer takes Legal.',
+              say:  'US Legal, 8.5 by 14 inches. Pages 3.5 by 4.25 inches, wider than Letter’s. Check that your printer takes Legal.' },
+    a5:     { name: 'A5',        cls: 'a5',     size: '148' + X + '210' + NB + 'mm',
+              note: 'Pages 52.5' + X + '74' + NB + 'mm, the smallest zine. Check that your printer takes A5.',
+              say:  'A5, 148 by 210 millimetres. Pages 52.5 by 74 millimetres, the smallest zine. Check that your printer takes A5.' },
+  };
+  const ORDER = ['a4', 'letter', 'legal', 'a5'];         // A35.2: written out, fixed
+  let preferred = 'a4', made = 0, snackTimer = 0;
+  const sheet = $('a35Sheet'), scrim = $('a35Scrim'), drawer = $('a35Drawer'), start = $('a35Start');
+
+  function node(tag, cls, text){ const n = document.createElement(tag); if(cls) n.className = cls; if(text != null) n.textContent = text; return n; }
+  function lines(p){
+    const tx = node('span', 'a35-tx');
+    tx.append(node('span', 'a35-nm', p.name), node('span', 'a35-dm', p.size), node('span', 'a35-nt', p.note));
+    return tx;
+  }
+  function stock(p){
+    const slot = node('span', 'a35-slot'); slot.setAttribute('aria-hidden', 'true');
+    slot.appendChild(node('span', 'a35-stock ' + p.cls));
+    return slot;
+  }
+  function rows(){
+    const box = $('a35Rows'); box.textContent = '';
+    [preferred, ...ORDER.filter(k => k !== preferred)].forEach(k => {
+      const p = PAPERS[k], b = node('button', 'a35-row');
+      b.setAttribute('aria-label', p.say);             // A35.11: one node, the paper's name first
+      b.append(stock(p), lines(p));
+      b.onclick = () => choose(k);
+      box.appendChild(b);
+    });
+  }
+  function raise(el){ scrim.classList.add('show'); el.classList.add('show'); el.inert = false; }
+  function lowerAll(){
+    [sheet, drawer].forEach(el => { el.classList.remove('show'); el.inert = true; });
+    scrim.classList.remove('show');
+  }
+  function openSheet(){ rows(); raise(sheet); $('a35Ttl').focus({ preventScroll: true }); }   // A35.12
+  function closeSheet(){ const was = sheet.classList.contains('show'); lowerAll(); if(was) start.focus({ preventScroll: true }); }
+  function choose(k){
+    const p = PAPERS[k];
+    lowerAll();
+    made++;
+    const z = node('article', 'a35-zine'), c = node('div', 'cover paper-s');
+    c.append(node('span', 'tape'), node('div', 'fill'), node('div', 'spine'), node('span', 'stamp', p.name));
+    z.append(c, node('p', 'name', 'My zine'), node('p', 'sub', 'just now'));
+    $('a35Shelf').querySelector('.shelf-head').after(z);   // newest first
+    $('a35Count').textContent = (4 + made) + ' zines';
+    const s = $('a35Snack'); $('a35SnackText').textContent = 'New ' + p.name + ' zine. In the app the Bench opens here.';
+    s.style.bottom = ($('a35Phone').clientHeight - document.querySelector('#a35Phone .dock').offsetTop + 8) + 'px';
+    s.classList.add('show'); clearTimeout(snackTimer); snackTimer = setTimeout(() => s.classList.remove('show'), 3200);
+  }
+  function printFor(k){
+    const box = $('a35PrintPaper'); box.textContent = '';
+    if(k === 'a4' || k === 'letter'){                    // A35.8: a PICTURE of v21-proof.html's .paperseg, unchanged; the live switch is there
+      const seg = node('div', 'a35-seg'); seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Paper size');
+      ['a4', 'letter'].forEach(x => { const s = node('span', x === k ? 'on' : '', PAPERS[x].name); seg.appendChild(s); });
+      box.append(seg, node('p', 'a35-hint', 'We lay your zine out for this exact size, so it prints at 100% — nothing shrinks to fit.'));
+    } else {
+      const p = PAPERS[k], f = node('div', 'a35-fixed');
+      const tx = node('span', 'a35-tx');
+      const why = 'This zine was made for ' + p.name + ', so it prints on ' + p.name + ' only. Put ' + p.name + ' paper in your printer before you print.';
+      tx.append(node('span', 'a35-nm', p.name), node('span', 'a35-dm', p.size), node('span', 'a35-nt', why));
+      f.append(stock(p), tx);
+      f.setAttribute('role', 'note');                    // text, not a control
+      box.appendChild(f);
+    }
+    raise(drawer); $('a35Dh').focus({ preventScroll: true });
+  }
+
+  start.onclick = openSheet;
+  $('a35Open').onclick = openSheet;
+  scrim.onclick = closeSheet;
+  sheet.addEventListener('keydown', e => { if(e.key === 'Escape'){ e.stopPropagation(); closeSheet(); } });
+  drawer.addEventListener('keydown', e => { if(e.key === 'Escape'){ e.stopPropagation(); lowerAll(); } });
+  document.querySelectorAll('[data-a35-pref]').forEach(b => b.onclick = () => {
+    preferred = b.dataset.a35Pref;
+    document.querySelectorAll('[data-a35-pref]').forEach(x => x.classList.toggle('on', x === b));
+    openSheet();
+  });
+  document.querySelectorAll('[data-a35-print]').forEach(b => b.onclick = () => printFor(b.dataset.a35Print));
+  $('a35Big').onclick = () => { const on = $('a35Phone').classList.toggle('big'); $('a35Big').classList.toggle('on', on); };
+  $('a35Snack').inert = true;
+  rows();
+})();
+/* ===================== end of A35 ===================== */
+</script>
