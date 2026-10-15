@@ -25,6 +25,7 @@ import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.data.storage.AtomicFileStore
 import com.aritr.zinely.data.android.DocumentRepositoryImpl
+import com.aritr.zinely.home.PendingDeleteStore
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -40,6 +41,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.util.UUID
+import javax.inject.Inject
 
 /**
  * The graph's first host-level tests (ADR-046 §Testing) — the REAL [ZinelyNavHost] over the real
@@ -60,6 +62,9 @@ class ZinelyNavHostTest {
     val composeRule = createAndroidComposeRule<HiltTestActivity>()
 
     private lateinit var navController: TestNavHostController
+
+    @Inject
+    internal lateinit var pendingDeletes: PendingDeleteStore
 
     private fun setHost() {
         composeRule.setContent {
@@ -304,6 +309,7 @@ class ZinelyNavHostTest {
 
     @Test
     fun `backgrounding Home commits a pending delete before a cold return can revive it`() {
+        hiltRule.inject()
         val id = seedZine()
         setHost()
         waitForCard(SEEDED_TITLE)
@@ -315,7 +321,14 @@ class ZinelyNavHostTest {
         composeRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
         composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
 
-        composeRule.waitForIdle()
+        // ON_STOP only *starts* the commit: the store deletes on its IO dispatcher, which waitForIdle does
+        // not wait for, so asserting straight after it raced the delete (#136). The commit has finished when
+        // its durable marker is cleared, back on the main thread after the store returns — success or failure,
+        // so a failed delete still fails the file check below rather than timing out.
+        composeRule.waitUntil(10_000) {
+            composeRule.waitForIdle() // runs the main-thread half of the commit
+            id !in pendingDeletes.pendingIds()
+        }
         assertFalse(rootProjectDir(id).toFile().exists())
         assertTrue(
             composeRule.onAllNodesWithContentDescription(cardLabel(SEEDED_TITLE))
