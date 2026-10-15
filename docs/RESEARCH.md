@@ -1182,3 +1182,72 @@ or shrink it (R29.1; ADR-133 decision 5). Let the About setting lead the list an
 that paper only and that the printer must take it (R29.3, R26.1), and say where each everyday
 paper is everyday (R29.5). Lay rows out so they grow at a flat 200% and start each spoken name with the
 paper's name, units said in full (R29.4). A35 does this.
+
+## R30. Telling someone their work went back to an earlier copy (2026-10-15)
+
+Asked before deciding [ADR-134](DECISIONS.md#adr-134) and freezing library A37
+([D-120](design/V2-SPEC-DEFECTS.md#d-120), issue #128): where should an app say that it repaired a damaged
+file from an earlier copy, in what words, and how does a screen-reader user hear it? Pages that would not
+load in the fetcher (material.io's banner and snackbar pages, Apple's HIG on alerts, the Compose
+`LiveRegionMode` reference) are not cited.
+
+### R30.1 A message the person must see stays until they dismiss it; a snackbar does not — ✅ VERIFIED
+
+- Material's banner, as Flutter's implementation documents it
+  ([MaterialBanner](https://api.flutter.dev/flutter/material/MaterialBanner-class.html)): "A banner displays
+  an important, succinct message, and provides actions for users to address (or dismiss the banner). A user
+  action is required for it to be dismissed." and "Banners should be displayed at the top of the screen,
+  below a top app bar."
+- Android's own snackbar guidance
+  ([Compose snackbar](https://developer.android.com/develop/ui/compose/components/snackbar)): "a brief
+  notification … It provides feedback about an operation or action without interrupting the user
+  experience", and "Snackbars disappear after a few seconds." Its examples are confirmations (Undo after a
+  delete), offline status and "saved".
+- 🟦 So a repair the maker did not ask for, and which may have undone their last change, is banner-shaped,
+  not snackbar-shaped: it is about their work, it was not the result of anything they just did, and a
+  message that leaves by itself at app start is easily missed. Zinely has no Material banner component; A37
+  draws one in the Shelf's own material (a paper note) under the heading, which is where the banner guidance
+  puts it.
+
+### R30.2 Recovery is told after the fact, plainly, and kept until reviewed — ✅ VERIFIED
+
+- Microsoft Office's Document Recovery ([Recover your Office files](https://support.microsoft.com/topic/5851ef9c-dcd6-4c42-9364-ad3416d8497d)):
+  "Document Recovery automatically opens the next time you open the Office app to help you get your file
+  back", and closing it before every file is reviewed offers "Yes, I want to view these files later (safest
+  option)" or "No, remove the files. I have saved the files I need". The recovery is told at the next start,
+  and it stays until the person says they are done with it.
+- 🟦 Office asks the person to choose between versions because it keeps several. Zinely keeps one earlier
+  copy of `meta.json` and the newer one is gone (D-116), so there is nothing to choose: the note informs
+  and is dismissed. A dialog would interrupt for a decision that does not exist.
+
+### R30.3 How to word it — ✅ VERIFIED
+
+- [Microsoft, Error Message Guidelines](https://learn.microsoft.com/en-us/windows/win32/debug/error-message-guidelines):
+  a well-written message says "What happened and why? What is the end result for the user?"; "Do not use
+  technical jargon"; "Do not make the user feel at fault"; "Use complete but simple sentences"; "You can use
+  past tense to describe a distinct event that occurred in the past"; and "Avoid the word 'please'."
+- [Nielsen Norman Group, Error-Message Guidelines](https://www.nngroup.com/articles/error-message-guidelines/):
+  "Concisely and precisely describe the issue", "Avoid technical jargon and use language familiar to your
+  users instead", "Take a positive tone and don't blame the user", and "Merely stating the problem is also not
+  enough; offer some potential remedies."
+- 🟦 Applied in A37.3: what happened (a small file was damaged), why the name changed (the copy from before
+  the last change was used), the end result (named: "is called … again"), and what was not affected (the
+  pages). The remedy is implied, not instructed: the zine's own Rename and Move rows are where they always
+  are. No "backup" (Zinely's Backups are library backups, [ADR-120](DECISIONS.md#adr-120)), no "error",
+  "corrupt" or file names, no "please" and no apology.
+
+### R30.4 A status message is spoken without moving focus — ✅ VERIFIED
+
+- [WCAG 2.2, Understanding 4.1.3 Status Messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html):
+  "status messages can be programmatically determined through role or properties such that they can be
+  presented to the user by assistive technologies without receiving focus." A status message is a "change
+  in content that is not a change of context".
+- Flutter's semantics reference ([SemanticsProperties.liveRegion](https://api.flutter.dev/flutter/semantics/SemanticsProperties/liveRegion.html))
+  says that on Android a live region produces a polite announcement even when the widget does not have
+  accessibility focus, and that "This announcement may not be spoken if the OS accessibility services are
+  already announcing something else."
+- 🟦 Applied in A37.10: the words are a polite live region whose text never changes while the note is up, so
+  a note that arrives while the Shelf is open is spoken once; the note is also in reading order right after
+  the heading, so a dropped announcement still leaves it found. 🟨 Whether TalkBack speaks a live region that
+  is *added* already filled, rather than one whose text changes, is not settled by these sources: that is the
+  device pass's question (ADR-134, owed).
