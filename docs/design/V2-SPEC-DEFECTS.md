@@ -7871,7 +7871,7 @@ Two independent Review Agents, reading only, 2026-10-14.
 | **Artifacts** | `core/data-storage/.../AtomicFileStore.kt` (`read`) · `data-android/.../RoomProjectRepository.kt` (`readMetaOrNull`) · `docs/design/mockups/v21-library.html` A37 (appended; nothing above it edited) |
 | **Found** | 2026-10-14, as D-116's second known limit (PR #127); filed as [issue #128](https://github.com/aritr-codes/zinely-android/issues/128) |
 | **Severity** | **Trust defect.** No pages are lost. After a repair, the Shelf shows a zine under its earlier name, cover or folder with no word of why, so a maker can believe a zine is missing or that the app undid their rename |
-| **Status** | **Designed 2026-10-15** under [ADR-134](../DECISIONS.md#adr-134) (Accepted under the owner's delegation); A37 frozen. **Not built**: the Kotlin follows in its own change |
+| **Status** | **Designed 2026-10-15** under [ADR-134](../DECISIONS.md#adr-134) (Accepted under the owner's delegation); A37 frozen. **Built 2026-10-15** in PR #139 ([As built](../DECISIONS.md#adr-134-as-built)), in no release; **not accepted** until both device passes. Item 4 stays open |
 
 **What happens.** A zine's `meta.json` holds its title, createdAt, cover and folder. Each write keeps the
 previous file as `meta.json.bak`. If `meta.json` is found damaged, `AtomicFileStore.read` puts the `.bak`
@@ -7881,7 +7881,7 @@ rename, a move to a folder or a new cover made just before the damage is undone.
 | # | Finding | Outcome |
 |---|---|---|
 | 1 | **The maker is never told.** D-116 fixed the data and listed this as a known limit. | **Designed.** Library A37: one paper note under the My Shelf heading, exact words in A37.3, dismissed only by "Got it", once per repair and kept until seen (ADR-134 decisions 1–3) |
-| 2 | **The store cannot say that it used the `.bak`.** `read` returns the same bytes either way, so no caller can tell a repaired read from a clean one. | **Contract decided** (ADR-134 decision 4): a sealed result from `read`; `readMetaOrNull` records the waiting note; nothing new is caught. Built with the Kotlin |
+| 2 | **The store cannot say that it used the `.bak`.** `read` returns the same bytes either way, so no caller can tell a repaired read from a clean one. | **Built.** `AtomicFileStore.readReporting` returns `StoreRead.Read` / `Restored` / `BackupOnly`; `readMetaOrNull` records the waiting note; nothing new is caught. A mutation that reports every recovery as `Read` fails the store and repository tests (PR #139) |
 | 3 | **"Backup" is already taken on this screen.** Backups is a dock action that means library backups; "restored from a backup" would send the maker there. | **Designed around.** A37.4 bans the word; the note says "the copy from before the last change" |
 | 4 | **A page document put back from its own `.bak` is silent too.** `DocumentRepositoryImpl` reads `document.json` through the same `read` (ADR-021). Each autosave rewrites it, so the `.bak` is one autosave old and the maker may lose the last edits made before the damage, without a word. | **Not decided here; outside #128.** Proposed as its own issue for the main session. The sealed result of item 2 makes it cheap to report later |
 | 5 | **The prototype had no way to show font scale 2 at 360dp.** A28's large-text control is 1.8× on a 390px phone. | **Added** an A37 control, "text 2× at 360dp". With the several-zine note it fills most of the first screen at that size (676px of an 800px phone in review, Got it below the fold under the dock); every word shows and the note scrolls away with the zines (A37.8). Whether a large-text maker can still answer "Which zine do I want?" there is the first-time-user device pass's question |
@@ -7895,9 +7895,14 @@ rename, a move to a folder or a new cover made just before the damage is undone.
 390 × 812 in gallery mode, with no note raised, in the content, dark, folders and empty states: all four
 screenshots are byte-identical. The frozen Shelf is unchanged until a note is raised.
 
-**Owed** (with the build, ADR-134 consequences): both device passes on the phone with a hand-damaged
-`meta.json` in the QA package's own storage, including whether TalkBack speaks a note that arrives already
-filled; the owner's first-time reading of the words.
+**Built, 2026-10-15** (PR #139, [ADR-134 As built](../DECISIONS.md#adr-134-as-built)): item 1 as the
+`ShelfRestoredNote` under the heading, item 2 as above, item 3 in `Copy.Restored` with a test that the words
+never say backup, restore, error, corrupt or metadata. Item 5's case, five zines at font scale 2 on 360dp, has
+a Compose test (nothing cut, *Got it* under the words, inside the note, at least 48dp) and a golden.
+
+**Owed** (ADR-134 consequences): both device passes on the phone with a hand-damaged `meta.json` in the QA
+package's own storage, including whether TalkBack speaks a note that arrives already filled; the owner's
+first-time reading of the words.
 
 #### Review
 
