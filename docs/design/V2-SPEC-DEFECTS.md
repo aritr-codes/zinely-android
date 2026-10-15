@@ -8103,18 +8103,58 @@ bytes, so one stray mismatch (it happened once each in the content and folders s
 
 | | |
 |---|---|
-| **Artifacts** | `docs/design/mockups/v21-proof.html` (`#book`, `aria-live="polite"`; DOM order book, Previous, Next) · `feature/editor/.../ProofRead.kt` (the leaf and stack edges `clearAndSetSemantics {}`; declared Previous, leaf, Next) · `ProofScreen.kt` (`.pcount`, the only live region) |
+| **Artifacts** | `docs/design/mockups/v21-proof.html` (`#book`, `aria-live="polite"`) · `feature/editor/.../ProofRead.kt` (the leaf and stack edges `clearAndSetSemantics {}`) · `ProofScreen.kt` (the ticket, announced on each turn) |
 | **Found** | Brief 04 Problem 4 (2026-09-25); confirmed 2026-10-15 against `origin/main` `3577e31` by the wave's lane F |
 | **Severity** | Accessibility: a TalkBack reader of Read hears the page's number and two buttons, and none of the zine's words or photos. No sighted effect |
 | **Status** | **Designed, not built.** [`v21-proof.html` A38](mockups/v21-proof.html) frozen 2026-10-15 under the owner's delegation; [ADR-135](../DECISIONS.md#adr-135) Proposed |
 
 | # | Finding | Outcome |
 |---|---|---|
-| 1 | **Read speaks nothing from the page.** The leaf is cleared of semantics, so text, photos and Art are silent. The freeze never said what Read speaks. | **A38 specifies the stops**: text as written, `Photo` / `Photo: <description>`, described Art by its name, undescribed Art silent, an empty-page stop; in the Bench's spatial order. Built in two parts (ADR-135 decision 8) |
-| 2 | **The freeze and the build disagree about live regions.** `#book aria-live="polite"` would read the whole new leaf on every turn, beside the ticket the build announces. The build is right: one speaker (ADR-101 P5/P6). | **A38 supersedes `#book`'s live region.** The ticket stays the only one |
-| 3 | **Neither order suits a listener who turns pages.** The DOM puts the book before both buttons; the build puts the leaf between them. With stops in either place, the swipe after pressing Next page misses the new page or reads it backwards, because focus stays on the button. | **A38 declares Previous, Next, then the page.** Needs the device listen (ADR-135, owed item 3) |
-| 4 | **Nothing tells a maker that descriptions never reach paper or the PDF.** | **A38 fixes one helper line** for the future Describe field: *"Zinely reads this aloud in Read. It isn’t printed or put in the PDF."* Its drawing belongs to the Bench's Describe amendment |
+| 1 | **Read speaks nothing from the page.** The leaf is cleared of semantics, so text, photos and Art are silent. The freeze never said what Read speaks. | **A38 specifies the stops**: text as written, `Photo` / `Photo: <description>`, described Art by its name, undescribed Art silent, `Blank page` / `Only Art on this page`; in the Bench's spatial order. Built in two parts (ADR-135 decision 8) |
+| 2 | **The freeze and the build disagree about what a turn announces.** `#book aria-live="polite"` would read the whole new leaf on every turn, beside the ticket the build announces. The build is right: one announcement per turn (ADR-101 P5/P6). | **A38 supersedes `#book`'s live region.** The band's own live lines (`#stale`, the saved notice) are untouched |
+| 3 | **Where a swipe lands after a turn is unknown.** With the page between Previous and Next, a listener whose focus stays on Next page after a double tap would pass the new page or read it backwards. | **Kept as §4.5's visual row; the listen decides** (ADR-135 decision 4, owed item 3). The remedy, Next page declared first, is named, not taken |
+| 4 | **Nothing tells a maker that descriptions never reach paper or the PDF.** | **A38 fixes one helper line** for the future Describe field: *"Zinely reads this aloud in Read. It isn’t printed or put in the PDF."* The Bench's Describe amendment draws it |
 
 #### Review
 
-Recorded after the lane's independent review.
+Two independent Review Agents (headless Claude Code sessions, reading only), 2026-10-15. Codex, the usual
+second reviewer, could not sign in.
+
+**Accessibility and design lens: GO WITH FIXES.**
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| Next page before the page contradicts §4.5 ("the visual order and the accessibility order are the same order") and would fail `SurfaceTraversalOrderTest`'s row check; the ADR did not amend §4.5 | Required | **Accepted, by changing the decision.** The order goes back to the visual row; Next page first is the named remedy if the listen hears a fault |
+| "Never forced with `traversalIndex`" contradicts the Bench mechanism ADR-135 reuses (declared order *and* `traversalIndex`) and Brief 04's acceptance 2 | Required | **Accepted.** Stops are declared in order and `traversalIndex` restates it |
+| "No words or photos on this page" misleads on a page with only undescribed Art | Required | **Accepted.** Two strings: `Blank page`, `Only Art on this page` |
+| "TalkBack keeps focus on a button after it is pressed" is unsourced and frozen as fact | Required | **Accepted.** Marked 🟨; it is now the listen's first question, not a premise of the design |
+| Brief 04 said two calls were "to be decided by a listen"; the ADR decides them without saying so | Required | **Accepted.** The status block says they are decided at the desk under the delegation, and the listen can overturn them |
+| The turn edges are invisible overlays, the best argument for moving Next | Recommended | **Rejected.** Their chevrons are drawn (`ProofRead.kt` `TapEdge`), and the order change is no longer taken |
+| A double tap on a stop is undesigned and could reach a turn edge | Recommended | **Accepted.** It does nothing; owed item 3 checks it |
+| A38 says "never Unlabelled" as settled while R29 hedges | Recommended | **Accepted.** A38 now says no role is given and the listen confirms what TalkBack adds |
+| "Read answers 'what did I make?' for someone who cannot see the page" overstates part 1 | Recommended | **Accepted.** Reworded to what a listener actually gets |
+| Two homes for the helper line | Recommended | **Accepted.** A38 owns it; the Bench amendment quotes it |
+| Decision 6 restated Brief 04's field numbers | Recommended | **Accepted.** It links to Brief 04 part B |
+| Replace photo clears, Replace Art keeps, rests on an assumption | Recommended | **Accepted.** Marked 🟨 and made a Pass 2 question |
+| "A page-tall piece" paraphrases §4.5's "six tenths of the page" | Recommended | **Accepted.** Quoted |
+| "The ticket is the only live region" is true only of a turn (`ProofFold.kt` has one) | Observation | **Accepted** with the next table's first row |
+| ADR-134 appears nowhere | Observation | **No change.** Lane C of this wave holds it; said in the PR |
+| A38's cards hard-code colours instead of re-pinning tokens | Observation | **Accepted.** The card re-pins `--ink` and `--ink-soft` |
+| A `var()` set through `style.margin` | Observation | **Accepted.** Moved to a class |
+
+**Documents and evidence lens: GO WITH FIXES.**
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| "The ticket is the only live region" is false: the band's paper-changed note and saved block are live too, and the frozen `.pcount` has no `aria-live` | Required | **Accepted.** Every instance now says a turn announces the ticket only |
+| The role does not bring "Unlabelled"; an empty label does | Required | **Accepted.** The rationale now says an undescribed photo would need "Photo" anyway, giving "Photo, Image" |
+| A childless node with no role is captionable too (`ENABLE_CAPTION_FOR_LEAF_VIEW`) | Required | **Rejected, with evidence.** `isSmallSizeNode` admits only a node whose `getNodeText` (content description, then text) is empty (`ImageCaptionUtils.java` at `229212f`, lines 295–305; `AccessibilityNodeInfoUtils.getNodeText`). Every stop is labelled, so none is captionable. R31.2 now states the leaf rule and that condition |
+| Both Review sections were placeholders | Required | **Accepted.** Filled |
+| R29 collides with lanes E and C, which both added an R29 | Required | **Accepted.** Renumbered **R31**, the number this lane gets in the wave's merge order (E, then C, then F) |
+| §4.5 not disclosed as narrowed | Recommended | **Accepted** by keeping §4.5 (first table, first row) |
+| `google/talkback`'s branch is `master`, not `main` | Recommended | **Accepted** |
+| No OWNER-CHECKLIST row | Recommended | **Accepted for the main session.** The text is in the PR body |
+| `Role.Image` maps to `ROLE_IMAGE` only when not clickable | Recommended | **Accepted.** R31.2 says so |
+| Decided without the listen | Observation | Same as the first table's fifth row |
+| "Page-tall" vs six tenths | Observation | Same as the first table's thirteenth row |
+| The §11 link has no anchor | Observation | **Moot.** The link left with the order change |

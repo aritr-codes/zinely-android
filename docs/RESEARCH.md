@@ -1294,20 +1294,24 @@ and the PDF carry? Research pass, 2026-10-15. Brief 04's sources are not repeate
 
 ### R31.2 What TalkBack says depends on the node's role, and an image role invites a machine caption — ✅ VERIFIED (source)
 
-Read from the open-source TalkBack ([google/talkback](https://github.com/google/talkback), `main` at
+Read from the open-source TalkBack ([google/talkback](https://github.com/google/talkback), `master` at
 `229212f`, 2026-03-23) and Compose (`androidx-main`). Samsung phones run Google's TalkBack; the owner's
 SM-A176B ran 16.2 ([ADR-119](DECISIONS.md#adr-119)). 🟨 The open-source tree may lag the shipped app.
 
 - Compose reports `Role.Image` to the platform as `android.widget.ImageView`
   ([`SemanticsUtils.android.kt`](https://github.com/androidx/androidx/blob/androidx-main/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/SemanticsUtils.android.kt),
-  `toLegacyClassName`), which TalkBack maps to `ROLE_IMAGE` (`utils/.../Role.java`).
+  `toLegacyClassName`), which TalkBack maps to `ROLE_IMAGE` when the node is not clickable, `ROLE_IMAGE_BUTTON`
+  when it is (`utils/.../Role.java`).
 - For `ROLE_IMAGE`, TalkBack speaks the label and then the role name **"Image"** (`value_image`), while the
   listener keeps "speak element type" on (`NonTextViewsDescription.nodeRole`, `getNodeRoleName`).
-- An image node with no text and no label speaks **"Unlabelled"** (`value_unlabelled`, `nodeState`).
+- An image node whose text, label and id are all empty speaks **"Unlabelled"** (`value_unlabelled`, `nodeState`).
+  A label, any label, silences it.
 - The node's own text or label always wins. Only when both are empty does TalkBack fall back to its own
   caption: text recognition, icon detection, image description (`getNodeTextOrLabelDescription`).
-- Every `ROLE_IMAGE` node is "captionable" (`ImageCaptionUtils.isCaptionable`), so TalkBack's menu can offer to
-  describe it. Google: on eligible phones TalkBack describes images on the device with Gemini Nano, and the
+- Every `ROLE_IMAGE` node is "captionable" (`ImageCaptionUtils.isCaptionable`), labelled or not, so TalkBack's
+  menu can offer to describe it. Any other childless node is captionable only while it has **no** text or label
+  and is at most 150dp tall (`ENABLE_CAPTION_FOR_LEAF_VIEW`, `isSmallSizeNode`), so a labelled node with no role
+  is not. Google: on eligible phones TalkBack describes images on the device with Gemini Nano, and the
   menu's "Describe Image" sends the image "to Gemini 1.5 Flash on the server"
   ([Android Developers Blog, 2024-09](https://android-developers.googleblog.com/2024/09/talkback-uses-gemini-nano-to-increase-low-vision-accessibility.html)).
   The same post: "The average TalkBack user comes across 90 unlabeled images per day."
@@ -1346,17 +1350,19 @@ SM-A176B ran 16.2 ([ADR-119](DECISIONS.md#adr-119)). 🟨 The open-source tree m
 
 - **Say the maker's words, marked as a photo.** In Read a description sits among the zine's printed words, so
   the listener must hear which words are on the paper and which describe a picture. Two ways to mark it: the
-  `Image` role, or the word "Photo" in the label. The role brings TalkBack's "Unlabelled" for an undescribed
-  photo and makes every photo captionable, so a machine's guess, possibly the server's, could be spoken
-  inside the maker's zine; Brief 04 rules descriptions are the maker's own and never generated. So: no role,
-  and the label carries the kind, `Photo: <description>`, in the Bench's existing grammar (`Text: …`). This
-  departs from Android's "don't include an element's type" on purpose: with no role, nothing else says it.
+  `Image` role, or the word "Photo" in the label. The role says "Image" only while the listener keeps element
+  types on, so with it off a description would sound like printed words. An undescribed photo would still need a
+  label (with none TalkBack says "Unlabelled", or speaks its own caption if the listener turned those on), so it
+  would be "Photo, Image". And every image node stays captionable from TalkBack's menu, where a labelled node
+  with no role is not (R31.2); Brief 04 rules descriptions are the maker's own and never generated. So: no role,
+  and the label carries the kind, `Photo: <description>`, in the Bench's grammar (`Text: …`). This departs from
+  Android's "don't include an element's type" on purpose: with no role, nothing else says it.
 - **An undescribed photo keeps its stop and says "Photo".** A photo carries meaning in a zine, and the listener
-  should know it is there (R31.1, R31.3's "partially readable"); "Unlabelled" sounds like a fault in the app.
+  should know it is there (R31.1, R31.3's "partially readable").
 - **Art with no description is decoration in Read**, skipped as WCAG and Android allow; with a description it
   is spoken like a photo, named by its piece.
 - **One order for words and pictures:** the Bench's spatial order (R31.3).
 - **The paper and the PDF carry nothing**, and the app must not suggest otherwise (R31.4, and R31.3's comics
   label). A plain-text reader's edition is the honest later route (Brief 04, "Future extension"). 🔭
-- 🟨 Whether TalkBack offers its own description on a node with no image role has not been heard on a phone.
-  It is a device check, not a design input.
+- 🟨 The source says TalkBack offers no description of its own on a labelled node with no role (R31.2); the
+  shipped TalkBack may differ from the open-source tree, so the listen checks it.
