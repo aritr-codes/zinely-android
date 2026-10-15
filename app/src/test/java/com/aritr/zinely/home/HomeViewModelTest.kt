@@ -22,6 +22,7 @@ import com.aritr.zinely.data.android.prefs.BackupRecordStore
 import com.aritr.zinely.feature.library.LibraryLastBackup
 import com.aritr.zinely.feature.library.LibraryOmission
 import com.aritr.zinely.feature.library.LibraryOmissionReason
+import com.aritr.zinely.feature.library.RestoredZine
 import com.aritr.zinely.core.data.asset.ZineBackupOmission
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -2323,5 +2324,79 @@ class HomeViewModelTest {
         assertTrue(editedLabel(now - 2 * 60_000L, now).contains("2 minutes"))
         assertTrue(editedLabel(now - 2 * 3_600_000L, now).contains("2 hours"))
         assertTrue(editedLabel(now - 3 * 86_400_000L, now).contains("3 days"))
+    }
+
+    // ---- ADR-134 / A37: the restored-details note.
+
+    @Test
+    fun `waiting notes are listed in Shelf order, with a zine whose delete is pending still named (A37_6)`() = runTest {
+        // Given
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.restored["z1"] = "Letters to Gran"
+        repository.restored["z3"] = null
+        repository.projects.emit(
+            listOf(summary("z1", "Letters home", now), summary("z2", "Riso tests", now), summary("z3", "Coffee log", now)),
+        )
+
+        // When
+        viewModel.delete("z3")
+
+        // Then
+        val content = viewModel.state.value as HomeUiState.Content
+        assertEquals(listOf("z1", "z2"), content.cards.map { it.id })
+        assertEquals(
+            listOf(RestoredZine("z1", "Letters home", "Letters to Gran"), RestoredZine("z3", "Coffee log", null)),
+            content.restored,
+        )
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `Got it hides the note at once and clears every zine it names in the store`() = runTest {
+        // Given
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.restored["z1"] = "Letters to Gran"
+        repository.restored["z2"] = null
+        repository.projects.emit(listOf(summary("z1", "Letters home", now), summary("z2", "Riso tests", now)))
+
+        // When
+        viewModel.dismissRestored(listOf("z1", "z2"))
+
+        // Then
+        assertTrue((viewModel.state.value as HomeUiState.Content).restored.isEmpty())
+        assertTrue("dismiss restored z1, z2" in repository.calls)
+        assertTrue(repository.restored.isEmpty())
+
+        // And a later repair of the same zine is told again: the dismissed id did not stick.
+        repository.restored["z1"] = "Letters home"
+        repository.projects.emit(listOf(summary("z1", "Letters home", now), summary("z2", "Riso tests", now)))
+        assertEquals(listOf("z1"), (viewModel.state.value as HomeUiState.Content).restored.map { it.id })
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `when the store cannot clear the note it comes back with the warm message`() = runTest {
+        // Given
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+        repository.restored["z1"] = "Letters to Gran"
+        repository.dismissFailure = true
+        repository.projects.emit(listOf(summary("z1", "Letters home", now)))
+
+        // When
+        viewModel.dismissRestored(listOf("z1"))
+
+        // Then
+        assertEquals(listOf("z1"), (viewModel.state.value as HomeUiState.Content).restored.map { it.id })
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE)), events)
+        stateJob.cancel()
+        eventsJob.cancel()
     }
 }

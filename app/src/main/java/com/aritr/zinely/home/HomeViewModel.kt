@@ -35,6 +35,7 @@ import com.aritr.zinely.feature.library.LibraryLastBackup
 import com.aritr.zinely.feature.library.LibraryOmission
 import com.aritr.zinely.feature.library.LibraryOmissionReason
 import com.aritr.zinely.feature.library.LibraryZine
+import com.aritr.zinely.feature.library.RestoredZine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -87,6 +88,8 @@ internal sealed interface HomeUiState {
         // no covers, and no invitation either, because `Content` is not `Empty`. It is a state the screen
         // cannot represent honestly, so it must not be constructible by omission.
         val zines: List<LibraryZine>,
+        /** Zines whose details went back to their earlier copy and wait to be told (ADR-134), in Shelf order. */
+        val restored: List<RestoredZine> = emptyList(),
     ) : HomeUiState
 }
 
@@ -125,6 +128,13 @@ internal class HomeViewModel @Inject constructor(
      * delete is resuming), and [finishedDeletes] the store has not yet listed the Shelf without.
      */
     private val pendingDeletes = MutableStateFlow<Set<String>>(emptySet())
+
+    /**
+     * Zines whose restored-details note the maker has dismissed with *Got it* while the store clears it
+     * ([dismissRestored], ADR-134), so the note goes at once. An id leaves when the store lists the zine without a
+     * waiting note, so a later repair of the same zine is told again (A37.6).
+     */
+    private val dismissedNotes = MutableStateFlow<Set<String>>(emptySet())
 
     /**
      * The deletes the store has finished, kept in [pendingDeletes] only so a deleted card does not flash back
@@ -267,7 +277,8 @@ internal class HomeViewModel @Inject constructor(
         combine(
             projectRepository.observeShelfProjects(),
             pendingDeletes,
-        ) { projects, pending ->
+            dismissedNotes,
+        ) { projects, pending, dismissed ->
             // Prune pending ids the store no longer knows (committed deletes it caught up with):
             // this VM is process-lifetime since the ADR-046 re-root, so "stale ids are inert"
             // is no longer enough — they must not accumulate forever (Codex). The update
@@ -278,6 +289,10 @@ internal class HomeViewModel @Inject constructor(
             if (pending.any { it !in projectIds }) {
                 pendingDeletes.update { current -> current.filterTo(mutableSetOf()) { it in projectIds } }
                 finishedDeletes = finishedDeletes.filterTo(mutableSetOf()) { it in projectIds }
+            }
+            // Same convergence as above: a dismissed note the store no longer lists is over.
+            if (dismissed.any { id -> projects.none { it.id == id && it.restored != null } }) {
+                dismissedNotes.update { ids -> ids.filterTo(mutableSetOf()) { id -> projects.any { it.id == id && it.restored != null } } }
             }
             if (projects.isEmpty()) {
                 HomeUiState.Empty
@@ -299,6 +314,11 @@ internal class HomeViewModel @Inject constructor(
                             fallbackCover = fallbackCovers::get,
                             folder = entry.folder?.let { spellings[FolderNames.key(it)] },
                         )
+                    },
+                    // A37.6: a zine whose delete is still waiting stays named until its undo has passed.
+                    restored = projects.mapNotNull { entry ->
+                        entry.restored?.takeIf { entry.id !in dismissed }
+                            ?.let { RestoredZine(entry.id, entry.title, it.previousTitle) }
                     },
                 )
             }
@@ -487,6 +507,21 @@ internal class HomeViewModel @Inject constructor(
         val trimmed = title.trim()
         if (trimmed.isEmpty()) return
         viewModelScope.launch { projectRepository.renameProject(id, trimmed).sendMessageOnFailure() }
+    }
+
+    /**
+     * *Got it* on the restored-details note (A37.5): every zine it names stops waiting to be told. The note goes at
+     * once; if the store cannot clear it, it comes back with the warm failure message and is told again.
+     */
+    fun dismissRestored(ids: List<String>) {
+        dismissedNotes.update { it + ids }
+        viewModelScope.launch {
+            val result = projectRepository.dismissRestoredDetails(ids)
+            if (result is DataResult.Failure) {
+                dismissedNotes.update { it - ids.toSet() }
+                eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
+            }
+        }
     }
 
     fun duplicate(id: String) {
