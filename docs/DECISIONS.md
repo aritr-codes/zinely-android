@@ -142,7 +142,7 @@
 | [ADR-130](#adr-130) | **The typing-time notice says "prints in a font from your phone" for what the phone draws.** The check asks `Paint.hasGlyph` on the face the renderer resolves, which walks the same fallback chain; a script every character of which the phone draws gets the new line, anything else keeps ADR-070's "can't print yet". Amends ADR-070 (issue #103, D-115) | Accepted |
 | [ADR-132](#adr-132) | **The Art pieces are drawn by one hand.** One line weight (2.5 of 24 units), flat views, a fixed margin, and an edge that says what made it (cut, torn, drawn, metal, printer's mark); torn edges read one hand-written tear table, never a zig-zag. All 34 redrawn as bench A34, design frozen under the owner's delegation; ids, names, sizes and the eight holed pieces unchanged. The Compose redraw and every Art golden are a later wave | Proposed |
 | [ADR-133](#adr-133) | **Paper is a closed, named set; the imposition engine takes any sheet.** Answers the paper half of ADR-016. A person picks a size by name and the file stores the name; `Imposer.layout` also takes any portrait sheet, proved by properties. US Legal and A5 are the next sizes, in their own schema bump after v4, chosen at the start of a zine only; half-Letter, A3 and Tabloid are not | Accepted (engine and closed set); sizes decided, not built |
-| [ADR-134](#adr-134) | **When a zine's details go back to their earlier copy, My Shelf says so once.** A paper note under the heading names the zine (“Letters to Gran” is called “Letters home” again), says what went back, and stays until “Got it”. The store reports a repaired read as a sealed result; the waiting note is kept per zine. Library A37 | Accepted 2026-10-15 under delegation (design; Kotlin not built) |
+| [ADR-134](#adr-134) | **When a zine's details go back to their earlier copy, My Shelf says so once.** A paper note under the heading names the zine (“Letters to Gran” is called “Letters home” again), says what went back, and stays until “Got it”. The store reports a repaired read as a sealed result; the waiting note is kept per zine. Library A37 | Accepted 2026-10-15 under delegation; built 2026-10-15, in no release (device passes owed) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -16085,8 +16085,8 @@ themselves is still owed.
 
 **Status:** Accepted, 2026-10-15, under the owner's delegation of 2026-10-12 ("decide, do not ask"); the
 owner has not ruled on it personally and may overrule it.
-**Builds:** the design only (library amendment A37, frozen). The Kotlin follows in its own change, under
-the contract below; until it lands the app behaves as D-116 left it.
+**Builds:** library amendment A37 (frozen), and, in the same PR #139, the Kotlin under the contract below
+(see [As built](#adr-134-as-built)). In no release; both device passes are owed before the build is accepted.
 **Evidence:** [RESEARCH R29](RESEARCH.md#r29-telling-someone-their-work-went-back-to-an-earlier-copy-2026-10-15).
 **Findings:** [D-120](design/V2-SPEC-DEFECTS.md#d-120). **Spec:** `docs/design/mockups/v21-library.html` A37
 (rules A37.1–A37.12). **Issue:** [#128](https://github.com/aritr-codes/zinely-android/issues/128).
@@ -16205,6 +16205,34 @@ sequenceDiagram
   already filled (R29.4 leaves that open); and the owner's first-time reading of the words.
 - `DocumentRepositoryImpl` keeps the bytes-only wrapper; whether a page document's repair is told is D-120
   item 4.
+
+#### As built (2026-10-15) {#adr-134-as-built}
+
+Built in PR #139 on `feat/restored-notice-128`, under decisions 1–7 with nothing re-decided. Where the
+decision left a choice to the build, the choice is recorded here.
+
+| Decision | Where | Choice made by the build |
+|---|---|---|
+| 4 Sealed result | `AtomicFileStore.readReporting` → `StoreRead.Read` / `Restored` / `BackupOnly` (null when neither file is there); `read` is `readReporting(…)?.bytes` | `Restored` means the target was present when the read found it unusable, so the quarantine path is `Restored` once and `BackupOnly` after. No new `catch` |
+| 4 One place | `RoomProjectRepository.readMetaOrNull` → `noteRepair` | The row's title is read before the D-116 re-sync; the re-sync runs there, in the same read, so every caller (scan, Shelf list, folder action, rename) re-syncs before the Shelf lists. A note already waiting keeps its first previous title |
+| 5 Kept per zine | `projects/<id>/restored-note.json` (`ProjectPaths.restoredNoteFile`), written by `AtomicFileStore.write`; an in-memory map beside it | A marker that cannot be written leaves the note in memory for this run (proved by a test); an unreadable marker still raises the note, with no previous title. Duplicate writes a new `meta.json` and document only, and the library backup writes named entries only, so the marker is never copied; delete removes the directory |
+| 3 Clearing | `dismissRestoredDetails(ids)` (Got it), `renameProject`, `moveProject`, `deleteProject` | A marker that cannot be removed is `DataError.Io`, as an index write after a committed file is; the ViewModel brings the note back with the warm message. A folder rename or unpack does not clear the note: the maker did not act on the zine |
+| 1–2 The note | `ShelfRestoredNote` in `feature/editor/.../library`, a full-span item between the heading and the zines; words in `Copy.Restored` | Paper and ink pinned; `zinelyFocusRing` gained a colour parameter so *Got it*'s ring is pinned ink too. The tape is the cover's tape, extracted as `ZineTape` |
+| 6 Announced only on arrival | `NoteArrival` in `ZineLibraryScreen`, and the note's own `announce` | A note is announced only when it appears on a My Shelf that drew its zines without one. The live region is set for those words only and dropped for good when they change. The words are put in 150 ms after the node (the frozen page's `setTimeout`), since Compose sends accessibility changes at most every 100 ms and words in the same window would reach the platform with the node already filled (R29.4) |
+| A37.6 Pending delete | `HomeViewModel` | A zine whose delete is waiting stays named until the store deletes it; *Got it* hides the note at once and clears every zine it names |
+
+**Verification.** Tests: `AtomicFileStoreTest` (the sealed result, the quarantine path),
+`RoomProjectRepositoryRestoredNoteTest` (one note per repair, none for a clean read, survives a restart, Got it
+clears it for good, a disk-full repair told once, a failed marker write still shown, the re-sync outside the
+scan, rename / move / delete, Duplicate), `RestoredCopyTest` (every A37.3 form, A37.4's banned words),
+`HomeViewModelTest` (order, pending delete, dismiss, failure), `ShelfRestoredNoteTest` (position, the single
+merged node, traversal order, the 48dp button, present-on-entry not live, arrival live and polite on the
+platform node, a change drops the live region, folder round trip silent, Got it focuses the heading, font
+scale 2 at 360dp), and three goldens (`v21_library_restored_{light,dark}`, `v21_library_restored_five_360_2x`)
+recorded on CI. Run results and the repair-signal mutation check are in PR #139.
+
+**Owed:** both device passes on the phone with a hand-damaged `meta.json` in the QA package's storage,
+including whether TalkBack speaks the arriving note; the owner's first-time reading of the words; D-120 item 4.
 
 #### Review
 
