@@ -8042,9 +8042,10 @@ rename, a move to a folder or a new cover made just before the damage is undone.
 |---|---|---|
 | 1 | **The maker is never told.** D-116 fixed the data and listed this as a known limit. | **Designed.** Library A37: one paper note under the My Shelf heading, exact words in A37.3, dismissed only by "Got it", once per repair and kept until seen (ADR-134 decisions 1–3) |
 | 2 | **The store cannot say that it used the `.bak`.** `read` returns the same bytes either way, so no caller can tell a repaired read from a clean one. | **Contract decided** (ADR-134 decision 4): a sealed result from `read`; `readMetaOrNull` records the waiting note; nothing new is caught. Built with the Kotlin |
-| 3 | **"Backup" is already taken on this screen.** Backups is a dock action that means library backups; "restored from a backup" would send the maker there. | **Designed around.** A37.4 bans the word; the note says "the copy from before your last change" |
+| 3 | **"Backup" is already taken on this screen.** Backups is a dock action that means library backups; "restored from a backup" would send the maker there. | **Designed around.** A37.4 bans the word; the note says "the copy from before the last change" |
 | 4 | **A page document put back from its own `.bak` is silent too.** `DocumentRepositoryImpl` reads `document.json` through the same `read` (ADR-021). Each autosave rewrites it, so the `.bak` is one autosave old and the maker may lose the last edits made before the damage, without a word. | **Not decided here; outside #128.** Proposed as its own issue for the main session. The sealed result of item 2 makes it cheap to report later |
 | 5 | **The prototype had no way to show font scale 2 at 360dp.** A28's large-text control is 1.8× on a 390px phone. | **Added** an A37 control, "text 2× at 360dp". With the four-zine note it fills most of the first screen at that size; every word shows and the note scrolls away with the zines (A37.8) |
+| 6 | **First draft said "your last change".** The last write to `meta.json` is not always the maker's: Zinely writes it too (a cover drawn for an older zine, D-026), so the words could blame the maker for a change they never made. | **Fixed in the self-check.** A37.3 says "the last change" |
 
 **Measured, 2026-10-15.** The amended page and `origin/main`'s were rendered in headless Chromium at
 390 × 812 in gallery mode, with no note raised, in the content, dark, folders and empty states: all four
@@ -8053,3 +8054,11 @@ screenshots are byte-identical. The frozen Shelf is unchanged until a note is ra
 **Owed** (with the build, ADR-134 consequences): both device passes on the phone with a hand-damaged
 `meta.json` in the QA package's own storage, including whether TalkBack speaks a note that arrives already
 filled; the owner's first-time reading of the words.
+
+#### Review
+
+**No independent Review Agent ran on this design.** The lane's sub-agent had no agent-spawning tool, and the
+Codex reviewer refused to start (its sign-in had expired). Per CLAUDE.md this is stated rather than hidden:
+the design, ADR-134 and R29 need a review pass, on a design lens and a documents lens, **before the PR
+merges**. The implementer's own check against the code found one fault, finding 6, and fixed it; it is not a
+substitute for the review.

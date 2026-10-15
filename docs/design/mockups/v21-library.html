@@ -1553,16 +1553,18 @@ waits for the format change that adds the two sizes; the app still offers A4 and
                 one zine, name went back ... “{was}” is called “{now}” again
                 one zine, otherwise ......... Zinely repaired “{now}”
                   body: A small file that holds its name, cover and folder was damaged,
-                  so Zinely used the copy from before your last change to them. Its pages
+                  so Zinely used the copy from before the last change to them. Its pages
                   weren’t touched.
                 several zines ............... Zinely repaired {n} zines
                   body: {list}. Small files that hold their names, covers and folders were
-                  damaged, so Zinely used the copies from before your last changes to them.
+                  damaged, so Zinely used the copies from before the last changes to them.
                   Their pages weren’t touched.
                 {list}: each zine as “{now}”, or “{now}” (was “{was}”) when its name went
                 back; in Shelf order; joined with ", " and a final " and "; past three,
                 the first three and then " and {k} more".
                 button ...................... Got it
+                "The last change", not "your last change": the last write to the file may
+                have been Zinely's own (a cover drawn for an older zine, D-026).
                 {now} is the title in the repaired file, the one its tile shows.  {was} is
                 the title My Shelf showed before the repair; "name went back" means both are
                 known and differ.  When {was} is unknown the zine takes the plain form.
@@ -1622,11 +1624,11 @@ function rsWords(items){                                                    // A
     const z = items[0];
     return [z.was ? q(z.was) + ' is called ' + q(z.name) + ' again' : 'Zinely repaired ' + q(z.name),
       'A small file that holds its name, cover and folder was damaged, so Zinely used the copy from ' +
-      'before your last change to them. Its pages weren’t touched.'];
+      'before the last change to them. Its pages weren’t touched.'];
   }
   return ['Zinely repaired ' + items.length + ' zines',
     rsList(items) + '. Small files that hold their names, covers and folders were damaged, so Zinely ' +
-    'used the copies from before your last changes to them. Their pages weren’t touched.'];
+    'used the copies from before the last changes to them. Their pages weren’t touched.'];
 }
 function rsSync(){                                                          // A37.2
   const loading = $('ld').classList.contains('on');
