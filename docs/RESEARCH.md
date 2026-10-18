@@ -1372,3 +1372,94 @@ SM-A176B ran 16.2 ([ADR-119](DECISIONS.md#adr-119)). 🟨 The open-source tree m
   label). A plain-text reader's edition is the honest later route (Brief 04, "Future extension"). 🔭
 - 🟨 The source says TalkBack offers no description of its own on a labelled node with no role (R31.2); the
   shipped TalkBack may differ from the open-source tree, so the listen checks it.
+
+---
+
+## R32. What makers hate, Art at scale, paper colour and a hidden signature (2026-10-15)
+
+The evidence behind [ADR-136](DECISIONS.md#adr-136) and [ADR-137](DECISIONS.md#adr-137). Research Agent passes,
+2026-10-15. Each report was checked by its own reviewer; R32.6 was not. Quotes were taken by a fetch summariser
+or from search snippets; spot-check before quoting one elsewhere.
+
+### R32.1 What users hate in creative, journal, zine and print apps — ✅ VERIFIED (counts 🟨)
+
+Six sweeps (app-store reviews, forums and HN, dark-pattern literature, home and zine printing, Android UX,
+asset libraries and AI) plus a critic pass. Counts are distinct sources, merged roughly.
+
+- **Losing work comes first** (about 30 sources): *"it is so frustrating to have your day's work systematically
+  deleted"* ([Phonto reviews](https://apps.apple.com/us/app/phonto-text-on-photos/id438429273?see-all=reviews)).
+  Offline apps also lose work through uninstall, a page that slows as it fills, and a delete whose undo has gone.
+- **Printing is where zine makers suffer most** (about 55): page order, fit-to-page shrink, hidden margins,
+  upside-down backs, A4 against Letter ([Adobe forum](https://community.adobe.com/questions-15/disable-scale-to-fit-8456)).
+- **Watermarks and branding on the work** (about 10): *"there is always a tacky watermark"*
+  ([Frames reviews](https://justuseapp.com/en/app/536422900/frames-picture-collage-maker/reviews)). A printed
+  "made with" page is the same thing by another name.
+- **Bloat and redesigns that change saved work** (about 40): *"far too bloated… I dont need 90%"*
+  ([Day One forum](https://forums.dayoneapp.com/forums/topic/feedback-from-a-13-year-user-app-complexity-workflow-changes-and-pricing-conc/));
+  *"Please roll back the changes"* ([Snapseed reviews](https://apps.apple.com/us/app/snapseed/id439438619?see-all=reviews)).
+- Also: generative AI pushed in, assets of unknown provenance, account walls, money mechanics, nagging and
+  tours. The resulting Never list is in [ZINE-DIRECTION §8](design/ZINE-DIRECTION.md#never).
+- ⚠️ Caveats: Reddit and Google Play were unreachable, so the evidence leans to iOS; comics, sticker-maker and
+  print-shop apps were not swept.
+
+### R32.2 Delivering a larger Art cabinet — ✅ VERIFIED (sizes 🟨)
+
+- ✅ Google Drive cannot host it: *"Using Drive as a replacement for a large-scale CDN is not allowed"*
+  ([Drive API terms](https://developers.google.com/drive/api/terms)), and an API key in an APK is shared by every
+  install ([limits](https://developers.google.com/workspace/drive/api/guides/limits)). The network is closed by
+  Amendment 3 in any case.
+- ✅ A placed piece stores only its id, and an unknown id draws nothing (`SupplyCatalog.kt`), so a renamed or
+  removed id, or a backup restored onto an older build, prints with the Art silently missing. Hence: ids are
+  only ever added, held by a test.
+- 🟨 Size: the beta.7 APK is 15.6 MB; path data for 5,000 pieces would add about 2.5 MB, but Kotlin source hits
+  the JVM's 64 KB limit on one static initialiser: one compiled build measured about 480 bytes per piece, near
+  135 pieces (an earlier estimate said 200). Raster pieces would break single-ink tinting.
+- ✅ A maker's own file on Drive is reachable through the system file picker, which needs no network permission
+  in Zinely; it is blocked today by JPEG-only storage, not by the network.
+
+### R32.3 Public-domain and open-licence sources, per item — ✅ VERIFIED
+
+- ✅ [Smithsonian Open Access](https://www.si.edu/openaccess): items marked CC0 per item; commercial use, no
+  attribution. Answers ADR-104's ⚠ for the Smithsonian, per item.
+- ✅ [Rijksmuseum](https://data.rijksmuseum.nl): Public Domain Mark per image; the collection also holds CC BY
+  items, which are excluded.
+- ✅ [Cleveland Museum of Art Open Access](https://www.clevelandart.org/open-access): CC0 per item; its dates are
+  sometimes wrong.
+- ⚠️ Still per item only, or unresolved: the Met, Art Institute of Chicago, NGA, NYPL, Library of Congress,
+  Flickr Commons, Wikimedia (a host, not a licensor), Public Domain Vectors (an aggregator), Openclipart (uploads
+  may be traces). ❌ fromoldbooks.org.
+- 🟦 Best fits: postmarks and fancy cancels for Stamps & marks; blackwork, vignettes, cartouches and corner
+  ornaments for Cut paper or Stamps & marks, redrawn rather than traced. Covers with a hateful or tragic subject
+  were left out on content grounds.
+
+### R32.4 Showing paper colour without printing it — ✅ VERIFIED
+
+- ✅ Professional tools preview the paper and never print it: Acrobat's Output Preview has "Simulate Paper
+  Color" ([Adobe](https://helpx.adobe.com/acrobat/current/previewing-output-acrobat-pro.html); the page returned
+  403 on re-check).
+- ✅ Ink is translucent and white prints as bare paper
+  ([Jukebox](https://support.jukeboxprint.com/en/articles/3189624-how-will-printed-colours-look-on-stocks-from-the-colour-collection));
+  colour toner is transparent by design ([US7264910](https://patents.justia.com/patent/7264910)). Multiply is the
+  usual screen model; its flaw, objects multiplying each other, is avoided by multiplying the flattened page once.
+- ✅ The saved format ignores unknown keys but not unknown enum values (`JsonDocumentSerializer.kt`), so every
+  named paper added later needs its own schema bump: choose the first set before v5.
+- 🟦 No dark papers or brights until measured, with exposure and white balance locked.
+
+### R32.5 A hidden signature in the PDF — ✅ VERIFIED for current Skia only
+
+- ✅ Skia writes its own Info dictionary with `/Producer (Skia/PDF mNNN)` and a classic xref
+  ([SkPDFDocument.cpp](https://skia.googlesource.com/skia/+/refs/heads/main/src/pdf/SkPDFDocument.cpp),
+  [SkPDFMetadata.cpp](https://skia.googlesource.com/skia/+/refs/heads/main/src/pdf/SkPDFMetadata.cpp)).
+- ✅ An incremental update only appends bytes, so it never removes Skia's string; a same-length rewrite while
+  streaming does, and keeps the xref offsets valid.
+- ⚠️ Android 7–13 ship older Skia; check on API 24 and the newest API before relying on it. Nothing printed can
+  be hidden, so a printed mark was rejected.
+
+### R32.6 Critique of the A34 redraw — 🟨 not independently reviewed
+
+Measured on rendered sheets of A34: the tear still reads as a zig-zag; ink coverage runs from 6.8% (Saddle
+stitch) to 90.5% (Rectangle); about ten pieces misread or read as a neighbour; Crop marks and Eyelet regressed
+against the shipped set. Proposed (🟦): optical size per shape class; a coverage band of 25–65%; a fine weight
+for printer's marks; a tear rewritten as a running walk; a curve-quality rule (no kinks, smooth joins); a
+recognition check at tile size. Outside sets do not match the house style: Phosphor (MIT) is a puffy UI style.
+These are the open numbers A39 sets ([SUPPLIES-SPEC §4.5](design/SUPPLIES-SPEC.md#one-world)).

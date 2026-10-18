@@ -72,6 +72,7 @@ the resulting sequence and per-step readiness are in the [plan §5 and §11](ZIN
   - Bundled Fraunces = three **static 9 pt roman** chrome cuts (400/500/600) in `:core:ui`; no Bold, no Italic
     (recorded in Brief 02 before its rewrite, at `ae374ea`; now [Brief 02, The four faces](BRIEF-02-THREE-VOICES.md#the-four-faces)).
 - **Ruling (owner, 2026-09-26):**
+  - *2026-10-18: Hand is no longer deferred; it is scheduled as W9, Shantell Sans, on the owner's 2026-10-15 reading ([ADR-136](../DECISIONS.md#adr-136) decision 6).*
   - **Book = Fraunces. Plain = Inter. Hand = deferred.** Averia remains the interface voice for now.
   - **Scope ruling (dated; not a constitutional rewrite):** *text inside a zine may use a document voice; a
     document voice is not a UI typeface under the existing constitutional wording.*

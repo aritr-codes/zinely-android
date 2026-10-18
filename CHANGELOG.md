@@ -16,6 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **My Shelf now tells you when a zine's details went back to an earlier copy.** If the small file that holds a
+  zine's name, cover and folder is damaged, Zinely uses the copy from before the last change, as it did
+  before; now a note under the heading names the zine (for example, "Letters to Gran" is called "Letters home"
+  again), says what went back, and stays until **Got it**, across restarts. Before, this happened without a
+  word. The note covers those details only: a zine's pages repaired the same way still say nothing
+  ([#146](https://github.com/aritr-codes/zinely-android/issues/146)). Checked on an emulator, including the
+  largest text on a 360dp screen; not yet on a real phone or with a screen reader by ear
+  ([`v21-library.html` A37](docs/design/mockups/v21-library.html), [ADR-134](docs/DECISIONS.md#adr-134), [#128](https://github.com/aritr-codes/zinely-android/issues/128)).
+- Designed, not built: the Type bar's stacked Align row drawn as the app already shows it (A36), a paper
+  picker for four sizes (A35, waiting on the format change after v4), and what Read says aloud for each page
+  ([ADR-135](docs/DECISIONS.md#adr-135) Proposed). Nothing in the app changes for these.
 - Art house style and redraw designed: all 34 Art pieces redrawn to one hand in the bench spec (A34, ADR-132
   Proposed). Not in the app yet; the app still draws the current Art.
 - Two new pieces in Art, at the end of Cut paper: **Snipped border**, a thin border cut with scissors, and
@@ -76,9 +87,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tray with the same buttons; it stays open while you pick other pieces, and Done or Back closes it. The
   first-run hint now names Arrange, is readable in dark mode, and steps aside while the Type bar is open
   ([`v21-bench.html` A33](docs/design/mockups/v21-bench.html), [ADR-129](docs/DECISIONS.md#adr-129), decided
-  under the owner's delegation; it reverses the owner's OD-11 ruling, which the owner can overrule). Known
-  limitation: at the largest text size the first-run hint still clips its first and last words
-  ([#134](https://github.com/aritr-codes/zinely-android/issues/134)).
+  under the owner's delegation; it reverses the owner's OD-11 ruling, which the owner can overrule). At the
+  largest text size the first-run hint clipped its first and last words (also in beta.7); fixed, see *Fixed*.
+- Internal: two tests that failed now and then on CI now wait for the work they check
+  ([#132](https://github.com/aritr-codes/zinely-android/issues/132), [#136](https://github.com/aritr-codes/zinely-android/issues/136)). No app change.
 - Internal: the imposition engine now lays out any sheet size, property-tested from 4 to 18 in a side; US Legal
   and A5 are chosen as the next paper sizes ([ADR-133](docs/DECISIONS.md#adr-133)). No paper size a person can choose has
   changed.
@@ -120,18 +132,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known limitations
 
-- **Selecting something still makes the page smaller**, and it grows back when nothing is selected. The row
-  of move and resize buttons needs the room. On a small phone the page loses about a third of its height,
-  and with larger text its bottom edge can sit under the button row. A change is being explored; nothing is
-  designed or built ([ADR-129](docs/DECISIONS.md#adr-129)).
 - **With larger text on a small phone, the fold guide and the screen after Save PDF scroll.** In the fold
   guide a step opens at its top and its instruction is below; after a save, the top bar scrolls away with the
   page. That scroll after a save is animated even when the phone is set to reduce motion.
+- **At the largest text size on a small phone, the low-storage notice shown when a change can't be saved can
+  run taller than the screen**: its two buttons squeeze the words into a narrow column. Found by a test, not seen on a device; the fix needs a
+  design change first ([#149](https://github.com/aritr-codes/zinely-android/issues/149), [D-119](docs/design/V2-SPEC-DEFECTS.md#d-119)).
 - **None of the changes below was listened to with a screen reader.** They were checked by reading the
   screen's accessibility information, not by ear.
 
 ### Fixed
 
+- At the largest text size on a small phone, the first-run hint no longer cuts off its first and last words.
+  A tall hint now has rounded corners instead of round ends. Checked on an emulator set to a small phone, not
+  yet on a real one ([D-119](docs/design/V2-SPEC-DEFECTS.md#d-119), [#134](https://github.com/aritr-codes/zinely-android/issues/134)).
+  At that size the hint still covers the piece it asks you to drag ([#148](https://github.com/aritr-codes/zinely-android/issues/148)).
 - A zine's title on the Shelf now always matches its saved metadata file. Before, if the file was restored
   from its backup copy after damage (it holds the previous version), the Shelf could keep showing the newer
   title until something rewrote it (D-116, [#106](https://github.com/aritr-codes/zinely-android/issues/106)).

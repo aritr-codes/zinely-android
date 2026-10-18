@@ -2,7 +2,7 @@
 
 > **The single source of truth for phasing.** *Every roadmap change is reflected here.* Scope detail per phase lives in [PRD.md](PRD.md); the "how" in [ARCHITECTURE.md](ARCHITECTURE.md); rationale in [DECISIONS.md](DECISIONS.md). No dates are committed yet — phases are ordered, not scheduled.
 
-- **Current priorities reviewed:** 2026-10-12. Earlier phase plans below are historical context, not a list of
+- **Current priorities reviewed:** 2026-10-18 (order of work from [ADR-136](DECISIONS.md#adr-136)). Earlier phase plans below are historical context, not a list of
   promised or still-missing features. Use this current section for next-work decisions.
 
 <a id="current-priorities"></a>
@@ -30,8 +30,30 @@ is planned as a *wave-1* release on the current document format, before any sche
 plan's backup-honesty, accessibility and tap-through steps ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)).
 Those steps shipped in beta.6 on 2026-10-06.
 
+<a id="order-of-work"></a>
+### Order of work, from 2026-10-18
+
+Decided in [ADR-136](DECISIONS.md#adr-136) under the owner's delegation, after the owner's rulings of
+2026-10-15. The items in each wave, their sizes and the cut list are in the ADR; this is the order only. Each
+wave still needs its own HTML amendment or ADR where the rules ask for one, and none has a date.
+
+1. **W1 — Never lose work, never get stuck.** Fixes, each with a failing test first.
+2. **W2a — Small things, no design change; W2b — small things that need an HTML amendment first.**
+3. **W3 — Art: better before more.** The A34 polish as A39, then the Compose redraw ([ADR-132](DECISIONS.md#adr-132)).
+4. **W4 — Photo descriptions**, saved format v4, alone.
+5. **W5 — Print guidance:** designed now, shipped after the print study.
+6. **W6 — Paper sizes** (US Legal, A5), saved format v5, and **paper colour shown on screen**, never printed.
+   The fields for W8 are designed here, before v5 freezes.
+7. **W7 — More Art inside the four families**, from any source that passes the house gates, with variants of
+   one subject ([ADR-137](DECISIONS.md#adr-137), Proposed).
+8. **W8 — Your own artwork.**
+9. **W9 — A third voice, Hand** (Shantell Sans).
+10. **Later:** Recently deleted first; then a hidden signature in the PDF's metadata, the pen tool, shaped photo
+    cutouts, a 16-page booklet, device-to-device transfer, tablets and keyboard shortcuts, an RTL check and
+    back-page credits.
+
 <a id="where-the-list-stands"></a>
-### Where the list stands, 2026-10-12 (updated 2026-10-14)
+### Where the list stands, 2026-10-12 (updated 2026-10-18)
 
 **Not everything on the last list is finished.** Four built items are not accepted, and six items are not
 built. "Built" below means merged to `main`; "accepted" means the ADR says Accepted.
@@ -44,18 +66,22 @@ built. "Built" below means merged to `main`; "accepted" means the ADR says Accep
 | Document voices, Book and Plain ([ADR-126](DECISIONS.md#adr-126)) | yes | beta.7 | **no** | A printed Book page at 12 pt; TalkBack listen; owner's own try and rulings. |
 | Two frames (plan step 9) | yes | **no** | **no** | Owner's first-time pass with a finger; TalkBack listen; one printed page. |
 | Print guidance (plan step 5) | no | no | no | Blocked on the print study, which has not been run. |
-| Photo descriptions (plan steps 6 and 7) | no | no | no | The v4 format step, then a Read-semantics design. Not started. |
-| Page backgrounds | no | no | no | No design. Also contradicts an older "do not build" line in [ZINE-DIRECTION](design/ZINE-DIRECTION.md) that has not been reconciled. |
-| More paper sizes | no | no | no | [ADR-133](DECISIONS.md#adr-133): US Legal and A5 chosen; the engine takes any sheet (merged, PR #129). The sizes wait on their own schema bump after v4, and the A35 picker. |
-| A page that keeps its size, the Arrange tray (added 2026-10-14, from *Exploring*) | yes (PR #133) | **no** | yes, under the owner's delegation ([ADR-129](DECISIONS.md#adr-129)); the owner can overrule | TalkBack listen of the tray; a real small phone at large text. |
+| Photo descriptions (plan steps 6 and 7) | no | no | no | What Read says aloud is designed (`v21-proof.html` A38, frozen; [ADR-135](DECISIONS.md#adr-135) Proposed; PR #141). Owed: the v4 format step, the build, both device passes and the owner's TalkBack listen. |
+| Page backgrounds | no | no | no | Answered by paper colour shown on screen and never printed, in W6 ([ADR-136](DECISIONS.md#adr-136) decision 5, which keeps ZINE-DIRECTION's "do not build" line for a printed fill). No design yet. |
+| More paper sizes | no | no | no | [ADR-133](DECISIONS.md#adr-133): US Legal and A5 chosen; the engine takes any sheet (merged, PR #129). The A35 picker is designed (`v21-library.html` A35, frozen; PR #142). The sizes wait on their own schema bump after v4. |
+| A page that keeps its size, the Arrange tray (added 2026-10-14, from *Exploring*) | yes (PR #133) | **no** | yes, under the owner's delegation ([ADR-129](DECISIONS.md#adr-129)); the owner can overrule | TalkBack listen of the tray; a real small phone at large text. The first-run hint no longer clips its words at the largest text, a problem beta.7 also has ([D-119](design/V2-SPEC-DEFECTS.md#d-119), PR #143; checked on an emulator, the real small phone owed). |
+| A note when a zine's details go back to their earlier copy (added 2026-10-18, from [#128](https://github.com/aritr-codes/zinely-android/issues/128)) | yes (PR #139) | **no** | yes, under the owner's delegation ([ADR-134](DECISIONS.md#adr-134)); the owner can overrule | A TalkBack listen; a real phone at 360dp and font scale 2; the owner's first-time reading of the words. Follow-ups [#145](https://github.com/aritr-codes/zinely-android/issues/145)–[#147](https://github.com/aritr-codes/zinely-android/issues/147). |
 | Google Play | no | no | no | Owner's account verification is still blocked. |
 | Fold clarity study | no | no | no | Needs first-time makers with paper. Not run. |
 
 Most owner items in the "still owed" column are indexed in [OWNER-CHECKLIST](OWNER-CHECKLIST.md). Not yet indexed
-there: the two-phone restore pass, the page-background line in ZINE-DIRECTION, and the tester's screenshots.
+there: the two-phone restore pass and the tester's screenshots.
 
-**Known problems in the current download (beta.7).** The first three are fixed on `main` (2026-10-14) and
-are not yet in a download:
+**Known problems in the current download (beta.7).** The first four are fixed on `main` (the first three
+2026-10-14, the fourth 2026-10-18) and are not yet in a download. D-119's tests and passes found two more that
+it does not fix, each needing a `v21-bench.html` amendment first: at the largest text on a 360dp screen the
+low-storage save-failure notice's two buttons squeeze its words into a column taller than the screen (found by
+a test, not seen on a device; [#149](https://github.com/aritr-codes/zinely-android/issues/149)), and the hint covers the piece it asks you to drag ([#148](https://github.com/aritr-codes/zinely-android/issues/148)).
 
 - At the largest text size the Align row crowds and "Right" breaks across lines
   ([#102](https://github.com/aritr-codes/zinely-android/issues/102)). The issue's second half, the unreachable
@@ -69,11 +95,20 @@ are not yet in a download:
   can go back to an older title while the Shelf keeps the newer one. Pages are not affected
   ([#106](https://github.com/aritr-codes/zinely-android/issues/106)). *Fixed on `main`
   ([D-116](design/V2-SPEC-DEFECTS.md#d-116)).*
+- At the largest text on a small phone the first-run hint, shown the first time a piece is placed, cuts off
+  its first and last words: its round ends grow with its height
+  ([#134](https://github.com/aritr-codes/zinely-android/issues/134)). *Fixed on `main`: a tall hint's corners stop growing at 40dp
+  ([D-119](design/V2-SPEC-DEFECTS.md#d-119), PR #143); checked on an emulator only.*
 - **Tester feedback, 2026-10-12 (owner's report):** the interface breaks in places, and many Art pieces look
   amateurish. The places are **not yet recorded**: no screenshot or screen name has reached the repository, so
   nothing here is triaged or reproduced.
 
 ### In development — started (designing, building or testing), not in the public download
+
+- **A note when a zine's details go back to their earlier copy** ([#128](https://github.com/aritr-codes/zinely-android/issues/128)):
+  My Shelf names the zine, says what went back, and keeps the note until "Got it". Designed as
+  `v21-library.html` A37 and built (PR #139, [ADR-134](DECISIONS.md#adr-134) Accepted under delegation); both
+  emulator passes passed on 2026-10-18. In no released APK; a TalkBack listen and a real-phone check are owed.
 
 - **Two hand-cut frames** (plan step 9): Snipped border and Round window, at the end of Cut paper. Design frozen
   2026-10-12 ([`v21-bench.html` A32](design/mockups/v21-bench.html)); built and merged to `main` on the owner's instruction 2026-10-12 (PR #119, `7f8980a`),
@@ -98,17 +133,24 @@ its HTML specification frozen and an ADR before any Compose work.
 
 - **Art quality pass** (owner, 2026-10-12, after tester feedback): the Art pieces are to be redrawn to one
   house style so they look made by one hand. Design frozen (`v21-bench.html` A34,
-  [ADR-132](DECISIONS.md#adr-132) Proposed); Compose redraw and Art golden re-record not started.
+  [ADR-132](DECISIONS.md#adr-132) Proposed); Compose redraw and Art golden re-record not started. *2026-10-18:
+  this is W3; A34 is polished as A39 first, and the set's rule now reads "one world"
+  ([ADR-137](DECISIONS.md#adr-137), Proposed). The A39 candidate sheet is made and waits for the owner's
+  picks; A34 is not wired into the app until then.*
 - **Print guidance:** help at the print step so a sheet comes out at the right size (plan step 5). Still gated
   on the print study; one successful print by a user, reported by the owner, is recorded in the plan as
-  evidence, not as the study.
-- **Photo descriptions (alt text):** plan step 7; needs the v4 format step and a Read-semantics design.
+  evidence, not as the study. *W5: design now.*
+- **Photo descriptions (alt text):** plan step 7; needs the v4 format step. What Read says aloud is designed
+  (`v21-proof.html` A38, [ADR-135](DECISIONS.md#adr-135) Proposed); nothing is built. *W4, before any v5 work.*
 - **Page backgrounds:** a background for a page, behind its photos and words (owner request 2026-10-06). The
   document and the renderer already carry a per-page `background` (none, or a solid colour); nothing in the
-  editor sets it, so it is `none` in every zine made today. No picker or design exists yet.
+  editor sets it, so it is `none` in every zine made today. No picker or design exists yet. *2026-10-18
+  ([ADR-136](DECISIONS.md#adr-136) decision 5): answered by paper colour in W6, the paper the maker loads,
+  shown on screen. A printed fill stays out, because a home printer prints it as a panel inside a white margin.*
 - **More paper sizes:** today a zine prints on A4 or US Letter only (owner request 2026-10-06).
   [ADR-133](DECISIONS.md#adr-133) chose US Legal and A5 and made the imposition engine take any sheet; the
-  sizes need their own schema bump after v4 and a frozen picker (A35) before anyone can choose them.
+  sizes need their own schema bump after v4 before anyone can choose them; the picker is designed
+  (`v21-library.html` A35, frozen 2026-10-15) and not built. *W6.*
 - **Google Play publication**, after owner account verification, mandatory testing and store review. Account
   verification remains blocked; the signed GitHub beta and public policy already exist. This is a distribution
   task, not a reason to rebuild or overwrite the current beta. [Release authority](RELEASING.md#3-beta-distribution-side-load).
@@ -120,7 +162,8 @@ its HTML specification frozen and an ADR before any Compose work.
    if evidence identifies an improvement. The website guide is shipped; native replay is not.
 2. **Creative tools:** more Art, photo transparency, shaped cutouts and crop improvements stay under
    evaluation (reopened 2026-09-12; see the assessment below). Fonts and frames left this list for *Planned*
-   on 2026-10-06, following the owner's 2026-09-26 rulings. No delivery date is committed.
+   on 2026-10-06, following the owner's 2026-09-26 rulings. No delivery date is committed. *2026-10-18: more
+   Art is W7 and shaped cutouts are Later ([order of work](#order-of-work)); photo transparency rides W8.*
 3. **Wider customisation** (owner's ideas, 2026-10-12; evaluated the same day, nothing decided). Each is listed
    with what stands in its way, because several reverse rulings already on record:
    - *Colours of your own* (a hex picker): [ZINE-DIRECTION](design/ZINE-DIRECTION.md) §8 says "Free colour
@@ -130,11 +173,14 @@ its HTML specification frozen and an ADR before any Compose work.
      only; nothing saves colours or styles. No design.
    - *Your own artwork:* every stored image is a JPEG, so transparency is lost and a cut-out shows a white box
      ([ADR-023](DECISIONS.md#adr-023)). Needs an alpha-preserving image format, a backup-format change and its
-     own ADR first.
+     own ADR first. *2026-10-18: W8, trying a cheaper path first ([ADR-136](DECISIONS.md#adr-136)).*
    - *Photo fixes* (black and white, levels, background removal): [PRD §7.2](PRD.md) puts adjustments beyond crop
      out of MVP scope; Copier already gives a 1-bit look. Background removal is rated large in the assessment
-     below and no on-device model has been tried.
+     below and no on-device model has been tried. *2026-10-18: background removal is cut (it needs a model
+     download and is an AI feature; [ADR-136](DECISIONS.md#adr-136)).*
    - *More fonts, and generated variations:* a third voice is blocked on glyph coverage and an owner ruling.
+     *2026-10-18: the owner's ruling is given; Hand (Shantell Sans) is W9, after its own coverage check
+     ([ADR-136](DECISIONS.md#adr-136)).*
      Randomised variation was refused in [ADR-107](DECISIONS.md#adr-107) and stays refused unless the owner
      reopens it.
    - *HTML, CSS and JavaScript for drawing Art:* already how pieces are specified (the bench file, checked
@@ -437,6 +483,8 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-18 | **Wave of 2026-10-15 merged: one fix, one note built, three designs frozen.** On `main`, in no download: the first-run hint no longer clips its words at the largest text, as it does in beta.7 (D-119, PR #143); My Shelf says when a zine's details went back to their earlier copy (A37, ADR-134 Accepted under delegation, PR #139; TalkBack and a real phone owed); two flaky tests fixed (#132, #136, PR #144). Designed, not built: the Type bar's stacked Align row drawn as built (A36, PR #140), the paper picker for four sizes (A35, PR #142, waits on the format bump after v4) and what Read says aloud (A38, ADR-135 Proposed, PR #141). The Art redraw (ADR-132) stays Proposed and unbuilt while the A39 candidate sheet waits for the owner's picks. Two D-119 follow-ups filed (#148, #149). The website's "Page backgrounds" correction is in its own PR, not yet merged. | [ADR-134](DECISIONS.md#adr-134) · [ADR-135](DECISIONS.md#adr-135) · [D-119](design/V2-SPEC-DEFECTS.md#d-119) · [D-120](design/V2-SPEC-DEFECTS.md#d-120) · [D-121](design/V2-SPEC-DEFECTS.md#d-121) · [D-122](design/V2-SPEC-DEFECTS.md#d-122) |
+| 2026-10-18 | **Order of work set from the 2026-10-15 direction.** *Current priorities* gains an order of work, W1 to W9 then Later: fixes first, then small things, then the Art redraw, photo descriptions (v4), print guidance, paper sizes and paper colour (v5), more Art, your own artwork and a Hand voice. The cut list and Never #19's rewording are in ADR-136. The Art set's rule becomes "one world", curated rather than capped (ADR-137, Proposed). Page backgrounds are answered by paper colour shown on screen, so the website's "Page backgrounds" line now promises more than is planned and is owed a correction. Nothing is built; no public copy changed in this change. | [ADR-136](DECISIONS.md#adr-136) · [ADR-137](DECISIONS.md#adr-137) |
 | 2026-10-14 | **A page that keeps its size; three beta.7 problems fixed; Art redraw designed.** The Arrange tray replaces the move-by-buttons bar, decided under the owner's delegation (it reverses OD-11). #102, #103 and #106 are fixed on `main`. The Art redraw is frozen as a design (A34, ADR-132 Proposed) and not built. All of it is on `main`, none of it in a download; no public copy changed. | [ADR-129](DECISIONS.md#adr-129) · [ADR-130](DECISIONS.md#adr-130) · [ADR-132](DECISIONS.md#adr-132) · [D-115](design/V2-SPEC-DEFECTS.md#d-115) · [D-116](design/V2-SPEC-DEFECTS.md#d-116) |
 | 2026-10-14 | **Paper sizes decided; engine ready.** ADR-133 answers ADR-016's paper question: a closed, named set, with the engine open over any sheet. US Legal and A5 come next, in their own schema bump after v4; half-Letter, A3 and Tabloid are not planned. Nothing a person can choose has changed. | [ADR-133](DECISIONS.md#adr-133) · [ADR-016](DECISIONS.md#adr-016) |
 | 2026-10-13 | **Small-phone and large-text audit closed; one design item added to Exploring.** The D-113 list is fixed and was checked on a 360 × 640dp emulator. One item is not fixed: the page shrinks each time something is selected. A direction (a tray opened from the verb bar) is proposed; it needs the owner and an HTML amendment before anything is built. Nothing here is in a published download. | [D-113](design/V2-SPEC-DEFECTS.md#d-113) · [ADR-127](DECISIONS.md#adr-127) · [ADR-128](DECISIONS.md#adr-128) · [ADR-129](DECISIONS.md#adr-129) |
