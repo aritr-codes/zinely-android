@@ -7955,3 +7955,69 @@ using a test image pushed under a distinctive name; it was the only image on the
   fix), and moving it is a design change that needs an HTML amendment first. It goes to the main session
   as a follow-up. A smaller pre-existing observation: at 2.0 the verb bar cuts its last label ("Duplica…",
   "Across fol…").
+
+---
+
+### D-121 — the paper chooser had no V2.1 drawing, and two-size words sit in three frozen files {#d-121}
+
+| | |
+|---|---|
+| **Artifacts** | `v21-library.html` (A35, appended) · `v1/shelf.html` `#createSheet` · `v21-proof.html` `.paperseg` · `v21-colophon.html` "Paper for new zines" · `feature/editor/.../ShelfSheets.kt` |
+| **Found** | 2026-10-15, while designing the picker for [ADR-133](../DECISIONS.md#adr-133)'s four sizes (lane E of the 2026-10-15 wave) |
+| **Severity** | No user-visible defect today: the app offers A4 and US Letter only. One design gap, closed by A35; three frozen files with two-size words, owed to the build that adds the sizes |
+| **Status** | ✓ **Design gap closed 2026-10-15** by [`v21-library.html` A35](mockups/v21-library.html), frozen under the owner's delegation of 2026-10-12. Items 3–5 and 8 stay open until the schema bump that adds US Legal and A5 (ADR-133 decision 4); #6 until that build's device pass; #7 until `HomeViewModel.kt` is next touched |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **The chooser had no V2.1 home.** A new zine is started from the Shelf's "Make a zine", but neither `v2-library.html` nor `v21-library.html` drew the sheet it raises. The only frozen drawing was V1's `#createSheet` (`v1/shelf.html`, amended by ADR-088); the app paints it from `v21-proof.html`'s `.paperseg`, as `ShelfSheets.kt` says. ADR-133 called A35 "a frozen bench amendment", but the Bench never starts a zine. | **Closed.** A35 is drawn in `v21-library.html`, the file that owns "Make a zine". ADR-133 carries a note saying so |
+| 2 | **The shipped sentence stops being true.** The sheet says "Choose your paper. You can print it at home on either." With four sizes there is no "either", and US Legal and A5 print only on themselves. | **Closed in the design.** A35.5: "Which paper will you print on? A zine keeps the paper it starts on." `Copy.Shelf.CHOOSE_PAPER_SUB` changes with the build |
+| 3 | **The Print switch would offer the wrong papers for a US Legal or A5 zine.** `v21-proof.html`'s `.paperseg` is a two-way A4 / US Letter switch. ADR-133 decision 5 keeps it out of reach of the new sizes and left a scaled switch to A35. | **Decided in A35.8: no scaled switch.** "Nothing shrinks to fit" is the Print panel's promise, and scaling Legal onto Letter breaks it. A US Legal or A5 zine shows its paper as a fact, not a control. `v21-proof.html` still draws only the switch; it is lane F's file this wave, so the build that adds the sizes amends it to point at A35.8. **Open** |
+| 4 | **About says "the other one".** `v21-colophon.html` lists two papers and says "You can always choose the other one." | **Decided in A35.9:** four, in the fixed order, and "You can always choose another." The file is amended by the build. **Open** |
+| 5 | **The frozen Shelf's postmark says "Letter"; the app says "US Letter".** `v21-library.html`'s covers stamp `Letter` and its `data-sub` reads "Letter · today"; the app takes `Copy.Paper.LETTER` = "US Letter" for both. Beside "US Legal", a bare "Letter" would be ambiguous. | **Decided in A35.7:** the postmark and the sheet line use the full names. The app already does; the frozen covers above A35 are left as drawn (append-only). **Open** as a note for the next redraw of that file |
+| 6 | **"×" may be spoken badly.** The shipped tiles carry "210 × 297 mm" as visible text, and nothing measured what TalkBack says for it. | **Designed around in A35.11:** each row's spoken name spells the units ("210 by 297 millimetres"). What TalkBack says for the shipped tiles today is **not measured**: owed to the device pass of the build |
+| 7 | **A KDoc says the cover carries no paper; the V2.1 cover does.** `HomeViewModel.kt`'s `toLibraryZine` KDoc says the subtitle "is composed here, not on the cover" and quotes V2's "not stamped on every card". Under V2.1 the subtitle's first half *is* the cover's postmark: `ZineOnShelf.kt` passes `zineShelfStampLabel(zine.subtitle)` to `ZineV21Cover`, which draws it uppercased. The design review read the KDoc as the truth and called A35.7 a reversal. | **Recorded.** A35.7 describes what ships. The stale KDoc is a code comment, left for the build that touches the file. **Open** |
+| 8 | **A screen reader could not tell a zine's paper from the Shelf.** The tile speaks only its title (`ZineOnShelf.kt`, a deliberate narrowing so the shelf can be skimmed by ear), while every cover's postmark shows the paper to the eye. With two papers that print on each other this cost nothing; a US Legal or A5 zine prints on nothing else. | **Decided in A35.11:** a US Legal or A5 tile says its paper after the title ("Camping trip, US Legal"); A4 and US Letter tiles keep the title alone. Built with the sizes. **Open** |
+
+#### Review
+
+One independent Review Agent, design and documents lens, reading only, 2026-10-15 (a separate Claude Code
+session; the Codex reviewer could not sign in). **GO WITH FIXES.** It confirmed the append is one hunk with
+nothing above changed, the four stock sizes and page sizes, the cited frozen values, and that A35's script
+shares no global name or selector with the frozen page's.
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| A35.11 cited "ADR-087 §3" for the platform not counting items; ADR-087 says nothing of the kind | Required | **Accepted.** The citation is gone; "no position" is now the design's own reason (buttons, not a list of choices) |
+| A35.7 and #5 say the app stamps the paper on the cover; `HomeViewModel.kt` says it does not | Required | **Rejected, with evidence.** `ZineOnShelf.kt` passes `zineShelfStampLabel(zine.subtitle)` as the cover's `stampLabel` and `ZineV21Cover.kt` draws it; the KDoc is the stale part. Recorded as #7 |
+| Three rules claimed `[shown]` for things the page does not show (inside a folder, swipe down, the zine sheet's line) | Recommended | **Accepted.** Each is now `[stated]` |
+| The build shrinks the shipped stocks and turns two tiles into four rows, unsaid | Recommended | **Accepted.** A35.4 says so for the build, with the numbers |
+| "Check that your printer takes …" cited R26.1, whose heading says printers do take them | Recommended | **Accepted.** A35.4 and R29.3 name the absences R26.1 records |
+| "Everyday paper in most of the world / North America" had no source | Recommended | **Accepted.** R29.5 cites where each is standard |
+| About's four radios at font scale 2 were not designed | Recommended | **Accepted.** A35.9: one radio per row at every text size |
+| The prototype's snack stayed inert, so a screen reader would never hear it | Recommended | **Accepted.** Fixed: un-inert before showing, inert again when it goes |
+| The new strings had no stated home | Recommended | **Accepted.** A35.13: `core:copy`, beside `Copy.Paper` / `Copy.Shelf` / `Copy.ProofPrint` |
+| A5's ruled pages are texture at 23 × 33 px | Observation | **Accepted.** A35.4 says the words carry the page size |
+| The Print picture moves "nothing shrinks to fit" under the switch, draws spans, and closing it returns no focus | Observation | **Kept.** It is labelled a picture of `v21-proof.html`; no rule depends on it |
+| `.a35-shelf` restates `.shelf` | Observation | **Kept.** Append-only forces it |
+| D-119 and D-120 are absent on `main` | Observation | **Expected.** Lanes A and C of the same wave hold them |
+
+Second round, two independent reviewers, 2026-10-15: one design-and-first-time-user lens (rendered the page
+headless at scale 1 and at font scale 2 on 360px), one documents-and-citations lens (fetched every R29 source
+and re-ran `TokenDisciplineTest` through the build gate on `4e8480c`: 8 tests, 0 failures). Both **GO WITH
+FIXES**.
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| At the moment of an irreversible choice the US Legal and A5 rows spoke of the printer only, not that the zine then prints on that paper only (first said at Print, after the work) | Required | **Accepted.** A35.4, the rows' words and A35.11's spoken names now say "Prints on US Legal paper only, so check that your printer takes it" (A5 the same); R29.6 and the ADR-133 note follow |
+| R29.3 quoted EZZINE's App Store listing with words that are on a third-party aggregator, not the listing | Required | **Accepted.** The quote is gone; R29.3 says what the listing says (A4 or Letter; Letter added in 2.2) |
+| No stated recovery from a mis-tap on a one-tap, permanent choice | Recommended | **Accepted.** A35.6 names today's path: Back to the Shelf, delete "My zine" with the Shelf's Undo, start again (`HomeViewModel.startZine` saves at once under `DEFAULT_NEW_TITLE`; `delete`/`undoDelete` exist) |
+| TalkBack users cannot learn a zine's paper from the Shelf | Recommended | **Partially accepted.** US Legal and A5 tiles say their paper; A4 and US Letter tiles keep the shipped title-only name, whose reason (skim by ear) still holds for papers that print on each other. Recorded as #8 |
+| R29 lacked canvas apps that fix the size at creation | Recommended | **Accepted.** R29.1 adds Procreate (size set at Create; Crop and Resize later) and Affinity Publisher (a later change forces keep-size or rescale). Canva refused the fetch again (403) |
+| D-121's Status named only items 3–5 as open | Recommended | **Accepted.** It names every open item and what closes it |
+| R29 collides with lane C's R29 (PR #139) | Recommended | **Accepted as a merge note.** E merges before C (handoff §6.4), so C renumbers; carried in PR #142's notes for the main session |
+| A35.12 asked for accessibility focus on the title, which Compose cannot move directly | Observation | **Accepted.** A35.12 now says "as ZSheet's sheets do today", checked on a device |
+| The owner-checklist row's "before the A35 picker is frozen" is overtaken | Observation | **Carried** to the main session in PR #142 |
+| The local re-run on the final tree had not run | Observation | **Closed** by the reviewer's own gated run and green CI on `4e8480c`, and re-run after these fixes |
+| "A zine keeps the paper it starts on" is stricter than an A4 or US Letter zine's Print switch | Observation | **Kept.** True of the stored paper and errs safe; left for the build's Pass 2 |
+| ADR-133's "Builds" line still says "bench amendment" | Observation | **Kept** (an ADR body is not rewritten); the note corrects it, and the main session may fix the index row |
+| Append-only, numbering, anchors, cited code facts, large-text render, other R29 citations | Observation | **Confirmed** by the reviewers |
