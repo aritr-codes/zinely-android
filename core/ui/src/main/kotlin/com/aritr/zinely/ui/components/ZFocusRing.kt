@@ -9,6 +9,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -95,9 +96,11 @@ public fun Modifier.zinelyFocusRing(
     focused: Boolean,
     cornerRadius: Dp = ZinelyDimens.FocusRingRadius,
     offset: Dp = FocusRingOffset,
+    // A control on PINNED paper (the same cream in both themes) passes its pinned ink: the theme's ink is
+    // light in dark mode and would vanish on that paper (`v21-library.html` A37 `.rs-ok:focus-visible`).
+    color: Color = ZinelyTheme.v21Colors.ink,
 ): Modifier {
     if (!focused) return this
-    val color = ZinelyTheme.v21Colors.ink
     return drawBehind {
         val width = FocusRingWidth.toPx()
         val offsetPx = offset.toPx()

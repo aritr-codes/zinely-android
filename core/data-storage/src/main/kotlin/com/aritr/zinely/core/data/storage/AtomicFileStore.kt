@@ -80,8 +80,23 @@ public class AtomicFileStore(
      * The default accepts any readable bytes, so a pure byte-level caller still gets
      * missing/unreadable-target → backup recovery.
      */
-    public fun read(target: Path, isIntact: (ByteArray) -> Boolean = { true }): ByteArray? {
-        readIfUsable(target, isIntact)?.let { return it }
+    public fun read(target: Path, isIntact: (ByteArray) -> Boolean = { true }): ByteArray? =
+        readReporting(target, isIntact)?.bytes
+
+    /**
+     * [read], saying which copy the bytes came from ([ADR-134](../../docs/DECISIONS.md#adr-134) decision 4):
+     * [StoreRead.Read] for [target] itself, [StoreRead.Restored] when [target] was present but damaged and the
+     * `.bak` was used, [StoreRead.BackupOnly] when [target] was already absent beside its `.bak`. `null` when
+     * neither is usable. Same recovery, same exceptions; nothing new is caught.
+     *
+     * Invariant: a damaged file reports [StoreRead.Restored] **once**. A repair that cannot be written still
+     * quarantines the damaged file (see [read]), so every later read of that lone `.bak` is [StoreRead.BackupOnly]
+     * and a caller that tells the maker about a repair tells it once.
+     */
+    public fun readReporting(target: Path, isIntact: (ByteArray) -> Boolean = { true }): StoreRead? {
+        readIfUsable(target, isIntact)?.let { return StoreRead.Read(it) }
+        // Before recovery touches it: present means present and damaged (unreadable or rejected).
+        val damaged = Files.exists(target)
         val recovered = readIfUsable(backupOf(target), isIntact) ?: return null
         // Repair the primary from the good backup without touching .bak, so a crash mid-repair still
         // leaves the backup as the good copy. If the repair write fails, quarantine the corrupt
@@ -100,7 +115,7 @@ public class AtomicFileStore(
                 throw repairFailure
             }
         }
-        return recovered
+        return if (damaged) StoreRead.Restored(recovered) else StoreRead.BackupOnly(recovered)
     }
 
     /** Atomically place [bytes] at [target] (no `.bak` handling). The all-or-nothing primitive. */
@@ -145,4 +160,18 @@ public class AtomicFileStore(
 
     private fun backupOf(target: Path): Path =
         target.resolveSibling(target.fileName.toString() + ".bak")
+}
+
+/** Which copy [AtomicFileStore.readReporting] returned. */
+public sealed interface StoreRead {
+    public val bytes: ByteArray
+
+    /** The file itself. */
+    public class Read(override val bytes: ByteArray) : StoreRead
+
+    /** The file was present but damaged, and its `.bak` was used (a repair, counted once). */
+    public class Restored(override val bytes: ByteArray) : StoreRead
+
+    /** The file was already absent beside its `.bak` (an earlier repair's quarantine): not a new repair. */
+    public class BackupOnly(override val bytes: ByteArray) : StoreRead
 }

@@ -8021,3 +8021,78 @@ FIXES**.
 | "A zine keeps the paper it starts on" is stricter than an A4 or US Letter zine's Print switch | Observation | **Kept.** True of the stored paper and errs safe; left for the build's Pass 2 |
 | ADR-133's "Builds" line still says "bench amendment" | Observation | **Kept** (an ADR body is not rewritten); the note corrects it, and the main session may fix the index row |
 | Append-only, numbering, anchors, cited code facts, large-text render, other R29 citations | Observation | **Confirmed** by the reviewers |
+
+---
+
+### D-120 — a zine's details can go back to an earlier copy and nobody is told {#d-120}
+
+| | |
+|---|---|
+| **Artifacts** | `core/data-storage/.../AtomicFileStore.kt` (`read`) · `data-android/.../RoomProjectRepository.kt` (`readMetaOrNull`) · `docs/design/mockups/v21-library.html` A37 (appended; nothing above it edited) |
+| **Found** | 2026-10-14, as D-116's second known limit (PR #127); filed as [issue #128](https://github.com/aritr-codes/zinely-android/issues/128) |
+| **Severity** | **Trust defect.** No pages are lost. After a repair, the Shelf shows a zine under its earlier name, cover or folder with no word of why, so a maker can believe a zine is missing or that the app undid their rename |
+| **Status** | **Designed 2026-10-15** under [ADR-134](../DECISIONS.md#adr-134) (Accepted under the owner's delegation); A37 frozen. **Built 2026-10-15** in PR #139 ([As built](../DECISIONS.md#adr-134-as-built)), in no release; **not accepted** until both device passes. Item 4 stays open |
+
+**What happens.** A zine's `meta.json` holds its title, createdAt, cover and folder. Each write keeps the
+previous file as `meta.json.bak`. If `meta.json` is found damaged, `AtomicFileStore.read` puts the `.bak`
+back, and since D-116 the Shelf shows what it says. The `.bak` is the file before the last change, so a
+rename, a move to a folder or a new cover made just before the damage is undone. Nothing on screen says so.
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **The maker is never told.** D-116 fixed the data and listed this as a known limit. | **Designed.** Library A37: one paper note under the My Shelf heading, exact words in A37.3, dismissed only by "Got it", once per repair and kept until seen (ADR-134 decisions 1–3) |
+| 2 | **The store cannot say that it used the `.bak`.** `read` returns the same bytes either way, so no caller can tell a repaired read from a clean one. | **Built.** `AtomicFileStore.readReporting` returns `StoreRead.Read` / `Restored` / `BackupOnly`; `readMetaOrNull` records the waiting note; nothing new is caught. A mutation that reports every recovery as `Read` fails the store and repository tests (PR #139) |
+| 3 | **"Backup" is already taken on this screen.** Backups is a dock action that means library backups; "restored from a backup" would send the maker there. | **Designed around.** A37.4 bans the word; the note says "the copy from before the last change" |
+| 4 | **A page document put back from its own `.bak` is silent too.** `DocumentRepositoryImpl` reads `document.json` through the same `read` (ADR-021). Each autosave rewrites it, so the `.bak` is one autosave old and the maker may lose the last edits made before the damage, without a word. | **Not decided here; outside #128.** Proposed as its own issue for the main session. The sealed result of item 2 makes it cheap to report later |
+| 5 | **The prototype had no way to show font scale 2 at 360dp.** A28's large-text control is 1.8× on a 390px phone. | **Added** an A37 control, "text 2× at 360dp". With the several-zine note it fills most of the first screen at that size (676px of an 800px phone in review, Got it below the fold under the dock); every word shows and the note scrolls away with the zines (A37.8). Whether a large-text maker can still answer "Which zine do I want?" there is the first-time-user device pass's question |
+| 6 | **First draft said "your last change".** The last write to `meta.json` is not always the maker's: Zinely writes it too (a cover drawn for an older zine, D-026), so the words could blame the maker for a change they never made. | **Fixed in the self-check.** A37.3 says "the last change" |
+| 7 | **The first frozen words promised "Its pages weren't touched".** A page document is put back from its own `.bak` by the same store, silently (item 4), and a damaged `meta.json` often comes with a damaged `document.json`: in the reconcile scan the re-sync of a disagreeing row loads the document through `AtomicFileStore.read`, so the sentence could be false in the very case that raises the note. Found by review (RF-1). | **Fixed before merge.** A37.3 and ADR-134 decision 2: the note makes no claim about the pages |
+| 8 | **A37.6 let the words change while the note is up, against A37.10's "never spoken twice".** Rename, Move and delete are on the same Shelf; each would change a polite live region and be spoken again on top of the A28 snack. Re-entering the Shelf could also announce a waiting note again. Found by review (RF-2, RI-2). | **Fixed before merge.** A37.10 and ADR-134 decision 6: announced only when the note arrives on a Shelf already showing its zines; present on entry is read in order; later changes are silent; the build owes a test for both |
+| 9 | **"Once per repair" failed on the quarantine path.** When the repair write fails, the store deletes the damaged `meta.json` and leaves the `.bak`; every later read takes the `.bak` again, so the note would come back after every "Got it". Found by review (RI-1, F2). | **Fixed before merge.** A37.6 and ADR-134 decisions 3–4: a repair is a read that found the file present and damaged; a lone `.bak` read is `BackupOnly` and raises nothing; a failed note write still shows the note for this run |
+| 10 | **A37.7 and ADR-134 quoted D-111 as "no shelf badge".** D-111's owner ruling also excludes a "shelf-wide error state". Found by review (F1). | **Fixed before merge.** Both now quote D-111 in full and say why a dismissable note about a finished repair is not that state |
+
+**Measured, 2026-10-15.** The amended page and `origin/main`'s were rendered in headless Chromium at
+390 × 812 in gallery mode, with no note raised, in the content, dark, folders and empty states: all four
+screenshots are byte-identical. The frozen Shelf is unchanged until a note is raised.
+
+**Built, 2026-10-15** (PR #139, [ADR-134 As built](../DECISIONS.md#adr-134-as-built)): item 1 as the
+`ShelfRestoredNote` under the heading, item 2 as above, item 3 in `Copy.Restored` with a test that the words
+never say backup, restore, error, corrupt or metadata. Item 5's case, five zines at font scale 2 on 360dp, has
+a Compose test (nothing cut, *Got it* under the words, inside the note, at least 48dp) and a golden.
+
+**Owed** (ADR-134 consequences): both device passes on the phone with a hand-damaged `meta.json` in the QA
+package's own storage, including whether TalkBack speaks a note that arrives already filled; the owner's
+first-time reading of the words.
+
+#### Review
+
+Two independent Review Agents, reading only, 2026-10-15, on PR #139 at `ffd75b0`: a design and accessibility
+lens (drove the mockup in headless Chromium, re-fetched five R30 sources) and a documents lens (numbering,
+anchors, code claims, all seven R30 sources). Both: **GO WITH FIXES.** A37 was frozen in this same PR and
+had not merged, so its rules were corrected in place before merge; nothing frozen on `main` was edited. The
+first draft had no review (the lane's sub-agent could not spawn one); these two are that review.
+
+| Finding | Class | Reconciliation |
+|---|---|---|
+| RF-1 "Its pages weren't touched" can be false | Required | **Accepted.** Item 7 |
+| RF-2 the words change while the note is up | Required | **Accepted.** Item 8 |
+| F1 D-111 quoted in part | Required | **Accepted.** Item 10 |
+| RI-1 / F2 once per repair on the quarantine path; a failed note write | Recommended | **Accepted.** Item 9 |
+| RI-2 re-announced on re-entry | Recommended | **Accepted.** Item 8; the test is in ADR-134's consequences |
+| RI-3 give a remedy when the name went back | Recommended | **Partly accepted.** The one-zine form adds "You can rename it again."; the several-zine form names none, since each "(was …)" carries the old name and it is already the long form (A37.3) |
+| RI-4 "and 1 more" | Recommended | **Accepted.** Up to four names in full; past four, three and "and {k} more" with k ≥ 2. The prototype's several-zine button now raises five |
+| RI-5 the cover can be compared | Recommended | **Accepted.** ADR-134 decision 3 and its alternatives row: the row holds title and cover; only the folder is not mirrored |
+| F3 {was} and the tile when the repair is found outside the scan | Observation | **Accepted as contract.** ADR-134 decision 4: the row is re-synced before the note shows, whichever read found the repair; a JVM test is owed |
+| OB-2 / F4 snackbar nuance, Material 2 banner, WCAG scope, link text, Win32's third question | Observation | **Accepted.** R30.1 notes `SnackbarDuration.Indefinite` (re-fetched) and that Compose Material3 1.4.0 has no `Banner` class (checked in the Gradle cache); R30.4 marks WCAG as a web rule applied by analogy; R30.2's link text is the page's title; R30.3 quotes the third question and says why it is left out |
+| OB-4 two paragraphs in the status | Observation | **Accepted.** A37.10 says the build merges them and a platform-tree test proves it |
+| OB-3 the note at 2× fills the first screen | Observation | Recorded in item 5 for the device pass |
+| OB-1, F6 | Observation | No change |
+| F5 R29 and A37 will meet lanes E and F | Observation | Resolved at merge (2026-10-18): lane E took R29, so this section is **R30**; A37 sits after A35 in the mockup |
+| OB-5 CI | Observation | Checked on the final head (PR body) |
+
+**Measured after the fixes, 2026-10-15.** The probe re-read every form of the words (one zine with and without
+a name going back, two, four and five zines), Got it hides the note and focuses "My Shelf", Got it is 48.8px
+at 2× on 360px, no sideways overflow, no page errors. With no note raised, `origin/main`'s page and this one
+were rendered twice more in the content, dark, folders and empty states: the second run was byte-identical in
+all four. Single runs are not reliable on this page: the same `origin/main` file rendered twice differed by
+bytes, so one stray mismatch (it happened once each in the content and folders states) is noise, not a change.
