@@ -8067,8 +8067,8 @@ first-time reading of the words.
 #### Review
 
 Two independent Review Agents, reading only, 2026-10-15, on PR #139 at `ffd75b0`: a design and accessibility
-lens (drove the mockup in headless Chromium, re-fetched five R29 sources) and a documents lens (numbering,
-anchors, code claims, all seven R29 sources). Both: **GO WITH FIXES.** A37 was frozen in this same PR and
+lens (drove the mockup in headless Chromium, re-fetched five R30 sources) and a documents lens (numbering,
+anchors, code claims, all seven R30 sources). Both: **GO WITH FIXES.** A37 was frozen in this same PR and
 had not merged, so its rules were corrected in place before merge; nothing frozen on `main` was edited. The
 first draft had no review (the lane's sub-agent could not spawn one); these two are that review.
 
@@ -8083,11 +8083,11 @@ first draft had no review (the lane's sub-agent could not spawn one); these two 
 | RI-4 "and 1 more" | Recommended | **Accepted.** Up to four names in full; past four, three and "and {k} more" with k ≥ 2. The prototype's several-zine button now raises five |
 | RI-5 the cover can be compared | Recommended | **Accepted.** ADR-134 decision 3 and its alternatives row: the row holds title and cover; only the folder is not mirrored |
 | F3 {was} and the tile when the repair is found outside the scan | Observation | **Accepted as contract.** ADR-134 decision 4: the row is re-synced before the note shows, whichever read found the repair; a JVM test is owed |
-| OB-2 / F4 snackbar nuance, Material 2 banner, WCAG scope, link text, Win32's third question | Observation | **Accepted.** R29.1 notes `SnackbarDuration.Indefinite` (re-fetched) and that Compose Material3 1.4.0 has no `Banner` class (checked in the Gradle cache); R29.4 marks WCAG as a web rule applied by analogy; R29.2's link text is the page's title; R29.3 quotes the third question and says why it is left out |
+| OB-2 / F4 snackbar nuance, Material 2 banner, WCAG scope, link text, Win32's third question | Observation | **Accepted.** R30.1 notes `SnackbarDuration.Indefinite` (re-fetched) and that Compose Material3 1.4.0 has no `Banner` class (checked in the Gradle cache); R30.4 marks WCAG as a web rule applied by analogy; R30.2's link text is the page's title; R30.3 quotes the third question and says why it is left out |
 | OB-4 two paragraphs in the status | Observation | **Accepted.** A37.10 says the build merges them and a platform-tree test proves it |
 | OB-3 the note at 2× fills the first screen | Observation | Recorded in item 5 for the device pass |
 | OB-1, F6 | Observation | No change |
-| F5 R29 and A37 will meet lanes E and F | Observation | No change now; per the merge order lane C merges after E and renumbers or resolves then |
+| F5 R29 and A37 will meet lanes E and F | Observation | Resolved at merge (2026-10-18): lane E took R29, so this section is **R30**; A37 sits after A35 in the mockup |
 | OB-5 CI | Observation | Checked on the final head (PR body) |
 
 **Measured after the fixes, 2026-10-15.** The probe re-read every form of the words (one zine with and without

@@ -16087,7 +16087,7 @@ themselves is still owed.
 owner has not ruled on it personally and may overrule it.
 **Builds:** library amendment A37 (frozen), and, in the same PR #139, the Kotlin under the contract below
 (see [As built](#adr-134-as-built)). In no release; both device passes are owed before the build is accepted.
-**Evidence:** [RESEARCH R29](RESEARCH.md#r29-telling-someone-their-work-went-back-to-an-earlier-copy-2026-10-15).
+**Evidence:** [RESEARCH R30](RESEARCH.md#r30-telling-someone-their-work-went-back-to-an-earlier-copy-2026-10-15).
 **Findings:** [D-120](design/V2-SPEC-DEFECTS.md#d-120). **Spec:** `docs/design/mockups/v21-library.html` A37
 (rules A37.1–A37.12). **Issue:** [#128](https://github.com/aritr-codes/zinely-android/issues/128).
 
@@ -16124,7 +16124,7 @@ sequenceDiagram
 
 1. **Tell it on My Shelf, in one paper note under the heading, dismissed only by "Got it"** (A37.2, A37.5).
    Not a snackbar: it leaves by itself and is meant for the result of something the person just did
-   (R29.1). Not a dialog: there is nothing to choose, because the newer details are gone (R29.2). Not a mark
+   (R30.1). Not a dialog: there is nothing to choose, because the newer details are gone (R30.2). Not a mark
    on the tile. [D-111](design/V2-SPEC-DEFECTS.md#d-111), ruled by the owner on 2026-08-28, gives an
    unavailable zine "no badge, warning mark, card replacement or shelf-wide error state", so that the shelf
    "still answers 'Which zine is mine?'". This decision keeps the first three for a repaired zine. The note is
@@ -16183,7 +16183,7 @@ sequenceDiagram
 
 | Option | Why not |
 |---|---|
-| A snackbar at start | Gone in seconds, at the moment the maker is least likely to be reading; Android's own guidance keeps snackbars for feedback on an action (R29.1) |
+| A snackbar at start | Gone in seconds, at the moment the maker is least likely to be reading; Android's own guidance keeps snackbars for feedback on an action (R30.1) |
 | A dialog at start | Interrupts with nothing to decide; the newer details cannot be offered back |
 | A mark on the repaired tile | D-111 rules out a badge or warning mark on a zine's tile (decision 1); a mark alone does not say what happened |
 | Show the note only when something visible changed | The row holds the title and cover but not the folder, so the folder cannot be compared with what the Shelf showed; a wrong "nothing changed" is worse than a note the maker dismisses |
@@ -16202,7 +16202,7 @@ sequenceDiagram
   360dp test that nothing is cut; goldens recorded on CI.
 - **Owed before the build is accepted:** both device passes on the phone with a hand-damaged `meta.json` in
   the QA package's own storage (never the owner's app), including whether TalkBack speaks a note that arrives
-  already filled (R29.4 leaves that open); and the owner's first-time reading of the words.
+  already filled (R30.4 leaves that open); and the owner's first-time reading of the words.
 - `DocumentRepositoryImpl` keeps the bytes-only wrapper; whether a page document's repair is told is D-120
   item 4.
 
@@ -16218,7 +16218,7 @@ decision left a choice to the build, the choice is recorded here.
 | 5 Kept per zine | `projects/<id>/restored-note.json` (`ProjectPaths.restoredNoteFile`), written by `AtomicFileStore.write`; an in-memory map beside it | A marker that cannot be written leaves the note in memory for this run (proved by a test); an unreadable marker still raises the note, with no previous title. Duplicate writes a new `meta.json` and document only, and the library backup writes named entries only, so the marker is never copied; delete removes the directory |
 | 3 Clearing | `dismissRestoredDetails(ids)` (Got it), `renameProject`, `moveProject`, `deleteProject` | A marker that cannot be removed is `DataError.Io`, as an index write after a committed file is; the ViewModel brings the note back with the warm message. A folder rename or unpack does not clear the note: the maker did not act on the zine |
 | 1–2 The note | `ShelfRestoredNote` in `feature/editor/.../library`, a full-span item between the heading and the zines; words in `Copy.Restored` | Paper and ink pinned; `zinelyFocusRing` gained a colour parameter so *Got it*'s ring is pinned ink too. The tape is the cover's tape, extracted as `ZineTape` |
-| 6 Announced only on arrival | `NoteArrival` in `ZineLibraryScreen`, and the note's own `announce` | A note is announced only when it appears on a My Shelf that drew its zines without one. The live region is set for those words only and dropped for good when they change. The words are put in 150 ms after the node (the frozen page's `setTimeout`), since Compose sends accessibility changes at most every 100 ms and words in the same window would reach the platform with the node already filled (R29.4). Known ceiling: a note that arrives while My Shelf is scrolled past its first row is announced when it comes into view, for the device pass to judge |
+| 6 Announced only on arrival | `NoteArrival` in `ZineLibraryScreen`, and the note's own `announce` | A note is announced only when it appears on a My Shelf that drew its zines without one. The live region is set for those words only and dropped for good when they change. The words are put in 150 ms after the node (the frozen page's `setTimeout`), since Compose sends accessibility changes at most every 100 ms and words in the same window would reach the platform with the node already filled (R30.4). Known ceiling: a note that arrives while My Shelf is scrolled past its first row is announced when it comes into view, for the device pass to judge |
 | A37.6 Pending delete | `HomeViewModel` | A zine whose delete is waiting stays named until the store deletes it; *Got it* hides the note at once and clears every zine it names |
 
 **Verification.** Tests: `AtomicFileStoreTest` (the sealed result, the quarantine path),
@@ -16231,8 +16231,20 @@ platform node, a change drops the live region, folder round trip silent, Got it 
 scale 2 at 360dp), and three goldens (`v21_library_restored_{light,dark}`, `v21_library_restored_five_360_2x`)
 recorded on CI. Run results and the repair-signal mutation check are in PR #139.
 
-**Owed:** both device passes on the phone with a hand-damaged `meta.json` in the QA package's storage,
-including whether TalkBack speaks the arriving note; the owner's first-time reading of the words; D-120 item 4.
+**Emulator passes, 2026-10-18** (Medium_Phone API 36.1, QA package `com.aritr.zinely.inkqa` at 414aeed,
+hand-damaged `meta.json`): Pass 1 and Pass 2 both PASS, no Required Fix. The words match A37.3; the tile
+reads the repaired title; Got it is a 48dp button and clears the marker for good; the note survives a
+restart; a second repair raises it again; font scale 2 at 360dp shows every word with Got it reachable;
+two and five zines take the A37.3 list forms; the mockup and the build agree. Review fixes 1 and 2 (a
+committed rename or move never reports failure; a half-cleared marker keeps the note) landed in 414aeed
+with tests. Pass 2 finding, a spec matter for A37.3 (HTML first): past four zines the list keeps Shelf
+order, so the zines whose *name* went back can be the ones hidden in "and k more"; list those first.
+TalkBack could not be driven on the emulator (injected input does not move its focus).
+
+**Owed:** TalkBack listening by a human (one announcement on arrival, none on re-entry, focus to the
+heading after Got it), and a real phone at 360dp and font scale 2; the owner's first-time reading of the
+words; D-120 item 4; review follow-ups 3 (a repair found during a move or rename is cleared by it) and 4
+(a second repair is hidden by `dismissedNotes` until a clean listing).
 
 #### Review
 

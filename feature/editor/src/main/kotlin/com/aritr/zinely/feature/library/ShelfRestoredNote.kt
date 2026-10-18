@@ -189,7 +189,7 @@ private fun GotIt(onClick: () -> Unit, modifier: Modifier = Modifier) {
 /**
  * How long the words wait after the note on arrival: the frozen page's `setTimeout(…, 150)`. Compose sends
  * accessibility changes at most every 100ms, so words put in within the same window would reach the platform with
- * the node, already filled, which R29.4 leaves open as to whether TalkBack speaks.
+ * the node, already filled, which R30.4 leaves open as to whether TalkBack speaks.
  */
 internal const val ArrivalSettleMillis = 150L
 
