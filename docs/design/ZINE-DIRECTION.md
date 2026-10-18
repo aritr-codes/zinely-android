@@ -73,7 +73,7 @@ The café was doing two jobs — supplying the *feeling* and supplying the *plac
 | **A document** | **One zine** — a small edition of one title, of which you can print many copies | Never "project" or "file". Duplicating a zine is *a new title*, not a backup |
 | **A page** | **One panel of the folded sheet.** Fixed at eight, because the fold says eight | The fixed count is the form, like a sonnet's fourteen lines. Page 9 is not a missing feature; it is a different fold |
 | **A tool** | **Something you pick up, use, and put down.** Type bar, Ink pots, Reframe, Supplies | Tools appear at thumb reach in a fixed position, do one job, and leave. A tool that stays on screen is clutter, not a tool |
-| **A material** | **Stock you place and cannot un-invent.** Photos, words, tape, stamps, cut paper | Materials are finite, named, and authored. Five inks, three voices, sixteen supplies. Never a picker over infinity — *2026-10-14: two document voices, Book and Plain ([ADR-126](../DECISIONS.md#adr-126), Proposed); see principle 3* |
+| **A material** | **Stock you place and cannot un-invent.** Photos, words, tape, stamps, cut paper | Materials are finite, named, and authored. Five inks, three voices, sixteen supplies. Never a picker over infinity — *2026-10-14: two document voices, Book and Plain ([ADR-126](../DECISIONS.md#adr-126), Proposed); see principle 3. 2026-10-18: "finite" means curated, not capped ([ADR-137](../DECISIONS.md#adr-137), Proposed)* |
 | **Importing** | **Bringing stock to the bench** — from the drawer (gallery), from the camera, from another app | Import is not "upload". It never leaves the phone, so it is a *reach*, not a *transfer* |
 | **Exporting** | **The press run.** Ink meets paper; a sheet exists that did not before | The primary output is a foldable sheet. Page images are offcuts you may also keep |
 | **Settings** | **The colophon**, presented as **About Zinely** — the printer's note at the back of a book saying how it was made | See §2.3. The concept fits the metaphor and solves a legal obligation; the maker-facing name stays plain |
@@ -143,7 +143,7 @@ Ten principles. Each is a *test you can fail*, not an aspiration.
 
 1. **The page is the hero; the tool is a guest.** Chrome arrives when needed and leaves. If two rows of controls are permanently visible below the page, the screen has stopped being a bench.
 2. **The sheet is under the lamp.** Light means the thing you are making; dark means the room you stand in. There is no third case. Tools never become paper, however close they float. *(ADR-090)*
-3. **Materials are finite, named, and authored.** Five inks, three voices, sixteen supplies. A picker over infinity is an abdication — curation *is* the design work. *(2026-10-14: two document voices, Book and Plain, by the owner's 2026-09-26 ruling ([ADR-126](../DECISIONS.md#adr-126), Proposed). The principle stands; the count is the direction as first written.)*
+3. **Materials are curated, named, and authored.** Five inks, three voices, sixteen supplies. A picker over infinity is an abdication — curation *is* the design work. *(2026-10-14: two document voices, Book and Plain, by the owner's 2026-09-26 ruling ([ADR-126](../DECISIONS.md#adr-126), Proposed). The principle stands; the count is the direction as first written.)* *(2026-10-18: "finite" became "curated" under [ADR-137](../DECISIONS.md#adr-137), Proposed, on the owner's 2026-10-15 ruling. The Art cabinet has no count ceiling; every piece, from any source, passes the same house gates, and variants of one subject sit together inside the four families. Still no picker over infinity, and still curation is the design work.)*
 4. **Imperfection is intentional and quantified.** Tape tilts 1.4° because a hand stuck it down. Randomness may set an initial value; it may **never** be a running behaviour. Nothing re-rolls.
 5. **Every mark names its physical cause.** If you cannot say what object made it, it does not ship. This governs texture, shadow, motion and decor alike.
 6. **Show, don't explain.** A confident product states a thing once, where it matters. Repeated reassurance reads as anxiety.
@@ -376,13 +376,46 @@ Step 14 of the walkthrough is *export/share*. **But the loop does not end there 
 | Opacity & blend sliders | **DO NOT BUILD** | Translucency is a material property, not a control |
 | Pattern fill / auto-tiling | **DO NOT BUILD** | Names no physical cause a person could produce |
 | Emoji in text | **SEPTEMBER REQUIREMENT — ADR-112 GATED** | Per-OEM fallback remains forbidden; a bundled deterministic renderer must prove screen/PNG/PDF parity first |
-| Page background colour | **DO NOT BUILD** | Home printers cannot bleed — prints as a panel in a white margin |
+| Page background colour | **DO NOT BUILD** | Home printers cannot bleed — prints as a panel in a white margin. *2026-10-18: still not built as a printed fill; the paper a maker loads may be shown on screen, never printed ([ADR-136](../DECISIONS.md#adr-136) decision 5)* |
 | Templates gallery | **DO NOT BUILD** | *"Blank is a peer"* |
 | Onboarding tour | **DO NOT BUILD** | Empty states already teach |
 | Accounts · cloud · feed · collaboration · marketplace · AI layout | **DO NOT BUILD** | The product is that there isn't one |
 | Online Art search (drawn in the freeze) | **DO NOT BUILD** — ruled by **ADR-104** (§16) | The freeze fenced it behind an asset-layer ADR + legal pass that were never written. §16 performs both and rules bundled-only. Openverse *"does not verify licensing information"*; Unsplash mandates hotlinking and telemetry; Pexels allows 200 req/hr on a key shared by every install |
 | Art sourced from ShareAlike or CC-BY | **DO NOT BUILD** | ⚠ The obligation would follow the user's exported zine. Rejects **OpenMoji** and **The Noun Project** specifically (§16.4) |
 | Any networking library | **DO NOT BUILD** — in anything this document plans | NFR-1; the zero-network claim must stay inspectable in the manifest. ⚠ *Permanence* is constitutional and is the owner decision in §16.9, not a call this document makes |
+
+<a id="never"></a>
+### Never — what makers hate, and Zinely does not do (added 2026-10-18)
+
+*Adopted by [ADR-136](../DECISIONS.md#adr-136) from the research in
+[RESEARCH R32.1](../RESEARCH.md#r32-what-makers-hate-art-at-scale-paper-colour-and-a-hidden-signature-2026-10-15).
+It sits beside the DO NOT BUILD rows above and [Constitution §IV](V2-CONSTITUTION.md); it is not a third list,
+and where it overlaps them they win. This block is the authority for the list and its numbers, which follow
+the 2026-10-15 research, so "Never #19" means the same thing everywhere. "Not yet true" names where today's app
+falls short and where that is scheduled.*
+
+| # | Zinely never… | Not yet true |
+|---|---|---|
+| 1 | loses a change: every edit is saved on the device before it matters, and every destructive act has undo | Back while typing drops the words; the snack's Undo can undo a later action; sheet drafts are lost on a configuration change (all ADR-136 W1). A deleted zine has only the snack's undo (Recently deleted, Later) |
+| 2 | leaves a shelf with no way out: whole-library backup and standard PDF export stay free and easy to find | |
+| 3 | requires an account, a network, a licence check or an update to make, save, export or print | |
+| 4 | uploads, syncs, analyses or trains on user content, or ships an ad or tracker SDK | |
+| 5 | shows an item the user cannot use, badges anything "Pro", or puts a purchase inside a creative picker | |
+| 6 | takes back a feature, font, supply or format once it has shipped free, or sells a subscription, credits or countdowns | |
+| 7 | stamps its name or mark on a printed or exported page (a hidden signature in the PDF's metadata, disclosed, is not on a page; ADR-136, Later) | |
+| 8 | generates art, text or layout with AI, or auto-places user content | |
+| 9 | ships an asset without known human provenance and a licence that lets the user print, sell and trade with no attribution duty (held by [ADR-104](../DECISIONS.md#adr-104) and [ADR-137](../DECISIONS.md#adr-137)) | |
+| 10 | makes the user arrange imposition, or shows the imposed sheet as if it were the zine | |
+| 11 | relies on fit-to-page, driver booklet mode or the unprintable edge to print correctly, or adds blank pages without saying so first | Print guidance (W5) |
+| 12 | defaults to the wrong paper for the user's region, or prints marks the user can't turn off | Every region defaults to A4 (W2b). The fold and cut guides always print; no wave holds a switch yet |
+| 13 | downsamples below print resolution silently; it always says when a photo will print soft | The note is W2b |
+| 14 | lets a page become unresponsive as it fills, on the oldest phone it supports | Not measured |
+| 15 | lets the keyboard hide the text being edited or the way out of editing | |
+| 16 | applies a photo or scan fix that can't be reverted to the original | Import keeps a JPEG master, not the original file, and flattens transparency to white ([ADR-023](../DECISIONS.md#adr-023)); fixes are reverted to that master |
+| 17 | interrupts editing with a modal unless it prevents loss or wasted paper, asks twice after "no", or sends notifications, streaks or rating prompts | |
+| 18 | shows a first-run tour, or adds a feed, profile or community layer | |
+| 19 | ***breaks*** a saved zine after an update, or moves or removes a working tool without a visible path | *Breaks* means it fails to open, loses content, or moves ink outside the box a piece occupied. The one named exception is the pre-1.0 Art redraw of [ADR-132](../DECISIONS.md#adr-132), announced in the release notes and owed a bounding-box test ([ADR-136](../DECISIONS.md#adr-136) decision 3) |
+| 20 | asks for a permission a system picker or intent can replace, ships a surface that breaks at large text, lacks TalkBack labels or ignores reduced motion, or lets a user find out about a script limit only after typing | Android 7–9 "Don't ask again", Proof labels below the type floor, and a scroll that ignores reduced motion (all W1) |
 
 ---
 
@@ -851,6 +884,8 @@ What holds:
 ## 16.4 Sourcing rules for the sixteen
 
 **We draw them ourselves** (§9.2) — an authored kit by one hand is the point, and at sixteen the licensing question mostly evaporates. External sources are a **fallback**, and these are the cleared rules:
+
+> *2026-10-18: "one hand" reads "one world" under [ADR-137](../DECISIONS.md#adr-137) (Proposed). Pieces redrawn from public-domain or open-licence references, and imported open-licence pieces, are admitted when they pass the same house gates ([SUPPLIES-SPEC §4.5](SUPPLIES-SPEC.md#one-world)) and carry the per-item record below. The table's rules are unchanged. Its ⚠ row is answered per item, not per site, for Smithsonian Open Access (CC0); the Rijksmuseum (Public Domain Mark) and the Cleveland Museum of Art (CC0) are added ([RESEARCH R32.3](../RESEARCH.md#r32-what-makers-hate-art-at-scale-paper-colour-and-a-hidden-signature-2026-10-15)).*
 
 | Verdict | Sources | Basis |
 |---|---|---|

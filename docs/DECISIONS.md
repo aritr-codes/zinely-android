@@ -144,6 +144,8 @@
 | [ADR-133](#adr-133) | **Paper is a closed, named set; the imposition engine takes any sheet.** Answers the paper half of ADR-016. A person picks a size by name and the file stores the name; `Imposer.layout` also takes any portrait sheet, proved by properties. US Legal and A5 are the next sizes, in their own schema bump after v4, chosen at the start of a zine only; half-Letter, A3 and Tabloid are not | Accepted (engine and closed set); sizes decided, not built |
 | [ADR-134](#adr-134) | **When a zine's details go back to their earlier copy, My Shelf says so once.** A paper note under the heading names the zine (“Letters to Gran” is called “Letters home” again), says what went back, and stays until “Got it”. The store reports a repaired read as a sealed result; the waiting note is kept per zine. Library A37 | Accepted 2026-10-15 under delegation; built 2026-10-15, in no release (device passes owed) |
 | [ADR-135](#adr-135) | **Read speaks the page.** One stop per meaningful thing, in the Bench's spatial order, between Previous and Next page: text as written, a photo as `Photo` or `Photo: <description>`, Art only when described (by its name), `Blank page` / `Only Art on this page`; no role on a stop; a turn announces the ticket only. The PDF and paper carry no description, said once in the Describe field. `v21-proof.html` A38 frozen; part 1 needs no schema, part 2 is plan step 7 | Proposed (design frozen under the owner's delegation; not built) |
+| [ADR-136](#adr-136) | **Product direction 2026-10-15: keep, cut and the order of work.** W1 never lose work, never get stuck → W2a/W2b small things → W3 Art better before more → W4 photo descriptions (v4, alone) → W5 print guidance → W6 paper sizes (v5) and paper colour → W7 Art grows inside the four families → W8 your own artwork → W9 Hand voice; then Later. A cut list with reasons. Never #19 becomes "never *breaks* a saved zine", with ADR-132's pre-1.0 redraw as the one named exception. Records the owner's readings Q1 ("the paper is the medium, not the page") and Q2 ("§IV governs chrome; a document voice is content") | Accepted, under the owner's delegation; Q1 and Q2 are owner readings |
+| [ADR-137](#adr-137) | **One world: Art pieces from any source pass the same house gates; variants of one subject.** "One hand" becomes "one world": pieces we draw, pieces redrawn from public-domain or open-licence references, and imported open-licence pieces all pass nine gates and carry ADR-104's record per item. Variants of one subject sit together on the sheet. Still four families; curated, not capped. Amends SUPPLIES-SPEC §4.1 and §4.4 (by §4.5), ADR-107 R1's count target and ZINE-DIRECTION principle 3 | Proposed (direction ruled by the owner; A39 not picked) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -11449,6 +11451,7 @@ The visual treatment and preliminary outlines remain pending D-080's rendered HT
 expired) and the *"No categories beyond the four. No tags, no filters, no sort"* one (a straight reversal; it
 states no premise to expire). · **Does not amend** §5 (randomiser ban) or §9's *no emoji* bullet
 **Review record:** [§ Review and reconciliation](#adr-107-review) — read it before trusting any claim here
+**2026-10-18:** R1's count target (about 60) is amended by [ADR-137](#adr-137) (Proposed): curated, not capped; still the four families.
 
 #### Context
 
@@ -15882,6 +15885,9 @@ are done.
 **Keeps:** [ADR-107](#adr-107) R2 (no randomisation), [ADR-124](#adr-124)'s tap-through list, A16's sheet,
 A32's two frames as named and ordered, the landing sizes of SUPPLIES-SPEC §5.2.
 **Defect:** [D-117](design/V2-SPEC-DEFECTS.md#d-117). **Evidence:** [RESEARCH R27](RESEARCH.md#r27-one-hand-for-a-set-of-single-ink-pieces-2026-10-14).
+**2026-10-18:** "one hand" reads "one world" under [ADR-137](#adr-137) (Proposed); the house style below is
+unchanged. The Never #19 exception for this redraw is recorded in [ADR-136](#adr-136) decision 3; its
+bounding-box test is owed before Accepted.
 
 #### Context
 
@@ -16427,3 +16433,307 @@ evidence, **GO**. The Required Fix: "a double tap on a stop does nothing" was fr
 TalkBack's fallback taps the stop's centre, which can lie in a turn edge; decision 1 now names the mechanism and
 owed item 1 the test. Also taken: a blank description counts as none; off-page Art is left out before the
 empty-page test; Duplicate keeps the description. Reconciled in D-122.
+
+---
+
+## ADR-136 {#adr-136}
+
+### Product direction 2026-10-15: keep, cut and the order of work
+
+**Status:** Accepted, 2026-10-18, under the owner's delegation of 2026-10-12 ("decide, do not ask"); the owner
+may overrule any line. Two readings of the Constitution in it, **Q1** and **Q2** below, are the **owner's own
+readings**, given on 2026-10-15. They are recorded as readings, like
+[SUPPLIES-SPEC §0 O-B](design/SUPPLIES-SPEC.md), not as amendments.
+**Owner rulings of 2026-10-15 that bind it:** no printed "made with Zinely" page (a hidden signature is
+acceptable, under Later); no pen tool yet (Later, not next); online or Drive-hosted Art stays closed
+([Constitution Amendment 3](design/V2-CONSTITUTION.md#amendment-log), which the owner reaffirmed); "generative"
+is already reworded as Amendment 4 and is not redone here; no ceiling on the number of Art pieces
+([ADR-137](#adr-137)).
+**What "Accepted" covers:** the order of work, the cut list, the Never #19 wording and the v4-first rule. It
+freezes no design. Every wave still needs its own HTML amendment, ADR or both where the rules ask for one.
+[ADR-124](#adr-124), [ADR-125](#adr-125)'s implementation, [ADR-126](#adr-126) and [ADR-132](#adr-132) keep
+their status.
+**Evidence:** [RESEARCH R32](RESEARCH.md#r32-what-makers-hate-art-at-scale-paper-colour-and-a-hidden-signature-2026-10-15).
+
+#### Context
+
+- ✅ A tester said the interface breaks in places and many Art pieces look amateurish (owner's report,
+  2026-10-12). The owner then listed customisation ideas and asked for direction ("research wide, decide
+  narrow").
+- ✅ A research pass on 2026-10-15 asked what makers hate in creative, journal, zine and print apps; how a
+  larger Art cabinet could be delivered; which public-domain sources hold up; how paper colour could be shown
+  honestly; and whether a hidden signature can be written safely (R32).
+- ✅ A draft was reviewed by three independent Review Agents with product, law and engineering lenses. All
+  three returned **GO WITH FIXES**. Every finding was accepted (§ Review). Two of the reconciled draft's lines
+  were then overridden by the owner: the curated ceiling of about 120 pieces, and "one hand" (both now
+  [ADR-137](#adr-137)).
+- Every kept item passed one filter: it serves a zine printed at home, folded and handed on; it answers the
+  question of the screen it lives on; it keeps the laws (offline, no network, one replayer, elements closed at
+  three, one ink per mark, no randomisation, no opacity, HTML first, provenance); it is a material, not a
+  costume; and better comes before more.
+
+#### Decision
+
+**1. The order of work.** Sizes: **S** up to 3 days, **M** 1 to 2 weeks, **L** more. They are estimates.
+**[amend]** means the frozen HTML is amended first (CLAUDE.md, *DESIGN FREEZE*).
+
+| Wave | What | Size |
+|---|---|---|
+| **W1** Never lose work, never get stuck | Each fix starts with a failing test. Back while typing keeps the words [amend] · the snack's Undo undoes its own action (only while the newest history entry is still that action) · accessibility timeouts for every snack and toast · the Shelf snack keyed per request · Back cancels Reframe · a failed photo pick is shown, not only spoken · the Proof error says what failed, and Share stays after Save [amend] · Android 7–9 "Don't ask again" leads to Settings [amend] · a Shelf failure keeps Backups and About · "Save backup" explains itself [amend] · sheet drafts survive a configuration change · stale copy (Replace, share wording) · Proof labels at the type floor · reduced-motion scroll · the Add pill grows · a visible way back to the Shelf from the Bench [amend] | L in all (about 16 fixes, four amendments and their device passes) |
+| **W2a** Small, no design change | Each item checks the frozen HTML first; one that touches it moves to W2b. The PDF is named after the zine · new zines are numbered ("My zine 2") · rename selects the old title, with a 60-character cap · a rename is not an edit · duplicate scrolls to the copy · Art recents and favourites survive a restart · consecutive nudges are one undo step · the soft keyboard can start a new line · the hint mentions the two-finger turn | S each |
+| **W2b** Small, HTML amendment first | New Art cascades instead of stacking at page centre ([SUPPLIES-SPEC §5.2](design/SUPPLIES-SPEC.md) amended first) · style (voice, size) reachable while typing · new text copies the voice, size and ink of the last text set **in this zine**, read from the zine itself with no stored field (Art keeps its family landing size) · "Last backup saved 12 September 2026" on the Shelf, in the frozen backup wording · paper size from the phone's region, for new installs only, behind a "region applied" marker (colophon freeze and A35 amended) · a "Page 6 is empty" note · a "may print soft" photo note · missing photos listed before Save or Share · "Edit this page" from Read · share a reading copy (a new export path, **M**) | S–M each |
+| **W3** Art: better before more | Polish A34 to the critique (R32.6), as the A39 amendment, reviewed first as a local HTML file; then wire it, record goldens on CI and run both device passes. A39 amends §4.4 by rule number and ADR-132 lists the changes. ADR-132 stays Proposed with an *As built* note. The Never #19 exception (3 below) is recorded there | L |
+| **W4** Photo descriptions, saved format v4 | Plan steps 6 and 7 ([plan](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md)); A38 and [ADR-135](#adr-135) from their own lane (PR #141, not yet merged). v4 alone, as [ADR-133](#adr-133) decision 4 already requires | L, as planned |
+| **W5** Print guidance | Design the guidance now (test sheet, flip edge, margins); ship it after the print study, as the owner ruled ([gate Q7](planning/ZINELY-1X-DECISION-GATE.md#q7-print-o13--d3-stage-2)) | M to design; shipping waits on the study |
+| **W6** Paper sizes, saved format v5 | US Legal and A5 with the A35 picker ([ADR-133](#adr-133); A35 is in PR #142, not yet merged). The W8 `ImageElement` fields are designed here, before v5 freezes. Paper colour (Q1 below) as its own design amendment after A35, with measured papers, the preview layer and a legibility note | L |
+| **W7** Art grows inside the four families | Under [ADR-137](#adr-137): the ADR-107 R1 backlog; the playful gap (squiggle, sparkle, heart, scissors, cut here, balloons); pieces redrawn in-house from public-domain references (Smithsonian cancels, Rijksmuseum and Cleveland ornaments, R32.3); open-licence pieces that pass the gates; variants of one subject. Ornaments go into the existing families by kind: postmarks and cancels to Stamps & marks; corners, rules, cartouches and tailpieces to Cut paper or Stamps & marks. A new holed piece needs an H9 and ADR-124 amendment, so it is drawn solid or waits. Each batch ships with the id add-only test and the provenance test | M per batch |
+| **W8** Your own artwork | Try the cheaper path first: keep the JPEG master and threshold it at draw time into a tinted mask, which needs no new asset type and no backup change. The `ImageElement` fields are designed before v5 freezes (W6); v5 or a later bump is decided then, and if it is v5, [ADR-133](#adr-133) decision 4 is amended openly. The fields ride a bump either way: an older build that dropped a mask field would print the full photo. It stays an `ImageElement`, so the element set stays three ([SUPPLIES-SPEC §7](design/SUPPLIES-SPEC.md)) | L |
+| **W9** Hand voice | Shantell Sans as a third document voice (Q2 below), after W5, under its own ADR amending [ADR-126](#adr-126) and with its own script-coverage check | M |
+| **Later** | In this order where it matters: **Recently deleted** first (revisit the rationale of [ADR-125](#adr-125) rule 7, and decide whether zines waiting in it are backed up) · the **hidden signature**: PDF metadata only (the `/Creator` and a same-length `/Producer` rewrite), disclosed in Licences & credits, recorded as an export-path ADR, and shipped only behind a JVM test that re-parses the file and `strings` checks on API 24 and the newest API · the **pen tool** (it will need SUPPLIES-SPEC §9's "no custom shape drawing" amended) · shaped photo cutouts · a 16-page booklet, or a half-Letter booklet folded from Letter sheets (not a half-Letter paper size, which [ADR-133](#adr-133) rejects) · device-to-device transfer · tablets and keyboard shortcuts · an RTL alignment check · back-page credits (opt-in, never pre-filled with "Zinely") | — |
+
+**2. Cut, with the reason.**
+
+| Cut | Reason |
+|---|---|
+| Online or Drive-hosted Art | Amendment 3; Drive's own terms forbid using it as a CDN (R32.2) |
+| Outside icon sets dropped into the families as they are | They fail the world-match gate ([ADR-137](#adr-137)); an outside piece enters only by passing the gates |
+| Fluent emoji stickers | Emoji already exist in text, under [ADR-112](#adr-112) |
+| Pen tool | Owner, 2026-10-15 (under Later) |
+| A printed "made with Zinely" page | Owner, 2026-10-15; a watermark by another name (R32.1) |
+| Paper textures, riso and linocut filters, fake streaks, misregistration | Costume: they name no physical cause ([ZINE-DIRECTION](design/ZINE-DIRECTION.md) §3, principle 5) |
+| Ruled or dot paper, pattern fill, ink-on-ink multiply | [ZINE-DIRECTION](design/ZINE-DIRECTION.md) §8 and §9.6; no opacity |
+| Templates, starters, panel grids, a tour, a sample zine | [ZINE-DIRECTION](design/ZINE-DIRECTION.md) §8 |
+| Poster, Stencil and Gothic fonts; font lists | [ZINE-DIRECTION](design/ZINE-DIRECTION.md) §8 (no font picker) |
+| Word strips, a ransom-note randomiser | [ADR-107](#adr-107) R2 |
+| Background removal | It needs a segmentation model, bundled (app size) or downloaded (network, closed by Amendment 3); none has been tried. It is an AI feature, which makers distrust (R32.1) |
+| Launcher shortcuts, widgets | Serve no screen's question |
+| Snapshots, copy and paste style, pin, Shelf search and sort | Covered elsewhere or parked |
+| Stamp labels with words | Words belong to text, in the maker's voice |
+| To front and To back | A tool joins the tray only if it displaces or nests another ([constitution](zinely-constitution.md)) |
+| A "Folded" stamp on the Shelf | Claims what the app cannot know |
+| Proof's paper saved in the zine | A35.6: a zine's paper never changes |
+| A fifth Art family, sub-family shelves | The four families are frozen ([ADR-107](#adr-107) R1, R5) |
+
+**3. Never #19 and the Never list.** The Never list from R32.1 is adopted into
+[ZINE-DIRECTION §8](design/ZINE-DIRECTION.md#never) as a Never block beside the DO NOT BUILD rows. It is not a
+third list, and the PRD's principles are not changed. Never #19 reads:
+
+> **Zinely never *breaks* a saved zine after an update, and never moves or removes a working tool without a
+> visible path.**
+
+*Breaks* means the zine fails to open, loses content, or has a placed piece's ink grow past the **ink bounding
+box of its old outline** (inside the unit square), so a finished layout no longer fits its keep-clear. A change
+to how a placed piece looks is not a break, but it is not made silently either: after 1.0 a shipped id's drawing
+never changes, and a new drawing gets a new id ([ADR-137](#adr-137)). **One exception is named:** the pre-1.0
+Art redraw of [ADR-132](#adr-132) changes the drawing of pieces already placed, under the same ids, and is
+announced in the release notes. It is owed a test, run against A34's frozen outlines now and against A39's
+when frozen, that each redrawn outline's ink box stays inside the old one. For those 34 ids, optical sizing
+(G3) may shrink a piece's ink box, never grow it.
+
+**4. v4 before v5.** Photo descriptions (W4) take v4 alone, before any v5 work: paper sizes, paper colour, and
+any W8 field. [ADR-133](#adr-133) decision 4 stands. If paper colour rides v5 with the sizes, ADR-133 is
+amended openly to say so; the same holds for any W8 field.
+
+**5. Q1, the owner's reading: "the paper is the medium, not the page."** Adopted 2026-10-15.
+[§III Print](design/V2-CONSTITUTION.md) says there is "never a second way to draw a page", and §IV bans "a
+second draw path". Under this reading the page is still drawn by the one engine. A screen may then show it on
+the paper colour the maker says they will load, as a **host overlay outside the replayer**, as `ShelfCover`
+already draws its own layer. The PDF and the PNG are unchanged. "Preview == export" and "Preview must *be*
+export" still hold for the page: its pixels are the export's, drawn on opaque white as now, and only the paper
+under them is the host's, as the sheet of paper is not part of the PDF. The W6 amendment owes:
+
+- the list of screens that show the paper, named one by one (Bench, Read, Proof, Fold, thumbnails and the Shelf
+  cover are the candidates);
+- a test that the PDF bytes do not change;
+- a measurement of the extra layer's cost on Android 7.
+
+Multiply is physical for paper, where translucent ink lies on coloured stock. It is costume for ink on ink,
+which stays cut. These lines stay: "Page background colour: DO NOT BUILD"
+([ZINE-DIRECTION](design/ZINE-DIRECTION.md) §8, a printed fill) and "opaque white ground, always". The W6
+amendment narrows BETA-DIRECTION's "paper tint" ban by name. Its paper names must not collide with the
+"Paper tints" ink band. This is also the answer to the owner's 2026-10-06 request for page backgrounds: the
+paper the maker loads, shown on screen. A printed fill stays out.
+
+**6. Q2, the owner's reading: "§IV governs chrome; a document voice is content."** Adopted 2026-10-15.
+§IV lists "handwriting fonts" among banned skeuomorphs. Under this reading that ban governs the app's own
+chrome, as O-B read it for torn paper. It does not reach a voice the maker chooses for their words. The
+2026-09-26 "Hand = deferred" ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)) is lifted
+as sequencing: Hand is W9.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Art first, fixes after | Losing work is the complaint makers rank highest (R32.1); W1 is the trust the rest stands on |
+| A Never list in PRD §5 | It would be a third list beside Constitution §IV and ZINE-DIRECTION's DO NOT BUILD |
+| Keep Never #19 as "never changes how a zine renders" | W3 breaks it on the day it ships. Giving the redrawn pieces new ids would leave every existing zine on the drawings the tester called amateurish |
+| Paper sizes before photo descriptions | v4 is reserved for photo descriptions, alone (ADR-133) |
+| A printed signature page | Owner ruling |
+
+#### Consequences
+
+- [ROADMAP](ROADMAP.md#current-priorities) follows this order.
+- The release notes for W3 announce the redraw (decision 3). Those for W7 and W9 must say that older builds
+  draw differently: an older build draws a new Art id as nothing, so a backup restored there loses that Art
+  without a word; and it draws Hand as Inter, per ADR-126's fallback.
+- The website's "Page backgrounds" line (`website/roadmap/index.html`, `website/index.html`) now promises more
+  than decision 5 gives. It is owed a correction in the next website change.
+- Not decided here: inks a maker mixes and saves (the owner's 2026-10-12 idea, still under *Exploring* in
+  [ROADMAP](ROADMAP.md#current-priorities)).
+- The work stacks on items that are built and not accepted. The owner checks they owe stay indexed in
+  [OWNER-CHECKLIST](OWNER-CHECKLIST.md), and the device passes owed will grow.
+- Moving the outlines from Kotlin to a data file is not a goal. If measured size requires it, it happens by its
+  own ADR, as a pure refactor in its own change, behind a JVM test that every loaded outline equals today's
+  exactly, at full precision, loaded lazily as a classpath resource. Every outline today initialises in one
+  static block of one `object`, which the JVM caps at 64 KB; one compiled build measured about 480 bytes per
+  piece, which puts the cap near 135 pieces, earlier for curve-heavy pieces (R32.2). So the first W7 batch owes
+  a check on that initialiser's size, and the catalogue splits into one object per family before the check
+  nears the cap.
+
+#### Review
+
+Three independent Review Agents read the draft on 2026-10-15, all **GO WITH FIXES**. **Product:** a fifth
+family breaks the frozen four; 5,000 pieces reverses "finite" (later replaced by the owner's "curated, not
+capped"); Never #19 contradicts W3; multiply versus the cut list; print help unscheduled; the Bench exit
+belongs in W1; text styling is hard to find; To front and To back grow the tray; "last-used style" was
+ambiguous; "colophon" names two things; "Folded" claims too much; W2 was too big. **Law:** paper colour reads
+§III; ADR-133 decision 4 and A35.6; Hand against the owner's deferral and §IV; W4 against the four families,
+§4.1 and H9; W3 rewrites H1 and H5; W2 changed frozen designs without marking them; the region default cannot
+tell a new install from an upgrade; Recently deleted against ADR-125 rule 7; the signature needs disclosure
+and an export ADR; the Never list duplicates; §4.1's attestation needs rewording. **Engineering:** the
+bounding-box test; v4 was missing from the order; W8 needs its fields designed before v5; no sizes; W8 cost
+underestimated; the data-file move's conditions; the paper layer's screens, the PDF-bytes test and the
+Android 7 cost; the signature can corrupt exports. Every finding was accepted and is reflected above. No
+finding was rejected.
+
+Two more independent Review Agents read the landed documents on 2026-10-18, both **GO WITH FIXES**: one on law
+and consistency, one on product and engineering. Their findings and how each was reconciled are recorded under
+[ADR-137](#adr-137-review), which they also covered.
+
+## ADR-137 {#adr-137}
+
+### One world: Art pieces from any source pass the same house gates; variants of one subject
+
+**Status:** Proposed, 2026-10-18. The owner ruled the direction on 2026-10-15. It stays Proposed until the A39
+candidate sheet is picked and frozen with the gate numbers below.
+**Amends:** [SUPPLIES-SPEC §4.1](design/SUPPLIES-SPEC.md#41-authoring-rule-binding) (provenance and
+attestation) and [§4.4](design/SUPPLIES-SPEC.md#house-style) (the house rules become gates), by the dated
+amendment block [§4.5](design/SUPPLIES-SPEC.md#one-world); [ADR-107](#adr-107) R1's count target of about 60
+and §4.3's worked ceiling of about 51 (curated, not capped); the "one hand" wording of [ADR-132](#adr-132) and
+§4.4, which reads "one world"; [ZINE-DIRECTION](design/ZINE-DIRECTION.md) principle 3, its §2.2 *material*
+row, and its §16.4 "by one hand" line and binding-rule sentence (the Public Domain Mark joins MIT, ISC,
+Apache-2.0 and CC0); and [ADR-104](#adr-104)'s Openclipart row, which becomes per item, because its uploads can
+be traces.
+**Keeps:** exactly four families, with no fifth family and no sub-family shelves ([ADR-107](#adr-107) R1 and
+R5; SUPPLIES-SPEC §9); [ADR-104](#adr-104)'s binding sourcing rule and its five-field record; ADR-107 R2 (no
+randomisation); §4.1's outlines as reviewed Kotlin source, not a data file; H9's holed set of eight and
+[ADR-124](#adr-124)'s list; [ADR-105](#adr-105) (a placed piece stores only its id); §9's "no emoji, no
+imported SVG" bullet; [Constitution Amendment 3](design/V2-CONSTITUTION.md#amendment-log) (no network, so
+every piece is bundled).
+**In force now, and pending:** the owner's 2026-10-15 rulings are in force as direction. The open gate
+numbers, and so any new piece, wait for A39.
+**Evidence:** [RESEARCH R32](RESEARCH.md#r32-what-makers-hate-art-at-scale-paper-colour-and-a-hidden-signature-2026-10-15)
+(R32.2, R32.3, R32.6); [R27](RESEARCH.md#r27-one-hand-for-a-set-of-single-ink-pieces-2026-10-14).
+
+#### Context
+
+- §4.1 says outlines are "not imported from anywhere", and its attestation reads "authored from scratch, no
+  reference art traced". §4.4 and ADR-132 say every piece is "drawn by one hand". ZINE-DIRECTION principle 3
+  says "materials are finite". ADR-107 R1 set a target of about 60 pieces.
+- ✅ The tester's "amateurish" was mixed weights, mixed detail and pieces that do not read as their names
+  ([D-117](design/V2-SPEC-DEFECTS.md#d-117), R27). None of that is about who drew a piece. A piece from outside
+  that passes the same rules reads as part of the set; one of ours that fails them does not.
+- ✅ ADR-104 already permits MIT, ISC, Apache-2.0 and CC0 art, with attribution in the APK and never in the
+  user's PDF, and requires a traceable record for every bundled third-party asset. R32.3 resolves, per item,
+  three of the sources ADR-104 had left unresolved or unnamed: Smithsonian Open Access and the Cleveland Museum
+  of Art mark items CC0, and the Rijksmuseum marks items with the Public Domain Mark.
+- **The owner ruled on 2026-10-15:** no ceiling of about 120 pieces. Keep variants of the same subject, both
+  our own drawings and open-source pieces that match the Zinely world. Import the ones that suit; use the rest
+  as inspiration to redraw in-house. Still exactly four families.
+
+#### Decision
+
+1. **One world.** Every Art piece passes the same nine house gates, whatever its source: weight, gaps, shape
+   classes, coverage, tear, curve quality, holes, recognition and world match. The gates, the §4.4 rules that
+   hold each one, and what A39 still sets are in [SUPPLIES-SPEC §4.5](design/SUPPLIES-SPEC.md#one-world), which
+   is the authority for them.
+2. **Three sources, one record.** A piece is drawn in-house from scratch, redrawn in-house from a public-domain
+   or open-licence reference, or imported under an open licence and changed as far as the gates need. Every
+   piece records which. A redrawn or imported piece also carries ADR-104's record **per item**, read on the item
+   and never assumed from the site. The permitted licences and the record are in §4.5. A reference whose
+   subject carries hate or a recent tragedy is left out, whatever its licence (R32.3).
+3. **Variants of one subject.** A subject (a star, a staple, a postmark) may hold several pieces. A variant is
+   admitted only if its drawing differs in a way rotate, scale, mirror or ink cannot make (§4.3.1's filter
+   stands), and only if it passes the gates, including G8 across its siblings: no two variants may be mistaken
+   for each other. Variants sit next to each other within their family, on the sheet and in search results
+   ([ADR-107](#adr-107) R5), so a maker sees a subject's variants at once and the sheet can be browsed as well
+   as searched. There are no sub-family shelves, no fifth family, and no variant picker.
+4. **Curated, not capped.** No number limits the cabinet. Growth is held by the gates, by curation (does it
+   attach, point, tear or cut; can a verb already make it), by the provenance record, by an id rule (ids are
+   only ever added, never renamed or removed, R32.2) and by the sheet staying browsable. ADR-107 R1's target
+   and §4.3's worked ceiling stay as the record of the first wave, not as limits. Each batch reports each
+   family's sheet length in screens at 360dp, so growth is seen before it is felt. The Kotlin size limit, and
+   the split it forces, are in [ADR-136](#adr-136) *Consequences*.
+5. **"One hand" reads "one world"** wherever the set's rule is stated. Dated notes say so now under §4.4's
+   heading, in ADR-132's header and in ZINE-DIRECTION §16.4; the heading and the title are retitled when this
+   ADR is Accepted. ADR-132's decision (the house style, all 34 redrawn) is unchanged, and it stays Proposed.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Keep "one hand": only pieces we draw from scratch | Throws away matching, correctly licensed work, and every variant has to wait for in-house drawing time. The gates, not the hand, are what make a set read as one |
+| A ceiling of about 120 pieces (the reconciled draft) | Overruled by the owner. It also limits the wrong thing: sameness and poor pieces are the risk, not count, and the gates and the variant rule hold that directly |
+| Import outside sets whole | Fails world match. Phosphor, for one, is a puffy UI style beside A34 (R32.6) |
+| Sub-family shelves or a variants picker | Breaks the frozen four, and adds a level of navigation the sheet does not need while variants sit together |
+
+#### Consequences
+
+- W7 of [ADR-136](#adr-136) runs under this ADR. Each batch is a bench amendment first, showing every new piece
+  at tile size beside its family. Set membership is the owner's under [ADR-107](#adr-107) R1a; each batch is
+  decided under the owner's 2026-10-12 delegation, which the owner may overrule.
+- Owed with the first W7 batch, in the repository beside `SupplyCatalog`: a machine-readable source kind for
+  every id (drawn, redrawn or imported), so a missing record can be told from a piece drawn from scratch; a
+  committed baseline list of ids, and a test that fails if one is renamed or removed; a JVM provenance test that
+  fails if a redrawn or imported piece has no record, a licence outside the permitted list, or a source file
+  whose sha256 does not match; and each piece's entry in Licences & credits. From 1.0, a frozen per-id outline
+  hash, so a shipped id's drawing cannot change (ADR-136 decision 3).
+- An older build draws a new id as nothing ([ADR-136](#adr-136) *Consequences*).
+
+#### Owed before Accepted
+
+- A39 picked and frozen, with the numbers for G1, G3, G4, G5, G6 and G8 written into §4.4.
+- The first batch's provenance records reviewed against the items themselves, not the sites.
+
+#### Review {#adr-137-review}
+
+Two independent Review Agents read ADR-136, this ADR and the documents they amend on 2026-10-18, against the
+files. Both returned **GO WITH FIXES**.
+
+**Law and consistency.** Three Required Fixes, all accepted. ADR-136 claimed the PRD links to the Never block;
+it does not, so the sentence is reworded and the PRD is unchanged. The Never block said the redraw's
+bounding-box test holds it; the test is owed, and the row says so. The gate table and licence list lived here
+and in §4.5 with different text; §4.5 is now the one authority and this ADR links to it. Recommended, all
+accepted: say how Q1 squares with "Preview must *be* export"; group variants in search results rather than
+claim the sheet needs no search (ADR-107 R5); name the Public Domain Mark and the Openclipart tightening in
+*Amends*; §4.5 does amend §4.1's provenance sentence, so it no longer says it replaces nothing; W8's fields
+carry the same open-amendment promise as paper colour; say where A35 lives (PR #142); dated pointers at the
+gate's Q2 and at ZINE-DIRECTION's page-background row; owner rows in OWNER-CHECKLIST; the Never block owns its
+own numbering. Observations taken: §9 is cited by its licence sentence; an in-force line; R1a's delegation for
+W7; half-Letter clarified; the background-removal reason softened; the pen tool's §9 amendment noted; a stray
+mark fixed. One not taken: the font-picker row's "finite and named" stays, because fonts remain a closed set.
+
+**Product and engineering.** Every code claim checked true. Two Required Fixes, both accepted. The website's
+"Page backgrounds" line now overpromises: recorded as owed in ADR-136 *Consequences* and the ROADMAP row, and
+the website is not changed in this docs-only change. ROADMAP's *Exploring* still said a third voice was
+blocked and more Art was under evaluation: dated notes added. Recommended: the Kotlin limit is nearer 135
+pieces than 200, so the first batch owes a size check and a split; Never #19's box is the old outline's ink box,
+and for the 34 ids optical sizing may only shrink; the id rules gain a source kind per id, a committed baseline
+and an outline hash from 1.0; growth is reported per batch as sheet length, and G8 runs across a subject's
+variants. That last one is a **partial** accept: a limit on variants per subject was not taken, because it
+would be the cap the owner overruled. Also accepted: the Never block's shortfall column completed for #1, #7,
+#16 and #20; cascade moved to W2b, "Save backup explains itself" marked [amend], and W2a checks the frozen HTML
+first; W1 resized to L; ROADMAP's W6 line names the W8 field design; decision 5 now says the retitle waits for
+Accepted; OWNER-CHECKLIST rows added; mixed inks recorded as not decided. Observations taken: this section
+replaces the placeholder; W3's release-note line corrected; the W8 field must ride a bump. The ADR-135 link
+resolves once PR #141 merges.

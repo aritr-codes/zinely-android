@@ -2,7 +2,7 @@
 
 > **The single source of truth for phasing.** *Every roadmap change is reflected here.* Scope detail per phase lives in [PRD.md](PRD.md); the "how" in [ARCHITECTURE.md](ARCHITECTURE.md); rationale in [DECISIONS.md](DECISIONS.md). No dates are committed yet — phases are ordered, not scheduled.
 
-- **Current priorities reviewed:** 2026-10-12. Earlier phase plans below are historical context, not a list of
+- **Current priorities reviewed:** 2026-10-18 (order of work from [ADR-136](DECISIONS.md#adr-136)). Earlier phase plans below are historical context, not a list of
   promised or still-missing features. Use this current section for next-work decisions.
 
 <a id="current-priorities"></a>
@@ -29,6 +29,28 @@ features shipped **not accepted**. No next tester build is scheduled by date yet
 is planned as a *wave-1* release on the current document format, before any schema change, carrying the 1.x
 plan's backup-honesty, accessibility and tap-through steps ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)).
 Those steps shipped in beta.6 on 2026-10-06.
+
+<a id="order-of-work"></a>
+### Order of work, from 2026-10-18
+
+Decided in [ADR-136](DECISIONS.md#adr-136) under the owner's delegation, after the owner's rulings of
+2026-10-15. The items in each wave, their sizes and the cut list are in the ADR; this is the order only. Each
+wave still needs its own HTML amendment or ADR where the rules ask for one, and none has a date.
+
+1. **W1 — Never lose work, never get stuck.** Fixes, each with a failing test first.
+2. **W2a — Small things, no design change; W2b — small things that need an HTML amendment first.**
+3. **W3 — Art: better before more.** The A34 polish as A39, then the Compose redraw ([ADR-132](DECISIONS.md#adr-132)).
+4. **W4 — Photo descriptions**, saved format v4, alone.
+5. **W5 — Print guidance:** designed now, shipped after the print study.
+6. **W6 — Paper sizes** (US Legal, A5), saved format v5, and **paper colour shown on screen**, never printed.
+   The fields for W8 are designed here, before v5 freezes.
+7. **W7 — More Art inside the four families**, from any source that passes the house gates, with variants of
+   one subject ([ADR-137](DECISIONS.md#adr-137), Proposed).
+8. **W8 — Your own artwork.**
+9. **W9 — A third voice, Hand** (Shantell Sans).
+10. **Later:** Recently deleted first; then a hidden signature in the PDF's metadata, the pen tool, shaped photo
+    cutouts, a 16-page booklet, device-to-device transfer, tablets and keyboard shortcuts, an RTL check and
+    back-page credits.
 
 <a id="where-the-list-stands"></a>
 ### Where the list stands, 2026-10-12 (updated 2026-10-14)
@@ -98,17 +120,22 @@ its HTML specification frozen and an ADR before any Compose work.
 
 - **Art quality pass** (owner, 2026-10-12, after tester feedback): the Art pieces are to be redrawn to one
   house style so they look made by one hand. Design frozen (`v21-bench.html` A34,
-  [ADR-132](DECISIONS.md#adr-132) Proposed); Compose redraw and Art golden re-record not started.
+  [ADR-132](DECISIONS.md#adr-132) Proposed); Compose redraw and Art golden re-record not started. *2026-10-18:
+  this is W3; A34 is polished as A39 first, and the set's rule now reads "one world"
+  ([ADR-137](DECISIONS.md#adr-137), Proposed).*
 - **Print guidance:** help at the print step so a sheet comes out at the right size (plan step 5). Still gated
   on the print study; one successful print by a user, reported by the owner, is recorded in the plan as
-  evidence, not as the study.
-- **Photo descriptions (alt text):** plan step 7; needs the v4 format step and a Read-semantics design.
+  evidence, not as the study. *W5: design now.*
+- **Photo descriptions (alt text):** plan step 7; needs the v4 format step and a Read-semantics design. *W4,
+  before any v5 work.*
 - **Page backgrounds:** a background for a page, behind its photos and words (owner request 2026-10-06). The
   document and the renderer already carry a per-page `background` (none, or a solid colour); nothing in the
-  editor sets it, so it is `none` in every zine made today. No picker or design exists yet.
+  editor sets it, so it is `none` in every zine made today. No picker or design exists yet. *2026-10-18
+  ([ADR-136](DECISIONS.md#adr-136) decision 5): answered by paper colour in W6, the paper the maker loads,
+  shown on screen. A printed fill stays out, because a home printer prints it as a panel inside a white margin.*
 - **More paper sizes:** today a zine prints on A4 or US Letter only (owner request 2026-10-06).
   [ADR-133](DECISIONS.md#adr-133) chose US Legal and A5 and made the imposition engine take any sheet; the
-  sizes need their own schema bump after v4 and a frozen picker (A35) before anyone can choose them.
+  sizes need their own schema bump after v4 and a frozen picker (A35) before anyone can choose them. *W6.*
 - **Google Play publication**, after owner account verification, mandatory testing and store review. Account
   verification remains blocked; the signed GitHub beta and public policy already exist. This is a distribution
   task, not a reason to rebuild or overwrite the current beta. [Release authority](RELEASING.md#3-beta-distribution-side-load).
@@ -120,7 +147,8 @@ its HTML specification frozen and an ADR before any Compose work.
    if evidence identifies an improvement. The website guide is shipped; native replay is not.
 2. **Creative tools:** more Art, photo transparency, shaped cutouts and crop improvements stay under
    evaluation (reopened 2026-09-12; see the assessment below). Fonts and frames left this list for *Planned*
-   on 2026-10-06, following the owner's 2026-09-26 rulings. No delivery date is committed.
+   on 2026-10-06, following the owner's 2026-09-26 rulings. No delivery date is committed. *2026-10-18: more
+   Art is W7 and shaped cutouts are Later ([order of work](#order-of-work)); photo transparency rides W8.*
 3. **Wider customisation** (owner's ideas, 2026-10-12; evaluated the same day, nothing decided). Each is listed
    with what stands in its way, because several reverse rulings already on record:
    - *Colours of your own* (a hex picker): [ZINE-DIRECTION](design/ZINE-DIRECTION.md) §8 says "Free colour
@@ -130,11 +158,14 @@ its HTML specification frozen and an ADR before any Compose work.
      only; nothing saves colours or styles. No design.
    - *Your own artwork:* every stored image is a JPEG, so transparency is lost and a cut-out shows a white box
      ([ADR-023](DECISIONS.md#adr-023)). Needs an alpha-preserving image format, a backup-format change and its
-     own ADR first.
+     own ADR first. *2026-10-18: W8, trying a cheaper path first ([ADR-136](DECISIONS.md#adr-136)).*
    - *Photo fixes* (black and white, levels, background removal): [PRD §7.2](PRD.md) puts adjustments beyond crop
      out of MVP scope; Copier already gives a 1-bit look. Background removal is rated large in the assessment
-     below and no on-device model has been tried.
+     below and no on-device model has been tried. *2026-10-18: background removal is cut (it needs a model
+     download and is an AI feature; [ADR-136](DECISIONS.md#adr-136)).*
    - *More fonts, and generated variations:* a third voice is blocked on glyph coverage and an owner ruling.
+     *2026-10-18: the owner's ruling is given; Hand (Shantell Sans) is W9, after its own coverage check
+     ([ADR-136](DECISIONS.md#adr-136)).*
      Randomised variation was refused in [ADR-107](DECISIONS.md#adr-107) and stays refused unless the owner
      reopens it.
    - *HTML, CSS and JavaScript for drawing Art:* already how pieces are specified (the bench file, checked
@@ -437,6 +468,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-18 | **Order of work set from the 2026-10-15 direction.** *Current priorities* gains an order of work, W1 to W9 then Later: fixes first, then small things, then the Art redraw, photo descriptions (v4), print guidance, paper sizes and paper colour (v5), more Art, your own artwork and a Hand voice. The cut list and Never #19's rewording are in ADR-136. The Art set's rule becomes "one world", curated rather than capped (ADR-137, Proposed). Page backgrounds are answered by paper colour shown on screen, so the website's "Page backgrounds" line now promises more than is planned and is owed a correction. Nothing is built; no public copy changed in this change. | [ADR-136](DECISIONS.md#adr-136) · [ADR-137](DECISIONS.md#adr-137) |
 | 2026-10-14 | **A page that keeps its size; three beta.7 problems fixed; Art redraw designed.** The Arrange tray replaces the move-by-buttons bar, decided under the owner's delegation (it reverses OD-11). #102, #103 and #106 are fixed on `main`. The Art redraw is frozen as a design (A34, ADR-132 Proposed) and not built. All of it is on `main`, none of it in a download; no public copy changed. | [ADR-129](DECISIONS.md#adr-129) · [ADR-130](DECISIONS.md#adr-130) · [ADR-132](DECISIONS.md#adr-132) · [D-115](design/V2-SPEC-DEFECTS.md#d-115) · [D-116](design/V2-SPEC-DEFECTS.md#d-116) |
 | 2026-10-14 | **Paper sizes decided; engine ready.** ADR-133 answers ADR-016's paper question: a closed, named set, with the engine open over any sheet. US Legal and A5 come next, in their own schema bump after v4; half-Letter, A3 and Tabloid are not planned. Nothing a person can choose has changed. | [ADR-133](DECISIONS.md#adr-133) · [ADR-016](DECISIONS.md#adr-016) |
 | 2026-10-13 | **Small-phone and large-text audit closed; one design item added to Exploring.** The D-113 list is fixed and was checked on a 360 × 640dp emulator. One item is not fixed: the page shrinks each time something is selected. A direction (a tray opened from the verb bar) is proposed; it needs the owner and an HTML amendment before anything is built. Nothing here is in a published download. | [D-113](design/V2-SPEC-DEFECTS.md#d-113) · [ADR-127](DECISIONS.md#adr-127) · [ADR-128](DECISIONS.md#adr-128) · [ADR-129](DECISIONS.md#adr-129) |

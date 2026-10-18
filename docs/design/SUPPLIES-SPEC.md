@@ -530,6 +530,13 @@ self-intersection — are **unassertable by design**: winding-independence is a 
 relationship to a fill rule, not of its coordinates. That gap *is* the argument for §4.1's "reviewed like
 code, not a data file": the two rules a machine cannot check are exactly the two a reviewer must.
 
+⚠ **AMENDED 2026-10-18 by [ADR-137](../DECISIONS.md#adr-137) (Proposed) — see [§4.5](#one-world).** "Not imported
+from anywhere" and the attestation's "authored from scratch, no reference art traced" now admit two more
+sources: a piece redrawn in-house from a public-domain or open-licence reference, and an imported open-licence
+piece. Both are converted into reviewed Kotlin source in `SupplyCatalog`, so the rest of this section is
+unchanged: unit square, fill-only, even-odd, and Kotlin source rather than a data file. The attestation now
+names one of three sources (§4.5).
+
 ### 4.2 Why torn edges are permitted here and banned in the chrome
 
 Required citation, per §0 O-B. [`V2-CONSTITUTION.md:282`](V2-CONSTITUTION.md) bans *"literal coffee stains,
@@ -560,7 +567,8 @@ The worked list produced 51; the 2026-08-25 owner amendment deliberately stages 
 candidates first. Fifteen near-duplicate fasteners are as legible a repetition as any shuffle.
 
 **The worked ceiling remains ~51; the accepted first expansion stops at 32.** (Two frames were added after it,
-on 2026-10-12, for 34; see the note under the table.)
+on 2026-10-12, for 34; see the note under the table.) *2026-10-18: the ceiling is a record, not a limit, under
+[ADR-137](../DECISIONS.md#adr-137) (Proposed, [§4.5](#one-world)).*
 
 | Family | Ships now | Accepted first wave | Backlog | Worked total | Ceiling reached? |
 |---|---:|---:|---:|---:|---|
@@ -736,6 +744,61 @@ Imitating a machine by hand would be the costume §4.2 refuses.
 
 **What these rules do not change:** §4.1 (unit square, fill-only, even-odd, no winding-dependent overlap),
 the no-opacity and no-stroke rows of §2, the landing sizes of §5.2, and every id and name.
+
+⚠ **AMENDED 2026-10-18 by [ADR-137](../DECISIONS.md#adr-137) (Proposed) — see [§4.5](#one-world).** "Drawn by one
+hand" reads "**one world**": these rules are the house gates every piece passes, whatever its source. The rules
+H1–H9 above are not rewritten; §4.5 maps them to gates and names the three gates they do not yet cover.
+
+### 4.5 One world — amendment, 2026-10-18 {#one-world}
+
+*Added with [ADR-137](../DECISIONS.md#adr-137), **Proposed**: the owner ruled the direction on 2026-10-15, and the
+A39 candidate sheet that sets the open numbers is not picked yet. Evidence:
+[RESEARCH R32](../RESEARCH.md#r32-what-makers-hate-art-at-scale-paper-colour-and-a-hidden-signature-2026-10-15).
+It amends §4.1's provenance sentence ("not imported from anywhere") and its attestation wording, and reads
+§4.3's ceiling as a record. It replaces no other rule of §4.1, §4.3 or §4.4. **In force now:** the owner's
+2026-10-15 direction. **Pending A39:** the open numbers below, and so any new piece.*
+
+**1. Every piece passes the same gates, whatever its source.**
+
+| Gate | Held by | Open until A39 |
+|---|---|---|
+| **G1 Weight** | H1 | Whether printer's marks get one fine weight |
+| **G2 Gaps** | H2 | — |
+| **G3 Shape classes** | H4 | Optical size per shape class (square, round, triangle, line) |
+| **G4 Coverage** | *new* | The band of ink inside the box (the critique proposes 25–65%, R32.6) |
+| **G5 Tear** | H6, H7 | The rewritten tear walk |
+| **G6 Curve quality** | *new* | No kinks, smooth joins, no curve drawn as a polyline |
+| **G7 Holes** | H9 and [ADR-124](../DECISIONS.md#adr-124) | — |
+| **G8 Recognition** | *new* | A first-time reader names it unlabelled; no confusion inside a look-alike group, or between variants of one subject, at tile size. An owner and first-time-user check |
+| **G9 World match** | H3, H5, H8 and §4.1 | — (flat, one ink, one of the five edge voices, at most three ideas; a small press's mark, not a UI icon or an emoji) |
+
+A39 writes its numbers into §4.4 by rule number when it is frozen. Until then the open cells bind as stated
+in words, and nothing new ships.
+
+**2. Three sources, one record.** The §4.1 attestation names one:
+
+- **(a) drawn in-house** from scratch;
+- **(b) redrawn in-house from a reference** that is public domain or carries an open licence;
+- **(c) imported**, an open-licence piece changed as far as the gates need.
+
+For (b) and (c) the piece also carries [ADR-104](../DECISIONS.md#adr-104)'s record (source · licence ·
+attribution · modification · redistribution) **per item**, with the item's URL or id and the date it was
+checked. The licence is read on the item, never assumed from the site. Only MIT, ISC, Apache-2.0, CC0 and the
+Public Domain Mark pass; nothing whose obligation can follow the user's zine, and nothing of unknown origin.
+Credit goes in Licences & credits, never in the PDF.
+
+**3. Variants of one subject.** A subject may hold several pieces. A variant must differ in drawing, in a way
+rotate, scale, mirror or ink cannot make (§4.3.1's filter stands), and pass the gates, G8 included across its
+siblings. Variants sit next to each other within their family, on the sheet and in search results (§9), so a
+maker sees a subject's variants at once. Each batch reports each family's sheet length in screens at 360dp.
+
+**4. Curated, not capped.** Still exactly four families: no fifth family and no sub-family shelves (§4, §9). No
+number limits the cabinet. §4.3's worked ceiling of about 51 stays as the record of the first wave, not as a
+limit. Ids are only ever added, never renamed or removed, and a test holds that. §9's "no emoji, no imported
+SVG" bullet stands on its own last sentence: the ban is on the licence attached to the artifact, never on the
+shape, and an imported piece arrives with a permitted licence, as reviewed Kotlin outline, never as an SVG
+file. §2's "authored, not imported" stays true of the key: an imported piece still gets a catalogue
+`supplyId`, never a content hash.
 
 ---
 
