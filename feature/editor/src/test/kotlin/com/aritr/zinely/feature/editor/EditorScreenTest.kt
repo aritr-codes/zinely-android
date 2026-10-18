@@ -13,6 +13,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -1215,10 +1216,13 @@ class EditorScreenTest {
 
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ACROSS_FOLD}").performClick()
         composeRule.onNodeWithTag(ImageSpreadConfirmTestTag).performClick()
-        // The production path reads image bounds on Dispatchers.IO. Compose idleness does not include
-        // that dispatcher, so wait on the document result instead of racing the sheet dismissal.
+        // The confirm reads image bounds on Dispatchers.IO, and this rule composes on an unconfined test
+        // dispatcher, so the rest of the confirm runs ON THAT IO THREAD: it writes the document, then closes
+        // the sheet. Waiting on the document alone asserted in that gap (#132). Wait for both, the close last.
+        // (On a device the confirm resumes on the main thread, where both writes land together.)
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            store.uiState.value.document.pages[7].elements.isNotEmpty()
+            store.uiState.value.document.pages[7].elements.isNotEmpty() &&
+                composeRule.onAllNodesWithTag(ImageSpreadSheetTestTag).fetchSemanticsNodes().isEmpty()
         }
         composeRule.waitForIdle()
 
