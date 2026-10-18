@@ -7861,3 +7861,95 @@ Two independent Review Agents, reading only, 2026-10-14.
 | PRD §7, ROADMAP and ADR-016's status will be stale | Recommended | **Partly accepted.** Nothing ships, so PRD scope is unchanged; the ROADMAP lines and ADR-016's status go to the main session in the PR body |
 | The index cell should say what is built | Recommended | **Accepted.** "Accepted (engine and closed set); sizes decided, not built" |
 | Review placeholders unfilled | Recommended | **Accepted.** Filled |
+
+---
+
+### D-119 — at the largest text the first-run hint's rounded ends cut off its first and last words {#d-119}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../EditorSaveFailure.kt` (`NoticeShape`, `NoticeMaxRadius`) · `EditorMoveResizeHint.kt` · `EditorCoverageNotice.kt` · `EditorMoveResizeHintLargeTextTest.kt` · frozen `docs/design/mockups/v21-bench.html` `.snack` (not edited) |
+| **Found** | 2026-10-14, the emulator pass in [D-114](#d-114): [issue #134](https://github.com/aritr-codes/zinely-android/issues/134) |
+| **Severity** | **Visible UX defect** at an accessibility setting: words of a teaching line cannot be read |
+| **Status** | ✓ **Fixed 2026-10-15** in Compose, as a legibility bug fix inside the freeze (no amendment). The owner's real small phone is still owed |
+
+**The defect.** On a 360 × 640dp screen at text size 2.0 the move/resize hint wraps to five lines. Its
+shape draws `.snack{border-radius:var(--br-pill)}` as `RoundedCornerShape(percent = 50)`: each end is half
+the height, so a 208dp-tall hint has 104dp ends. The first and last lines start 16dp × 12dp in from the
+corner (the padding), well inside the curve, and the clip took their first letters: "rag to move." and
+"uttons." were what showed.
+
+**The cause** is the shape, not the hint. All three canvas notices share `NoticeShape` (the hint, the
+save failure and the coverage notice), all three wrap, and the same geometry would cut any of them once it
+runs past three lines. The frozen `.snack` draws the same stadium in a browser (a pill radius is clamped to
+half the height), but it has no `overflow:hidden`, so there the words would cross its curved border rather
+than be cut; the cut is Compose's `.clip(NoticeShape)`. The prototype never wraps it, so the freeze does not
+say what a tall one should look like. Issue #134 asked for an amendment; this fix needs none, because it changes nothing the
+freeze draws.
+
+**The fix.** `NoticeShape` keeps ends of half the height up to `NoticeMaxRadius` (40dp) and stops there, so
+a tall notice becomes a rounded card instead of a stadium. The range is measured; 40dp is a round number
+inside it:
+
+| Bound | Value | Why |
+|---|---|---|
+| At least | 39.6dp | half the tallest notice golden (three lines: the photo hint and the save failure, 79.2dp; goldens are 430dp wide at text size 1), so every golden is unchanged |
+| At most | 43.9dp | the radius at which the curve, inside its 1.5dp border, meets the first line's corner (16dp, 12dp in): (r−16)² + (r−12)² ≤ (r−1.5)² |
+
+What does change: any notice taller than 80dp takes the cap, whatever made it tall. That includes a
+notice at text size 1 on a narrower screen (the save failure has no width cap, and its longer
+out-of-space line has no golden), and notices 80–88dp tall that the old shape did not yet clip. None of
+these is drawn by the freeze. The margin over the goldens is 0.4dp: a font-metric, padding or copy
+change that pushes the photo hint or the save failure past 80dp will move their goldens from a stadium
+to a rounded card, and the exact golden job will flag it. The upper bound depends on the 16dp and 12dp
+padding; shrinking either can make 40dp unsafe (the KDoc on `NoticeMaxRadius` says so).
+
+Fixed in the shared shape rather than in the hint alone: the three notices are one surface on purpose
+(the block comment above `NoticeGap` says why), and a hint-only shape would be the drift it warns about.
+
+**Evidence.**
+
+- `EditorMoveResizeHintLargeTextTest` (360 × 640dp, xhdpi, font scale 2): for every laid-out line, all
+  four corners of the line box must lie inside the shape's border, measured in the hint's own unrotated
+  frame. It requires at least four lines, so it cannot pass on a short hint. **Red before the fix**, both
+  cases at the first line's corner (32, 24)px: generic hint 640 × 416px with a 208px radius, photo hint
+  640 × 493px with a 246.5px radius. Green after. A third case, added after review, fences the save
+  failure (out-of-space line, two buttons) the same way, on a 360dp-wide screen made tall enough to hold
+  it (see the finding below). It is red on the old shape too (a 656px-wide pill, 328px radius, same
+  corner) and green on the fix. The coverage notice shares the same 16 × 12dp inset and is covered by
+  the geometry, not a test.
+- **A separate defect, found by that case and not fixed here.** At text size 2 on a 360dp screen the save
+  failure's two buttons ("Try now", "Got it") squeeze its line into a narrow column that runs to 16 lines,
+  taller than the 608dp a 640dp screen leaves it: in the test's host its last line falls below the
+  notice, where the clip cuts it. That is the notice's layout (buttons beside the text, as `.snack`
+  draws them), not its shape; stacking the buttons under the text is a design change and needs a
+  `v21-bench.html` amendment first. It goes to the main session as a follow-up. Not seen on a device:
+  forcing a save failure on the emulator was outside this pass.
+- The eight notice goldens (`editor_move_resize_hint_*`, `editor_photo_move_resize_hint_*`,
+  `editor_save_failure_*`, `editor_coverage_notice_*`) measure 59–79dp tall, all under the 80dp at which
+  the cap starts to act.
+
+**Device verification, 2026-10-15.** Emulator AVD `Medium_Phone_API_36.1`, Android 16, set to 360 × 640dp
+(`wm size 1080x1920`, `wm density 480`). Debug build of `2291b37`, installed fresh. The hint was reached as a
+first-timer would reach it: Make a zine, A4, Add, Art, Photo corner. The photo hint came from Add, Photo,
+using a test image pushed under a distinctive name; it was the only image on the device. Screenshots and
+`uiautomator` dumps were read for each step.
+
+| Text size | Hint | What the screen showed |
+|---|---|---|
+| 2.0 | generic | Five lines in a rounded card with the ends capped. "Drag to move." and "buttons." are whole and well clear of the corners. "Got it" is a clickable 88 × 49dp node, centred on the right |
+| 2.0 | photo | Six lines, ending "Reframe crops inside.". The first and last words are whole |
+| 1.3 | generic | Three lines in a card about 97dp tall, so the cap applies. "Drag" and "use buttons." are whole |
+| 1.0 | generic | Two lines in a full stadium about 72dp tall, unchanged from the frozen look |
+
+- **Pass 1 (built right): PASS.** No word is clipped at any of the three text sizes. The platform tree
+  carries the whole sentence as one `TextView`. "Got it" dismisses the hint.
+- **Pass 2 (would a first-timer understand it): PASS on legibility, with one finding outside this fix.** At
+  2.0 the hint reads easily, and the capped ends look like a note card from the same family as the pill.
+  Nothing suggests a fault. What felt wrong before I knew the reason was the request to "drag" a piece I
+  could not see. On this screen the 210–245dp hint covers almost the whole page, including the piece just
+  placed and its handles, so the hint has to be dismissed before its advice can be followed. That is
+  placement, not shape: the hint sits in the canvas's top region (`EditorScreen.kt`, which is outside this
+  fix), and moving it is a design change that needs an HTML amendment first. It goes to the main session
+  as a follow-up. A smaller pre-existing observation: at 2.0 the verb bar cuts its last label ("Duplica…",
+  "Across fol…").
