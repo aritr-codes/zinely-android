@@ -190,6 +190,38 @@ class RoomProjectRepositoryRestoredNoteTest {
         assertTrue(repo.shelf().none { it.id == deleted })
     }
 
+    /** Makes the marker's `.bak` impossible to delete: a directory that is not empty. */
+    private fun blockMarkerBackup(id: String) {
+        val bak = root.resolve("projects/$id/restored-note.json.bak")
+        Files.deleteIfExists(bak)
+        Files.createDirectories(bak.resolve("stuck"))
+    }
+
+    @Test
+    fun `a Got it that cannot finish clearing reports failure and keeps the note for next start`() = runTest {
+        val id = renamedThenDamaged()
+        repo().shelf()
+        blockMarkerBackup(id)
+
+        assertTrue(repo().dismissRestoredDetails(listOf(id)) is DataResult.Failure)
+
+        // The main marker went second, so it is still there: the note is not silently lost.
+        assertTrue(Files.exists(noteFile(id)))
+        assertEquals("Letters to Gran", repo().shelf().single().restored?.previousTitle)
+    }
+
+    @Test
+    fun `a rename that committed reports success even when its marker cannot be cleared`() = runTest {
+        val id = renamedThenDamaged()
+        repo().shelf()
+        blockMarkerBackup(id)
+
+        assertTrue(repo().renameProject(id, "Letters to Gran") is DataResult.Success)
+
+        assertEquals("Letters to Gran", repo().getProject(id).getOrNull()!!.title)
+        assertTrue("left on disk, told again", Files.exists(noteFile(id)))
+    }
+
     @Test
     fun `a duplicate does not inherit its original's waiting note`() = runTest {
         val id = renamedThenDamaged()

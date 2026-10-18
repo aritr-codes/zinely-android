@@ -1254,20 +1254,29 @@ internal class RoomProjectRepository(
         return RestoredDetails(previous)
     }
 
-    /** [id] stops waiting to be told. Throws when its marker cannot be removed; it is then told again next start. */
+    /**
+     * [id] stops waiting to be told. Throws when its marker cannot be removed; it is then told again next start.
+     * The `.bak` goes first: [waitingNoteOf] checks only the main marker, so a throw on either delete leaves the
+     * main marker in place and the failure is never a note silently lost.
+     */
     private fun clearWaitingNote(id: String) {
         waitingNotes.remove(id)
         val marker = paths.restoredNoteFile(id) ?: return
-        Files.deleteIfExists(marker)
         Files.deleteIfExists(marker.resolveSibling(marker.fileName.toString() + ".bak"))
+        Files.deleteIfExists(marker)
     }
 
-    /** [clearWaitingNote] after a committed rename or move: a marker left behind is reported, not hidden. */
-    private fun clearWaitingNoteResult(id: String): DataResult<Unit> = try {
-        clearWaitingNote(id)
-        DataResult.Success(Unit)
-    } catch (e: IOException) {
-        failure(DataError.Io("failed to clear the restored-details note for '$id'", e))
+    /**
+     * [clearWaitingNote] after a committed rename or move. The change itself is done, so it is reported as done:
+     * a marker that cannot be removed stays on disk and the note is told again next start, which is harmless.
+     */
+    private fun clearWaitingNoteResult(id: String): DataResult<Unit> {
+        try {
+            clearWaitingNote(id)
+        } catch (_: IOException) {
+            // ponytail: the leftover marker is the record; next start tells the note again.
+        }
+        return DataResult.Success(Unit)
     }
 
     override suspend fun dismissRestoredDetails(ids: Collection<String>): DataResult<Unit> = withContext(io) {
@@ -1406,8 +1415,8 @@ internal class RoomProjectRepository(
                 // that does not. Missing or unreadable metadata is My Shelf. Under the lock, because this read
                 // can repair the file from its backup copy and must not race a folder operation's write.
                 // Read together, in this order and under one lock: a repair this very read finds is recorded by
-        // readMetaOrNull, so the same listing that shows the repaired title also carries its note.
-        val (meta, restored) = mutex.withLock { readMetaOrNull(id) to waitingNoteOf(id) }
+                // readMetaOrNull, so the same listing that shows the repaired title also carries its note.
+                val (meta, restored) = mutex.withLock { readMetaOrNull(id) to waitingNoteOf(id) }
                 val folder = FolderNames.clean(meta?.folder)
                 // ADR-134 decision 4: a repair this read found has re-synced the row, so the tile is read from
                 // the row as it is now, and the tile and the note name the zine the same way.
