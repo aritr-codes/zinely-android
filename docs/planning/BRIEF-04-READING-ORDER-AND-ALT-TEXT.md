@@ -12,7 +12,8 @@ Base: `origin/main` @ `0aa7a7d` (code citations made at `5f7707a`; `src/main` un
 - **A3:** READY AFTER PR #70 is settled (merged or closed; it amends the same `v21-bench.html` and `EditorScreen.kt`) **and** the owner-approved `v21-bench.html` undo-snack amendment (gate 3; it replaces frozen copy). It is its own session, after A1.
 - **A2:** READY AFTER a wording spec and a TalkBack listen (gate 4). A2 has not been audited.
 - **B:** BLOCKED BY the wave-1 release (approved by the owner on 2026-09-26 as a v3 release before v4, Q8), the F1 v4
-  bump, a Read-semantics design and the Describe amendment (the F3 fixtures are done, step 0) (gates 5–8).
+  bump and the Describe amendment (the F3 fixtures are done, step 0) (gates 5, 6 and 8). Read semantics (gate 7)
+  is designed: `v21-proof.html` A38, [ADR-135](../DECISIONS.md#adr-135) Proposed, 2026-10-15.
 
 ## Gates before an implementation session may start
 
@@ -49,6 +50,8 @@ amendment (gates 3, 7, 8).
    fixtures are a writer-produced v2 archive plus v1–v3 `document.json`, all fictional and frozen.
 7. **B needs Read semantics designed first.** Design work: Read speaks nothing from the page today ([Problem 4](#problem)).
    The design comes with its own HTML amendment.
+   ✅ **Designed 2026-10-15:** `v21-proof.html` A38 (frozen) and [ADR-135](../DECISIONS.md#adr-135) (Proposed until
+   built). It settles B's two open questions below: `Photo: <description>`, and undescribed Art is decoration in Read.
 8. **B needs a Describe verb amendment** to `v21-bench.html` `toolsFor()` (`:694`). The owner approves the amended HTML.
 
 ## Problem
@@ -296,6 +299,7 @@ row tops interleaves them. A2's relative phrases and the maker's own arrangement
 - Open, to be decided by a listen:
   - "Photo: <description>" or the description alone;
   - whether Art can be marked decorative (skipped in Read, still reachable on the Bench).
+  - → **Decided** in [ADR-135](../DECISIONS.md#adr-135): `Photo: <description>`; Art with no description is skipped in Read, with no flag. The owner's TalkBack listen is still owed.
 
 ## Current architecture touchpoints
 
@@ -487,6 +491,7 @@ Stop and ask if any of the following happens:
 
 | Date | Change |
 |---|---|
+| 2026-10-15 | Gate 7 designed: `v21-proof.html` A38 and [ADR-135](../DECISIONS.md#adr-135) (Proposed) settle what Read says, including B's two open questions; readiness line updated. B still waits for v4 and the Describe amendment. Design only. Base `3577e31`. |
 | 2026-09-30 | Owner rulings on PR #88 frozen into A26 (D1 1a, D2 2a, D3 3a, D4 4c at 2% / 2°, Across fold "Photo back on one page"); A3's open copy decisions marked ruled. Design only; Step 3 implementation not started. Base `a6eb16b`. |
 | 2026-09-30 | A3's gate-3 amendment drafted as `v21-bench.html` A26 (proposed, not frozen) with an owner review page; the frozen post-undo inventory corrected (three lines, not deletes only). Readiness unchanged. Base `a6eb16b`. |
 | 2026-09-26 | Owner rulings recorded (decision gate): no D4 scope change; A3 now also waits for PR #70 to be settled; B's wave-1 release approved as a v3 release before v4; ADR numbering note widened (steps 1b and 4 add ADRs too). Base `0aa7a7d`. |

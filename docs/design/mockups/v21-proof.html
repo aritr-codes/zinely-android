@@ -1207,3 +1207,186 @@ if (prototypeParams.get('gallery') === 'fold') {
      rendering remain unchanged. This does not remove fold instruction motion
      or chrome transitions: the feedback names the page animation specifically.
 =========================================================================== -->
+
+
+<!-- ===========================================================================
+     A38 (ADR-135, D-122, RESEARCH R31) — 2026-10-15 — DESIGN FROZEN under the
+     owner's delegation of 2026-10-12. ADR-135 stays Proposed until it is built.
+
+     What Read says aloud. Appended after the amendment log so no line above moves.
+     Nothing drawn changes: no badge, no marker, no new words on screen. Every rule
+     here is about the platform accessibility tree, which this file cannot show, so
+     the section below writes it out as what TalkBack speaks.
+
+     1. Each page gets STOPS, one per thing that carries meaning. A stop has no role,
+        no click and no actions: Read is for reading. The leaf itself stays silent.
+          Text with words ......... the words, exactly as typed. No "Text:" prefix.
+          Text with no words ...... no stop.
+          Photo, described ........ "Photo: " + the description.
+          Photo, not described .... "Photo".
+          A description of only spaces counts as none.
+          Art, described .......... the piece's name + ": " + the description
+                                    ("Pointing hand: this way to the flower end").
+          Art, not described ...... no stop. It is decoration (WCAG 1.1.1).
+          Anything wholly off the page .. no stop (Read does not draw it), and it is
+                                    left out before the two empty-page rows below.
+          A page with no stops and no Art drawn on it ... one stop: "Blank page".
+          A page with no stops but Art drawn on it ...... one stop: "Only Art on this page".
+        A double tap on a stop does nothing. "No click" alone does not ensure it: with
+        no click action TalkBack taps the stop's centre (FocusActor.clickNode, R31.2),
+        and the outer fifth of the leaf on each side lies inside a turn edge. So while
+        touch exploration is on, a turn edge ignores taps inside the leaf's bounds and
+        the stops sit above the edges for touch; the edges' own click actions still
+        turn the page, and with TalkBack off tap-to-turn is unchanged.
+     2. Stops come in the Bench's reading order (ZINELY-DESIGN-SYSTEM §4.5, ADR-119):
+        a piece taller than six tenths of the page first, then rows top to bottom,
+        left to right in a row. Declared in that order; traversalIndex restates it.
+     3. On the screen, the visual row, as built: top bar (Back, the page ticket, How
+        to fold) -> Previous page -> the page's stops -> Next page -> the Print
+        details band. The stops take the leaf's place between the two edges.
+        OPEN (ADR-135 decision 4): where a swipe lands after a double tap on Next
+        page is the TalkBack listen's first question. If it is heard as a fault, the
+        named remedy is a §4.5 amendment putting Next page before the page.
+     4. One announcement per turn: the page ticket says "Page 3 of 8" and nothing
+        from the page. `#book aria-live="polite"` above is SUPERSEDED: it would read
+        the whole leaf on every turn (D-122). The band's own live lines are untouched.
+     5. Where a description is written: on the Bench, in a Describe field opened from
+        a Describe verb on a selected photo's or Art piece's bar. That surface is drawn
+        by its own v21-bench.html amendment (Brief 04 gate 8), not here. Its helper
+        line is owned here, and that amendment quotes it verbatim:
+          "Zinely reads this aloud in Read. It isn’t printed or put in the PDF."
+     6. The printed sheet and the PDF carry no description. PdfDocument has no tag or
+        alt-text API, and the PDF is the imposed sheet. Read's band and print drawer
+        say nothing about descriptions; no public claim (ADR-118).
+=========================================================================== -->
+<style>
+.a38{width:100%;max-width:760px;display:flex;flex-direction:column;gap:var(--gap-md);margin-top:var(--gap-2xl)}
+.a38 h3{font-family:var(--voice);font-size:1.15rem;margin:var(--gap-md) 0 0;color:var(--ink)}
+.a38 table{border-collapse:collapse;width:100%;font-size:.9rem}
+.a38 th,.a38 td{text-align:left;vertical-align:top;padding:var(--gap-sm);border-bottom:1px solid var(--hair)}
+.a38 th{color:var(--ink-soft);font-weight:600}
+.a38 .said{font-family:var(--sans);font-weight:600;color:var(--ink)}
+.a38 .none{color:var(--ink-soft);font-style:italic;font-weight:400}
+.a38 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--gap-md)}
+/* A card is a page of the zine: paper, lit in both themes, so it re-pins the light inks (as .leaf does). */
+.a38 .card{--ink:#27270F;--ink-soft:#6A452F;background:var(--paper);color:var(--ink);border:1.5px solid var(--ink);
+  border-radius:var(--br-sm);padding:var(--gap-md)}
+.a38 .card h4{margin:0 0 var(--gap-xs);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.a38 .card ol{margin:0;padding-left:1.4em;font-size:.88rem}
+.a38 .card li{margin:0 0 var(--gap-xs);white-space:pre-line}
+.a38 .card p.none{margin:0 0 var(--gap-xs)}
+.a38 .walk{margin:0;padding-left:1.4em}
+.a38 .walk .role{color:var(--ink-soft);font-weight:400}
+.a38 .note{border-left:3px solid var(--leaf-text);padding:var(--gap-xs) var(--gap-md);margin:0}
+:root[data-gallery="true"] .a38{display:none}
+</style>
+
+<section class="a38" id="a38" aria-labelledby="a38h">
+  <p class="cap lead" id="a38h"><span class="badge">frozen · A38 · ADR-135</span><br>
+  A38 — what Read says aloud</p>
+  <p class="cap">A screen reader in Read hears the zine’s words, in the Bench’s reading order, and where each
+  photo is. A photo its maker described says those words; one not described says “Photo”. <b>Nothing drawn
+  changes.</b> The printed sheet and the PDF carry the pictures, not the words about them.</p>
+
+  <h3>What each thing on the page says</h3>
+  <table>
+    <thead><tr><th scope="col">On the page</th><th scope="col">TalkBack says, exactly</th></tr></thead>
+    <tbody>
+      <tr><td>Text</td><td class="said">its words, as typed: <q>Before seven</q></td></tr>
+      <tr><td>Text with no words</td><td class="none">no stop</td></tr>
+      <tr><td>Photo with a description</td><td class="said">Photo: a trestle table heaped with red and green chillies under a striped awning</td></tr>
+      <tr><td>Photo with no description, or one of only spaces</td><td class="said">Photo</td></tr>
+      <tr><td>Art with a description</td><td class="said">Pointing hand: this way to the flower end</td></tr>
+      <tr><td>Art with no description</td><td class="none">no stop: it is decoration</td></tr>
+      <tr><td>Anything wholly off the page</td><td class="none">no stop: Read does not draw it</td></tr>
+      <tr><td>A page with none of the above, and no Art drawn on it</td><td class="said">Blank page</td></tr>
+      <tr><td>A page with none of the above, but Art drawn on it</td><td class="said">Only Art on this page</td></tr>
+      <tr><td>Turning a page</td><td class="said">the ticket only: <q>Page 3 of 8</q></td></tr>
+    </tbody>
+  </table>
+  <p class="cap">Stops are given no role, and a double tap on one does nothing, even near the page’s edge,
+  where a turn zone lies under it. The word <b>Photo</b> is how a
+  listener tells the maker’s description from the words printed on the page. By TalkBack’s source a labelled
+  stop with no role gets no “Image” after it and no description of TalkBack’s own; the listen confirms it.</p>
+
+  <h3>The order, on page 3</h3>
+  <ol class="walk">
+    <li>Back to the bench (your work is saved) <span class="role">· Button</span></li>
+    <li>Page 3 of 8</li>
+    <li>How to fold <span class="role">· Button</span></li>
+    <li>Previous page <span class="role">· Button</span></li>
+    <li><b>Photo: a trestle table heaped with red and green chillies under a striped awning</b></li>
+    <li><b>Ravi’s stall — third week running out of the good chillies</b></li>
+    <li><b>He writes the prices on the back of a cereal box. They change twice before noon.</b></li>
+    <li>Next page <span class="role">· Button</span></li>
+    <li>Print details <span class="role">· Button</span>, then the rest of the band</li>
+  </ol>
+  <p class="cap">Grey words are TalkBack’s own. The page sits between the two turn buttons, where it is drawn.
+  A double tap on Next page says “Page 4 of 8”. <b>Open:</b> where the next swipe lands is the listen’s first
+  question; touching the page, or TalkBack’s “read from top”, reaches page 4’s first stop either way.</p>
+
+  <h3>Every page of this zine</h3>
+  <p class="cap">Page 3’s photo is described; page 5’s is not. The cover’s sprout stands for an Art piece with
+  no description.</p>
+  <div class="grid" id="a38pages"></div>
+
+  <h3>Where the words are written, and where they go</h3>
+  <p class="note">On the Bench: a <b>Describe</b> verb on a selected photo or Art piece opens one text field.
+  Its own <code>v21-bench.html</code> amendment draws it, at 360dp and at 200% text, and quotes the helper line
+  owned here: <q class="said">Zinely reads this aloud in Read. It isn’t printed or put in the PDF.</q> On the Bench
+  the photo then says the same words, still as a button.</p>
+  <p class="note">The printed sheet and the PDF: nothing. Android’s <code>PdfDocument</code> cannot tag an image
+  or carry alternative text, and the PDF is the imposed sheet, upside-down panels and all. Read’s band and
+  print drawer say nothing about descriptions.</p>
+</section>
+
+<script>
+/* A38 — the stops, page by page, in reading order. A {none} entry is something on the page with no stop,
+   shown beside the list; no page here needs an empty-page stop. */
+(function(){
+  const NONE = (t) => ({none:t});
+  const A38_STOPS = {
+    1:[NONE('sprout (Art, no description): no stop'), 'Sunday market', 'notes from the last stall on the left'],
+    2:['Before seven',
+       'The vans arrive in the dark and the whole street smells of wet cardboard and coffee. Nobody is selling yet. It is the best hour.',
+       '“You come for the tomatoes. You stay for the arguing.”'],
+    3:['Photo: a trestle table heaped with red and green chillies under a striped awning',
+       'Ravi’s stall — third week running out of the good chillies',
+       'He writes the prices on the back of a cereal box. They change twice before noon.'],
+    4:['What to buy',
+       'Tomatoes — only the ugly ones\nCoriander, the whole bunch\nWhatever the fish man says\nBread, if any is left',
+       'This list has never once survived contact with the market.'],
+    5:['Photo', 'The flower end, 8:40, before the crowd'],
+    6:['The rule',
+       'Buy from whoever grew it. If they can tell you which field, you are in the right place.',
+       '“It rained on Tuesday, so these are small. Sorry.”'],
+    7:['Going home',
+       'Two bags, one of them splitting, and the long way back past the bakery that opens at nine. Every week. Same route.'],
+    8:['Sunday market', 'made on a phone · printed at home · folded by hand', 'no. 1 of however many']
+  };
+  const ticket = (n) => n === 1 ? 'Cover · 1 of 8' : n === 8 ? 'Back cover · 8 of 8' : 'Page ' + n + ' of 8';
+  const host = document.getElementById('a38pages');
+  for (let n = 1; n <= 8; n++) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const h = document.createElement('h4');
+    h.textContent = ticket(n);
+    const ol = document.createElement('ol');
+    card.append(h);
+    A38_STOPS[n].forEach(s => {
+      if (typeof s !== 'string') {   // no stop, so no number: said beside the list, not in it
+        const p = document.createElement('p');
+        p.className = 'none';
+        p.textContent = s.none;
+        card.append(p);
+        return;
+      }
+      const li = document.createElement('li');
+      li.textContent = s;
+      ol.appendChild(li);
+    });
+    card.append(ol);
+    host.appendChild(card);
+  }
+})();
+</script>
