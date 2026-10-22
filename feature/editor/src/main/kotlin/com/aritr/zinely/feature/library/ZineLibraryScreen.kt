@@ -178,18 +178,21 @@ private val LibrarySheetSaver: Saver<LibrarySheet?, Any> = Saver(
         }
     },
     restore = { saved ->
-        val f = (saved as List<*>)
-        when (f.firstOrNull()) {
-            "create" -> LibrarySheet.Create
-            "keepSafe" -> LibrarySheet.KeepSafe
-            "actions" -> LibrarySheet.Actions(f[1] as String)
-            "rename" -> LibrarySheet.Rename(f[1] as String, f[2] as String)
-            "move" -> LibrarySheet.Move(f[1] as String)
-            "newFolder" -> LibrarySheet.NewFolder(f[1] as String, f[2] as Boolean)
-            "folder" -> LibrarySheet.Folder(f[1] as String)
-            "renameFolder" -> LibrarySheet.RenameFolder(f[1] as String)
-            else -> null
-        }
+        // Bad or stale data closes the sheet rather than crashing the Shelf on start.
+        runCatching {
+            val f = (saved as List<*>)
+            when (f.firstOrNull()) {
+                "create" -> LibrarySheet.Create
+                "keepSafe" -> LibrarySheet.KeepSafe
+                "actions" -> LibrarySheet.Actions(f[1] as String)
+                "rename" -> LibrarySheet.Rename(f[1] as String, f[2] as String)
+                "move" -> LibrarySheet.Move(f[1] as String)
+                "newFolder" -> LibrarySheet.NewFolder(f[1] as String, f[2] as Boolean)
+                "folder" -> LibrarySheet.Folder(f[1] as String)
+                "renameFolder" -> LibrarySheet.RenameFolder(f[1] as String)
+                else -> null
+            }
+        }.getOrNull()
     },
 )
 
@@ -725,7 +728,7 @@ public fun ZineLibraryScreen(
 
         // `.dock{position:absolute;left:0;right:0;bottom:0}` — over the shelf, which scrolls under it and
         // clears it with bottom padding of its own (188dp on `.shelf`, 206dp on `.empty`; the failure
-        // surface keeps its established 150dp, which its own copy never needed to change),
+        // surface is cleared by the measured dock height),
         // each grown by the safe area — see [zineDockClearance]). In a `Column` after the shelf it would
         // look identical at rest and steal that space at every other moment.
         ZineDock(
