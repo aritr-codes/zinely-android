@@ -8181,30 +8181,3 @@ second reviewer, could not sign in.
 | R31 relies on lane C renumbering | Observation | Same as above |
 | Duplicate also carries the description | Observation | **Accepted.** Decision 6: Duplicate keeps it; owed item 2 tests it |
 | Verified claims | Observation | No change |
-
----
-
-### D-140 — the Proof's smallest words are under 12 sp, and no floor was ever written {#d-140}
-
-| | |
-|---|---|
-| **Artifacts** | `feature/editor/.../ProofSheet.kt` (`:203` 9.5 sp, `:331` and `:384` 11.5 sp) · `ProofFold.kt` (`:217` 11.5 sp, `:294` 10.5 sp, `:500` 10 sp, and the fold diagram's page numbers, drawn at 9 diagram units by `cellNumber`, `:975-987`) · `ProofPrint.kt:272` (10.5 sp) · `ProofScreen.kt` (`:873` 11.8 sp, `:1140` 11.5 sp) · `core/ui/.../ZinelyV2Typography.kt:167-170` (`sectionLabel`, 10.5 sp, shared beyond the Proof) · `docs/design/mockups/v21-proof.html` A44 |
-| **Found** | [ADR-136](../DECISIONS.md#adr-136) W1 item 13; sizes confirmed 2026-10-22 on `846c91e` by the W1 plan and its review (R4) |
-| **Severity** | Legibility. The Proof is print guidance, read at arm's length with a sheet of paper in the other hand, and its fold steps and sheet labels are its smallest words |
-| **Status** | **Decided 2026-10-22** under the owner's delegation of 2026-10-12 ("decide, do not ask"); the owner may overrule it. A44 records it in the HTML; the build is W1 Task 9. Not built |
-
-**The ruling.** 🟦 **House ruling, not platform guidance: every text node on the Proof is at least 12 sp.**
-No floor was written anywhere before this (not in `V21-SPEC.md`, not in ZINE-DIRECTION). Material 3's
-smallest type token is `labelSmall` at 11 sp, and 12 sp is `bodySmall`; so 12 sp is this product's choice
-for a screen read at a distance, and is never cited as "Android's minimum".
-
-| # | Rule | Why |
-|---|---|---|
-| 1 | Every `Text` on the Proof (Read, the Print drawer, the Fold steps, the Sheet, the done block) is at least 12 sp, before font scale | The Proof's question is "how do I print it correctly?", answered with the paper in hand |
-| 2 | The floor is a Proof value (`ZinelyV2Typography`'s new floor constant), not a change to `sectionLabel` | `sectionLabel` is shared beyond the Proof; changing it globally would move screens this ruling did not look at |
-| 3 | **The fold diagram's page numbers are not exempt.** They are drawn with a `TextMeasurer` inside a `DrawScope`, so no semantics test sees them. Their size comes from a small pure helper, the font size in sp from the diagram's scale, density and font scale, with its own unit test asserting at least 12 sp (plan review R4, controller ruling R-W4) | The numbers are the one thing on the diagram that says which panel is which; a decorative exemption would leave the smallest words on the screen the hardest to read |
-| 4 | The cells sit 44 diagram units apart (`xs = q ± 22f`). At 12 sp and font scale 2 the numbers grow to 24 sp equivalent, so the build checks in its Pass 1 that neighbours never touch, and records the result | A floor that makes two numbers collide fails the same reader |
-
-**Owed** (W1 Task 9): the test over every Proof state (`ProofTypeFloorTest`), the helper's unit test, the Proof
-goldens re-recorded on CI (`record-goldens.yml`, with the `*_compare.png` read first), emulator Pass 1 at 1×
-and 2×, Pass 2 on the Fold steps, and a real-phone large-text pass of Fold for the owner.

@@ -1744,11 +1744,10 @@ $('rs4').onclick = () => {
                   every zine pages only:  {list}. Their page files were damaged, so
                     Zinely used the copies from just before your last few seconds of
                     changes.
-                  otherwise, when any zine has a pages repair:  {list}. Small files that
-                    hold their names, covers and folders, or their pages, were damaged,
-                    so Zinely used the copies from before the last changes to them. For
-                    pages, that is the copy from just before your last few seconds of
-                    changes.
+                  otherwise, when any zine has a pages repair:  {list}. Some of their
+                    files were damaged, so Zinely used the copies it kept. Names, covers
+                    and folders are from before the last change to them; pages are from
+                    just before your last few seconds of changes.
                 no pages repair at all ....... A37.3, unchanged.
                 "YOUR last few seconds", where A37.3 says "the last change": only an edit
                 on the Bench rewrites an existing document.json (an autosave).  Make a
@@ -1758,7 +1757,8 @@ $('rs4').onclick = () => {
                 promise that nothing was lost.
   A46.4  [shown]  A37.4 holds: never backup, restore, error, corrupt, metadata or file
                 names.  "A page file" names a kind of file, not a file name.
-  A46.5  [stated] CLEARING.  Got it clears every zine, both kinds (A37.5).  A zine leaves
+  A46.5  [stated] CLEARING.  NARROWS A37.6 (rename or move took the whole zine off the
+                note).  Got it clears every zine, both kinds (A37.5).  A zine leaves
                 the note when it is deleted, once its undo has passed (A37.6).  Renaming
                 or moving a zine clears its details part only: that acts on its name and
                 folder, not on its pages.  A zine with both keeps its pages part, and its
@@ -1766,9 +1766,11 @@ $('rs4').onclick = () => {
   A46.6  [stated] ORDER.  Shelf order, as in A37.3.  (The ADR-134 Pass 2 finding, "list the
                 zines whose name went back first", belongs to an amendment of A37.3; A46
                 does not make it.)
-  A46.7  [shown]  A37.8 to A37.10 hold unchanged.  The longest one-zine form here (details
-                and pages, name went back) at "text 2× at 360dp" shows every word, with
-                Got it below the words.  The title and body are one node; the note is
+  A46.7  [shown]  A37.8 to A37.10 hold unchanged.  At "text 2× at 360dp" the longest
+                one-zine form (details and pages, name went back) and the four-zine mixed
+                form each show every word, with Got it below the words; the mixed form is
+                taller than the screen and scrolls with the zines, as A37.8 already allows
+                for the five-zine note.  The title and body are one node; the note is
                 announced only on arrival.
   A46.8  [stated] The words live in core:copy (Copy.Restored), transcribed from A46.3
                 exactly, under the A37.4 banned-words test.
@@ -1791,9 +1793,9 @@ rsWords = items => {                                                        // A
     list + '. Their page files were damaged, so Zinely used the copies from just before your last few ' +
     'seconds of changes.'];
   return ['Zinely repaired ' + items.length + ' zines',
-    list + '. Small files that hold their names, covers and folders, or their pages, were damaged, so ' +
-    'Zinely used the copies from before the last changes to them. For pages, that is the copy from just ' +
-    'before your last few seconds of changes.'];
+    list + '. Some of their files were damaged, so Zinely used the copies it kept. Names, covers and ' +
+    'folders are from before the last change to them; pages are from just before your last few seconds ' +
+    'of changes.'];
 };
 
 /* A46's caption and controls sit beside A37's, so the buttons raise the note on the phone above */

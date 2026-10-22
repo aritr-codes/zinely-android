@@ -16776,8 +16776,10 @@ item 4. **Issue:** [#146](https://github.com/aritr-codes/zinely-android/issues/1
   and nothing is told. The comment at `:75-77` ("AtomicFileStore exposes no richer status") has been stale since
   ADR-134 added `readReporting`.
 - ✅ The `.bak` is the file before the last write: `write` copies the target to `<name>.bak` before the atomic
-  rename (`AtomicFileStore.kt:51-60`). Only an autosave rewrites an existing `document.json`; Make a zine,
-  Duplicate and a restore write a new one (`RoomProjectRepository.kt:232,316`; `AutosaveCoordinatorFactory.kt:149`).
+  rename (`AtomicFileStore.kt:51-60`). Only an autosave rewrites an existing `document.json`
+  (`AutosaveCoordinatorFactory.kt:149`, fired only by Bench edits, undo and redo); Make a zine and Duplicate
+  write a new id (`RoomProjectRepository.kt:232,316`), and a restore copies into a fresh directory and moves it
+  in without replacing (`RoomProjectRepository.kt:994-995`, `AdditiveLibraryRestoreCommitter.kt:223`).
   One autosave holds at most about five seconds of editing (`AutosaveConfig`: 1 s debounce, 5 s cap from the
   first unsaved edit, `AutosaveCoordinator.kt:44-45`). So a repair loses up to the maker's last few seconds of
   changes, with no word.
@@ -16820,26 +16822,30 @@ sequenceDiagram
    under the maker is what the note exists to say. The Bench shows nothing. A Bench notice (option B) is the
    **named follow-up**, taken only if the first-time-user device pass reads the Shelf note as too late for a
    repair found on Bench open.
-2. **The words are A46.3's, exactly**, transcribed into `Copy.Restored` beside A37.3's. A pages-only zine reads
-   "Zinely repaired “{now}”" / "A page file was damaged, so Zinely used the copy from just before your last few
-   seconds of changes." A zine with both kinds gets one note, its details sentence and then its pages sentence
-   (A46.3). "Your" is right here where A37.3 refused it, because only the maker's own edits rewrite an existing
-   document (context); "a few seconds" is the honest bound, never "nothing was lost". Never "backup" (A37.4).
+2. **The words are A46.3's, exactly**, transcribed into `Copy.Restored` beside A37.3's; the HTML owns them and
+   the reason for "your" (only the maker's own edits rewrite an existing document, context above). One note
+   covers a zine whose details and pages both went back. Never "backup" (A37.4).
 3. **The signal is the store's sealed result.** `DocumentRepositoryImpl.load` calls
    `store.readReporting(path, ::isLoadable)`; on `StoreRead.Restored` it records a pages repair for the zine,
    before decoding, since the file on disk has changed whatever the decode then says. `Read` records nothing.
    **`BackupOnly` records nothing**, and the reason is the store's, not a crash window: `write` *copies* the
-   target to `.bak`, so the primary never disappears between the snapshot and the rename. A lone `.bak` arises
-   only from an earlier repair that could not write the primary back and quarantined it
-   (`AtomicFileStore.kt:88-118,176`), and that repair was already reported as `Restored`. This is ADR-134
+   target to `.bak`, so the primary never disappears between the snapshot and the rename. On a zine that is
+   still listed, a lone `.bak` arises from an earlier repair that could not write the primary back and
+   quarantined it (`AtomicFileStore.kt:88-118,176`), and that repair was already reported as `Restored`. (An
+   interrupted delete removes `document.json` first, `RoomProjectRepository.kt:355`, and leaves one too, but that
+   zine is no longer listed, `:1160`, so silence is right there as well.) This is ADR-134
    decision 3's rule, mirrored. Nothing new is caught; the stale comment goes.
 4. **One repair-note store, injected into both repositories.** The waiting notes (today's `waitingNotes`
    map, `waitingNoteOf` and the marker write and removal, `RoomProjectRepository.kt:168`; `noteRepair` `:1211`, `waitingNoteOf` `:1242`, `clearWaitingNote` `:1262`) move into
    one small lock-free class, `RepairNotes`, that both `DocumentRepositoryImpl` and `RoomProjectRepository`
    take in their constructors, so neither repository depends on the other and no callback runs between them.
-   It takes no lock of its own beyond what its map and the store's atomic write give it, and it is never
-   reached through `noteRepair` from inside the project repository's lock: the pages path does not enter
-   `RoomProjectRepository` at all. The row re-sync stays in `RoomProjectRepository`, for details repairs
+   It never takes the project repository's `mutex` and never calls back into either repository, so it is safe to
+   call with that mutex held, which happens: `documents.load` runs under it at `:307` (Duplicate), `:701/:704`
+   (backup) and `:1043` (re-sync). Its change signal to observers is therefore non-suspending and takes no lock,
+   like `folderChanges` (`RoomProjectRepository.kt:160`). **Adding a kind is atomic per zine** (for example
+   `ConcurrentHashMap.compute`, keeping the class lock-free): the pages path (Bench open, Shelf tile)
+   runs outside the mutex and the details path inside it, so a plain read-modify-write of one zine's note could
+   drop a kind; the merged note is what the marker then records. The row re-sync stays in `RoomProjectRepository`, for details repairs
    only. A pages repair needs none: the row mirrors no page content, and the cover redraws from the document's
    mtime ([ADR-045](#adr-045)), which the repair's write changes.
    **Where it lives.** The controller ruling R-W1 names `core/data`. `:core:data` cannot see
@@ -16857,10 +16863,11 @@ sequenceDiagram
    document load, so a repair that the Shelf's own tile load finds is in that same listing. The test is fixed:
    a pages repair found when the Bench opens a zine is in the note when the maker comes back to My Shelf, with
    no restart (ruling R-W2). That note was already there when the Shelf drew its zines, so it is read in order,
-   not announced (A37.10); a repair the Shelf's own load finds while it is showing arrives, and is announced.
-7. **Clearing** (A46.5). "Got it" clears every zine and both kinds. Delete removes the zine from the note once
-   its undo has passed. Rename and move clear a zine's details part only, since they act on its name and
-   folder and not its pages; a zine with both stays, now in the pages-only form, silently.
+   not announced (A37.10). A repair found by the Shelf's first listing of a visit is there when it draws its
+   zines, so it too is read in order (ADR-134 decision 6); only a note that appears on a Shelf that has
+   already drawn its zines is announced.
+7. **Clearing is A46.5's**, which narrows A37.6: rename and move clear a zine's details part only. The store
+   therefore clears by kind; Got it and delete clear both.
 8. **Scope.** Only the repair of a present, damaged `document.json`. The lost seconds are not recovered: see
    options C to E. A pre-existing race is left as it is: two readers repairing the same file at once share the
    fixed `.tmp`, and one may delete the other's temp; the note's check-then-write then counts it once, which is
@@ -16899,4 +16906,23 @@ sequenceDiagram
 
 #### Review
 
-To be filled in by this change's Review Agent before A46 is relied on.
+Two independent Review Agents, reading only, 2026-10-22, on `w1/t4` (`846c91e..0cbdd22`): a spec-compliance
+lens (every citation re-checked against the source; every `document.json` writer traced) returned **GO**; a
+design, copy and accessibility lens (A46 driven in headless Chromium, light, dark and 2× at 360dp) returned
+**GO WITH FIXES**.
+
+| Finding | Class | Reconciliation |
+|---|---|---|
+| A D-140 written here collides with Task 2's D-140 (the Proof floor) | Required | **Accepted.** Removed from this branch; D-140 is Task 2's record |
+| Restore's "writes a new one" was uncited | Recommended | **Accepted.** Context cites the restore copy and its non-replacing move |
+| Adding a second kind is a read-modify-write across a locked and an unlocked path | Recommended | **Accepted.** Decision 4: atomic per zine |
+| "The pages path does not enter `RoomProjectRepository`" was false: `load` runs under its mutex | Recommended | **Accepted.** Decision 4 says it may run with the mutex held, so its signal never suspends or locks |
+| The mixed several-zine words blurred "page file" and were long at 2× | Recommended | **Accepted.** A46.3 takes the reviewer's shorter form; A46.7 names it at 2× |
+| Decisions 2 and 7 restated A46 | Recommended | **Accepted.** Both now point at A46.3 and A46.5 |
+| A46.5 changed A37.6 without saying so | Recommended | **Accepted.** A46.5 says it narrows A37.6 |
+| `sectionLabel` is unused in production | Recommended | **Moot** with D-140 removed |
+| "A lone `.bak` arises only from an earlier repair" is too strong (an interrupted delete) | Observation | **Accepted.** Decision 3 names it; that zine is not listed |
+| A repair found by the Shelf's first listing is not announced | Observation | **Accepted.** Decision 6 |
+| The mixed form does not say which zines lost seconds | Observation | For the Pass 2 reading |
+| "A page file" may suggest one page | Observation | No change; the sentence is the brief's |
+| The branch forks from `846c91e`, not the W1 branch tip | Observation | For the controller's merge |
