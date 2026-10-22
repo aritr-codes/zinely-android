@@ -3828,3 +3828,45 @@ ALTERNATIVES WEIGHED (D-143).
   });
 })();
 </script>
+
+<!-- ===================================================================================================
+     A40 · Mix an ink (frozen 2026-10-22, ADR-138). Append-only; nothing above changes.
+     The working prototype is its own page, v21-ink-mixer.html (same tokens and CSS as this file, copied
+     verbatim), because its ids would collide with this page's Ink tray. That page is the canonical A40.
+     =================================================================================================== -->
+<section class="a40" id="a40" aria-label="A40: Mix an ink">
+  <h2>A40 · Mix an ink</h2>
+  <p>Owner ruling 2026-10-22: makers may mix their own ink with a hex picker, and keep up to 9 in <b>My inks</b> for every
+    zine. Owner looked at the prototype and ruled the cap of 9 the same day. Open the working prototype:
+    <a href="v21-ink-mixer.html">v21-ink-mixer.html</a> (five states, dark, largest text, 360dp).</p>
+  <ol class="a40-rules">
+    <li><b>Ink tray:</b> one band added, <i>My inks</i>, after Neutrals and before Starting palettes, for text and Art. It
+      ends with a dashed <i>Mix</i> pot ("Mix an ink"). Band label counts "N of 9" once one is kept.</li>
+    <li><b>Mixer sheet</b> opens on the selected piece's current ink: title + colour name; a full-cap note (only when 9 are
+      kept and this code is not one of them); a paper preview (title, a body line and a mark on white, "On white paper ·
+      about how it prints"); a fixed-height legibility line; the hex field; one shade square; one hue strip; Cancel and
+      <i>Use this ink</i> pinned.</li>
+    <li><b>Hex:</b> strip whitespace, zero-width characters and <code>#</code> before any length cap; only 6 hex digits move the
+      colour live; 3 digits count on Done or leaving the field; otherwise "Still showing #RRGGBB." Use settles the field first.
+      Stored upper-case RRGGBB, no alpha.</li>
+    <li><b>Legibility:</b> contrast against #FFFFFF below 3.0:1 shows "Pale in print", worded for text or for Art; never
+      blocks (D-028). Otherwise "Reads clearly on white paper." Same slot, same height.</li>
+    <li><b>My inks:</b> app-wide, cap 9 (9 + Mix = two rows of five). Display newest-made first, stable. At the cap the
+      least-recently-used ink is removed and the sheet names it (pot + colour name) before Use, with "Pages already using
+      it keep it." Reuse never duplicates. Undo after Use restores the page's ink and My inks. Long-press (TalkBack custom
+      action) "Remove from My inks", undoable.</li>
+    <li><b>TalkBack:</b> kept pot "My ink, &lt;name&gt;, &lt;digits spoken singly&gt;"; Mix "Mix an ink"; the square is
+      touch-only, with two one-axis sliders <i>Colour strength</i> and <i>Lightness</i> (5% steps) and the <i>Hue</i> slider
+      (5°, value = hue name); no live region on the heading name; hex error announced once; toast says the name.
+      Names come from the prototype's <code>colourName</code> and its 38-colour table, which the app's test copies.</li>
+    <li><b>Largest text:</b> A40 defines the large-text Ink tray (three pots a row, 72dp); the mixer is one scrolling column,
+      buttons stacked and pinned, square 120dp, type never shrinks.</li>
+  </ol>
+</section>
+<style>
+.a40{max-width:680px;margin:var(--gap-2xl) 0;font-size:13.5px;color:var(--ink-soft)}
+.a40 h2{font-family:var(--voice);color:var(--ink)}
+.a40 b{color:var(--ink)} .a40 a{color:var(--leaf-text)}
+.a40-rules{padding-left:20px} .a40-rules li{margin-bottom:var(--gap-sm)}
+.a40 code{font-size:12px}
+</style>
