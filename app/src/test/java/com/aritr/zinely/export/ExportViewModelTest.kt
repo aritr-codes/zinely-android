@@ -194,6 +194,94 @@ class ExportViewModelTest {
         assertEquals(emptyList<ExportDestination>(), fake.destinations)
     }
 
+    // ---- A43 / D-142: the error names its cause -------------------------------------------------
+
+    /** An exporter that always throws [failure], to reach each cause through the real catch blocks. */
+    private class ThrowingExporter(private val failure: Throwable) : SheetExporter {
+        override suspend fun export(
+            document: ZineDocument,
+            pageSizePt: PtSize,
+            imageBytes: AssetBytesSource,
+            format: ExportFormat,
+            destination: ExportDestination,
+        ): ExportOutcome = throw failure
+    }
+
+    @Test
+    fun oom_is_reported_as_out_of_memory() = runTest {
+        // Given the sheet render runs out of memory
+        val vm = ExportViewModel(ThrowingExporter(OutOfMemoryError("sheet")), freeBytes = { Long.MAX_VALUE })
+
+        // When Save PDF runs
+        vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.DOWNLOADS)
+        advanceUntilIdle()
+
+        // Then the error says memory
+        assertEquals(ExportFailure.OutOfMemory, (vm.state.value as ExportUiState.Error).failure)
+    }
+
+    @Test
+    fun io_failure_with_low_space_is_out_of_space() = runTest {
+        // Given the write fails and the phone has no usable space left
+        val vm = ExportViewModel(ThrowingExporter(java.io.IOException("write failed")), freeBytes = { 0L })
+
+        vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.DOWNLOADS)
+        advanceUntilIdle()
+
+        assertEquals(ExportFailure.OutOfSpace, (vm.state.value as ExportUiState.Error).failure)
+    }
+
+    /** The same failure with room to spare is not a space problem: never claim one the disk disproves. */
+    @Test
+    fun io_failure_with_room_to_spare_stays_generic() = runTest {
+        val vm = ExportViewModel(
+            ThrowingExporter(java.io.IOException("write failed")),
+            freeBytes = { 10L * 1024 * 1024 * 1024 },
+        )
+
+        vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.DOWNLOADS)
+        advanceUntilIdle()
+
+        assertEquals(ExportFailure.Other, (vm.state.value as ExportUiState.Error).failure)
+    }
+
+    /** A probe that cannot answer must not invent a storage-full claim. */
+    @Test
+    fun io_failure_with_a_broken_probe_stays_generic() = runTest {
+        val vm = ExportViewModel(
+            ThrowingExporter(java.io.IOException("write failed")),
+            freeBytes = { throw SecurityException("no statfs") },
+        )
+
+        vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.DOWNLOADS)
+        advanceUntilIdle()
+
+        assertEquals(ExportFailure.Other, (vm.state.value as ExportUiState.Error).failure)
+    }
+
+    /** Low space with a non-IO failure is not a space problem either: only a failed write is. */
+    @Test
+    fun non_io_failure_with_low_space_stays_generic() = runTest {
+        val vm = ExportViewModel(ThrowingExporter(IllegalStateException("bad layout")), freeBytes = { 0L })
+
+        vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.DOWNLOADS)
+        advanceUntilIdle()
+
+        assertEquals(ExportFailure.Other, (vm.state.value as ExportUiState.Error).failure)
+    }
+
+    @Test
+    fun denied_permission_is_permission_denied() = runTest {
+        // Given Android 7–9 refused Save PDF's storage permission
+        val vm = ExportViewModel(FakeExporter(saved()), freeBytes = { Long.MAX_VALUE })
+
+        // When the host reports it could not start the save
+        vm.couldNotStart(ExportDestination.DOWNLOADS)
+
+        // Then the error says permission
+        assertEquals(ExportFailure.PermissionDenied, (vm.state.value as ExportUiState.Error).failure)
+    }
+
     /** Like a second tap, it never interrupts a render already in flight. */
     @Test
     fun couldNotStartLeavesARenderInFlightAlone() = runTest {

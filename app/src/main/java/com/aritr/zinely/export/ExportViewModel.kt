@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import android.os.Environment
+import java.io.IOException
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -32,8 +34,18 @@ import kotlin.coroutines.cancellation.CancellationException
 internal sealed interface ExportUiState {
     data object Idle : ExportUiState
     data class Working(val format: ExportFormat, val destination: ExportDestination) : ExportUiState
-    data class Error(val message: String, val destination: ExportDestination) : ExportUiState
+    data class Error(
+        val message: String,
+        val destination: ExportDestination,
+        val failure: ExportFailure = ExportFailure.Other,
+    ) : ExportUiState
 }
+
+/**
+ * Why an export failed, so the Proof can say what to change (`v21-proof.html` A43, D-142). Classified from the exception's **type**
+ * and a free-space probe, never from its message.
+ */
+internal enum class ExportFailure { Other, OutOfMemory, OutOfSpace, PermissionDenied }
 
 /**
  * The delivery-agnostic result of one export (ADR-054 Decision 2). The VM emits it and the host routes on
@@ -64,9 +76,14 @@ internal data class ExportSaved(
  * any failure (IO, or an `OutOfMemoryError` on the ~33 MB sheet) becomes a friendly [ExportUiState.Error].
  */
 @HiltViewModel
-internal class ExportViewModel @Inject constructor(
+internal class ExportViewModel(
     private val exporter: SheetExporter,
+    /** Usable bytes where the export lands. A seam so the out-of-space call is testable. */
+    private val freeBytes: () -> Long,
 ) : ViewModel() {
+
+    @Inject
+    constructor(exporter: SheetExporter) : this(exporter, ::sharedStorageFreeBytes)
 
     private val _state = MutableStateFlow<ExportUiState>(ExportUiState.Idle)
     val state: StateFlow<ExportUiState> = _state.asStateFlow()
@@ -95,7 +112,10 @@ internal class ExportViewModel @Inject constructor(
                 ExportUiState.Error(
                     "This zine is a bit big to render right now. Please try again.",
                     destination,
+                    ExportFailure.OutOfMemory,
                 )
+            } catch (e: IOException) {
+                ExportUiState.Error(COULD_NOT_MAKE_FILE, destination, classifyIo())
             } catch (e: Exception) {
                 ExportUiState.Error(COULD_NOT_MAKE_FILE, destination)
             }
@@ -110,7 +130,21 @@ internal class ExportViewModel @Inject constructor(
      */
     fun couldNotStart(destination: ExportDestination) {
         if (_state.value is ExportUiState.Working) return
-        _state.value = ExportUiState.Error(COULD_NOT_MAKE_FILE, destination)
+        _state.value = ExportUiState.Error(COULD_NOT_MAKE_FILE, destination, ExportFailure.PermissionDenied)
+    }
+
+    /**
+     * A failed write is "out of space" only when the disk demonstrably is: the same false-negative-biased
+     * probe as `DocumentRepositoryImpl.classifyWriteFailure` (ADR-036). `IOException` carries no errno, so
+     * the probe is the only honest signal; a probe that cannot answer never invents the claim.
+     */
+    private fun classifyIo(): ExportFailure {
+        val low = try {
+            freeBytes() < LOW_SPACE_BYTES
+        } catch (_: Exception) {
+            false
+        }
+        return if (low) ExportFailure.OutOfSpace else ExportFailure.Other
     }
 
     /**
@@ -140,5 +174,16 @@ internal class ExportViewModel @Inject constructor(
 
     private companion object {
         const val COULD_NOT_MAKE_FILE = "Couldn’t make your file just now. Please try again."
+
+        // ponytail: a fixed bar, not the payload size (unknown until written). A one-sheet PDF is a few MB,
+        // so under 64 MiB free a failed write is very likely the disk; above it we under-claim (generic).
+        const val LOW_SPACE_BYTES = 64L * 1024 * 1024
     }
 }
+
+/**
+ * Usable bytes of shared storage, where Downloads lives (and, on every shipped layout, the same volume as
+ * the app's cache that Share writes to). The storage root always exists, so no walk-up is needed.
+ */
+@Suppress("DEPRECATION") // getExternalStorageDirectory: statfs only, no file access.
+private fun sharedStorageFreeBytes(): Long = Environment.getExternalStorageDirectory().usableSpace
