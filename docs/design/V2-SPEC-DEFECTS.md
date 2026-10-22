@@ -8182,6 +8182,36 @@ second reviewer, could not sign in.
 | Duplicate also carries the description | Observation | **Accepted.** Decision 6: Duplicate keeps it; owed item 2 tests it |
 | Verified claims | Observation | No change |
 
+### D-130 — A39's colour bar cannot take `mark.bar` without breaking G2 {#d-130}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` A39 (`mark.bar`, `mark.barb`) · the A39 candidate sheet (`art-a39/candidates.json`, the A39 `mark.bar`) |
+| **Found** | 2026-10-22, by the Never #19 dry run for [ADR-139](../DECISIONS.md#adr-139) ([RESEARCH R34.2](../RESEARCH.md#r34-the-a39-art-picks-gate-measurements-the-never-19-dry-run-and-the-licences-2026-10-22)) |
+| **Severity** | Print: a piece whose rails and tint dots are thinner than the house minimum, on every saved zine that holds a colour bar. Caught before freeze; nothing shipped |
+| **Status** | **Resolved in the freeze.** The A34 bar holds `mark.bar`; A39's is `mark.barb` at full size |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **The fit that Never #19 needs undoes G2.** A39's tone-patch bar is 16.8 units tall against the shipped bar's 16, so it fits only at ×0.952. Its frame rails are drawn at the fine weight Wf = 1.5 and its tint dots at 2.0, so the shrink makes them 1.43 and 1.90: the verifier's thin-ink area goes from 2.6 to 65.9 square units. Moving the rails inward instead closes the 1.5 gap to the patches. | **The holder rule checks G2 after the fit** (ADR-139 decision 2). The A34 bar fits untouched and holds the id; the critique's tone-patch fix is offered as its own piece, so a maker who wants it picks it |
+
+### D-131 — five picked drawings fail or sit at a gate {#d-131}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` A39 (`fix.sticker`, `shape.flower`, `mark.scissors`, `shape.hex`, `tape.plaster`) · `art-a39/candidates.json` (their gate notes) |
+| **Found** | The A39 sheet's own gate notes (2026-10-15), confirmed by the recon and by R34.3 on 2026-10-22 |
+| **Severity** | Print and recognition: a kinked edge, gaps and holes that close on a home printer or a photocopy, one piece with no sign of being cut. None is wired |
+| **Status** | **Open.** Each fix is a bug fix under the A39 freeze, made as a dated note in A39 before the piece's family is wired ([ADR-139](../DECISIONS.md#adr-139) decision 9) |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | `fix.sticker` (Tabler): G6 fails, 4–14° kinks and micro-segments at both peel corners | Redraw the two corners: merge the micro-segments, smooth the joins |
+| 2 | `shape.flower` (Tabler): G2 fails, 1.2 square units of gap under 1.5 at the six petal cusps | Round each concave cusp to a radius of about 0.5 |
+| 3 | `mark.scissors` (Doodle Icons): the two finger holes sit at the 1.5 minimum and close at tile size | Enlarge both holes |
+| 4 | `shape.hex` (Phosphor): true geometry with no cut sign, the most UI-like piece picked (G8 risk) | Add the cut sign (corners up to 0.5 off true, H5's cut voice) |
+| 5 | `tape.plaster` (Tabler): G2 at the limit, 2.5 dots with 1.5 gaps that merge at 24 px | Widen the dot gaps, or accept at the printed-page check |
+
 ---
 
 ### D-140 — the Proof's smallest labels sit under 12sp, on a screen read at arm's length {#d-140}

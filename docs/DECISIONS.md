@@ -145,7 +145,8 @@
 | [ADR-134](#adr-134) | **When a zine's details go back to their earlier copy, My Shelf says so once.** A paper note under the heading names the zine (“Letters to Gran” is called “Letters home” again), says what went back, and stays until “Got it”. The store reports a repaired read as a sealed result; the waiting note is kept per zine. Library A37 | Accepted 2026-10-15 under delegation; built 2026-10-15, in no release (emulator passes 2026-10-18; TalkBack listen and a real phone owed) |
 | [ADR-135](#adr-135) | **Read speaks the page.** One stop per meaningful thing, in the Bench's spatial order, between Previous and Next page: text as written, a photo as `Photo` or `Photo: <description>`, Art only when described (by its name), `Blank page` / `Only Art on this page`; no role on a stop; a turn announces the ticket only. The PDF and paper carry no description, said once in the Describe field. `v21-proof.html` A38 frozen; part 1 needs no schema, part 2 is plan step 7 | Proposed (design frozen under the owner's delegation; not built) |
 | [ADR-136](#adr-136) | **Product direction 2026-10-15: keep, cut and the order of work.** W1 never lose work, never get stuck → W2a/W2b small things → W3 Art better before more → W4 photo descriptions (v4, alone) → W5 print guidance → W6 paper sizes (v5) and paper colour → W7 Art grows inside the four families → W8 your own artwork → W9 Hand voice; then Later. A cut list with reasons. Never #19 becomes "never *breaks* a saved zine", with ADR-132's pre-1.0 redraw as the one named exception. Records the owner's readings Q1 ("the paper is the medium, not the page") and Q2 ("§IV governs chrome; a document voice is content") | Accepted, under the owner's delegation; Q1 and Q2 are owner readings |
-| [ADR-137](#adr-137) | **One world: Art pieces from any source pass the same house gates; variants of one subject.** "One hand" becomes "one world": pieces we draw, pieces redrawn from public-domain or open-licence references, and imported open-licence pieces all pass nine gates and carry ADR-104's record per item. Variants of one subject sit together on the sheet. Still four families; curated, not capped. Amends SUPPLIES-SPEC §4.1 and §4.4 (by §4.5), ADR-107 R1's count target and ZINE-DIRECTION principle 3 | Proposed (direction ruled by the owner; A39 not picked) |
+| [ADR-137](#adr-137) | **One world: Art pieces from any source pass the same house gates; variants of one subject.** "One hand" becomes "one world": pieces we draw, pieces redrawn from public-domain or open-licence references, and imported open-licence pieces all pass nine gates and carry ADR-104's record per item. Variants of one subject sit together on the sheet. Still four families; curated, not capped. Amends SUPPLIES-SPEC §4.1 and §4.4 (by §4.5), ADR-107 R1's count target and ZINE-DIRECTION principle 3 | Proposed (direction ruled by the owner; A39 picked 2026-10-22, [ADR-139](#adr-139)) |
+| [ADR-139](#adr-139) | **The A39 Art picks: 124 outlines from 125 picks, add-only ids, a named holed list of 31.** The owner's 125 picks; 34 shipped ids remain (17 keep their drawing, 17 take a redraw fitted inside the old ink box by a move and/or a scale of at least 0.90) and 90 letters-only ids are added; the A34 and A39 Circles collapse to one; H9 becomes a named list of 31; the gate numbers go into SUPPLIES-SPEC §4.4; six Fluent Emoji silhouettes admitted by the owner's pick. Bench A39 and colophon A39 | Proposed (frozen in HTML; not built) |
 | [ADR-140](#adr-140) | **When a zine's pages go back to their earlier copy, My Shelf says so once (extends ADR-134).** A `document.json` put back from its `.bak` is told by the A37 note in Library A46's words ("A page file was damaged, so Zinely used the copy from just before your last few seconds of changes"); one note covers a zine's details and pages. The store's `Restored` result is recorded in one lock-free repair-note store shared by both repositories; `BackupOnly` is silent. No Bench notice (named follow-up); no edit journal. Decides D-120 item 4, #146 | Proposed (A46 frozen 2026-10-22 under the owner's delegation; Accepted only once built and reviewed) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
@@ -14255,6 +14256,12 @@ decision changed: the same three passes, the same tolerance, the same function. 
 left as the record of its date. This ADR's status is unchanged by the note: still Proposed. The known limit below
 (a band is only as wide as it is drawn) is sharpest for Snipped border, whose band is about 8 % of its box.
 
+**Scope note, 2026-10-22: the set becomes 31.** [ADR-139](#adr-139) decision 5 names 23 more holed pieces from
+the owner's A39 picks ([`v21-bench.html`](design/mockups/v21-bench.html) A39); each joins the set by name in the
+commit that wires its family. The same three passes, tolerance and function; status unchanged, still Proposed.
+The smallest new holes (the scissors' finger loops, the gift tag's eyelet, the needle's eye) let a tap through
+only inside a small area, which is the intended behaviour.
+
 **Excluded, and unchanged:** `mark.crop` (ruled out by name, Q3) and the other 25 supplies, including the five other
 pieces made of separate parts (`mark.halftone`, `fix.stitch`, `mark.bar`, `mark.scan`, `mark.perf`); every text box;
 every photo, including the letterbox bars of a `Fit.FIT` photo; and a supply id this build does not know. All of
@@ -15961,6 +15968,9 @@ drawings, and the app draws the current Art. Wiring A34 into the app is held for
 the owner's picks. This ADR stays **Proposed**. Everything under *Owed before Accepted* is still owed, against
 A34 as A39 amends it once A39 is frozen.
 
+**2026-10-22:** A39 is picked and frozen under [ADR-139](#adr-139) (Proposed), which says which of the 34 ids are
+redrawn (17) and by which drawing, and sets the holed list at 31. Still not built.
+
 #### Review
 
 Two independent Review Agents, 2026-10-14, both **GO WITH FIXES**. Design lens: the margin rule (H4) was
@@ -16516,7 +16526,7 @@ their status.
 |---|---|
 | Online or Drive-hosted Art | Amendment 3; Drive's own terms forbid using it as a CDN (R32.2) |
 | Outside icon sets dropped into the families as they are | They fail the world-match gate ([ADR-137](#adr-137)); an outside piece enters only by passing the gates |
-| Fluent emoji stickers | Emoji already exist in text, under [ADR-112](#adr-112) |
+| Fluent emoji stickers | Emoji already exist in text, under [ADR-112](#adr-112). ⚠ **Narrowed 2026-10-22 by the owner's A39 pick ([ADR-139](#adr-139) decision 7):** colour emoji stickers stay cut; six single-ink silhouettes from Fluent Emoji High Contrast are admitted, by id |
 | Pen tool | Owner, 2026-10-15 (under Later) |
 | A printed "made with Zinely" page | Owner, 2026-10-15; a watermark by another name (R32.1) |
 | Paper textures, riso and linocut filters, fake streaks, misregistration | Costume: they name no physical cause ([ZINE-DIRECTION](design/ZINE-DIRECTION.md) §3, principle 5) |
@@ -16651,6 +16661,10 @@ imported SVG" bullet; [Constitution Amendment 3](design/V2-CONSTITUTION.md#amend
 every piece is bundled).
 **In force now, and pending:** the owner's 2026-10-15 rulings are in force as direction. The open gate
 numbers, and so any new piece, wait for A39.
+**2026-10-22:** A39 is picked and frozen, and its gate numbers are in §4.4, under [ADR-139](#adr-139) (Proposed),
+which also amends two *Keeps* above: the holed set of eight becomes a named list of 31, and §9's emoji bullet is
+read as a licence rule, with the owner's pick ruling the shape. This ADR stays Proposed: the first batch's
+provenance records are still to be reviewed against the items.
 **Evidence:** [RESEARCH R32](RESEARCH.md#r32-what-makers-hate-art-at-scale-paper-colour-and-a-hidden-signature-2026-10-15)
 (R32.2, R32.3, R32.6); [R27](RESEARCH.md#r27-one-hand-for-a-set-of-single-ink-pieces-2026-10-14).
 
@@ -16756,6 +16770,159 @@ first; W1 resized to L; ROADMAP's W6 line names the W8 field design; decision 5 
 Accepted; OWNER-CHECKLIST rows added; mixed inks recorded as not decided. Observations taken: this section
 replaces the placeholder; W3's release-note line corrected; the W8 field must ride a bump. The ADR-135 link
 resolves once PR #141 merges.
+
+## ADR-139 {#adr-139}
+
+### The A39 Art picks: 124 outlines from 125 picks, add-only ids, a named holed list of 31
+
+**Status:** Proposed, 2026-10-22. **Docs and frozen HTML only; not built.** The owner picked 125 drawings from the
+A39 candidate sheet on 2026-10-22 (verbatim in the A39 amendment of
+[`v21-bench.html`](design/mockups/v21-bench.html)). The owner's pick is the G8 (recognition) and G9 (world match)
+ruling for every piece picked. Everything else here (the ids, which drawing holds a shipped id, the fits, the one
+collapse, the gate numbers, the names) is decided under the owner's delegation of 2026-10-12 ("decide, do not
+ask"), which the owner may overrule. It stays Proposed until the list under *Owed before Accepted* is met.
+**Amends:**
+- [ADR-132](#adr-132) decision 2 ("all 34 are redrawn … the same eight pieces have holes"): 17 shipped drawings
+  stay on their ids, 17 ids take a redraw (decision 2 below), and the holed set is 31.
+- [ADR-136](#adr-136) decision 2's cut of "Fluent emoji stickers", narrowed: colour emoji stickers stay cut;
+  single-ink silhouettes from Fluent Emoji High Contrast are admitted by the owner's pick (decision 7). ADR-136
+  lets the owner overrule any line; a dated note sits on the row.
+- [ADR-137](#adr-137): its open gate numbers (this is the first W7 batch), and two of its *Keeps*: "H9's holed set
+  of eight and ADR-124's list" (now the named list of 31) and "§9's no emoji, no imported SVG bullet" (read as a
+  licence rule, as §4.5 item 4 already says, with the owner's pick ruling the shape).
+- [ADR-124](#adr-124)'s scope: a scope note, the set becomes 31 as each family is wired. Its passes, tolerance,
+  function and status (Proposed) are unchanged.
+- [SUPPLIES-SPEC](design/SUPPLIES-SPEC.md) §4.4 [H1, H2, H4 and H9](design/SUPPLIES-SPEC.md#house-style) by rule
+  number; [§4.5](design/SUPPLIES-SPEC.md#one-world)'s "Open until A39" cells and G9's "not a UI icon or an emoji"
+  clause; a dated pointer at §4.3.5's "the family is done".
+- [`v21-colophon.html`](design/mockups/v21-colophon.html): Licences & credits gains an Art section (its A39
+  amendment).
+
+**Keeps:** exactly four families; [ADR-105](#adr-105) (a placed piece stores only its id); the v3 document format
+and `DefaultDocumentValidator.SUPPLY_ID` (`^[a-z]+\.[a-z]+$`), untouched; [ADR-107](#adr-107) R2 (no
+randomisation); outlines as reviewed Kotlin source, never a data file or a runtime SVG parse; ADR-104's permitted
+licences and its rule that credit never goes in the PDF; ADR-124's three passes and tolerance.
+**Defects:** [D-130](design/V2-SPEC-DEFECTS.md#d-130), [D-131](design/V2-SPEC-DEFECTS.md#d-131).
+**Evidence:** [RESEARCH R34](RESEARCH.md#r34-the-a39-art-picks-gate-measurements-the-never-19-dry-run-and-the-licences-2026-10-22)
+(the dry run, the gate measurements, variant similarity, the licences); the sheet's data in
+`zinely-archive/2026-10-15-wave2/art-a39/` (`candidates.json`, `oss-src-*/LICENSE-RECORD.txt`).
+
+#### Context
+
+- [ADR-132](#adr-132) froze a redraw of all 34 pieces (A34). [ADR-136](#adr-136) W3 asked for A34 to be polished
+  first, as A39, and [ADR-137](#adr-137) opened the set to redrawn and imported pieces under one set of gates,
+  with the variants of a subject side by side.
+- ✅ The owner picked 125: 17 shipped drawings kept, 30 A34, 38 A39 and 40 open-source (Tabler Icons, Fluent Emoji
+  High Contrast, Doodle Icons by Oreo Design, Doodle Icons by Khushmeen Sidhu, Phosphor Icons, Lucide) (R34.1).
+- ✅ The document validator rejects any `supplyId` that is not `^[a-z]+\.[a-z]+$`, as an error, on load, save and
+  restore. The sheet's own ids (`fix.pushpin.v2`, `fix.clip~tabler`) would make a zine invalid, and widening the
+  regex would make an older build reject a restored zine whole, where ADR-136 promises it draws a new id as
+  nothing.
+- ✅ Of the 17 shipped ids whose drawing was not picked, eight redraws grow past the old ink box as drawn, which
+  Never #19 forbids ([ADR-136](#adr-136) decision 3). All 17 can be fitted (R34.2).
+
+#### Decision
+
+1. **The set.** 125 picks give **124 offered outlines**: Tape & fixings 24, Stamps & marks 38, Cut paper 44, Cut
+   shapes 18. **34 shipped ids remain and 90 are added.** The final table (id, subject, source, display name,
+   family, redrawn or not, holed or not, transform) and every outline's path are in A39; nothing is renamed or
+   removed.
+2. **Ids and who holds a shipped id.** A picked shipped drawing keeps its id (17). Where the shipped drawing was
+   not picked, the first picked redraw, A39 before A34, that fits the old ink box after a move and/or a uniform
+   scale of at least 0.90, and still passes G2 after the scale, takes the id as ADR-132's one-time redraw (17).
+   Every other pick gets a new id, letters only: `<prefix>.<subject><letter>` in sheet order (`fix.clipb`), or its
+   own word for a new subject (`fix.needle`, `paper.balloon`). The holders that are not A39:
+   - `fix.clip` and `mark.hand`: A34 (A39's would need ×0.857 and ×0.788). `mark.hand` is the A34 hand at ×0.965,
+     moved up 1.84 units.
+   - `mark.bar`: A34. A39's tone-patch bar fits at ×0.952, but the shrink thins its 1.5 rails and 2.0 dots under G2
+     ([D-130](design/V2-SPEC-DEFECTS.md#d-130)); it is offered at full size as `mark.barb`.
+   - `shape.rect`: A34, by ruling, although A39's fits. A39's is a 21 × 14.9 landscape, so every saved full-page
+     panel would shrink to about 62% of its height; it is offered as `shape.rectb`.
+   - `shape.rule`: A34, the only picked redraw, at ×0.969 (its band stays 4.8 high).
+
+   The other fits: `fix.staple` moved down 0.95; `mark.asterisk` moved down 0.04; `tape.masking` ×0.947;
+   `paper.underline` ×0.919, moved down 0.44. Each id's transform is in A39 and R34.2.
+3. **Never #19 holds by test.** Each of the 17 redrawn ids keeps its ink box inside the shipped outline's ink box.
+   A JVM test holds this against a committed literal of the 34 shipped boxes, so the baseline survives the redraw;
+   an id baseline test fails if a shipped id is renamed or removed. Both land with the wiring, before any family's
+   outlines change.
+4. **One collapse.** Only picks that are the same drawing collapse (similarity ≥ 0.99, R34.4): the A34 and A39
+   Circles, so the A39 Circle holds `shape.circle` and the A34 Circle gets no id. The Ring (0.98), Rectangle
+   (0.98) and Triangle (0.96) pairs stay as picked: the owner's eye is the G8 ruling, confirmed at the
+   first-time-user pass. The 0.86–0.94 groups (R34.4) are the look-alike groups that pass checks.
+5. **Holes: a named list of 31.** H9 becomes "the named list in `SupplyInk.IN_SCOPE`", which is the authority. The
+   list: the eight of A32 plus 23 new ids, `fix.cornerb`, `fix.grommetb`, `fix.grommetc`, `fix.needle`,
+   `tape.plaster`, `fix.sticker`, `mark.registrationb`, `mark.registrationc`, `mark.scissors`, `mark.squiggle`,
+   `paper.windowb`, `paper.windowc`, `paper.cutwindow`, `paper.holeb`, `paper.holec`, `paper.holed`,
+   `paper.borderb`, `paper.borderc`, `paper.borderd`, `paper.roundb`, `paper.roundc`, `paper.gifttag` and
+   `shape.ringb`. Each id joins `IN_SCOPE` in the commit that wires its family, so no commit names an id the
+   catalogue does not hold. A test derives holes from the geometry and checks both ways: every listed id has a
+   hole, and every holed id is listed or excluded by a named ruling (none today; `mark.crop` stays excluded by
+   name and has no enclosed hole). A piece cannot gain or lose a hole unlisted.
+6. **Gate numbers**, written into [SUPPLIES-SPEC §4.4](design/SUPPLIES-SPEC.md#house-style) by rule number: G1
+   W = 2.5, printer's marks Wf = 1.5; G2 ink ≥ 2 (≥ Wf for printer's marks), gaps and holes ≥ 1.5; G3 four shape
+   classes with optical sizes; G4 coverage bands per class (line 4–35%, mark 25–65%, frame 30–65%, sheet 40–85%)
+   with five named exceptions; G5 a tear's lag-1 autocorrelation ≥ 0 and at most one sharp vertex per 4 units at
+   landing; G6 joins under 1°, handles 55–70% of the tangent intersection, nodes at extremes, no polyline curves;
+   G8 the owner and a first-time user at 24 px, across a subject's variants. The spec's G1–G9 are canonical; the
+   A39 tooling's G7 (edge ends and voice), G10 (holes) and G11 (world match) read as the spec's G5/H5, G7 and G9.
+7. **World match by the owner's pick.** Six Fluent Emoji High Contrast silhouettes (`fix.needle`, `mark.burstd`,
+   `mark.sparkle`, `paper.ticket`, `paper.thought`, `paper.shout`), drawn in one ink, and the Tabler and Phosphor
+   picks the sheet flagged as UI idiom (`tape.plaster`, `fix.sticker`, `fix.clipc`, `mark.asteriskc`,
+   `shape.hex`, `shape.scallop`) are admitted as the owner's G9 ruling, by id. G9's "not a UI icon or an emoji"
+   still binds every piece the owner has not picked by name.
+8. **Provenance and credits.** Every id records its source kind: drawn in-house (the shipped, A34 and A39 pieces)
+   or imported (the 40); none in this batch is redrawn from a reference. Every imported piece carries ADR-104's
+   record per item, with the upstream file's sha256 checked by a JVM test against test resources (never in the
+   APK's art path), and its set appears in Licences & credits with its licence, holder and notice text. Doodle
+   Icons by Khushmeen Sidhu is credited to the creator under CC0, and the mirror's MIT text (© 2022 Srivatsa
+   Rampalli) ships as a precaution (R34.5).
+9. **Five drawings owe a fix before their family is wired** ([D-131](design/V2-SPEC-DEFECTS.md#d-131)):
+   `fix.sticker` (G6), `shape.flower` (G2), `mark.scissors` (G2, its finger holes), `shape.hex` (G8, a cut sign)
+   and `tape.plaster` (G2 at the limit). Each fix is a bug fix under the freeze, made as a dated note in A39.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| The sheet's `<subject>.<n>` ids | Fail the validator; a zine holding one would not open or save |
+| Widen the validator's id regex | Older builds reject the whole zine on restore, breaking the downgrade promise of ADR-136 |
+| Give every redraw a new id and keep all 34 shipped drawings | Leaves saved zines on the drawings the tester called amateurish (ADR-136, *Alternatives*) |
+| Retire a shipped id whose redraws do not fit (drawn for saved zines, hidden from the tray) | Needs a second name list, family lookup and tests for one piece, and every shipped id has a fitting pick (R34.2), so it buys nothing |
+| A39's hand at ×0.788, or A39's bar at ×0.952 | A 21% shrink is a visible change to every saved zine; the bar's shrink fails G2 |
+| A39's landscape for `shape.rect` | Shrinks every saved full-page panel to about 62% of its height |
+| Collapse every pair at 0.95 or more (Ring, Rectangle, Triangle too) | Overrules the owner's pick on a measure that under-weights edge character; also drops `shape.ringb`, a holed piece |
+| Keep H9 at eight and draw every new piece solid | Plaster, gift tag, scissors and needle do not read without their holes (the sheet's notes) |
+| One `SupplyCatalog` object | About 7,000 literal points pass the JVM's 64 KB static-initialiser cap |
+
+#### Consequences
+
+- `SupplyCatalog` is split into one object per family behind the same façade (landed on this branch as a pure
+  refactor, `8968b1d`, behind a snapshot test of today's outlines).
+- `shape.rect` stops being the exact unit square: A34's rectangle keeps a 0.5-unit margin. Tests that use
+  `shape.rect` as a box-filling fixture are restated in the Cut shapes wiring commit.
+- Every Art and Decor golden re-records on CI, reading each diff first. The release notes announce the redraw
+  (ADR-136 decision 3) and say that an older build draws the 90 new ids as nothing.
+- Licences & credits gains an Art section, frozen first as the `v21-colophon.html` A39 amendment.
+- Each family's sheet length at 360dp, computed in A39: Tape & fixings 3.0 screens, Stamps & marks 4.7, Cut paper
+  5.4, Cut shapes 2.2 (today 0.8 to 1.5).
+
+#### Owed before Accepted
+
+- The wiring, one family per commit (outlines, names and tags, holed ids and parity rows together), with the id
+  baseline, Never #19 box, provenance and holes tests; the goldens re-recorded on CI.
+- The five drawing fixes of D-131.
+- A printed page and a second-generation photocopy of all 124 at their landing sizes: no hole may fill in
+  (ADR-132's list).
+- Both device passes: G8 for each look-alike group (R34.4) with a first-time user, and TalkBack reading every
+  name distinctly.
+- The Doodle Icons diff against the creator's own release (the Gumroad download), owed before beta.8; and the
+  check that no Oreo Design glyph redraws a Lucide or Feather path (if one does, its notice is added).
+- [ADR-132](#adr-132)'s and [ADR-137](#adr-137)'s own owed items.
+
+#### Review
+
+To be recorded after the independent review of this change.
 
 ---
 
