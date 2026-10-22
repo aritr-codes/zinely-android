@@ -1402,14 +1402,15 @@ if (prototypeParams.get('gallery') === 'fold') {
 
      1. SAME overlay, SAME title, SAME Try again. The overlay is the frozen
         `#errwrap` of docs/design/v1/proof.html, built as `ProofErrorPane`: it
-        replaces the reader AND the band, and the top bar's back stays. This
+        replaces the reader AND the band, and the top bar's back stays (the
+        page ticket hides: there is no page to name). This
         file never drew it; A43 draws it in V2.1 inks. Only the BODY sentence
         changes, and it names the cause. Every body opens "Your zine is safe."
         because the title alone ("Couldn’t make the PDF") reads as a loss, the
         exact misreading the Beta UX review recorded ("it lost my work").
           Cause                      Body (exact; Copy.Proof)
-          OutOfMemory, sheet render  "Your zine is safe. It’s too big to make in one go on this phone — close other apps, then try again."
-          OutOfSpace                 "Your zine is safe. Your phone is out of space — free some up, then try again."
+          OutOfMemory, sheet render  "Your zine is safe. This phone ran short of memory making the PDF — try again in a moment."
+          OutOfSpace                 "Your zine is safe. This phone is out of space — free some up, then try again."
           Permission, Android 7–9    "Your zine is safe. Zinely needs permission to save to Downloads — tap Try again, then Allow."
           anything else              unchanged: "Your zine is safe on this device — the export just didn’t finish. Try once more."
         OutOfMemory is the `OutOfMemoryError` caught around the sheet render
@@ -1427,11 +1428,12 @@ if (prototypeParams.get('gallery') === 'fold') {
         On return (ON_RESUME) the overlay STAYS until the maker acts: there is
         no automatic retry. If Storage is now on, the button reads "Try again"
         (the body already says so); if not, it still reads "Open settings".
-        The task brief's "tap Save PDF" is not used: the overlay covers the
+        The body says "Try again", not "Save PDF": the overlay covers the
         band, so Save PDF is not on screen; Try again re-fires the same save.
      3. SHARE AFTER SAVE. The `.done` block (P2 above) gains a quiet "Share"
         between Open PDF and Fold it up, in Open PDF's surface style, and keeps
-        it in the folded state too. `.band.saved .commit` stays hidden: the
+        it in the folded state too. Open PDF and Share take a 48dp minimum
+        height (an accessibility fix). `.band.saved .commit` stays hidden: the
         commit row's Share does not come back, this one replaces it. It sends
         a copy of the saved PDF through the share sheet, the same verb as
         before the save (ADR-054: Save keeps, Share sends). A failed Share
@@ -1471,6 +1473,8 @@ if (prototypeParams.get('gallery') === 'fold') {
 
 /* A43.1 — the overlay, in V2.1 inks. It takes the reader's and the band's place under the top bar. */
 .phone.a43on .stagewrap,.phone.a43on .band{display:none}
+/* No page is on screen, so the ticket has nothing to name (as built: ProofScreen.kt hides it). */
+.phone.a43on .pcount{visibility:hidden}
 .a43err{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
   gap:var(--gap-sm);padding:0 var(--gap-xl) var(--gap-2xl)}
 .a43err[hidden]{display:none}
@@ -1485,6 +1489,7 @@ if (prototypeParams.get('gallery') === 'fold') {
 
 /* A43.3 — Share joins the done row; at large text the row wraps rather than clipping. */
 .done .row{flex-wrap:wrap;justify-content:center}
+.done .openpdf{min-height:48px}
 
 /* Prototype only: ?frame=1 shows the phone alone, for the 360dp specimens below. */
 :root[data-frame] body{padding:0;gap:0;align-items:flex-start;background:var(--stage)}
@@ -1582,8 +1587,8 @@ if (prototypeParams.get('gallery') === 'fold') {
 (function(){
   const SAFE = 'Your zine is safe. ';
   const A43_BODY = {
-    memory:     SAFE + 'It’s too big to make in one go on this phone — close other apps, then try again.',
-    space:      SAFE + 'Your phone is out of space — free some up, then try again.',
+    memory:     SAFE + 'This phone ran short of memory making the PDF — try again in a moment.',
+    space:      SAFE + 'This phone is out of space — free some up, then try again.',
     permission: SAFE + 'Zinely needs permission to save to Downloads — tap Try again, then Allow.',
     settings:   SAFE + 'Zinely needs permission to save to Downloads. Under Permissions, turn on Storage, then come back and tap Try again.',
     generic:    'Your zine is safe on this device — the export just didn’t finish. Try once more.'
