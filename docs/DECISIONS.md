@@ -16822,7 +16822,8 @@ document; [ADR-032](#adr-032)'s single Preferences DataStore; D-028's ruling tha
    Starter palettes (a closed disclosure, "3 to copy"). Built-in inks are the 13 frozen inks with `Ink` once, in one
    7-across grid of 28dp pots in 48dp targets, with no visible names; the paper tints follow a dashed rule for Art
    only. My inks is a 5-across grid of 30dp pots in 56dp targets, ending in a dashed *Mix* pot. At the largest text
-   (`fontScale ≥ 1.3`, the threshold `FlipTray.kt:159` already uses) My inks is 3 across at 72dp, built-in inks 5
+   (`fontScale ≥ 1.3`, so the system's largest common setting, exactly 1.3, counts; `FlipTray.kt:159` uses `> 1.3`
+   and is not changed) My inks is 3 across at 72dp, built-in inks 5
    across, palette strips 3 across, and the tray scrolls.
 2. **Mixing** (A40 rules 2–6, rev. 2 rule 5): a sheet that opens on the selected piece's ink, with a paper preview whose
    footer is the one fixed-height legibility line, a hex field, one shade square (touch only) and one hue strip.
@@ -16846,9 +16847,13 @@ document; [ADR-032](#adr-032)'s single Preferences DataStore; D-028's ruling tha
    ink; nothing recolours a page.
 5. **Undo** (rev. 2 Undo rule): a snack offers Undo **only when it follows a change**, never on a cap message, on "Pick
    at least 2 inks" or on a tap that changed nothing. Undo restores My inks and My palettes to the value the change
-   replaced and, when the same change also re-inked the piece, takes the document back one step with `Intent.Undo`.
-   Undo after Save restores the palettes and reopens the edit with its changes; Undo after "Palette not saved" reopens
-   the draft.
+   replaced and, **only when the same action measurably changed the document** (the document before and after the
+   synchronous dispatch differ; a blank text box, for one, refuses a style), takes the document back one step with
+   `Intent.Undo`. If the document changes again while the snack stands, its Undo is withdrawn, so it can never undo
+   an unrelated step. Undo after Save restores the palettes and reopens the edit with its changes; Undo after
+   "Palette not saved" reopens the draft. *Deviation recorded for parity:* the prototype's `wireTray` snapshots on
+   every pot tap and so offers Undo even when the tap re-picks the current ink; the app does not, because the rev. 2
+   rule says Undo follows a change and an `Intent.Undo` there would undo an earlier step.
 6. **TalkBack and focus** (rev. 2 TalkBack rule): a kept pot reads "My ink, ‹name›, ‹digits spoken singly›"; a palette
    pot "‹name›, from ‹palette›"; a strip "‹palette›, N inks" as a radio; the current pot adds ", selected". The snack is
    the one announcement of an ink change: Current ink is **not** a live region (today's `liveRegion` at
@@ -16860,17 +16865,21 @@ document; [ADR-032](#adr-032)'s single Preferences DataStore; D-028's ruling tha
    `NAME_TABLE`. No network.
 8. **Storage and placement.**
    - Pure and platform-free, in `:core:editor`, package `com.aritr.zinely.core.editor.ink`: `InkHex` and `parseHex`,
-     HSV ↔ hex, `contrastOnWhite`, `colourName`, and an immutable `InkLibrary` (My inks with a use clock, palettes, a
-     next id and the open palette) whose operations are total functions that enforce both caps, plus a pure
-     `PaletteDraft` for the edit mode. `:core:editor` gains `implementation(project(":core:copy"))` so `colourName`'s
-     words live in `Copy` ([ADR-060](#adr-060)); `:core:copy` has no dependencies, so the core-only CI job still runs
-     the name table.
+     HSV ↔ hex, `contrastOnWhite`, a `colourName` classifier that returns a **structured** name (tone, hue word, grey
+     form; no words), and an immutable `InkLibrary` (My inks with a use clock, palettes, a next id and the open
+     palette) whose operations are total functions that enforce both caps, plus a pure `PaletteDraft` for the edit
+     mode. The words live in `Copy` ([ADR-060](#adr-060)) and are joined in `:feature:editor`, the way
+     `benchInkName` maps ink ids to words today, so `:core:editor` still cannot see `:core:copy`
+     ([ARCHITECTURE](ARCHITECTURE.md) §15.6) and gains no dependency.
    - A thin seam in `:data-android`: `InkLibraryStore` (`Flow<InkLibrary>` and `update(transform)`, which returns the
-     value it replaced), and `DataStoreInkLibraryStore`, which writes one string key, `ink_library`, as versioned JSON
-     (kotlinx.serialization, already applied there) into the existing `editor_onboarding` Preferences DataStore. A
-     missing, unreadable or unknown-version value reads as an empty library, and every read is sanitised to the caps.
-     The undo snapshot is the value `update` replaced, never a copy held by the UI, so an action taken before the first
-     load cannot restore an empty library over a real one.
+     value it replaced and the value it wrote), and `DataStoreInkLibraryStore`, which writes one string key,
+     `ink_library`, as versioned JSON (kotlinx.serialization, already applied there) into the existing
+     `editor_onboarding` Preferences DataStore; `:data-android` gains `implementation(project(":core:editor"))` (no
+     cycle). A missing or unreadable value reads as an empty library, and every read is sanitised to the caps. A value
+     with an **unknown (newer) version** also reads as empty but is **never overwritten**: `update` refuses to write
+     over it, so a downgrade cannot destroy a newer build's inks. The undo snapshot is the value `update` replaced,
+     never a copy held by the UI, so an action taken before the first load cannot restore an empty library over a
+     real one; writes run in the ViewModel's scope, so leaving the screen cannot cancel one half-way.
    - `EditorViewModel` exposes it; the nav host passes it to `EditorScreen` as plain parameters, as `reframeCoachSeen`
      travels today (`ZinelyNavHost.kt:996`).
    - The saved document is untouched: `CURRENT_SCHEMA_VERSION` stays 3 and `DocumentSchemaShapeTest` is unchanged.
@@ -16888,18 +16897,22 @@ document; [ADR-032](#adr-032)'s single Preferences DataStore; D-028's ruling tha
 | A confirmed, non-undoable delete (Procreate, R33.7) | The owner ruled Undo; a snack is cheaper than a dialog and matches the Bench's delete |
 | Drag to reorder palettes | The owner ruled no; newest first is enough at 9 |
 | Recolour a page from a palette (Canva themes) | A different and larger feature; Future Enhancement below |
+| `colourName` producing words in `:core:editor` (a new `:core:editor` → `:core:copy` edge) | Reverses the documented boundary that `:core:editor` cannot see `:core:copy`, and `CopyNoProseLiteralTest` does not scan `:core:editor`; a structured result keeps the words in `Copy` and the guard where it already looks |
 | Carry My inks and palettes in the v2 backup | Needs a manifest field and a restore-merge rule ([ADR-121](#adr-121)'s "adds, never replaces" has no answer yet for a capped list); deferred, Known Limitation below |
 
 #### Consequences
 
 - The built-in bands, the preset pills and their copy go: `Copy.BenchInk.INKS`, `NEUTRALS`, `PRESETS`, `CUSTOM_INK`,
-  `SPOT_INK_SPOKEN`, `NEUTRAL_INK_SPOKEN`, `apply` and `presetLabel` are replaced by the A40 words.
+  `SPOT_INK_SPOKEN`, `NEUTRAL_INK_SPOKEN`, `apply` and `presetLabel` are replaced by the A40 words, and the already
+  unused `useNote` is deleted.
 - **A palette pot is not fenced by target.** The frozen prototype draws every palette and starter pot for a text target
   too, so *Warm zine*'s `Cream #F1E9D6` and *Cool zine*'s `Sky #DDE9EE` reach a text piece in one tap, which OD-24's
   band fence had prevented. This follows the freeze and D-028 (never block); the built-in grid keeps the fence.
   Recorded for the owner in OWNER-CHECKLIST.
-- The ink snack changes: it offers Undo when the tap changed the piece, stands 4000ms as the prototype's toast does,
-  and is drawn above the tray rather than under it.
+- The ink snack changes: it offers Undo when the action changed the piece or the library, stands 4000ms as the
+  prototype's toast does, and is drawn above the tray rather than under it.
+- The mixer's preview title for an Art piece (which has no words of its own) is a stock sample, "Last stop", the
+  prototype's mock text. That choice is the implementer's, not the freeze's, and is listed for the owner.
 - The Ink tray's pixel goldens change and new ones are added; they are recorded on CI (`record-goldens.yml`), never
   locally.
 - `EditorViewModel` gains a constructor parameter, so its two JVM tests gain a fake store.
@@ -16915,7 +16928,29 @@ document; [ADR-032](#adr-032)'s single Preferences DataStore; D-028's ruling tha
 
 #### Review {#adr-138-review}
 
-Pending: one independent review of this ADR and its implementation plan; the outcome is recorded here.
+**Plan review, 2026-10-22.** One independent Review Agent read this ADR and the implementation plan against the files
+and the frozen prototype, and returned **GO WITH FIXES**. It confirmed every cited symbol and line, every Copy string
+in the plan against the prototype, the pure-helper ports, the parallel lanes and the absence of a module cycle, and
+found no owner ruling re-decided. Five Required Fixes, all accepted:
+
+- *A predicted change could undo the wrong step.* The plan compared the piece's colour before dispatching, but the
+  reducer refuses a style on a blank text box, so Undo would have removed the box itself. Now the change is measured
+  (document before and after the synchronous dispatch), decision 5.
+- *Mixer Use had no single undo contract* (library changed, document not; or two writes keeping the wrong snapshot).
+  The plan now has one entry point that offers Undo when either changed and dispatches `Intent.Undo` only for a
+  document change.
+- *A renamed New palette never counted as changed.* The draft now keeps the name it started with.
+- *A `:core:editor` → `:core:copy` edge reversed a documented boundary and sat outside the copy guard.* `colourName`
+  now returns a structured name and the words are joined in `:feature:editor`; decision 8 and *Alternatives*.
+- *The task order could not compile.* The test rewrites that use retired symbols moved into the task that retires them.
+
+Recommended, accepted: an unknown stored version is never overwritten; `update` returns both values and writes run in
+the ViewModel's scope; a standing Undo is withdrawn when the document changes; the large-text threshold wording; Copy
+details (which name each snack says, the edit-mode pot label); the preview sample for Art listed for the owner; the
+pale note's polite status asserted; the TalkBack remove action removes directly; the ZINE-DIRECTION note reworded;
+`addMixed` precedence tested. Observations: prototype line numbers drifted after `777374f`, so the plan cites
+symbols; the prototype offers Undo on a no-op tap, recorded as a deviation in decision 5; RESEARCH has two `R33.7`
+headings (left for the research owner). The implementation review is recorded here when the work is done.
 
 ## ADR-139 {#adr-139}
 
