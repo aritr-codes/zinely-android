@@ -69,7 +69,7 @@ class SupplyCatalogTest {
         // extent and at least one must run edge to edge.
         //
         // Only *one* axis, because `shape.rule` is deliberately a centred band with air above and
-        // below (see SupplyCatalog.RULE) — the margin is the whole difference between a rule and a
+        // below (see ShapeArt.RULE) — the margin is the whole difference between a rule and a
         // rectangle. Requiring both axes would forbid the one supply that has a reason to say no.
         for ((id, outline) in SupplyCatalog.OUTLINES) {
             val pts = outline.points()

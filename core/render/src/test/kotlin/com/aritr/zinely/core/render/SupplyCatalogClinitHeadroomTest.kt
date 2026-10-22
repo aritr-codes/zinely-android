@@ -14,7 +14,7 @@ class SupplyCatalogClinitHeadroomTest {
     @Test
     fun `given each family art object, when its class file is read, then it is under 48 KB`() {
         for (name in listOf("ShapeArt", "MarkArt", "PaperArt", "TapeArt")) {
-            val bytes = javaClass.getResourceAsStream("/com/aritr/zinely/core/render/$name.class")!!.use { it.readBytes() }
+            val bytes = checkNotNull(javaClass.getResourceAsStream("/com/aritr/zinely/core/render/$name.class")) { "$name.class not on the classpath; update this list when a family object is added or renamed" }.use { it.readBytes() }
             assertTrue(bytes.size <= 48 * 1024, "$name.class is ${bytes.size} bytes; split the family before it nears 64 KB")
         }
     }

@@ -18,7 +18,7 @@ internal object TapeArt {
      * A staple, seen flat: a crossbar with two legs turned down at its ends.
      *
      * **One polygon, eight points** — not a bar plus two legs, for the even-odd reason in this
-     * section's header. Proportions are a real staple's: the crown is most of the width, the legs are
+     * header comment in `MarkArt`. Proportions are a real staple's: the crown is most of the width, the legs are
      * about a third of the height, and the wire is thin enough to read as wire rather than as a
      * bracket.
      */
@@ -30,7 +30,7 @@ internal object TapeArt {
     /**
      * A photo corner: the triangular pocket a print slides into, with the pocket cut out.
      *
-     * Two subpaths and therefore a hole, exactly like [WINDOW] — the inner triangle is the opening the
+     * Two subpaths and therefore a hole, exactly like [PaperArt.WINDOW] — the inner triangle is the opening the
      * photograph's corner goes behind, and without it the supply is a solid triangle already served by
      * `shape.triangle`.
      */

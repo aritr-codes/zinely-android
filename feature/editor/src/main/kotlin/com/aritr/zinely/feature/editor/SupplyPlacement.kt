@@ -127,7 +127,7 @@ internal val BenchSupplyDefaults: Map<String, BenchSupplyDefault> = mapOf(
  *
  * `shape.rule` is a divider — the thing you put *between* two things — and a divider that arrives as tall
  * as it is wide is not one. It lands at 70 % of the page's width on the outline's own 5:1 proportion (the
- * bar occupies the middle fifth of its box, `SupplyCatalog.RULE`), so the drawn ink is a line rather than a
+ * bar occupies the middle fifth of its box, `ShapeArt.RULE`), so the drawn ink is a line rather than a
  * band, and it is visibly not the rectangle its family-mate `shape.rect` places.
  *
  * ⚠ Keep this map at one entry unless the spec grows another example. It exists because §5.2's own
