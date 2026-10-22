@@ -1186,13 +1186,35 @@ public object Copy {
          * only when both are known and differ. Up to four names in full; past four, three and "and {k} more",
          * so k is always 2 or more.
          */
-        public fun note(zines: List<Pair<String, String?>>): Pair<String, String> {
+        public fun note(zines: List<Pair<String, String?>>): Pair<String, String> =
+            noteFor(zines.map { (now, was) -> Zine(now, was) })
+
+        /**
+         * One zine on the note: [now] and [was] as in [note]; [details] when its name, cover and folder went back
+         * (A37), [pages] when its page file did (A46, [ADR-140](docs/DECISIONS.md#adr-140)).
+         */
+        public data class Zine(
+            val now: String,
+            val was: String?,
+            val details: Boolean = true,
+            val pages: Boolean = false,
+        )
+
+        /** [note] with each zine's kinds: `v21-library.html` A46.3, form by form; A37.3 when no page file went back. */
+        public fun noteFor(zines: List<Zine>): Pair<String, String> {
             require(zines.isNotEmpty()) { "a note names at least one zine" }
-            val wentBack = zines.map { (now, was) -> now to was?.takeIf { it != now } }
+            // A46.3: {was} belongs to a details repair only; a pages repair never changes a name.
+            val wentBack = zines.map { z -> z.now to z.was?.takeIf { z.details && it != z.now } }
             if (wentBack.size == 1) {
+                val z = zines.single()
                 val (now, was) = wentBack.single()
+                val body = when {
+                    !z.pages -> ONE_BODY
+                    !z.details -> PAGES_BODY
+                    else -> ONE_BODY + PAGES_TOO
+                }
                 return (if (was != null) "“$was” is called “$now” again" else "Zinely repaired “$now”") to
-                    ONE_BODY + (if (was != null) RENAME_AGAIN else "")
+                    body + (if (was != null) RENAME_AGAIN else "")
             }
             val names = wentBack.map { (now, was) -> if (was != null) "“$now” (was “$was”)" else "“$now”" }
             val list = if (names.size > 4) {
@@ -1200,7 +1222,12 @@ public object Copy {
             } else {
                 names.dropLast(1).joinToString(", ") + " and " + names.last()
             }
-            return "Zinely repaired ${zines.size} zines" to "$list. $SEVERAL_BODY"
+            val body = when {
+                zines.none { it.pages } -> SEVERAL_BODY
+                zines.none { it.details } -> SEVERAL_PAGES_BODY
+                else -> SEVERAL_MIXED_BODY
+            }
+            return "Zinely repaired ${zines.size} zines" to "$list. $body"
         }
 
         /** What TalkBack reads: the title and body as one node (A37.10). */
@@ -1211,6 +1238,17 @@ public object Copy {
         private const val RENAME_AGAIN: String = " You can rename it again."
         private const val SEVERAL_BODY: String = "Small files that hold their names, covers and folders were " +
             "damaged, so Zinely used the copies from before the last changes to them."
+
+        // A46.3. "Your last few seconds": only a Bench autosave rewrites an existing page file (ADR-140).
+        private const val PAGES_BODY: String = "A page file was damaged, so Zinely used the copy from just before " +
+            "your last few seconds of changes."
+        private const val PAGES_TOO: String = " A page file was damaged too, so its pages are from just before your " +
+            "last few seconds of changes."
+        private const val SEVERAL_PAGES_BODY: String = "Their page files were damaged, so Zinely used the copies " +
+            "from just before your last few seconds of changes."
+        private const val SEVERAL_MIXED_BODY: String = "Some of their files were damaged, so Zinely used the copies " +
+            "it kept. Names, covers and folders are from before the last change to them; pages are from just before " +
+            "your last few seconds of changes."
     }
 
     /** Paper-size display names, shared by the shelf chooser and the print recipe. */
