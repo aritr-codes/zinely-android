@@ -634,6 +634,12 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
 .a34-pair figure{margin:0;display:grid;justify-items:center;font-size:11px}
 .a34-name{font-size:12px}
 
+.a40{max-width:680px;margin:var(--gap-2xl) 0;font-size:13.5px;color:var(--ink-soft)}
+.a40 h2{font-family:var(--voice);color:var(--ink)}
+.a40 b{color:var(--ink)} .a40 a{color:var(--leaf-text)}
+.a40-rules{padding-left:20px} .a40-rules li{margin-bottom:var(--gap-sm)}
+.a40 code{font-size:12px}
+
 </style></head><body>
 <style>
 /* ===== A40 · Mix an ink — page chrome ===================================== */
@@ -675,6 +681,70 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
 .ink-choice.mix .ink-name{color:var(--ink);font-weight:700}
 .ink-choice .ink-name.hex{font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 
+/* ===== A40 rev. 2: palettes and a compact built-in grid ===================== */
+.inkpop.a40 .inklbl{min-height:28px}
+.lbl-act{font:700 .66rem var(--sans);letter-spacing:0;text-transform:none;color:#27270F;background:var(--paper);
+  border:1.5px solid var(--ink);border-radius:var(--br-pill);min-height:32px;padding:0 var(--gap-md);cursor:pointer;position:relative}
+.lbl-act::after{content:"";position:absolute;inset:-8px -2px}  /* 48dp touch area */
+.pal{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:var(--gap-sm);background:var(--paper);color:#27270F;border:1.5px solid var(--ink);
+  border-radius:var(--br-md);padding:var(--gap-xs) var(--gap-xs) var(--gap-xs) var(--gap-md);margin-bottom:var(--gap-sm)}
+.pal .pal-name{flex:1;min-width:0;font:700 .84rem var(--voice);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pal .pal-pots{grid-column:1/-1;display:flex;flex-wrap:wrap;margin:-6px 0 0 -7px}
+.pal .pal-pot{width:40px;height:48px;display:grid;place-items:center;background:none;border:0;cursor:pointer;padding:0}
+.pal .pal-pot span{width:26px;height:26px;border-radius:50%;border:1.5px solid #27270F;position:relative;display:block}
+.pal .pal-pot.on span::after{content:"";position:absolute;inset:-5px;border:1.6px dashed #27270F;border-radius:50%}
+.pal .pal-more{flex:none;width:48px;height:48px;border:0;background:none;color:#27270F;font:700 1.2rem var(--sans);cursor:pointer;border-radius:var(--br-sm)}
+.pal .pal-copy{flex:none;min-height:48px;padding:0 var(--gap-sm);border:0;background:none;color:#555A1B;font:700 .72rem var(--sans);cursor:pointer;text-decoration:underline}
+.pal-empty{border:1.5px dashed var(--ink);border-radius:var(--br-md);padding:var(--gap-sm) var(--gap-md);font-size:.74rem;
+  color:var(--ink-soft);margin-bottom:var(--gap-sm);line-height:1.4}
+.pal-empty b{color:var(--ink)}
+.inkpop.a40 .pots.compact{grid-template-columns:repeat(7,minmax(0,1fr))}
+.pots.compact .ink-choice{min-height:48px}
+.pots.compact .ink-choice .pot{width:28px;height:28px}
+.pots.compact .ink-name{display:none}
+.tint-sep{grid-column:1/-1;height:0;border-top:1.5px dashed var(--hair);margin:2px 0}
+.disclose{display:flex;align-items:center;gap:var(--gap-sm);width:100%;min-height:48px;margin-top:var(--gap-xs);background:none;border:0;
+  border-top:1.5px dashed var(--hair);color:var(--ink);font:700 .6rem var(--sans);letter-spacing:.13em;text-transform:uppercase;cursor:pointer;padding:0}
+.disclose small{font-size:.66rem;letter-spacing:0;text-transform:none;color:var(--ink-soft);font-weight:600}
+.disclose i{margin-left:auto;font-style:normal;transition:transform .15s}
+.disclose[aria-expanded="true"] i{transform:rotate(180deg)}
+.pe-name label{display:block;font:700 .66rem var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 var(--gap-xs)}
+.pe-name input{width:100%;min-height:48px;border:1.5px solid var(--ink);border-radius:var(--br-md);background:var(--paper);color:#27270F;
+  font:700 .95rem var(--voice);padding:0 var(--gap-md)}
+.pe-name input:focus{outline:3px solid var(--berry);outline-offset:2px}
+.pe-strip{display:flex;flex-wrap:wrap;gap:var(--gap-xs);min-height:52px;align-items:center;margin-top:var(--gap-sm);padding:var(--gap-xs);
+  border:1.5px dashed var(--ink);border-radius:var(--br-md);background:var(--paper)}
+.pe-strip:empty::before{content:"Tap inks below to add them";font-size:.74rem;color:#6A452F;padding-left:var(--gap-sm)}
+.pe-strip button{width:48px;height:48px;border:0;background:none;display:grid;place-items:center;cursor:pointer;position:relative}
+.pe-strip button span{width:28px;height:28px;border-radius:50%;border:1.5px solid #27270F;display:block}
+.pe-strip button::after{content:"\00D7";position:absolute;right:3px;top:3px;font:700 .7rem/12px var(--sans);color:#27270F;background:var(--paper);
+  border:1px solid #27270F;border-radius:50%;width:14px;height:14px;text-align:center}
+.pe-count{font-size:.74rem;color:var(--ink-soft);margin:var(--gap-xs) 2px 0}
+/* a badge, not a glyph on the ink: readable on any colour */
+.ink-choice.picked .pot::before{content:"\2713";position:absolute;right:-6px;top:-6px;width:16px;height:16px;border-radius:50%;
+  background:#27270F;color:#FFF9DB;border:1.5px solid #FFF9DB;font:700 .58rem/13px var(--sans);text-align:center}
+.ink-current[hidden],#editBody[hidden],#trayBody[hidden]{display:none!important}
+.inkpop.a40 h4{position:sticky;top:calc(-1 * var(--gap-md));z-index:2;background:var(--surface);padding-top:var(--gap-xs)}
+.pe-bar{position:sticky;bottom:calc(-1 * var(--gap-md));display:flex;gap:var(--gap-sm);padding:var(--gap-md) 0;margin-top:var(--gap-sm);
+  background:var(--surface);border-top:1.5px dashed var(--hair)}
+.pe-bar button{flex:1;min-height:48px;border-radius:var(--br-pill);border:1.5px solid var(--ink);font:700 .88rem var(--sans);cursor:pointer;box-shadow:2px 2px 0 var(--ink-line)}
+.pe-bar .ghost{background:var(--surface);color:var(--ink)} .pe-bar .go{background:var(--leaf);color:var(--on-leaf);flex:1.6}
+.pe-bar .go[aria-disabled="true"]{opacity:.5}
+.kept-menu button{display:block;width:100%;text-align:left}
+:root[data-big="on"] .inkpop.a40 .pots.compact{grid-template-columns:repeat(5,minmax(0,1fr))}
+:root[data-big="on"] .pal .pal-name{font-size:1.2rem;white-space:normal}
+:root[data-big="on"] .lbl-act{font-size:.9rem}
+:root[data-big="on"] .pe-bar{flex-direction:column}
+
+.inkpop.a40 .ink-current b{color:#27270F} .inkpop.a40 .ink-current small{color:#6A452F}
+.pal-pick{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:0 0 var(--gap-sm)}
+.pal-mini{position:relative;height:28px;margin:10px 0;display:flex;padding:0;border:1.5px solid #27270F;border-radius:var(--br-pill);
+  overflow:hidden;background:var(--paper);cursor:pointer}
+.pal-mini::after{content:"";position:absolute;inset:-10px 0}  /* 48dp touch area */
+.pal-mini i{flex:1}
+.pal-mini[aria-checked="true"]{outline:2px dashed var(--ink);outline-offset:3px}
+.inklbl small#palCount{margin-left:6px}
+:root[data-big="on"] .pal-pick{grid-template-columns:repeat(3,minmax(0,1fr))}
 /* ===== the mixer sheet ==================================================== */
 .sheet.mixer{max-height:92%;padding-bottom:0;display:flex;flex-direction:column;overflow:hidden}
 .sheet.mixer .body{overflow:auto;padding-bottom:var(--gap-md);min-height:0}
@@ -685,20 +755,25 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
   box-shadow:var(--hard) var(--hard) 0 var(--ink-line);padding:var(--gap-md) var(--gap-lg);display:grid;grid-template-columns:1fr auto;
   gap:var(--gap-xs) var(--gap-md);align-items:center}
 .proofcard::after{content:"";position:absolute;inset:0;background-image:var(--grain);background-size:130px;mix-blend-mode:multiply;opacity:.28;pointer-events:none;border-radius:inherit}
+.proofcard{padding:var(--gap-sm) var(--gap-md)}
 .proofcard .pt{font:700 1.32rem/1.1 var(--voice);color:var(--mix)}
 .proofcard .pb{font:400 .8rem/1.45 var(--serif);color:var(--mix);grid-column:1}
-.proofcard svg.mark{grid-row:1/3;grid-column:2;width:58px;height:58px;color:var(--mix)}
+.proofcard svg.mark{grid-row:1;grid-column:2;width:40px;height:40px;color:var(--mix)}
 .proofcard .papernote{grid-column:1/3;font:600 .6rem var(--sans);letter-spacing:.1em;text-transform:uppercase;color:#6A452F;margin-top:var(--gap-xs)}
 .legib{display:flex;gap:var(--gap-sm);align-items:flex-start;margin:var(--gap-md) 0 0;padding:var(--gap-sm) var(--gap-md);
   background:var(--butter);color:#27270F;border:1.5px solid var(--ink);border-radius:var(--br-md);font-size:.78rem;line-height:1.4}
 /* RF1: the note lives in a fixed slot, so the square below never moves while you drag */
-.legib{min-height:64px}
-.legib.ok{background:var(--paper);align-items:center}
+/* rev. 2: the legibility line is the card's footer: one fixed slot, so nothing below moves while you drag */
+.proofcard .legib{grid-column:1/3;margin:var(--gap-xs) calc(-1 * var(--gap-md)) calc(-1 * var(--gap-sm));min-height:40px;border:0;
+  border-top:1.5px dashed #27270F;border-radius:0 0 var(--br-md) var(--br-xs);padding:var(--gap-xs) var(--gap-md);align-items:center;font-size:.74rem;
+  position:relative;z-index:1}
+.legib b{display:inline} .legib.ok{background:transparent;align-items:center}
 .legib.ok .warn-only{display:none} .legib:not(.ok) .ok-only{display:none}
 .legib svg{flex:none;width:18px;height:18px;margin-top:1px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .legib b{display:block}
 /* hex first */
-.hexrow{margin-top:var(--gap-md)}
+.hexrow{margin-top:var(--gap-sm)}
+.hexhelp:empty{display:none}
 .hexrow label{display:block;font:700 .7rem var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:var(--gap-xs)}
 .hexbox{display:flex;align-items:center;gap:var(--gap-sm);min-height:52px;background:var(--paper);color:#27270F;border:1.5px solid var(--ink);
   border-radius:var(--br-md);padding:0 var(--gap-md)}
@@ -711,7 +786,7 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
 .hexhelp.err{color:var(--jam-text);font-weight:600}
 .hexbox.err{border-color:var(--jam-text);box-shadow:inset 0 0 0 1px var(--jam-text)}
 /* one shade square, one hue strip */
-.sv{position:relative;margin-top:var(--gap-md);height:156px;border:1.5px solid var(--ink);border-radius:var(--br-md);touch-action:none;cursor:crosshair;
+.sv{position:relative;margin-top:var(--gap-sm);height:132px;border:1.5px solid var(--ink);border-radius:var(--br-md);touch-action:none;cursor:crosshair;
   background:linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,hsl(var(--hue),100%,50%))}
 .sv:focus-visible,.hue:focus-visible{outline:3px solid var(--berry);outline-offset:3px}
 .knob{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;border:3px solid #fff;
@@ -726,11 +801,11 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
 .kept-menu{position:absolute;z-index:40;background:var(--surface);border:1.5px solid var(--ink);border-radius:var(--br-md);
   box-shadow:3px 3px 0 var(--ink-line);padding:var(--gap-xs)}
 .kept-menu button{min-height:48px;padding:0 var(--gap-md);background:none;border:0;font:600 .8rem var(--sans);color:var(--ink);cursor:pointer}
-.fullnote{display:flex;gap:var(--gap-sm);align-items:center;font-size:.76rem;color:var(--ink);margin:0 0 var(--gap-md);
+.fullnote{display:flex;gap:var(--gap-sm);align-items:center;font-size:.76rem;color:var(--ink);margin:0 0 var(--gap-sm);
   padding:var(--gap-sm) var(--gap-md);border:1.5px dashed var(--ink);border-radius:var(--br-md);line-height:1.35}
 .fullnote .pot{flex:none;width:24px;height:24px;cursor:default}
 .fullnote[hidden]{display:none}
-.mixbar{flex:none;display:flex;gap:var(--gap-sm);padding:var(--gap-md) 0 var(--gap-lg)}
+.mixbar{flex:none;display:flex;gap:var(--gap-sm);padding:var(--gap-sm) 0 var(--gap-md)}
 .mixbar button{flex:1;min-height:48px;border-radius:var(--br-pill);border:1.5px solid var(--ink);font:700 .9rem var(--sans);cursor:pointer;box-shadow:2px 2px 0 var(--ink-line)}
 .mixbar .ghost{background:var(--surface);color:var(--ink)}
 .mixbar .go{background:var(--leaf);color:var(--on-leaf);flex:1.6}
@@ -761,18 +836,22 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
 @media (prefers-reduced-motion:reduce){.sheet,.toast2{transition:none}}
 </style>
 
-<p class="badge">A40 · amendment to v21-bench · frozen 2026-10-22</p>
+<p class="badge">A40 rev. 2 · palettes · frozen 2026-10-22</p>
 <p class="cap lead">Mix an ink — a colour of your own, judged on paper, kept for every zine.</p>
 <p class="cap">Owner ruling 2026-10-22: custom inks, with a hex picker (<a href="../../DECISIONS.md#adr-138">ADR-138</a>).
-Owner looked 2026-10-22 ("looks great") and ruled the cap of 9. Frozen the same day after an independent critique.
-The Ink tray stays as frozen; one band is added, <b>My inks</b>, ending in a <b>Mix</b> pot. Everything else on this page is new.</p>
+Owner looked 2026-10-22 ("looks great"), ruled the cap of 9, then asked for <b>named palettes</b> and a tray that puts
+the maker's own work first. Rev. 2 reorders the frozen Ink tray: <b>My palettes</b>, <b>My inks</b>, then the
+<b>built-in inks</b> in one compact grid, with the three starter palettes behind a disclosure. Owner, second look: "trim the text, avoid the scroller", so the mixer lost three sentences and fits without scrolling.</p>
 
 <div class="controls" role="group" aria-label="States to look at">
-  <button data-state="tray0" aria-pressed="true">1 · Ink tray, first time</button>
-  <button data-state="mixer">2 · Mixing</button>
-  <button data-state="pale">3 · A pale ink (warning)</button>
-  <button data-state="tray3">4 · Tray with my inks</button>
-  <button data-state="full">5 · My inks full</button>
+  <button data-state="tray0" aria-pressed="true">1 · First time</button>
+  <button data-state="tray3">2 · My palettes and inks</button>
+  <button data-state="newpal">3 · New palette</button>
+  <button data-state="many">3b · Nine palettes (full)</button>
+  <button data-state="starters">4 · Starter palettes open</button>
+  <button data-state="mixer">5 · Mixing</button>
+  <button data-state="pale">6 · A pale ink</button>
+  <button data-state="full">7 · My inks full</button>
   <span class="sep"></span>
   <button data-toggle="theme" aria-pressed="false">Dark</button>
   <button data-toggle="big" aria-pressed="false">Largest text</button>
@@ -792,13 +871,30 @@ The Ink tray stays as frozen; one band is added, <b>My inks</b>, ending in a <b>
   <!-- the Ink tray (frozen A16 form) + the A40 band -->
   <div class="inkpop ink-a16 a40" id="tray" role="dialog" aria-label="Ink">
     <h4>Ink<button type="button" id="trayDone">Done</button></h4>
-    <div class="ink-current" aria-live="polite"><span class="ink-current-pot" id="curPot" style="background:#2A251E"></span>
+    <div class="ink-current" id="curRow" aria-live="polite"><span class="ink-current-pot" id="curPot" style="background:#2A251E"></span>
       <span class="ink-current-copy"><small>Current ink</small><b id="curName">Ink</b></span></div>
-    <div class="inklbl">Spot inks</div><div class="pots" id="bandSpot"></div>
-    <div class="inklbl">Neutrals</div><div class="pots" id="bandNeut"></div>
-    <div class="inklbl"><span>My inks</span><small id="myCount"></small></div><div class="pots" id="bandMine"></div>
-    <div class="inklbl">Starting palettes</div>
-    <div class="presets" id="presets"></div>
+    <!-- A40 rev. 2: the maker's own work first, the built-in inks compact below -->
+    <div id="trayBody">
+      <div class="inklbl"><span>My palettes <small id="palCount"></small></span><button class="lbl-act" type="button" id="newPal">+ New palette</button></div>
+      <div id="palList"></div>
+      <div class="inklbl"><span>My inks</span><small id="myCount"></small></div><div class="pots" id="bandMine"></div>
+      <div class="inklbl"><span>Built-in inks</span></div>
+      <div class="pots compact" id="bandBuilt"></div>
+      <button class="disclose" type="button" id="starterBtn" aria-expanded="false" aria-controls="starterList"><span>Starter palettes</span><small>3 to copy</small><i aria-hidden="true">&#9662;</i></button>
+      <div id="starterList" hidden></div>
+    </div>
+    <!-- palette edit mode: the same tray; inks become toggles -->
+    <div id="editBody" hidden>
+      <div class="pe-name"><label for="palName">Palette name</label>
+        <input id="palName" maxlength="30" autocomplete="off" aria-describedby="palHelp">
+        <p class="hexhelp" id="palHelp" aria-live="polite"></p></div>
+      <div class="pe-strip" id="peStrip" role="group" aria-label="Inks in this palette"></div>
+      <p class="pe-count" id="peCount" aria-live="polite" tabindex="-1"></p>
+      <div id="peLost" hidden><div class="inklbl"><span>Was in this palette</span></div><div class="pots" id="peLostPots"></div></div>
+      <div class="inklbl"><span>My inks</span></div><div class="pots" id="peMine"></div>
+      <div class="inklbl"><span>Built-in inks</span></div><div class="pots compact" id="peBuilt"></div>
+      <div class="pe-bar"><button class="ghost" type="button" id="peCancel">Cancel</button><button class="go" type="button" id="peSave">Save palette</button></div>
+    </div>
   </div>
 
   <div class="scrim" id="scrim"></div>
@@ -806,25 +902,23 @@ The Ink tray stays as frozen; one band is added, <b>My inks</b>, ending in a <b>
     <div class="grip" aria-hidden="true"></div>
     <div class="body">
       <h3><span id="mixTitle">Mix an ink</span><small id="mixName"></small></h3>
-      <p class="fullnote" id="fullnote" hidden></p>
-      <div class="proofcard" aria-label="Printed preview">
+      <p class="fullnote" id="fullnote" role="status" hidden></p>
+      <div class="proofcard" aria-label="Preview on white paper">
         <span class="pt">Last stop</span>
-        <span class="pb">The words you set in this ink, the way they print.</span>
         <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1l2.6 6.9 7.4.4-5.8 4.6 2 7.1L12 16l-6.2 4 2-7.1L2 8.3l7.4-.4z"/></svg>
-        <span class="papernote">On white paper · about how it prints</span>
-      </div>
-      <div class="legib ok" id="legib">
-        <svg class="warn-only" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>
-        <svg class="ok-only" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
-        <span class="ok-only">Reads clearly on white paper.</span>
-        <span class="warn-only" id="legibWarn" role="status"><b>Pale in print.</b><span id="legibCopy"></span></span>
+        <span class="legib ok" id="legib">
+          <svg class="warn-only" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>
+          <svg class="ok-only" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
+          <span class="ok-only">Reads clearly on white paper</span>
+          <span class="warn-only" id="legibWarn" role="status"><b>Pale in print.</b><span id="legibCopy"></span></span>
+        </span>
       </div>
       <div class="hexrow">
-        <label for="hex">Hex colour</label>
+        <label class="vh" for="hex">Hex colour</label>
         <div class="hexbox" id="hexbox"><span class="hash" aria-hidden="true">#</span>
-          <input id="hex" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="hexhelp" value="505955">
+          <input id="hex" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="hexhelp" placeholder="505955" value="505955">
           <span class="sw" aria-hidden="true"></span></div>
-        <p class="hexhelp" id="hexhelp" aria-live="polite">Type or paste a code, like 505955. Or pick below.</p>
+        <p class="hexhelp" id="hexhelp" aria-live="polite"></p>
       </div>
       <!-- RF7: the square is touch-only; TalkBack and keys get two one-axis sliders instead (hidden, below) -->
       <div class="sv" id="sv" aria-hidden="true"><span class="knob" id="svKnob"></span></div>
@@ -833,7 +927,7 @@ The Ink tray stays as frozen; one band is added, <b>My inks</b>, ending in a <b>
       <div class="slbl" aria-hidden="true"><span>Greyer ← → More colour</span><span>↑ Lighter · ↓ Darker</span></div>
       <div class="hue" id="hue" tabindex="0" role="slider" aria-label="Hue" aria-valuemin="0" aria-valuemax="355" aria-valuenow="150"><span class="knob" id="hueKnob"></span></div>
     </div>
-    <div class="mixfoot"><p class="fullnote" id="fullnote" role="status" hidden></p>
+    <div class="mixfoot">
     <div class="mixbar"><button class="ghost" type="button" id="mixCancel">Cancel</button>
       <button class="go" type="button" id="mixUse">Use this ink</button></div></div>
   </div>
@@ -843,28 +937,35 @@ The Ink tray stays as frozen; one band is added, <b>My inks</b>, ending in a <b>
 </div>
 
 <div class="notes">
-  <h2>What A40 adds, and what it does not</h2>
+  <h2>Rev. 2: the tray, in the order you work</h2>
   <ol>
-    <li><b>My inks band</b> in the Ink tray, after Neutrals, before Starting palettes, for text <i>and</i> Art, in every zine.
-      It ends with a dashed <b>Mix</b> pot; the first time, Mix is all it holds.</li>
-    <li><b>Mix an ink</b> opens a sheet on the selected piece's current ink, so "a bit darker" is one drag.</li>
-    <li><b>Hex first.</b> <code>#</code> optional, any case; spaces, <code>#</code> and invisible characters are stripped
-      <i>before</i> anything is cut, so a pasted <code>"&nbsp;&nbsp;#505955"</code> works. Only a full 6-character code moves the
-      colour while you type; a 3-character code counts when you tap Done or leave the field. An unfinished or wrong code says
-      "Still showing #…", and the field settles to what is shown before Use applies it.</li>
-    <li><b>One shade square, one hue strip.</b> Square: left greyer, right more colour; up lighter, down darker. The strip's
-      track is 28 dp inside a 48 dp touch area. No R/G/B boxes, no screen eyedropper (photo pick is a later idea).</li>
-    <li><b>Paper preview</b>: your title, a line of body text and a mark, on white, "about how it prints" (a screen is not toner).</li>
-    <li><b>Legibility line</b> in a fixed slot under the preview: "Reads clearly on white paper", or, below <b>3 : 1</b> against
-      white (about <code>#949494</code> or paler), a yellow "Pale in print" note. Same size either way, so nothing below it moves
-      mid-drag. Its words differ for text and for Art. It warns, never blocks (D-028). Note: five built-in inks are below 3 : 1
-      too (Strawberry, Sunflower, Ochre, Aqua, Fog), so mixing from them shows the note; that is honest, and the tray itself
-      stays silent as frozen.</li>
-    <li><b>My inks holds 9</b>, so nine kept inks and the Mix pot fill exactly two rows of five (three rows of three at the largest text). Shown newest-made first; the order never shuffles while you look. When full, the ink you used
-      <i>longest ago</i> is the one that goes, and the sheet shows it (pot + name) before you tap, with "Pages already using it
-      keep it." Reusing a kept ink, from its pot or by mixing the same code, never duplicates it.</li>
-    <li><b>Undo</b> after Use puts back the page's ink <i>and</i> My inks, so a stray tap never costs a kept ink.
-      <b>Long-press</b> a kept pot for "Remove from My inks" (also undoable).</li>
+    <li><b>Order: Current ink → My palettes → My inks → Built-in inks → Starter palettes (closed).</b> The maker's own work
+      comes first, because repeat use is where time goes. Done and "tap a pot to use it" are unchanged.</li>
+    <li><b>Built-in inks, compact.</b> The 13 built-in inks (the frozen Spot inks and Neutrals, with Ink shown once) sit in one
+      7-across grid of 28 dp pots in 48 dp targets, about half the height of the old bands. Paper tints follow for Art
+      only, as frozen. Visible names go; the picked ink's name shows in Current ink, and TalkBack reads every name.
+      Always visible, never folded away: no extra tap for the common case.</li>
+    <li><b>My palettes, one open at a time.</b> The open palette shows its name, ⋯ and its 2–6 pots; every other palette waits
+      below as a colour strip, five to a row, so nine palettes take two rows (as My inks: nine and Mix) and the tray never grows. Tap a strip to open it.
+      The one you opened last stays open next time. <b>A palette</b> is a named row of 2–6 pots. Tap any pot to use that ink (a piece holds one ink, so "applying" a
+      palette means its inks are one tap away in every zine; no tool recolours a whole design from a palette except
+      Canva themes, R33.7). <b>⋯</b> gives Edit, Duplicate, Delete. Newest first. Holds 9 (owner, 2026-10-22); the 10th asks you to delete
+      one, because palettes are named on purpose and are never silently dropped.</li>
+    <li><b>New palette / Edit</b> happen in the tray itself, not a new screen: a name field (a unique default, "My palette 2"),
+      a strip of the chosen inks (tap one to remove it), and every ink below as a toggle with a ✓ (not colour alone).
+      Mix adds a freshly mixed ink straight into the palette and My inks. Save needs a name and 2 inks.
+      A duplicate name is allowed and noted ("You have another palette called this. That's fine."): no tool forbids it,
+      and blocking would be fussier than the risk.</li>
+    <li><b>Palettes keep copies of their colours</b>, not links to My inks. Removing a kept ink, or the cap letting one go,
+      never changes a palette or a page. Editing a palette changes only that palette. Undo after Delete, Duplicate, Save
+      or Remove puts everything back.</li>
+    <li><b>Starter palettes</b> (Two-colour, Warm zine, Cool zine) become examples: behind one "Starter palettes · 3 to copy"
+      disclosure at the bottom, each with "Save a copy" into My palettes. Their pots still apply an ink with one tap, so the
+      old "Apply" action is one tap on the first pot.</li>
+    <li><b>Mixing, trimmed.</b> Same parts as rev. 1, fewer words: the legibility line is now the paper preview's footer
+      ("Reads clearly on white paper" / "Pale in print. Words may be hard to read."); the hex help sentence became a placeholder
+      and shows only for an error; the full note is one sentence. The sheet fits a normal phone without scrolling; at the
+      largest text it still scrolls, on purpose.</li>
   </ol>
   <h3>TalkBack</h3>
   <ul>
@@ -882,7 +983,8 @@ The Ink tray stays as frozen; one band is added, <b>My inks</b>, ending in a <b>
   <p>The bench has no large-text rule for the Ink tray, so A40 <i>defines</i> one: three pots per row, 72 dp tall. The mixer keeps
     one column and scrolls; the two buttons stack and stay pinned; the square shrinks to 120 dp; type never does.</p>
   <h3>Not in A40</h3>
-  <p>Naming or reordering your inks, paper colour, eyedropper, whether a backup carries My inks (decided in ADR-138).</p>
+  <p>Naming or reordering single inks; dragging palettes into an order (newest first is enough at 9); a palette that
+    recolours a whole page; paper colour; eyedropper; whether a backup carries My inks and palettes (decided in ADR-138).</p>
 </div>
 </div>
 
@@ -937,65 +1039,170 @@ if(typeof module!=='undefined')module.exports={parseHex,hsvToHex,hexToHsv,colour
 
 const $=id=>document.getElementById(id);
 document.documentElement.setAttribute('data-theme','light');
-const SPOT=[['Matcha','#7C8A3F'],['Forest','#3E5E3A'],['Strawberry','#E27F89'],['Brick','#B0503F'],
-  ['Sunflower','#E7B53C'],['Ochre','#D19A3C'],['Aqua','#57B0A9'],['Cornflower','#6E86C9'],['Plum','#8A5A9B'],['Ink','#2A251E','Spot ink']];
-const NEUT=[['Ink','#2A251E','Neutral ink'],['Slate','#5B5347'],['Stone','#8C8269'],['Fog','#B7AD93']];
-const PRESETS=[['Two-colour',['#2A251E','#E27F89']],['Warm zine',['#B0503F','#E7B53C','#F1E9D6']],['Cool zine',['#3E5E3A','#57B0A9','#DDE9EE']]];
-const CAP=9;   // 9 kept + Mix = two full rows of five; never a half-empty row
-/* My inks: display order is newest-made first and never shuffles under your finger;
-   when full, the ink used LEAST RECENTLY is the one that goes (RF5). */
-let mine=[];   // [{hex, used}]
-let clock=0;
+/* Built-in inks, one list: the frozen Spot inks then the Neutrals, with the duplicate Ink shown once (rev. 2) */
+const BUILT=[['Matcha','7C8A3F'],['Forest','3E5E3A'],['Strawberry','E27F89'],['Brick','B0503F'],['Sunflower','E7B53C'],
+  ['Ochre','D19A3C'],['Aqua','57B0A9'],['Cornflower','6E86C9'],['Plum','8A5A9B'],['Ink','2A251E'],
+  ['Slate','5B5347'],['Stone','8C8269'],['Fog','B7AD93']];
+const TINTS=[['Cream','F1E9D6'],['Blush','F0DED9'],['Sky','DDE9EE'],['Sage','E1E9D2'],['Kraft','E4D3B4']]; // Art only, as frozen
+const STARTERS=[['Two-colour',['2A251E','E27F89']],['Warm zine',['B0503F','E7B53C','F1E9D6']],['Cool zine',['3E5E3A','57B0A9','DDE9EE']]];
+const CAP=9;          // My inks: 9 kept + Mix = two full rows of five
+const PAL_CAP=9;      // My palettes (owner 2026-10-22): named on purpose, so never evicted; the 10th asks for room
+const PAL_MIN=2, PAL_MAX=6;
+let mine=[];          // [{hex, used}]  newest-made first; LRU evicted at CAP
+let pals=[];          // [{id, name, inks:[hex...]}]  newest first; inks are COPIES of values, never references
+let clock=0, palSeq=0;
 let state={h:150,s:.1,v:.35};
-let target='text';           // what the mixer was opened from: 'text' or 'art' (the note's copy differs)
+let target='text';
 let undoSnap=null;
+let edit=null;        // {id|null, name, inks:[]} while editing a palette
+let current='2A251E';
+let mixReturn=null;
+let openPal=null;   // the palette whose inks are out; the others wait as strips   // 'edit' when Mix was opened from palette editing
 
-const HELP='Type or paste a code, like 505955. Or pick below.';
+const HELP='';  // rev. 2: the placeholder and the square say it; help shows only for an error
 function kept(hex){return mine.find(k=>k.hex===hex);}
 function lru(){return mine.reduce((a,k)=>k.used<a.used?k:a,mine[0]);}
+/* one name for any ink: a built-in keeps its own name, anything else gets the colour name */
+function inkName(hex){const b=[...BUILT,...TINTS].find(([,h])=>h===hex);return b?b[0]:colourName(hex);}
+function builtFor(){return target==='text'?BUILT:[...BUILT,...TINTS];}
+const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---- pots ---- */
+const choice=(hex,{cls='',label,name,pressed})=>{const on=!edit&&hex===current;
+  return `<button class="ink-choice ${cls}${on?' on':''}" type="button" aria-label="${esc(label)}${on?', selected':''}"${pressed===undefined?'':` aria-pressed="${pressed}"`} data-ink="${hex}">
+  <span class="pot" style="background:#${hex}"></span><span class="ink-name${cls.includes('my')?' hex':''}" aria-hidden="true">${esc(name)}</span></button>`;};
+const mixPot=`<button class="ink-choice mix" type="button" data-mix="1" aria-label="Mix an ink"><span class="pot"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></span><span class="ink-name">Mix</span></button>`;
+function mineHtml(picking){
+  return mine.map(k=>choice(k.hex,{cls:'my'+(picking&&edit.inks.includes(k.hex)?' picked':''),pressed:picking?edit.inks.includes(k.hex):undefined,
+    label:(picking?'':'My ink, ')+colourName(k.hex)+', '+spokenHex(k.hex),name:'#'+k.hex})).join('')+mixPot;
+}
+function builtHtml(picking){
+  const list=builtFor();
+  return list.map(([n,h],i)=>(i===BUILT.length?'<span class="tint-sep" aria-hidden="true"></span>':'')
+    +choice(h,{cls:picking&&edit.inks.includes(h)?'picked':'',pressed:picking?edit.inks.includes(h):undefined,label:n,name:n})).join('');
+}
+function palCard(p,starter){
+  const pots=p.inks.map(h=>`<button class="pal-pot${h===current?' on':''}" type="button" data-ink="${h}" aria-label="${esc(inkName(h))}, from ${esc(p.name)}${h===current?', selected':''}"><span style="background:#${h}"></span></button>`).join('');
+  return `<div class="pal" role="group" aria-label="${esc(p.name)}, ${p.inks.length} inks"><span class="pal-name">${esc(p.name)}</span>`
+    +(starter?`<button class="pal-copy" type="button" data-copy="${esc(p.name)}">Save a copy</button>`
+             :`<button class="pal-more" type="button" data-more="${p.id}" aria-label="More for ${esc(p.name)}">&#8943;</button>`)
+    +`<span class="pal-pots">${pots}</span></div>`;
+}
 
 /* ---- the tray ---- */
-const choice=(name,colour,spoken,cls='')=>`<button class="ink-choice ${cls}" type="button" aria-label="${spoken||name}" data-ink="${colour}" data-name="${name}">
-  <span class="pot" style="background:${colour}"></span><span class="ink-name${cls.includes('my')?' hex':''}" aria-hidden="true">${name}</span></button>`;
 function renderTray(){
-  $('bandSpot').innerHTML=SPOT.map(([n,c,s])=>choice(n,c,s)).join('');
-  $('bandNeut').innerHTML=NEUT.map(([n,c,s])=>choice(n,c,s)).join('');
-  $('bandMine').innerHTML=mine.map(k=>choice('#'+k.hex,'#'+k.hex,'My ink, '+colourName(k.hex)+', '+spokenHex(k.hex),'my')).join('')
-    +`<button class="ink-choice mix" type="button" id="mixBtn" aria-label="Mix an ink"><span class="pot"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></span><span class="ink-name">Mix</span></button>`;
+  const editing=!!edit;
+  $('trayBody').hidden=editing;$('editBody').hidden=!editing;
+  $('tray').querySelector('h4').firstChild.textContent=editing?(edit.id?'Edit palette':'New palette'):'Ink';
+  $('trayDone').hidden=editing;$('curRow').hidden=editing;
+  if(editing)return renderEdit();
+  const op=pals.find(p=>p.id===openPal)||pals[0];
+  $('palList').innerHTML=pals.length?palCard(op)
+      +(pals.length>1?`<div class="pal-pick" role="radiogroup" aria-label="Your palettes">`+pals.map(q=>
+        `<button class="pal-mini" type="button" role="radio" aria-checked="${q===op}" data-open="${q.id}" aria-label="${esc(q.name)}, ${q.inks.length} inks">`
+        +q.inks.map(h=>`<i style="background:#${h}"></i>`).join('')+'</button>').join('')+'</div>':'')
+    :`<p class="pal-empty"><b>Inks that go together, one tap away.</b> Make one, or copy a starter below.</p>`;
+  $('palCount').textContent=pals.length?pals.length+' of '+PAL_CAP:'';
+  $('palList').querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{openPal=+b.dataset.open;renderTray();
+    $('palList').querySelector(`[data-open="${openPal}"]`).focus();});
+  $('newPal').setAttribute('aria-label','New palette');
+  $('bandMine').innerHTML=mineHtml(false);
   $('myCount').textContent=mine.length?mine.length+' of '+CAP:'';
-  $('presets').innerHTML=PRESETS.map(([n,cs])=>`<button class="preset" type="button"><i aria-hidden="true">${cs.map(c=>`<b style="background:${c}"></b>`).join('')}</i><span class="ink-preset-name">${n}</span><span class="ink-preset-action">Apply</span></button>`).join('');
-  document.querySelectorAll('#tray .ink-choice:not(.mix)').forEach(b=>b.onclick=()=>{
-    const k=kept(b.dataset.ink.slice(1));
-    snapshot();
-    if(k)k.used=++clock;
-    applyInk(k?colourName(k.hex):b.dataset.name,b.dataset.ink);});
-  /* RI9: long-press a kept pot (TalkBack: custom action "Remove from My inks") */
-  document.querySelectorAll('#tray .ink-choice.my').forEach(b=>b.oncontextmenu=e=>{e.preventDefault();keptMenu(b);});
-  $('mixBtn').onclick=()=>openMixer();
+  $('bandBuilt').innerHTML=builtHtml(false);
+  $('starterList').innerHTML=STARTERS.map(([n,inks])=>palCard({name:n,inks},true)).join('');
+  wireTray($('tray'));
 }
-function keptMenu(b){
+function wireTray(root){
+  root.querySelectorAll('#trayBody [data-ink]').forEach(b=>b.onclick=()=>{
+    const hex=b.dataset.ink,k=kept(hex);snapshot();if(k)k.used=++clock;applyInk(hex);});
+  root.querySelectorAll('#trayBody [data-mix]').forEach(b=>b.onclick=()=>{mixReturn=null;openMixer();});
+  root.querySelectorAll('#trayBody .ink-choice.my').forEach(b=>b.oncontextmenu=e=>{e.preventDefault();
+    menu(b,[['Remove from My inks',()=>{snapshot();mine=mine.filter(k=>k.hex!==b.dataset.ink);renderTray();
+      toast('Removed · '+colourName(b.dataset.ink)+'. Pages and palettes using it keep it.');}]]);});
+  root.querySelectorAll('[data-more]').forEach(b=>b.onclick=()=>{const p=pals.find(x=>x.id===+b.dataset.more);
+    menu(b,[['Edit',()=>startEdit(p)],['Duplicate',()=>{if(pals.length>=PAL_CAP)return toast('My palettes holds '+PAL_CAP+'. Delete one to make room.');
+              snapshot();addPal(uniqueName(p.name.replace(/ copy( \d+)?$/,'')+' copy'),p.inks.slice());renderTray();toast('Duplicated · '+p.name);}],
+            ['Delete',()=>{snapshot();pals=pals.filter(x=>x!==p);renderTray();toast('Deleted · '+p.name+'. Its inks stay.');}]]);});
+  root.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{
+    if(pals.length>=PAL_CAP)return toast('My palettes holds '+PAL_CAP+'. Delete one to make room.');
+    const s=STARTERS.find(([n])=>n===b.dataset.copy);snapshot();addPal(uniqueName(s[0]),s[1].slice());renderTray();
+    toast('Saved to My palettes · '+s[0]);});
+}
+function menu(anchor,items){
   document.querySelectorAll('.kept-menu').forEach(m=>m.remove());
-  const m=document.createElement('div');m.className='kept-menu';m.innerHTML='<button type="button">Remove from My inks</button>';
-  const r=b.getBoundingClientRect(),pr=$('phone').getBoundingClientRect();
-  m.style.left=(r.left-pr.left)+'px';m.style.top=(r.top-pr.top-56)+'px';$('phone').appendChild(m);
-  m.querySelector('button').onclick=()=>{snapshot();const hex=b.dataset.ink.slice(1);mine=mine.filter(k=>k.hex!==hex);
-    m.remove();renderTray();toast('Removed · '+colourName(hex)+'. Pages using it keep it.');};
+  const m=document.createElement('div');m.className='kept-menu';m.setAttribute('role','menu');
+  items.forEach(([t,fn])=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','menuitem');b.textContent=t;
+    b.onclick=()=>{m.remove();fn();};m.appendChild(b);});
+  const r=anchor.getBoundingClientRect(),pr=$('phone').getBoundingClientRect();
+  m.style.right=(pr.right-r.right)+'px';m.style.top=(r.bottom-pr.top)+'px';$('phone').appendChild(m);m.querySelector('button').focus();
+  setTimeout(()=>document.addEventListener('click',function off(e){if(!m.contains(e.target)){m.remove();document.removeEventListener('click',off);}}),0);
 }
-function snapshot(){undoSnap={mine:mine.map(k=>({...k})),ink:getComputedStyle(document.documentElement).getPropertyValue('--sel-ink')||'#2A251E',
-  name:$('curName').textContent};}
-function applyInk(name,colour){
-  document.documentElement.style.setProperty('--sel-ink',colour);
-  $('curPot').style.background=colour;$('curName').textContent=name;
-  document.querySelectorAll('#tray .ink-choice').forEach(b=>b.classList.toggle('on',b.dataset.ink===colour));
-  toast('Ink · '+name);   // RI8: the name, not a spelled-out code
+function addPal(name,inks){pals.unshift({id:++palSeq,name,inks});openPal=palSeq;}
+/* names: a default is always unique; a typed duplicate is allowed and gently named (no tool forbids it, R33.7) */
+function uniqueName(base){let n=base,i=2;while(pals.some(p=>p.name.toLowerCase()===n.toLowerCase()))n=base+' '+(i++);return n;}
+
+/* ---- palette editing: the same tray, inks become toggles ---- */
+$('newPal').onclick=()=>{
+  if(pals.length>=PAL_CAP)return toast('My palettes holds '+PAL_CAP+'. Delete one to make room.');
+  startEdit(null);};
+function startEdit(p){
+  edit=p?{id:p.id,name:p.name,inks:p.inks.slice(),orig:p.inks.slice(),origName:p.name}
+        :{id:null,name:uniqueName('My palette'),inks:[current],orig:[],origName:null};
+  renderTray();$('palName').value=edit.name;nameHelp();$('peCount').focus();
 }
-/* Undo puts back the page's ink AND My inks, so a stray Use never costs a kept ink (RF5) */
-$('toast2').querySelector('u').onclick=()=>{if(!undoSnap)return;mine=undoSnap.mine;renderTray();
-  applyInk(undoSnap.name,undoSnap.ink.trim());$('toast2').classList.remove('show');undoSnap=null;};
+function keepFocus(fn){const a=document.activeElement,k=a&&(a.dataset.ink||a.dataset.rm||a.id);fn();
+  if(!k)return;const t=$('tray').querySelector(`[data-ink="${k}"]:not([hidden] *),[data-rm="${k}"]`)||document.getElementById(k);if(t)t.focus();}
+function renderEdit(){
+  $('peStrip').innerHTML=edit.inks.map((h,i)=>`<button type="button" data-rm="${i}" aria-label="Remove ${esc(inkName(h))} from palette"><span style="background:#${h}"></span></button>`).join('');
+  const n=edit.inks.length;
+  $('peCount').textContent=n<PAL_MIN?`Pick ${PAL_MIN} to ${PAL_MAX} inks. ${n} picked.`:n>=PAL_MAX?`${PAL_MAX} picked — that's the most a palette holds.`:`${n} picked. Up to ${PAL_MAX}.`;
+  $('peMine').innerHTML=mineHtml(true);$('peBuilt').innerHTML=builtHtml(true);
+  const lost=edit.orig.filter(h=>!edit.inks.includes(h)&&!kept(h)&&!builtFor().some(([,b])=>b===h));
+  $('peLost').hidden=!lost.length;
+  $('peLostPots').innerHTML=lost.map(h=>choice(h,{cls:'',pressed:false,label:colourName(h)+', '+spokenHex(h),name:'#'+h})).join('');
+  const ok=n>=PAL_MIN&&$('palName').value.trim().length>0;
+  $('peSave').setAttribute('aria-disabled',!ok);
+  $('peStrip').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const h=edit.inks[+b.dataset.rm];edit.inks.splice(+b.dataset.rm,1);
+    renderEdit();const t=$('editBody').querySelector(`.ink-choice[data-ink="${h}"]`)||$('peCount');t.focus();});
+  $('editBody').querySelectorAll('.ink-choice[data-ink]').forEach(b=>b.onclick=()=>{const h=b.dataset.ink,i=edit.inks.indexOf(h);
+    if(i>=0)edit.inks.splice(i,1);else if(edit.inks.length<PAL_MAX)edit.inks.push(h);else return toast('A palette holds '+PAL_MAX+'. Remove one first.');
+    keepFocus(renderEdit);});
+  $('editBody').querySelectorAll('[data-mix]').forEach(b=>b.onclick=()=>{mixReturn='edit';openMixer();});
+}
+function nameHelp(){const v=$('palName').value.trim();
+  const dup=pals.some(p=>p.id!==edit.id&&p.name.toLowerCase()===v.toLowerCase());
+  $('palHelp').textContent=!v?'Give it a name, like "Warm vintage".':dup?'You have another palette called this. That\'s fine.':'';
+  $('palHelp').classList.toggle('err',!v);}
+$('palName').addEventListener('input',()=>{nameHelp();renderEdit();});
+function changed(){return edit&&($('palName').value.trim()!==(edit.origName??edit.name)||edit.inks.join()!==(edit.id?edit.orig:[current]).join());}
+$('peCancel').onclick=()=>{const was=edit&&{...edit,inks:edit.inks.slice(),name:$('palName').value},c=changed();edit=null;renderTray();
+  if(c){undoSnap={reopen:was};toast('Palette not saved');}};   /* Back in edit mode = Cancel */
+$('peSave').onclick=()=>{
+  const name=$('palName').value.trim(),n=edit.inks.length;
+  if(!name){$('palName').focus();return;}
+  if(n<PAL_MIN)return toast('Pick at least '+PAL_MIN+' inks.');
+  snapshot();
+  if(edit.id){const p=pals.find(x=>x.id===edit.id);p.name=name;p.inks=edit.inks.slice();toast('Saved · '+name);}
+  else{addPal(name,edit.inks.slice());toast('New palette · '+name);}
+  edit=null;renderTray();};
+
+/* ---- applying, undo, toast ---- */
+function snapshot(){undoSnap={mine:mine.map(k=>({...k})),pals:pals.map(p=>({...p,inks:p.inks.slice()})),current,
+  edit:edit&&{...edit,inks:edit.inks.slice()}};}
+function applyInk(hex){
+  current=hex;document.documentElement.style.setProperty('--sel-ink','#'+hex);
+  $('curPot').style.background='#'+hex;$('curName').textContent=inkName(hex);
+  renderTray();toast('Ink · '+inkName(hex));
+}
+$('toast2').querySelector('u').onclick=()=>{if(!undoSnap)return;
+  if(undoSnap.reopen){edit=undoSnap.reopen;undoSnap=null;renderTray();$('palName').value=edit.name;nameHelp();$('toast2').classList.remove('show');return;}
+  mine=undoSnap.mine;pals=undoSnap.pals;const c=undoSnap.current;if(undoSnap.edit)edit=undoSnap.edit;undoSnap=null;
+  current=c;document.documentElement.style.setProperty('--sel-ink','#'+c);$('curPot').style.background='#'+c;$('curName').textContent=inkName(c);
+  renderTray();$('toast2').classList.remove('show');};
 function toast(m){$('toastMsg').textContent=m;$('toast2').classList.add('show');$('toast2').style.pointerEvents='auto';
   clearTimeout(toast.t);toast.t=setTimeout(()=>{$('toast2').classList.remove('show');$('toast2').style.pointerEvents='none';},4000);}
 
-/* ---- the mixer ---- */
+/* ---- the mixer (unchanged from rev. 1) ---- */
 function currentHex(){return hsvToHex(state.h,state.s,state.v);}
 function setHelp(msg,err){$('hexhelp').textContent=msg;$('hexhelp').classList.toggle('err',!!err);$('hexbox').classList.toggle('err',!!err);}
 function paint(fromHex){
@@ -1005,36 +1212,38 @@ function paint(fromHex){
   $('hueKnob').style.left=(state.h/360*100)+'%';
   if(!fromHex&&document.activeElement!==$('hex'))$('hex').value=hex;
   const name=colourName(hex);
-  $('mixName').textContent=name;           // not a live region: it would talk through every drag (RF3)
+  $('mixName').textContent=name;
   $('aStrength').value=Math.round(state.s*100);$('aStrength').setAttribute('aria-valuetext',name+', '+Math.round(state.s*100)+'% colour');
   $('aLight').value=Math.round(state.v*100);$('aLight').setAttribute('aria-valuetext',name+', '+Math.round(state.v*100)+'% light');
   $('hue').setAttribute('aria-valuenow',Math.round(state.h));$('hue').setAttribute('aria-valuetext',hueName(state.h));
   const pale=contrastOnWhite(hex)<PALE_BELOW;
   $('legib').classList.toggle('ok',!pale);
   $('legibCopy').textContent=target==='text'
-    ?' Home printers fade pale inks; words in this one may be hard to read.'
-    :' Home printers fade pale inks. Fine for a soft mark or a tint.';
+    ?' Words may be hard to read.'
+    :' Fine for a soft mark or a tint.';
   const full=mine.length>=CAP&&!kept(hex);
   $('fullnote').hidden=!full;
   if(full){const g=lru();$('fullnote').innerHTML=`<span class="pot" style="background:#${g.hex}" aria-hidden="true"></span>
-    <span>My inks holds 9. Using this one removes <b>${colourName(g.hex)}</b>, the one you used longest ago. Pages already using it keep it.</span>`;}
+    <span>My inks is full. This replaces <b>${colourName(g.hex)}</b>, used longest ago. Your pages keep it.</span>`;}
+  $('mixUse').textContent=mixReturn==='edit'?(edit.inks.length<PAL_MAX?'Add to palette':'Save to My inks'):'Use this ink';
 }
 function openMixer(startHex){
-  const cur=startHex||rgbToHex(getComputedStyle($('selTitle')).color);
+  const cur=startHex||current;
   state=hexToHsv(cur,state.h);setHelp(HELP);
   $('scrim').classList.add('show');$('mixer').classList.add('show');$('hex').value=cur;paint();
 }
-function rgbToHex(c){const m=c.match(/\d+/g);return m?m.slice(0,3).map(x=>(+x).toString(16).padStart(2,'0')).join('').toUpperCase():'2A251E';}
 function closeMixer(){$('scrim').classList.remove('show');$('mixer').classList.remove('show');}
 $('mixCancel').onclick=closeMixer;$('scrim').onclick=closeMixer;
 $('mixUse').onclick=()=>{
-  commitHex();                       // an unfinished code is settled first: the field always shows what Use applies (RF2c)
+  commitHex();
   const hex=currentHex();snapshot();
   const k=kept(hex);
   if(k)k.used=++clock;
   else{if(mine.length>=CAP){const g=lru();mine=mine.filter(x=>x!==g);}mine.unshift({hex,used:++clock});}
-  closeMixer();renderTray();applyInk(colourName(hex),'#'+hex);};
-/* typing: only a full 6-digit code moves the colour; 3 digits count on Done/blur; paste is stripped BEFORE any cap (RF2) */
+  closeMixer();
+  if(mixReturn==='edit'){mixReturn=null;const fits=!edit.inks.includes(hex)&&edit.inks.length<PAL_MAX;if(fits)edit.inks.push(hex);renderEdit();
+    toast(fits?'Mixed · '+colourName(hex)+', added to the palette and My inks':'Mixed · '+colourName(hex)+', kept in My inks (the palette is full)');}
+  else applyInk(hex);};
 $('hex').addEventListener('input',e=>{
   const t=stripHex(e.target.value).slice(0,6);
   if(e.target.value!==t)e.target.value=t;
@@ -1055,28 +1264,40 @@ drag($('sv'),e=>{const r=$('sv').getBoundingClientRect();state.s=Math.min(1,Math
 drag($('hue'),e=>{const r=$('hue').getBoundingClientRect();state.h=Math.min(355,Math.max(0,(e.clientX-r.left)/r.width*360));paint();});
 $('aStrength').oninput=e=>{state.s=e.target.value/100;paint();};
 $('aLight').oninput=e=>{state.v=e.target.value/100;paint();};
-/* hue clamps 0–355 by drag and by step alike (no wrap), 5° steps */
 $('hue').addEventListener('keydown',e=>{const d={ArrowRight:5,ArrowUp:5,ArrowLeft:-5,ArrowDown:-5}[e.key];if(!d)return;
   e.preventDefault();state.h=Math.min(355,Math.max(0,state.h+d));paint();});
 $('trayDone').onclick=()=>toast('Ink tray closes; back to the page');
+$('starterBtn').onclick=()=>{const open=$('starterBtn').getAttribute('aria-expanded')!=='true';
+  $('starterBtn').setAttribute('aria-expanded',open);$('starterList').hidden=!open;};
 
 /* ---- states ---- */
 const CAPTIONS={
-  tray0:'<b>Ink tray, first time.</b> The frozen tray, plus one band: <b>My inks</b>, which holds only the dashed <b>Mix</b> pot until you mix something.',
-  mixer:'<b>Mixing.</b> Opens on the selected piece\'s ink. Type a code, or drag the square and the strip; the paper card shows about how it prints.',
+  tray0:'<b>First time.</b> Your own work comes first, so it starts empty: a one-line invitation for palettes and the Mix pot. The built-in inks sit below in one compact grid; their name shows in Current ink when picked.',
+  many:'<b>Nine palettes, the most it keeps.</b> One palette is open; all nine wait as colour strips, five to a row, two rows at most. Tap a strip to open it, then tap an ink. TalkBack reads each strip by name.',
+  tray3:'<b>My palettes and inks.</b> Each palette is a named row; tap any of its inks to use it. ⋯ edits, duplicates or deletes. Kept inks below; built-in inks compact at the end.',
+  newpal:'<b>New palette.</b> The tray itself becomes the picker: name it, tap inks to add them (✓, not colour alone), reorder by removing and re-adding. Mix adds a new ink straight in. 2 to 6 inks.',
+  starters:'<b>Starter palettes.</b> The three examples sit behind one disclosure. Tap an ink to use it, or "Save a copy" to make it yours and edit it.',
+  mixer:'<b>Mixing.</b> Opens on the current ink. Type a code, or drag the square and the strip; the paper card shows about how it prints.',
   pale:'<b>A pale ink.</b> Below 3 : 1 on white the note turns yellow. Same place, same size, so nothing jumps. It never blocks.',
-  tray3:'<b>Tray with my inks.</b> Newest first, labelled by code; TalkBack says the colour name and the code. Long-press one to remove it.',
-  full:'<b>My inks full.</b> Before you tap, the sheet shows which kept ink would go: the one used longest ago. Undo brings it back.'
+  full:'<b>My inks full.</b> Before you tap, the sheet shows which kept ink would go: the one used longest ago. Palettes keep their own copy.'
 };
 function seed(list){mine=list.map((hex,i)=>({hex,used:list.length-i}));clock=list.length;}
+function seedPals(){pals=[];palSeq=0;addPal('Soft pastels',['E27F89','57B0A9','B7AD93','8A5A9B']);
+  addPal('Forest & earth',['3E5E3A','7C8A3F','8C8269','2A251E']);addPal('Warm vintage',['B0503F','D19A3C','E7B53C','505955']);}
 function setState(k){
   document.querySelectorAll('[data-state]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.state===k));
-  closeMixer();
-  if(k==='tray0'){seed([]);renderTray();}
-  if(k==='tray3'){seed(['505955','C0392B','2E6F95']);renderTray();}
-  if(k==='full'){seed(['505955','C0392B','2E6F95','E8A87C','6B4E71','1F7A5C','D4B000','8C1C13','3D5A80']);renderTray();openMixer('7A3B69');}
-  if(k==='mixer'){seed([]);renderTray();openMixer('505955');}
-  if(k==='pale'){seed([]);renderTray();openMixer('F2D7A6');}
+  closeMixer();edit=null;mixReturn=null;$('starterBtn').setAttribute('aria-expanded','false');$('starterList').hidden=true;
+  if(k==='tray0'){seed([]);pals=[];renderTray();}
+  if(k==='tray3'||k==='newpal'||k==='starters'){seed(['505955','C0392B','2E6F95']);seedPals();renderTray();}
+  if(k==='many'){seed(['505955','C0392B','2E6F95']);seedPals();
+    [['Risograph',['FF48B0','0078BF','FFE800']],['Night bus',['2A251E','6E86C9','E7B53C']],['Seaside',['57B0A9','DDE9EE','E7B53C','6E86C9']],
+     ['Autumn',['B0503F','D19A3C','5B5347']],['Mono',['2A251E','5B5347','8C8269','B7AD93']],['Garden',['3E5E3A','7C8A3F','E7B53C','E27F89']]]
+      .forEach(([n,i])=>addPal(n,i));openPal=pals[2].id;renderTray();}
+  if(k==='newpal'){startEdit(null);edit.inks=['505955','B0503F','E7B53C'];$('palName').value='Night bus';edit.name='Night bus';nameHelp();renderEdit();}
+  if(k==='starters'){$('starterBtn').click();setTimeout(()=>{$('tray').scrollTop=$('tray').scrollHeight;},0);}
+  if(k==='full'){seed(['505955','C0392B','2E6F95','E8A87C','6B4E71','1F7A5C','D4B000','8C1C13','3D5A80']);pals=[];renderTray();openMixer('7A3B69');}
+  if(k==='mixer'){seed([]);pals=[];renderTray();openMixer('505955');}
+  if(k==='pale'){seed([]);pals=[];renderTray();openMixer('F2D7A6');}
   $('caption').innerHTML=CAPTIONS[k];
 }
 document.querySelectorAll('[data-state]').forEach(b=>b.onclick=()=>setState(b.dataset.state));
@@ -1087,7 +1308,7 @@ document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>{const on=b.
   if(b.dataset.toggle==='narrow')r.setAttribute('data-narrow',on?'on':'off');
   setTimeout(paint,50);});
 renderTray();
-{const q=new URLSearchParams(location.search);   // ?state=mixer&dark&big&narrow — for screenshots
+{const q=new URLSearchParams(location.search);
  ['theme','big','narrow'].forEach(t=>{if(q.has(t==='theme'?'dark':t))document.querySelector(`[data-toggle="${t}"]`).click();});
  setState(q.get('state')||'tray0');}
 
