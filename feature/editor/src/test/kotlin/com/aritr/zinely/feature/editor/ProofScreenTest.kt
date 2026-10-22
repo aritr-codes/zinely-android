@@ -872,6 +872,8 @@ class ProofScreenTest {
         composeRule.onNodeWithText(Copy.Proof.FOLD_IT_UP).assertDoesNotExist()
         // Demoted, not deleted: same destination, quiet label.
         composeRule.onNodeWithTag(ProofFoldItUpTestTag).assertTextEquals(Copy.Proof.HOW_TO_FOLD)
+        // A43.3: Share is kept after the fold.
+        composeRule.onNodeWithTag(ProofShareTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(ProofFoldItUpTestTag).performClick()
         composeRule.onNodeWithTag(ProofFoldGuideTestTag).assertIsDisplayed()
     }

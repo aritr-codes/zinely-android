@@ -1487,7 +1487,6 @@ private fun ProofDoneBlock(
             horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
         ) {
-            val grow = Modifier.weight(1f).fillMaxRowHeight()
             if (onOpenSavedPdf != null) {
                 ProofBandButton(
                     text = Copy.Proof.OPEN_PDF,
@@ -1542,9 +1541,8 @@ private fun ProofDoneBlock(
                     hero = true,
                     enabled = true,
                     press = ZinelyV21Press.Raised,
-                    // `grow`, not a bare `weight`: inside the pair a bare one resolves against the band's
-                    // column and the button is given no height at all.
-                    modifier = grow.testTag(ProofFoldItUpTestTag),
+                    // Takes what is left of its line, or the whole line once the row wraps (A43.3).
+                    modifier = Modifier.weight(1f).fillMaxRowHeight().testTag(ProofFoldItUpTestTag),
                     icon = { tint -> ProofVectorIcon(ICON_FOLD, tint) },
                 )
             }
