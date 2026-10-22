@@ -8210,9 +8210,11 @@ Undo keep their ordinary timeout.
 **Ruling (controller ruling R-W10).** The Proof's own back control, reused: the same chevron in the same
 bordered round button, first in the Bench's status strip, before the time. No visible text, a touch target of
 at least 48dp, and the accessibility name "Back to My Shelf (your work is saved)", following the Proof's "Back
-to the bench (your work is saved)". It does exactly what system Back does from an idle Bench; autosave has
-already run, so nothing asks first (Never #17). It hides, without moving the time or Saved, while text editing,
-Reframe, or an open tray or sheet owns Back, so one control never means two things.
+to the bench (your work is saved)". It sits in the strip's start slot, which `BenchStatusStrip.kt` leaves
+empty today; the target overlaps the strip's padding, so the strip does not grow. It does exactly what system
+Back does from an idle Bench; autosave has already run, so nothing asks first (Never #17). It hides, without
+moving anything, whenever anything else on the Bench owns Back: the text session, the type bar, Reframe, the
+Ink tray, Flip, Arrange, All pages, Add and Across fold. So one control never means two things.
 
 | Alternative | Outcome |
 |---|---|

@@ -2970,6 +2970,8 @@ While the type bar is open over a text session, one Back commits the words and t
 closes with the session.  Back does not first close the bar on its own (controller
 ruling R-W7).  v21-typebar.html's note that "Back now closes it" still holds for the bar
 when no words are being edited.
+Tapping away from the box (another piece, or the empty page) already commits through the
+same path, on focus loss (EditTextSession.kt); that is unchanged.
 Prototype: a capture-phase Escape handler below runs the Done path while the keyboard
 stack is up, and consumes the key, so closeOverlays() and deselect() (:928) do not also
 run on the same press.
@@ -3014,9 +3016,12 @@ WHY.  The Bench has no visible way out.  System Back works, but a maker who does
 the gesture is stuck on the page they opened (Never #19, "a visible path").
 
 THE CONTROL.  The Proof's own back control, reused rather than invented: the same chevron
-(ProofScreen.kt ICON_BACK, "M15 5l-7 7 7 7") in the same bordered round button, first in
-the status strip, before the time.  It has no visible text.  Its touch target is at least
-48dp.  Its accessibility name is
+(ProofScreen.kt ICON_BACK, "M15 5l-7 7 7 7") in the same bordered round button, in the
+status strip's start slot.  That slot is empty in the app (BenchStatusStrip.kt); this
+prototype draws a clock there, and the button sits before it.  It has no visible text.
+The button is the Proof's 44dp circle inside a 48dp touch target.  The target overlaps the
+strip's own top padding and the top edge of the canvas below, so the strip does not grow:
+the page and the Saved mark stay where the freeze puts them.  Its accessibility name is
   "Back to My Shelf (your work is saved)"
 which follows the Proof's "Back to the bench (your work is saved)" (ruling R-W10; this
 replaces the plan's text button reading "Shelf" after a chevron).
@@ -3024,9 +3029,11 @@ replaces the plan's text button reading "Shelf" after a chevron).
 WHAT IT DOES.  Exactly what system Back does from an idle Bench.  Autosave has already run,
 so nothing asks first (Never #17).
 
-WHEN IT HIDES.  While text editing, Reframe, or an open tray or sheet owns Back (the Ink
-tray, Flip, Arrange, Add, All pages, Across fold), so one control never means two things.
-It hides without moving anything: the time and the Saved mark keep their places.  A
+WHEN IT HIDES.  Whenever anything else on the Bench owns Back, so one control never means
+two things.  That is every Bench BackHandler and every sheet: the text session, the type
+bar, Reframe, the Ink tray, Flip, Arrange, All pages, Add and Across fold.  (This prototype
+has no type bar or Reframe to open; the rule covers them.)  It hides without moving
+anything: the time and the Saved mark keep their places.  A
 selected piece does not hide it, because Back from a selected piece also leaves.
 
 LARGE TEXT AND NARROW PHONES.  The button keeps its 48dp size at every text scale; the
@@ -3049,7 +3056,8 @@ ALTERNATIVES WEIGHED (D-143).
 #content .a41-emptied .t-title,#content .a41-emptied .t-body{color:transparent;text-shadow:none}
 #content .a41-blank{min-height:1.5em}
 /* A42: the way back. The Proof's .iconbtn look inside a 48px target. */
-.a42-back{flex:none;width:48px;height:48px;margin:-8px 4px -8px -4px;padding:2px;border:0;background:none;
+.a42-back{flex:none;width:48px;height:48px;margin:-11px 8px -10px -4px;padding:2px;border:0;background:none;
+  position:relative;z-index:1;border-radius:var(--br-pill);
   cursor:pointer;display:grid;place-items:center;color:var(--ink-soft)}
 .a42-back i{width:44px;height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
   background:var(--surface);display:grid;place-items:center;box-shadow:2px 2px 0 var(--ink-line)}
@@ -3156,11 +3164,15 @@ ALTERNATIVES WEIGHED (D-143).
     e.preventDefault(); e.stopImmediatePropagation();
     $('doneEdit').onclick({stopPropagation(){},a41Back:true});
   },true);
+  // Tapping away (another piece, or the empty page) ends the session through the same commit path.
+  function endSession(){ if(sel&&sel.classList.contains('editing')) $('doneEdit').onclick({stopPropagation(){}}); }
+  function dropFresh(){ if(sel&&sel.dataset.a41Fresh==='true'){ const n=sel; sel=null; n.remove(); } }
   const deselectBeforeA41=deselect;
-  deselect=function(){
-    if(sel&&sel.dataset.a41Fresh==='true'){ const n=sel; sel=null; n.remove(); }
-    clearFlags(sel); deselectBeforeA41();
-  };
+  deselect=function(){ endSession(); dropFresh(); clearFlags(sel); deselectBeforeA41(); };
+  const selectBeforeA41=select;
+  select=function(node){ if(sel&&sel!==node){ endSession(); dropFresh(); clearFlags(sel); } selectBeforeA41(node); };
+  // :735 holds the original deselect, so a tap on the phone's own background is routed here first.
+  $('phone').addEventListener('click',e=>{ if(e.target===$('phone')) endSession(); },true);
 
   /* ---- A41 demo controls ---- */
   // A piece of the kind asked for, or any piece left, so the buttons work after a retired Undo too.
