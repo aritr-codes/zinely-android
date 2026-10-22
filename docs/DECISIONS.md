@@ -140,7 +140,7 @@
 | [ADR-128](#adr-128) | **A docked panel leaves the thing it edits in view.** The Ink tray and the Text panel stop short of the canvas top by a band sized to the selected element, and the page lifts the element into it; for those panels and for Reframe the lift stops at the element's own top instead of 96dp. Deviates from frozen A16; recorded in D-113 | Accepted |
 | [ADR-129](#adr-129) | **Moving a piece by buttons lives in an Arrange tray, not in a bar that takes rows from the canvas.** The two-row accessible bar (A14) made the page shrink each time something was selected. The ten controls now open from an Arrange verb on the verb bar, in a tray that follows ADR-128 (Bench A33). Reverses OD-11 and ADR-092's reading of it; decided under the owner's delegation, which the owner may overrule | Accepted |
 | [ADR-130](#adr-130) | **The typing-time notice says "prints in a font from your phone" for what the phone draws.** The check asks `Paint.hasGlyph` on the face the renderer resolves, which walks the same fallback chain; a script every character of which the phone draws gets the new line, anything else keeps ADR-070's "can't print yet". Amends ADR-070 (issue #103, D-115) | Accepted |
-| [ADR-132](#adr-132) | **The Art pieces are drawn by one hand.** One line weight (2.5 of 24 units), flat views, a fixed margin, and an edge that says what made it (cut, torn, drawn, metal, printer's mark); torn edges read one hand-written tear table, never a zig-zag. All 34 redrawn as bench A34, design frozen under the owner's delegation; ids, names, sizes and the eight holed pieces unchanged. The Compose redraw and every Art golden are a later wave | Proposed |
+| [ADR-132](#adr-132) | **The Art pieces are drawn by one hand.** One line weight (2.5 of 24 units), flat views, a fixed margin, and an edge that says what made it (cut, torn, drawn, metal, printer's mark); torn edges read one hand-written tear table, never a zig-zag. All 34 redrawn as bench A34, design frozen under the owner's delegation; ids, names, sizes and the eight holed pieces unchanged. The Compose redraw and every Art golden are a later wave. *2026-10-22: which ids are redrawn (17) and the holed set (31) are now [ADR-139](#adr-139)'s* | Proposed |
 | [ADR-133](#adr-133) | **Paper is a closed, named set; the imposition engine takes any sheet.** Answers the paper half of ADR-016. A person picks a size by name and the file stores the name; `Imposer.layout` also takes any portrait sheet, proved by properties. US Legal and A5 are the next sizes, in their own schema bump after v4, chosen at the start of a zine only; half-Letter, A3 and Tabloid are not | Accepted (engine and closed set); sizes decided, not built |
 | [ADR-134](#adr-134) | **When a zine's details go back to their earlier copy, My Shelf says so once.** A paper note under the heading names the zine (“Letters to Gran” is called “Letters home” again), says what went back, and stays until “Got it”. The store reports a repaired read as a sealed result; the waiting note is kept per zine. Library A37 | Accepted 2026-10-15 under delegation; built 2026-10-15, in no release (emulator passes 2026-10-18; TalkBack listen and a real phone owed) |
 | [ADR-135](#adr-135) | **Read speaks the page.** One stop per meaningful thing, in the Bench's spatial order, between Previous and Next page: text as written, a photo as `Photo` or `Photo: <description>`, Art only when described (by its name), `Blank page` / `Only Art on this page`; no role on a stop; a turn announces the ticket only. The PDF and paper carry no description, said once in the Describe field. `v21-proof.html` A38 frozen; part 1 needs no schema, part 2 is plan step 7 | Proposed (design frozen under the owner's delegation; not built) |
@@ -14260,7 +14260,9 @@ left as the record of its date. This ADR's status is unchanged by the note: stil
 the owner's A39 picks ([`v21-bench.html`](design/mockups/v21-bench.html) A39); each joins the set by name in the
 commit that wires its family. The same three passes, tolerance and function; status unchanged, still Proposed.
 The smallest new holes (the scissors' finger loops, the gift tag's eyelet, the needle's eye) let a tap through
-only inside a small area, which is the intended behaviour.
+only inside a small area, which is the intended behaviour. The list is now also checked against the geometry,
+one way: an outline with enclosed paper must be named here or excluded by a ruling (ADR-139 decision 5); a piece
+is still in scope because it is named. "The other 25 supplies" below counts the 34 shipped ids.
 
 **Excluded, and unchanged:** `mark.crop` (ruled out by name, Q3) and the other 25 supplies, including the five other
 pieces made of separate parts (`mark.halftone`, `fix.stitch`, `mark.bar`, `mark.scan`, `mark.perf`); every text box;
@@ -16790,13 +16792,17 @@ ask"), which the owner may overrule. It stays Proposed until the list under *Owe
 - [ADR-137](#adr-137): its open gate numbers (this is the first W7 batch), and two of its *Keeps*: "H9's holed set
   of eight and ADR-124's list" (now the named list of 31) and "§9's no emoji, no imported SVG bullet" (read as a
   licence rule, as §4.5 item 4 already says, with the owner's pick ruling the shape).
-- [ADR-124](#adr-124)'s scope: a scope note, the set becomes 31 as each family is wired. Its passes, tolerance,
-  function and status (Proposed) are unchanged.
+- [ADR-124](#adr-124)'s scope: a scope note, the set becomes 31 as each family is wired, and the list is now
+  checked against the geometry one way (decision 5). Its passes, tolerance, function, "a list, not a rule" and
+  status (Proposed) are unchanged.
+- [ADR-136](#adr-136) W3 ("ADR-132 lists the changes"): this ADR lists them, and the first W7 batch (90 new ids)
+  rides with W3's redraw, because the owner picked both from one sheet.
 - [SUPPLIES-SPEC](design/SUPPLIES-SPEC.md) §4.4 [H1, H2, H4 and H9](design/SUPPLIES-SPEC.md#house-style) by rule
   number; [§4.5](design/SUPPLIES-SPEC.md#one-world)'s "Open until A39" cells and G9's "not a UI icon or an emoji"
   clause; a dated pointer at §4.3.5's "the family is done".
 - [`v21-colophon.html`](design/mockups/v21-colophon.html): Licences & credits gains an Art section (its A39
-  amendment).
+  amendment), one row per set whose notice names its pieces, which is how ADR-137's "each piece's entry"
+  is met.
 
 **Keeps:** exactly four families; [ADR-105](#adr-105) (a placed piece stores only its id); the v3 document format
 and `DefaultDocumentValidator.SUPPLY_ID` (`^[a-z]+\.[a-z]+$`), untouched; [ADR-107](#adr-107) R2 (no
@@ -16847,18 +16853,21 @@ licences and its rule that credit never goes in the PDF; ADR-124's three passes 
    an id baseline test fails if a shipped id is renamed or removed. Both land with the wiring, before any family's
    outlines change.
 4. **One collapse.** Only picks that are the same drawing collapse (similarity ≥ 0.99, R34.4): the A34 and A39
-   Circles, so the A39 Circle holds `shape.circle` and the A34 Circle gets no id. The Ring (0.98), Rectangle
+   Circles, so the A39 Circle holds `shape.circle` and the A34 Circle gets no id: one owner pick is not offered.
+   It differs by 14 square units of fill (slightly larger, slightly off-round), which does not read at tile size. The Ring (0.98), Rectangle
    (0.98) and Triangle (0.96) pairs stay as picked: the owner's eye is the G8 ruling, confirmed at the
    first-time-user pass. The 0.86–0.94 groups (R34.4) are the look-alike groups that pass checks.
-5. **Holes: a named list of 31.** H9 becomes "the named list in `SupplyInk.IN_SCOPE`", which is the authority. The
-   list: the eight of A32 plus 23 new ids, `fix.cornerb`, `fix.grommetb`, `fix.grommetc`, `fix.needle`,
+5. **Holes: a named list of 31.** H9 becomes a named list, and [SUPPLIES-SPEC H9](design/SUPPLIES-SPEC.md#house-style)
+   is its authority (`SupplyInk.IN_SCOPE` holds it in code). The list, as of this decision: the eight of A32 plus 23 new ids, `fix.cornerb`, `fix.grommetb`, `fix.grommetc`, `fix.needle`,
    `tape.plaster`, `fix.sticker`, `mark.registrationb`, `mark.registrationc`, `mark.scissors`, `mark.squiggle`,
    `paper.windowb`, `paper.windowc`, `paper.cutwindow`, `paper.holeb`, `paper.holec`, `paper.holed`,
    `paper.borderb`, `paper.borderc`, `paper.borderd`, `paper.roundb`, `paper.roundc`, `paper.gifttag` and
    `shape.ringb`. Each id joins `IN_SCOPE` in the commit that wires its family, so no commit names an id the
-   catalogue does not hold. A test derives holes from the geometry and checks both ways: every listed id has a
-   hole, and every holed id is listed or excluded by a named ruling (none today; `mark.crop` stays excluded by
-   name and has no enclosed hole). A piece cannot gain or lose a hole unlisted.
+   catalogue does not hold. The set stays a list, as [ADR-124](#adr-124) says: a piece is in scope because it is
+   named, and naming it is a reviewed change. What is new is a check one way, geometry to list: a JVM test finds
+   every outline with enclosed paper and fails unless that id is listed or excluded by a named ruling, so a piece
+   cannot gain a hole unlisted. The exclusions list is empty today (ADR-124's exclusion of `mark.crop` is about
+   bare paper between marks, not an enclosed hole).
 6. **Gate numbers**, written into [SUPPLIES-SPEC §4.4](design/SUPPLIES-SPEC.md#house-style) by rule number: G1
    W = 2.5, printer's marks Wf = 1.5; G2 ink ≥ 2 (≥ Wf for printer's marks), gaps and holes ≥ 1.5; G3 four shape
    classes with optical sizes; G4 coverage bands per class (line 4–35%, mark 25–65%, frame 30–65%, sheet 40–85%)
@@ -16874,7 +16883,9 @@ licences and its rule that credit never goes in the PDF; ADR-124's three passes 
 8. **Provenance and credits.** Every id records its source kind: drawn in-house (the shipped, A34 and A39 pieces)
    or imported (the 40); none in this batch is redrawn from a reference. Every imported piece carries ADR-104's
    record per item, with the upstream file's sha256 checked by a JVM test against test resources (never in the
-   APK's art path), and its set appears in Licences & credits with its licence, holder and notice text. Doodle
+   APK's art path). Licences & credits lists each set once, with its licence, holder and notice text, and each
+   set's notice names the pieces taken from it, which is how this batch meets [ADR-137](#adr-137)'s "each piece's
+   entry in Licences & credits". Doodle
    Icons by Khushmeen Sidhu is credited to the creator under CC0, and the mirror's MIT text (© 2022 Srivatsa
    Rampalli) ships as a precaution (R34.5).
 9. **Five drawings owe a fix before their family is wired** ([D-131](design/V2-SPEC-DEFECTS.md#d-131)):
@@ -16922,7 +16933,29 @@ licences and its rule that credit never goes in the PDF; ADR-124's three passes 
 
 #### Review
 
-To be recorded after the independent review of this change.
+Two independent Review Agents read the change against the files on 2026-10-22, both **GO WITH FIXES**.
+
+**Law and consistency.** It confirmed 17 redraws, not the 16 an earlier ruling assumed when `mark.hand` was to be
+retired; the counts and the licences; and that nothing is marked Accepted that must not be. It asked the owner's
+side to ratify the `mark.bar` holder, because the G2 re-check after a fit is written in this same change (it is
+recorded openly in decision 2, D-130 and OWNER-CHECKLIST). Three Required Fixes, all accepted: decision 5 changed
+ADR-124's "a list, not a rule" unstated and contradicted itself on `mark.crop` (now a one-way check, the list
+stays a list, ADR-124's note and the *Amends* line say so); one credits row per set contradicted ADR-137's "each
+piece's entry" (each set's notice now names its pieces, and *Amends* says so); ROADMAP and OWNER-CHECKLIST still
+said A39 waits for the picks (dated notes, a change-log row and an ADR-139 owner row with the Doodle download
+added). Recommended, accepted: the ADR-132 index row points here; ADR-124's "other 25" is dated; ADR-136 W3 is in
+*Amends*. Partly accepted: the holed list is named in H9, here, A39 and R34; H9 is now its one authority, and
+`IN_SCOPE` is described as holding it in code as each family lands. The list stays written out here and in A39
+because this decision and the freeze name what they decide.
+
+**Design and data.** With its own parser it found no data defect: every pick maps to one row except the A34
+Circle; the six transforms reproduce exactly; every redrawn id fits its old box; the holed list is 31 from the
+geometry; the credits counts, holders and notice texts match the licence files; nothing overflows at 360. Its
+Recommended items, accepted: A39 claimed "only M, L, C and Z" though five kept shipped rows use H and V (now
+said); the non-zero note covered only the A34 variants (the four shipped holed drawings are now named, and the
+`fix.cornerb` reversal described); the dropped A34 Circle is named as an owner pick not offered (decision 4); the
+Fluent set label is the same in A39 and the credits. Not taken: the white licence page in dark mode, which is
+the frozen typeface licence page's own design, unchanged here.
 
 ---
 

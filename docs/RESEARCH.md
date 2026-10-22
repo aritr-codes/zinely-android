@@ -1549,8 +1549,10 @@ petal cusps). At a minimum: `mark.scissors` (finger holes at 1.5), `tape.plaster
 `paper.hole`, `shape.ring`, `paper.border`, `paper.round`) and 23 new ids. The full list: `fix.corner`, `fix.cornerb`, `fix.grommet`, `fix.grommetb`, `fix.grommetc`, `fix.needle`, `tape.plaster`, `fix.sticker`, `mark.registration`, `mark.registrationb`, `mark.registrationc`, `mark.scissors`, `mark.squiggle`, `paper.window`, `paper.windowb`, `paper.windowc`, `paper.cutwindow`, `paper.hole`, `paper.holeb`, `paper.holec`, `paper.holed`, `paper.border`, `paper.borderb`, `paper.borderc`, `paper.borderd`, `paper.round`, `paper.roundb`, `paper.roundc`, `paper.gifttag`, `shape.ring`, `shape.ringb`.
 The recon's "34 holed picks" was an arithmetic slip; the review and this run both count 31. Eight A34 variants
 (`fix.cornerb`, `fix.grommetb`, `mark.registrationb`, `paper.windowb`, `paper.holeb`, `paper.borderb`,
-`paper.roundb`, `shape.ringb`) wind each hole the same way as the outer contour; rewinding the inner subpath makes
-even-odd equal non-zero (residual 0.0 sq units) with the fill unchanged, and A39 carries them rewound. The
+`paper.roundb`, `shape.ringb`) wind each hole the same way as the outer contour; reversing one contour (the inner
+one, or for `fix.cornerb` the outer) makes even-odd equal non-zero (residual 0.0 sq units) with the fill unchanged,
+and A39 carries them so. The four shipped holed drawings kept as picked still differ under non-zero; the renderer
+fills even-odd, so this is harmless. The
 smallest holes are the scissors' finger loops and the gift tag's eyelet; a tap there hits what lies beneath, as
 [ADR-124](DECISIONS.md#adr-124) intends.
 

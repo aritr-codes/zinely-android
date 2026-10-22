@@ -3138,8 +3138,10 @@ A39 Circle holds `shape.circle` and the A34 Circle gets no id.  Ring, Rectangle 
 
 HOLES (H9, ADR-124).  31 pieces have enclosed paper, counted from the geometry: the eight of A32 plus
 23 new ids.  The list: fix.corner, fix.cornerb, fix.grommet, fix.grommetb, fix.grommetc, fix.needle, tape.plaster, fix.sticker, mark.registration, mark.registrationb, mark.registrationc, mark.scissors, mark.squiggle, paper.window, paper.windowb, paper.windowc, paper.cutwindow, paper.hole, paper.holeb, paper.holec, paper.holed, paper.border, paper.borderb, paper.borderc, paper.borderd, paper.round, paper.roundb, paper.roundc, paper.gifttag, shape.ring, shape.ringb.
-A34's holed variants are transcribed with each hole wound against its outer contour, so even-odd
-and non-zero agree; the fill is unchanged.
+The eight A34 holed variants are transcribed with one contour reversed (the inner one, or for
+fix.cornerb the outer), so even-odd and non-zero agree for them; the fill is unchanged.  The four
+shipped holed drawings kept as picked (mark.registration, paper.window, paper.border, paper.round)
+still fill differently under non-zero, which is harmless: the renderer fills even-odd.
 
 OWED DRAWING FIXES (D-131).  These are frozen as picked and fail or sit at a gate; each fix is a bug
 fix under the freeze, made as a dated note here before its family is wired: `fix.sticker` G6 (kinks
@@ -3152,8 +3154,9 @@ other list or tile: the sheet still shows A34 over the shipped literal lists, an
 BenchArtSheetParityTest keeps holding the shipped catalogue to them.  The wiring, one family per
 commit: transcribe that family's ART_A39 rows into its SupplyCatalog object (divide by 24); add its
 ids, names and tags to Copy.Supplies.BY_FAMILY; add its holed ids to SupplyInk.IN_SCOPE; and point the
-parity test's rows for that family at the ART_A39 list, which uses only absolute M, L, C and Z with
-at most two decimals.  Every Art and Decor golden re-records on CI, reading each diff first.
+parity test's rows for that family at the ART_A39 list, which uses
+at most two decimals in absolute M, L, C and Z, plus H and V in five rows that keep the shipped
+drawing (mark.crop, mark.scan, mark.perf, paper.stub, paper.dogear), as the shipped lists do.  Every Art and Decor golden re-records on CI, reading each diff first.
 
 SHEET LENGTH AT 360DP (ADR-137 decision 4).  The A16 sheet lays tiles three to a row, 134dp tall with
 a 12dp gap, under a 40dp family label.  On a 360 x 640dp phone the sheet is 86% of the height, about
@@ -3336,7 +3339,7 @@ const A39_META={
   'fix.pushpinc':['fix.pushpin','A39',false,0,'none'],
   'fix.pushpind':['fix.pushpin','Doodle Icons by Oreo Design',false,0,'none'],
   'fix.pushpine':['fix.pushpin','Doodle Icons by Oreo Design',false,0,'none'],
-  'fix.needle':['fix.needle','Fluent Emoji High Contrast',false,1,'none'],
+  'fix.needle':['fix.needle','Fluent Emoji (High Contrast)',false,1,'none'],
   'tape.plaster':['tape.plaster','Tabler Icons',false,1,'none'],
   'fix.sticker':['fix.sticker','Tabler Icons',false,2,'none'],
   'mark.asterisk':['mark.asterisk','A39',true,0,'move +0, +0.04'],
@@ -3369,8 +3372,8 @@ const A39_META={
   'mark.burst':['mark.burst','shipped',false,0,'none'],
   'mark.burstb':['mark.burst','A34',false,0,'none'],
   'mark.burstc':['mark.burst','A39',false,0,'none'],
-  'mark.burstd':['mark.burst','Fluent Emoji High Contrast',false,0,'none'],
-  'mark.sparkle':['mark.sparkle','Fluent Emoji High Contrast',false,0,'none'],
+  'mark.burstd':['mark.burst','Fluent Emoji (High Contrast)',false,0,'none'],
+  'mark.sparkle':['mark.sparkle','Fluent Emoji (High Contrast)',false,0,'none'],
   'mark.cancel':['mark.cancel','Tabler Icons',false,0,'none'],
   'mark.heart':['mark.heart','Doodle Icons by Khushmeen Sidhu',false,0,'none'],
   'mark.tick':['mark.tick','Doodle Icons by Khushmeen Sidhu',false,0,'none'],
@@ -3392,7 +3395,7 @@ const A39_META={
   'paper.stub':['paper.stub','shipped',false,0,'none'],
   'paper.stubb':['paper.stub','A34',false,0,'none'],
   'paper.stubc':['paper.stub','A39',false,0,'none'],
-  'paper.ticket':['paper.stub','Fluent Emoji High Contrast',false,0,'none'],
+  'paper.ticket':['paper.stub','Fluent Emoji (High Contrast)',false,0,'none'],
   'paper.stamp':['paper.stamp','shipped',false,0,'none'],
   'paper.stampb':['paper.stamp','A34',false,0,'none'],
   'paper.stampc':['paper.stamp','A39',false,0,'none'],
@@ -3416,8 +3419,8 @@ const A39_META={
   'paper.roundb':['paper.round','A34',false,1,'none'],
   'paper.roundc':['paper.round','A39',false,1,'none'],
   'paper.balloon':['paper.balloon','Doodle Icons by Khushmeen Sidhu',false,0,'none'],
-  'paper.thought':['paper.thought','Fluent Emoji High Contrast',false,0,'none'],
-  'paper.shout':['paper.shout','Fluent Emoji High Contrast',false,0,'none'],
+  'paper.thought':['paper.thought','Fluent Emoji (High Contrast)',false,0,'none'],
+  'paper.shout':['paper.shout','Fluent Emoji (High Contrast)',false,0,'none'],
   'paper.bookmark':['paper.bookmark','Doodle Icons by Oreo Design',false,0,'none'],
   'paper.ribbon':['paper.bookmark','Doodle Icons by Khushmeen Sidhu',false,0,'none'],
   'paper.gifttag':['paper.gifttag','Doodle Icons by Oreo Design',false,1,'none'],
