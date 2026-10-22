@@ -17,7 +17,7 @@ internal object TapeArt {
     /**
      * A staple, seen flat: a crossbar with two legs turned down at its ends.
      *
-     * **One polygon, eight points** — not a bar plus two legs, for the even-odd reason in this
+     * **One polygon, eight points** — not a bar plus two legs, for the even-odd reason in the
      * header comment in `MarkArt`. Proportions are a real staple's: the crown is most of the width, the legs are
      * about a third of the height, and the wire is thin enough to read as wire rather than as a
      * bracket.
