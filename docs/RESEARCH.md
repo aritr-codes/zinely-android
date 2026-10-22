@@ -1614,7 +1614,7 @@ Where a page did not say, this is stated; nothing below is inferred silently.
 - ✅ VERIFIED: **linked semantics exist only where the document keeps the link** (Figma styles, Illustrator global swatches). Raster-style tools (Procreate, Photoshop) copy the value, so deleting a palette is harmless to finished work.
 - ⚠️ NOT VERIFIED: what Figma or Illustrator do to the *users* of a deleted style or swatch. Do not cite them for "delete detaches and keeps the value".
 
-### R33.7 Zinely application — 🟦 RECOMMENDATION
+### R33.8 Zinely application (palettes) — 🟦 RECOMMENDATION
 
 - **Copy, not reference.** A zine already stores each used ink's own value in its document (R33.6), so a saved combination is a list of `RRGGBB` values. Deleting a combination or one of its inks never changes any zine. That is Procreate's semantics, and it avoids the unverified delete-while-in-use case entirely.
 - **Create:** a "Save these inks" action that makes the combination already named ("Untitled", or the first ink's colour name), with the name field focused for rename in place. No name-first dialog.

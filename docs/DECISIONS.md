@@ -16908,11 +16908,14 @@ document; [ADR-032](#adr-032)'s single Preferences DataStore; D-028's ruling tha
 - **A palette pot is not fenced by target.** The frozen prototype draws every palette and starter pot for a text target
   too, so *Warm zine*'s `Cream #F1E9D6` and *Cool zine*'s `Sky #DDE9EE` reach a text piece in one tap, which OD-24's
   band fence had prevented. This follows the freeze and D-028 (never block); the built-in grid keeps the fence.
-  Recorded for the owner in OWNER-CHECKLIST.
+  Controller ruling 2026-10-22 (owner delegation "decide, do not ask"): when a pot below 3:1 on white lands on a text
+  piece, the ink snack says so — "Ink · Cream. Pale in print: words may be hard to read." — the same words as the
+  mixer's footer. It warns, never blocks. Cost if wrong: one snack string.
 - The ink snack changes: it offers Undo when the action changed the piece or the library, stands 4000ms as the
   prototype's toast does, and is drawn above the tray rather than under it.
 - The mixer's preview title for an Art piece (which has no words of its own) is a stock sample, "Last stop", the
-  prototype's mock text. That choice is the implementer's, not the freeze's, and is listed for the owner.
+  prototype's mock text. Controller ruling 2026-10-22: kept; the preview judges the ink, and an Art piece's own mark
+  is already drawn beside the title.
 - The Ink tray's pixel goldens change and new ones are added; they are recorded on CI (`record-goldens.yml`), never
   locally.
 - `EditorViewModel` gains a constructor parameter, so its two JVM tests gain a fake store.
@@ -16924,7 +16927,6 @@ document; [ADR-032](#adr-032)'s single Preferences DataStore; D-028's ruling tha
 
 - The implementation, both device passes (including the platform accessibility tree for the sliders, toggles and
   radios), a TalkBack listen, and pixel parity against the frozen prototype.
-- The owner's look at the palette-pot fence consequence above.
 
 #### Review {#adr-138-review}
 
@@ -16949,8 +16951,8 @@ the ViewModel's scope; a standing Undo is withdrawn when the document changes; t
 details (which name each snack says, the edit-mode pot label); the preview sample for Art listed for the owner; the
 pale note's polite status asserted; the TalkBack remove action removes directly; the ZINE-DIRECTION note reworded;
 `addMixed` precedence tested. Observations: prototype line numbers drifted after `777374f`, so the plan cites
-symbols; the prototype offers Undo on a no-op tap, recorded as a deviation in decision 5; RESEARCH has two `R33.7`
-headings (left for the research owner). The implementation review is recorded here when the work is done.
+symbols; the prototype offers Undo on a no-op tap, recorded as a deviation in decision 5; RESEARCH had two `R33.7`
+headings (the second is now R33.8). The implementation review is recorded here when the work is done.
 
 ## ADR-139 {#adr-139}
 
