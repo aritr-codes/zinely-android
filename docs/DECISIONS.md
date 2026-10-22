@@ -146,6 +146,7 @@
 | [ADR-135](#adr-135) | **Read speaks the page.** One stop per meaningful thing, in the Bench's spatial order, between Previous and Next page: text as written, a photo as `Photo` or `Photo: <description>`, Art only when described (by its name), `Blank page` / `Only Art on this page`; no role on a stop; a turn announces the ticket only. The PDF and paper carry no description, said once in the Describe field. `v21-proof.html` A38 frozen; part 1 needs no schema, part 2 is plan step 7 | Proposed (design frozen under the owner's delegation; not built) |
 | [ADR-136](#adr-136) | **Product direction 2026-10-15: keep, cut and the order of work.** W1 never lose work, never get stuck → W2a/W2b small things → W3 Art better before more → W4 photo descriptions (v4, alone) → W5 print guidance → W6 paper sizes (v5) and paper colour → W7 Art grows inside the four families → W8 your own artwork → W9 Hand voice; then Later. A cut list with reasons. Never #19 becomes "never *breaks* a saved zine", with ADR-132's pre-1.0 redraw as the one named exception. Records the owner's readings Q1 ("the paper is the medium, not the page") and Q2 ("§IV governs chrome; a document voice is content") | Accepted, under the owner's delegation; Q1 and Q2 are owner readings |
 | [ADR-137](#adr-137) | **One world: Art pieces from any source pass the same house gates; variants of one subject.** "One hand" becomes "one world": pieces we draw, pieces redrawn from public-domain or open-licence references, and imported open-licence pieces all pass nine gates and carry ADR-104's record per item. Variants of one subject sit together on the sheet. Still four families; curated, not capped. Amends SUPPLIES-SPEC §4.1 and §4.4 (by §4.5), ADR-107 R1's count target and ZINE-DIRECTION principle 3 | Proposed (direction ruled by the owner; A39 not picked) |
+| [ADR-140](#adr-140) | **When a zine's pages go back to their earlier copy, My Shelf says so once (extends ADR-134).** A `document.json` put back from its `.bak` is told by the A37 note in Library A46's words ("A page file was damaged, so Zinely used the copy from just before your last few seconds of changes"); one note covers a zine's details and pages. The store's `Restored` result is recorded in one lock-free repair-note store shared by both repositories; `BackupOnly` is silent. No Bench notice (named follow-up); no edit journal. Decides D-120 item 4, #146 | Proposed (A46 frozen 2026-10-22 under the owner's delegation; Accepted only once built and reviewed) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -16261,6 +16262,11 @@ heading after Got it), and a real phone at 360dp and font scale 2; the owner's f
 words; D-120 item 4; review follow-ups 3 (a repair found during a move or rename is cleared by it) and 4
 (a second repair is hidden by `dismissedNotes` until a clean listing).
 
+**2026-10-22:** decision 7's scope ("Only `meta.json`") is extended, not rewritten, by [ADR-140](#adr-140)
+(Proposed): a page document put back from its own `.bak` is told by this same note, in Library A46's words, and
+D-120 item 4 is decided there. The waiting notes move into one store shared by both repositories (ADR-140
+decision 4).
+
 #### Review
 
 See [D-120](design/V2-SPEC-DEFECTS.md#d-120) § Review.
@@ -16745,3 +16751,152 @@ first; W1 resized to L; ROADMAP's W6 line names the W8 field design; decision 5 
 Accepted; OWNER-CHECKLIST rows added; mixed inks recorded as not decided. Observations taken: this section
 replaces the placeholder; W3's release-note line corrected; the W8 field must ride a bump. The ADR-135 link
 resolves once PR #141 merges.
+
+---
+
+## ADR-140 {#adr-140}
+
+### When a zine's pages go back to their earlier copy, My Shelf says so once (extends ADR-134)
+
+**Status:** Proposed, 2026-10-22, under the owner's delegation of 2026-10-12 ("decide, do not ask"). It
+becomes Accepted under that delegation only once it is built (W1 Task 11) and that build is reviewed; the owner
+has not ruled on it personally and may overrule it.
+**Builds:** library amendment A46 (frozen 2026-10-22, appended after A37 in `docs/design/mockups/v21-library.html`),
+then the Kotlin under the contract below, in one PR that closes #146.
+**Extends:** [ADR-134](#adr-134), whose decision 7 ("Only `meta.json`") is left as written; this ADR decides the
+question it left open. **Evidence:** [RESEARCH R30](RESEARCH.md#r30-telling-someone-their-work-went-back-to-an-earlier-copy-2026-10-15)
+(no new research: the surface and its reasons are ADR-134's). **Findings:** [D-120](design/V2-SPEC-DEFECTS.md#d-120)
+item 4. **Issue:** [#146](https://github.com/aritr-codes/zinely-android/issues/146). **Direction:**
+[ADR-136](#adr-136) W1, "never lose work, never get stuck".
+
+#### Context
+
+- ✅ `DocumentRepositoryImpl.load` reads `document.json` with `store.read(path, ::isLoadable)`
+  (`DocumentRepositoryImpl.kt:70`), so a read that puts the `.bak` back returns the same bytes as a clean one
+  and nothing is told. The comment at `:75-77` ("AtomicFileStore exposes no richer status") has been stale since
+  ADR-134 added `readReporting`.
+- ✅ The `.bak` is the file before the last write: `write` copies the target to `<name>.bak` before the atomic
+  rename (`AtomicFileStore.kt:51-60`). Only an autosave rewrites an existing `document.json`; Make a zine,
+  Duplicate and a restore write a new one (`RoomProjectRepository.kt:232,316`; `AutosaveCoordinatorFactory.kt:149`).
+  One autosave holds at most about five seconds of editing (`AutosaveConfig`: 1 s debounce, 5 s cap from the
+  first unsaved edit, `AutosaveCoordinator.kt:44-45`). So a repair loses up to the maker's last few seconds of
+  changes, with no word.
+- ✅ `readReporting` already says which copy it returned, and reports a damaged file as `Restored` once
+  (`AtomicFileStore.kt:88-118,176`; ADR-134 decision 4).
+- ✅ `documents.load` has seven production callers: six in `RoomProjectRepository` (`:307` Duplicate, `:651`
+  the ADR-121 restore match, `:701` and `:704` the library backup, `:1043` the row re-sync, `:1424` the Shelf
+  tile) and the Bench's `EditorBootstrap.kt:39`, which reaches `DocumentRepository` with no
+  `RoomProjectRepository` on its path. Whichever reads first finds the repair, and the store reports it once,
+  so the signal must be **kept at the repository layer**, not raised by one screen.
+- ✅ `RoomProjectRepository` takes `DocumentRepository` in its constructor (`RoomProjectRepository.kt:119`,
+  `DataModule.kt:86,91`); its note writer `noteRepair` is private, runs with the repository's non-re-entrant
+  `mutex` held (`:1175-1177`, `:1211`), and `documents.load` is itself called under that lock (`:302-307`) and
+  from `syncRowFromDisk` (`:1043`), which `noteRepair` calls. A callback from the document repository into
+  `noteRepair` is therefore a dependency cycle, a deadlock or a broken lock invariant (plan review R1).
+- ✅ The Shelf listing reads the waiting note *before* it loads the document (`RoomProjectRepository.kt:1419`
+  then `:1424`), and a repair found on Bench open changes no index row, so today's Shelf flow would have no
+  reason to emit again when the maker comes back (plan review R2).
+
+#### Decision
+
+```mermaid
+sequenceDiagram
+    participant S as AtomicFileStore.readReporting
+    participant D as DocumentRepositoryImpl.load
+    participant N as RepairNotes (one, lock-free)
+    participant P as RoomProjectRepository
+    participant V as My Shelf (A37 note, A46 words)
+    S-->>D: Restored(bytes) for document.json
+    D->>N: pages repair for this zine
+    S-->>P: Restored(bytes) for meta.json (ADR-134)
+    P->>N: details repair, with the title the row showed
+    N-->>V: notes changed, the Shelf lists again
+    V->>N: Got it (both kinds) / rename, move (details only) / delete
+```
+
+1. **Tell it as ADR-134 does: the A37 note on My Shelf, with A46's words (option A).** No new surface. The
+   note is already persisted, once per repair, dismissed only by "Got it" and announced on arrival only
+   (ADR-134 decisions 1, 3 and 6). The Shelf's question is "which zine do I want?", and a zine that changed
+   under the maker is what the note exists to say. The Bench shows nothing. A Bench notice (option B) is the
+   **named follow-up**, taken only if the first-time-user device pass reads the Shelf note as too late for a
+   repair found on Bench open.
+2. **The words are A46.3's, exactly**, transcribed into `Copy.Restored` beside A37.3's. A pages-only zine reads
+   "Zinely repaired “{now}”" / "A page file was damaged, so Zinely used the copy from just before your last few
+   seconds of changes." A zine with both kinds gets one note, its details sentence and then its pages sentence
+   (A46.3). "Your" is right here where A37.3 refused it, because only the maker's own edits rewrite an existing
+   document (context); "a few seconds" is the honest bound, never "nothing was lost". Never "backup" (A37.4).
+3. **The signal is the store's sealed result.** `DocumentRepositoryImpl.load` calls
+   `store.readReporting(path, ::isLoadable)`; on `StoreRead.Restored` it records a pages repair for the zine,
+   before decoding, since the file on disk has changed whatever the decode then says. `Read` records nothing.
+   **`BackupOnly` records nothing**, and the reason is the store's, not a crash window: `write` *copies* the
+   target to `.bak`, so the primary never disappears between the snapshot and the rename. A lone `.bak` arises
+   only from an earlier repair that could not write the primary back and quarantined it
+   (`AtomicFileStore.kt:88-118,176`), and that repair was already reported as `Restored`. This is ADR-134
+   decision 3's rule, mirrored. Nothing new is caught; the stale comment goes.
+4. **One repair-note store, injected into both repositories.** The waiting notes (today's `waitingNotes`
+   map, `waitingNoteOf` and the marker write and removal, `RoomProjectRepository.kt:168`; `noteRepair` `:1211`, `waitingNoteOf` `:1242`, `clearWaitingNote` `:1262`) move into
+   one small lock-free class, `RepairNotes`, that both `DocumentRepositoryImpl` and `RoomProjectRepository`
+   take in their constructors, so neither repository depends on the other and no callback runs between them.
+   It takes no lock of its own beyond what its map and the store's atomic write give it, and it is never
+   reached through `noteRepair` from inside the project repository's lock: the pages path does not enter
+   `RoomProjectRepository` at all. The row re-sync stays in `RoomProjectRepository`, for details repairs
+   only. A pages repair needs none: the row mirrors no page content, and the cover redraws from the document's
+   mtime ([ADR-045](#adr-045)), which the repair's write changes.
+   **Where it lives.** The controller ruling R-W1 names `core/data`. `:core:data` cannot see
+   `AtomicFileStore` (`:core:data-storage` depends on `:core:data`, not the reverse), and the marker paths are
+   `:data-android`'s `ProjectPaths`, so the class lives in `:data-android` beside both repositories, as the
+   plan review's R1 placed it. The value it hands the Shelf, `RestoredDetails`, stays in `core/data`.
+5. **The record carries the kind.** `restored-note.json` (ADR-134 decision 5) records whether the details,
+   the pages or both went back, in fields with defaults such that a marker written before this change still
+   decodes as a details repair with its previous title. A second repair of the other kind on a zine already
+   waiting adds its kind to the same note and keeps the first previous title. It stays a sidecar, written
+   atomically, never copied by Duplicate, into a library backup or by a restore, and gone with the zine's
+   directory: `document.json` and the v3 format (`CURRENT_SCHEMA_VERSION = 3`) are untouched.
+6. **The Shelf hears about it without a restart.** `RepairNotes` tells its observers when a note is added or
+   cleared, and the Shelf listing re-reads when it does. Within one listing the note is read after the
+   document load, so a repair that the Shelf's own tile load finds is in that same listing. The test is fixed:
+   a pages repair found when the Bench opens a zine is in the note when the maker comes back to My Shelf, with
+   no restart (ruling R-W2). That note was already there when the Shelf drew its zines, so it is read in order,
+   not announced (A37.10); a repair the Shelf's own load finds while it is showing arrives, and is announced.
+7. **Clearing** (A46.5). "Got it" clears every zine and both kinds. Delete removes the zine from the note once
+   its undo has passed. Rename and move clear a zine's details part only, since they act on its name and
+   folder and not its pages; a zine with both stays, now in the pages-only form, silently.
+8. **Scope.** Only the repair of a present, damaged `document.json`. The lost seconds are not recovered: see
+   options C to E. A pre-existing race is left as it is: two readers repairing the same file at once share the
+   fixed `.tmp`, and one may delete the other's temp; the note's check-then-write then counts it once, which is
+   the wanted outcome (plan review, observations).
+
+#### Alternatives considered
+
+| | Option | For | Against |
+|---|---|---|---|
+| **A** | **Tell it as ADR-134 does** (chosen): `readReporting`, a pages note in the one `RepairNotes` store, the A37 note shows it once | Reuses a frozen, accepted surface and its once-only, persisted, announced-on-arrival pipeline; no new UI; small | Late when the repair happens on Bench open: the maker learns on returning to the Shelf |
+| B | A, **plus** a Bench notice in the `EditorSaveFailure` banner's shape ("Got it") when the repair happens on Bench open | Tells the maker where the loss is visible | A second surface for one fact; a new Bench state and amendment; must not tell twice with the Shelf note. **Named follow-up** if Pass 2 says "too late" |
+| C | **Stronger repair:** an append-only edit journal replayed over the `.bak` | The only option that recovers the lost seconds | A new on-disk format beside v3, crash-ordering risk, and a large change for at most about five seconds of edits in a repair this rare ([ADR-021](#adr-021) chose no op-log) |
+| D | Keep the last N `.bak` files | Survives a `.bak` that is damaged too | Does not recover the lost autosave, which is the complaint |
+| E | Keep the damaged bytes as `document.json.damaged` | Forensics | Nothing reads it (YAGNI), and it would have to stay out of the backup |
+| — | A callback from `DocumentRepositoryImpl` into `RoomProjectRepository.noteRepair` (the first draft) | No new class | A DI cycle; a deadlock or a broken lock invariant under the non-re-entrant mutex; recursion through `syncRowFromDisk`; and the Bench's load never passes through `RoomProjectRepository` (plan review R1) |
+
+#### Consequences
+
+- **The Kotlin change owes, in one PR** (W1 Task 11): `readReporting` in `DocumentRepositoryImpl.load`;
+  `RepairNotes` injected into both repositories; the kind in `restored-note.json` with the old-marker default;
+  the kind carried through `RestoredDetails`, `HomeViewModel` and `RestoredZine`; the A46 words in
+  `Copy.Restored`. Tests: a damaged document beside a good `.bak` loaded twice records exactly one pages repair
+  and both loads return the `.bak`'s content; a clean read and a `BackupOnly` read record none; a pages repair
+  and a details repair on one zine make one note; an old marker decodes as a details repair; the Bench-open
+  repair is on the Shelf on return without a restart; rename and move clear the details part only; every
+  A46.3 form and A37.4's banned words; the note's Compose and platform-tree tests extended to the pages
+  forms; goldens recorded on CI. ADR-134's review follow-up 4 (a second repair hidden by `dismissedNotes`
+  until a clean listing) now also covers a pages repair that follows a dismissed details note, so the build
+  fixes it or proves it cannot happen, with a test.
+- **Owed before the build is accepted:** emulator Pass 1 (a hand-damaged `document.json` through `run-as` in
+  the QA package, never the owner's app: the note once, the zine opens with the `.bak`'s pages) and Pass 2 (do
+  the words say what was lost without alarm, and is the Shelf too late?); a TalkBack listen of the pages note
+  by a human; the owner's first-time reading of the words.
+- D-120 item 4 is decided here. ADR-134 decision 7 is not rewritten; its *As built* carries a dated line
+  pointing here.
+
+#### Review
+
+To be filled in by this change's Review Agent before A46 is relied on.
