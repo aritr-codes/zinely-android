@@ -1390,3 +1390,318 @@ if (prototypeParams.get('gallery') === 'fold') {
   }
 })();
 </script>
+
+
+<!-- ===========================================================================
+     A43 (D-142, ADR-054, ADR-136 W1) — 2026-10-22 — DESIGN FROZEN under the
+     owner's delegation of 2026-10-12 ("decide, do not ask").
+
+     The Proof says what went wrong, and Share stays. Appended after A38 so no
+     line above moves. Everything below is drawn live in the phone above
+     (controls: "error: …", "after save") and again, at 360dp, in the section.
+
+     1. SAME overlay, SAME title, SAME Try again. The overlay is the frozen
+        `#errwrap` of docs/design/v1/proof.html, built as `ProofErrorPane`: it
+        replaces the reader AND the band, and the top bar's back stays. This
+        file never drew it; A43 draws it in V2.1 inks. Only the BODY sentence
+        changes, and it names the cause. Every body opens "Your zine is safe."
+        because the title alone ("Couldn’t make the PDF") reads as a loss, the
+        exact misreading the Beta UX review recorded ("it lost my work").
+          Cause                      Body (exact; Copy.Proof)
+          OutOfMemory, sheet render  "Your zine is safe. It’s too big to make in one go on this phone — close other apps, then try again."
+          OutOfSpace                 "Your zine is safe. Your phone is out of space — free some up, then try again."
+          Permission, Android 7–9    "Your zine is safe. Zinely needs permission to save to Downloads — tap Try again, then Allow."
+          anything else              unchanged: "Your zine is safe on this device — the export just didn’t finish. Try once more."
+        OutOfMemory is the `OutOfMemoryError` caught around the sheet render
+        (ExportViewModel.kt:92). OutOfSpace is an IOException while the usable
+        space is low, by the same probe as DocumentRepositoryImpl
+        .classifyWriteFailure. Permission is the host's refusal on Android 7–9
+        (ExportViewModel.couldNotStart). A missing photo is NOT a failure: the
+        renderer draws a placeholder (ImageBlitter, render-android) and the
+        save succeeds. This overlay never lists photos; W2b owns "missing
+        photos listed before Save or Share".
+     2. PERMANENT DENIAL. When Storage is denied and Android will no longer ask
+        (no rationale after a denial), the one button reads "Open settings" and
+        opens Zinely's own page in Android settings (app details). The body:
+          "Your zine is safe. Zinely needs permission to save to Downloads. Under Permissions, turn on Storage, then come back and tap Try again."
+        On return (ON_RESUME) the overlay STAYS until the maker acts: there is
+        no automatic retry. If Storage is now on, the button reads "Try again"
+        (the body already says so); if not, it still reads "Open settings".
+        The task brief's "tap Save PDF" is not used: the overlay covers the
+        band, so Save PDF is not on screen; Try again re-fires the same save.
+     3. SHARE AFTER SAVE. The `.done` block (P2 above) gains a quiet "Share"
+        between Open PDF and Fold it up, in Open PDF's surface style, and keeps
+        it in the folded state too. `.band.saved .commit` stays hidden: the
+        commit row's Share does not come back, this one replaces it. It sends
+        a copy of the saved PDF through the share sheet, the same verb as
+        before the save (ADR-054: Save keeps, Share sends). A failed Share
+        does not undo the save: the file is still in Downloads, so once the
+        overlay goes the done block is back.
+     Stale text above, corrected here rather than edited: P2 names the done
+     block's actions as Open PDF and Fold it up only; it now has Share too.
+=========================================================================== -->
+<!-- ===========================================================================
+     A44 (D-140) — 2026-10-22 — DESIGN FROZEN under the owner's delegation.
+     Accessibility fix allowed after freeze; recorded so the HTML stays true.
+
+     Nothing on the Proof is smaller than 12sp. The floor for any text a maker
+     must read on the Proof is 12sp (.75rem against this file's 16px root), and
+     it scales with the phone's font scale (rem does; sp does).
+       raised to .75rem: .pcount (.74) · .ready .rl span, the ready summary
+       (.72) · .btn-save small (.66) · .sect (.66) · .mp, the sheet's page
+       numbers (.66) · .cutlbl, the cut tag (.60) · .stepno, "Step N of 8"
+       (.66) · .legend (.62) · .foldnow (.74)
+       Compose-only, no element here, same floor: the sheet key and the cover
+       captions (ProofSheet.kt).
+     The fold diagram's page numbers (.cellno, SVG text) keep their size in
+     diagram units but never draw smaller than 12sp × font scale on screen:
+     size = max(diagram size, 12 × fontScale / diagram scale), in the
+     drawFold wrapper below. Exempt: the zine itself (the leaf's page art and
+     its .pgn page numbers are the maker's printed page drawn to scale, not
+     text the Proof sets) and this file's own annotation chrome (.badge, .cap).
+     🟦 House ruling, not a platform rule: M3's smallest type token is
+     labelSmall at 11sp and 12sp is bodySmall (🟨 from the M3 type scale, not
+     fetched here). 12sp is chosen because the Proof is print guidance read at
+     arm's length, and ProofPrint.kt already treats 12sp as the panel's
+     smallest text.
+=========================================================================== -->
+<style>
+/* A44 — the floor. Wrapping the frozen rules above by cascade order, never editing them. */
+.pcount,.ready .rl span,.btn-save small,.sect,.mp,.cutlbl,.stepno,.legend,.foldnow{font-size:.75rem}
+
+/* A43.1 — the overlay, in V2.1 inks. It takes the reader's and the band's place under the top bar. */
+.phone.a43on .stagewrap,.phone.a43on .band{display:none}
+.a43err{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  gap:var(--gap-sm);padding:0 var(--gap-xl) var(--gap-2xl)}
+.a43err[hidden]{display:none}
+/* The badge is a stamp on paper, so it re-pins the lit inks in both rooms (as .legend i does): the dark
+   room's --jam-text on --berry-tint would be about 1.1:1. */
+.a43mk{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;margin-bottom:var(--gap-xs);
+  background:#F1B4AF;color:#A9303D;border:1.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink-line)}
+.a43mk svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.a43err h2{font-family:var(--voice);font-weight:700;font-size:1.6rem;line-height:1.15;margin:0;color:var(--ink)}
+.a43err p{font-size:.94rem;line-height:1.5;color:var(--ink-soft);margin:0 0 var(--gap-md);max-width:32ch}
+.a43err .btn-save{flex:none;min-height:48px;padding:var(--gap-md) var(--gap-xl)}
+
+/* A43.3 — Share joins the done row; at large text the row wraps rather than clipping. */
+.done .row{flex-wrap:wrap;justify-content:center}
+
+/* Prototype only: ?frame=1 shows the phone alone, for the 360dp specimens below. */
+:root[data-frame] body{padding:0;gap:0;align-items:flex-start;background:var(--stage)}
+:root[data-frame] body>*:not(.phone){display:none!important}
+:root[data-frame] .phone{border-radius:0;border:0}
+.phone.a44w360{width:360px}
+
+.a43,.a44{width:100%;max-width:760px;display:flex;flex-direction:column;gap:var(--gap-md);margin-top:var(--gap-2xl)}
+.a43 h3,.a44 h3{font-family:var(--voice);font-size:1.15rem;margin:var(--gap-md) 0 0;color:var(--ink)}
+.a43 table,.a44 table{border-collapse:collapse;width:100%;font-size:.9rem}
+.a43 th,.a43 td,.a44 th,.a44 td{text-align:left;vertical-align:top;padding:var(--gap-sm);border-bottom:1px solid var(--hair)}
+.a43 th,.a44 th{color:var(--ink-soft);font-weight:600}
+.a43 .said{font-family:var(--sans);font-weight:600;color:var(--ink)}
+.a43 .note,.a44 .note{border-left:3px solid var(--leaf-text);padding:var(--gap-xs) var(--gap-md);margin:0}
+.a4x-frames{display:flex;flex-wrap:wrap;gap:var(--gap-lg);justify-content:center}
+.a4x-frames figure{margin:0;display:flex;flex-direction:column;gap:var(--gap-xs);align-items:center}
+.a4x-frames figcaption{font-size:.85rem;color:var(--ink-soft);max-width:360px;text-align:center}
+.a4x-frames iframe{width:360px;height:812px;border:1.5px solid var(--ink);border-radius:var(--br-md);background:var(--stage)}
+:root[data-gallery="true"] .a43,:root[data-gallery="true"] .a44{display:none}
+</style>
+
+<section class="a43" id="a43" aria-labelledby="a43h">
+  <p class="cap lead" id="a43h"><span class="badge">frozen · A43 · D-142</span><br>
+  A43 — the Proof says what went wrong, and Share stays</p>
+  <p class="cap">When a save fails, the overlay is the one it always was: same title, same <b>Try again</b>.
+  Its sentence now says <b>why</b>, so the maker knows what to do next, and it still starts by saying the zine
+  is safe. After a save, <b>Share</b> no longer disappears. Decided under the owner’s delegation; why:
+  <a href="../V2-SPEC-DEFECTS.md#d-142">D-142</a>, <a href="../../DECISIONS.md#adr-054">ADR-054</a> (keep vs send),
+  <a href="../../DECISIONS.md#adr-136">ADR-136</a> row W1.</p>
+
+  <h3>What the overlay says, by cause</h3>
+  <table>
+    <thead><tr><th scope="col">Cause</th><th scope="col">Body, exactly</th><th scope="col">Button</th></tr></thead>
+    <tbody>
+      <tr><td>Out of memory while making the sheet</td><td class="said" data-a43="memory"></td><td>Try again</td></tr>
+      <tr><td>Phone out of space</td><td class="said" data-a43="space"></td><td>Try again</td></tr>
+      <tr><td>Android 7–9 refused Storage, and will ask again</td><td class="said" data-a43="permission"></td><td>Try again</td></tr>
+      <tr><td>Android 7–9 refused Storage, and will not ask again</td><td class="said" data-a43="settings"></td><td>Open settings, then Try again once Storage is on</td></tr>
+      <tr><td>Anything else</td><td class="said" data-a43="generic"></td><td>Try again</td></tr>
+    </tbody>
+  </table>
+  <p class="note">The title stays <q class="said">Couldn’t make the PDF</q> in every row. A missing photo is
+  <b>not</b> a failure: the PDF draws a placeholder in its place and the save succeeds, so it never appears
+  here. Telling the maker about missing photos before Save or Share belongs to W2b.</p>
+  <p class="note"><b>Open settings</b> opens Zinely’s own page in Android settings. Coming back does not retry
+  on its own: the overlay waits, and its button reads <b>Try again</b> if Storage is now on.</p>
+
+  <h3>After a save</h3>
+  <p class="cap">The done block gains a quiet <b>Share</b> between Open PDF and Fold it up, and keeps it once
+  the zine is folded. It sends a copy of the saved PDF; Save PDF is still the only button that keeps one.
+  At 2× text the row wraps onto a second line instead of clipping.</p>
+
+  <h3>At 360dp</h3>
+  <div class="a4x-frames" id="a43frames"></div>
+</section>
+
+<section class="a44" id="a44" aria-labelledby="a44h">
+  <p class="cap lead" id="a44h"><span class="badge">frozen · A44 · D-140</span><br>
+  A44 — nothing on the Proof is smaller than 12sp</p>
+  <p class="cap">Every word a maker has to read on the Proof is at least <b>12sp</b>, and grows with the
+  phone’s text size. The labels that sat under it are raised to it; nothing else moves. A house ruling for a
+  screen read at arm’s length on the way to a printer: <a href="../V2-SPEC-DEFECTS.md#d-140">D-140</a>.</p>
+
+  <table>
+    <thead><tr><th scope="col">Text</th><th scope="col">Was</th><th scope="col">Now</th><th scope="col">Built in</th></tr></thead>
+    <tbody>
+      <tr><td>Page ticket (<code>.pcount</code>)</td><td>.74rem</td><td>12sp</td><td><code>ProofScreen.kt</code> 11.8sp</td></tr>
+      <tr><td>Ready summary (<code>.ready .rl span</code>)</td><td>.72rem</td><td>12sp</td><td><code>ProofScreen.kt</code> 11.5sp</td></tr>
+      <tr><td>Save PDF’s second line (<code>.btn-save small</code>)</td><td>.66rem</td><td>12sp</td><td>not built</td></tr>
+      <tr><td>Section labels in Print details (<code>.sect</code>)</td><td>.66rem</td><td>12sp</td><td><code>ProofPrint.kt</code> 10.5sp</td></tr>
+      <tr><td>Sheet page numbers (<code>.mp</code>)</td><td>.66rem</td><td>12sp</td><td><code>ProofSheet.kt</code> 15sp, already over</td></tr>
+      <tr><td>The cut tag (<code>.cutlbl</code>, built as “ONE CUT”)</td><td>.60rem</td><td>12sp</td><td><code>ProofSheet.kt</code> 9.5sp</td></tr>
+      <tr><td>Sheet key and cover captions</td><td>—</td><td>12sp</td><td><code>ProofSheet.kt</code> 11.5sp</td></tr>
+      <tr><td>“Step N of 8” (<code>.stepno</code>)</td><td>.66rem</td><td>12sp</td><td><code>ProofFold.kt</code> 10.5sp</td></tr>
+      <tr><td>Fold legend (<code>.legend</code>)</td><td>.62rem</td><td>12sp</td><td><code>ProofFold.kt</code> 10sp</td></tr>
+      <tr><td>The step’s “now” line (<code>.foldnow</code>)</td><td>.74rem</td><td>12sp</td><td><code>ProofFold.kt</code> 11.5sp</td></tr>
+      <tr><td>Fold-diagram page numbers (<code>.cellno</code>)</td><td>9 diagram units</td><td>the larger of 9 units and 12sp × text size</td><td><code>ProofFold.kt</code> units × scale</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Not raised: the zine itself. The leaf’s words and its page numbers are the maker’s printed
+  page drawn to scale, not text the Proof sets. At 2× text the fold-diagram numbers draw at 24sp; a one-digit
+  number is about 15 diagram units wide against a 44-unit cell pitch, so they do not collide.</p>
+  <p class="note">What wraps at 2× and 360dp (seen in the frames below; at 1× nothing new wraps): the ready
+  row’s heading and summary take two lines each; Save PDF’s label wraps inside its button; Print details’
+  section labels take two lines; the fold legend takes two rows; the done row puts Fold it up on a line of its
+  own. None clips. This phone is a fixed 812px tall, so at 2× the band crowds the page; on the phone the
+  screen scrolls.</p>
+
+  <h3>1× and 2× text, at 360dp</h3>
+  <div class="a4x-frames" id="a44frames"></div>
+</section>
+
+<script>
+/* A43 / A44 — prototype wiring. Wraps the frozen functions above in the fooBeforeAnn style. */
+(function(){
+  const SAFE = 'Your zine is safe. ';
+  const A43_BODY = {
+    memory:     SAFE + 'It’s too big to make in one go on this phone — close other apps, then try again.',
+    space:      SAFE + 'Your phone is out of space — free some up, then try again.',
+    permission: SAFE + 'Zinely needs permission to save to Downloads — tap Try again, then Allow.',
+    settings:   SAFE + 'Zinely needs permission to save to Downloads. Under Permissions, turn on Storage, then come back and tap Try again.',
+    generic:    'Your zine is safe on this device — the export just didn’t finish. Try once more.'
+  };
+  document.querySelectorAll('[data-a43]').forEach(td => td.textContent = A43_BODY[td.dataset.a43]);
+
+  const phone = document.querySelector('.phone');
+  const err = document.createElement('div');
+  err.className = 'a43err'; err.id = 'a43err'; err.hidden = true;
+  err.innerHTML = '<span class="a43mk" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3l9-16z"/>'
+    + '<path d="M12 9v4.5"/><path d="M12 16.6v.1"/></svg></span>'
+    + '<h2>Couldn’t make the PDF</h2><p id="a43body"></p>'
+    + '<button class="btn btn-save" id="a43cta"></button>';
+  phone.querySelector('.topbar').after(err);
+  const cta = err.querySelector('#a43cta');
+  let a43cause = null;
+  function a43show(cause){
+    a43cause = cause;
+    phone.classList.toggle('a43on', !!cause);
+    err.hidden = !cause;
+    if (!cause) return;
+    err.querySelector('#a43body').textContent = A43_BODY[cause];
+    cta.textContent = cause === 'settings' ? 'Open settings' : 'Try again';
+  }
+  cta.onclick = () => {
+    if (cta.textContent === 'Open settings') {
+      // The round trip, as the prototype can show it: the overlay stays, and Storage is now on.
+      flash('Opens Zinely’s page in Android settings');
+      cta.textContent = 'Try again';
+      return;
+    }
+    a43show(null);
+    flash('Tries the same save again');
+  };
+  window.a43show = a43show;
+
+  const openpdf = document.querySelector('.done .openpdf');
+  const share = document.createElement('button');
+  share.className = 'openpdf a43share';
+  share.textContent = 'Share';
+  share.onclick = () => flash('Opens your share sheet — a copy of the saved PDF');
+  openpdf.after(share);
+
+  // A44 — the fold diagram's numbers never draw under 12sp × font scale.
+  const drawFoldBeforeA44 = drawFold;
+  drawFold = function(){
+    drawFoldBeforeA44();
+    const svg = document.getElementById('foldDiagram');
+    const scale = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width;
+    if (!scale) return;
+    const fontScale = parseFloat(getComputedStyle(R).fontSize) / 16;
+    svg.querySelectorAll('.cellno').forEach(t => {
+      const units = parseFloat(t.style.fontSize) || 9;
+      t.style.fontSize = Math.max(units, 12 * fontScale / scale) + 'px';
+    });
+  };
+
+  const ctl = document.querySelector('.controls');
+  const add = (label, fn) => { const b = document.createElement('button'); b.className = 'ctl';
+    b.textContent = label; b.onclick = fn; ctl.appendChild(b); };
+  const g = document.createElement('span'); g.className = 'grp'; g.textContent = 'A43 / A44'; ctl.appendChild(g);
+  ['memory','space','permission','settings','generic'].forEach(c => add('error: ' + c, () => a43show(c)));
+  add('no error', () => a43show(null));
+  add('text 1× / 2×', () => { R.style.fontSize = R.style.fontSize ? '' : '200%'; drawFold(); });
+  add('360 wide', () => phone.classList.toggle('a44w360'));
+
+  // ?frame=1 — the phone alone, for the specimens. Never builds frames inside a frame.
+  const q = new URLSearchParams(location.search);
+  if (q.get('frame') === '1') {
+    R.setAttribute('data-frame', '');
+    if (q.get('theme')) R.setAttribute('data-theme', q.get('theme'));
+    if (q.get('text')) R.style.fontSize = (Number(q.get('text')) * 100) + '%';
+    if (q.get('w') === '360') phone.classList.add('a44w360');
+    if (q.get('saved') === '1') { doSave(); document.getElementById('flash').classList.remove('on'); }
+    if (q.get('folded') === '1') document.getElementById('band').classList.add('folded');
+    if (q.get('err')) a43show(q.get('err'));
+    if (q.get('drawer')) openDrawer(q.get('drawer'));
+    if (q.get('drawer') === 'fold') goStep(Number(q.get('step') || 1) - 1);
+    return;
+  }
+  const theme = () => R.getAttribute('data-theme') || '';
+  function frames(hostId, list){
+    const host = document.getElementById(hostId);
+    host.innerHTML = '';
+    list.forEach(([params, label]) => {
+      const fig = document.createElement('figure');
+      const f = document.createElement('iframe');
+      f.loading = 'lazy';
+      f.title = label;
+      f.src = location.pathname + '?frame=1&w=360&' + params + (theme() ? '&theme=' + theme() : '');
+      const cap = document.createElement('figcaption');
+      cap.textContent = label;
+      fig.append(f, cap);
+      host.appendChild(fig);
+    });
+  }
+  function build(){
+    frames('a43frames', [
+      ['err=memory',     'Out of memory'],
+      ['err=space',      'Out of space'],
+      ['err=permission', 'Storage refused, will ask again'],
+      ['err=settings',   'Storage refused for good: Open settings'],
+      ['err=generic',    'Anything else (unchanged)'],
+      ['saved=1',        'After a save: Share beside Open PDF'],
+      ['saved=1&folded=1', 'After the fold: Share stays'],
+      ['saved=1&text=2', 'After a save, 2× text: the row wraps']
+    ]);
+    frames('a44frames', [
+      ['text=1',                     'Band, 1×'],
+      ['text=2',                     'Band, 2×'],
+      ['drawer=fold&step=1&text=1',  'Fold guide step 1, 1×'],
+      ['drawer=fold&step=1&text=2',  'Fold guide step 1, 2×'],
+      ['drawer=details&text=1',      'Print details, 1×'],
+      ['drawer=details&text=2',      'Print details, 2×']
+    ]);
+  }
+  build();
+  // The specimens follow the day / night toggle above.
+  new MutationObserver(build).observe(R, {attributes:true, attributeFilter:['data-theme']});
+})();
+</script>
