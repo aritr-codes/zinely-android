@@ -40,6 +40,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -351,6 +352,11 @@ public fun EditorScreen(
     // button at all and stands for 1600ms rather than 3200 — the frozen `applyInk` builds it that way
     // because an ink is one undoable command the bar's own Undo already reverses.
     var snackAction by remember { mutableStateOf<String?>(null) }
+    // How long a snack stands: its base, or longer if the phone's accessibility timeout ("time to take
+    // action") asks — the Shelf snack's rule (A28.13). Read when each timer starts, so a snack with Undo is
+    // given the longer controls timeout.
+    val accessibility = LocalAccessibilityManager.current
+    val snackHold = { base: Long -> benchSnackHoldMillis(accessibility, base, hasAction = snackAction != null) }
     val c4Scope = rememberCoroutineScope()
     val spreadJob = remember { arrayOfNulls<Job>(1) }
     // One job, cancelled on re-entry: two deletes in quick succession must not leave the first
@@ -380,7 +386,7 @@ public fun EditorScreen(
             snackVisible = true
             latestHistoryAnnounce(line)
             deleteJob[0] = c4Scope.launch {
-                delay(BenchSnackDeleteMillis)
+                delay(snackHold(BenchSnackDeleteMillis))
                 snackVisible = false
             }
         }
@@ -416,7 +422,7 @@ public fun EditorScreen(
                 snackMessage = benchDeletedMessage(label)
                 snackAction = UndoActionLabel
                 snackVisible = true
-                delay(BenchSnackDeleteMillis)
+                delay(snackHold(BenchSnackDeleteMillis))
                 snackVisible = false
             }
         }
@@ -479,7 +485,7 @@ public fun EditorScreen(
                     snackMessage = Copy.Snack.PLACED
                     snackAction = UndoActionLabel
                     snackVisible = true
-                    delay(BenchSnackDeleteMillis)
+                    delay(snackHold(BenchSnackDeleteMillis))
                     snackVisible = false
                 }
             }
@@ -540,7 +546,7 @@ public fun EditorScreen(
                 snackMessage = Copy.BenchInk.applied(name)
                 snackAction = null
                 snackVisible = true
-                delay(BenchSnackInkMillis)
+                delay(snackHold(BenchSnackInkMillis))
                 snackVisible = false
             }
         }
@@ -695,7 +701,7 @@ public fun EditorScreen(
                     snackVisible = true
                     deleteJob[0]?.cancel()
                     deleteJob[0] = c4Scope.launch {
-                        delay(BenchSnackDeleteMillis)
+                        delay(snackHold(BenchSnackDeleteMillis))
                         snackVisible = false
                     }
                 } finally {
@@ -872,7 +878,7 @@ public fun EditorScreen(
                 snackAction = null
                 snackVisible = true
                 deleteJob[0] = c4Scope.launch {
-                    delay(BenchSnackDeleteMillis)
+                    delay(snackHold(BenchSnackDeleteMillis))
                     snackVisible = false
                 }
                 dispatch(Intent.CancelReframe(rf.token))
@@ -1912,7 +1918,7 @@ public fun EditorScreen(
                                 snackAction = UndoActionLabel
                                 snackVisible = true
                                 deleteJob[0] = c4Scope.launch {
-                                    delay(BenchSnackDeleteMillis)
+                                    delay(snackHold(BenchSnackDeleteMillis))
                                     snackVisible = false
                                 }
                             }
@@ -1970,7 +1976,7 @@ public fun EditorScreen(
                         snackAction = UndoActionLabel
                         snackVisible = true
                         deleteJob[0] = c4Scope.launch {
-                            delay(BenchSnackDeleteMillis)
+                            delay(snackHold(BenchSnackDeleteMillis))
                             snackVisible = false
                         }
                     },

@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.AccessibilityManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -155,6 +156,18 @@ public const val BenchSnackDeleteMillis: Long = 3200L
  * `EditorScreen` that reads it. Owner call.
  */
 public const val BenchSnackInkMillis: Long = 1600L
+
+/**
+ * How long a Bench snack stands: [base], or longer when the phone's accessibility timeout ("time to take
+ * action") asks for more — the Shelf snack's rule (`ZineLibraryScreen.kt`, A28.13), applied to every Bench
+ * timer. A snack with a button counts as holding a control, so the platform may give it longer still.
+ */
+internal fun benchSnackHoldMillis(accessibility: AccessibilityManager?, base: Long, hasAction: Boolean): Long =
+    accessibility?.calculateRecommendedTimeoutMillis(
+        originalTimeoutMillis = base,
+        containsText = true,
+        containsControls = hasAction,
+    ) ?: base
 
 /**
  * The frozen snackbar — `.snack` (`v21-bench.html:450-480`, markup `:570`);
