@@ -16585,7 +16585,7 @@ as sequencing: Hand is W9.
   draw differently: an older build draws a new Art id as nothing, so a backup restored there loses that Art
   without a word; and it draws Hand as Inter, per ADR-126's fallback.
 - The website's "Page backgrounds" line (`website/roadmap/index.html`, `website/index.html`) now promises more
-  than decision 5 gives. It is owed a correction in the next website change.
+  than decision 5 gives. *2026-10-22: corrected and live ([PR #151](https://github.com/aritr-codes/zinely-android/pull/151), `846c91e`).*
 - Not decided here: inks a maker mixes and saves (the owner's 2026-10-12 idea, still under *Exploring* in
   [ROADMAP](ROADMAP.md#current-priorities)).
 - The work stacks on items that are built and not accepted. The owner checks they owe stay indexed in
