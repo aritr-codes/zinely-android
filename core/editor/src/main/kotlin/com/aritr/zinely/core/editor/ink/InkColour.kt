@@ -13,9 +13,14 @@ public data class Hsv(val h: Double, val s: Double, val v: Double)
  * `hsvToHex`, `hueOf`, `hexToHsv`, `lum`, `contrastOnWhite`). Kotlin `%` is a truncated remainder like JS.
  */
 public fun hsvToHex(h: Double, s: Double, v: Double): InkHex {
+    // Unlike the prototype this never throws: a drag that overshoots the strip hands in out-of-range or NaN
+    // values, so wrap the hue and clamp s, v and every channel.
+    val hue = if (h.isFinite()) ((h % 360) + 360) % 360 else 0.0
+    val sat = if (s.isNaN()) 0.0 else s.coerceIn(0.0, 1.0)
+    val value = if (v.isNaN()) 0.0 else v.coerceIn(0.0, 1.0)
     fun f(n: Int): Int {
-        val k = (n + h / 60) % 6
-        return ((v - v * s * max(0.0, min(min(k, 4 - k), 1.0))) * 255).roundToInt()
+        val k = (n + hue / 60) % 6
+        return ((value - value * sat * max(0.0, min(min(k, 4 - k), 1.0))) * 255).roundToInt().coerceIn(0, 255)
     }
     return InkHex("%02X%02X%02X".format(java.util.Locale.ROOT, f(5), f(3), f(1)))
 }

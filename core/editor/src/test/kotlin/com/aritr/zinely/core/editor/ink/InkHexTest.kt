@@ -26,6 +26,9 @@ class InkHexTest {
         assertEquals("ABC", stripHex("A‌ B﻿#C‍"))
     }
 
+    @Test fun `given a no-break space from a web paste then stripped`() =
+        assertEquals(InkHex("ABCDEF"), parseHex(" ABC　DEF", final = false))
+
     @Test fun `spoken spaces every digit`() = assertEquals("5 0 5 9 5 5", InkHex("505955").spoken())
 
     @Test fun `of ignores alpha`() = assertEquals(InkHex("010203"), InkHex.of(ColorRgba(1, 2, 3, 10)))

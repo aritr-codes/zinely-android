@@ -15,6 +15,28 @@ class InkColourTest {
         }
     }
 
+    @Test fun `given out of range or NaN input then hsvToHex still returns a valid hex`() {
+        assertEquals(InkHex("FF0000"), hsvToHex(0.0, 1.5, 1.2))
+        assertEquals(InkHex("000000"), hsvToHex(0.0, 1.0, -0.2))
+        assertEquals(hsvToHex(0.0, 1.0, 1.0), hsvToHex(Double.NaN, 1.0, 1.0))
+        assertEquals(hsvToHex(330.0, 1.0, 1.0), hsvToHex(-30.0, 1.0, 1.0))
+        assertEquals(hsvToHex(0.0, 1.0, 1.0), hsvToHex(360.0, 1.0, 1.0))
+        hsvToHex(Double.POSITIVE_INFINITY, 1.0, 1.0)
+    }
+
+    @Test fun `hueName tolerates 360 and NaN`() {
+        assertEquals(InkHueWord.RED, hueName(360.0))
+        assertEquals(InkHueWord.RED, hueName(Double.NaN))
+    }
+
+    @Test fun `given a coarse grid of colours then hsv round trips`() {
+        for (r in 0..255 step 5) for (g in 0..255 step 5) for (b in 0..255 step 5) {
+            val hex = InkHex("%02X%02X%02X".format(java.util.Locale.ROOT, r, g, b))
+            val hsv = hexToHsv(hex, keepHue = null)
+            assertEquals(hex, hsvToHex(hsv.h, hsv.s, hsv.v))
+        }
+    }
+
     @Test fun `given a grey and a kept hue then the hue is kept`() =
         assertEquals(150.0, hexToHsv(InkHex("808080"), keepHue = 150.0).h)
 

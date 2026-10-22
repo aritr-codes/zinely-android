@@ -23,7 +23,7 @@ public val HUE_BANDS: List<Pair<Int, InkHueWord>> = listOf(
     360 to InkHueWord.RED,
 )
 
-public fun hueName(h: Double): InkHueWord = HUE_BANDS.first { h < it.first }.second
+public fun hueName(h: Double): InkHueWord = HUE_BANDS.firstOrNull { h < it.first }?.second ?: InkHueWord.RED // 360 and NaN wrap to red
 
 /**
  * Prototype `colourName`, line for line. Names judge grey by chroma (max-min), not HSL saturation,
