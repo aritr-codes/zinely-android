@@ -8181,3 +8181,37 @@ second reviewer, could not sign in.
 | R31 relies on lane C renumbering | Observation | Same as above |
 | Duplicate also carries the description | Observation | **Accepted.** Decision 6: Duplicate keeps it; owed item 2 tests it |
 | Verified claims | Observation | No change |
+
+---
+
+### D-140 — the Proof's smallest labels sit under 12sp, on a screen read at arm's length {#d-140}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-proof.html` (`.pcount`, `.ready .rl span`, `.btn-save small`, `.sect`, `.mp`, `.cutlbl`, `.stepno`, `.legend`, `.foldnow`, `.cellno`) · `feature/editor/.../ProofScreen.kt`, `ProofPrint.kt`, `ProofSheet.kt`, `ProofFold.kt` |
+| **Found** | W1 lane plan, item 13 (2026-10-22), from ADR-136 row W1 |
+| **Severity** | Legibility: the step counter, the fold legend, the cut tag and the section labels in Print details are 9.5–11.8sp on a screen the maker reads while holding paper |
+| **Status** | **Designed, not built.** [`v21-proof.html` A44](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 9 |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **No type floor is written anywhere.** Not in `V21-SPEC.md`, not in `ZINE-DIRECTION`; the shared `sectionLabel` token is 10.5sp. | 🟦 **House ruling: 12sp on the Proof's text nodes**, scaling with font scale (controller ruling R-W4). The Proof only; `sectionLabel` is not changed globally. Not a platform rule: M3's smallest token, `labelSmall`, is 11sp, and 12sp is `bodySmall` (🟨 from the M3 type scale, not fetched). `ProofPrint.kt` already treats 12sp as the panel's smallest text |
+| 2 | **The fold-diagram numbers are not `Text` nodes.** `ProofFold.kt` draws them with a `TextMeasurer` in a `DrawScope`, at 9 diagram units × the diagram's scale, so a semantics test cannot see them. | **They take `max(diagram size, 12sp × fontScale)`** through a small pure helper with its own unit test (R-W4, Task 9). At 2× a one-digit number is about 15 units wide against a 44-unit cell pitch: no collision |
+| 3 | **The zine itself is not Proof text.** The leaf's words and `.pgn` page numbers are the maker's printed page drawn to scale. | **Exempt.** So is the prototype's own annotation chrome |
+
+### D-142 — a failed save says nothing about why, and Share disappears after a save {#d-142}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-proof.html` · `docs/design/v1/proof.html` (lines 73–74, "NO new error state") · `ExportViewModel.kt` (`:92`, `couldNotStart`) · `ZinelyNavHost.kt` (`ProofDestination`) · `ProofScreen.kt` (`ProofErrorPane`) · `core/copy/.../Copy.kt` (`Copy.Proof`) |
+| **Found** | W1 lane plan, items 7, 7b and 8 (2026-10-22), from ADR-136 row W1; the "Don't ask again" gap was recorded as a beta.5 Known Limitation in [ADR-054](../DECISIONS.md#adr-054) decision 8 |
+| **Severity** | Recovery: a maker out of space, out of memory or refused Storage reads the same "try once more" and cannot tell what to change. After "Don't ask again", Try again does nothing visible and nothing leads to Settings. After a save the band has no Share |
+| **Status** | **Designed, not built.** [`v21-proof.html` A43](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 8 |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **One sentence for every failure.** | **Same overlay, title and Try again; the body names the cause.** Final wording, exact: memory *"Your zine is safe. This phone ran short of memory making the PDF — try again in a moment."* · space *"Your zine is safe. This phone is out of space — free some up, then try again."* · permission *"Your zine is safe. Zinely needs permission to save to Downloads — tap Try again, then Allow."* · anything else: the existing `ERROR_BODY`, unchanged. The memory sentence does not say "close other apps": the limit is per app, so on Android 7 that advice would not help. Each opens "Your zine is safe." because the title alone reads as a loss ([BETA-UX-REVIEW](../BETA-UX-REVIEW.md), "it lost my work") |
+| 2 | **No route out of a permanent Storage denial.** | **The button reads "Open settings"** and opens Zinely's app-details page. Body, exact: *"Your zine is safe. Zinely needs permission to save to Downloads. Under Permissions, turn on Storage, then come back and tap Try again."* On return the overlay stays; no auto-retry; the button reads "Try again" once Storage is on. It says "Try again", not "Save PDF": the overlay covers the band, so Save PDF is not on screen |
+| 3 | **A missing photo could be mistaken for a failure.** | **It is not one.** The renderer draws a placeholder (`ImageBlitter`) and the save succeeds; the overlay never lists photos. W2b owns listing them before Save or Share |
+| 4 | **Share disappears after a save.** `.band.saved .commit` hides the commit row. | **The done block gains a quiet Share** between Open PDF and Fold it up, kept after the fold; `.commit` stays hidden. It sends a copy of the saved PDF: ADR-054's keep vs send, unchanged |
+| 5 | **ADR-054 decision 8 left the copy to an owner ruling.** | **Closed by this entry, under the owner's delegation of 2026-10-12.** ADR-054's text is not edited; its decision 8 note is answered here by ID |
