@@ -146,6 +146,7 @@
 | [ADR-135](#adr-135) | **Read speaks the page.** One stop per meaningful thing, in the Bench's spatial order, between Previous and Next page: text as written, a photo as `Photo` or `Photo: <description>`, Art only when described (by its name), `Blank page` / `Only Art on this page`; no role on a stop; a turn announces the ticket only. The PDF and paper carry no description, said once in the Describe field. `v21-proof.html` A38 frozen; part 1 needs no schema, part 2 is plan step 7 | Proposed (design frozen under the owner's delegation; not built) |
 | [ADR-136](#adr-136) | **Product direction 2026-10-15: keep, cut and the order of work.** W1 never lose work, never get stuck → W2a/W2b small things → W3 Art better before more → W4 photo descriptions (v4, alone) → W5 print guidance → W6 paper sizes (v5) and paper colour → W7 Art grows inside the four families → W8 your own artwork → W9 Hand voice; then Later. A cut list with reasons. Never #19 becomes "never *breaks* a saved zine", with ADR-132's pre-1.0 redraw as the one named exception. Records the owner's readings Q1 ("the paper is the medium, not the page") and Q2 ("§IV governs chrome; a document voice is content") | Accepted, under the owner's delegation; Q1 and Q2 are owner readings |
 | [ADR-137](#adr-137) | **One world: Art pieces from any source pass the same house gates; variants of one subject.** "One hand" becomes "one world": pieces we draw, pieces redrawn from public-domain or open-licence references, and imported open-licence pieces all pass nine gates and carry ADR-104's record per item. Variants of one subject sit together on the sheet. Still four families; curated, not capped. Amends SUPPLIES-SPEC §4.1 and §4.4 (by §4.5), ADR-107 R1's count target and ZINE-DIRECTION principle 3 | Proposed (direction ruled by the owner; A39 picked 2026-10-22, [ADR-139](#adr-139)) |
+| [ADR-138](#adr-138) | **Mix an ink, keep it, and keep inks together.** A hex picker in a sheet; *My inks* app-wide, 9 kept, least-recently-used removal named before Use; *My palettes* up to 9, 2–6 copied values each, never evicted; the Ink tray reordered so the maker's own work comes first. Stored in the app's Preferences DataStore, not the document (schema stays v3); pure helpers in `:core:editor`. Not carried by backups (Known Limitation). Amends A16, ADR-096 §2, OD-24's preset rule and ZINE-DIRECTION §8's colour-picker row; resolves D-060 | Proposed (design frozen as bench A40 rev. 2; not built) |
 | [ADR-139](#adr-139) | **The A39 Art picks: 124 outlines from 125 picks, add-only ids, a named holed list of 31.** The owner's 125 picks; 34 shipped ids remain (17 keep their drawing, 17 take a redraw fitted inside the old ink box by a move and/or a scale of at least 0.90) and 90 letters-only ids are added; the A34 and A39 Circles collapse to one; H9 becomes a named list of 31; the gate numbers go into SUPPLIES-SPEC §4.4; six Fluent Emoji silhouettes admitted by the owner's pick. Bench A39 and colophon A39 | Proposed (built on `feat/art-picks` 2026-10-24, in no download; device passes owed) |
 | [ADR-140](#adr-140) | **When a zine's pages go back to their earlier copy, My Shelf says so once (extends ADR-134).** A `document.json` put back from its `.bak` is told by the A37 note in Library A46's words ("A page file was damaged, so Zinely used the copy from just before your last few seconds of changes"); one note covers a zine's details and pages. The store's `Restored` result is recorded in one lock-free repair-note store shared by both repositories; `BackupOnly` is silent. No Bench notice (named follow-up); no edit journal. Decides D-120 item 4, #146 | Proposed (A46 frozen 2026-10-22 under the owner's delegation; Accepted only once built and reviewed) |
 | [ADR-141](#adr-141) | **Selecting several things: the Bench stays single-select; My Shelf multi-select is Planned after W1 to W3.** Settles ADR-129's open question: no group selection on the Bench (page-level actions instead); a Shelf long-press selection with Move to a folder, Delete and one Undo for the batch is Planned, not in beta.8, design first. Proposed under delegation. |
@@ -16773,6 +16774,148 @@ first; W1 resized to L; ROADMAP's W6 line names the W8 field design; decision 5 
 Accepted; OWNER-CHECKLIST rows added; mixed inks recorded as not decided. Observations taken: this section
 replaces the placeholder; W3's release-note line corrected; the W8 field must ride a bump. The ADR-135 link
 resolves once PR #141 merges.
+
+## ADR-138 {#adr-138}
+
+### Mix an ink, keep it, and keep inks together
+
+**Status:** Proposed, 2026-10-22. Design frozen by the owner the same day as bench
+[A40](design/mockups/v21-bench.html#a40) and [A40 rev. 2](design/mockups/v21-bench.html#a40r2) (with the freeze-review
+fixes of `777374f`). The working prototype [`v21-ink-mixer.html`](design/mockups/v21-ink-mixer.html) is the behavioural
+spec, and its `<script>` is the reference for every pure helper below. Not built.
+**Amends:** frozen bench **A16**'s Ink tray (its band order, "Starting palettes" and the `Apply …` action), superseded
+by A40 rev. 2 rules 1–3; [ADR-096](#adr-096) §2 (the four bands and the preset pills);
+[OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling)'s preset rule ("a preset applies `[0]`"), because every pot of a
+starter now applies its own ink; the C6 ink snack (row 4.15: no button, drawn under the tray), which now offers Undo
+after a change and is drawn above the tray, as the prototype's toast is; and the colour half of
+[ZINE-DIRECTION §8](design/ZINE-DIRECTION.md#8-feature-decisions)'s "Free colour picker / font picker: DO NOT BUILD"
+row (a dated note there points here). **Resolves** [D-060](design/V2-SPEC-DEFECTS.md#d-060) (`Ink` is drawn once) and
+so retires [D-083](design/V2-SPEC-DEFECTS.md#d-083)'s "Spot ink" / "Neutral ink" spoken names.
+**Keeps:** [SUPPLIES-SPEC §0 O-A](design/SUPPLIES-SPEC.md#o-a--decor-tints-from-the-content-palette--all-three-bands)
+(paper tints for Art only, now after a dashed rule in the built-in grid); [ADR-128](#adr-128) (the tray stops short of
+the element it edits); [ADR-055](#adr-055)'s Type bar and its five inks; [ADR-123](#adr-123)'s named undo lines for the
+document; [ADR-032](#adr-032)'s single Preferences DataStore; D-028's ruling that nothing blocks a pale ink.
+**Evidence:** [RESEARCH R33](RESEARCH.md#r33-mixing-and-keeping-your-own-ink-2026-10-22) (R33.1–R33.6) and R33.7
+(palettes in other tools).
+
+#### Context
+
+- ✅ A maker can pick only from 13 built-in inks (10 spot inks and 4 neutrals, with `Ink` drawn twice, D-060), plus five
+  paper tints for Art (`BenchInkPopover.kt:151` `benchInkBands`), and three recipe pills that apply their first colour
+  (`:196` `benchInkPresets`, OD-24). Any other colour on a page came from the Type bar and reads "Custom ink".
+- ✅ An ink is already one `ColorRgba` per element (`Document.kt:200`; text `style.color`, decor `ink`), applied through
+  `Intent.StyleText` / `Intent.InkSupply` (`EditorScreen.kt:523` `applyInk`), each one undoable command. A mixed ink
+  needs no new document field.
+- ✅ The app already keeps small app-wide state in one Preferences DataStore behind narrow seams
+  (`PreferencesModule.kt`, `DataStorePreferredPaperStore.kt`), and none of it leaves the device
+  (`android:allowBackup="false"`; every domain excluded in `data_extraction_rules.xml`).
+- **The owner ruled on 2026-10-22:** custom inks through a hex picker; *My inks* app-wide, 9 kept, the
+  least-recently-used one removed and named before Use; Undo; long-press removes; warn below 3:1 on white and never
+  block; named palettes, 9 of them, 2–6 inks each, copies of values, never evicted, duplicate names allowed, Edit,
+  Duplicate and Delete with Undo, no drag reorder; applying a palette means tapping one of its inks; tray order
+  Current ink, My palettes, My inks, Built-in, then Starters closed with "Save a copy"; stored app-level, not in the
+  document; not carried by backups in this release.
+
+#### Decision
+
+1. **The tray, in the order you work** (A40 rev. 2 rules 1–3): Current ink → My palettes → My inks → Built-in inks →
+   Starter palettes (a closed disclosure, "3 to copy"). Built-in inks are the 13 frozen inks with `Ink` once, in one
+   7-across grid of 28dp pots in 48dp targets, with no visible names; the paper tints follow a dashed rule for Art
+   only. My inks is a 5-across grid of 30dp pots in 56dp targets, ending in a dashed *Mix* pot. At the largest text
+   (`fontScale ≥ 1.3`, the threshold `FlipTray.kt:159` already uses) My inks is 3 across at 72dp, built-in inks 5
+   across, palette strips 3 across, and the tray scrolls.
+2. **Mixing** (A40 rules 2–6, rev. 2 rule 5): a sheet that opens on the selected piece's ink, with a paper preview whose
+   footer is the one fixed-height legibility line, a hex field, one shade square (touch only) and one hue strip.
+   TalkBack gets *Colour strength* and *Lightness* sliders (5% steps) and a *Hue* slider (5°) instead of the square.
+   Hex rules are the prototype's `parseHex`: strip whitespace, zero-width characters and `#`; six digits move the
+   colour live; three count only on Done or on leaving the field; stored `RRGGBB` upper case, no alpha. Below 3.0:1
+   against `#FFFFFF` (`contrastOnWhite`, `PALE_BELOW`) the footer says "Pale in print", worded for text or for Art; it
+   never blocks.
+3. **My inks**: app-wide, at most **9**, shown newest-made first and stable (reuse does not reorder). Using a kept code
+   touches it; a new code at the cap removes the least-recently-used ink, which the sheet names before Use.
+   Long-press, and a TalkBack custom action, "Remove from My inks". Pages and palettes keep their own copies, so a
+   removal changes neither.
+4. **My palettes**: at most **9**, newest first, never evicted. Each holds 2–6 inks as **copies of `RRGGBB` values**
+   (R33.7), never references into My inks. One palette is open (name, ⋯, pots); every palette is also a strip in a
+   radio group, 5 a row; the last one opened stays open across launches. ⋯ = Edit, Duplicate, Delete. New and Edit
+   happen in the tray itself: a name field (unique default "My palette", "My palette 2" …; a typed duplicate is allowed
+   and noted), a strip of the chosen inks, every ink as a toggle with a ✓, a "Was in this palette" row, and Mix adding
+   to the palette and My inks ("added", "already in this palette", or "kept in My inks (the palette is full)" with the
+   button reading *Save to My inks*). Save needs a name and 2 inks. **The cap is enforced in the pure library code on
+   every way in** (New, Duplicate, Save a copy, Save), not only on the button. Tapping a palette's pot applies that one
+   ink; nothing recolours a page.
+5. **Undo** (rev. 2 Undo rule): a snack offers Undo **only when it follows a change**, never on a cap message, on "Pick
+   at least 2 inks" or on a tap that changed nothing. Undo restores My inks and My palettes to the value the change
+   replaced and, when the same change also re-inked the piece, takes the document back one step with `Intent.Undo`.
+   Undo after Save restores the palettes and reopens the edit with its changes; Undo after "Palette not saved" reopens
+   the draft.
+6. **TalkBack and focus** (rev. 2 TalkBack rule): a kept pot reads "My ink, ‹name›, ‹digits spoken singly›"; a palette
+   pot "‹name›, from ‹palette›"; a strip "‹palette›, N inks" as a radio; the current pot adds ", selected". The snack is
+   the one announcement of an ink change: Current ink is **not** a live region (today's `liveRegion` at
+   `BenchInkPopover.kt:486` goes). Focus stays on the control after a re-render; when the control is gone, focus goes
+   where rev. 2 says (the open palette's ⋯ or + New palette; the first My inks pot or Mix; Current ink, or the edit
+   count, after Undo).
+7. **Names.** A built-in ink keeps its own name; any other code is named by the prototype's `colourName` (hue bands,
+   light and dark, grey judged by chroma, near-black, white), ported exactly and tested against its 38-colour
+   `NAME_TABLE`. No network.
+8. **Storage and placement.**
+   - Pure and platform-free, in `:core:editor`, package `com.aritr.zinely.core.editor.ink`: `InkHex` and `parseHex`,
+     HSV ↔ hex, `contrastOnWhite`, `colourName`, and an immutable `InkLibrary` (My inks with a use clock, palettes, a
+     next id and the open palette) whose operations are total functions that enforce both caps, plus a pure
+     `PaletteDraft` for the edit mode. `:core:editor` gains `implementation(project(":core:copy"))` so `colourName`'s
+     words live in `Copy` ([ADR-060](#adr-060)); `:core:copy` has no dependencies, so the core-only CI job still runs
+     the name table.
+   - A thin seam in `:data-android`: `InkLibraryStore` (`Flow<InkLibrary>` and `update(transform)`, which returns the
+     value it replaced), and `DataStoreInkLibraryStore`, which writes one string key, `ink_library`, as versioned JSON
+     (kotlinx.serialization, already applied there) into the existing `editor_onboarding` Preferences DataStore. A
+     missing, unreadable or unknown-version value reads as an empty library, and every read is sanitised to the caps.
+     The undo snapshot is the value `update` replaced, never a copy held by the UI, so an action taken before the first
+     load cannot restore an empty library over a real one.
+   - `EditorViewModel` exposes it; the nav host passes it to `EditorScreen` as plain parameters, as `reframeCoachSeen`
+     travels today (`ZinelyNavHost.kt:996`).
+   - The saved document is untouched: `CURRENT_SCHEMA_VERSION` stays 3 and `DocumentSchemaShapeTest` is unchanged.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| My inks inside each document | A used ink is already in its zine; a per-zine list loses "kept for every zine" and would bump the schema (R33.6) |
+| A Room table | A migration, a DAO and a table for at most 9 + 9×6 short strings, with no queries or relations (R33.5) |
+| Proto DataStore | Adds the protobuf plugin and a schema file for one small record; versioned JSON in one key does the same |
+| One comma-joined key for My inks (R33.6's sketch) | Palettes need names, ids and order; a second ad hoc format would mean two codecs for one library |
+| Palettes as references to My inks (Figma styles) | A removal or an eviction would silently change a palette; R33.7 found link semantics only where the document keeps the link |
+| A cap of 8 (R33.6) | The owner ruled 9: 9 + Mix is two full rows of five |
+| A confirmed, non-undoable delete (Procreate, R33.7) | The owner ruled Undo; a snack is cheaper than a dialog and matches the Bench's delete |
+| Drag to reorder palettes | The owner ruled no; newest first is enough at 9 |
+| Recolour a page from a palette (Canva themes) | A different and larger feature; Future Enhancement below |
+| Carry My inks and palettes in the v2 backup | Needs a manifest field and a restore-merge rule ([ADR-121](#adr-121)'s "adds, never replaces" has no answer yet for a capped list); deferred, Known Limitation below |
+
+#### Consequences
+
+- The built-in bands, the preset pills and their copy go: `Copy.BenchInk.INKS`, `NEUTRALS`, `PRESETS`, `CUSTOM_INK`,
+  `SPOT_INK_SPOKEN`, `NEUTRAL_INK_SPOKEN`, `apply` and `presetLabel` are replaced by the A40 words.
+- **A palette pot is not fenced by target.** The frozen prototype draws every palette and starter pot for a text target
+  too, so *Warm zine*'s `Cream #F1E9D6` and *Cool zine*'s `Sky #DDE9EE` reach a text piece in one tap, which OD-24's
+  band fence had prevented. This follows the freeze and D-028 (never block); the built-in grid keeps the fence.
+  Recorded for the owner in OWNER-CHECKLIST.
+- The ink snack changes: it offers Undo when the tap changed the piece, stands 4000ms as the prototype's toast does,
+  and is drawn above the tray rather than under it.
+- The Ink tray's pixel goldens change and new ones are added; they are recorded on CI (`record-goldens.yml`), never
+  locally.
+- `EditorViewModel` gains a constructor parameter, so its two JVM tests gain a fake store.
+- **Known Limitation (this release):** My inks and My palettes are not in a Zinely backup, and a restore on another
+  phone does not bring them back. The colours already on pages are in the zines, so no page changes.
+- **Future Enhancement:** "Recolour page from palette".
+
+#### Owed before Accepted
+
+- The implementation, both device passes (including the platform accessibility tree for the sliders, toggles and
+  radios), a TalkBack listen, and pixel parity against the frozen prototype.
+- The owner's look at the palette-pot fence consequence above.
+
+#### Review {#adr-138-review}
+
+Pending: one independent review of this ADR and its implementation plan; the outcome is recorded here.
 
 ## ADR-139 {#adr-139}
 

@@ -372,7 +372,7 @@ Step 14 of the walkthrough is *export/share*. **But the loop does not end there 
 | Canvas zoom/pan | **DEFER** | Premature: would make pinch ambiguous |
 | Direct print (`PrintManager`) | **DEFER** | Incorrect-as-built: silent driver re-scaling breaks every fold |
 | Alignment/distribute | **DO NOT BUILD** | Layout-tool thinking |
-| Free colour picker / font picker | **DO NOT BUILD** | Materials are finite and named — the whole strategy |
+| Free colour picker / font picker | **DO NOT BUILD** | Materials are finite and named — the whole strategy. *2026-10-22: the colour half is amended by the owner's ruling — a maker may mix an ink with a hex picker and keep up to 9, named, in My inks and My palettes ([ADR-138](../DECISIONS.md#adr-138), bench A40). Still no picker on every tap.* |
 | Opacity & blend sliders | **DO NOT BUILD** | Translucency is a material property, not a control |
 | Pattern fill / auto-tiling | **DO NOT BUILD** | Names no physical cause a person could produce |
 | Emoji in text | **SEPTEMBER REQUIREMENT — ADR-112 GATED** | Per-OEM fallback remains forbidden; a bundled deterministic renderer must prove screen/PNG/PDF parity first |
