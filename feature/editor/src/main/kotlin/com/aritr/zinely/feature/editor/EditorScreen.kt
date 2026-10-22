@@ -1080,6 +1080,9 @@ public fun EditorScreen(
         pageAfterEditIndex = null
         editingTextSession?.let { dispatch(Intent.CancelText(it.id, it.token)) }
     }
+    // Back while reframing is Reframe's own Cancel (`v21-reframe.html`), never a way off the Bench. Composed
+    // after every tray handler so it is the one that wins while a session is open.
+    BackHandler(enabled = reframing != null) { reframeCancel() }
     // The frozen editing row's Done ends the session by clearing focus — see its call site for why that,
     // and not a dispatch, is the correct end (the draft is feature-ephemeral).
     val focusManager = LocalFocusManager.current
