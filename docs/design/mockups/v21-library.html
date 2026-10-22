@@ -1117,7 +1117,7 @@ $('lg').onclick = () => {
 /* ===================== end of A28 script ===================== */
 </script>
 
-<!-- =====================================================================</script>
+<!-- =====================================================================
 
      A35 · PAPER AT THE START — FROZEN 2026-10-15 under the owner's delegation of
      2026-10-12 ("decide, do not ask"); the owner may overrule it.  Designed for
@@ -1521,7 +1521,7 @@ waits for the format change that adds the two sizes; the app still offers A4 and
   rows();
 })();
 /* ===================== end of A35 ===================== */
-=======
+</script>
 <script>
 /* ============================================================================
    A37 · RESTORED-DETAILS NOTE — FROZEN 2026-10-15 under the owner's delegation of
@@ -1688,4 +1688,142 @@ $('rs4').onclick = () => {
   R.setAttribute('data-a37big', on ? 'on' : 'off'); $('rs4').classList.toggle('on', on);
 };
 /* ===================== end of A37 script ===================== */
+</script>
+
+<script>
+/* ============================================================================
+   A46 · THE PAGES FORM OF THE RESTORED NOTE — FROZEN 2026-10-22 under the owner's
+   delegation of 2026-10-12 ("decide, do not ask"), for ADR-140 (Proposed until it is
+   built and reviewed).  The owner has not ruled on it personally and may overrule it.
+   Issue #146.  Defect record: D-120 item 4.  Extends A37: everything A37 says still holds
+   unless a rule below names it.  No rule above this line changed: the A37 functions are
+   wrapped (rsWordsBeforeA46, rsOnBeforeA46), not edited, and this script adds its own
+   caption and controls.  One bug fix came first, in its own commit (6db7491): the A37
+   merge (caa0164) had left a "=======" marker at line 1524 where A35's closing script
+   tag belonged, and that tag at the end of line 1120, so neither the A35 nor the A37
+   script ran.  Both lines were restored in place; no line moved.
+
+   WHY.  A zine's pages live in document.json.  Each autosave keeps the previous file as
+   document.json.bak, and a read that finds document.json damaged puts the .bak back
+   (ADR-021).  One autosave holds at most about five seconds of editing (it waits for 1 s
+   of quiet, capped at 5 s from the first unsaved edit), so the .bak lacks the maker's
+   last few seconds of changes.  Until ADR-140 nothing said so.
+
+   THE RULES.  Cited as A46.n.  [shown] = this page performs it; [stated] = written down
+   only; both kinds are the amendment.  ADR-140 owns the signal and the storage; this page
+   owns the words.
+
+  A46.1  [stated] WHEN.  A zine joins the note when its document.json was present but
+                damaged and its earlier copy was used, whichever reader found it: the
+                Bench opening the zine, the Shelf drawing its cover, a backup, a restore's
+                match or a Duplicate.  A read of a lone earlier copy (the damaged file was
+                already removed because an earlier repair could not be written back) is
+                that same repair and raises nothing new, as A37.6.  CORRECTS A37.1's "not
+                for a page document recovered from its own copy (D-120 item 4)" and the
+                A37 caption's "It speaks only of those details": both were true before A46.
+  A46.2  [stated] WHERE.  The A37 note, nothing new.  One note, however many zines and
+                whichever kinds.  A repair found when the Bench opens a zine is told on My
+                Shelf when the maker comes back, without a restart, and is read in order
+                there, not announced (A37.10: "back from the Bench").  The Bench shows
+                nothing; a Bench notice is ADR-140's named follow-up if the device pass
+                finds the Shelf too late.
+  A46.3  [shown]  THE WORDS, exactly.  {now}, {was}, {list} and "Got it" as in A37.3.  A
+                zine has a DETAILS repair (meta.json, A37), a PAGES repair (document.json),
+                or both.  {was} belongs to a details repair only: a pages repair never
+                changes a name, so in {list} a pages-only zine is always plain “{now}”.
+                one zine, pages only ......... Zinely repaired “{now}”
+                  body: A page file was damaged, so Zinely used the copy from just
+                  before your last few seconds of changes.
+                one zine, details and pages .. the A37.3 one-zine title
+                  body: A small file that holds its name, cover and folder was damaged,
+                  so Zinely used the copy from before the last change to them. A page
+                  file was damaged too, so its pages are from just before your last few
+                  seconds of changes.
+                  + when its name went back: You can rename it again.
+                several zines ................ Zinely repaired {n} zines
+                  every zine pages only:  {list}. Their page files were damaged, so
+                    Zinely used the copies from just before your last few seconds of
+                    changes.
+                  otherwise, when any zine has a pages repair:  {list}. Some of their
+                    files were damaged, so Zinely used the copies it kept. Names, covers
+                    and folders are from before the last change to them; pages are from
+                    just before your last few seconds of changes.
+                no pages repair at all ....... A37.3, unchanged.
+                "YOUR last few seconds", where A37.3 says "the last change": only an edit
+                on the Bench rewrites an existing document.json (an autosave).  Make a
+                zine, Duplicate and a restore each write a new one, with no earlier copy.
+                So the lost seconds are always the maker's own, and saying so tells them
+                what to look for.  "A few seconds" is the honest bound; the words never
+                promise that nothing was lost.
+  A46.4  [shown]  A37.4 holds: never backup, restore, error, corrupt, metadata or file
+                names.  "A page file" names a kind of file, not a file name.
+  A46.5  [stated] CLEARING.  NARROWS A37.6 (rename or move took the whole zine off the
+                note).  Got it clears every zine, both kinds (A37.5).  A zine leaves
+                the note when it is deleted, once its undo has passed (A37.6).  Renaming
+                or moving a zine clears its details part only: that acts on its name and
+                folder, not on its pages.  A zine with both keeps its pages part, and its
+                words become the pages-only form, silently (A37.10).
+  A46.6  [stated] ORDER.  Shelf order, as in A37.3.  (The ADR-134 Pass 2 finding, "list the
+                zines whose name went back first", belongs to an amendment of A37.3; A46
+                does not make it.)
+  A46.7  [shown]  A37.8 to A37.10 hold unchanged.  At "text 2× at 360dp" the longest
+                one-zine form (details and pages, name went back) and the four-zine mixed
+                form each show every word, with Got it below the words; the mixed form is
+                taller than the screen and scrolls with the zines, as A37.8 already allows
+                for the five-zine note.  The title and body are one node; the note is
+                announced only on arrival.
+  A46.8  [stated] The words live in core:copy (Copy.Restored), transcribed from A46.3
+                exactly, under the A37.4 banned-words test.
+   ============================================================================ */
+const A46_PAGES = 'A page file was damaged, so Zinely used the copy from just before your last few seconds of changes.';
+const rsWordsBeforeA46 = rsWords;
+rsWords = items => {                                                        // A46.3
+  const det = z => z.details !== false, pg = z => !!z.pages;
+  if(!items.some(pg)) return rsWordsBeforeA46(items);
+  if(items.length === 1){
+    const z = items[0];
+    if(!det(z)) return ['Zinely repaired ' + q(z.name), A46_PAGES];
+    return [z.was ? q(z.was) + ' is called ' + q(z.name) + ' again' : 'Zinely repaired ' + q(z.name),
+      'A small file that holds its name, cover and folder was damaged, so Zinely used the copy from ' +
+      'before the last change to them. A page file was damaged too, so its pages are from just before ' +
+      'your last few seconds of changes.' + (z.was ? ' You can rename it again.' : '')];
+  }
+  const list = rsList(items.map(z => ({ name: z.name, was: det(z) ? z.was : null })));
+  if(!items.some(det)) return ['Zinely repaired ' + items.length + ' zines',
+    list + '. Their page files were damaged, so Zinely used the copies from just before your last few ' +
+    'seconds of changes.'];
+  return ['Zinely repaired ' + items.length + ' zines',
+    list + '. Some of their files were damaged, so Zinely used the copies it kept. Names, covers and ' +
+    'folders are from before the last change to them; pages are from just before your last few seconds ' +
+    'of changes.'];
+};
+
+/* A46's caption and controls sit beside A37's, so the buttons raise the note on the phone above */
+const A46_IDS = ['rs5', 'rs6', 'rs7', 'rs8'];
+const rsOnBeforeA46 = rsOn;
+rsOn = id => { rsOnBeforeA46(id); A46_IDS.forEach(b => $(b).classList.toggle('on', b === id)); };
+const a46Btns = [['rs5', 'one zine, pages'], ['rs6', 'one zine, name and pages'],
+  ['rs7', 'two zines, pages'], ['rs8', 'four zines, mixed']]
+  .map(([id, t]) => { const b = el('button', 'ctl', t); b.id = id; return b; });
+$('rs4').after(el('span', 'grp', 'restored pages — A46'), ...a46Btns);
+const a46Cap = el('p', 'cap');
+a46Cap.innerHTML = '<span class="badge">A46 restored pages · frozen 2026-10-22 · not built</span><br>' +
+  '<b>When a zine’s pages went back to an earlier copy (ADR-140, #146).</b> If the file that holds a zine’s ' +
+  'pages is damaged, Zinely uses the copy it kept, which lacks the last few seconds of changes, and the A37 note ' +
+  'now says so too. One note still covers every zine and both kinds. The <b>restored pages</b> buttons below ' +
+  'raise each form.';
+[...document.querySelectorAll('p.cap')].find(p => p.textContent.startsWith('A37 restored details')).after(a46Cap);
+
+$('rs5').onclick = () => { state('content'); raiseNote([{ name: 'Riso tests', was: null, details: false, pages: true }], 'rs5'); };
+$('rs6').onclick = () => { state('content'); raiseNote([{ name: 'Letters home', was: 'Letters to Gran', pages: true }], 'rs6'); };
+$('rs7').onclick = () => {
+  state('content');
+  raiseNote(['Riso tests', 'Coffee log'].filter(byName).map(n => ({ name: n, was: null, details: false, pages: true })), 'rs7');
+};
+$('rs8').onclick = () => {
+  state('content');
+  raiseNote([{ name: 'Letters home', was: 'Letters to Gran' }, { name: 'Riso tests', was: null, details: false, pages: true },
+    { name: 'Mum’s garden', was: null, pages: true }, { name: 'Tiny poems', was: null }].filter(z => byName(z.name)), 'rs8');
+};
+/* ===================== end of A46 script ===================== */
 </script>
