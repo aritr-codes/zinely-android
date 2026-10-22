@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -228,7 +229,8 @@ internal fun FolderNameSheetSurface(
     val renaming = drawn.renaming
     val title = if (renaming == null) Copy.Folders.NEW_FOLDER else Copy.Folders.RENAME_FOLDER
 
-    var draft by remember(drawn) {
+    // Saved, so a half-typed name survives rotation or a theme change.
+    var draft by rememberSaveable(drawn, stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(initial, TextRange(initial.length)))
     }
     val verdict = check(draft.text)

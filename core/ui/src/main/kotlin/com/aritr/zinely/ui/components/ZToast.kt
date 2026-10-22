@@ -10,7 +10,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
@@ -67,9 +69,11 @@ public fun ZToast(
     onTimeout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LaunchedEffect(message) {
-        delay(ZINELY_TOAST_TIMEOUT_MILLIS)
-        onTimeout()
+    val timeout = recommendedTimeoutMillis(ZINELY_TOAST_TIMEOUT_MILLIS, hasAction = false)
+    val currentOnTimeout by rememberUpdatedState(onTimeout)
+    LaunchedEffect(message, timeout) {
+        delay(timeout)
+        currentOnTimeout()
     }
     val colors = ZinelyTheme.v21Colors
     val motion = ZinelyTheme.motion

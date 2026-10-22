@@ -24,6 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -546,7 +547,7 @@ internal fun ShelfRenameSheet(
 ) {
     // Keyed on `title` as well as `visible` so reopening the sheet for a different zine — or for the same
     // one after a rename — starts from the name that zine actually has, never a stale draft.
-    var draft by remember(visible, title) { mutableStateOf(title) }
+    var draft by rememberSaveable(visible, title) { mutableStateOf(title) }
     ZSheet(
         visible = visible,
         onDismiss = onDismiss,
