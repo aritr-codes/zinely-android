@@ -1589,6 +1589,40 @@ preferences; check before deciding that a restore brings "My inks" back.
 
 **Not now.** No screen-wide eyedropper, no R/G/B boxes, no alpha, no harmony suggestions (Procreate's Harmony tab is
 where a picker becomes a palette tool). Revisit the eyedropper only if makers ask to match photo colours.
+
+### R33.7 Saving inks together: palettes in other tools (2026-10-22)
+
+Question: how do established tools let people save and reuse named colour combinations, and does a palette
+*reference* its colours or *copy* them? Sources are vendor help pages fetched or surfaced by search on 2026-10-22.
+Where a page did not say, this is stated; nothing below is inferred silently.
+
+| Tool | Create | Name / duplicate names | Edit, duplicate, delete, reorder | Cap | Reference or copy |
+|---|---|---|---|---|---|
+| **Illustrator** | Select swatches, then *New Swatch Group*; or *Selected Artwork* builds a group from the artwork's unique colours; a name is typed in the dialog ([Adobe: group swatches](https://helpx.adobe.com/vn_vi/illustrator/desktop/manage-colors/use-swatches/group-swatches.html), via search snippet) | Typed in the dialog; duplicate-name handling not stated | Recolor Artwork's *Swatch Groups* list edits, deletes and creates groups; *Delete Swatch Group* removes the group ([Adobe: Recolor options](https://helpx.adobe.com/illustrator/desktop/manage-colors/learn-color-basics/edit-colors-dialog-overview.html)) | Not stated | A group is a folder of the panel's swatches. *Convert Process to Global* turns colours into linked global swatches, so editing one updates the artwork. ✅ VERIFIED for global; effect of deleting a swatch that sits in a group ⚠️ not documented in anything reachable (Adobe's page returned 403 to a direct fetch) |
+| **Photoshop** | Groups are folders in the Swatches panel; no official page found for the create flow | Not found | Community answer: no "merge groups"; people drag swatches into a new group and delete the emptied ones ([Adobe community](https://community.adobe.com/t5/photoshop-ecosystem-discussions/photoshop-swatch-group-gt-how-to-save-to-quot-my-library-quot/m-p/14643041/highlight/true)) | Not found | Painting with a swatch **copies** the colour into the foreground; nothing in the document refers back to the swatch 🟨 (general behaviour, no page found) |
+| **Procreate** | Palettes tab, **+**; starts empty, named "Untitled", becomes the active palette | Tap the title to rename; no duplicate-name rule stated, the copy from Duplicate is appended at the bottom | Three-dot menu: Duplicate, Delete (confirm; "cannot be restored"), Set as active; press-and-hold a title and drag to reorder; a full palette's swatch is replaced by press-and-hold then *Set* ([Procreate handbook](https://help.procreate.com/procreate/handbook/colors/colors-palettes)) | A row holds 10 swatches (compact) or 3 (cards); the handbook states **no total cap**; a third-party page says 30, unconfirmed | Tapping a swatch sets the current colour (a **copy**); drag onto artwork flood-fills. Deleting a palette cannot touch artwork, because artwork holds pixels |
+| **Figma** | Colour *styles* and *variables* are created from a selection or the panel | Names are paths (`brand/primary`); same-name handling not read | Edit, delete, detach in the properties panel | Not stated | **Reference.** "Figma will automatically apply those changes to any objects using that style" ([Figma: Styles](https://help.figma.com/hc/en-us/articles/360039238753-Styles-in-Figma)). *Detach* keeps the object's existing colour as a plain value ([Figma help via search](https://figma-signup.helpjuice.com/use-libraries/apply-styles-to-layers-and-objects)). What deletion does to users of a deleted style: the page fetched did not say; ⚠️ not verified |
+| **Canva** | Brand Kit, Colors, add-to-category, *Add palette*; add colours with *Add new* | Click the palette's name to rename | More-options menu deletes; **the last palette cannot be deleted** ("at least one palette") | Free: 1 palette of 3 colours; Pro and up: 100 palettes of 100 colours (from the China-region help page only) | Applying is by colour pick or a *colour theme* that recolours background, elements and text together; themes cannot be authored from scratch ([Canva: colour palettes](https://www.canva.com/help/article/color-palettes/), [themes](https://www.canva.com/help/color-themes/)). Reference vs copy not stated |
+| **Adobe Express** | *Brands*, *Create brand*, name it; add colours by picker or hex/RGB; *Add Color palette* | Brand named at creation | Each tile has a three-dot menu: edit, duplicate, delete ([Adobe Express: brand kit](https://helpx.adobe.com/ee/express/how-to/create-brand-kit.html)) | Not stated | Applied from the colour picker in the editor; no documented link back |
+
+**What generalises.**
+
+- ✅ VERIFIED (Procreate, Canva, Express): **create = a "+" that makes an empty, auto-named, immediately active item; rename is by tapping the name in place.** Nobody asks for a name before the colours exist.
+- ✅ VERIFIED: **delete is confirmed and not undoable** in Procreate; Canva refuses to delete the last one rather than leave none.
+- ✅ VERIFIED: no tool found enforces unique names; none documents a duplicate-name error. Duplicate appends a copy at the end.
+- ✅ VERIFIED: **applying a palette colour to a target is "set the one colour"**. The palette is a picker, not a bundle that follows the target. Only Canva themes and Figma styles/variables apply many colours as one, and those are design-system features with a link.
+- ✅ VERIFIED: **linked semantics exist only where the document keeps the link** (Figma styles, Illustrator global swatches). Raster-style tools (Procreate, Photoshop) copy the value, so deleting a palette is harmless to finished work.
+- ⚠️ NOT VERIFIED: what Figma or Illustrator do to the *users* of a deleted style or swatch. Do not cite them for "delete detaches and keeps the value".
+
+### R33.7 Zinely application — 🟦 RECOMMENDATION
+
+- **Copy, not reference.** A zine already stores each used ink's own value in its document (R33.6), so a saved combination is a list of `RRGGBB` values. Deleting a combination or one of its inks never changes any zine. That is Procreate's semantics, and it avoids the unverified delete-while-in-use case entirely.
+- **Create:** a "Save these inks" action that makes the combination already named ("Untitled", or the first ink's colour name), with the name field focused for rename in place. No name-first dialog.
+- **Names:** allow duplicates (the market norm); show the swatch strip beside the name so two "Sunset" rows stay tellable. Trim whitespace; empty falls back to "Untitled".
+- **Controls:** rename, duplicate (copy appended at the end), delete with a confirm that says it cannot be undone, and reorder. Never delete the last one silently; a zero-state is fine for Zinely, so Canva's last-one rule is not needed.
+- **Cap:** pick a small, stated number and say so when full, asking which to remove. Combinations hold at most the "My inks" cap of 8 colours. A combination cap is a product call; Procreate states none and Canva's 100 is a paid-tier figure, so neither is a precedent for a free offline app.
+- **Apply to a target that holds one colour:** do what every tool does, set the single colour. Offer a combination as a row of tappable swatches, each applying one ink; do not recolour a whole page in one tap (that is Canva's theme, a different and larger feature).
+
 ## R34. The A39 Art picks: gate measurements, the Never #19 dry run and the licences (2026-10-22)
 
 The evidence behind [ADR-139](DECISIONS.md#adr-139) and `v21-bench.html` A39. Measured on 2026-10-22 from the
