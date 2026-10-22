@@ -27,9 +27,9 @@ public sealed interface ProjectShelfEntry {
     public val folder: String?
 
     /**
-     * Set while this zine's details wait to be told: its `meta.json` was put back from its earlier copy and the
-     * maker has not pressed *Got it* ([ADR-134](docs/DECISIONS.md#adr-134)). Read from a marker beside the zine's
-     * files each time the Shelf lists, so it survives the app being stopped.
+     * Set while this zine waits to be told: its `meta.json` or `document.json` was put back from its earlier copy and
+     * the maker has not pressed *Got it* ([ADR-134](docs/DECISIONS.md#adr-134), [ADR-140](docs/DECISIONS.md#adr-140)).
+     * Read from a marker beside the zine's files each time the Shelf lists, so it survives the app being stopped.
      */
     public val restored: RestoredDetails?
 
@@ -65,12 +65,20 @@ public sealed interface ProjectShelfEntry {
 }
 
 /**
- * A zine whose details went back to their earlier copy (ADR-134).
+ * A zine whose details (ADR-134), pages ([ADR-140](docs/DECISIONS.md#adr-140)) or both went back to their earlier
+ * copy: one note per zine, whichever kinds.
  *
- * @property previousTitle the title the Shelf showed before the repair, or `null` when it is not known (the zine
- *   had no index row). The screen decides whether the name went back: both known and different.
+ * @property previousTitle the title the Shelf showed before a details repair, or `null` when it is not known (the
+ *   zine had no index row) or only its pages went back. The screen decides whether the name went back: both known
+ *   and different.
+ * @property details its name, cover and folder (`meta.json`) went back.
+ * @property pages its page file (`document.json`) went back.
  */
-public data class RestoredDetails(val previousTitle: String?)
+public data class RestoredDetails(
+    val previousTitle: String?,
+    val details: Boolean = true,
+    val pages: Boolean = false,
+)
 
 public enum class ProjectUnavailableReason {
     CORRUPT,

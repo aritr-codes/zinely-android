@@ -9,6 +9,7 @@ import com.aritr.zinely.core.data.serialization.DocumentSerializer
 import com.aritr.zinely.core.data.serialization.JsonDocumentSerializer
 import com.aritr.zinely.core.data.serialization.NewerSchemaVersionException
 import com.aritr.zinely.core.data.storage.AtomicFileStore
+import com.aritr.zinely.core.data.storage.StoreRead
 import com.aritr.zinely.core.data.validation.DocumentValidator
 import com.aritr.zinely.core.data.validation.DefaultDocumentValidator
 import com.aritr.zinely.core.data.validation.ValidationIssue
@@ -55,6 +56,13 @@ public class DocumentRepositoryImpl(
     // non-existent path on some platforms, which would otherwise misread as "full". NOT errno/string
     // sniffing — see [classifyWriteFailure] and [DataError.OutOfSpace].
     private val freeSpaceProbe: (Path) -> Long = { usableSpaceNear(it) },
+    /**
+     * Told the project id when a load put a damaged `document.json` back from its earlier copy, once per repair
+     * ([ADR-140](docs/DECISIONS.md#adr-140) decision 3). `DataModule` wires it to the shared [RepairNotes]. It is
+     * called on whichever path loads, with or without the project repository's lock held, so it must not suspend,
+     * lock or call back into a repository.
+     */
+    private val onPagesRestored: (projectId: String) -> Unit = {},
 ) : DocumentRepository {
 
     /** The shared untrusted-id → path chokepoint (ADR-042). */
@@ -66,15 +74,18 @@ public class DocumentRepositoryImpl(
         // ADR-021 open-time recovery: a torn/unreadable primary falls back to the fsync'd .bak. The
         // predicate must NOT reject a newer-than-supported document — that is a complete, deliberate
         // payload we surface as SchemaTooNew below, never something to mask by loading an older backup.
-        val bytes = try {
-            store.read(path, ::isLoadable)
+        val read = try {
+            store.readReporting(path, ::isLoadable)
         } catch (e: IOException) {
             return failure(DataError.Io("failed to read document for '$projectId'", e))
         }
+        // ADR-140 decision 3: before decoding, since the file on disk has changed whatever the decode says.
+        // BackupOnly is an earlier repair's quarantine, already told; Read is the file itself.
+        if (read is StoreRead.Restored) onPagesRestored(projectId)
+        val bytes = read?.bytes
         if (bytes == null) {
-            // read() returns null when neither primary nor backup is usable. A present-but-unusable
-            // primary is corruption; a genuinely absent one is NotFound. (AtomicFileStore exposes no
-            // richer status, so the primary's existence is the only discriminator available here.)
+            // Neither primary nor backup is usable. A present-but-unusable primary is corruption; a genuinely
+            // absent one is NotFound.
             return failure(
                 if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
                     DataError.Corrupt("document for '$projectId' is unreadable or corrupt")
