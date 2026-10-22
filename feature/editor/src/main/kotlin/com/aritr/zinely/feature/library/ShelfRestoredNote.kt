@@ -45,8 +45,21 @@ import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import kotlinx.coroutines.delay
 
-/** One zine on the restored-details note: its title now, and the one My Shelf showed before, if known. */
-public data class RestoredZine(val id: String, val title: String, val previousTitle: String?)
+/**
+ * One zine on the restored note: its title now, the one My Shelf showed before, if known, and what went back: its
+ * [details] (A37), its [pages] (A46, [ADR-140](docs/DECISIONS.md#adr-140)) or both.
+ */
+public data class RestoredZine(
+    val id: String,
+    val title: String,
+    val previousTitle: String?,
+    val details: Boolean = true,
+    val pages: Boolean = false,
+)
+
+/** The note's title and body for these zines, in Shelf order: the A46.3 sentence for each mix of kinds. */
+internal fun List<RestoredZine>.noteWords(): Pair<String, String> =
+    Copy.Restored.noteFor(map { Copy.Restored.Zine(it.title, it.previousTitle, it.details, it.pages) })
 
 /** `.restored` — the note itself. */
 internal const val ShelfRestoredNoteTestTag: String = "shelf-restored-note"

@@ -638,7 +638,7 @@ public fun ZineLibraryScreen(
                         null
                     } else {
                         {
-                            val (title, body) = Copy.Restored.note(restored.map { it.title to it.previousTitle })
+                            val (title, body) = restored.noteWords()
                             ShelfRestoredNote(
                                 title = title,
                                 body = body,

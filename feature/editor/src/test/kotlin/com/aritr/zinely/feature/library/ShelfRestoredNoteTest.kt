@@ -214,6 +214,84 @@ class ShelfRestoredNoteTest {
         assertTrue("the words stay inside the note", text.left >= note.left && text.right <= note.right)
     }
 
+    // ---- A46 (ADR-140): a page file put back from its earlier copy. Words are literals from A46.3.
+
+    private val pagesX = listOf(RestoredZine("Coffee log", "Coffee log", null, details = false, pages = true))
+    private val spokenPagesX = "Zinely repaired “Coffee log”. A page file was damaged, so Zinely used the copy from " +
+        "just before your last few seconds of changes."
+
+    @Test
+    fun `a pages note says A46's words, is announced once on arrival, and Got it dismisses it`() {
+        turnAccessibilityOn()
+        show(LibraryShelfState.Content(ZINES))
+        update(LibraryShelfState.Content(ZINES, pagesX))
+        composeRule.mainClock.advanceTimeBy(ArrivalSettleMillis + 50)
+        composeRule.waitForIdle()
+
+        assertEquals(spokenPagesX, said())
+        assertEquals(View.ACCESSIBILITY_LIVE_REGION_POLITE, platformText().liveRegion)
+        assertEquals(spokenPagesX, platformText().contentDescription?.toString())
+        val stops = platformTraversalStops(composeRule.activity).map { it.label }
+        assertEquals("Got it", stops[stops.indexOf(spokenPagesX) + 1])
+
+        composeRule.onNodeWithTag(ShelfRestoredNoteOkTestTag).performClick()
+        update(LibraryShelfState.Content(ZINES))
+        composeRule.waitForIdle()
+        assertEquals(listOf(listOf("Coffee log")), dismissed)
+        composeRule.onNodeWithTag(ShelfRestoredNoteTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun `a pages note there when the Shelf first draws (back from the Bench) is read in order, not announced`() {
+        show(LibraryShelfState.Content(ZINES, pagesX))
+
+        assertEquals(spokenPagesX, said())
+        assertEquals(View.ACCESSIBILITY_LIVE_REGION_NONE, platformText().liveRegion)
+    }
+
+    @Test
+    fun `one zine whose details and pages went back, and a mixed note, take their A46_3 forms`() {
+        show(LibraryShelfState.Content(ZINES, listOf(RestoredZine("Letters home", "Letters home", "Letters to Gran", pages = true))))
+        assertEquals(
+            "“Letters to Gran” is called “Letters home” again. A small file that holds its name, cover and folder was " +
+                "damaged, so Zinely used the copy from before the last change to them. A page file was damaged too, so " +
+                "its pages are from just before your last few seconds of changes. You can rename it again.",
+            said(),
+        )
+
+        update(LibraryShelfState.Content(ZINES, oneBack + pagesX))
+        composeRule.waitForIdle()
+        assertEquals(
+            "Zinely repaired 2 zines. “Letters home” (was “Letters to Gran”) and “Coffee log”. Some of their files were " +
+                "damaged, so Zinely used the copies it kept. Names, covers and folders are from before the last change " +
+                "to them; pages are from just before your last few seconds of changes.",
+            said(),
+        )
+    }
+
+    @Test
+    @Config(qualifiers = "w360dp-h800dp")
+    fun `at text size 2 on a 360dp phone the longest pages forms show every word, Got it under them (A46_7)`() {
+        val both = listOf(RestoredZine("Letters home", "Letters home", "Letters to Gran", pages = true))
+        val mixed = listOf("Letters home", LONG_NAME, "Mum’s garden", "Tiny poems")
+            .map { RestoredZine(it, it, if (it == "Letters home") "Letters to Gran" else null, pages = it != "Letters home") }
+        show(LibraryShelfState.Content(ZINES, both), fontScale = 2f)
+        for (form in listOf(both, mixed)) {
+            update(LibraryShelfState.Content(ZINES, form))
+            composeRule.waitForIdle()
+            val root = composeRule.onRoot().getBoundsInRoot()
+            val note = composeRule.onNodeWithTag(ShelfRestoredNoteTestTag).getBoundsInRoot()
+            val text = composeRule.onNodeWithTag(ShelfRestoredNoteTextTestTag).getBoundsInRoot()
+            val ok = composeRule.onNodeWithTag(ShelfRestoredNoteOkTestTag).getBoundsInRoot()
+            assertTrue("no sideways overflow", note.left >= root.left && note.right <= root.right)
+            assertTrue("Got it is under the words", ok.top >= text.bottom)
+            assertTrue("Got it is inside the note", ok.bottom <= note.bottom)
+            assertTrue("48dp tall", ok.height >= 48.dp)
+            assertTrue("the words stay inside the note", text.left >= note.left && text.right <= note.right)
+            assertTrue(said()!!.endsWith("just before your last few seconds of changes." + if (form === both) " You can rename it again." else ""))
+        }
+    }
+
     // ---------------------------------------------------------------------------------------------
 
     private fun show(initial: LibraryShelfState, fontScale: Float = 1f) {
