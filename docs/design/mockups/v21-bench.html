@@ -3900,6 +3900,19 @@ ALTERNATIVES WEIGHED (D-143).
       hex help is a placeholder and appears only for an error; full note: "My inks is full. This replaces &lt;name&gt;,
       used longest ago. Your pages keep it." Fits without scrolling at default text; scrolls at the largest.</li>
     <li><b>TalkBack:</b> the current ink reads ", selected"; palette pots "&lt;name&gt;, from &lt;palette&gt;"; strips
-      "&lt;palette&gt;, N inks" as radios; focus stays on the control after any re-render.</li>
+      "&lt;palette&gt;, N inks" as radios; the toast is the one announcement of an ink change (Current ink is not a live
+      region). Focus stays on the control after a re-render; when the control is gone it goes to: after Delete,
+      Duplicate, Save a copy, Save or Cancel, the open palette's ⋯ (or + New palette); after Remove from My inks, the
+      first pot in My inks (Mix if none); after Undo, Current ink (or the edit strip's count, if Undo reopened an edit).</li>
+    <li><b>Undo:</b> a toast offers Undo only when it follows a change (never on a cap, "Pick at least 2" or "Ink tray
+      closes" toast). Undo after Save restores the palettes as they were and reopens the edit with your changes.
+      Every way in (New, Duplicate, Save a copy, Save) enforces the 9-palette cap in the reducer, not only the button.</li>
+    <li><b>Mix into a palette:</b> "added to the palette and My inks"; "already in this palette"; or, when it holds 6,
+      "kept in My inks (the palette is full)", with the button reading <i>Save to My inks</i>.</li>
+    <li><b>Largest text:</b> built-in inks five a row, palette strips three a row (nine palettes = three rows), the tray
+      scrolls; the mixer scrolls. Type never shrinks.</li>
+    <li><b>Retired from #a40:</b> rule 1's band order and "Starting palettes" (now <i>Starter palettes</i>); rule 2's preview
+      body line and "On white paper · about how it prints" note, and the separate legibility box (now the preview's footer,
+      still one fixed slot).</li>
   </ol>
 </section>
