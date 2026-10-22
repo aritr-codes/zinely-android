@@ -8215,3 +8215,43 @@ second reviewer, could not sign in.
 | 3 | **A missing photo could be mistaken for a failure.** | **It is not one.** The renderer draws a placeholder (`ImageBlitter`) and the save succeeds; the overlay never lists photos. W2b owns listing them before Save or Share |
 | 4 | **Share disappears after a save.** `.band.saved .commit` hides the commit row. | **The done block gains a quiet Share** between Open PDF and Fold it up, kept after the fold; `.commit` stays hidden. It sends a copy of the saved PDF: ADR-054's keep vs send, unchanged |
 | 5 | **ADR-054 decision 8 left the copy to an owner ruling.** | **Closed by this entry, under the owner's delegation of 2026-10-12.** ADR-054's text is not edited; its decision 8 note is answered here by ID |
+
+### D-141 — a snack's Undo can undo a later action than the one it names {#d-141}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (`toast()`, `#undoSnack`, `:801-811`) · `feature/editor/.../EditorScreen.kt` (the Bench snack and its Undo) · `core/editor/.../EditorReducer.kt` (history push, undo, redo) |
+| **Found** | W1 plan, 2026-10-22 ([ADR-136](../DECISIONS.md#adr-136) decision 1, row W1: "the snack's Undo undoes its own action (only while the newest history entry is still that action)") |
+| **Severity** | Loses work (Never #1). A maker who deletes a piece, then makes another edit while the snack is still up, and taps the snack's Undo, undoes the later edit while the snack says it will put the piece back |
+| **Status** | **Designed, not built.** [`v21-bench.html` A41.2](mockups/v21-bench.html) frozen 2026-10-22 under the owner's delegation of 2026-10-12; the owner may overrule it |
+
+**Ruling.** A snack's Undo is live only while the newest history entry is the one that raised it. As soon as any
+later history step lands (an edit, an Undo or Redo from the bar, a page command), the snack is retired: hidden
+at once, with no exit transition. The revision is recorded after the action's own history push, so a snack
+never retires itself (controller ruling R-W6). Every history mutation moves it, the fresh-blank removal of
+A41.1 included. A counter is used, not the undo depth: the depth repeats after undo-then-edit. Snacks without
+Undo keep their ordinary timeout.
+
+### D-143 — the Bench has no visible way back to My Shelf {#d-143}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (`.status`, `:567-571`) · `feature/editor/.../EditorScreen.kt` · `feature/editor/.../ProofScreen.kt` (`ICON_BACK`, the Proof's back control this reuses) |
+| **Found** | W1 plan, 2026-10-22 ([ADR-136](../DECISIONS.md#adr-136) decision 1, row W1: "a visible way back to the Shelf from the Bench") |
+| **Severity** | Gets stuck (Never #19, "a visible path"). Only the system Back gesture leaves the Bench; a maker who does not know it has no control to tap |
+| **Status** | **Designed, not built.** [`v21-bench.html` A42](mockups/v21-bench.html) frozen 2026-10-22 under the owner's delegation of 2026-10-12; the owner may overrule it |
+
+**Ruling (controller ruling R-W10).** The Proof's own back control, reused: the same chevron in the same
+bordered round button, first in the Bench's status strip, before the time. No visible text, a touch target of
+at least 48dp, and the accessibility name "Back to My Shelf (your work is saved)", following the Proof's "Back
+to the bench (your work is saved)". It sits in the strip's start slot, which `BenchStatusStrip.kt` leaves
+empty today; the target overlaps the strip's padding, so the strip does not grow. It does exactly what system
+Back does from an idle Bench; autosave has already run, so nothing asks first (Never #17). It hides, without
+moving anything, whenever anything else on the Bench owns Back: the text session, the type bar, Reframe, the
+Ink tray, Flip, Arrange, All pages, Add and Across fold. So one control never means two things.
+
+| Alternative | Outcome |
+|---|---|
+| A Shelf icon in the bottom bar | **Rejected.** The bar is Undo · Redo · Add · Done; a fifth control crowds Add |
+| An overflow menu | **Rejected.** It hides the path, against Never #19 |
+| A "‹ Shelf" text button (the plan's first draft) | **Rejected by R-W10.** A second back control would look different from the Proof's for the same act |

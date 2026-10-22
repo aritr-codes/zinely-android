@@ -2943,3 +2943,286 @@ const ART_A34=[
   });
 })();
 </script>
+<!-- ===========================================================================
+A41 · 2026-10-22 · FROZEN under the owner's delegation of 2026-10-12 ("decide, do not
+ask"), ADR-136 decision 1 row W1.  The owner has not ruled on it personally and may
+overrule it.  D-141.  SPECIFIED, NOT YET BUILT.
+Your words and your undo stay yours.
+
+WHY.  Never #1 (docs/design/ZINE-DIRECTION.md §8): nothing loses a change.  Two Bench
+paths do today.  Back while typing drops the words, and a snack's Undo can undo a later
+action than the one it names.  Two more lines are stale or unseen: a failed photo pick
+is only spoken, and the reframe failure still sends the maker to "adding it again"
+although Replace ships.
+
+A41.1  BACK WHILE TYPING COMMITS.  System Back (Escape in this prototype) commits the
+draft exactly as Done does.  This replaces the adaa6ee behaviour, "the first Back hides
+the keyboard, the next discards".  One press does one thing: the words are kept, the
+piece stays selected, and a second Back then leaves as it would from a selected piece.
+The commit path has three outcomes, the same for Back and Done:
+  words typed                 the words are kept, one undo step
+  a fresh box left blank      the box is removed with no undo step, as today's
+                              commit does (EditorReducer.kt:569-580)
+  an existing box emptied     the box is deleted as one undoable step, with the
+                              ordinary "Removed" snack and its Undo.  Today Back
+                              puts the old text back instead; that ends here
+While the type bar is open over a text session, one Back commits the words and the bar
+closes with the session.  Back does not first close the bar on its own (controller
+ruling R-W7).  v21-typebar.html's note that "Back now closes it" still holds for the bar
+when no words are being edited.
+Tapping away from the box (another piece, or the empty page) already commits through the
+same path, on focus loss (EditTextSession.kt); that is unchanged.
+Prototype: a capture-phase Escape handler below runs the Done path while the keyboard
+stack is up, and consumes the key, so closeOverlays() and deselect() (:928) do not also
+run on the same press.
+
+A41.2  UNDO RETIRES (D-141).  A snack's Undo is live only while the newest history entry
+is the one that raised it.  As soon as any later history step lands (an edit, an Undo
+or Redo from the bar, a page command), the snack is retired: hidden at once, with no
+exit transition.  The revision is recorded after the action's own history push, so a
+snack never retires itself (ruling R-W6).  Every history mutation moves the revision,
+the fresh-blank removal of A41.1 included.  Snacks without Undo are not retired early;
+they keep their timeout.
+Prototype: toast() and the bar's Undo are wrapped below.  This prototype cannot type, so
+its Done stands for a commit that changed words, and counts as a history step.
+
+A41.3  A FAILED PHOTO PICK IS SHOWN.  When a picked photo cannot be added, the Bench snack
+shows the failure line with no button.  The line is whatever the pick reports, unchanged,
+for example "That image couldn’t be added." or "Couldn’t save that image."  It is spoken
+once, through the snack's own polite live region (A25's rule), and not announced a second
+time by any other channel.
+
+A41.4  REPLACE COPY.  A25 (:998) says "Photo Replace remains unavailable and is not
+promised."  That is stale: photo Replace ships.  The reframe-failure line becomes
+  "This photo can’t be reframed. Try Replace."
+replacing "This photo can’t be reframed. Try adding it again." (Copy.kt:761).  Everything
+else in A25 holds.
+
+A41.5  THE ADD PILL GROWS.  .add is min-height:48px and grows with large text instead of
+a fixed 48px height.  At 1x text nothing moves.  This is an accessibility fix allowed after
+a freeze (CLAUDE.md, DESIGN FREEZE), recorded here so the HTML stays true; the style
+below applies it.
+
+WHAT DOES NOT CHANGE.  Done, the keyboard stack, the snack's look, place and timeout, the
+Removed / Put back lines, and every tray.
+=========================================================================== -->
+<!-- ===========================================================================
+A42 · 2026-10-22 · FROZEN under the owner's delegation of 2026-10-12 ("decide, do not
+ask"), ADR-136 decision 1 row W1.  The owner has not ruled on it personally and may
+overrule it.  D-143.  SPECIFIED, NOT YET BUILT.
+A way back to My Shelf.
+
+WHY.  The Bench has no visible way out.  System Back works, but a maker who does not know
+the gesture is stuck on the page they opened (Never #19, "a visible path").
+
+THE CONTROL.  The Proof's own back control, reused rather than invented: the same chevron
+(ProofScreen.kt ICON_BACK, "M15 5l-7 7 7 7") in the same bordered round button, in the
+status strip's start slot.  That slot is empty in the app (BenchStatusStrip.kt); this
+prototype draws a clock there, and the button sits before it.  It has no visible text.
+The button is the Proof's 44dp circle inside a 48dp touch target.  The target overlaps the
+strip's own top padding and the top edge of the canvas below, so the strip does not grow:
+the page and the Saved mark stay where the freeze puts them.  Its accessibility name is
+  "Back to My Shelf (your work is saved)"
+which follows the Proof's "Back to the bench (your work is saved)" (ruling R-W10; this
+replaces the plan's text button reading "Shelf" after a chevron).
+
+WHAT IT DOES.  Exactly what system Back does from an idle Bench.  Autosave has already run,
+so nothing asks first (Never #17).
+
+WHEN IT HIDES.  Whenever anything else on the Bench owns Back, so one control never means
+two things.  That is every Bench BackHandler and every sheet: the text session, the type
+bar, Reframe, the Ink tray, Flip, Arrange, All pages, Add and Across fold.  (This prototype
+has no type bar or Reframe to open; the rule covers them.)  It hides without moving
+anything: the time and the Saved mark keep their places.  A
+selected piece does not hide it, because Back from a selected piece also leaves.
+
+LARGE TEXT AND NARROW PHONES.  The button keeps its 48dp size at every text scale; the
+time and Saved grow beside it.  The specimens in the A42 card below show 1x and 1.8x text
+in a 360dp strip.
+
+ALTERNATIVES WEIGHED (D-143).
+  a Shelf icon in the bottom bar   rejected: the bar is Undo · Redo · Add · Done, and a
+                                   fifth control crowds Add
+  an overflow menu                 rejected: it hides the path, against Never #19
+  a "Shelf" text button            rejected by R-W10: a second back control would look
+                                   different from the Proof's for the same act
+=========================================================================== -->
+<style>
+/* A41.5: the Add pill grows with large text. */
+#addBtn.add{height:auto;min-height:48px;padding-block:var(--gap-xs)}
+/* A41.2: a retired snack leaves at once. */
+#snack.a41-now{transition:none}
+/* A41.1 demo: an emptied box, and a fresh one still blank. */
+#content .a41-emptied .t-title,#content .a41-emptied .t-body{color:transparent;text-shadow:none}
+#content .a41-blank{min-height:1.5em}
+/* A42: the way back. The Proof's .iconbtn look inside a 48px target. */
+.a42-back{flex:none;width:48px;height:48px;margin:-11px 8px -10px -4px;padding:2px;border:0;background:none;
+  position:relative;z-index:1;border-radius:var(--br-pill);
+  cursor:pointer;display:grid;place-items:center;color:var(--ink-soft)}
+.a42-back i{width:44px;height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
+  background:var(--surface);display:grid;place-items:center;box-shadow:2px 2px 0 var(--ink-line)}
+.a42-back:active i{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
+.a42-back svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round}
+.a42-back.a42-away{visibility:hidden}
+.status .a42-back+span{margin-right:auto}
+/* The A41 and A42 cards. */
+#a41,#a42{margin:32px 16px;width:min(760px,calc(100% - 32px));box-sizing:border-box;font:14px/1.45 system-ui,sans-serif;color:var(--ink)}
+#a41 h2,#a42 h2{font-size:18px;margin:0 0 4px}
+#a41 p,#a42 p{margin:0 0 10px}
+#a41 .a41-try{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+#a41 .a41-try button{min-height:48px;padding:0 14px;border:1.5px solid var(--ink);border-radius:var(--br-pill);
+  background:var(--surface);color:var(--ink);font:600 13px system-ui,sans-serif;cursor:pointer}
+#a41 ol{margin:0;padding-left:20px}
+#a42 figure{margin:0}
+#a42 .a42-spec{width:360px;max-width:100%;box-sizing:border-box;border:1px dashed var(--ink-soft);
+  border-radius:8px;background:var(--bench);margin:0 0 10px}
+#a42 .a42-spec .status{padding:12px 16px 4px;font-size:.7em}
+#a42 .a42-spec .saved{font-size:.97em}
+#a42 .a42-spec.x1{font-size:16px}
+#a42 .a42-spec.x18{font-size:28.8px}
+#a42 figcaption{font-size:12px;color:var(--ink-soft);margin:0 0 4px}
+</style>
+<section id="a41" aria-labelledby="a41Title">
+  <h2 id="a41Title">A41 · your words and your undo stay yours</h2>
+  <p>Try each state on the phone above.  "Back" is Escape on a keyboard, or the button below.</p>
+  <div class="a41-try">
+    <button type="button" id="a41Type">Type, then Back</button>
+    <button type="button" id="a41Empty">Empty a box, then Back</button>
+    <button type="button" id="a41Fresh">New blank box, then Back</button>
+    <button type="button" id="a41Back">Back (Esc)</button>
+    <button type="button" id="a41Del">Delete the sticker</button>
+    <button type="button" id="a41Later">Then make another edit</button>
+    <button type="button" id="a41Pick">Photo pick fails</button>
+    <button type="button" id="a41Reframe">Reframe fails</button>
+  </div>
+  <p>The states, in order:</p>
+  <ol>
+    <li>Back while typing: the words are kept and the piece stays selected (A41.1).</li>
+    <li>Back on an emptied box: the box is removed, with a Removed snack whose Undo brings it back with its words.</li>
+    <li>Back on a fresh blank box: the box goes, with no snack and no undo step.</li>
+    <li>Undo retires: with the Removed snack up, make another edit (or press Undo on the bar) and the snack goes at once (A41.2, D-141).</li>
+    <li>Photo pick fails: the snack shows the failure line with no button (A41.3).</li>
+    <li>Reframe fails: “This photo can’t be reframed. Try Replace.” (A41.4).</li>
+    <li>The Add pill grows with large text (A41.5); at 1x it looks as before.</li>
+  </ol>
+</section>
+<section id="a42" aria-labelledby="a42Title">
+  <h2 id="a42Title">A42 · a way back to My Shelf</h2>
+  <p>The round chevron at the start of the phone's status strip.  Open the Ink tray, Add or All pages, or start editing, and it hides.</p>
+  <figure><figcaption>360dp, 1x text</figcaption><div class="a42-spec x1" id="a42Spec1"></div></figure>
+  <figure><figcaption>360dp, 1.8x text</figcaption><div class="a42-spec x18" id="a42Spec18"></div></figure>
+  <p>The states: shown at rest and with a piece selected; hidden while editing or while a tray or sheet is open; a tap leaves for My Shelf with no question.</p>
+</section>
+<script>
+(function(){
+  /* ---- A41.2: the history revision and the snack that retires (D-141) ---- */
+  let rev=0, snackRev=null;
+  function retire(){
+    const s=$('snack');
+    if(snackRev===null||snackRev===rev) return;
+    snackRev=null;
+    if(!s.classList.contains('show')||$('undoSnack').style.display==='none') return;
+    clearTimeout(tt); s.classList.add('a41-now'); s.classList.remove('show');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>s.classList.remove('a41-now')));
+    cap('Undo retired','A later step landed, so the snack’s Undo would no longer undo what it names. It goes at once.');
+  }
+  function step(){ rev++; retire(); }
+  const toastBeforeA41=toast;
+  toast=function(msg,undoable){
+    if(undoable){ rev++; snackRev=rev; } else snackRev=null;   // R-W6: recorded after the action's own push
+    return toastBeforeA41(msg,undoable);
+  };
+  const undoBarBeforeA41=$('undoBtn').onclick;
+  $('undoBtn').onclick=e=>{ step(); undoBarBeforeA41(e); };
+
+  /* ---- A41.1: Back while typing runs the Done path ---- */
+  function clearFlags(node){
+    if(!node) return;
+    node.classList.remove('a41-emptied'); delete node.dataset.a41Empty;
+  }
+  const doneEditBeforeA41=$('doneEdit').onclick;
+  $('doneEdit').onclick=e=>{
+    const node=sel;
+    if(node&&node.dataset.a41Fresh==='true'){          // a fresh box left blank: gone, no undo step
+      node.classList.remove('editing'); $('kbstack').classList.remove('show');
+      sel=null; node.remove(); deselect(); step();
+      cap('Blank box removed','Nothing was typed, so the new box goes with no snack and no undo step, as Done does.');
+      return;
+    }
+    if(node&&node.dataset.a41Empty==='true'){          // an existing box emptied: one undoable delete
+      node.classList.remove('editing'); $('kbstack').classList.remove('show');
+      clearFlags(node); select(node); del();
+      cap('Emptied box removed','Its words were all cleared, so the box goes as one undoable step. Undo brings it back with its words.');
+      return;
+    }
+    doneEditBeforeA41(e); step();
+    if(e&&e.a41Back) cap('Back kept your words','Back commits the words exactly as Done does. The piece stays selected; a second Back leaves.');
+  };
+  addEventListener('keydown',e=>{
+    if(e.key!=='Escape'||!$('kbstack').classList.contains('show')) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    $('doneEdit').onclick({stopPropagation(){},a41Back:true});
+  },true);
+  // Tapping away (another piece, or the empty page) ends the session through the same commit path.
+  function endSession(){ if(sel&&sel.classList.contains('editing')) $('doneEdit').onclick({stopPropagation(){}}); }
+  function dropFresh(){ if(sel&&sel.dataset.a41Fresh==='true'){ const n=sel; sel=null; n.remove(); } }
+  const deselectBeforeA41=deselect;
+  deselect=function(){ endSession(); dropFresh(); clearFlags(sel); deselectBeforeA41(); };
+  const selectBeforeA41=select;
+  select=function(node){ if(sel&&sel!==node){ endSession(); dropFresh(); clearFlags(sel); } selectBeforeA41(node); };
+  // :735 holds the original deselect, so a tap on the phone's own background is routed here first.
+  $('phone').addEventListener('click',e=>{ if(e.target===$('phone')) endSession(); },true);
+
+  /* ---- A41 demo controls ---- */
+  // A piece of the kind asked for, or any piece left, so the buttons work after a retired Undo too.
+  const pick=kind=>{ const all=[...document.querySelectorAll('#content .el')];
+    const n=all.find(e=>e.dataset.kind===kind)||all[0]; if(n) select(n); return n; };
+  $('a41Back').onclick=()=>document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+  $('a41Type').onclick=()=>{ if(pick('text')?.dataset.kind!=='text') return; edit();
+    cap('Editing · in place','Words are typed. Press Back (Esc): they are kept.'); };
+  $('a41Empty').onclick=()=>{ if(pick('text')?.dataset.kind!=='text') return; edit();
+    sel.dataset.a41Empty='true'; sel.classList.add('a41-emptied');
+    cap('Editing · words cleared','Every word in this box is cleared. Press Back (Esc).'); };
+  $('a41Fresh').onclick=()=>{
+    ELS.push({kind:'text',label:'Text: new, still blank'});
+    const n=document.createElement('div');
+    n.className='el'; n.tabIndex=0; n.dataset.i=ELS.length-1; n.dataset.kind='text';
+    n.dataset.a41Fresh='true'; n.setAttribute('aria-label','New text box, blank.');
+    n.innerHTML='<span class="ring"></span><div class="t-body a41-blank"><span class="caret"></span></div>';
+    n.onclick=e=>{ e.stopPropagation(); select(n); };
+    $('content').appendChild(n); select(n); edit();
+    cap('Editing · a new box','A box just placed, nothing typed yet. Press Back (Esc).');
+  };
+  $('a41Del').onclick=()=>{ if(pick('decor')) del(); };
+  $('a41Later').onclick=()=>{ pick('text'); step();
+    if(!$('snack').classList.contains('show')) cap('Another edit','A history step landed. Any Undo snack up at the time has gone.'); };
+  $('a41Pick').onclick=()=>{ toast('That image couldn’t be added.',false);
+    cap('Photo pick failed','Shown in the snack, with no button, and spoken once by the snack’s own live region.'); };
+  $('a41Reframe').onclick=()=>{ pick('photo'); toast('This photo can’t be reframed. Try Replace.',false);
+    cap('Reframe failed','Replace ships, so the line points at it.'); };
+
+  /* ---- A42: the way back to My Shelf (D-143) ---- */
+  const LABEL='Back to My Shelf (your work is saved)';
+  function backButton(){
+    const b=document.createElement('button');
+    b.type='button'; b.className='a42-back'; b.setAttribute('aria-label',LABEL); b.title=LABEL;
+    b.innerHTML='<i>'+svg('<path d="M15 5l-7 7 7 7"/>')+'</i>'; return b;
+  }
+  const a42=backButton();
+  document.querySelector('#phone .status').prepend(a42);
+  a42.onclick=e=>{ e.stopPropagation();
+    cap('Back to My Shelf','Leaves exactly as system Back does from rest. Autosave already ran, so nothing asks first.'); };
+  const owners=[$('kbstack'),$('sheet'),$('pgrid'),$('inkpop'),flipPanel,arrPanel,spread];
+  const sync=()=>a42.classList.toggle('a42-away',owners.some(n=>n.classList.contains('show')));
+  const watch=new MutationObserver(sync);
+  owners.forEach(n=>watch.observe(n,{attributes:true,attributeFilter:['class']}));
+  sync();
+  ['a42Spec1','a42Spec18'].forEach(id=>{
+    $(id).innerHTML='<div class="status"><span>9:41</span><span class="saved">'
+      +svg('<path d="M4 12l5 5 11-12"/>')+'Saved</span></div>';
+    const b=backButton(); b.tabIndex=-1; b.setAttribute('aria-hidden','true');
+    $(id).firstChild.prepend(b);
+  });
+})();
+</script>
