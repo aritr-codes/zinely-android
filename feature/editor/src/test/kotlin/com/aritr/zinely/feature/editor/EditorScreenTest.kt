@@ -11,7 +11,10 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -1317,5 +1320,32 @@ class EditorScreenTest {
             setOf(id),
             store.uiState.value.selection,
         )
+    }
+
+    // ── W1 Task 5 (A41 / A42) ──────────────────────────────────────────────────────────────────────
+
+    @Test
+    fun art_sheet_survives_recreation() {
+        // Given the Art sheet open with "sta" typed in its search
+        val store = store()
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent {
+            ZinelyTheme {
+                EditorScreen(store = store, pageSizePt = pageSizePt, modifier = Modifier.size(300.dp, 425.dp))
+            }
+        }
+        composeRule.onNodeWithTag(BenchBarAddTag).performClick()
+        composeRule.onNodeWithTag(BenchAddChooserArtTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchArtSearchTestTag).performTextInput("sta")
+        composeRule.waitForIdle()
+
+        // When the activity is recreated
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+
+        // Then the sheet is still up and the query still reads "sta"
+        composeRule.onNodeWithTag(BenchArtSheetTestTag).assertExists()
+        composeRule.onNodeWithTag(BenchArtSearchTestTag).assertTextContains("sta")
     }
 }

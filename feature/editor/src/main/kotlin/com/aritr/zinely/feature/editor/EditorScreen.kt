@@ -40,6 +40,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.focus.FocusRequester
@@ -310,7 +311,7 @@ public fun EditorScreen(
     var addChooserOpen by remember { mutableStateOf(false) }
     // Frozen Bench A19: the selected photo whose two-page confirmation is open. The document is not
     // touched until confirmation; dismissal clears only this ephemeral id.
-    var spreadPhotoId by remember { mutableStateOf<String?>(null) }
+    var spreadPhotoId by rememberSaveable { mutableStateOf<String?>(null) }
     var spreadBusy by remember { mutableStateOf(false) }
 
     // The Art sheet — the frozen `openArt()` (ADR-105 step S7). Purpose remains separate from the chooser's
@@ -327,7 +328,7 @@ public fun EditorScreen(
     // know which. A `Boolean` plus an `artReplaceTarget: String?` beside it would be two states that can
     // disagree, which is exactly the shape [D-091](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-091)
     // cost this package a review cycle over. One nullable value, and the purpose is unconstructibly wrong.
-    var artSheetFor by remember { mutableStateOf<BenchArtPurpose?>(null) }
+    var artSheetFor by rememberSaveable(stateSaver = BenchArtPurposeSaver) { mutableStateOf<BenchArtPurpose?>(null) }
     val artSheetOpen = artSheetFor != null
 
     // ----- C5 (ADR-095) -------------------------------------------------------------------

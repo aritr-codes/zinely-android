@@ -29,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -677,6 +678,22 @@ internal sealed interface BenchArtPurpose {
     data object Place : BenchArtPurpose
     data class Replace(val id: String) : BenchArtPurpose
 }
+
+/**
+ * Keeps the open Art sheet's purpose across an activity recreation (W1, controller ruling R-W8: a `Saver`,
+ * not `@Parcelize`, which this module does not apply). `null` (no sheet) saves nothing; Place is the empty
+ * string, since an element id is never empty.
+ */
+internal val BenchArtPurposeSaver: Saver<BenchArtPurpose?, String> = Saver(
+    save = { purpose ->
+        when (purpose) {
+            null -> null
+            BenchArtPurpose.Place -> ""
+            is BenchArtPurpose.Replace -> purpose.id
+        }
+    },
+    restore = { saved -> if (saved.isEmpty()) BenchArtPurpose.Place else BenchArtPurpose.Replace(saved) },
+)
 
 private val ArtPaperInk = Color(0xFF27270F)
 private val ArtPaperInkSoft = Color(0xFF6A452F)
