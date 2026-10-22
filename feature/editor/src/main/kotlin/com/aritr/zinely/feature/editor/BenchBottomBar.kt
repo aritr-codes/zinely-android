@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -399,7 +400,7 @@ private fun BenchAddButton(onAdd: () -> Unit, modifier: Modifier) {
     val addWithHaptic = benchTap(action = onAdd)
     Row(
         modifier = modifier
-            .height(BenchAddHeight)
+            .heightIn(min = BenchAddHeight)
             // Ring first so it lands under the shadow; neither may sit right of a clip.
             .zinelyV21Frame(colors.butterTint, BenchBarShape)
             .zinelyV21Pressable(pressed, ZinelyV21Press.Hero, colors.inkLine, BenchBarShape)

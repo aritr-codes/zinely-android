@@ -257,6 +257,8 @@ internal fun BenchPageNav(
     // the first placement snaps: a strip that visibly slides itself into position on entry announces the
     // navigator instead of the page, which is the opposite of what row 5.10 is for.
     var placed by remember { mutableStateOf(false) }
+    // Read outside the effect: the effect is a coroutine, and the policy is a composition-local read.
+    val reduceMotion = ZinelyTheme.v2Motion.reduceMotion
     LaunchedEffect(currentPageIndex, viewportPx, pages.size) {
         if (viewportPx <= 0) return@LaunchedEffect
         // The leading term stays explicit even at zero: the arithmetic is the strip's geometry, not a
@@ -270,7 +272,7 @@ internal fun BenchPageNav(
                 .roundToPx()
         }
         val target = (centre - viewportPx / 2).coerceIn(0, scroll.maxValue)
-        if (placed) scroll.animateScrollTo(target) else scroll.scrollTo(target)
+        if (placed && !reduceMotion) scroll.animateScrollTo(target) else scroll.scrollTo(target)
         placed = true
     }
 
