@@ -184,6 +184,30 @@
   is added again". The owner's text stands; Pass 2 decides whether it needs another look.
 -->
 
+<!--
+  AMENDMENT A45 — "Back up this shelf" says what happens next — W1 lane, 2026-10-22 (append-only; the
+  frozen text above stays as history). Delegated design call (ruling R-W5; no maker complaint was cited, so
+  this is a judgement, not a reported defect). ADR-136 decision 1 (W1); the ADR-140 / D-144 records land
+  with W1's docs task. NOT yet owner-frozen: the owner's Pass 2 reading of the line is owed.
+
+  What changes: one line, the Back up option's body (#saveOption .option-body, the markup near
+  "Back up this shelf"). Nothing else on the sheet moves: title, sheet body (#trustBody), last-backup
+  line, Restore option, every running / success / error state and the focus order are unchanged. The JS
+  never sets this line, so no script changes.
+
+  Why: tapping Back up opens Android's own "Save" screen, which Zinely cannot label. The old line,
+  "Choose where to keep the backup file.", told the maker to do something before they had been told
+  anything was about to appear, and read as an instruction for the sheet they were already on. The new
+  line names what happens next, in the phone's terms.
+
+  Exact copy (replaces the old line):
+     "Next, your phone asks where to save it."
+  Rules kept: P1's one-line, no-repeated-note rule (the polish above) still holds. The line does NOT
+  restate the sheet body ("The backup file holds the zines and photos on this shelf…"), so what the file
+  contains is said once, in #trustBody. No "every" / "all" (amendment 1a: "No line promises every zine before the result is known"). The line can wrap to two lines
+  at 200 % text; the option already stacks and scrolls there.
+-->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Averia+Sans+Libre:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -885,7 +909,7 @@ body{
             <span class="chip">⤓</span>
             <span>
               <p class="option-title">Back up this shelf</p>
-              <p class="option-body">Choose where to keep the backup file.</p>
+              <p class="option-body">Next, your phone asks where to save it.</p>
             </span>
           </button>
           <button class="option restore" id="restoreOption">
