@@ -207,6 +207,26 @@ class ZineLibraryFoldersTest {
     }
 
     @Test
+    fun `a half typed folder name survives recreation`() {
+        // Given New folder with "Zin" typed.
+        zines = SEEDED.map { it.copy(folder = null) }
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent { Screen() }
+        composeRule.onNodeWithContentDescription("Actions for Riso tests").performClick()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Move)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FolderNameFieldTestTag).performTextInput("Zin")
+
+        // When the Activity is saved and restored.
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+
+        // Then the sheet is up and reads "Zin".
+        composeRule.onNodeWithTag(FolderNameSheetTestTag).assertExists()
+        composeRule.onNodeWithTag(FolderNameFieldTestTag).assertTextEquals("Zin")
+    }
+
+    @Test
     fun `the chooser lists where the zine can go, and says where it already is`() {
         // A28, *What TalkBack hears*: "My Shelf, Out of the folder" · "Family, 2 zines" ·
         // "Family, It's here" (not a choice) · "New folder".
