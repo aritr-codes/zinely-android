@@ -65,7 +65,16 @@ import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import com.aritr.zinely.ui.theme.ZinelyV21Press
 import android.Manifest
 import android.content.ActivityNotFoundException
+import android.app.Activity
 import android.content.ComponentName
+import android.content.Context
+import android.content.ContextWrapper
+import android.provider.Settings
+import androidx.core.app.ActivityCompat
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.lifecycle.compose.LifecycleEventEffect
+import com.aritr.zinely.export.ExportFailure
+import com.aritr.zinely.feature.editor.ProofFailure
 import android.content.Intent
 import com.aritr.zinely.MainActivity
 import android.content.pm.PackageManager
@@ -409,11 +418,33 @@ private fun ProofDestination(
             // storage grant. The host asks at the tap because only the host has an Activity; the VM and
             // DownloadsWriter never learn that permissions exist. A grant continues this one save; a denial
             // shows the same error a failed save does, and nothing retries by itself.
+            //
+            // A43.2: a denial Android will not ask about again is "permanent". That is read only HERE, after a
+            // request ran: before any request `shouldShowRequestPermissionRationale` is false too (a fresh
+            // install), and reading it then would send a first-time maker to Settings unasked.
+            var storageBlocked by rememberSaveable { mutableStateOf(false) }
             val storagePermission = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestPermission(),
             ) { granted ->
-                if (granted) exportTo(ExportDestination.DOWNLOADS)
-                else exportViewModel.couldNotStart(ExportDestination.DOWNLOADS)
+                if (granted) {
+                    storageBlocked = false
+                    exportTo(ExportDestination.DOWNLOADS)
+                } else {
+                    storageBlocked = context.findActivity()?.let {
+                        !ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    } ?: false
+                    exportViewModel.couldNotStart(ExportDestination.DOWNLOADS)
+                }
+            }
+            // Re-read on every resume, so coming back from Settings with Storage on turns "Open settings"
+            // into "Try again" (A43.2) — and nothing retries by itself. A counter, not the lifecycle state:
+            // the state can leave RESUMED and come back between two frames, and an unchanged key recomputes
+            // nothing.
+            var resumes by remember { mutableIntStateOf(0) }
+            LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { resumes++ }
+            val storageGranted = remember(resumes) {
+                ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                    PackageManager.PERMISSION_GRANTED
             }
             val needsStoragePermission: (ExportDestination) -> Boolean = { destination ->
                 needsLegacyStoragePermission(
@@ -425,6 +456,7 @@ private fun ProofDestination(
                     ) == PackageManager.PERMISSION_GRANTED,
                 )
             }
+            val exportError = exportState as? ExportUiState.Error
             ProofScreen(
                 // The `zineName` this used to pass was `Copy.Nav.ZINE_NAME_FALLBACK` — a placeholder,
                 // because the real title lives in Room project metadata (ADR-042) and never reached the
@@ -449,7 +481,19 @@ private fun ProofDestination(
                 // A failed render surfaces the recoverable error overlay (carries forward the retired
                 // ExportScreen's error surfacing — never a silent failure), and it now names the action
                 // that failed, so "Try again" is a promise the screen can keep.
-                failedTarget = (exportState as? ExportUiState.Error)?.destination?.toTarget(),
+                failedTarget = exportError?.destination?.toTarget(),
+                failure = exportError?.failure.toProofFailure(storageBlocked),
+                onOpenSettings = if (storageBlocked && !storageGranted) {
+                    {
+                        try {
+                            context.startActivity(appDetailsSettingsIntent(context.packageName))
+                        } catch (e: ActivityNotFoundException) {
+                            Toast.makeText(context, Copy.Nav.NO_APP_TO_OPEN, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } else {
+                    null
+                },
                 onRetryExport = {
                     // A Save PDF that failed for want of the grant asks again, through the same gate.
                     val failed = (exportState as? ExportUiState.Error)?.destination
@@ -509,6 +553,28 @@ private fun shareIntent(uri: Uri, mime: String): Intent =
         putExtra(Intent.EXTRA_STREAM, uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
+
+/** Zinely's own page in Android settings, where Storage can be turned back on (A43.2). */
+internal fun appDetailsSettingsIntent(packageName: String): Intent =
+    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
+
+/**
+ * The host's failure as the Proof says it (A43). A refused Storage permission splits on whether Android
+ * will ask again ([storageBlocked], read after a request ran).
+ */
+internal fun ExportFailure?.toProofFailure(storageBlocked: Boolean): ProofFailure = when (this) {
+    null, ExportFailure.Other -> ProofFailure.Other
+    ExportFailure.OutOfMemory -> ProofFailure.OutOfMemory
+    ExportFailure.OutOfSpace -> ProofFailure.OutOfSpace
+    ExportFailure.PermissionDenied -> if (storageBlocked) ProofFailure.StorageBlocked else ProofFailure.StorageRefused
+}
+
+/** The Activity behind a Compose context, or null (a rationale can only be asked of an Activity). */
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
 
 /** Opens one exact saved export without searching Downloads by its display name. */
 internal fun openDocumentIntent(uri: Uri, mime: String): Intent =
