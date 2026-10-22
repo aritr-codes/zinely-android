@@ -8031,7 +8031,7 @@ FIXES**.
 | **Artifacts** | `core/data-storage/.../AtomicFileStore.kt` (`read`) · `data-android/.../RoomProjectRepository.kt` (`readMetaOrNull`) · `docs/design/mockups/v21-library.html` A37 (appended; nothing above it edited) |
 | **Found** | 2026-10-14, as D-116's second known limit (PR #127); filed as [issue #128](https://github.com/aritr-codes/zinely-android/issues/128) |
 | **Severity** | **Trust defect.** No pages are lost. After a repair, the Shelf shows a zine under its earlier name, cover or folder with no word of why, so a maker can believe a zine is missing or that the app undid their rename |
-| **Status** | **Designed 2026-10-15** under [ADR-134](../DECISIONS.md#adr-134) (Accepted under the owner's delegation); A37 frozen. **Built 2026-10-15** in PR #139 ([As built](../DECISIONS.md#adr-134-as-built)), in no release; **not accepted** until both device passes. Item 4 stays open |
+| **Status** | **Designed 2026-10-15** under [ADR-134](../DECISIONS.md#adr-134) (Accepted under the owner's delegation); A37 frozen. **Built 2026-10-15** in PR #139 ([As built](../DECISIONS.md#adr-134-as-built)), in no release; **not accepted** until both device passes. Item 4 stays open; **2026-10-22:** item 4 decided by [ADR-140](../DECISIONS.md#adr-140) (Proposed), A46 frozen |
 
 **What happens.** A zine's `meta.json` holds its title, createdAt, cover and folder. Each write keeps the
 previous file as `meta.json.bak`. If `meta.json` is found damaged, `AtomicFileStore.read` puts the `.bak`
@@ -8043,7 +8043,7 @@ rename, a move to a folder or a new cover made just before the damage is undone.
 | 1 | **The maker is never told.** D-116 fixed the data and listed this as a known limit. | **Designed.** Library A37: one paper note under the My Shelf heading, exact words in A37.3, dismissed only by "Got it", once per repair and kept until seen (ADR-134 decisions 1–3) |
 | 2 | **The store cannot say that it used the `.bak`.** `read` returns the same bytes either way, so no caller can tell a repaired read from a clean one. | **Built.** `AtomicFileStore.readReporting` returns `StoreRead.Read` / `Restored` / `BackupOnly`; `readMetaOrNull` records the waiting note; nothing new is caught. A mutation that reports every recovery as `Read` fails the store and repository tests (PR #139) |
 | 3 | **"Backup" is already taken on this screen.** Backups is a dock action that means library backups; "restored from a backup" would send the maker there. | **Designed around.** A37.4 bans the word; the note says "the copy from before the last change" |
-| 4 | **A page document put back from its own `.bak` is silent too.** `DocumentRepositoryImpl` reads `document.json` through the same `read` (ADR-021). Each autosave rewrites it, so the `.bak` is one autosave old and the maker may lose the last edits made before the damage, without a word. | **Not decided here; outside #128.** Proposed as its own issue for the main session. The sealed result of item 2 makes it cheap to report later |
+| 4 | **A page document put back from its own `.bak` is silent too.** `DocumentRepositoryImpl` reads `document.json` through the same `read` (ADR-021). Each autosave rewrites it, so the `.bak` is one autosave old and the maker may lose the last edits made before the damage, without a word. | **Not decided here; outside #128.** Proposed as its own issue for the main session. The sealed result of item 2 makes it cheap to report later. **2026-10-22: decided by [ADR-140](../DECISIONS.md#adr-140)** (Proposed; issue [#146](https://github.com/aritr-codes/zinely-android/issues/146)): told by the same note, in Library A46's words; not built |
 | 5 | **The prototype had no way to show font scale 2 at 360dp.** A28's large-text control is 1.8× on a 390px phone. | **Added** an A37 control, "text 2× at 360dp". With the several-zine note it fills most of the first screen at that size (676px of an 800px phone in review, Got it below the fold under the dock); every word shows and the note scrolls away with the zines (A37.8). Whether a large-text maker can still answer "Which zine do I want?" there is the first-time-user device pass's question |
 | 6 | **First draft said "your last change".** The last write to `meta.json` is not always the maker's: Zinely writes it too (a cover drawn for an older zine, D-026), so the words could blame the maker for a change they never made. | **Fixed in the self-check.** A37.3 says "the last change" |
 | 7 | **The first frozen words promised "Its pages weren't touched".** A page document is put back from its own `.bak` by the same store, silently (item 4), and a damaged `meta.json` often comes with a damaged `document.json`: in the reconcile scan the re-sync of a disagreeing row loads the document through `AtomicFileStore.read`, so the sentence could be false in the very case that raises the note. Found by review (RF-1). | **Fixed before merge.** A37.3 and ADR-134 decision 2: the note makes no claim about the pages |
@@ -8181,3 +8181,30 @@ second reviewer, could not sign in.
 | R31 relies on lane C renumbering | Observation | Same as above |
 | Duplicate also carries the description | Observation | **Accepted.** Decision 6: Duplicate keeps it; owed item 2 tests it |
 | Verified claims | Observation | No change |
+
+---
+
+### D-140 — the Proof's smallest words are under 12 sp, and no floor was ever written {#d-140}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../ProofSheet.kt` (`:203` 9.5 sp, `:331` and `:384` 11.5 sp) · `ProofFold.kt` (`:217` 11.5 sp, `:294` 10.5 sp, `:500` 10 sp, and the fold diagram's page numbers, drawn at 9 diagram units by `cellNumber`, `:975-987`) · `ProofPrint.kt:272` (10.5 sp) · `ProofScreen.kt` (`:873` 11.8 sp, `:1140` 11.5 sp) · `core/ui/.../ZinelyV2Typography.kt:167-170` (`sectionLabel`, 10.5 sp, shared beyond the Proof) · `docs/design/mockups/v21-proof.html` A44 |
+| **Found** | [ADR-136](../DECISIONS.md#adr-136) W1 item 13; sizes confirmed 2026-10-22 on `846c91e` by the W1 plan and its review (R4) |
+| **Severity** | Legibility. The Proof is print guidance, read at arm's length with a sheet of paper in the other hand, and its fold steps and sheet labels are its smallest words |
+| **Status** | **Decided 2026-10-22** under the owner's delegation of 2026-10-12 ("decide, do not ask"); the owner may overrule it. A44 records it in the HTML; the build is W1 Task 9. Not built |
+
+**The ruling.** 🟦 **House ruling, not platform guidance: every text node on the Proof is at least 12 sp.**
+No floor was written anywhere before this (not in `V21-SPEC.md`, not in ZINE-DIRECTION). Material 3's
+smallest type token is `labelSmall` at 11 sp, and 12 sp is `bodySmall`; so 12 sp is this product's choice
+for a screen read at a distance, and is never cited as "Android's minimum".
+
+| # | Rule | Why |
+|---|---|---|
+| 1 | Every `Text` on the Proof (Read, the Print drawer, the Fold steps, the Sheet, the done block) is at least 12 sp, before font scale | The Proof's question is "how do I print it correctly?", answered with the paper in hand |
+| 2 | The floor is a Proof value (`ZinelyV2Typography`'s new floor constant), not a change to `sectionLabel` | `sectionLabel` is shared beyond the Proof; changing it globally would move screens this ruling did not look at |
+| 3 | **The fold diagram's page numbers are not exempt.** They are drawn with a `TextMeasurer` inside a `DrawScope`, so no semantics test sees them. Their size comes from a small pure helper, the font size in sp from the diagram's scale, density and font scale, with its own unit test asserting at least 12 sp (plan review R4, controller ruling R-W4) | The numbers are the one thing on the diagram that says which panel is which; a decorative exemption would leave the smallest words on the screen the hardest to read |
+| 4 | The cells sit 44 diagram units apart (`xs = q ± 22f`). At 12 sp and font scale 2 the numbers grow to 24 sp equivalent, so the build checks in its Pass 1 that neighbours never touch, and records the result | A floor that makes two numbers collide fails the same reader |
+
+**Owed** (W1 Task 9): the test over every Proof state (`ProofTypeFloorTest`), the helper's unit test, the Proof
+goldens re-recorded on CI (`record-goldens.yml`, with the `*_compare.png` read first), emulator Pass 1 at 1×
+and 2×, Pass 2 on the Fold steps, and a real-phone large-text pass of Fold for the owner.
