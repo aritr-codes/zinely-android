@@ -96,6 +96,9 @@ internal class RepairNotes(rootDir: Path, private val store: AtomicFileStore) {
                     if (after == null) deleteMarker(id) else writeMarker(id, after)
                 } catch (e: IOException) {
                     failure = e
+                } catch (e: Exception) {
+                    // Never out of compute: the note held here must still change (ADR-134 decision 4).
+                    failure = IOException(e)
                 }
             }
             after
@@ -117,6 +120,8 @@ internal class RepairNotes(rootDir: Path, private val store: AtomicFileStore) {
 
     private fun writeMarker(id: String, note: RestoredDetails) {
         val marker = paths.restoredNoteFile(id) ?: return
+        // A zine deleted while its page file was being read: never bring its directory back for a marker.
+        if (!Files.isDirectory(marker.parent)) return
         val file = RestoredNoteFile(note.previousTitle, details = note.details, pages = note.pages)
         store.write(marker, json.encodeToString(RestoredNoteFile.serializer(), file).encodeToByteArray())
     }

@@ -332,6 +332,18 @@ class RoomProjectRepositoryRestoredNoteTest {
     }
 
     @Test
+    fun `a pages repair reported for a zine already deleted brings back no directory`() = runTest {
+        // Given a zine deleted while the Bench was still reading its page file
+        val notes = RepairNotes(root, AtomicFileStore())
+
+        // When that read's repair is reported
+        notes.addPages("gone")
+
+        // Then nothing is written where the zine was
+        assertFalse(Files.exists(root.resolve("projects/gone")))
+    }
+
+    @Test
     fun `a pages repair found when the Bench opens a zine is on the Shelf without a restart (R-W2)`() = runTest {
         // Given My Shelf has drawn its zines, none waiting
         val (repo, bench) = process()
