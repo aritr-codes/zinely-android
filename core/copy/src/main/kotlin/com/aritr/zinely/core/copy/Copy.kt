@@ -420,6 +420,144 @@ public object Copy {
         public fun currentInk(name: String): String = "$CURRENT_INK, $name"
 
         public fun presetLabel(name: String, primary: String): String = "$name. ${apply(primary)}"
+
+        // — A40 (ADR-138): My inks / palettes. Verbatim from `v21-ink-mixer.html` and bench `#a40`/`#a40r2`. —
+        // Tray
+        public const val MY_PALETTES: String = "My palettes"
+        public fun paletteCount(n: Int): String = "$n of 9"
+        public const val NEW_PALETTE_ACTION: String = "+ New palette"
+
+        /** Declared once: the new-palette action's spoken name and the edit sheet's title. */
+        public const val NEW_PALETTE: String = "New palette"
+        public const val MY_INKS: String = "My inks"
+        public fun inkCount(n: Int): String = "$n of 9"
+        public const val BUILT_IN_INKS: String = "Built-in inks"
+        public const val STARTER_PALETTES: String = "Starter palettes"
+        public const val STARTER_COUNT: String = "3 to copy"
+        public const val SAVE_A_COPY: String = "Save a copy"
+        public fun moreFor(palette: String): String = "More for $palette"
+        public const val PALETTES_EMPTY_LEAD: String = "Inks that go together, one tap away."
+        public const val PALETTES_EMPTY_REST: String = " Make one, or copy a starter below."
+        public const val YOUR_PALETTES: String = "Your palettes"
+        public fun paletteGroup(palette: String, inks: Int): String = "$palette, $inks inks"
+        public fun palettePot(name: String, palette: String): String = "$name, from $palette"
+        public const val SELECTED_SUFFIX: String = ", selected"
+
+        /** [name] is always `colourName`'s words, even when the hex equals a built-in (as the prototype does). */
+        public fun myInkLabel(name: String, spokenHex: String): String = "My ink, $name, $spokenHex"
+
+        /** In edit mode the toggle drops the "My ink" prefix (prototype `mineHtml(picking)`). */
+        public fun pickInkLabel(name: String, spokenHex: String): String = "$name, $spokenHex"
+        public const val MIX: String = "Mix"
+        public const val MIX_AN_INK: String = "Mix an ink"
+
+        // Menus (the shared verbs are reused, not re-spelled)
+        public const val REMOVE_FROM_MY_INKS: String = "Remove from My inks"
+        public const val EDIT: String = BenchVerbs.EDIT
+        public const val DUPLICATE: String = BenchVerbs.DUPLICATE
+        public const val DELETE: String = BenchVerbs.DELETE
+
+        // Edit mode
+        public const val EDIT_PALETTE: String = "Edit palette"
+        public const val PALETTE_NAME: String = "Palette name"
+        public const val DEFAULT_PALETTE_NAME: String = "My palette"
+        public const val COPY_SUFFIX: String = " copy"
+        public const val INKS_IN_PALETTE: String = "Inks in this palette"
+        public const val TAP_INKS_TO_ADD: String = "Tap inks below to add them"
+        public fun pickedCount(n: Int): String = when {
+            n < 2 -> "Pick 2 to 6 inks. $n picked."
+            n >= 6 -> "6 picked — that's the most a palette holds."
+            else -> "$n picked. Up to 6."
+        }
+        public const val WAS_IN_PALETTE: String = "Was in this palette"
+        public const val CANCEL: String = "Cancel"
+        public const val SAVE_PALETTE: String = "Save palette"
+        public fun removeFromPalette(name: String): String = "Remove $name from palette"
+        public const val NAME_EMPTY_HELP: String = "Give it a name, like \"Warm vintage\"."
+        public const val NAME_DUPLICATE_HELP: String = "You have another palette called this. That's fine."
+
+        // Snacks. `removedInk`/`mixed*` carry `colourName` words; `duplicated` the SOURCE palette's name;
+        // `savedCopy` the STARTER's name, not the unique name it is saved under; `saved`/`newPalette` the
+        // trimmed typed name.
+        /** [applied]'s pale-on-text form (ADR-138 controller ruling, 2026-10-22): the apply lands, the warning rides with it. */
+        public fun appliedPale(name: String): String = "Ink · $name. Pale in print: words may be hard to read."
+        public fun removedInk(name: String): String = "Removed · $name. Pages and palettes using it keep it."
+        public const val PALETTES_FULL: String = "My palettes holds 9. Delete one to make room."
+        public fun duplicated(palette: String): String = "Duplicated · $palette"
+        public fun deleted(palette: String): String = "Deleted · $palette. Its inks stay."
+        public fun savedCopy(starter: String): String = "Saved to My palettes · $starter"
+        public const val PALETTE_HOLDS_SIX: String = "A palette holds 6. Remove one first."
+        public const val PALETTE_NOT_SAVED: String = "Palette not saved"
+        public const val PICK_AT_LEAST_TWO: String = "Pick at least 2 inks."
+        public fun saved(palette: String): String = "Saved · $palette"
+        public fun newPalette(palette: String): String = "New palette · $palette"
+        public fun mixedAdded(name: String): String = "Mixed · $name, added to the palette and My inks"
+        public fun mixedAlreadyIn(name: String): String = "Mixed · $name, already in this palette"
+        public fun mixedKept(name: String): String = "Mixed · $name, kept in My inks (the palette is full)"
+    }
+
+    /** The Mix-an-ink sheet (A40). Verbatim from `v21-ink-mixer.html`. */
+    public object InkMix {
+        public const val TITLE: String = BenchInk.MIX_AN_INK
+        public const val PREVIEW_LABEL: String = "Preview on white paper"
+        public const val READS_CLEARLY: String = "Reads clearly on white paper"
+        public const val PALE_LEAD: String = "Pale in print."
+        public const val PALE_TEXT: String = " Words may be hard to read."
+        public const val PALE_ART: String = " Fine for a soft mark or a tint."
+        public const val HEX_LABEL: String = "Hex colour"
+        public fun badHex(hex: String): String = "Use 0–9 and A–F only. Still showing #$hex."
+        public fun keepTyping(hex: String): String =
+            "Keep typing, or tap Done for a 3-letter code. Still showing #$hex."
+        public const val COLOUR_STRENGTH: String = "Colour strength"
+        public const val LIGHTNESS: String = "Lightness"
+        public const val HUE: String = "Hue"
+        public fun strengthValue(name: String, pct: Int): String = "$name, $pct% colour"
+        public fun lightValue(name: String, pct: Int): String = "$name, $pct% light"
+        public const val SQUARE_HINT_X: String = "Greyer ← → More colour"
+        public const val SQUARE_HINT_Y: String = "↑ Lighter · ↓ Darker"
+        public const val USE_THIS_INK: String = "Use this ink"
+        public const val ADD_TO_PALETTE: String = "Add to palette"
+        public const val SAVE_TO_MY_INKS: String = "Save to My inks"
+        public fun fullNote(name: String): String =
+            "My inks is full. This replaces $name, used longest ago. Your pages keep it."
+
+        /**
+         * The preview title when the piece is not text (for text it is the piece's own first line). An
+         * implementer's choice — the prototype's mock text — listed for the owner in ADR-138 Consequences.
+         */
+        public const val PREVIEW_SAMPLE: String = "Last stop"
+    }
+
+    /**
+     * The words that name a colour (prototype `colourName`). `:core:editor` returns the name as structure
+     * (ADR-060: it carries no user-facing text); `:feature:editor`'s `inkColourWords` joins it with these.
+     */
+    public object InkName {
+        public const val NEAR_BLACK: String = "near-black"
+        public const val WHITE: String = "white"
+        public const val DARK: String = "dark"
+        public const val LIGHT: String = "light"
+        public const val GREY: String = "grey"
+        public const val RED: String = "red"
+        public const val ORANGE: String = "orange"
+        public const val YELLOW: String = "yellow"
+        public const val YELLOW_GREEN: String = "yellow-green"
+        public const val GREEN: String = "green"
+        public const val TEAL: String = "teal"
+        public const val CYAN: String = "cyan"
+        public const val BLUE: String = "blue"
+        public const val VIOLET: String = "violet"
+        public const val PURPLE: String = "purple"
+        public const val MAGENTA: String = "magenta"
+        public const val PINK: String = "pink"
+        public const val BROWN: String = "brown"
+        public const val BEIGE: String = "beige"
+
+        /** "dark teal"; a null tone is the plain word. */
+        public fun toned(tone: String?, word: String): String = if (tone == null) word else "$tone $word"
+
+        /** "brown-grey". */
+        public fun tintedGrey(word: String): String = "$word-grey"
     }
 
     public object BenchArt {
