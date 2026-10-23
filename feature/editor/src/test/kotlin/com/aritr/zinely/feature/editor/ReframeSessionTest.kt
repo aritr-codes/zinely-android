@@ -220,6 +220,8 @@ class ReframeSessionTest {
                     LiveRegionMode.Polite,
                 ),
             )
+        // A41.4: photo Replace ships, so the refusal points at it (literal, so a copy edit cannot pass silently).
+        assertEquals("This photo can’t be reframed. Try Replace.", Copy.Editor.REFRAME_UNAVAILABLE)
         composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(BenchBarAddTag)
             .assertIsDisplayed()

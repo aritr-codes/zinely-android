@@ -66,9 +66,9 @@ public object Copy {
      *
      * ⚠ **The failure half is spoken, not shown** — [importSummary] rides `announceForAccessibility`,
      * so a maker without TalkBack sees photos appear and is told nothing about the ones that did not.
-     * That is the *existing* import pipeline's behaviour (`ImagePickResult.Failure` → `Announcer`), and
-     * this path deliberately inherits it rather than inventing a second, better-informed failure surface
-     * for one entry point. Recorded as a known gap in **D-081**, not as a claim that it is right.
+     * That was the import pipeline's behaviour when this path was built, and it was inherited rather than
+     * given a second failure surface. A single photo pick's failure is now shown in the Bench snack
+     * (`v21-bench.html` A41.3); this share-in path still only speaks. Recorded as a known gap in **D-081**.
      */
     public object ShareIn {
         public const val CHOOSE_ZINE: String = "Open a zine and your photos will be added to it."
@@ -644,6 +644,12 @@ public object Copy {
         public const val SAVED_MARK: String = "✿"
         public const val SAVED_WORD: String = "Saved"
         public const val SAVED_SPOKEN: String = "Saved"
+
+        /**
+         * The status strip's way back to the Shelf (`v21-bench.html` A42, D-143): the Proof's back chevron,
+         * no visible text, named after the Proof's own [Proof.BACK_TO_BENCH_SAVED].
+         */
+        public const val BACK_TO_SHELF_SAVED: String = "Back to My Shelf (your work is saved)"
     }
 
     /**
@@ -758,7 +764,7 @@ public object Copy {
         public const val FRAMING_RESET: String = "Framing reset. Cancel to undo."
         public const val REFRAMING_CANCELLED: String = "Reframing cancelled."
         public const val REFRAME_UNAVAILABLE: String =
-            "This photo can’t be reframed. Try adding it again."
+            "This photo can’t be reframed. Try Replace."
         public const val WHOLE_PHOTO_INERT: String =
             "Whole photo can’t be moved or zoomed. Choose Fill to adjust it."
         public const val PREVIEW: String = "Preview"
