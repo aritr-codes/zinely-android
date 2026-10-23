@@ -391,6 +391,55 @@ class ProofSmallPhoneTest {
         tagged(ProofBackTestTag).assertWhollyVisible("Back")
     }
 
+    // ---- P3b: the done row wraps whole buttons, never a word ----------------------------------------
+
+    /** Every word of the label sits whole on one line: no line ends or starts inside a word. */
+    private fun assertNoWordBroken(text: String, fontScale: Float) {
+        val layout = label(text).textLayout()
+        val lines = (0 until layout.lineCount).flatMap { i ->
+            text.substring(layout.getLineStart(i), layout.getLineEnd(i)).trim().split(' ').filter { it.isNotEmpty() }
+        }
+        assertEquals(
+            "\"$text\" breaks inside a word at font scale $fontScale: ${layout.describe()}",
+            text.split(' '),
+            lines,
+        )
+    }
+
+    /**
+     * A43.3: Open PDF · Share · Fold it up is one row that wraps, centred, and the hero takes what is left
+     * of its line *or the whole line once the row wraps*. `weight(1f)` let FlowRow keep the hero on the
+     * first line in a 23dp remainder ("Fol / d it", "up" clipped; API 36 emulator, 360dp, font 1.0), and
+     * at 2.0 Share broke as "Shar / e" beside Open PDF. A button that cannot hold its longest word goes to
+     * the next line instead.
+     */
+    private fun assertDoneRowWrapsWholeButtons(fontScale: Float) {
+        setProof()
+        save()
+
+        listOf(Copy.Proof.OPEN_PDF, Copy.Proof.SHARE, Copy.Proof.FOLD_IT_UP).forEach { assertNoWordBroken(it, fontScale) }
+
+        val hero = tagged(ProofFoldItUpTestTag).fetchSemanticsNode().boundsInRoot
+        val others = listOf(ProofOpenPdfTestTag, ProofShareTestTag).map { tagged(it).fetchSemanticsNode().boundsInRoot }
+        val aloneOnItsLine = others.none { it.top < hero.bottom && it.bottom > hero.top }
+        assertTrue(
+            "Fold it up is squeezed beside the other buttons at font scale $fontScale " +
+                "(${label(Copy.Proof.FOLD_IT_UP).textLayout().describe()}, hero $hero, others $others)",
+            aloneOnItsLine || label(Copy.Proof.FOLD_IT_UP).textLayout().lineCount == 1,
+        )
+    }
+
+    @Test
+    fun `the done row wraps whole buttons at font scale 1`() = assertDoneRowWrapsWholeButtons(1f)
+
+    @Test
+    @Config(fontScale = 1.3f)
+    fun `the done row wraps whole buttons at font scale 1_3`() = assertDoneRowWrapsWholeButtons(1.3f)
+
+    @Test
+    @Config(fontScale = 2f)
+    fun `the done row wraps whole buttons at font scale 2`() = assertDoneRowWrapsWholeButtons(2f)
+
     // ---- P4: the honesty legend wraps --------------------------------------------------------------
 
     /**

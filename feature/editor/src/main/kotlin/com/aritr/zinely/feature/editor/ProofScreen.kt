@@ -1486,6 +1486,13 @@ private fun ProofDoneBlock(
         }
         // A43.3: Open PDF · Share · Fold it up, one row that wraps (centred) rather than clipping at large
         // text. Each line's buttons share that line's height, as the retired pair's did.
+        //
+        // Invariant: a button joins a line only if its whole one-line label fits there; otherwise it wraps.
+        // `fillMaxRowHeight` makes FlowRow break lines on each item's *min* intrinsic width (its longest
+        // word), but the line then measures the unweighted buttons at their full one-line width — so the
+        // last button got less than it was promised: "Fol / d it" at 360dp, "Shar / e" at font 2.
+        // `width(IntrinsicSize.Max)` makes the break width the one-line width. Under the hero's `weight`
+        // the line's fixed width still wins, so it takes what is left of its line or the whole line.
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm, Alignment.CenterHorizontally),
@@ -1498,7 +1505,7 @@ private fun ProofDoneBlock(
                     hero = false,
                     enabled = true,
                     press = ZinelyV21Press.Raised,
-                    modifier = Modifier.fillMaxRowHeight().testTag(ProofOpenPdfTestTag),
+                    modifier = Modifier.fillMaxRowHeight().width(IntrinsicSize.Max).testTag(ProofOpenPdfTestTag),
                     icon = { tint -> ProofVectorIcon(ICON_OPEN_PDF, tint) },
                 )
             }
@@ -1511,7 +1518,7 @@ private fun ProofDoneBlock(
                 enabled = busyTarget == null,
                 busy = busyTarget == ProofExportTarget.SEND,
                 press = ZinelyV21Press.Raised,
-                modifier = Modifier.fillMaxRowHeight().testTag(ProofShareTestTag),
+                modifier = Modifier.fillMaxRowHeight().width(IntrinsicSize.Max).testTag(ProofShareTestTag),
                 icon = { tint -> ShareGlyph(tint) },
             )
             // Folded: the same destination, demoted to the print panel's quiet-link shape. Forgetting
@@ -1546,7 +1553,7 @@ private fun ProofDoneBlock(
                     enabled = true,
                     press = ZinelyV21Press.Raised,
                     // Takes what is left of its line, or the whole line once the row wraps (A43.3).
-                    modifier = Modifier.weight(1f).fillMaxRowHeight().testTag(ProofFoldItUpTestTag),
+                    modifier = Modifier.weight(1f).fillMaxRowHeight().width(IntrinsicSize.Max).testTag(ProofFoldItUpTestTag),
                     icon = { tint -> ProofVectorIcon(ICON_FOLD, tint) },
                 )
             }
