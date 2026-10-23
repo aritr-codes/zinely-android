@@ -407,17 +407,23 @@ class ProofSmallPhoneTest {
     }
 
     /**
-     * A43.3: Open PDF · Share · Fold it up is one row that wraps, centred, and the hero takes what is left
-     * of its line *or the whole line once the row wraps*. `weight(1f)` let FlowRow keep the hero on the
-     * first line in a 23dp remainder ("Fol / d it", "up" clipped; API 36 emulator, 360dp, font 1.0), and
-     * at 2.0 Share broke as "Shar / e" beside Open PDF. A button that cannot hold its longest word goes to
-     * the next line instead.
+     * A43.3: Open PDF · Share · Fold it up is one row that wraps, centred. FlowRow broke the row's lines
+     * on each button's longest word, then gave the earlier buttons their full width, so the last one got
+     * less than its word: the hero kept a 23dp remainder ("Fol / d it", "up" clipped; API 36 emulator,
+     * 360dp, font 1.0), and at 2.0 Share broke as "Shar / e" beside Open PDF. A button that cannot hold
+     * its whole one-line label goes to the next line instead — on this phone every label fits one line.
      */
-    private fun assertDoneRowWrapsWholeButtons(fontScale: Float) {
-        setProof()
+    private fun assertDoneRowWrapsWholeButtons(fontScale: Float, busyTarget: ProofExportTarget? = null) {
+        setProof(busyTarget = busyTarget)
         save()
 
-        listOf(Copy.Proof.OPEN_PDF, Copy.Proof.SHARE, Copy.Proof.FOLD_IT_UP).forEach { assertNoWordBroken(it, fontScale) }
+        val share = if (busyTarget == ProofExportTarget.SEND) Copy.Proof.PREPARING_SHARE else Copy.Proof.SHARE
+        listOf(Copy.Proof.OPEN_PDF, share, Copy.Proof.FOLD_IT_UP).forEach {
+            assertNoWordBroken(it, fontScale)
+            val layout = label(it).textLayout()
+            assertEquals("\"$it\" wraps at font scale $fontScale: ${layout.describe()}", 1, layout.lineCount)
+            assertFalse("\"$it\" is cut short at font scale $fontScale: ${layout.describe()}", layout.dropsText())
+        }
 
         val hero = tagged(ProofFoldItUpTestTag).fetchSemanticsNode().boundsInRoot
         val others = listOf(ProofOpenPdfTestTag, ProofShareTestTag).map { tagged(it).fetchSemanticsNode().boundsInRoot }
@@ -439,6 +445,12 @@ class ProofSmallPhoneTest {
     @Test
     @Config(fontScale = 2f)
     fun `the done row wraps whole buttons at font scale 2`() = assertDoneRowWrapsWholeButtons(2f)
+
+    /** "Preparing…" is the row's longest label, and it can push the hero to the next line mid-share. */
+    @Test
+    @Config(fontScale = 2f)
+    fun `the done row wraps whole buttons while a share is being prepared at font scale 2`() =
+        assertDoneRowWrapsWholeButtons(2f, busyTarget = ProofExportTarget.SEND)
 
     // ---- P4: the honesty legend wraps --------------------------------------------------------------
 
