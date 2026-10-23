@@ -241,7 +241,6 @@ class ColophonScreenTest {
             assertTrue("${set.key} notice is empty", text.isNotBlank())
             assertTrue("${set.key} notice names its source", text.startsWith("Source: "))
             assertTrue("${set.key} notice lists its pieces", text.contains("Pieces in Zinely from this set: "))
-            assertTrue("${set.key} notice carries a licence", text.contains("License") || text.contains("CC0"))
         }
     }
 

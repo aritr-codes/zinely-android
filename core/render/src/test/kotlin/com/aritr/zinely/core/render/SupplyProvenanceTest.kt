@@ -102,6 +102,7 @@ class SupplyProvenanceTest {
     @Test
     fun `the parsed spec is the 124 ids, 17 redraws, 40 imports and six sets the freeze names`() {
         assertEquals(124, a39Rows.size)
+        assertEquals(124, a39Meta.size)
         assertEquals(124, a39Rows.map { it.id }.toSet().size)
         assertEquals(17, a39Meta.values.count { it.redraw })
         assertEquals(6, credits.size)
