@@ -547,7 +547,7 @@ private fun BenchVerbButton(
                 // keyboard, automation — could fire, and that `uiautomator dump` "would have read
                 // `clickable=\"false\"` on all seven". Measured with the instrument that settles it, on
                 // the real `AccessibilityNodeInfo`: with this line deleted the enabled verbs still report
-                // `isClickable = true` (`BenchInkPresetPlatformA11yTest`). The `clickable` sits ABOVE the
+                // `isClickable = true` (`BenchInkPresetPlatformA11yTest`, retired with the preset pill in INK task 6). The `clickable` sits ABOVE the
                 // `clearAndSetSemantics`, and its action survives; the disabled axis above genuinely does
                 // not, which is what made the wrong half plausible. The line stays — it pins what the
                 // action *is* if the chain is reordered — but it was never repairing a live defect, and a

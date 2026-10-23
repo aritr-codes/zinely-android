@@ -351,13 +351,9 @@ public object Copy {
         /** The popover's dismiss. The same word the editing row and the bar already ship. */
         public const val DONE: String = EditText.DONE
 
-        // — the four band labels, verbatim (`v2-bench.html:690` Inks/Neutrals, `:688` Paper tints, `:682` the presets) —
-        public const val INKS: String = "Spot inks"
+        /** Kept (A40): still the spoken name of the tints group that follows the separator for Art. */
         public const val PAPER_TINTS: String = "Paper tints"
-        public const val NEUTRALS: String = "Neutrals"
-        public const val PRESETS: String = "Starting palettes"
         public const val CURRENT_INK: String = "Current ink"
-        public const val CUSTOM_INK: String = "Custom ink"
 
         // — band 1, the ten riso spot inks, in frozen order —
         public const val MATCHA: String = "Matcha"
@@ -371,10 +367,6 @@ public object Copy {
         public const val PLUM: String = "Plum"
         public const val INK: String = "Ink"
 
-        /** D-083: the two drawn `Ink` swatches need different names in a non-visual traversal. */
-        public const val SPOT_INK_SPOKEN: String = "Spot ink"
-        public const val NEUTRAL_INK_SPOKEN: String = "Neutral ink"
-
         // — band 2, the paper tints (fenced for a text target, see above) —
         public const val CREAM: String = "Cream"
         public const val BLUSH: String = "Blush"
@@ -387,19 +379,10 @@ public object Copy {
         public const val STONE: String = "Stone"
         public const val FOG: String = "Fog"
 
-        // — the three preset recipes —
+        // — the three starter palettes (prototype `STARTERS`) —
         public const val PRESET_TWO_COLOUR: String = "Two-colour"
         public const val PRESET_WARM: String = "Warm zine"
         public const val PRESET_COOL: String = "Cool zine"
-
-        /**
-         * The `.inkuse` note (`v2-bench.html:691`). The count is **live** — the prototype hard-codes 2
-         * because it has no document to count. It counts the distinct inks in the whole **zine**, not the
-         * open page: "print cheapest" is a per-zine cost, since a riso or a copy shop charges by the ink
-         * on the job.
-         */
-        public fun useNote(inks: Int): String =
-            "Zines look best — and print cheapest — with 1–3 inks. This one uses $inks."
 
         /**
          * The confirmation the frozen `applyInk` raises (`v2-bench.html:702`) — the ink's own name, so the
@@ -410,16 +393,7 @@ public object Copy {
         /** Spoken name for one swatch: the colour's name is the control's whole meaning. */
         public fun swatchLabel(name: String): String = name
 
-        /**
-         * Spoken name for one preset. The dots are decorative — a reader cannot hear three overlapping
-         * circles — so the recipe's name carries it, with its primary ink named because that is the one
-         * the tap actually applies (OD-24).
-         */
-        public fun apply(primary: String): String = "Apply $primary"
-
         public fun currentInk(name: String): String = "$CURRENT_INK, $name"
-
-        public fun presetLabel(name: String, primary: String): String = "$name. ${apply(primary)}"
 
         // — A40 (ADR-138): My inks / palettes. Verbatim from `v21-ink-mixer.html` and bench `#a40`/`#a40r2`. —
         // Tray
@@ -470,7 +444,8 @@ public object Copy {
             else -> "$n picked. Up to 6."
         }
         public const val WAS_IN_PALETTE: String = "Was in this palette"
-        public const val CANCEL: String = "Cancel"
+        /** The same word as the Across-pages confirmation's (INK addendum R-I5: aliased, not re-spelled). */
+        public const val CANCEL: String = Spread.CANCEL
         public const val SAVE_PALETTE: String = "Save palette"
         public fun removeFromPalette(name: String): String = "Remove $name from palette"
         public const val NAME_EMPTY_HELP: String = "Give it a name, like \"Warm vintage\"."

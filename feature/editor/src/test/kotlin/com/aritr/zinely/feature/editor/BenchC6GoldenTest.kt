@@ -34,7 +34,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * The golden net for [BenchInkPopover] — the frozen `.inkpop` / `.inklbl` / `.pot` / `.preset`
+ * The golden net for [BenchInkPopover] — the frozen `.inkpop` / `.inklbl` / `.pot`
  * ([ADR-096](../../../../../../../docs/DECISIONS.md#adr-096) rows 6.1b, 6.1c, 6.3c, 6.5b, 6.6, 6.10d,
  * 6.12c), light + dark, re-skinned to V2.1 by
  * [ADR-102](../../../../../../../docs/DECISIONS.md#adr-102) package P4.
@@ -49,6 +49,10 @@ import org.robolectric.annotation.GraphicsMode
  * Two of the counts are the ones the ruling turns on. The `.sel` ring must appear **only** on the swatch
  * the element's own ink matches, and the fenced `Paper tints` must paint **nothing** for a text target —
  * a fence that is real in the band list and invisible in the raster would be no fence at all.
+ *
+ * INK task 6 (A40 rev. 2) rewrote the tray these compose (one compact Built-in grid, My palettes / My inks,
+ * Starter palettes behind a closed disclosure; the preset pills are gone, and with them the recipe-dot
+ * test). The PNG names are kept; the images stay stale until INK task 10 re-records them on CI.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -85,11 +89,9 @@ class BenchC6GoldenTest {
                 ) {
                     BenchInkPopover(
                         visible = true,
-                        bands = benchInkBands(inks, BenchVerbKind.TEXT),
-                        presets = benchInkPresets(inks),
+                        kind = BenchVerbKind.TEXT,
                         selected = selected,
                         onPick = {},
-                        onPreset = {},
                         onDone = {},
                     )
                 }
@@ -239,11 +241,9 @@ class BenchC6GoldenTest {
                 ) {
                     BenchInkPopover(
                         visible = true,
-                        bands = benchInkBands(inks, BenchVerbKind.TEXT),
-                        presets = benchInkPresets(inks),
+                        kind = BenchVerbKind.TEXT,
                         selected = selected.value,
                         onPick = {},
-                        onPreset = {},
                         onDone = {},
                     )
                 }
@@ -262,21 +262,18 @@ class BenchC6GoldenTest {
             ringed > unringedForest,
         )
 
-        // The ring is 1.6dp on a circle of radius 15 + 5 + .8dp — at most `2*PI*20.8*1.6` px² of ink, and
-        // rather less because it is DASHED. The band is generous because antialiasing on a curve is not
-        // exactly countable and the dash rhythm is an approximation; what it refuses is a ring drawn on
-        // all fourteen pots, which would be an order of magnitude more.
-        val one = 2 * PI * px(20.8f) * px(1.6f)
+        // The ring is 1.6dp on a circle of radius 14 + 5 + .8dp (the compact 28dp pot) — at most
+        // `2*PI*19.8*1.6` px² of ink, and rather less because it is DASHED. The band is generous because
+        // antialiasing on a curve is not exactly countable; what it refuses is a ring on all thirteen pots.
+        val one = 2 * PI * px(19.8f) * px(1.6f)
         assertTrue(
             "the ring measures ${ringed - unringedForest}px, which is not one ring of at most " +
-                "${one.toInt()}px — fourteen would be ${(one * 14).toInt()}",
+                "${one.toInt()}px — thirteen would be ${(one * 13).toInt()}",
             (ringed - unringedForest).toDouble() < one * 3,
         )
 
-        // The colour that appears in TWO bands. `Ink #2A251E` is both a riso ink and a neutral
-        // (`ZinelyContentInks.kt:219`, `:231`), and both bands are drawn for a text target — so this is
-        // the one value that can ring twice. `< one * 3` above would not have noticed two rings; this
-        // measures the same ink again with the same instrument and a bound that only one ring fits.
+        // `Ink #2A251E` is both a riso ink and a neutral, and A40 rev. 2 lists it ONCE in the Built-in grid.
+        // A regression that drew both would ring it twice; this bound only one ring fits.
         selected.value = Color(0xFF2A251E)
         composeRule.waitForIdle()
         val duplicated = cropToBounds(full(), swatchRect(9)).pixelCountOf(inkArgb) - unringedInk
@@ -299,51 +296,16 @@ class BenchC6GoldenTest {
         host(darkTheme = false, selected = null)
         val card = crop(BenchInkPopoverTestTag, full())
         inks.paperTints.forEach { tint ->
-            // `Cream` and `Sky` still appear as PRESET DOTS, which is correct and frozen — a recipe shows
-            // its paper. So the count is bounded by one dot's area rather than required to be zero, and
-            // a 30dp pot would blow straight through it.
+            // `Cream` and `Sky` are starter-palette inks, but Starter palettes start closed, so nothing
+            // should paint them. The bound stays one small dot's area (antialiased edges can match a tint by
+            // accident) and a 28dp pot would blow straight through it.
             val dot = PI * px(6.5f) * px(6.5f)
             val n = card.pixelCountOf(tint.value.toArgb())
             assertTrue(
-                "${benchInkName(tint.id)} paints ${n}px, more than the ${dot.toInt()}px a preset dot can " +
-                    "account for — the fenced band is being drawn to a text element",
+                "${benchInkName(tint.id)} paints ${n}px, more than ${dot.toInt()}px — the fenced tints " +
+                    "are being drawn to a text element",
                 n < dot * 2,
             )
         }
-    }
-
-    /**
-     * Row 6.10d — `.preset i b{margin-left:-5px}` (`v21-bench.html:260`). The overlap is what makes three
-     * circles read as one recipe, and it is measured in the raster rather than computed: three 13dp dots
-     * at a −5dp margin span **29dp**, and three at no margin would span 39. V2 drew 12dp dots at −4.
-     *
-     * The span is read from `Warm zine`'s own colours — leftmost `Brick` to rightmost `Cream` — so it
-     * cannot accidentally measure the pill, its border, or its label.
-     */
-    @Test
-    fun a_recipes_dots_overlap_by_the_frozen_five_dp() {
-        host(darkTheme = false, selected = null)
-        val pill = cropToBounds(
-            full(),
-            composeRule.onAllNodesWithTag(BenchInkPresetTestTag, useUnmergedTree = true)
-                .fetchSemanticsNodes()[1].boundsInRoot,
-        )
-        val brick = inks[com.aritr.zinely.ui.theme.ZinelyMakerInkId.Brick].value.toArgb()
-        val cream = inks[com.aritr.zinely.ui.theme.ZinelyPaperTintId.Cream].value.toArgb()
-        var first = pill.width
-        var last = -1
-        for (y in 0 until pill.height) for (x in 0 until pill.width) {
-            val p = pill.getPixel(x, y)
-            if (p == brick && x < first) first = x
-            if (p == cream && x > last) last = x
-        }
-        assertTrue("neither end of the recipe was painted (first=$first last=$last)", last > first)
-        // 38dp end to end, less the 1.5dp ink border each dot carries on its outer edge.
-        assertEquals(
-            "three 16dp dots at a -5dp margin span 38dp; at no margin they would span 48",
-            px(38f) - px(3f),
-            (last - first).toFloat(),
-            px(2.5f),
-        )
     }
 }

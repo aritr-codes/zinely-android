@@ -7,12 +7,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
-import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.theme.ZinelyTheme
-import com.aritr.zinely.ui.theme.zinelyContentInks
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
@@ -26,22 +23,20 @@ class BenchInkPopoverScrollTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     /**
-     * A16 freezes a scrolling tray. Decor carries the extra Paper tints band, so a phone-height
-     * editor cannot expose its final palette actions without scrolling the tray.
+     * A16 freezes a scrolling tray. Decor carries the extra tints row, so a phone-height editor cannot
+     * expose the tray's last section without scrolling. A40 rev. 2: that section is now the Starter
+     * palettes disclosure (it was A16's preset pills, whose "Apply Forest" line this used to reach).
      */
     @Test
-    fun decor_tray_scrolls_to_every_starting_palette_action_in_a_constrained_editor() {
-        val inks = zinelyContentInks()
+    fun decor_tray_scrolls_to_the_starter_palettes_in_a_constrained_editor() {
         composeRule.setContent {
             ZinelyTheme {
                 Box(Modifier.size(width = 360.dp, height = 430.dp)) {
                     BenchInkPopover(
                         visible = true,
-                        bands = benchInkBands(inks, BenchVerbKind.DECOR),
-                        presets = benchInkPresets(inks),
+                        kind = BenchVerbKind.DECOR,
                         selected = null,
                         onPick = {},
-                        onPreset = {},
                         onDone = {},
                         onDockedTopChanged = {},
                     )
@@ -49,29 +44,24 @@ class BenchInkPopoverScrollTest {
             }
         }
 
-        composeRule.onNodeWithText(Copy.BenchInk.apply(Copy.BenchInk.FOREST), useUnmergedTree = true)
-            .performScrollTo()
-            .assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchInkStartersTestTag).performScrollTo().assertIsDisplayed()
     }
 
     /**
-     * The header is pinned: scrolling to the last palette must not carry `Ink` and `Done` under the
+     * The header is pinned: scrolling to the last section must not carry `Ink` and `Done` under the
      * card's top edge. A tester's phone showed both cut in half there, with the only way out of the
      * tray half off the card.
      */
     @Test
     fun title_and_done_stay_whole_when_the_tray_is_scrolled_to_its_end() {
-        val inks = zinelyContentInks()
         composeRule.setContent {
             ZinelyTheme {
                 Box(Modifier.size(width = 360.dp, height = 430.dp)) {
                     BenchInkPopover(
                         visible = true,
-                        bands = benchInkBands(inks, BenchVerbKind.DECOR),
-                        presets = benchInkPresets(inks),
+                        kind = BenchVerbKind.DECOR,
                         selected = null,
                         onPick = {},
-                        onPreset = {},
                         onDone = {},
                         onDockedTopChanged = {},
                     )
@@ -84,8 +74,7 @@ class BenchInkPopoverScrollTest {
         val doneBefore = bounds(BenchInkDoneTestTag)
         val currentBefore = bounds(BenchInkCurrentTestTag)
 
-        composeRule.onNodeWithText(Copy.BenchInk.apply(Copy.BenchInk.FOREST), useUnmergedTree = true)
-            .performScrollTo()
+        composeRule.onNodeWithTag(BenchInkStartersTestTag).performScrollTo()
 
         // Not vacuous: the tray really did scroll, so the header had the chance to leave.
         assertNotEquals(currentBefore, bounds(BenchInkCurrentTestTag))

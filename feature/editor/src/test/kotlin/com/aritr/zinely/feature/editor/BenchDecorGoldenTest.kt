@@ -55,9 +55,13 @@ import org.robolectric.annotation.GraphicsMode
  * thought to assert. This is the same division [BenchC6GoldenTest] makes, and for the same reason.
  *
  * The popover assertion here is deliberately the **exact inverse** of that file's
- * `no_paper_tint_is_painted_anywhere_in_a_text_elements_popover`. `benchInkBands` fences `Paper tints` out
- * of a text target and hands them to a decor one; a fence asserted in only one direction is satisfied by a
- * function that draws nothing for anybody. The pair pins it from both sides.
+ * `no_paper_tint_is_painted_anywhere_in_a_text_elements_popover`. `benchBuiltInInks` fences the paper tints
+ * out of a text target and hands them to a decor one; a fence asserted in only one direction is satisfied by
+ * a function that draws nothing for anybody. The pair pins it from both sides.
+ *
+ * INK task 6 (A40 rev. 2) rewrote the popover these compose: the tints now follow a dashed separator inside
+ * one compact Built-in grid, at 28dp. The PNG names are kept; the images stay stale until INK task 10
+ * re-records them on CI.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -121,11 +125,9 @@ class BenchDecorGoldenTest {
             // The whole point of the capture: `PHOTO, DECOR ->` is the arm that had never rendered in a
             // golden on any host. Passing `BenchVerbKind.DECOR` rather than the band list directly keeps
             // the routing under test too — a regression that re-hardcoded TEXT here would go red.
-            bands = benchInkBands(inks, BenchVerbKind.DECOR),
-            presets = benchInkPresets(inks),
+            kind = BenchVerbKind.DECOR,
             selected = null,
             onPick = {},
-            onPreset = {},
             onDone = {},
         )
     }
@@ -210,24 +212,22 @@ class BenchDecorGoldenTest {
      * **The higher-value capture** (D-090's ⚠): a supply's popover, carrying the band a text element's
      * never shows.
      *
-     * The assertion is the mirror of [BenchC6GoldenTest]'s fence. There, every paper tint had to paint
-     * *less* than one preset dot could account for; here each must paint at least **half a pot**, which a
-     * 13dp recipe dot cannot reach and only the 30dp swatch can. Asserted per tint rather than in
-     * aggregate, so a band that renders with one swatch missing is red.
+     * The assertion is the mirror of [BenchC6GoldenTest]'s fence. There, no paper tint may paint more than a
+     * stray dot's worth; here each must paint at least **half a pot** (the compact grid's 28dp). Asserted per
+     * tint rather than in aggregate, so a grid that renders with one tint missing is red.
      */
     @Test
     fun a_supplys_popover_paints_the_paper_tints_a_text_elements_fences_out() {
         decorPopover(darkTheme = false)
         val card = crop(BenchInkPopoverTestTag, full())
 
-        // A 30dp pot; the recipe dots that confused the text-side fence are 13dp, i.e. under a fifth of
-        // this area, so the floor cannot be met by a preset.
-        val pot = PI * px(15f) * px(15f)
+        // A 28dp compact pot. Starter palettes are closed by default, so no starter pot can meet the floor.
+        val pot = PI * px(14f) * px(14f)
         inks.paperTints.forEach { tint ->
             val n = card.pixelCountOf(tint.value.toArgb())
             assertTrue(
                 "${benchInkName(tint.id)} paints ${n}px — under the ${(pot / 2).toInt()}px half a pot " +
-                    "needs, so the fenced band is NOT reaching a supply",
+                    "needs, so the fenced tints are NOT reaching a supply",
                 n.toDouble() > pot / 2,
             )
         }
@@ -236,12 +236,12 @@ class BenchDecorGoldenTest {
             .captureRoboImage("$GOLDEN_DIR/bench_ink_popover_decor_light.png", roborazziOptions = aa())
     }
 
-    /** The dark frame of the decor bands. */
+    /** The dark frame of the decor tray. */
     @Test
     fun the_supplys_popover_dims_with_the_room_and_keeps_its_tints() {
         decorPopover(darkTheme = true)
         val card = crop(BenchInkPopoverTestTag, full())
-        val pot = PI * px(15f) * px(15f)
+        val pot = PI * px(14f) * px(14f)
         inks.paperTints.forEach { tint ->
             assertTrue(
                 "${benchInkName(tint.id)} is missing from the dark decor popover",
@@ -285,20 +285,16 @@ class BenchDecorGoldenTest {
                 ) {
                     BenchInkPopover(
                         visible = true,
-                        bands = benchInkBands(inks, BenchVerbKind.DECOR),
-                        presets = benchInkPresets(inks),
+                        kind = BenchVerbKind.DECOR,
                         selected = selected.value,
                         onPick = {},
-                        onPreset = {},
                         onDone = {},
                     )
                 }
             }
         }
         composeRule.waitForIdle()
-        val tintIndex = benchInkBands(inks, BenchVerbKind.DECOR)
-            .flatMap { it.swatches }
-            .indexOfFirst { it.value == tint.value }
+        val tintIndex = benchBuiltInInks(inks, BenchVerbKind.DECOR).indexOfFirst { it.value == tint.value }
         val swatchBounds = composeRule
             .onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)[tintIndex]
             .fetchSemanticsNode()
@@ -316,7 +312,7 @@ class BenchDecorGoldenTest {
         )
 
         val card = crop(BenchInkPopoverTestTag, ringed)
-        val pot = PI * px(15f) * px(15f)
+        val pot = PI * px(14f) * px(14f)
         assertTrue(
             "${benchInkName(tint.id)} paints ${card.pixelCountOf(tint.value.toArgb())}px once ringed, " +
                 "under the ${(pot / 2).toInt()}px floor the fence is measured by — the ring is eating " +
