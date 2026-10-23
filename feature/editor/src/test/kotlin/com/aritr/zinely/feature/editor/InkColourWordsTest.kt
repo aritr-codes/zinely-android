@@ -65,11 +65,16 @@ class InkColourWordsTest {
         assertEquals(emptyList<String>(), bad)
     }
 
-    @Test fun `every hue word has its own words, so a new enum value cannot be blank`() {
-        InkHueWord.entries.forEach { w ->
-            val words = inkColourWords(InkColourName(InkTone.NONE, InkNameForm.HUE, w))
-            assertEquals(false, words.isBlank())
-        }
+    @Test fun `every hue word maps to its own word`() {
+        val want = mapOf(
+            InkHueWord.RED to "red", InkHueWord.ORANGE to "orange", InkHueWord.YELLOW to "yellow",
+            InkHueWord.YELLOW_GREEN to "yellow-green", InkHueWord.GREEN to "green", InkHueWord.TEAL to "teal",
+            InkHueWord.CYAN to "cyan", InkHueWord.BLUE to "blue", InkHueWord.VIOLET to "violet",
+            InkHueWord.PURPLE to "purple", InkHueWord.MAGENTA to "magenta", InkHueWord.PINK to "pink",
+            InkHueWord.BROWN to "brown", InkHueWord.BEIGE to "beige",
+        )
+        assertEquals(InkHueWord.entries.toSet(), want.keys)
+        want.forEach { (w, words) -> assertEquals(words, hueWord(w)) }
     }
 
     private val inks = zinelyContentInks()

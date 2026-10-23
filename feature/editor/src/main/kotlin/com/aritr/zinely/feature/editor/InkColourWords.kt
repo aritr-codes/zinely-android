@@ -28,7 +28,7 @@ internal fun inkColourWords(name: InkColourName): String {
 }
 
 // A HUE or TINTED_GREY name always carries a hue word (InkColourName), so requireNotNull cannot fire.
-private fun hueWord(word: InkHueWord?): String =
+internal fun hueWord(word: InkHueWord?): String =
     when (requireNotNull(word)) {
         InkHueWord.RED -> Copy.InkName.RED
         InkHueWord.ORANGE -> Copy.InkName.ORANGE
@@ -49,8 +49,10 @@ private fun hueWord(word: InkHueWord?): String =
 private fun Color.inkHex() = InkHex("%06X".format(java.util.Locale.ROOT, toArgb() and 0xFFFFFF))
 
 /**
- * Prototype `inkName`: a built-in's own name when [hex] is one of the target's built-ins (a text target
- * is not offered the paper tints, so for text a tint's hex is only a colour), else the colour words.
+ * Prototype `inkName`, with one deliberate departure (task-5 brief: "the target's built-ins"): the prototype
+ * searches the tints for every target, but a text target is not offered them, so for text a tint's hex is
+ * only a colour and is worded ("light beige-grey"), not named ("Cream"). Otherwise a built-in's own name,
+ * else the colour words.
  * Maker inks come before neutrals, as the prototype's `BUILT` does; `Ink` is in both with the same name.
  */
 internal fun inkName(hex: InkHex, inks: ZinelyContentInks, kind: BenchVerbKind): String {
