@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -190,7 +191,12 @@ internal fun BenchAddArtSheet(
         }
     }
 
+    // W1 step 3: the search is held here, outside the sheet's Dialog window, because state saved inside
+    // that window did not come back after a recreation (EditorScreenTest.art_sheet_survives_recreation).
+    // Cleared whenever the cabinet is not showing, so each opening still starts unfiltered.
+    val artQuery = rememberSaveable { mutableStateOf("") }
     val showingArt = artPurpose != null
+    LaunchedEffect(showingArt) { if (!showingArt) artQuery.value = "" }
     ZSheet(
         visible = visible,
         onDismiss = onDismiss,
@@ -210,6 +216,7 @@ internal fun BenchAddArtSheet(
                 },
                 supplyPainter = supplyPainter,
                 modifier = Modifier.weight(1f),
+                queryState = artQuery,
             )
         } else {
             BenchAddChooserBody(
@@ -229,10 +236,11 @@ internal fun BenchArtSheetBody(
     onFavouriteChange: (supplyId: String, favourite: Boolean) -> Unit = { _, _ -> },
     supplyPainter: SupplyPainter? = null,
     modifier: Modifier = Modifier,
+    queryState: MutableState<String> = rememberSaveable { mutableStateOf("") },
 ) {
     val sharedSupplyPainter = supplyPainter ?: remember { SupplyPainter() }
     val colors = ZinelyTheme.v21Colors
-    var query by rememberSaveable { mutableStateOf("") }
+    var query by queryState
     var selectedFamily by rememberSaveable { mutableStateOf<String?>(null) }
     val matches = Copy.Supplies.matchingIds(query, selectedFamily)
     val narrowed = query.isNotBlank() || selectedFamily != null
