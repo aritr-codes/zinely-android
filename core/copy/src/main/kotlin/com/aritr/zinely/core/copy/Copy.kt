@@ -1276,6 +1276,19 @@ public object Copy {
         public const val COULDNT_MAKE_PDF: String = "Couldn’t make the PDF"
         public const val ERROR_BODY: String =
             "Your zine is safe on this device — the export just didn’t finish. Try once more."
+        // A43 / D-142: the same overlay and title, the body names the cause. Each opens "Your zine is safe."
+        // because the title alone reads as a loss. Exact, frozen wording.
+        public const val ERROR_OUT_OF_MEMORY: String =
+            "Your zine is safe. This phone ran short of memory making the PDF — try again in a moment."
+        public const val ERROR_OUT_OF_SPACE: String =
+            "Your zine is safe. This phone is out of space — free some up, then try again."
+        public const val ERROR_STORAGE_REFUSED: String =
+            "Your zine is safe. Zinely needs permission to save to Downloads — tap Try again, then Allow."
+        public const val ERROR_STORAGE_BLOCKED: String =
+            "Your zine is safe. Zinely needs permission to save to Downloads. Under Permissions, turn on " +
+                "Storage, then come back and tap Try again."
+        /** A43.2: after a permanent Storage denial the overlay's one button opens Zinely's app details. */
+        public const val OPEN_SETTINGS: String = "Open settings"
         public const val BACK_TO_BENCH_SAVED: String = "Back to the bench (your work is saved)"
 
         /**

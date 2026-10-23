@@ -263,19 +263,23 @@ class ProofSmallPhoneTest {
     }
 
     /**
-     * A pin, not a proof: this held before the floor existed (161dp, measured). It is here so the floor
-     * stays low enough that a 360x640 window at font scale 2 still shows everything at once.
+     * Was a pin that a 360x640 window at font scale 2 shows everything with nothing to scroll. A43.3
+     * (D-142) adds Share to the done row, and the frozen 2× specimen wraps it: Fold it up takes a line of
+     * its own, the band grows by that line, and the save scrolls the bar out of view — as the 568dp case
+     * above already does, and as A44's note accepts ("on the phone the screen scrolls"). What must hold is
+     * what that case asserts: the zine keeps its floor, the hand-off lands in view, Back stays reachable.
      */
     @Test
     @Config(fontScale = 2f)
-    fun `a 640dp window at font scale 2 still shows the zine and the hand-off with nothing to scroll`() {
+    fun `a 640dp window at font scale 2 keeps the zine and lands a save on its whole hand-off`() {
         setProof()
         save()
 
         assertZineKeepsItsFloor()
-        tagged(ProofBackTestTag).assertWhollyVisible("Back")
         tagged(ProofFoldItUpTestTag).assertWhollyVisible("Fold it up")
         tagged(ProofOpenPdfTestTag).assertWhollyVisible("Open PDF")
+        tagged(ProofShareTestTag).assertWhollyVisible("Share")
+        assertReachableWhole(ProofBackTestTag, "Back")
     }
 
     /** A pin as well: the scroll is the fallback, not the layout — at the default size nothing moves. */
@@ -367,7 +371,8 @@ class ProofSmallPhoneTest {
     fun `the hand-off pair is the same height at font scale 1_4`() {
         setProof()
         save()
-        assertEquals(heightDp(ProofOpenPdfTestTag), heightDp(ProofFoldItUpTestTag), 0.5f)
+        // A43.3: the done row wraps, so "same height" is per line. Open PDF and Share share the first one.
+        assertEquals(heightDp(ProofOpenPdfTestTag), heightDp(ProofShareTestTag), 0.5f)
     }
 
     /** From 1.5 the pair stacks: each button the full width, so no label is broken inside a word. */

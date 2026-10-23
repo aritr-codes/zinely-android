@@ -5,8 +5,11 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.Settings
+import androidx.lifecycle.Lifecycle
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -14,6 +17,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
 import com.aritr.zinely.HiltTestActivity
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.storage.AtomicFileStore
 import com.aritr.zinely.core.model.PtSize
@@ -124,6 +128,7 @@ class SavePdfPermissionHostTest {
     @Test
     fun `denying shows the save error, saves nothing, and does not ask again by itself`() {
         openProofOnFreshZine()
+        willAskAgain(true)
 
         composeRule.onNodeWithTag(ProofSavePdfTestTag).performClick()
         val request = answerStoragePermission(granted = false)
@@ -139,6 +144,7 @@ class SavePdfPermissionHostTest {
     @Test
     fun `Try again after a denial asks again, and a grant then saves exactly once`() {
         openProofOnFreshZine()
+        willAskAgain(true)
         composeRule.onNodeWithTag(ProofSavePdfTestTag).performClick()
         val denied = answerStoragePermission(granted = false)
         awaitRealWork("the save error") {
@@ -192,6 +198,85 @@ class SavePdfPermissionHostTest {
         awaitRealWork("the share export") { exporter.destinations.isNotEmpty() }
         assertEquals(listOf(ExportDestination.TRANSPORT), exporter.destinations)
         assertNull(shadowOf(composeRule.activity).lastRequestedPermission)
+    }
+
+    // ---- A43.2 (D-142): a permanent denial leads to Settings ----
+
+    @Test
+    fun permanent_denial_offers_open_settings() {
+        // Given Storage is denied and Android will not ask again (no rationale AFTER a request ran)
+        openProofOnFreshZine()
+        willAskAgain(false)
+        composeRule.onNodeWithTag(ProofSavePdfTestTag).performClick()
+        val denied = answerStoragePermission(granted = false)
+        awaitRealWork("the save error") {
+            composeRule.onAllNodesWithTag(ProofRetryTestTag).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(ProofRetryTestTag).assertTextEquals(Copy.Proof.OPEN_SETTINGS)
+
+        // When the overlay's button is clicked
+        composeRule.onNodeWithTag(ProofRetryTestTag).performClick()
+        composeRule.waitForIdle()
+
+        // Then Zinely's app-details page opens, and no permission request is launched
+        val settings = startedIntents().singleOrNull { it.action == Settings.ACTION_APPLICATION_DETAILS_SETTINGS }
+        checkNotNull(settings) { "Zinely's settings page was not opened" }
+        assertEquals(Uri.parse("package:${composeRule.activity.packageName}"), settings.data)
+        assertSame("Open settings must not ask again", denied, shadowOf(composeRule.activity).lastRequestedPermission)
+        settle(300)
+        assertEquals(emptyList<ExportDestination>(), exporter.destinations)
+    }
+
+    @Test
+    fun before_any_request_no_rationale_is_not_a_permanent_denial() {
+        // Given a fresh install: Android reports no rationale before it has ever asked
+        openProofOnFreshZine()
+        willAskAgain(false)
+
+        // When Save PDF is tapped
+        composeRule.onNodeWithTag(ProofSavePdfTestTag).performClick()
+        composeRule.waitForIdle()
+
+        // Then it asks, and does not send the maker to Settings
+        assertTrue(shadowOf(composeRule.activity).lastRequestedPermission != null)
+        assertTrue(startedIntents().none { it.action == Settings.ACTION_APPLICATION_DETAILS_SETTINGS })
+    }
+
+    @Test
+    fun back_from_settings_with_storage_on_reads_try_again_and_saves_once() {
+        openProofOnFreshZine()
+        willAskAgain(false)
+        composeRule.onNodeWithTag(ProofSavePdfTestTag).performClick()
+        answerStoragePermission(granted = false)
+        awaitRealWork("the save error") {
+            composeRule.onAllNodesWithTag(ProofRetryTestTag).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag(ProofRetryTestTag).performClick()
+
+        // The maker turns Storage on in Settings and comes back: the overlay stays, nothing retries by itself.
+        shadowOf(composeRule.activity.application).grantPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.STARTED)
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        composeRule.waitForIdle()
+        settle(300)
+        assertEquals("no automatic retry on return", emptyList<ExportDestination>(), exporter.destinations)
+        composeRule.onNodeWithTag(ProofRetryTestTag).assertTextEquals(Copy.Common.TRY_AGAIN).performClick()
+
+        awaitRealWork("the retried save") { exporter.destinations.isNotEmpty() }
+        settle(300)
+        assertEquals(listOf(ExportDestination.DOWNLOADS), exporter.destinations)
+    }
+
+    /** Every Intent the Activity started so far (the permission request is one of them), drained. */
+    private fun startedIntents(): List<Intent> =
+        generateSequence { shadowOf(composeRule.activity).nextStartedActivity }.toList()
+
+    /** What Android answers to `shouldShowRequestPermissionRationale` for Storage from now on. */
+    private fun willAskAgain(show: Boolean) {
+        shadowOf(composeRule.activity.packageManager).setShouldShowRequestPermissionRationale(
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            show,
+        )
     }
 
     // ---- harness (the ZinelyNavHostTest / ShareInHostTest idiom) ----

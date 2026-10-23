@@ -8,6 +8,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -92,6 +94,7 @@ import com.aritr.zinely.ui.components.zinelyV21Dimmed
 import com.aritr.zinely.ui.components.zinelyV21Frame
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.theme.ZinelyHaptic
+import com.aritr.zinely.ui.theme.ZinelyV2Typography
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Press
@@ -280,7 +283,10 @@ private val ReaderMinHeight = 160.dp
  *   nothing reads as a broken button, not as a busy one. It was a Boolean until ADR-102, and a Boolean
  *   cannot say *which*, so both commit buttons reacted to either tap.
  * @param failedTarget **which** export failed, or `null` — shows the recoverable error overlay, named.
+ * @param failure why [failedTarget] failed — picks the overlay's sentence (A43, D-142). The title stays.
  * @param onRetryExport the error overlay's "Try again" — re-fires the export named by [failedTarget].
+ * @param onOpenSettings non-null only while Storage is blocked for good ([ProofFailure.StorageBlocked]) and
+ *   still off: the overlay's one button then reads "Open settings" and calls this instead of retrying.
  * @param savedSignals one emission per **successful Save-PDF** render, carrying the actual saved display
  *   name (e.g. `zine.pdf`) the exporter wrote to Downloads. Each raises the band's `.done` block, whose
  *   copy NAMES that file and its destination — the check that makes [ADR-054]'s *we kept a copy*
@@ -298,7 +304,9 @@ public fun ProofScreen(
     onExportPdf: (ProofExportTarget) -> Unit = {},
     busyTarget: ProofExportTarget? = null,
     failedTarget: ProofExportTarget? = null,
+    failure: ProofFailure = ProofFailure.Other,
     onRetryExport: () -> Unit = {},
+    onOpenSettings: (() -> Unit)? = null,
     savedSignals: Flow<String> = emptyFlow(),
     onOpenSavedPdf: (() -> Unit)? = null,
     pages: List<Page> = emptyList(),
@@ -459,7 +467,12 @@ public fun ProofScreen(
                 // loss-safe back stays available. This carries forward the retired ExportScreen's error
                 // surfacing — a failed render must never be silent — and is why the band needs no failure
                 // state of its own (ADR-101 §3 item 1).
-                ProofErrorPane(onRetry = onRetryExport, modifier = Modifier.fillMaxWidth())
+                ProofErrorPane(
+                    failure = failure,
+                    onRetry = onRetryExport,
+                    onOpenSettings = onOpenSettings.takeIf { failure == ProofFailure.StorageBlocked },
+                    modifier = Modifier.fillMaxWidth(),
+                )
             } else {
                 ProofReadAct(
                     pages = pages,
@@ -654,29 +667,48 @@ public fun ProofScreen(
 }
 
 /**
+ * Why an export failed, as the Proof says it ([A43](../../../../../../docs/design/mockups/v21-proof.html),
+ * [D-142](../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-142)). The host maps its own failure to this;
+ * [StorageRefused] is a denial Android will ask about again, [StorageBlocked] one it will not.
+ */
+public enum class ProofFailure { Other, OutOfMemory, OutOfSpace, StorageRefused, StorageBlocked }
+
+/**
  * The recoverable export-error overlay — the frozen `#errwrap`: a coral warning badge, the honest
- * "your zine is safe" reassurance, and a single stamp "Try again" that re-fires the last export. One
- * action only; the top bar's loss-safe back is the other way out.
+ * "your zine is safe" reassurance naming the cause (A43), and a single stamp button. One action only; the
+ * top bar's loss-safe back is the other way out. The button is "Try again", or "Open settings" while
+ * [onOpenSettings] is offered (A43.2) — never both.
  */
 @Composable
-private fun ProofErrorPane(onRetry: () -> Unit, modifier: Modifier = Modifier) {
-    val colors = ZinelyTheme.v21Colors
+private fun ProofErrorPane(
+    failure: ProofFailure,
+    onRetry: () -> Unit,
+    onOpenSettings: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    // A43's `.a43mk` re-pins the lit inks in both rooms: the badge is a stamp on paper. The dark room's
+    // `jamText` (#FF9CA4) on `berryTint` (#F1B4AF) is about 1.1:1, which is why the theme pair is not used.
+    val lit = rememberLitSheetPalette()
     Box(modifier, contentAlignment = Alignment.Center) {
         ZStatusPane(
             title = Copy.Proof.COULDNT_MAKE_PDF,
-            body = Copy.Proof.ERROR_BODY,
-            // `--berry-tint` is the palette's own ground for a `jam-text` mark, and it is AA-measured for
-            // that pairing — which a hand-mixed 14% wash of `jam` would not be.
-            badgeBackground = colors.berryTint,
-            badgeContent = colors.jamText,
+            body = when (failure) {
+                ProofFailure.Other -> Copy.Proof.ERROR_BODY
+                ProofFailure.OutOfMemory -> Copy.Proof.ERROR_OUT_OF_MEMORY
+                ProofFailure.OutOfSpace -> Copy.Proof.ERROR_OUT_OF_SPACE
+                ProofFailure.StorageRefused -> Copy.Proof.ERROR_STORAGE_REFUSED
+                ProofFailure.StorageBlocked -> Copy.Proof.ERROR_STORAGE_BLOCKED
+            },
+            badgeBackground = lit.berryTint,
+            badgeContent = lit.jamText,
             modifier = Modifier
                 .padding(horizontal = 24.dp)
                 .testTag(ProofErrorPaneTestTag),
             badgeIcon = { tint -> ProofWarnBadge(tint) },
             cta = {
                 ProofBandButton(
-                    text = Copy.Common.TRY_AGAIN,
-                    onClick = onRetry,
+                    text = if (onOpenSettings != null) Copy.Proof.OPEN_SETTINGS else Copy.Common.TRY_AGAIN,
+                    onClick = onOpenSettings ?: onRetry,
                     hero = true,
                     enabled = true,
                     modifier = Modifier.testTag(ProofRetryTestTag),
@@ -869,8 +901,8 @@ private fun ProofPageTicket(ticket: String, modifier: Modifier = Modifier) {
         style = TextStyle(
             color = colors.inkSoft,
             fontFamily = ZinelyTheme.typography.shell,
-            // `.74rem` against the 16px root the prototype sets.
-            fontSize = 11.8.sp,
+            // A44 / D-140: `.pcount` is `.75rem` against the prototype's 16px root, the Proof floor (was 11.8.sp).
+            fontSize = ZinelyV2Typography.TypeFloor,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.08.em,
             textAlign = TextAlign.Center,
@@ -994,6 +1026,8 @@ private fun ProofBand(
             ProofDoneBlock(
                 savedName = savedName,
                 folded = folded,
+                busyTarget = busyTarget,
+                onShare = onShare,
                 onOpenSavedPdf = onOpenSavedPdf,
                 onFoldItUp = onFoldItUp,
             )
@@ -1139,7 +1173,8 @@ private fun ProofReadyRow(
                 style = TextStyle(
                     color = colors.inkSoft,
                     fontFamily = typography.shell,
-                    fontSize = 11.5.sp,
+                    // A44 / D-140: the Proof type floor (was 11.5.sp).
+                    fontSize = ZinelyV2Typography.TypeFloor,
                 ),
             )
         }
@@ -1254,18 +1289,14 @@ private fun ProofCommitRow(
  * word in the middle, and a maker who asked for large text is better served by two wide buttons than by
  * two narrow ones.
  *
- * @param stacks false keeps the pair side by side at every text size. The hand-off pair after a save
- *   passes it: the band is at its tallest there (ticket, then the pair), and a second row of buttons
- *   pushes the top bar off a 360x640 phone at text size 2. Its two short labels wrap between words.
  * @param content receives the modifier for the action that takes the spare width, then the one for the
  *   action that takes only its own.
  */
 @Composable
 private fun ProofActionPair(
-    stacks: Boolean = true,
     content: @Composable (grow: Modifier, rest: Modifier) -> Unit,
 ) {
-    if (stacks && LocalDensity.current.fontScale >= ProofPairStacksFrom) {
+    if (LocalDensity.current.fontScale >= ProofPairStacksFrom) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
@@ -1390,10 +1421,13 @@ private fun ProofBandButton(
  * TalkBack stays silent here, the save became less accessible, not more, and the fix is an explicit
  * announcement rather than a live region.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ProofDoneBlock(
     savedName: String,
     folded: Boolean,
+    busyTarget: ProofExportTarget?,
+    onShare: () -> Unit,
     onOpenSavedPdf: (() -> Unit)?,
     onFoldItUp: () -> Unit,
 ) {
@@ -1450,7 +1484,13 @@ private fun ProofDoneBlock(
                 ),
             )
         }
-        ProofActionPair(stacks = false) { grow, _ ->
+        // A43.3: Open PDF · Share · Fold it up, one row that wraps (centred) rather than clipping at large
+        // text. Each line's buttons share that line's height, as the retired pair's did.
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+        ) {
             if (onOpenSavedPdf != null) {
                 ProofBandButton(
                     text = Copy.Proof.OPEN_PDF,
@@ -1458,10 +1498,22 @@ private fun ProofDoneBlock(
                     hero = false,
                     enabled = true,
                     press = ZinelyV21Press.Raised,
-                    modifier = grow.testTag(ProofOpenPdfTestTag),
+                    modifier = Modifier.fillMaxRowHeight().testTag(ProofOpenPdfTestTag),
                     icon = { tint -> ProofVectorIcon(ICON_OPEN_PDF, tint) },
                 )
             }
+            // The commit row's Share does not come back; this one replaces it, and sends a copy of the
+            // saved PDF (ADR-054: Save keeps, Share sends). Same single-flight treatment as `.commit`.
+            ProofBandButton(
+                text = if (busyTarget == ProofExportTarget.SEND) Copy.Proof.PREPARING_SHARE else Copy.Proof.SHARE,
+                onClick = { haptics.perform(ZinelyHaptic.Tick); onShare() },
+                hero = false,
+                enabled = busyTarget == null,
+                busy = busyTarget == ProofExportTarget.SEND,
+                press = ZinelyV21Press.Raised,
+                modifier = Modifier.fillMaxRowHeight().testTag(ProofShareTestTag),
+                icon = { tint -> ShareGlyph(tint) },
+            )
             // Folded: the same destination, demoted to the print panel's quiet-link shape. Forgetting
             // step 8 five seconds after declaring it done is ordinary, so the guide stays one tap away.
             if (folded) {
@@ -1493,9 +1545,8 @@ private fun ProofDoneBlock(
                     hero = true,
                     enabled = true,
                     press = ZinelyV21Press.Raised,
-                    // `grow`, not a bare `weight`: inside the pair a bare one resolves against the band's
-                    // column and the button is given no height at all.
-                    modifier = grow.testTag(ProofFoldItUpTestTag),
+                    // Takes what is left of its line, or the whole line once the row wraps (A43.3).
+                    modifier = Modifier.weight(1f).fillMaxRowHeight().testTag(ProofFoldItUpTestTag),
                     icon = { tint -> ProofVectorIcon(ICON_FOLD, tint) },
                 )
             }

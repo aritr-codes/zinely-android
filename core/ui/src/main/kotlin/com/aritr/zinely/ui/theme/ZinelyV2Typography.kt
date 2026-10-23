@@ -5,6 +5,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.ui.R
@@ -170,4 +171,14 @@ public data class ZinelyV2Typography(
         fontSize = 10.5.sp,
         letterSpacing = 0.13.em,
     ),
-)
+) {
+    public companion object {
+        /**
+         * The Proof's type floor ([D-140](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-140), A44):
+         * nothing the Proof sets is smaller than this, and it scales with font scale because it is sp.
+         * A house ruling (R-W4) for a print-guidance screen read at arm's length, not a platform rule —
+         * which is why [sectionLabel] (shared beyond the Proof) is left at 10.5sp and the Proof uses this.
+         */
+        public val TypeFloor: TextUnit = 12.sp
+    }
+}

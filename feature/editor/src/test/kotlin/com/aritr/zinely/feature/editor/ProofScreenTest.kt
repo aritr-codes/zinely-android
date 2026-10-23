@@ -872,6 +872,8 @@ class ProofScreenTest {
         composeRule.onNodeWithText(Copy.Proof.FOLD_IT_UP).assertDoesNotExist()
         // Demoted, not deleted: same destination, quiet label.
         composeRule.onNodeWithTag(ProofFoldItUpTestTag).assertTextEquals(Copy.Proof.HOW_TO_FOLD)
+        // A43.3: Share is kept after the fold.
+        composeRule.onNodeWithTag(ProofShareTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(ProofFoldItUpTestTag).performClick()
         composeRule.onNodeWithTag(ProofFoldGuideTestTag).assertIsDisplayed()
     }
@@ -906,6 +908,129 @@ class ProofScreenTest {
 
         composeRule.onNodeWithTag(ProofRetryTestTag).performClick()
         assertEquals(1, retried)
+    }
+
+    // ---- A43 (D-142): the overlay names the cause, Share stays, the route to Settings ------------
+
+    private fun setProofFailed(
+        failure: ProofFailure,
+        onOpenSettings: (() -> Unit)? = null,
+        onRetry: () -> Unit = {},
+    ) {
+        composeRule.setContent {
+            ZinelyTheme {
+                ProofScreen(
+                    onBack = { backCount++ },
+                    failedTarget = ProofExportTarget.SAVE,
+                    failure = failure,
+                    onRetryExport = onRetry,
+                    onOpenSettings = onOpenSettings,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun out_of_space_failure_names_the_cause() {
+        // Given the save failed because the phone is out of space
+        setProofFailed(ProofFailure.OutOfSpace)
+
+        // Then the A43 storage sentence shows, under the unchanged title
+        composeRule.onNodeWithText(
+            "Your zine is safe. This phone is out of space — free some up, then try again.",
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText("Couldn’t make the PDF").assertIsDisplayed()
+        composeRule.onNodeWithTag(ProofRetryTestTag).assertTextEquals(Copy.Common.TRY_AGAIN)
+    }
+
+    /** Every cause says its own A43 sentence, word for word; anything else keeps the old one. */
+    @Test
+    fun each_failure_cause_says_its_frozen_sentence() {
+        val expected = mapOf(
+            ProofFailure.OutOfMemory to
+                "Your zine is safe. This phone ran short of memory making the PDF — try again in a moment.",
+            ProofFailure.StorageRefused to
+                "Your zine is safe. Zinely needs permission to save to Downloads — tap Try again, then Allow.",
+            ProofFailure.StorageBlocked to
+                "Your zine is safe. Zinely needs permission to save to Downloads. Under Permissions, turn on " +
+                "Storage, then come back and tap Try again.",
+            ProofFailure.Other to
+                "Your zine is safe on this device — the export just didn’t finish. Try once more.",
+        )
+        var failure by mutableStateOf(ProofFailure.Other)
+        composeRule.setContent {
+            ZinelyTheme {
+                ProofScreen(onBack = {}, failedTarget = ProofExportTarget.SAVE, failure = failure)
+            }
+        }
+        expected.forEach { (cause, sentence) ->
+            failure = cause
+            composeRule.waitForIdle()
+            composeRule.onNodeWithText(sentence).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun storage_blocked_for_good_offers_open_settings_instead_of_retry() {
+        // Given Android will no longer ask for Storage
+        var settings = 0
+        var retried = 0
+        setProofFailed(ProofFailure.StorageBlocked, onOpenSettings = { settings++ }, onRetry = { retried++ })
+
+        // When the overlay's one button is tapped
+        composeRule.onNodeWithTag(ProofRetryTestTag).assertTextEquals(Copy.Proof.OPEN_SETTINGS).performClick()
+
+        // Then it goes to Settings, and nothing retries
+        assertEquals(1, settings)
+        assertEquals(0, retried)
+    }
+
+    /** Back from Settings with Storage on: the host stops offering Settings, and the button is Try again. */
+    @Test
+    fun storage_blocked_without_a_settings_route_reads_try_again() {
+        var retried = 0
+        setProofFailed(ProofFailure.StorageBlocked, onOpenSettings = null, onRetry = { retried++ })
+
+        composeRule.onNodeWithTag(ProofRetryTestTag).assertTextEquals(Copy.Common.TRY_AGAIN).performClick()
+
+        assertEquals(1, retried)
+    }
+
+    @Test
+    fun share_stays_after_save() {
+        // Given a save landed
+        val saved = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        setProofBand(saved = saved)
+        saved.tryEmit("zine.pdf")
+        composeRule.waitForIdle()
+
+        // Then Share is still offered, and sends (A43.3)
+        composeRule.onNodeWithTag(ProofDoneTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(ProofShareTestTag).assertIsDisplayed().performClick()
+        assertEquals(ProofExportTarget.SEND, lastExport)
+    }
+
+    /** A43.3: a failed Share does not undo the save — once the overlay goes, the done block is back. */
+    @Test
+    fun a_failed_share_after_a_save_gives_the_done_block_back() {
+        val saved = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        var failed by mutableStateOf<ProofExportTarget?>(null)
+        composeRule.setContent {
+            ZinelyTheme {
+                ProofScreen(onBack = {}, failedTarget = failed, savedSignals = saved, pages = pages())
+            }
+        }
+        saved.tryEmit("zine.pdf")
+        composeRule.waitForIdle()
+
+        failed = ProofExportTarget.SEND
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ProofErrorPaneTestTag).assertIsDisplayed()
+        failed = null
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(ProofDoneTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(ProofShareTestTag).assertIsDisplayed()
     }
 
     // The ADR-041 / ADR-054 post-export hand-off is asserted with the band above: P2 retired the
