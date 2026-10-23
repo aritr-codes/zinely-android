@@ -323,6 +323,6 @@ class BenchArtPlacementTest {
             reveal(benchArtTileTestTag(id))
             composeRule.onNodeWithTag(benchArtTileTestTag(id)).assertExists()
         }
-        assertEquals("A16 and A32 shipped 34; v21-bench.html A39 wires Tape & fixings to 24", 50, Copy.Supplies.NAMES.size)
+        assertEquals("A16 and A32 shipped 34; v21-bench.html A39 wires Tape & fixings to 24 and Stamps & marks to 38", 78, Copy.Supplies.NAMES.size)
     }
 }

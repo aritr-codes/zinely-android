@@ -101,7 +101,6 @@ class SupplyCatalogTest {
      * drawing. ⚠ Temporary: empty once the four family changes are in, and then deleted.
      */
     private val redrawPending = setOf(
-        "mark.asterisk", "mark.arrow", "mark.hand", "mark.bar",
         "paper.strip", "paper.tag", "paper.underline",
         "shape.rect", "shape.circle", "shape.triangle", "shape.rule", "shape.ring",
     )

@@ -16,7 +16,9 @@ class SupplyCatalogSnapshotTest {
      * per change: these are held by `SupplyRedrawBoundsTest` (old ink box) and `BenchArtSheetParityTest` (A39
      * row) instead. Every other shipped id must still draw exactly as it did. Grows to the 17 redraws, no more.
      */
-    private val redrawn = setOf("tape.torn", "fix.corner", "fix.staple", "fix.clip", "tape.masking")
+    private val redrawn = setOf("tape.torn", "fix.corner", "fix.staple", "fix.clip", "tape.masking",
+        "mark.asterisk", "mark.arrow", "mark.hand", "mark.bar",
+    )
 
     @Test
     fun `given the pre-split snapshot, when OUTLINES is serialised, then every id and coordinate is identical`() {

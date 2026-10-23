@@ -28,13 +28,18 @@ public object SupplyInk {
         // The two hand-cut frames (v21-bench.html A32).
         "paper.border",
         "paper.round",
-        // v21-bench.html A39 (SUPPLIES-SPEC H9, ADR-139), one family per change: Tape & fixings.
+        // v21-bench.html A39 (SUPPLIES-SPEC H9, ADR-139), one family per change. Tape & fixings.
         "fix.cornerb",
         "fix.grommetb",
         "fix.grommetc",
         "fix.needle",
         "tape.plaster",
         "fix.sticker",
+        // Stamps & marks.
+        "mark.registrationb",
+        "mark.registrationc",
+        "mark.scissors",
+        "mark.squiggle",
     )
 
     /**

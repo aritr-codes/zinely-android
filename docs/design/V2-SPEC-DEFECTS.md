@@ -8202,13 +8202,13 @@ second reviewer, could not sign in.
 | **Artifacts** | `docs/design/mockups/v21-bench.html` A39 (`fix.sticker`, `shape.flower`, `mark.scissors`, `shape.hex`, `tape.plaster`) · `art-a39/candidates.json` (their gate notes) |
 | **Found** | The A39 sheet's own gate notes (2026-10-15), confirmed by the recon and by R34.3 on 2026-10-22 |
 | **Severity** | Print and recognition: a kinked edge, gaps and holes that close on a home printer or a photocopy, one piece with no sign of being cut. None is wired |
-| **Status** | **Open, 2 of 5 fixed** (rows 1 and 5, 2026-10-23). Each fix is a bug fix under the A39 freeze, made as a dated note in A39 before the piece's family is wired ([ADR-139](../DECISIONS.md#adr-139) decision 9) |
+| **Status** | **Open, 3 of 5 fixed** (rows 1, 3 and 5, 2026-10-23). Each fix is a bug fix under the A39 freeze, made as a dated note in A39 before the piece's family is wired ([ADR-139](../DECISIONS.md#adr-139) decision 9) |
 
 | # | Finding | Outcome |
 |---|---|---|
 | 1 | `fix.sticker` (Tabler): G6 fails, 4–14° kinks and micro-segments at both peel corners | **Fixed 2026-10-23 (ART 6a).** Each outer peel corner is one arc tangent to both sides (radius 1.26); the inner corners' slivers are gone. No join turns between 1° and 20°; the look is unchanged. A39 row and `TapeArt.FIX_STICKER` changed together |
 | 2 | `shape.flower` (Tabler): G2 fails, 1.2 square units of gap under 1.5 at the six petal cusps | Round each concave cusp to a radius of about 0.5 |
-| 3 | `mark.scissors` (Doodle Icons): the two finger holes sit at the 1.5 minimum and close at tile size | Enlarge both holes |
+| 3 | `mark.scissors` (Doodle Icons): the two finger holes sit at the 1.5 minimum and close at tile size | **Fixed 2026-10-23 (ART 6b).** Both holes scaled 1.2 about their own centres (the upper one moved 0.15 down so its ring stays even): the widest circle each hole holds grew from 2.06 and 2.02 to 2.45 and 2.44. The rings, blades and pivot are unchanged. A39 row and `MarkArtPart2.MARK_SCISSORS` changed together |
 | 4 | `shape.hex` (Phosphor): true geometry with no cut sign, the most UI-like piece picked (G8 risk) | Add the cut sign (corners up to 0.5 off true, H5's cut voice) |
 | 5 | `tape.plaster` (Tabler): G2 at the limit, 2.5 dots with 1.5 gaps that merge at 24 px | **Fixed 2026-10-23 (ART 6a).** Measured, the dots were 0.66 apart (the 1.5 is the gap to the pad's edge). Two 2.5 dots cannot sit across the 8.57-wide pad with 1.5 gaps, so the dots are 2.02 across and 2.5 from the centre: every gap is now at least 1.5, the ink at H2's floor. Still four dots in a diamond. A39 row and `TapeArt.TAPE_PLASTER` changed together |
 

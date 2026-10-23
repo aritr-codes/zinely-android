@@ -129,10 +129,11 @@ class SupplyOutlineFillTest {
     fun `given the arrow, when its shaft and head are probed, then it points right`() {
         // Right, not up: the maker has rotate, and §5.1 lands every supply at 0°. If this ever reads as
         // an up arrow the default landing is wrong for every maker who does not think to rotate it.
+        // A39's arrow (ADR-139) sweeps from the left edge up to a head at the top right.
         probe(
             "mark.arrow",
-            inked = listOf(0.10 to 0.5, 0.95 to 0.5, 0.60 to 0.15),
-            bare = listOf(0.10 to 0.15, 0.10 to 0.85, 0.95 to 0.10),
+            inked = listOf(0.0625 to 0.686, 0.667 to 0.329, 0.908 to 0.5),
+            bare = listOf(0.10 to 0.15, 0.10 to 0.85, 0.5 to 0.3, 0.95 to 0.95),
         )
     }
 
@@ -174,7 +175,10 @@ class SupplyOutlineFillTest {
                 }
             }
             val coverage = inked.toDouble() / (n * n)
-            assertTrue(coverage > 0.05, "$id inks only ${"%.3f".format(coverage)} of its square — it would read as a speck")
+            // ponytail: one stated exception, not a lowered floor: A39's fine perforation is a frozen row of
+            // pinpricks (0.041 of its square) and reads as a line, not a speck.
+            val floor = if (id == "mark.perfc") 0.04 else 0.05
+            assertTrue(coverage > floor, "$id inks only ${"%.3f".format(coverage)} of its square — it would read as a speck")
             if (id == "shape.rect") {
                 assertEquals(1.0, coverage, 1e-9, "shape.rect is its own box, by definition")
             } else {

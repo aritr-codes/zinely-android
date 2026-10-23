@@ -112,14 +112,20 @@ class SuppliesCopyTest {
             Copy.Supplies.BY_FAMILY.keys.toList(),
             "SUPPLIES-SPEC §4 freezes four families (v21-bench.html:831)",
         )
-        // Tape & fixings carries v21-bench.html A39's 24 (ADR-139); the other three are wired one family per change.
-        assertEquals(listOf(24, 10, 11, 5), Copy.Supplies.BY_FAMILY.values.map { it.size })
+        // Tape & fixings and Stamps & marks carry v21-bench.html A39's 24 and 38 (ADR-139); one family per change.
+        assertEquals(listOf(24, 38, 11, 5), Copy.Supplies.BY_FAMILY.values.map { it.size })
     }
 
     @Test
     fun `search is local deterministic and matches names plus curated tags`() {
-        assertEquals(listOf("mark.asterisk", "mark.burst"), Copy.Supplies.matchingIds("star"))
-        assertEquals(listOf("mark.hand"), Copy.Supplies.matchingIds("manicule"))
+        assertEquals(
+            listOf(
+                "mark.asterisk", "mark.asteriskb", "mark.asteriskc",
+                "mark.burst", "mark.burstb", "mark.burstc", "mark.burstd", "mark.sparkle",
+            ),
+            Copy.Supplies.matchingIds("star"),
+        )
+        assertEquals(listOf("mark.hand", "mark.handb", "mark.handc"), Copy.Supplies.matchingIds("manicule"))
         assertEquals(
             listOf("tape.torn", "tape.tornb", "tape.masking", "tape.maskingb", "tape.plaster"),
             Copy.Supplies.matchingIds("tape", Copy.Supplies.TAPE_AND_FIXINGS),

@@ -71,6 +71,7 @@ class SupplyInkTest {
                 "paper.window", "paper.hole", "shape.ring", "fix.grommet", "fix.corner", "mark.registration",
                 "paper.border", "paper.round",
                 "fix.cornerb", "fix.grommetb", "fix.grommetc", "fix.needle", "tape.plaster", "fix.sticker",
+                "mark.registrationb", "mark.registrationc", "mark.scissors", "mark.squiggle",
             ),
             SupplyInk.IN_SCOPE,
         )

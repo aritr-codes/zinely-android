@@ -72,15 +72,16 @@ class BenchArtSheetTest {
             reveal(benchArtLabelTestTag(family))
             composeRule.onNodeWithTag(benchArtLabelTestTag(family)).assertExists()
         }
-        assertEquals("v21-bench.html A39 (ADR-139), wired so far: Tape & fixings", 50, Copy.Supplies.NAMES.size)
+        assertEquals("v21-bench.html A39 (ADR-139), wired so far: Tape & fixings, Stamps & marks", 78, Copy.Supplies.NAMES.size)
     }
 
     @Test
     fun name_and_tag_search_is_local_deterministic_and_resettable() {
         render()
         composeRule.onNodeWithTag(BenchArtSearchTestTag).performTextInput("manicule")
-        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("1 piece")
+        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("3 pieces")
         composeRule.onNodeWithTag(benchArtTileTestTag("mark.hand")).assertExists()
+        composeRule.onNodeWithTag(benchArtTileTestTag("mark.handc")).assertExists()
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).assertDoesNotExist()
 
         composeRule.onNodeWithTag(BenchArtSearchTestTag).performTextInput(" no-such-piece")
