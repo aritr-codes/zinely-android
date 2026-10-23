@@ -2,7 +2,10 @@ package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.AccessibilityManager
+import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -552,6 +555,86 @@ class BenchC4Test {
         assertEquals("the frozen delete window is 3200ms", 3200L, BenchSnackDeleteMillis)
     }
 
+    /** W1 Task 5 step 2: the phone's "time to take action" setting stretches the Bench snack. */
+    private fun deleteWithAccessibilityTimeout(): EditorStore {
+        val store = store()
+        composeRule.setContent {
+            ZinelyTheme {
+                CompositionLocalProvider(LocalAccessibilityManager provides BenchFakeAccessibilityManager(10_000L)) {
+                    EditorScreen(store = store, pageSizePt = pageSizePt, modifier = Modifier.size(host.first, host.second))
+                }
+            }
+        }
+        composeRule.waitForIdle()
+        placedText(store)
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        deleteSelected()
+        composeRule.mainClock.advanceTimeBy(BenchDeleteFadeMillis + 100L)
+        composeRule.waitForIdle()
+        return store
+    }
+
+    @Test
+    fun snack_stays_for_the_accessibility_timeout() {
+        // Given a 10 000 ms accessibility timeout, When a delete raises the snack and 5 000 ms pass
+        deleteWithAccessibilityTimeout()
+        composeRule.mainClock.advanceTimeBy(5_000L)
+        composeRule.waitForIdle()
+        // Then it is still up, long past the 3200 ms default
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun snack_leaves_after_the_accessibility_timeout() {
+        deleteWithAccessibilityTimeout()
+        composeRule.mainClock.advanceTimeBy(11_000L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun snack_undo_retires_once_a_later_edit_lands() {
+        // Given two pieces, one deleted, and its snack showing Undo
+        val store = store()
+        setScreen(store)
+        val kept = placedText(store)
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 60.0, 18.0), "bye"))
+        composeRule.waitForIdle()
+        val doomed = store.uiState.value.selection.single()
+        composeRule.mainClock.autoAdvance = false
+        deleteSelected()
+        composeRule.mainClock.advanceTimeBy(BenchDeleteFadeMillis + 100L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertIsDisplayed()
+
+        // When a later edit lands (a duplicate)
+        store.dispatch(Intent.DuplicateElement(kept, pageSizePt))
+        composeRule.mainClock.advanceTimeBy(100L)
+        composeRule.waitForIdle()
+
+        // Then the snack's Undo is gone at once, and the bar's Undo takes back only the duplicate
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
+        store.dispatch(Intent.Undo)
+        val ids = store.uiState.value.document.pages[0].elements.map { it.id }
+        assertEquals(listOf(kept), ids)
+        assertFalse("the deleted piece stays deleted", doomed in ids)
+    }
+
+    @Test
+    fun the_snack_does_not_retire_itself() {
+        // R-W6: the revision is read after the delete's own push, so the delete alone never retires it.
+        val store = store()
+        setScreen(store)
+        placedText(store)
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        deleteSelected()
+        composeRule.mainClock.advanceTimeBy(BenchDeleteFadeMillis + 500L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertIsDisplayed()
+    }
+
     @Test
     fun the_snack_enters_from_eight_dp_below_where_it_comes_to_rest() {
         // Row 4.11's `translateY(8px) → 0` (`v21-bench.html:493`); V2 rose 16. `graphicsLayer`'s
@@ -735,4 +818,17 @@ class BenchC4Test {
         assertEquals("the frozen soft-delete scale is .9", 0.9f, BenchDeleteToScale, 0.0001f)
         assertEquals(0.95f, BenchMaterialise.deleteScaleAt(0.5f), 0.0001f)
     }
+}
+
+/**
+ * A stand-in for the phone's accessibility timeout. ponytail: private to this file until Task 7's shared
+ * `com.aritr.zinely.ui.testing.FakeAccessibilityManager` (same constructor) merges; then swap to it (R-W9).
+ */
+private class BenchFakeAccessibilityManager(private val recommendedMillis: Long) : AccessibilityManager {
+    override fun calculateRecommendedTimeoutMillis(
+        originalTimeoutMillis: Long,
+        containsIcons: Boolean,
+        containsText: Boolean,
+        containsControls: Boolean,
+    ): Long = maxOf(originalTimeoutMillis, recommendedMillis)
 }

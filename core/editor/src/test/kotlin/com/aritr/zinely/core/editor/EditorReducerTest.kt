@@ -172,4 +172,35 @@ class EditorReducerTest {
         assertEquals(1, r.model.currentPageIndex)
         assertTrue(r.effects.none { it is Effect.Autosave })
     }
+
+    // W1 / D-141: the counter a snack's Undo is tied to. Screen state, not document state.
+    @Test
+    fun history_revision_moves_on_every_push_undo_and_redo() {
+        val start = modelOf(txt("a"))
+        assertEquals(0L, start.toUiState().historyRevision)
+        val placed = EditorReducer.reduce(start, Intent.PlaceText(Transform(20.0, 20.0, 30.0, 10.0), "hi")).model
+        assertEquals(1L, placed.toUiState().historyRevision, "a push moves it")
+        val selected = EditorReducer.reduce(placed, Intent.Select("a")).model
+        assertEquals(1L, selected.toUiState().historyRevision, "a selection is no history step")
+        val undone = EditorReducer.reduce(selected, Intent.Undo).model
+        assertEquals(2L, undone.toUiState().historyRevision, "an undo moves it")
+        val redone = EditorReducer.reduce(undone, Intent.Redo).model
+        assertEquals(3L, redone.toUiState().historyRevision, "a redo moves it")
+        // Undo then a new edit: the undo depth repeats, the revision does not.
+        val undoneAgain = EditorReducer.reduce(redone, Intent.Undo).model
+        val edited = EditorReducer.reduce(undoneAgain, Intent.PlaceText(Transform(0.0, 40.0, 30.0, 10.0), "yo")).model
+        assertEquals(redone.history.undo.size, edited.history.undo.size)
+        assertTrue(edited.toUiState().historyRevision > redone.toUiState().historyRevision)
+        // An empty undo stack: nothing happens, nothing moves.
+        assertEquals(0L, EditorReducer.reduce(start, Intent.Undo).model.toUiState().historyRevision)
+    }
+
+    @Test
+    fun history_revision_moves_when_a_fresh_blank_box_is_dropped() {
+        val placed = EditorReducer.reduce(modelOf(), Intent.PlaceTextAndEdit(Transform(0.0, 0.0, 30.0, 10.0))).model
+        val session = placed.interaction as Interaction.EditingText
+        val dropped = EditorReducer.reduce(placed, Intent.CancelText(session.id, session.token)).model
+        assertTrue(dropped.history.undo.isEmpty())
+        assertTrue(dropped.toUiState().historyRevision > placed.toUiState().historyRevision)
+    }
 }

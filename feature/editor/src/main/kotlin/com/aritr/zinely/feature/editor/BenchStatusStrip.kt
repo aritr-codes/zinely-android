@@ -19,7 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -165,11 +167,48 @@ public const val BenchSavedSpokenLabel: String = Copy.Status.SAVED_SPOKEN
  * is satisfied: only the presentation moves. [SavedConfirmationVisibleMs] stays the shared 1600ms window.
  *
  * @param savedVisible the host's existing autosave flag — the same one the retired chip took.
+ * @param backVisible whether the way back to My Shelf is shown (A42): false while anything else owns Back.
+ * @param onBack what it does — the same pop as the system Back from an idle Bench.
  */
+/**
+ * The way back to My Shelf (`v21-bench.html` A42, [D-143](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-143)):
+ * the Proof's own back control, reused — the same chevron in the same bordered 44dp pill inside a 48dp target
+ * ([ProofIconButton]) — with no visible text, named "Back to My Shelf (your work is saved)".
+ *
+ * **It takes no height in the strip.** The target is taller than the strip's content, so it reports a zero
+ * height and is drawn centred on the content row, overlapping the strip's top padding and the canvas's top
+ * edge: the strip does not grow and the page and Saved stay where the freeze puts them. Its bounds are not
+ * clipped by the strip (no ancestor clips), so the touch target and the platform node stay 48dp.
+ */
+@Composable
+private fun BenchShelfBack(onClick: () -> Unit) {
+    ProofIconButton(
+        onClick = onClick,
+        contentDescription = Copy.Status.BACK_TO_SHELF_SAVED,
+        path = ICON_BACK,
+        modifier = Modifier
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
+                // Pulled 4dp into the start padding, so the pill's edge sits 2dp before it (the mock's
+                // `margin-left:-4px`); the width it reports is unchanged, so nothing beside it moves.
+                layout(placeable.width - BenchShelfBackInset.roundToPx(), 0) {
+                    placeable.place(-BenchShelfBackInset.roundToPx(), -placeable.height / 2)
+                }
+            }
+            .testTag(BenchShelfBackTestTag),
+    )
+}
+
+private val BenchShelfBackInset = 4.dp
+
+public const val BenchShelfBackTestTag: String = "bench-shelf-back"
+
 @Composable
 internal fun BenchStatusStrip(
     savedVisible: Boolean,
     modifier: Modifier = Modifier,
+    backVisible: Boolean = false,
+    onBack: () -> Unit = {},
 ) {
     val colors = ZinelyTheme.v21Colors
     val alpha by animateFloatAsState(
@@ -193,7 +232,10 @@ internal fun BenchStatusStrip(
         // The frozen left slot, deliberately empty — see the KDoc. It is still a slot, because
         // `justify-content:space-between` on two children is what pins the chip to the end; dropping the
         // child would leave the chip start-aligned and the strip would no longer be the frozen shape.
-        Box(Modifier)
+        //
+        // A42 / D-143: the way back to My Shelf now sits in it, while nothing else owns Back. Hidden, the slot
+        // is the empty box again; the button takes no height, so nothing moves either way.
+        if (backVisible) BenchShelfBack(onBack) else Box(Modifier)
         // Composed only while it has something to say. An alpha of 0 hides pixels, not nodes: left
         // permanently composed, the chip stays in the platform accessibility tree announcing a save that
         // has not happened — the exact defect C3's style row shipped once and `SurfaceTraversalOrderTest`

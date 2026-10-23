@@ -11,13 +11,20 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.aritr.zinely.core.model.TextElement
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.assertContentDescriptionEquals
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.performSemanticsAction
@@ -1317,5 +1324,210 @@ class EditorScreenTest {
             setOf(id),
             store.uiState.value.selection,
         )
+    }
+
+    // ── W1 Task 5 (A41 / A42) ──────────────────────────────────────────────────────────────────────
+
+    @Test
+    fun art_sheet_survives_recreation() {
+        // Given the Art sheet open with "sta" typed in its search
+        val store = store()
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent {
+            ZinelyTheme {
+                EditorScreen(store = store, pageSizePt = pageSizePt, modifier = Modifier.size(300.dp, 425.dp))
+            }
+        }
+        composeRule.onNodeWithTag(BenchBarAddTag).performClick()
+        composeRule.onNodeWithTag(BenchAddChooserArtTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchArtSearchTestTag).performTextInput("sta")
+        composeRule.waitForIdle()
+
+        // When the activity is recreated
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+
+        // Then the sheet is still up and the query still reads "sta"
+        composeRule.onNodeWithTag(BenchArtSheetTestTag).assertExists()
+        composeRule.onNodeWithTag(BenchArtSearchTestTag).assertTextContains("sta")
+    }
+
+    /** A text box already in the saved zine, so the session's own commit is the only history step. */
+    private fun savedTextStore(onEffectRunner: EditorEffectRunner? = null): EditorStore {
+        val runner = onEffectRunner ?: object : EditorEffectRunner {
+            override fun run(effect: Effect, dispatch: (Intent) -> Unit) = Unit
+        }
+        val box = TextElement(id = "el-1", transform = midPageTextBox, text = "Hi")
+        return EditorStore(
+            EditorModel(
+                document = ZineDocument(
+                    format = ZineFormat.SINGLE_SHEET_8,
+                    paperSize = PaperSize.LETTER,
+                    pages = listOf(Page(index = 0, role = PageRole.INTERIOR, elements = listOf(box))),
+                ),
+            ),
+            scope, Dispatchers.Unconfined, runner,
+        )
+    }
+
+    private fun pressBack() {
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeRule.waitForIdle()
+    }
+
+    private fun savedText(store: EditorStore): TextElement? =
+        store.uiState.value.document.pages[0].elements.firstOrNull { it.id == "el-1" } as? TextElement
+
+    @Test
+    fun back_while_typing_commits_the_words() {
+        // Given a text box being edited with "Hello" typed
+        val store = savedTextStore()
+        setScreen(store)
+        store.dispatch(Intent.BeginEditText("el-1"))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("Hello")
+        composeRule.waitForIdle()
+
+        // When Back is pressed
+        pressBack()
+
+        // Then the words are kept as one undo step, the piece stays selected, and the Bench stays
+        assertTrue(store.uiState.value.interaction is Interaction.Idle)
+        assertEquals("Hello", savedText(store)?.text)
+        assertTrue(store.uiState.value.canUndo)
+        assertEquals(setOf("el-1"), store.uiState.value.selection)
+        assertTrue("Back must not leave the Bench", !composeRule.activity.isFinishing)
+    }
+
+    @Test
+    fun back_on_an_emptied_box_removes_it_with_an_undo_snack() {
+        // A41.1: an existing box emptied, then Back, is deleted as one undoable step with the Removed snack.
+        val store = savedTextStore()
+        setScreen(store)
+        store.dispatch(Intent.BeginEditText("el-1"))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("")
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+
+        pressBack()
+        composeRule.mainClock.advanceTimeBy(500L)
+        composeRule.waitForIdle()
+
+        assertEquals(null, savedText(store))
+        assertTrue(store.uiState.value.canUndo)
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).performClick()
+        composeRule.waitForIdle()
+        assertEquals("Undo brings it back with its words", "Hi", savedText(store)?.text)
+    }
+
+    @Test
+    fun failed_photo_pick_shows_in_the_snack() {
+        // Given a photo pick that fails
+        val failure = Copy.Effects.ADDING_IMAGES_UNAVAILABLE
+        val store = EditorStore(
+            EditorModel(
+                document = ZineDocument(
+                    format = ZineFormat.SINGLE_SHEET_8,
+                    paperSize = PaperSize.LETTER,
+                    pages = listOf(Page(index = 0, role = PageRole.INTERIOR)),
+                ),
+            ),
+            scope, Dispatchers.Unconfined,
+            DefaultEditorEffectRunner(
+                scope = scope,
+                io = Dispatchers.Unconfined,
+                autosave = {},
+                imagePipeline = { ImagePickResult.Failure(failure) },
+                savedSignal = {},
+            ),
+        )
+        setScreen(store)
+        composeRule.waitForIdle()
+
+        // When the maker adds a photo
+        composeRule.onNodeWithTag(BenchBarAddTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onNodeWithTag(BenchAddChooserPhotoTag).performClick()
+        composeRule.mainClock.advanceTimeBy(500L)
+        composeRule.waitForIdle()
+
+        // Then the snack shows the failure line, with no button
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchSnackVoiceTestTag, useUnmergedTree = true).assertContentDescriptionEquals(failure)
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun shelf_button_goes_back_and_hides_while_back_is_owned() {
+        // Given an idle Bench
+        var backs = 0
+        val store = savedTextStore()
+        composeRule.setContent {
+            ZinelyTheme {
+                EditorScreen(
+                    store = store,
+                    pageSizePt = pageSizePt,
+                    modifier = Modifier.size(300.dp, 425.dp),
+                    onBack = { backs++ },
+                )
+            }
+        }
+        composeRule.waitForIdle()
+        val button = composeRule.onNodeWithContentDescription(Copy.Status.BACK_TO_SHELF_SAVED)
+        val bounds = button.fetchSemanticsNode().touchBoundsInRoot
+        with(composeRule.density) {
+            assertTrue("a 48dp target (${bounds.height.toDp()})", bounds.height.toDp() >= 48.dp && bounds.width.toDp() >= 48.dp)
+        }
+
+        // When "Back to My Shelf" is clicked, Then onBack fired once
+        button.performClick()
+        composeRule.waitForIdle()
+        assertEquals(1, backs)
+
+        // Given text editing, Then the control is gone
+        store.dispatch(Intent.BeginEditText("el-1"))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription(Copy.Status.BACK_TO_SHELF_SAVED).assertDoesNotExist()
+    }
+
+    @Test
+    fun shelf_button_answers_at_the_edges_of_its_target() {
+        // Given the app's Bench layout (Preview row under the strip): the target reports no height and
+        // overhangs the strip, so its edges are where a hit could be lost to a later sibling
+        var backs = 0
+        composeRule.setContent {
+            ZinelyTheme {
+                EditorScreen(
+                    store = savedTextStore(),
+                    pageSizePt = pageSizePt,
+                    modifier = Modifier.size(300.dp, 425.dp),
+                    onPreview = {},
+                    onBack = { backs++ },
+                )
+            }
+        }
+        composeRule.waitForIdle()
+        val button = composeRule.onNodeWithContentDescription(Copy.Status.BACK_TO_SHELF_SAVED)
+
+        // When the top and bottom edges of the 48dp target are tapped, Then each one goes back
+        button.performTouchInput { click(Offset(width / 2f, 3f)) }
+        button.performTouchInput { click(Offset(width / 2f, height - 3f)) }
+        composeRule.waitForIdle()
+        assertEquals(2, backs)
+    }
+
+    @Test
+    fun art_purpose_saver_round_trips_every_purpose() {
+        // Given each purpose the Art sheet can hold, including a Replace whose id is empty
+        val scope = androidx.compose.runtime.saveable.SaverScope { true }
+        listOf(BenchArtPurpose.Place, BenchArtPurpose.Replace("el-1"), BenchArtPurpose.Replace("")).forEach { purpose ->
+            // When it is saved and restored, Then it comes back as itself
+            val saved = with(BenchArtPurposeSaver) { scope.save(purpose) }!!
+            assertEquals(purpose, BenchArtPurposeSaver.restore(saved))
+        }
     }
 }

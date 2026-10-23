@@ -21,7 +21,8 @@ import kotlinx.coroutines.launch
  * truth — the reducer's [EditorModel] — and exposes a history-free [EditorUiState] to Compose. It is a
  * thin shell over the **pure** [EditorReducer]: every [Intent] folds synchronously into a new model, and
  * the resulting [Effect]s are handed to an [EditorEffectRunner] (autosave / image decode), except
- * [Effect.HistoryStepped], which becomes one line on [historyLines].
+ * [Effect.HistoryStepped], which becomes one line on [historyLines], and [Effect.ImagePickFailed], which becomes
+ * one line on [imagePickFailures].
  *
  * **Threading & re-entrancy (Codex D1).** [dispatch] is **main-thread-only by contract** (the UI and the
  * gesture layer always call it on the main thread), which keeps the model free of cross-thread mutation.
@@ -60,6 +61,14 @@ public class EditorStore(
      */
     public val historyLines: SharedFlow<String> = _historyLines.asSharedFlow()
 
+    private val _imagePickFailures = MutableSharedFlow<String>(extraBufferCapacity = 8)
+
+    /**
+     * The line for each photo pick that failed ([Effect.ImagePickFailed]), for the Bench snack to show with
+     * no button (`v21-bench.html` A41.3). Routed like [historyLines], because the snack is screen state.
+     */
+    public val imagePickFailures: SharedFlow<String> = _imagePickFailures.asSharedFlow()
+
     private val mailbox = ArrayDeque<Intent>()
     private var draining = false
 
@@ -96,6 +105,8 @@ public class EditorStore(
                     }
                     if (effect is Effect.HistoryStepped) {
                         _historyLines.tryEmit(undoSnackLine(effect, reduction.model.currentPageIndex))
+                    } else if (effect is Effect.ImagePickFailed) {
+                        _imagePickFailures.tryEmit(effect.message)
                     } else {
                         effectRunner.run(effect, postDispatch)
                     }
