@@ -55,8 +55,9 @@ class BenchPageNavReducedMotionTest {
 
         composeRule.mainClock.autoAdvance = false
         current = 9
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.waitForIdle()
+        // Measure, launch the effect, then one more frame to land: far short of any smooth animation's length.
+        repeat(4) { composeRule.mainClock.advanceTimeByFrame() }
         val afterOneFrame = scrolled()
         composeRule.mainClock.autoAdvance = true
         composeRule.waitForIdle()
