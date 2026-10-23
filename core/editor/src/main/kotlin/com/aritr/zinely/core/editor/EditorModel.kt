@@ -21,6 +21,8 @@ public data class EditorModel(
      * rather than from a constant — see [firstFreeToken].
      */
     val nextToken: Long = firstFreeToken(document),
+    /** See [EditorUiState.historyRevision]; moved only by [EditorReducer.reduce]. Never saved. */
+    val historyRevision: Long = 0L,
 )
 
 /**
@@ -115,6 +117,12 @@ public data class EditorUiState(
     val interaction: Interaction,
     val canUndo: Boolean,
     val canRedo: Boolean,
+    /**
+     * Moves on every history mutation — a push, an undo, a redo, and the fresh-blank removal (D-141). A
+     * snack's Undo is live only while this still equals the value read after its own action's push (R-W6).
+     * A counter rather than the undo depth, which repeats after undo-then-edit. Screen state: never saved.
+     */
+    val historyRevision: Long = 0L,
 )
 
 /** Project the reducer model into the history-free UI state. */
@@ -126,4 +134,5 @@ public fun EditorModel.toUiState(): EditorUiState = EditorUiState(
     interaction = interaction,
     canUndo = history.undo.isNotEmpty(),
     canRedo = history.redo.isNotEmpty(),
+    historyRevision = historyRevision,
 )
