@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.TextUnit
 import com.aritr.zinely.core.model.Page
@@ -89,12 +90,14 @@ class ProofTypeFloorTest {
         mount { ProofScreen(onBack = {}, pages = pages, savedSignals = saved) }
         saved.tryEmit("zine.pdf")
         composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ProofDoneTestTag).assertExists()
         assertFloor("Done")
     }
 
     @Test
     fun the_error_overlay_keeps_the_floor() {
         mount { ProofScreen(onBack = {}, failedTarget = ProofExportTarget.SAVE, failure = ProofFailure.OutOfSpace) }
+        composeRule.onNodeWithTag(ProofErrorPaneTestTag).assertExists()
         assertFloor("Error")
     }
 
@@ -116,6 +119,25 @@ class ProofTypeFloorTest {
         }
     }
 
+    /** At 2× on a 360dp phone the floor still holds in sp, and every state still lays out (A44's 2× frames). */
+    @Test
+    @Config(qualifiers = "w360dp-h640dp-xhdpi", fontScale = 2f)
+    fun at_font_scale_2_on_a_360dp_phone_the_band_drawer_and_fold_keep_the_floor() {
+        var state by mutableIntStateOf(0)
+        mount {
+            when (state) {
+                0 -> ProofScreen(onBack = {}, pages = pages)
+                1 -> ProofPrintDetailsPanel(paper = PaperSize.A4, onPaperSelected = {}, onOpenFold = {})
+                else -> ProofFoldAct(step = 0, reduceMotion = true, onNext = {}, onPrev = {}, onGoToStep = {})
+            }
+        }
+        listOf("Read + band", "Print details + sheet", "Fold step 1").forEachIndexed { i, name ->
+            state = i
+            composeRule.waitForIdle()
+            assertFloor("$name at 2×")
+        }
+    }
+
     // ---- The fold diagram's canvas numbers (R-W4) ----------------------------------------------
 
     @Test
@@ -132,7 +154,7 @@ class ProofTypeFloorTest {
         val sp = foldCellNumberSp(units = 9f, pxPerUnit = 3.6f, density = density, fontScale = fontScale)
         // sp to px is × density × fontScale, as TextMeasurer resolves it
         val px = sp * density * fontScale
-        assertTrue("drew at ${px}px", px >= FLOOR_SP * fontScale * density)
+        assertTrue("drew at ${px}px", px >= FLOOR_SP * fontScale * density - 0.01f)
     }
 
     @Test

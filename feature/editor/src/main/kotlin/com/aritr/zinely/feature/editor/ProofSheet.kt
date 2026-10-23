@@ -183,11 +183,13 @@ private fun ImposedSheet() = ProofLitPaper {
         }
         // z3 — fold creases + the one coral cut.
         CreasesAndCut()
-        // z5 — the "one cut" chip, just above the centre line.
+        // z5 — the "one cut" chip, just above the centre line. Lifted by its OWN half-height plus a gap, not
+        // a fixed 16dp: A44's 12sp floor scales with font scale, and at 2× a fixed lift sat the chip on the
+        // very cut it labels.
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .graphicsLayer { translationY = -16.dp.toPx() }
+                .graphicsLayer { translationY = -(size.height / 2f + 6.dp.toPx()) }
                 .zinelyShadow(ZinelyTheme.elevation.shadow1, RoundedCornerShape(6.dp))
                 .clip(RoundedCornerShape(6.dp))
                 .background(colors.paper)
