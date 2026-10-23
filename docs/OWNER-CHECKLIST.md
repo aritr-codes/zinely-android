@@ -307,6 +307,28 @@ expose `stateDescription`** — so no dump I take substitutes for an ear.
 | ☐ | Two-pass device verification for every V2.1 surface as it lands | Reference device SM-A176B |
 | ☐ | **Android 7 look at the interface's Fraunces Medium, only if a screen starts using it** (added 2026-10-06) | A font-file reading says `fraunces_medium.ttf` may show wonky h, m, n, s and a wide `&` on Android 7.0 and 7.1. Not seen on a device. No release screen draws the file today, so nothing is owed now; the check comes due with the first screen that does. An API 24 emulator is enough. See [`DEVICE-VERIFICATION.md` §3.3](DEVICE-VERIFICATION.md#33-a-known-risk-on-android-7-the-interfaces-fraunces-medium) |
 
+### 2.5 W1 "never lose work" — built, unreleased, no pass run yet
+**Reason:** Physical / Judgement · **Blocks:** accepting ADR-140 and the W1 release · Authority for each item is the
+linked record; this table only points at it ([ADR-136](DECISIONS.md#adr-136) W1).
+
+| ☐ | Item | Where it is owned |
+|---|---|---|
+| ☐ | Emulator Pass 1 and Pass 2 for Bench A41 and A42: Back while typing, Back on an emptied box (Undo), Back from Reframe; the order of Backs with Arrange or Ink open during a text session | [D-141](design/V2-SPEC-DEFECTS.md#d-141), [D-143](design/V2-SPEC-DEFECTS.md#d-143) |
+| ☐ | Real phone with the Samsung IME: Back while typing commits; Back on an emptied box removes it with Undo | [D-141](design/V2-SPEC-DEFECTS.md#d-141) |
+| ☐ | Pass 1 dump: the Shelf back node is `clickable=true` with bounds of at least 48dp; finger taps on the pill's top and bottom edges | [D-143](design/V2-SPEC-DEFECTS.md#d-143) |
+| ☐ | TalkBack listen: "Back to My Shelf (your work is saved)" is named and focused first on the Bench | [D-143](design/V2-SPEC-DEFECTS.md#d-143) |
+| ☐ | TalkBack listen: a failed-pick snack is spoken once; a retired Undo snack is not announced after it retires; two quick same-titled Shelf deletes are each announced | [D-141](design/V2-SPEC-DEFECTS.md#d-141) |
+| ☐ | Pass 2: does "My Shelf" next to the Bench's "Your shelf" supply tray confuse anyone? | [D-143](design/V2-SPEC-DEFECTS.md#d-143) |
+| ☐ | Emulator Pass 1: rotate with the Art sheet (with a search typed), the Across-fold sheet, a half-typed Rename and the New folder sheet open; the folder text is unproven by unit tests. Shelf Error state through a debug route (owed if none) | [ADR-136](DECISIONS.md#adr-136) W1, [D-145](design/V2-SPEC-DEFECTS.md#d-145) |
+| ☐ | **Real Android 7-9 phone** (emulator-only so far): "Don't ask again", then Save PDF, Open settings, grant, return. Coming back must not retry, and the button must read Try again. Also fill the disk to provoke out-of-space | [D-142](design/V2-SPEC-DEFECTS.md#d-142), [ADR-054](DECISIONS.md#adr-054) decision 8 |
+| ☐ | TalkBack listen of each save-failure body and of the done block's Share | [D-142](design/V2-SPEC-DEFECTS.md#d-142) |
+| ☐ | Pass 2: does each failure sentence read as "my zine is fine, here is what to do"? Does Fold it up on its own line at 1x on 360dp feel right? | [D-142](design/V2-SPEC-DEFECTS.md#d-142) |
+| ☐ | Real phone at the largest text size: Add pill and Reframe Done grow without clipping; Proof at 1x and 2x on 360dp (ticket, ready summary ellipsis, Print details labels, ONE CUT chip clear of the cut line, fold legend); Fold steps 1-8, numbers not colliding. Emulator Pass 1 at 2x text with animator scale 0 for the page strip | [D-140](design/V2-SPEC-DEFECTS.md#d-140) |
+| ☐ | Owner reading of the Back up line "Next, your phone asks where to save it." (optional; fallback "where to save the backup") | [D-144](design/V2-SPEC-DEFECTS.md#d-144) |
+| ☐ | ADR-140: emulator Pass 1 in the QA package (damage `document.json` through `run-as` after a second save so a `.bak` exists; relaunch: the note once; also open the zine on the Bench first, come back: the note is there); Pass 2 (do the A46 words say what was lost without alarm; is the Shelf too late, which decides option B); a human TalkBack listen of the pages note (arrival announced once, re-entry silent); your first-time reading of the words | [ADR-140](DECISIONS.md#adr-140) *Owed before accepted*, [As built](DECISIONS.md#adr-140-as-built) |
+| ☐ | Optional: overrule any of A41-A46, frozen under delegation 2026-10-22 and viewable as local HTML in `docs/design/mockups/` | [D-140..D-144](design/V2-SPEC-DEFECTS.md#d-140) |
+| ☐ | **CI goldens:** run `record-goldens.yml` and read every `*_compare.png` first. Moved above threshold: `proof_saved_light` and `proof_saved_dark`, `proof_scaffold_light` and `proof_scaffold_dark`, `voice_read` (`VoiceSurfacesGoldenTest`), the ZineLibrary error light and dark goldens, and `LibraryBackupRestoreGoldenTest`. Expected to fail `golden-exact` only (under 2%): the idle-Bench shots in `EditorScreenGoldenTest`, `BenchC5GoldenTest`, `BenchStyleRowGoldenTest` and `VoiceSurfacesGoldenTest`, the Print details, sheet and fold-step goldens, and the Proof error badge in dark | [CLAUDE.md](../CLAUDE.md) (re-recording is a reviewed act) |
+
 ---
 
 ## 3. Release & credentials
