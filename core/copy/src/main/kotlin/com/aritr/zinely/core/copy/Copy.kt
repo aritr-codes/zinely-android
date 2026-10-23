@@ -622,7 +622,7 @@ public object Copy {
             "fix.clipb" to "clip paper wire fixing narrow",
             "fix.clipc" to "clip paper wire fixing slanted",
             "tape.maskingb" to "masking tape clean sticky collage wide",
-            "fix.stitchb" to "saddle stitch binding thread",
+            "fix.stitchb" to "saddle stitch binding thread sewn running",
             "fix.stitchc" to "saddle stitch binding thread across fold",
             "fix.grommetb" to "eyelet grommet hole binding flanged",
             "fix.grommetc" to "eyelet grommet hole binding wide bore",

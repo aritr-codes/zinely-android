@@ -83,10 +83,12 @@ internal object ArtGeometry {
         }
 
         fun l(x: Double, y: Double) {
+            check(start != null) { "l() before m(): a segment needs a subpath to belong to" }
             segments += Segment.LineTo(p(x, y))
         }
 
         fun c(x1: Double, y1: Double, x2: Double, y2: Double, x: Double, y: Double) {
+            check(start != null) { "c() before m(): a segment needs a subpath to belong to" }
             segments += Segment.CubicTo(p(x1, y1), p(x2, y2), p(x, y))
         }
 

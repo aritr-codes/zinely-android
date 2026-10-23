@@ -78,7 +78,8 @@ class SupplyCatalogTest {
         // A supply authored small inside its square would land smaller than the maker asked for, and
         // the maker would have no way to tell the outline from the box. Only *one* axis, because a wide
         // piece (Perforation, Ticket stub) has air above and below by design.
-        for (id in keptAsShipped) {
+        // Until a redraw lands with its family (redrawPending), its shipped drawing is held here too.
+        for (id in keptAsShipped + redrawPending) {
             val pts = SupplyCatalog.outlineOf(id)!!.points()
             val spanX = pts.maxOf { it.x } - pts.minOf { it.x }
             val spanY = pts.maxOf { it.y } - pts.minOf { it.y }
@@ -199,27 +200,28 @@ class SupplyCatalogTest {
      */
     private val sameDirectionRings = setOf("mark.registration", "paper.window", "paper.border", "paper.round")
 
-    /** Winding number of [polygons] about ([x], [y]), by a ray cast to `+x`. */
-    private fun winding(polygons: List<List<PtPoint>>, x: Double, y: Double): Int {
-        var w = 0
+    /**
+     * Do even-odd and non-zero disagree at ([x], [y])? One ray cast to `+x` over the flattened [polygons]
+     * gives both: the crossing count's parity (even-odd, as `SupplyInk` fills) and the signed sum (non-zero).
+     */
+    private fun rulesDisagree(polygons: List<List<PtPoint>>, x: Double, y: Double): Boolean {
+        var crossings = 0
+        var winding = 0
         for (poly in polygons) for (i in poly.indices) {
             val a = poly[i]
             val b = poly[(i + 1) % poly.size]
             if ((a.y <= y) != (b.y <= y) && a.x + (y - a.y) / (b.y - a.y) * (b.x - a.x) > x) {
-                w += if (b.y > a.y) 1 else -1
+                crossings++
+                winding += if (b.y > a.y) 1 else -1
             }
         }
-        return w
+        return (crossings % 2 == 1) != (winding != 0)
     }
 
     /** How many of an [n]×[n] grid's samples (offset off the 0.01 lattice) fill differently under the two rules. */
     private fun disagreements(outline: SupplyOutline, n: Int): Int {
         val polygons = outline.polygons()
-        return (0 until n * n).count { k ->
-            val x = (k % n + 0.437) / n
-            val y = (k / n + 0.391) / n
-            (winding(polygons, x, y) != 0) != outline.isInked(x, y)
-        }
+        return (0 until n * n).count { k -> rulesDisagree(polygons, (k % n + 0.437) / n, (k / n + 0.391) / n) }
     }
 
     @Test
