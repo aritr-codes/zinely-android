@@ -8,7 +8,8 @@ import com.aritr.zinely.core.render.SupplyInk
  * with it (ART-4). Unit-square points, origin top-left.
  *
  * - [ink]: a cell whose eight neighbours are ink too (clear of the boundary, so no probe sits on an edge).
- * - [bare]: up to three cells from *enclosed* bare regions (a hole, not the outside), likewise interior.
+ * - [bare]: up to three cells from *enclosed* bare regions (a hole), plus up to two interior bare cells of the
+ *outside* (inside the box, outside the ink), likewise interior.
  */
 internal object InkSampler {
     private const val N = 50
@@ -39,6 +40,9 @@ internal object InkSampler {
             .filter { (x, y) -> !ink[y][x] && !outside[y][x] && interior(x, y, false) }
         check(holeCells.isNotEmpty()) { "$id is in IN_SCOPE but the sampler finds no enclosed hole" }
         val picked = listOf(holeCells.first(), holeCells[holeCells.size / 2], holeCells.last()).distinct()
-        return Probes(centre(inkCell.first, inkCell.second), picked.map { centre(it.first, it.second) })
+        // Bare paper inside the box but outside the ink (a pocket, a corner): taps pass through it too.
+        val outsideCells = (0 until N * N).map { it % N to it / N }.filter { (x, y) -> outside[y][x] && interior(x, y, false) }
+        val outsidePicked = listOfNotNull(outsideCells.firstOrNull(), outsideCells.getOrNull(outsideCells.size / 2)).distinct()
+        return Probes(centre(inkCell.first, inkCell.second), (picked + outsidePicked).map { centre(it.first, it.second) })
     }
 }
