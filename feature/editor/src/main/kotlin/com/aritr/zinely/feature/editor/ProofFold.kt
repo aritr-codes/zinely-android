@@ -75,6 +75,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.theme.ZinelyEasing
+import com.aritr.zinely.ui.theme.ZinelyV2Typography
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
@@ -214,7 +215,8 @@ private fun FoldCaptionBlock(
                 // floor by 0.24.
                 color = colors.leafText,
                 fontFamily = ZinelyTheme.typography.shell,
-                fontSize = 11.5.sp,
+                // A44 / D-140: the Proof type floor (was 11.5.sp).
+                fontSize = ZinelyV2Typography.TypeFloor,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
             ),
@@ -291,7 +293,8 @@ private fun FoldGuide(
             style = TextStyle(
                 color = colors.inkSoft,
                 fontFamily = ZinelyTheme.typography.shell,
-                fontSize = 10.5.sp,
+                // A44 / D-140: the Proof type floor (was 10.5.sp).
+                fontSize = ZinelyV2Typography.TypeFloor,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.12.em,
             ),
@@ -497,7 +500,8 @@ private fun LegendMark(
             style = TextStyle(
                 color = labelColor,
                 fontFamily = ZinelyTheme.typography.shell,
-                fontSize = 10.sp,
+                // A44 / D-140: the Proof type floor (was 10.sp).
+                fontSize = ZinelyV2Typography.TypeFloor,
                 fontWeight = FontWeight.SemiBold,
             ),
         )
@@ -759,6 +763,14 @@ private const val ICON_STEP_PREV = "M15 5l-7 7 7 7"
 private const val ICON_STEP_NEXT = "M9 5l7 7-7 7"
 
 /**
+ * A fold-diagram page number's size in sp: [units] of diagram at [pxPerUnit] on screen. Pure, so the
+ * size the canvas draws — which no semantics test can see — is testable.
+ */
+internal fun foldCellNumberSp(units: Float, pxPerUnit: Float, density: Float, fontScale: Float): Float =
+    // A44 / D-140 #2: the diagram's own size, but never under the floor (sp, so × font scale on screen).
+    maxOf(units * pxPerUnit / (density * fontScale), ZinelyV2Typography.TypeFloor.value)
+
+/**
  * The frozen diagram geometry: one landscape sheet on a 230×172 viewBox, x 27→203, y 18→154, centres
  * 115/86, quarter columns 71 and 159. The canvas is pinned to that aspect ratio, so one scale factor
  * serves both axes and arrowheads stay symmetric.
@@ -984,7 +996,7 @@ private class FoldDiagramScope(
         val style = TextStyle(
             color = colors.inkSoft,
             fontFamily = shell,
-            fontSize = with(ds) { (sizeUnits * s).toSp() },
+            fontSize = foldCellNumberSp(sizeUnits, s, ds.density, ds.fontScale).sp,
             fontWeight = FontWeight.Bold,
         )
         val res = measurer.measure(text, style)

@@ -47,6 +47,7 @@ import com.aritr.zinely.core.model.Rotation
 import com.aritr.zinely.ui.components.ZPaperSurface
 import com.aritr.zinely.ui.components.zinelyShadow
 import com.aritr.zinely.ui.theme.ZinelyShadowLayer
+import com.aritr.zinely.ui.theme.ZinelyV2Typography
 import com.aritr.zinely.ui.theme.ZinelyTheme
 
 // Test tags for the Act 1 body the ProofScreen suite and golden address.
@@ -197,10 +198,11 @@ private fun ImposedSheet() = ProofLitPaper {
                 style = TextStyle(
                     // `jamText`, not `jam`. The frozen `.cutlbl` says `--jam-text` and the token's own KDoc
                     // says `jam` cannot carry text: `#CF4A28` on `#FFF6E8` is 4.25:1, under the 4.5:1 floor
-                    // for 9.5sp. The *line* below stays `jam` — a 2dp rule is a graphical object at 3:1.
+                    // for text this size. The *line* below stays `jam` — a 2dp rule is a graphical object at 3:1.
                     color = colors.jamText,
                     fontFamily = ZinelyTheme.typography.shell,
-                    fontSize = 9.5.sp,
+                    // A44 / D-140: the Proof type floor (was 9.5.sp).
+                    fontSize = ZinelyV2Typography.TypeFloor,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.06.em,
                 ),
@@ -328,7 +330,8 @@ private fun LegendItem(label: String, key: @Composable () -> Unit) {
             style = TextStyle(
                 color = ZinelyTheme.v21Colors.inkSoft,
                 fontFamily = ZinelyTheme.typography.shell,
-                fontSize = 11.5.sp,
+                // A44 / D-140: the Proof type floor (was 11.5.sp).
+                fontSize = ZinelyV2Typography.TypeFloor,
             ),
         )
     }
@@ -381,7 +384,8 @@ private fun CoverCard(caption: String, pageNumber: Int, testTag: String) {
             style = TextStyle(
                 color = colors.inkSoft,
                 fontFamily = ZinelyTheme.typography.shell,
-                fontSize = 11.5.sp,
+                // A44 / D-140: the Proof type floor (was 11.5.sp).
+                fontSize = ZinelyV2Typography.TypeFloor,
                 fontWeight = FontWeight.Medium,
             ),
         )

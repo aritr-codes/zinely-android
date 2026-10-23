@@ -94,6 +94,7 @@ import com.aritr.zinely.ui.components.zinelyV21Dimmed
 import com.aritr.zinely.ui.components.zinelyV21Frame
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.theme.ZinelyHaptic
+import com.aritr.zinely.ui.theme.ZinelyV2Typography
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Press
@@ -900,8 +901,8 @@ private fun ProofPageTicket(ticket: String, modifier: Modifier = Modifier) {
         style = TextStyle(
             color = colors.inkSoft,
             fontFamily = ZinelyTheme.typography.shell,
-            // `.74rem` against the 16px root the prototype sets.
-            fontSize = 11.8.sp,
+            // A44 / D-140: `.pcount` is `.75rem` against the prototype's 16px root, the Proof floor (was 11.8.sp).
+            fontSize = ZinelyV2Typography.TypeFloor,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.08.em,
             textAlign = TextAlign.Center,
@@ -1170,7 +1171,8 @@ private fun ProofReadyRow(
                 style = TextStyle(
                     color = colors.inkSoft,
                     fontFamily = typography.shell,
-                    fontSize = 11.5.sp,
+                    // A44 / D-140: the Proof type floor (was 11.5.sp).
+                    fontSize = ZinelyV2Typography.TypeFloor,
                 ),
             )
         }
