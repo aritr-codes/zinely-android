@@ -27,8 +27,9 @@ internal fun inkColourWords(name: InkColourName): String {
     }
 }
 
+// A HUE or TINTED_GREY name always carries a hue word (InkColourName), so requireNotNull cannot fire.
 private fun hueWord(word: InkHueWord?): String =
-    when (requireNotNull(word) // a HUE or TINTED_GREY name always carries a hue word (InkColourName)) {
+    when (requireNotNull(word)) {
         InkHueWord.RED -> Copy.InkName.RED
         InkHueWord.ORANGE -> Copy.InkName.ORANGE
         InkHueWord.YELLOW -> Copy.InkName.YELLOW
