@@ -16942,5 +16942,5 @@ saved-document format is untouched. The Shelf reads the note after the document 
 repair found when a zine opens on the Bench shows on the Shelf on return, without a restart. ADR-134 follow-up 4 is
 fixed in `HomeViewModel`: a dismissal hides only the note it dismissed. Named follow-up: Got it clears both kinds
 unconditionally, so a pages repair landing in the instant before it clears is cleared unseen (compare-and-clear if it
-is ever seen). Two reviews returned GO. Status stays **Proposed**: the emulator passes, the TalkBack listen and the
+is ever seen). Two independent Review Agents returned GO on the build. Status stays **Proposed**: the emulator passes, the TalkBack listen and the
 owner's reading are owed ([OWNER-CHECKLIST](OWNER-CHECKLIST.md)).

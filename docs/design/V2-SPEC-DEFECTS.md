@@ -8191,7 +8191,7 @@ second reviewer, could not sign in.
 | **Artifacts** | `docs/design/mockups/v21-proof.html` (`.pcount`, `.ready .rl span`, `.btn-save small`, `.sect`, `.mp`, `.cutlbl`, `.stepno`, `.legend`, `.foldnow`, `.cellno`) · `feature/editor/.../ProofScreen.kt`, `ProofPrint.kt`, `ProofSheet.kt`, `ProofFold.kt` |
 | **Found** | W1 lane plan, item 13 (2026-10-22), from ADR-136 row W1 |
 | **Severity** | Legibility: the step counter, the fold legend, the cut tag and the section labels in Print details are 9.5–11.8sp on a screen the maker reads while holding paper |
-| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-proof.html` A44](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 9 | Built by W1 Task 9 (`ProofTypeFloorTest`).
+| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-proof.html` A44](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 9 Built by W1 Task 9 (`ProofTypeFloorTest`). |
 
 | # | Finding | Outcome |
 |---|---|---|
@@ -8206,7 +8206,7 @@ second reviewer, could not sign in.
 | **Artifacts** | `docs/design/mockups/v21-proof.html` · `docs/design/v1/proof.html` (lines 73–74, "NO new error state") · `ExportViewModel.kt` (`:92`, `couldNotStart`) · `ZinelyNavHost.kt` (`ProofDestination`) · `ProofScreen.kt` (`ProofErrorPane`) · `core/copy/.../Copy.kt` (`Copy.Proof`) |
 | **Found** | W1 lane plan, items 7, 7b and 8 (2026-10-22), from ADR-136 row W1; the "Don't ask again" gap was recorded as a beta.5 Known Limitation in [ADR-054](../DECISIONS.md#adr-054) decision 8 |
 | **Severity** | Recovery: a maker out of space, out of memory or refused Storage reads the same "try once more" and cannot tell what to change. After "Don't ask again", Try again does nothing visible and nothing leads to Settings. After a save the band has no Share |
-| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-proof.html` A43](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 8 | Built by W1 Task 8 (`ExportFailure`, `ProofErrorPane`).
+| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-proof.html` A43](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 8 Built by W1 Task 8 (`ExportFailure`, `ProofErrorPane`). |
 
 | # | Finding | Outcome |
 |---|---|---|
@@ -8223,7 +8223,7 @@ second reviewer, could not sign in.
 | **Artifacts** | `docs/design/mockups/v21-bench.html` (`toast()`, `#undoSnack`, `:801-811`) · `feature/editor/.../EditorScreen.kt` (the Bench snack and its Undo) · `core/editor/.../EditorReducer.kt` (history push, undo, redo) |
 | **Found** | W1 plan, 2026-10-22 ([ADR-136](../DECISIONS.md#adr-136) decision 1, row W1: "the snack's Undo undoes its own action (only while the newest history entry is still that action)") |
 | **Severity** | Loses work (Never #1). A maker who deletes a piece, then makes another edit while the snack is still up, and taps the snack's Undo, undoes the later edit while the snack says it will put the piece back |
-| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-bench.html` A41.2](mockups/v21-bench.html) frozen 2026-10-22 under the owner's delegation of 2026-10-12; the owner may overrule it | Built by W1 Task 5 (`historyRevision`).
+| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-bench.html` A41.2](mockups/v21-bench.html) frozen 2026-10-22 under the owner's delegation of 2026-10-12; the owner may overrule it. Built by W1 Task 5 (`historyRevision`). |
 
 **Ruling.** A snack's Undo is live only while the newest history entry is the one that raised it. As soon as any
 later history step lands (an edit, an Undo or Redo from the bar, a page command), the snack is retired: hidden
@@ -8239,7 +8239,7 @@ Undo keep their ordinary timeout.
 | **Artifacts** | `docs/design/mockups/v21-bench.html` (`.status`, `:567-571`) · `feature/editor/.../EditorScreen.kt` · `feature/editor/.../ProofScreen.kt` (`ICON_BACK`, the Proof's back control this reuses) |
 | **Found** | W1 plan, 2026-10-22 ([ADR-136](../DECISIONS.md#adr-136) decision 1, row W1: "a visible way back to the Shelf from the Bench") |
 | **Severity** | Gets stuck (Never #19, "a visible path"). Only the system Back gesture leaves the Bench; a maker who does not know it has no control to tap |
-| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-bench.html` A42](mockups/v21-bench.html) frozen 2026-10-22 under the owner's delegation of 2026-10-12; the owner may overrule it | Built by W1 Task 5 (`BenchShelfBack`, in the strip, not a z-index overlay).
+| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-bench.html` A42](mockups/v21-bench.html) frozen 2026-10-22 under the owner's delegation of 2026-10-12; the owner may overrule it. Built by W1 Task 5 (`BenchShelfBack`, in the strip, not a z-index overlay). |
 
 **Ruling (controller ruling R-W10).** The Proof's own back control, reused: the same chevron in the same
 bordered round button, first in the Bench's status strip, before the time. No visible text, a touch target of
