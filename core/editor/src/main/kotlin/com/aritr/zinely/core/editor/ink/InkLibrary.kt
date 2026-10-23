@@ -19,7 +19,7 @@ public data class InkPalette(val id: Long, val name: String, val inks: List<InkH
 
 /** What a store mutation returns: the screen offers Undo from [changed]. */
 public data class InkLibraryEdit(val before: InkLibrary, val after: InkLibrary) {
-    val changed: Boolean get() = before != after
+    public val changed: Boolean get() = before != after
 }
 
 public data class UseResult(val library: InkLibrary, val evicted: InkHex?)
@@ -76,10 +76,18 @@ public data class InkLibrary(
 
     public fun remove(hex: InkHex): InkLibrary = copy(myInks = myInks.filter { it.hex != hex })
 
+    /**
+     * First free name, case-insensitive: the (trimmed) base, then "base 2", "base 3". Every candidate is cut
+     * to [PALETTE_NAME_MAX] by shortening the stem, so a suffix is never the part that gets cut off.
+     */
     public fun uniqueName(base: String): String {
-        var n = base
+        val b = base.trim()
+        var n = b.take(PALETTE_NAME_MAX)
         var i = 2
-        while (palettes.any { it.name.equals(n, ignoreCase = true) }) n = "$base ${i++}"
+        while (palettes.any { it.name.equals(n, ignoreCase = true) }) {
+            val suffix = " ${i++}"
+            n = b.take(PALETTE_NAME_MAX - suffix.length).trimEnd() + suffix
+        }
         return n
     }
 
@@ -104,7 +112,8 @@ public data class InkLibrary(
 
     public fun duplicate(id: Long, copySuffix: String): PaletteResult {
         val p = palettes.firstOrNull { it.id == id } ?: return PaletteResult.Missing
-        return addPalette(uniqueName(stripCopySuffix(p.name, copySuffix) + copySuffix), p.inks)
+        val stem = stripCopySuffix(p.name, copySuffix).take(PALETTE_NAME_MAX - copySuffix.length).trimEnd()
+        return addPalette(uniqueName(stem + copySuffix), p.inks)
     }
 
     /** "Save a copy" on a starter palette. */

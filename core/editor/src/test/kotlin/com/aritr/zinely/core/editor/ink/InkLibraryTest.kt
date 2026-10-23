@@ -85,6 +85,36 @@ class InkLibraryTest {
         assertEquals("Warm copy 2", ((lib.duplicate(warm, " copy") as PaletteResult.Done).library.palettes.first().name))
     }
 
+    @Test fun `given a name with no copy yet when duplicated then name copy`() {
+        val lib = (InkLibrary.EMPTY.addPalette("Warm", listOf(hx(1), hx(2))) as PaletteResult.Done).library
+        assertEquals("Warm copy", (lib.duplicate(lib.palettes.single().id, " copy") as PaletteResult.Done).library.palettes.first().name)
+    }
+
+    @Test fun `given a 30 character name when duplicated twice then names stay distinct and within 30`() {
+        var lib = (InkLibrary.EMPTY.addPalette("x".repeat(30), listOf(hx(1), hx(2))) as PaletteResult.Done).library
+        repeat(2) { lib = (lib.duplicate(lib.palettes.last().id, " copy") as PaletteResult.Done).library }
+        assertEquals(3, lib.palettes.map { it.name.lowercase() }.toSet().size)
+        assertTrue(lib.palettes.all { it.name.length <= PALETTE_NAME_MAX })
+    }
+
+    @Test fun `given a full library and invalid input then Full wins`() {
+        assertEquals(PaletteResult.Full, fullPalettes().addPalette(" ", emptyList()))
+    }
+
+    @Test fun `update validates and delete of another keeps the open one`() {
+        val lib = (InkLibrary.EMPTY.addPalette("A", listOf(hx(1), hx(2))) as PaletteResult.Done).library
+        val id = lib.palettes.single().id
+        assertEquals(PaletteResult.TooFew, lib.updatePalette(id, "A", listOf(hx(1))))
+        assertEquals(PaletteResult.NoName, lib.updatePalette(id, " ", listOf(hx(1), hx(2))))
+        val two = (lib.addPalette("B", listOf(hx(1), hx(2))) as PaletteResult.Done).library
+        assertEquals(two.openPaletteId, two.deletePalette(id).openPaletteId)
+    }
+
+    @Test fun `saveStarterCopy names the copy uniquely`() {
+        val lib = (InkLibrary.EMPTY.saveStarterCopy("Two-colour", listOf(hx(1), hx(2))) as PaletteResult.Done).library
+        assertEquals("Two-colour 2", (lib.saveStarterCopy("Two-colour", listOf(hx(1), hx(2))) as PaletteResult.Done).library.palettes.first().name)
+    }
+
     @Test fun `stripCopySuffix removes copy and numbered copy endings`() {
         assertEquals("Warm", stripCopySuffix("Warm copy 12", " copy"))
         assertEquals("Warm", stripCopySuffix("Warm copy", " copy"))
