@@ -153,7 +153,7 @@ public enum class ProofDrawer { None, Details, Fold }
 
 // `proof.html` primary/back icon path data (24×24 viewport), consumed verbatim so the chrome
 // mirrors the frozen SVGs rather than re-drawing them.
-private const val ICON_BACK = "M15 5l-7 7 7 7"
+internal const val ICON_BACK = "M15 5l-7 7 7 7"
 private const val ICON_FOLD = "M4 6h16v6l-8 6-8-6z"
 private const val ICON_OPEN_PDF = "M6 3h9l3 3v15H6zM14 3v4h4M9 12h6M9 16h6"
 private const val ICON_CHECK = "M5 12l5 5 9-11"
@@ -765,7 +765,7 @@ private fun ProofTopBar(
  * control were never in tension, only conflated.
  */
 @Composable
-private fun ProofIconButton(
+internal fun ProofIconButton(
     onClick: () -> Unit,
     contentDescription: String,
     path: String,

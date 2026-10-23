@@ -1030,6 +1030,8 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
                 // path (clears the banner on success, re-reports on a repeat failure).
                 onRetrySaveError = viewModel::retrySave,
                 onPreview = onPreview,
+                // A42 / D-143: the status strip's way back to My Shelf is the same pop as the system Back.
+                onBack = onBack,
             )
         }
     }
