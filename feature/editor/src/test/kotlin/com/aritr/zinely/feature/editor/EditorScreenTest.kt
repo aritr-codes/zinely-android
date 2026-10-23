@@ -1493,4 +1493,41 @@ class EditorScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription(Copy.Status.BACK_TO_SHELF_SAVED).assertDoesNotExist()
     }
+
+    @Test
+    fun shelf_button_answers_at_the_edges_of_its_target() {
+        // Given the app's Bench layout (Preview row under the strip): the target reports no height and
+        // overhangs the strip, so its edges are where a hit could be lost to a later sibling
+        var backs = 0
+        composeRule.setContent {
+            ZinelyTheme {
+                EditorScreen(
+                    store = savedTextStore(),
+                    pageSizePt = pageSizePt,
+                    modifier = Modifier.size(300.dp, 425.dp),
+                    onPreview = {},
+                    onBack = { backs++ },
+                )
+            }
+        }
+        composeRule.waitForIdle()
+        val button = composeRule.onNodeWithContentDescription(Copy.Status.BACK_TO_SHELF_SAVED)
+
+        // When the top and bottom edges of the 48dp target are tapped, Then each one goes back
+        button.performTouchInput { click(Offset(width / 2f, 3f)) }
+        button.performTouchInput { click(Offset(width / 2f, height - 3f)) }
+        composeRule.waitForIdle()
+        assertEquals(2, backs)
+    }
+
+    @Test
+    fun art_purpose_saver_round_trips_every_purpose() {
+        // Given each purpose the Art sheet can hold, including a Replace whose id is empty
+        val scope = androidx.compose.runtime.saveable.SaverScope { true }
+        listOf(BenchArtPurpose.Place, BenchArtPurpose.Replace("el-1"), BenchArtPurpose.Replace("")).forEach { purpose ->
+            // When it is saved and restored, Then it comes back as itself
+            val saved = with(BenchArtPurposeSaver) { scope.save(purpose) }!!
+            assertEquals(purpose, BenchArtPurposeSaver.restore(saved))
+        }
+    }
 }

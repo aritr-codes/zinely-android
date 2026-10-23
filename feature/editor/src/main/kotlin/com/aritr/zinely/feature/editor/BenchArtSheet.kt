@@ -689,18 +689,18 @@ internal sealed interface BenchArtPurpose {
 
 /**
  * Keeps the open Art sheet's purpose across an activity recreation (W1, controller ruling R-W8: a `Saver`,
- * not `@Parcelize`, which this module does not apply). `null` (no sheet) saves nothing; Place is the empty
- * string, since an element id is never empty.
+ * not `@Parcelize`, which this module does not apply). `null` (no sheet) saves nothing; Place is `"P"` and
+ * Replace is `"R:"` + the element id, tagged so that no id, however odd, can be read back as Place.
  */
 internal val BenchArtPurposeSaver: Saver<BenchArtPurpose?, String> = Saver(
     save = { purpose ->
         when (purpose) {
             null -> null
-            BenchArtPurpose.Place -> ""
-            is BenchArtPurpose.Replace -> purpose.id
+            BenchArtPurpose.Place -> "P"
+            is BenchArtPurpose.Replace -> "R:" + purpose.id
         }
     },
-    restore = { saved -> if (saved.isEmpty()) BenchArtPurpose.Place else BenchArtPurpose.Replace(saved) },
+    restore = { saved -> if (saved.startsWith("R:")) BenchArtPurpose.Replace(saved.removePrefix("R:")) else BenchArtPurpose.Place },
 )
 
 private val ArtPaperInk = Color(0xFF27270F)
