@@ -7,7 +7,6 @@ import com.aritr.zinely.core.model.ImageElement
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * The feature-layer side-effect boundary for the editor (ADR-029 §2.2, spike §10.3). The pure reducer
@@ -32,11 +31,6 @@ public interface EditorEffectRunner {
  */
 public fun interface AutosaveSink {
     public fun markDirty()
-}
-
-/** Accessibility live-region seam (WCAG 4.1.3); the app adapts it to an `AccessibilityManager` announce. */
-public fun interface Announcer {
-    public fun announce(text: String)
 }
 
 /**
@@ -73,7 +67,7 @@ public fun interface ImagePickDecodePipeline {
 /**
  * The placeholder image pipeline for the store-only S4 step: image import has no source wired yet, so it
  * reports a user-visible [ImagePickResult.Failure] rather than silently no-opping — exercising the whole
- * failure→[Announcer] path end-to-end before the real source lands.
+ * failure→snack path end-to-end before the real source lands.
  */
 public object UnavailableImagePipeline : ImagePickDecodePipeline {
     override suspend fun pickAndDecode(): ImagePickResult =
@@ -86,21 +80,19 @@ public object UnavailableImagePipeline : ImagePickDecodePipeline {
  *    [SavedSignal.onSaved] (the transient "Saved ✨" reassurance — ADR-034);
  *  - [Effect.PickAndDecodeImage] → launch the [ImagePickDecodePipeline] on [io], then on success dispatch
  *    [Intent.CommitAddImage] for Add or [Intent.ReplaceImage] for a targeted replacement, on failure
- *    announce, on cancel do nothing;
+ *    report the failure for the snack, on cancel do nothing;
  *  - [Effect.HistoryStepped] never reaches here: [EditorStore] hands its line to the screen (ADR-123), which shows it
  *    in the Bench snack and speaks it once through the host's announcement callback, not through this runner.
  *
- * Background results ([io] pipeline) are routed back to the main thread before touching the store or the
- * a11y announcer: the follow-up [Intent.CommitAddImage] goes through the supplied (main-confined)
- * `dispatch`, and the failure announce is posted onto [main] explicitly.
+ * Background results ([io] pipeline) reach the store only through the supplied (main-confined) `dispatch`:
+ * the follow-up [Intent.CommitAddImage] / [Intent.ReplaceImage] on success, [Intent.ReportImagePickFailure]
+ * on failure (A41.3).
  */
 public class DefaultEditorEffectRunner(
     private val scope: CoroutineScope,
     private val io: CoroutineDispatcher,
-    private val main: CoroutineDispatcher,
     private val autosave: AutosaveSink,
     private val imagePipeline: ImagePickDecodePipeline,
-    private val announcer: Announcer,
     private val savedSignal: SavedSignal,
 ) : EditorEffectRunner {
 
@@ -112,7 +104,8 @@ public class DefaultEditorEffectRunner(
                 autosave.markDirty()
                 savedSignal.onSaved()
             }
-            is Effect.HistoryStepped -> Unit
+            // Screen state, handed to the screen by [EditorStore]; they never reach a runner.
+            is Effect.HistoryStepped, is Effect.ImagePickFailed -> Unit
             is Effect.PickAndDecodeImage -> launchImagePick(effect.replacingId, dispatch)
         }
     }
@@ -124,7 +117,9 @@ public class DefaultEditorEffectRunner(
                     replacingId?.let { Intent.ReplaceImage(it, result.element.assetId) }
                         ?: Intent.CommitAddImage(result.element),
                 )
-                is ImagePickResult.Failure -> withContext(main) { announcer.announce(result.message) }
+                // A41.3: shown in the Bench snack, whose own live region speaks it once. Never announced here
+                // too, or TalkBack would say it twice. `dispatch` already confines to the main thread.
+                is ImagePickResult.Failure -> dispatch(Intent.ReportImagePickFailure(result.message))
                 ImagePickResult.Cancelled -> Unit
             }
         }

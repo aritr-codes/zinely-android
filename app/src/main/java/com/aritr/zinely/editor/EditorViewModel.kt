@@ -20,7 +20,6 @@ import com.aritr.zinely.data.android.EditorAutosaveBinder
 import com.aritr.zinely.data.android.SaveFailureSink
 import com.aritr.zinely.data.android.di.EditorAutosaveBinderFactory
 import com.aritr.zinely.data.android.prefs.EditorOnboardingStore
-import com.aritr.zinely.feature.editor.Announcer
 import com.aritr.zinely.home.BUSY_MESSAGE
 import com.aritr.zinely.feature.editor.AutosaveSink
 import com.aritr.zinely.feature.editor.DefaultEditorEffectRunner
@@ -101,8 +100,8 @@ internal fun restoredPageIndex(saved: Int?, pageCount: Int): Int =
  * created last — every edge is read only at runtime (markDirty / snapshot), long after construction,
  * so no half-built object is ever observed across threads.
  *
- * **Accessibility (Codex rec 1).** [Announcer] cannot hold a `LocalView` here (that is composable-only),
- * so it emits into [announcements]; the composable collects and calls `announceForAccessibility`.
+ * **Accessibility (Codex rec 1).** The VM cannot hold a `LocalView` here (that is composable-only), so it
+ * emits into [announcements]; the composable collects and calls `announceForAccessibility`.
  *
  * **Threading (Codex rec B).** Bootstrap runs on [viewModelScope] (Dispatchers.Main.immediate), so the
  * store — whose `dispatch` is main-thread-only by contract — is built and published on the main thread.
@@ -161,8 +160,8 @@ internal class EditorViewModel @Inject constructor(
     /**
      * A UI-originated a11y announcement (WCAG 4.1.3) — the Reframe surface's position/zoom/fit/commit lines
      * (ADR-053, IF3), text style, and the line an undo or redo says (ADR-123, second fallback). Routed through
-     * the SAME channel the effect runner's [com.aritr.zinely.feature.editor.Announcer] uses, so these
-     * announcements reach TalkBack via the one `announceForAccessibility` drain. Identical
+     * the one `announceForAccessibility` drain. (A failed photo pick no longer uses it: the Bench snack shows
+     * and speaks it, `v21-bench.html` A41.3.) Identical
      * consecutive text is handed over again each time; whether TalkBack speaks it again is not verified, and on
      * device an identical undo line was said once (ADR-123, a known limitation).
      */
@@ -315,7 +314,6 @@ internal class EditorViewModel @Inject constructor(
         // markDirty() time (post-construction), so the lateinit is never observed unset.
         lateinit var binder: EditorAutosaveBinder
 
-        val announcer = Announcer { text -> _announcements.tryEmit(text) }
         val autosave = AutosaveSink { binder.markDirty() }
         // The transient "Saved ✨" reassurance: the runner fires this on every Effect.Autosave, alongside
         // the binder mark-dirty (ADR-034). tryEmit is non-blocking; a full buffer just drops a redundant
@@ -334,7 +332,7 @@ internal class EditorViewModel @Inject constructor(
         )
 
         // Step 2: the store (a val) — its effect runner routes Autosave → the sink, image → the
-        // pick/decode/store pipeline, announce → the SharedFlow announcer.
+        // pick/decode/store pipeline; a failed pick comes back as a dispatch the Bench snack shows.
         val store = EditorStore(
             initial = initial,
             scope = viewModelScope,
@@ -342,10 +340,8 @@ internal class EditorViewModel @Inject constructor(
             effectRunner = DefaultEditorEffectRunner(
                 scope = viewModelScope,
                 io = ioDispatcher,
-                main = mainDispatcher,
                 autosave = autosave,
                 imagePipeline = imagePipeline,
-                announcer = announcer,
                 savedSignal = savedSignal,
             ),
         )

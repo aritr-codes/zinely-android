@@ -18,7 +18,8 @@ import org.junit.Test
 /**
  * Pure-JVM proof of [DefaultEditorEffectRunner] — the effect→I/O routing Codex reviewed (spike §10.3).
  * Verifies each [Effect] reaches the right seam and that background image results are routed back through
- * the supplied (main-confined) dispatch / onto the announcer, never silently dropped (Codex rec #6).
+ * the supplied (main-confined) dispatch, never silently dropped (Codex rec #6). A failed pick is dispatched
+ * as [Intent.ReportImagePickFailure] for the Bench snack to show (A41.3); the runner speaks nothing itself.
  */
 class DefaultEditorEffectRunnerTest {
 
@@ -28,15 +29,12 @@ class DefaultEditorEffectRunnerTest {
         scope: TestScope,
         pipeline: ImagePickDecodePipeline,
         autosave: AutosaveSink = AutosaveSink {},
-        announcer: Announcer = Announcer {},
         savedSignal: SavedSignal = SavedSignal {},
     ) = DefaultEditorEffectRunner(
         scope = scope,
         io = dispatcher,
-        main = dispatcher,
         autosave = autosave,
         imagePipeline = pipeline,
-        announcer = announcer,
         savedSignal = savedSignal,
     )
 
@@ -65,12 +63,13 @@ class DefaultEditorEffectRunnerTest {
     }
 
     @Test
-    fun historyStep_isNeverSpokenByTheAnnouncer() = runTest(dispatcher) {
-        // ADR-123: the screen speaks an undo line once through the host drain; the runner must not say it too.
-        val said = mutableListOf<String>()
-        val r = runner(this, UnavailableImagePipeline, announcer = { said += it })
-        r.run(Effect.HistoryStepped(EditLabel(EditVerb.DELETE, EditKind.PHOTO), isRedo = false, landedOnPage = 2), dispatch = {})
-        assertEquals(emptyList<String>(), said)
+    fun historyStep_isNeverHandledByTheRunner() = runTest(dispatcher) {
+        // ADR-123: the screen speaks an undo line once through the host drain; the runner must not act on it.
+        val dispatched = mutableListOf<Intent>()
+        val r = runner(this, UnavailableImagePipeline)
+        r.run(Effect.HistoryStepped(EditLabel(EditVerb.DELETE, EditKind.PHOTO), isRedo = false, landedOnPage = 2)) { dispatched += it }
+        advanceUntilIdle()
+        assertEquals(emptyList<Intent>(), dispatched)
     }
 
     @Test
@@ -84,25 +83,23 @@ class DefaultEditorEffectRunnerTest {
     }
 
     @Test
-    fun pickFailure_announcesMessage_noDispatch() = runTest(dispatcher) {
+    fun failed_pick_reports_a_visible_failure() = runTest(dispatcher) {
+        // Given a pipeline that fails with "X", When the pick runs
         val dispatched = mutableListOf<Intent>()
-        val said = mutableListOf<String>()
-        val r = runner(this, pipeline = { ImagePickResult.Failure("decode failed") }, announcer = { said += it })
+        val r = runner(this, pipeline = { ImagePickResult.Failure("X") })
         r.run(Effect.PickAndDecodeImage()) { dispatched += it }
         advanceUntilIdle()
-        assertTrue(dispatched.isEmpty())
-        assertEquals(listOf("decode failed"), said)
+        // Then the one signal is the visible failure (the snack speaks it; nothing else does, A41.3)
+        assertEquals(listOf<Intent>(Intent.ReportImagePickFailure("X")), dispatched)
     }
 
     @Test
     fun pickCancelled_isSilentNoOp() = runTest(dispatcher) {
         val dispatched = mutableListOf<Intent>()
-        val said = mutableListOf<String>()
-        val r = runner(this, pipeline = { ImagePickResult.Cancelled }, announcer = { said += it })
+        val r = runner(this, pipeline = { ImagePickResult.Cancelled })
         r.run(Effect.PickAndDecodeImage()) { dispatched += it }
         advanceUntilIdle()
         assertTrue(dispatched.isEmpty())
-        assertTrue(said.isEmpty())
     }
 
     @Test
@@ -123,7 +120,7 @@ class DefaultEditorEffectRunnerTest {
     }
 
     @Test
-    fun targetedPickCancelOrFailure_dispatchesNoReplacement() = runTest(dispatcher) {
+    fun targetedPickCancelOrFailure_replacesNothing() = runTest(dispatcher) {
         val cancelled = mutableListOf<Intent>()
         runner(this, pipeline = { ImagePickResult.Cancelled })
             .run(Effect.PickAndDecodeImage(replacingId = "photo-1")) { cancelled += it }
@@ -134,7 +131,7 @@ class DefaultEditorEffectRunnerTest {
         runner(this, pipeline = { ImagePickResult.Failure("decode failed") })
             .run(Effect.PickAndDecodeImage(replacingId = "photo-1")) { failed += it }
         advanceUntilIdle()
-        assertTrue(failed.isEmpty())
+        assertEquals("a failed Replace is shown, and replaces nothing", listOf<Intent>(Intent.ReportImagePickFailure("decode failed")), failed)
     }
 
     private fun stubDoc() = com.aritr.zinely.core.model.ZineDocument(
