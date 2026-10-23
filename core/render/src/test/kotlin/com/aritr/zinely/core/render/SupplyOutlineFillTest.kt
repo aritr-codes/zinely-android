@@ -93,7 +93,8 @@ class SupplyOutlineFillTest {
         // so the probe is placed where a leaning tail has ink and an upright one does not.
         probe(
             "paper.tag",
-            inked = listOf(0.5 to 0.30, 0.18 to 0.80),
+            // A39's tag (ADR-139): base 5.4..11.6 at y 16, apex (3.4, 22.6), so (5.76, 19.2) is in the leaning tail.
+            inked = listOf(0.5 to 0.30, 0.24 to 0.80),
             bare = listOf(0.70 to 0.85, 0.05 to 0.90, 0.95 to 0.95),
         )
     }

@@ -40,6 +40,19 @@ public object SupplyInk {
         "mark.registrationc",
         "mark.scissors",
         "mark.squiggle",
+        // Cut paper.
+        "paper.windowb",
+        "paper.windowc",
+        "paper.cutwindow",
+        "paper.holeb",
+        "paper.holec",
+        "paper.holed",
+        "paper.borderb",
+        "paper.borderc",
+        "paper.borderd",
+        "paper.roundb",
+        "paper.roundc",
+        "paper.gifttag",
     )
 
     /**

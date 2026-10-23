@@ -72,7 +72,7 @@ class BenchArtSheetTest {
             reveal(benchArtLabelTestTag(family))
             composeRule.onNodeWithTag(benchArtLabelTestTag(family)).assertExists()
         }
-        assertEquals("v21-bench.html A39 (ADR-139), wired so far: Tape & fixings, Stamps & marks", 78, Copy.Supplies.NAMES.size)
+        assertEquals("v21-bench.html A39 (ADR-139), wired so far: Tape & fixings, Stamps & marks, Cut paper", 111, Copy.Supplies.NAMES.size)
     }
 
     @Test

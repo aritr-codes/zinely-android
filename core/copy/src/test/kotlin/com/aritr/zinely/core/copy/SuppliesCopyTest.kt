@@ -112,8 +112,8 @@ class SuppliesCopyTest {
             Copy.Supplies.BY_FAMILY.keys.toList(),
             "SUPPLIES-SPEC §4 freezes four families (v21-bench.html:831)",
         )
-        // Tape & fixings and Stamps & marks carry v21-bench.html A39's 24 and 38 (ADR-139); one family per change.
-        assertEquals(listOf(24, 38, 11, 5), Copy.Supplies.BY_FAMILY.values.map { it.size })
+        // Three families carry v21-bench.html A39's 24, 38 and 44 (ADR-139); one family per change.
+        assertEquals(listOf(24, 38, 44, 5), Copy.Supplies.BY_FAMILY.values.map { it.size })
     }
 
     @Test
@@ -131,22 +131,27 @@ class SuppliesCopyTest {
             Copy.Supplies.matchingIds("tape", Copy.Supplies.TAPE_AND_FIXINGS),
         )
         assertTrue(Copy.Supplies.matchingIds("not in this cabinet").isEmpty())
-        // The two frames (v21-bench.html A32) are found by name and by tag, in the cabinet's own order.
-        assertEquals(listOf("paper.border"), Copy.Supplies.matchingIds("snipped"))
-        assertEquals(listOf("paper.round"), Copy.Supplies.matchingIds("porthole"))
+        // The two frames (v21-bench.html A32) and their A39 variants are found by name and by tag, in the
+        // cabinet's own order.
+        assertEquals(listOf("paper.border", "paper.borderb", "paper.borderc"), Copy.Supplies.matchingIds("snipped"))
+        assertEquals(listOf("paper.round", "paper.roundb", "paper.roundc"), Copy.Supplies.matchingIds("porthole"))
         assertEquals(
-            listOf("paper.window", "paper.border", "paper.round"),
+            listOf(
+                "paper.window", "paper.windowb", "paper.windowc", "paper.cutwindow", "paper.holed",
+                "paper.border", "paper.borderb", "paper.borderc", "paper.borderd",
+                "paper.round", "paper.roundb", "paper.roundc",
+            ),
             Copy.Supplies.matchingIds("frame"),
         )
     }
 
     @Test
-    fun `the two frames close Cut paper, in the order the owner ruled`() {
-        val cutPaper = Copy.Supplies.BY_FAMILY.getValue(Copy.Supplies.CUT_PAPER).entries.toList()
-        assertEquals(
-            listOf("paper.dogear" to "Folded corner", "paper.border" to "Snipped border", "paper.round" to "Round window"),
-            cutPaper.takeLast(3).map { it.key to it.value },
-        )
+    fun `the two frames follow Folded corner, in the order the owner ruled`() {
+        // A32 closed Cut paper with them; A39 (ADR-139) adds variants and new subjects around them, so the
+        // ruling that survives is their order among the shipped subjects.
+        val cutPaper = Copy.Supplies.BY_FAMILY.getValue(Copy.Supplies.CUT_PAPER)
+        val ruled = listOf("paper.dogear" to "Folded corner", "paper.border" to "Snipped border", "paper.round" to "Round window")
+        assertEquals(ruled, cutPaper.entries.filter { it.key in ruled.toMap() }.map { it.key to it.value })
     }
 
     @Test

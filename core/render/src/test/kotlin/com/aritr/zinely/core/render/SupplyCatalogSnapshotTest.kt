@@ -18,6 +18,7 @@ class SupplyCatalogSnapshotTest {
      */
     private val redrawn = setOf("tape.torn", "fix.corner", "fix.staple", "fix.clip", "tape.masking",
         "mark.asterisk", "mark.arrow", "mark.hand", "mark.bar",
+        "paper.strip", "paper.tag", "paper.underline",
     )
 
     @Test

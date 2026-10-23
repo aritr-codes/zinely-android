@@ -63,7 +63,7 @@ class BenchArtSheetParityTest {
      * The families wired to A39 so far, one per change (R-A7 (5)); the rest still match the shipped sheet.
      * ⚠ Temporary while the four family commits land: the last of them removes the shipped half.
      */
-    private val wiredToA39 = setOf(Copy.Supplies.TAPE_AND_FIXINGS, Copy.Supplies.STAMPS_AND_MARKS)
+    private val wiredToA39 = setOf(Copy.Supplies.TAPE_AND_FIXINGS, Copy.Supplies.STAMPS_AND_MARKS, Copy.Supplies.CUT_PAPER)
 
     private fun frozenSupplies(): List<FrozenSupply> = Copy.Supplies.BY_FAMILY.keys.flatMap { family ->
         (if (family in wiredToA39) a39 else shippedSupplies()).filter { it.family == family }
