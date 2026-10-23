@@ -17,7 +17,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -101,9 +103,12 @@ public fun ZSnackbar(
     onTimeout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LaunchedEffect(message) {
-        delay(ZINELY_SNACKBAR_TIMEOUT_MILLIS)
-        onTimeout()
+    val timeout = recommendedTimeoutMillis(ZINELY_SNACKBAR_TIMEOUT_MILLIS, hasAction = true)
+    // Read through a state holder: a recomposition with a new callback must not be lost to a running delay.
+    val currentOnTimeout by rememberUpdatedState(onTimeout)
+    LaunchedEffect(message, timeout) {
+        delay(timeout)
+        currentOnTimeout()
     }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(message) { focusRequester.requestFocus() }

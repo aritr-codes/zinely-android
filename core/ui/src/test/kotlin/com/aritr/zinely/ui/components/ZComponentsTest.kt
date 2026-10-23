@@ -4,7 +4,10 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalAccessibilityManager
+import com.aritr.zinely.ui.testing.FakeAccessibilityManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
@@ -321,6 +324,40 @@ class ZComponentsTest {
         composeRule.mainClock.advanceTimeBy(2_100L)
         assertFalse(timedOut)
         composeRule.mainClock.advanceTimeBy(500L)
+        assertTrue(timedOut)
+    }
+
+    @Test
+    fun `undo bar honours the recommended timeout`() {
+        // Given the system recommends 20 s for a bar with a control (accessibility "time to take action").
+        composeRule.mainClock.autoAdvance = false
+        var timedOut = false
+        composeRule.setContent {
+            CompositionLocalProvider(LocalAccessibilityManager provides FakeAccessibilityManager(20_000L)) {
+                ZinelyTheme {
+                    ZSnackbar(message = "Zine deleted", actionLabel = "Undo", onAction = {}, onTimeout = { timedOut = true })
+                }
+            }
+        }
+        // When 6 s pass, then the bar is still shown.
+        composeRule.mainClock.advanceTimeBy(6_000L)
+        assertFalse(timedOut)
+        composeRule.mainClock.advanceTimeBy(15_000L)
+        assertTrue(timedOut)
+    }
+
+    @Test
+    fun `toast honours the recommended timeout`() {
+        composeRule.mainClock.autoAdvance = false
+        var timedOut = false
+        composeRule.setContent {
+            CompositionLocalProvider(LocalAccessibilityManager provides FakeAccessibilityManager(20_000L)) {
+                ZinelyTheme { ZToast(message = "Saved", onTimeout = { timedOut = true }) }
+            }
+        }
+        composeRule.mainClock.advanceTimeBy(6_000L)
+        assertFalse(timedOut)
+        composeRule.mainClock.advanceTimeBy(15_000L)
         assertTrue(timedOut)
     }
 

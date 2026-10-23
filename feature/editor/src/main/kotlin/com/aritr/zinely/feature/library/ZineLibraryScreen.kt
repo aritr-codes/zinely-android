@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -157,6 +158,43 @@ private sealed interface LibrarySheet {
     /** A28: renaming one folder. */
     data class RenameFolder(val name: String) : LibrarySheet
 }
+
+/**
+ * Keeps [LibrarySheet] across Activity recreation. A hand-written [Saver] rather than `@Parcelize`:
+ * no module here applies the parcelize plugin (W1 R-W8). One tag, then the case's own fields.
+ */
+private val LibrarySheetSaver: Saver<LibrarySheet?, Any> = Saver(
+    save = { sheet ->
+        when (sheet) {
+            null -> emptyList<Any>()
+            LibrarySheet.Create -> listOf("create")
+            LibrarySheet.KeepSafe -> listOf("keepSafe")
+            is LibrarySheet.Actions -> listOf("actions", sheet.zineId)
+            is LibrarySheet.Rename -> listOf("rename", sheet.zineId, sheet.title)
+            is LibrarySheet.Move -> listOf("move", sheet.zineId)
+            is LibrarySheet.NewFolder -> listOf("newFolder", sheet.zineId, sheet.fromChooser)
+            is LibrarySheet.Folder -> listOf("folder", sheet.name)
+            is LibrarySheet.RenameFolder -> listOf("renameFolder", sheet.name)
+        }
+    },
+    restore = { saved ->
+        // Bad or stale data closes the sheet rather than crashing the Shelf on start.
+        runCatching {
+            val f = (saved as List<*>)
+            when (f.firstOrNull()) {
+                "create" -> LibrarySheet.Create
+                "keepSafe" -> LibrarySheet.KeepSafe
+                "actions" -> LibrarySheet.Actions(f[1] as String)
+                "rename" -> LibrarySheet.Rename(f[1] as String, f[2] as String)
+                "move" -> LibrarySheet.Move(f[1] as String)
+                "newFolder" -> LibrarySheet.NewFolder(f[1] as String, f[2] as Boolean)
+                "folder" -> LibrarySheet.Folder(f[1] as String)
+                "renameFolder" -> LibrarySheet.RenameFolder(f[1] as String)
+                else -> null
+            }
+        }.getOrNull()
+    },
+)
 
 /** Where focus should go once the Shelf shows what a folder action did (A28, *Focus*). */
 private sealed interface FocusWish {
@@ -317,7 +355,8 @@ public fun ZineLibraryScreen(
     val colors = ZinelyTheme.v21Colors
     val haptics = ZinelyTheme.haptics
 
-    var openSheet by remember { mutableStateOf<LibrarySheet?>(null) }
+    // Saved across recreation (rotation, dark-mode toggle): a half-typed name must not vanish with its sheet.
+    var openSheet by rememberSaveable(stateSaver = LibrarySheetSaver) { mutableStateOf<LibrarySheet?>(null) }
     var undo by remember { mutableStateOf<UndoRequest?>(null) }
     var toast by remember { mutableStateOf<Pair<String, CompletableDeferred<Unit>>?>(null) }
     val backupActionFocusRequester = remember { FocusRequester() }
@@ -359,7 +398,7 @@ public fun ZineLibraryScreen(
             restoreBackupActionFocus = true
         } else if (
             restoreBackupActionFocus &&
-            (state is LibraryShelfState.Content || state is LibraryShelfState.Empty)
+            (state is LibraryShelfState.Content || state is LibraryShelfState.Empty || state is LibraryShelfState.Error)
         ) {
             // Dialogs contain focus while visible. Ask for it back only after Compose has removed the
             // modal surface, so keyboard and accessibility users return to the action that opened it.
@@ -370,7 +409,7 @@ public fun ZineLibraryScreen(
 
     LaunchedEffect(showColophon, state) {
         if (!showColophon && restoreColophonActionFocus &&
-            (state is LibraryShelfState.Content || state is LibraryShelfState.Empty)
+            (state is LibraryShelfState.Content || state is LibraryShelfState.Empty || state is LibraryShelfState.Error)
         ) {
             colophonActionFocusRequester.requestFocus()
             restoreColophonActionFocus = false
@@ -536,11 +575,13 @@ public fun ZineLibraryScreen(
                 modifier = Modifier.fillMaxSize(),
             )
             toast?.let { (text, gone) ->
-                ZToast(
-                    message = text,
-                    onTimeout = { gone.complete(Unit) },
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = TransientBottomInset),
-                )
+                key(gone) {
+                    ZToast(
+                        message = text,
+                        onTimeout = { gone.complete(Unit) },
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = TransientBottomInset),
+                    )
+                }
             }
         }
         return
@@ -687,7 +728,7 @@ public fun ZineLibraryScreen(
 
         // `.dock{position:absolute;left:0;right:0;bottom:0}` — over the shelf, which scrolls under it and
         // clears it with bottom padding of its own (188dp on `.shelf`, 206dp on `.empty`; the failure
-        // surface keeps its established 150dp because it has no secondary action),
+        // surface is cleared by the measured dock height),
         // each grown by the safe area — see [zineDockClearance]). In a `Column` after the shelf it would
         // look identical at rest and steal that space at every other moment.
         ZineDock(
@@ -697,9 +738,11 @@ public fun ZineLibraryScreen(
                 openSheet = LibrarySheet.Create
             },
             secondaryActions = when (state) {
-                is LibraryShelfState.Content, is LibraryShelfState.Empty -> listOf(
+                is LibraryShelfState.Content, is LibraryShelfState.Empty, is LibraryShelfState.Error -> listOf(
                     ZineDockSecondaryAction(
-                        label = if (state is LibraryShelfState.Empty || zines.isEmpty()) {
+                        // `zines.isEmpty()` in Error means "could not read", not "empty": the frozen
+                        // `v21-library.html` says "Backups" there (D-145), and the sheet opens restore-only.
+                        label = if (state is LibraryShelfState.Empty || (state is LibraryShelfState.Content && zines.isEmpty())) {
                             Copy.LibraryBackup.BRING_BACK
                         } else {
                             Copy.LibraryBackup.BACKUPS
@@ -766,7 +809,7 @@ public fun ZineLibraryScreen(
         // Above the dock, never under the thumb that made them. Measured, not V1's fixed 96dp: the dock
         // is taller than that now, and the bar sat on top of Make a zine.
         val aboveDock = with(LocalDensity.current) { dockHeight.toDp() } + FolderSnackGap
-        undo?.let { request ->
+        undo?.let { request -> key(request) {
             ZSnackbar(
                 message = request.message,
                 actionLabel = Copy.Shelf.UNDO,
@@ -775,14 +818,14 @@ public fun ZineLibraryScreen(
                 modifier = Modifier.align(Alignment.BottomCenter)
                     .padding(start = TransientSideInset, end = TransientSideInset, bottom = aboveDock),
             )
-        }
-        toast?.let { (text, gone) ->
+        } }
+        toast?.let { (text, gone) -> key(gone) {
             ZToast(
                 message = text,
                 onTimeout = { gone.complete(Unit) },
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = aboveDock),
             )
-        }
+        } }
     }
 
     // The existing creation flow: choosing the paper *is* the create action (ADR-047).
@@ -796,6 +839,8 @@ public fun ZineLibraryScreen(
         },
     )
 
+    // In Error `zines` is empty because the read failed, so this opens restore-only. That is acceptable:
+    // restore only adds, never replaces ([ADR-121](docs/DECISIONS.md#adr-121)); D-145.
     KeepSafeSheet(
         visible = openSheet is LibrarySheet.KeepSafe,
         canBackup = zines.isNotEmpty(),
