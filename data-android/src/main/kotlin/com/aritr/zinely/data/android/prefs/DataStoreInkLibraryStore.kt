@@ -101,8 +101,6 @@ public class DataStoreInkLibraryStore(
         )
     }
 
-    private fun hexOrNull(value: String): InkHex? = try { InkHex(value) } catch (_: IllegalArgumentException) { null }
-
     private fun InkLibrary.toDto() = LibraryDto(
         v = VERSION,
         inks = myInks.map { InkDto(it.hex.value, it.used) },
@@ -119,3 +117,6 @@ public class DataStoreInkLibraryStore(
         val JSON = Json { ignoreUnknownKeys = true }
     }
 }
+
+private fun hexOrNull(value: String): InkHex? =
+    try { InkHex(value) } catch (_: IllegalArgumentException) { null }
