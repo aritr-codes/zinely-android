@@ -256,7 +256,8 @@ class LibraryBackupRestoreSheetTest {
             "The backup file holds the zines and photos on this shelf. Keep a copy somewhere other than this phone.",
         ).assertIsDisplayed()
         // The option merges its text under its own label, so read the unmerged node.
-        composeRule.onNodeWithText("Choose where to keep the backup file.", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText("Next, your phone asks where to save it.", useUnmergedTree = true).assertExists() // A45
+        composeRule.onNodeWithText("Choose where to keep the backup file.", useUnmergedTree = true).assertDoesNotExist()
         composeRule.onNodeWithText("Your zines, kept safe", useUnmergedTree = true).assertDoesNotExist()
         composeRule.onNodeWithText("Choose where to keep a copy of this whole shelf.", useUnmergedTree = true)
             .assertDoesNotExist()

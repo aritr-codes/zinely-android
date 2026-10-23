@@ -23,6 +23,7 @@ header lists every item and where it is drawn; this section records what the ame
 - **No promise of every zine before the result.** The save option reads *"Choose where to keep the backup
   file."* and the running backup body *"Putting zines together in one file."* Only a complete result says
   "All N zines…".
+  *(A45, 2026-10-22: the save option now reads "Next, your phone asks where to save it." - see the A45 block in `mockups/backup-restore.html`; the wording above is history.)*
 - **Partial backup is a success.** Title `N of M zines saved`, ✓ mark, no warning colour. It names the
   left-out zines (up to three, then "and N more") with one sentence per reason, in the order: couldn't open ·
   newer Zinely · couldn't read a photo. A zine with no readable name is counted, not named. `Some of these
