@@ -12,13 +12,14 @@ import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.core.render.SupplyInk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * Taps pass through the empty part of eight holed pieces (ADR-124, and A32's two frames): drawn, then
+ * Taps pass through the empty part of the holed pieces (`SupplyInk.IN_SCOPE`) (ADR-124, and A32's two frames): drawn, then
  * near, then box.
  *
  * Every distance here is in **page points** — `HitTest` knows nothing of dp. Unless a test says
@@ -52,18 +53,11 @@ class HitTestInkTest {
     /** Unit point of the default 100×100 piece at (50, 50), as a page point. */
     private fun unit(u: Double, v: Double) = PtPoint(50.0 + 100.0 * u, 50.0 + 100.0 * v)
 
-    /** Supply id → a unit point on its ink, and unit points in its hole or bare paper. */
-    private val holed: Map<String, Pair<PtPoint, List<PtPoint>>> = mapOf(
-        "paper.window" to (unit(0.05, 0.5) to listOf(unit(0.5, 0.5))),
-        "paper.hole" to (unit(0.125, 0.5) to listOf(unit(0.5, 0.5))),
-        "shape.ring" to (unit(0.1, 0.5) to listOf(unit(0.5, 0.5))),
-        "fix.grommet" to (unit(0.1, 0.5) to listOf(unit(0.5, 0.5))),
-        "fix.corner" to (unit(0.06, 0.9) to listOf(unit(0.25, 0.7), unit(0.9, 0.2))),
-        "mark.registration" to (unit(0.05, 0.5) to listOf(unit(0.5, 0.5), unit(0.15, 0.15))),
-        // The two hand-cut frames (v21-bench.html A32).
-        "paper.border" to (unit(0.05, 0.5) to listOf(unit(0.5, 0.5), unit(0.15, 0.5))),
-        "paper.round" to (unit(0.05, 0.5) to listOf(unit(0.5, 0.5), unit(0.25, 0.5))),
-    )
+    /** Supply id → a unit point on its ink, and unit points in its hole; sampled from the drawn ink (ART-4). */
+    private val holed: Map<String, Pair<PtPoint, List<PtPoint>>> = SupplyInk.IN_SCOPE.associateWith { id ->
+        val probes = InkSampler.probes(id)
+        unit(probes.ink.first, probes.ink.second) to probes.bare.map { unit(it.first, it.second) }
+    }
 
     // — 7, 8: each holed piece —
 
