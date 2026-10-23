@@ -3,8 +3,9 @@ package com.aritr.zinely.core.render
 import com.aritr.zinely.core.render.ArtGeometry.path
 
 /**
- * The second half of the *Stamps & marks* family (v21-bench.html A39, [ADR-139]): Colour bar to the end of
- * the family, transcribed from each row with [path]. Split from [MarkArt] only to keep each static
+ * The second half of the *Stamps & marks* family (v21-bench.html A39, [ADR-139]): the A39-transcribed
+ * pieces from Colour bar on, each from its row with [path] (the shipped Copier streak, Perforation and
+ * Starburst stay in [MarkArt]). Split from [MarkArt] only to keep each static
  * initialiser under the JVM's 64 KB cap (R-A5); [MarkArt.OUTLINES] is the family's one map.
  *
  * [ADR-139]: ../../../../../../../../docs/DECISIONS.md#adr-139

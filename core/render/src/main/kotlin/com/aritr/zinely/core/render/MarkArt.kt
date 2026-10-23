@@ -23,27 +23,22 @@ import com.aritr.zinely.core.render.ArtGeometry.path
 internal object MarkArt {
 
     // =============================================================================================
-    // Kept as shipped — the derivable eight of SUPPLIES-SPEC §4.3 / ADR-107 R4, six of them still drawn as shipped
+    // Kept as shipped (SUPPLIES-SPEC §4.3 / ADR-107 R4)
     //
-    // §10.1 recorded the remaining twelve as "gated on O-B/O-C". **That was stale**: §0 closes all four
-    // escalated calls and says so in as many words ("Nothing here is left open"). What actually gated
-    // them was a designer's hand, which is a resource, not a ruling — and *Cut shapes* already proved a
-    // quarter of the set was not design work at all. These eight are the same finding applied again.
+    // The family's other four first drawings (Star, Arrow, Pointing hand, Colour bar) are now A39 redraws, below.
     //
     // ⚠ **Even-odd is the binding constraint on every outline below, and it is the one that bites.**
     // §4.1 rule 3 fills even-odd, so two overlapping subpaths cancel to a HOLE rather than uniting.
-    // Nothing here may be drawn as overlapping parts: a plus is ONE twelve-point polygon, never two
-    // crossed bars; the registration arms stop short of the ring rather than crossing it; the halftone
-    // dots are spaced so no two touch. Rule 4 ("free of winding-dependent self-intersection") is
-    // explicitly an authoring rule; `SupplyCatalogTest` samples every outline for even-odd = non-zero (same-direction rings declared).
+    // Nothing here may be drawn as overlapping parts: the registration arms stop short of the ring rather
+    // than crossing it; the halftone dots are spaced so no two touch. `SupplyCatalogTest` samples every
+    // outline for even-odd = non-zero (same-direction rings declared).
     //
     // ### Attestation (§4.1, the definition of done)
     //
-    // All eight were authored from scratch, in this file, by writing coordinates or by elementary
+    // These six were authored from scratch, in this file, by writing coordinates or by elementary
     // construction from a named centre and radius. **No reference art was traced, opened or consulted.**
-    // The halftone grid is a fixed 4×4 lattice with a declared radius ramp. (Star, Arrow, Pointing hand
-    // and Colour bar are now A39's redraws, below; their provenance is `SupplyProvenanceCatalog`.) None of it is procedural in the §5 sense
-    // — every constant is written down here and identical on every device, for every maker, forever.
+    // The halftone grid is a fixed 4×4 lattice with a declared radius ramp. None of it is procedural in the
+    // §5 sense — every constant is written down here and identical on every device, for every maker, forever.
 
     /** Half the thickness of a registration arm, as a fraction of the unit square. */
     internal const val REG_ARM_HALF: Double = 0.035

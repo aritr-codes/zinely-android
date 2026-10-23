@@ -285,7 +285,7 @@ public object SupplyProvenanceCatalog {
             "https://raw.githubusercontent.com/svatsa159/react-doodle-icons/b51da0371e992b5d03e768fd1f570e8e9500c617/src/icons/interface/cut.svg",
             "doodle/interface_cut.svg",
             "817e19076b2adf271829f3bd4a43af2af50ebd1c8a752bb288cef93474b88ddc",
-            "Thickened to width 2.5; finger holes kept; D-131: both holes 1.2x larger about their centres.",
+            "Thickened to width 2.5; finger holes kept; D-131: both holes 1.2x larger about their centres, the upper one 0.15 lower.",
         ),
         imported(
             "mark.squiggle", ArtSet.TABLER,
