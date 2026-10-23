@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -692,7 +693,7 @@ private fun DoneButton(onDone: () -> Unit, modifier: Modifier = Modifier) {
     val done = benchTap(action = onDone)
     Row(
         modifier = modifier
-            .height(BenchAddHeight)
+            .heightIn(min = BenchAddHeight)
             // Ring first so it lands under the shadow; neither may sit right of a clip.
             .zinelyV21Frame(colors.butterTint, BenchBarShape)
             .zinelyV21Pressable(pressed, ZinelyV21Press.Hero, colors.inkLine, BenchBarShape)

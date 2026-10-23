@@ -942,6 +942,8 @@ private fun ProofBand(
     // nothing to say so. The card is what is asked for, not the surface's end: that is the least scroll
     // that shows the buttons with the paper under them, and where the card already fits it is none.
     val intoView = remember { BringIntoViewRequester() }
+    // ponytail: bring-into-view stays smooth under reduced motion (the default BringIntoViewSpec animates);
+    // upgrade path is a reduced-motion-aware `LocalBringIntoViewSpec`.
     LaunchedEffect(savedName) { if (savedName != null) intoView.bringIntoView() }
     Box(
         // `.band{margin:0 var(--gap-md) var(--gap-md)}` — a card resting on the desk, not a bar welded to
