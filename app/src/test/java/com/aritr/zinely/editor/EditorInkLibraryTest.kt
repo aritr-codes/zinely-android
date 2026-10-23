@@ -24,10 +24,12 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -50,6 +52,18 @@ class EditorInkLibraryTest {
         idleMain()
 
         assertEquals(stored, vm.inkLibrary.value)
+    }
+
+    @Test
+    fun `given a store that has not loaded, when the ViewModel starts, then inkLibrary is null, not empty`() {
+        val unloaded = object : InkLibraryStore {
+            override val library = emptyFlow<InkLibrary>()
+            override suspend fun update(transform: (InkLibrary) -> InkLibrary) = error("not called")
+        }
+        val vm = viewModel(unloaded)
+        idleMain()
+
+        assertNull(vm.inkLibrary.value)
     }
 
     @Test

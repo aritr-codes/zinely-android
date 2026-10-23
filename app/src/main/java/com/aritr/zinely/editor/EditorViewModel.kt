@@ -34,8 +34,8 @@ import com.aritr.zinely.feature.editor.SavedSignal
 import com.aritr.zinely.render.android.AssetBytesSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.async
 import java.io.File
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -286,8 +286,11 @@ internal class EditorViewModel @Inject constructor(
 
     /**
      * Applies [transform] to the stored library and returns its before and after (the caller offers Undo by
-     * restoring `before`). Invariant: the write runs in [viewModelScope], not the caller's scope, so a screen
-     * leaving mid-write cancels only its wait, never the write (ADR-138 decision 8).
+     * restoring `before`). Invariant: the write runs in [viewModelScope], not the caller's scope, so closing
+     * the tray or the mixer mid-write cancels only the caller's wait, never the write (ADR-138 decision 8).
+     * Clearing the ViewModel (leaving the editor) can still cancel a write DataStore has not applied yet; its
+     * edit is atomic, so a write is never half-applied. A store `IOException` is rethrown here: the caller
+     * catches it, and a caller already cancelled never sees it.
      */
     suspend fun editInkLibrary(transform: (InkLibrary) -> InkLibrary): InkLibraryEdit =
         viewModelScope.async { inkLibraryStore.update(transform) }.await()

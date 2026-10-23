@@ -16879,7 +16879,8 @@ document; [ADR-032](#adr-032)'s single Preferences DataStore; D-028's ruling tha
      with an **unknown (newer) version** also reads as empty but is **never overwritten**: `update` refuses to write
      over it, so a downgrade cannot destroy a newer build's inks. The undo snapshot is the value `update` replaced,
      never a copy held by the UI, so an action taken before the first load cannot restore an empty library over a
-     real one; writes run in the ViewModel's scope, so leaving the screen cannot cancel one half-way.
+     real one; writes run in the ViewModel's scope, so closing the tray or the mixer cannot cancel one, and DataStore's
+     edit is atomic, so leaving the editor can drop a write not yet applied but never leaves one half-way.
    - `EditorViewModel` exposes it; the nav host passes it to `EditorScreen` as plain parameters, as `reframeCoachSeen`
      travels today (`ZinelyNavHost.kt:996`).
    - The saved document is untouched: `CURRENT_SCHEMA_VERSION` stays 3 and `DocumentSchemaShapeTest` is unchanged.

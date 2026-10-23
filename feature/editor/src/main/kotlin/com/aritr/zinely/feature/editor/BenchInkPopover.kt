@@ -60,6 +60,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.editor.ink.InkLibrary
+import com.aritr.zinely.core.editor.ink.InkLibraryEdit
 import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.TextElement
@@ -320,6 +322,10 @@ internal fun BenchInkPopover(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
     onDockedTopChanged: (Float) -> Unit = {},
+    // ponytail: threaded only (ADR-138); INK task 6 draws My palettes / My inks from these.
+    inkLibrary: InkLibrary? = InkLibrary.EMPTY,
+    onEditInkLibrary: suspend ((InkLibrary) -> InkLibrary) -> InkLibraryEdit =
+        { InkLibraryEdit(InkLibrary.EMPTY, InkLibrary.EMPTY) },
 ) {
     val colors = ZinelyTheme.v21Colors
     val motion = if (ZinelyTheme.motion.reduceMotion) 0 else BenchInkPopoverEnterMillis

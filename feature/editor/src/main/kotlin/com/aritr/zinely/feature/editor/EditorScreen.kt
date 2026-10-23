@@ -1,7 +1,5 @@
 package com.aritr.zinely.feature.editor
 
-import com.aritr.zinely.core.editor.ink.InkLibrary
-import com.aritr.zinely.core.editor.ink.InkLibraryEdit
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -75,6 +73,8 @@ import com.aritr.zinely.core.editor.EditorUiState
 import com.aritr.zinely.core.editor.FramingMath
 import com.aritr.zinely.core.editor.FlipAxis
 import com.aritr.zinely.core.editor.Intent
+import com.aritr.zinely.core.editor.ink.InkLibrary
+import com.aritr.zinely.core.editor.ink.InkLibraryEdit
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveTransform
 import com.aritr.zinely.core.editor.cascadedPlacement
@@ -201,8 +201,10 @@ internal val LocalReframePhotoLoader = staticCompositionLocalOf { ProductionRefr
  *   non-null, and every write is a transform through [onEditInkLibrary], so nothing loaded late is overwritten.
  *   Defaults to an empty, loaded library (previews/tests).
  * @param onEditInkLibrary applies a transform to the stored library and returns its before and after; the
- *   caller offers Undo by restoring `before`. The app runs the write in the ViewModel's scope, so leaving the
- *   screen cannot cancel it. Defaults to a no-op that changes nothing.
+ *   caller offers Undo by restoring `before`. The app runs the write in the ViewModel's scope, so closing the
+ *   tray or the mixer cannot cancel it. Rethrows the store's `IOException`. Defaults to a no-op that changes
+ *   nothing.
+ *   Both are passed to [BenchInkPopover] and not used yet (the tray that reads them is INK task 6).
  */
 @Composable
 public fun EditorScreen(
@@ -2129,6 +2131,8 @@ public fun EditorScreen(
                     // reordering the composition keeps the snack above the verb bar, which is the other
                     // half of the frozen order.
                     modifier = ctxModifier.zIndex(1f).heightIn(max = panelMaxHeight),
+                    inkLibrary = inkLibrary,
+                    onEditInkLibrary = onEditInkLibrary,
                 )
                 }
 
