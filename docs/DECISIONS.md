@@ -572,6 +572,9 @@
 - **Review (2026-06-25):** Codex — **GO WITH FIXES**; all **8 Required Fixes** and the Recommended items reconciled and folded into the design ([spike §9 reconciliation table](spikes/s4-editor-mvi.md#9-codex-review--reconciliation-2026-06-25)): single-source transform snapshot, rotated-handle anchor math, hit-test tie order, dense-`zIndex` normalisation, reducer-vs-runner autosave boundary, race-safe text session, history-aware asset GC, undoable page commands; plus internal-`EditorModel`/derived-`EditorUiState` split, gesture `token`, rotation-sign goldens, explicit decode-failure path. **No disagreements.** → **Accepted.** Implementation proceeds TDD, pure `:core:editor` first.
 - **Status (2026-06-25):** **Pure `:core:editor` implemented** (new core-CI module; `HitTest`/`TransformMath`/`ZOrder`/`Command`/`EditorModel`/`Intent`/`EditorReducer`/`Snap`), **43 tests green** (39 unit + 4 jqwik properties), `explicitApi`. Reducer/hit-test/snap/bake are pure JVM, no Android. The gated `:feature:editor` store (`StateFlow<EditorUiState>` + effect runner, `detectTransformGestures`→`graphicsLayer{}` preview, selection contextbar + `semantics{customActions}`, Roborazzi selection-chrome goldens) is the next S4 step. See [spike §10.1](spikes/s4-editor-mvi.md#101-implementation-status-2026-06-25).
 - **Status (2026-06-26):** **Full `:feature:editor` interaction surface MERGED to `main`** (PR #21, rebase — 10 increments linear, tip `dd956f4`). Landed in gated, individually Codex-reviewed increments: store spine + effect runner, gesture pipeline, selection chrome + live **document-order** preview (approach B → preview == commit), opposite-anchor resize handles, live snap guides (single `LiveSnap.resolve` feeds preview **and** commit), a11y contextbar + element semantics (WCAG 2.5.7 twins), race-safe text-edit session, and the host **`EditorScreen`** assembling every layer over one `EditorStore`. The host added a display-only `Intent.SetViewport` (no autosave, no history) so all layers share one measured `ViewState`; Codex's 3 host-boundary concurrency fixes were reconciled (gestures/handles gated off while editing; tokenised `CancelTransform`; viewport deferred until `Idle`). **Selection-chrome Roborazzi goldens** pin the screen-space chrome (outline/guides) that `PagePreviewParityTest` structurally cannot reach — 3 goldens recorded on the pinned CI image, gated by `:feature:editor:verifyRoborazziDebug`; main CI green. **Remaining S4 (wiring):** mount `EditorScreen` in `:app` navigation + supply `pageSizePt` from imposition + a real image pipeline + the autosave binder at the app/DI layer — the *how* of that wiring (store ownership/lifecycle, projectId bootstrap, autosave binding, seam adapters) is decided in [ADR-030](#adr-030). See [spike §10.10–§10.11](spikes/s4-editor-mvi.md).
+- **Amendment (2026-10-23, W1 [ADR-136](#adr-136), Task 5):** the `Announcer` seam is removed. A failed photo pick is shown
+  and spoken once by the Bench snack (`v21-bench.html` A41.3). The text above is the record of what was decided then.
+
 
 ## ADR-030 {#adr-030}
 **S4 app-integration: `:app` mounts the gated `:feature:editor` `EditorScreen` via a single-Activity navigation-compose graph with type-safe `@Serializable` routes; a `@HiltViewModel` owns the `EditorStore` (lifecycle = `viewModelScope`); the editor bootstraps a fixed `projectId="default"` document (seed-on-miss through `DocumentRepository`, no `ProjectRepository` yet); the app-layer adapts the editor's three pure seams (`AutosaveSink`/`Announcer`/`ImagePickDecodePipeline`) and supplies `pageSizePt` from `:core:imposition`; the autosave binder is app-owned and lifecycle-observed; `android:allowBackup=false` keeps content off cloud backup; the real image pipeline + asset-bytes source are split to a second increment.** Realises the "Remaining S4 (wiring)" item of [ADR-029](#adr-029); applies the app-architecture decision [ADR-013](#adr-013) (Clean + single Activity + Compose + Hilt) and the autosave-binding decision [ADR-026](#adr-026); does not re-decide them.
@@ -14185,6 +14188,8 @@ now. This is the record of what the acceptance rests on.
   found no overclaim and no hidden limitation; its fixes, all accepted, were a stale "READY", the CI claim pinned to
   a commit, the delete snack attributed to both builds, and the "Saved" ruling worded as not ruled. The acceptance
   itself is the owner's decision.
+- **Amendment (2026-10-23, W1 [ADR-136](#adr-136), Task 5; the undo and redo lines still reach the announcement drain from the screen):** the `Announcer` seam is removed. A failed photo pick is shown
+  and spoken once by the Bench snack (`v21-bench.html` A41.3). The text above is the record of what was decided then.
 
 ---
 
@@ -16926,3 +16931,16 @@ design, copy and accessibility lens (A46 driven in headless Chromium, light, dar
 | The mixed form does not say which zines lost seconds | Observation | For the Pass 2 reading |
 | "A page file" may suggest one page | Observation | No change; the sentence is the brief's |
 | The branch forks from `846c91e`, not the W1 branch tip | Observation | For the controller's merge |
+
+#### As built (2026-10-22) {#adr-140-as-built}
+
+2026-10-22, W1 Task 11 (`w1/t11`, `5fa1782..df0d454`): built as decided. `RepairNotes` (`:data-android`) holds the
+notes, one `@Singleton` given to `DocumentRepositoryImpl` (as the function parameter `onPagesRestored`) and to
+`RoomProjectRepository`; per-zine changes go through `ConcurrentHashMap.compute`, the marker is written inside it, and
+`changes` is bumped after it. `restored-note.json` gains `details` (default true) and `pages` (default false); the
+saved-document format is untouched. The Shelf reads the note after the document load and re-lists on `changes`, so a
+repair found when a zine opens on the Bench shows on the Shelf on return, without a restart. ADR-134 follow-up 4 is
+fixed in `HomeViewModel`: a dismissal hides only the note it dismissed. Named follow-up: Got it clears both kinds
+unconditionally, so a pages repair landing in the instant before it clears is cleared unseen (compare-and-clear if it
+is ever seen). Two reviews returned GO. Status stays **Proposed**: the emulator passes, the TalkBack listen and the
+owner's reading are owed ([OWNER-CHECKLIST](OWNER-CHECKLIST.md)).
