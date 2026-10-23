@@ -17,6 +17,9 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.intOrNull
 import java.io.IOException
 
 /**
@@ -24,9 +27,10 @@ import java.io.IOException
  *
  * Invariants:
  * - Every read goes through [InkLibrary.sanitized], so a hand-edited or damaged value cannot break the caps.
- * - **Downgrade-safe.** A stored `v` greater than [VERSION] reads as [InkLibrary.EMPTY], and [update] then
+ * - **Downgrade-safe.** A stored `v` that is present but not [VERSION] (newer, or unreadable) reads as [InkLibrary.EMPTY], and [update] then
  *   writes nothing and returns an unchanged edit, so an older build never overwrites a newer build's inks.
- * - Undecodable data is already lost; the next write replaces it (refusing would leave the feature dead).
+ * - One bad hex drops only that ink or palette. Wholly undecodable data is already lost; the next write replaces
+ *   it (refusing would leave the feature dead).
  */
 public class DataStoreInkLibraryStore(
     private val dataStore: DataStore<Preferences>,
@@ -54,11 +58,17 @@ public class DataStoreInkLibraryStore(
     private fun decode(raw: String?): Decoded {
         if (raw == null) return Decoded(InkLibrary.EMPTY, false)
         return try {
-            val dto = JSON.decodeFromString<LibraryDto>(raw)
-            if (dto.v > VERSION) Decoded(InkLibrary.EMPTY, true) else Decoded(dto.toLibrary().sanitized(), false)
+            // A "v" that is present but is not exactly 1 (newer, 0, negative, a string) is a format we do
+            // not know: read as empty and never overwrite it. A missing "v" is plain garbage.
+            val v = (JSON.parseToJsonElement(raw) as? JsonObject)?.get("v")
+            if (v != null && (v as? JsonPrimitive)?.intOrNull != VERSION) {
+                Decoded(InkLibrary.EMPTY, true)
+            } else {
+                Decoded(JSON.decodeFromString<LibraryDto>(raw).toLibrary().sanitized(), false)
+            }
         } catch (_: SerializationException) {
             Decoded(InkLibrary.EMPTY, false)
-        } catch (_: IllegalArgumentException) { // InkHex rejects a bad hex
+        } catch (_: IllegalArgumentException) {
             Decoded(InkLibrary.EMPTY, false)
         }
     }
@@ -79,13 +89,19 @@ public class DataStoreInkLibraryStore(
         val open: Long? = null,
     ) {
         fun toLibrary(): InkLibrary = InkLibrary(
-            myInks = inks.map { MyInk(InkHex(it.hex), it.used) },
-            palettes = palettes.map { p -> InkPalette(p.id, p.name, p.inks.map(::InkHex)) },
+            // One bad hex drops only its own ink or palette, never the rest of the library.
+            myInks = inks.mapNotNull { i -> hexOrNull(i.hex)?.let { MyInk(it, i.used) } },
+            palettes = palettes.mapNotNull { p ->
+                val hexes = p.inks.map(::hexOrNull)
+                if (hexes.any { it == null }) null else InkPalette(p.id, p.name, hexes.filterNotNull())
+            },
             clock = clock,
             nextPaletteId = nextId,
             openPaletteId = open,
         )
     }
+
+    private fun hexOrNull(value: String): InkHex? = try { InkHex(value) } catch (_: IllegalArgumentException) { null }
 
     private fun InkLibrary.toDto() = LibraryDto(
         v = VERSION,
