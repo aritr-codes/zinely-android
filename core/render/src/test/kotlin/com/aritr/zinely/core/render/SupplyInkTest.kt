@@ -32,9 +32,10 @@ class SupplyInkTest {
         Probe("paper.hole", ink = listOf(0.125 to 0.5), bare = listOf(0.5 to 0.5)),
         Probe("shape.ring", ink = listOf(0.1 to 0.5, 0.5 to 0.9), bare = listOf(0.5 to 0.5)),
         Probe("fix.grommet", ink = listOf(0.1 to 0.5, 0.5 to 0.9), bare = listOf(0.5 to 0.5)),
-        // (0.06, 0.6) is level with the pocket, so it is ink only if the pocket's closing edge
-        // (u = 0.16) is counted; without it the ray crosses twice and the band reads as bare.
-        Probe("fix.corner", ink = listOf(0.06 to 0.6, 0.06 to 0.9, 0.5 to 0.95), bare = listOf(0.25 to 0.7, 0.9 to 0.2)),
+        // The A39 corner (ADR-139): the left and top bands, and the band below the pocket; bare in the pocket,
+        // past the hypotenuse, and at (0.01, 0.5), left of the paper — bare only if the outer contour's
+        // implicit closing edge (u = 0.5/24) is counted, or the ray crosses three times and reads as ink.
+        Probe("fix.corner", ink = listOf(0.06 to 0.3, 0.5 to 0.06, 0.3 to 0.6), bare = listOf(0.25 to 0.25, 0.9 to 0.9, 0.01 to 0.5)),
         Probe("mark.registration", ink = listOf(0.05 to 0.5, 0.5 to 0.28), bare = listOf(0.5 to 0.5, 0.15 to 0.15)),
         // The two hand-cut frames (v21-bench.html A32): band points, and the hole.
         Probe("paper.border", ink = listOf(0.05 to 0.5, 0.5 to 0.95), bare = listOf(0.5 to 0.5, 0.15 to 0.5)),
@@ -61,15 +62,19 @@ class SupplyInkTest {
     }
 
     @Test
-    fun `given the scope, then it is exactly the eight, each has an outline, and everything else is null`() {
+    fun `given the scope, then it is the named list, each has an outline, and everything else is null`() {
+        // SUPPLIES-SPEC H9 (ADR-139): the eight of A32, then v21-bench.html A39's holed ids, one family per
+        // change. The eight are probed by hand above; every holed id is probed from its own ink by
+        // `HitTestInkTest` (core:editor), and `SupplyHolesDerivedTest` checks the list against the geometry.
         assertEquals(
             setOf(
                 "paper.window", "paper.hole", "shape.ring", "fix.grommet", "fix.corner", "mark.registration",
                 "paper.border", "paper.round",
+                "fix.cornerb", "fix.grommetb", "fix.grommetc", "fix.needle", "tape.plaster", "fix.sticker",
             ),
             SupplyInk.IN_SCOPE,
         )
-        assertEquals(holed.map { it.id }.toSet(), SupplyInk.IN_SCOPE, "every in-scope piece is probed above")
+        assertTrue(holed.map { it.id }.toSet().all { it in SupplyInk.IN_SCOPE }, "every hand-probed piece is in scope")
         for (id in SupplyInk.IN_SCOPE) assertNotNull(SupplyCatalog.outlineOf(id), "$id has no outline")
 
         // Crop marks are out by ruling; the rest are out by not being named. Their centres are bare
@@ -113,7 +118,8 @@ class SupplyInkTest {
         // The window's left side (u = 0) and the corner's left side are both implicit closing edges. A
         // distance loop that skipped them would measure to the nearest authored edge instead.
         assertEquals(5.0, at("paper.window", -0.05, 0.5)!!, 1e-9, "5 pt left of the window")
-        assertEquals(5.0, at("fix.corner", -0.05, 0.6)!!, 1e-9, "5 pt left of the corner")
+        // The A39 corner (ADR-139) sits 0.5 of its 24 units in from the box edge (SUPPLIES-SPEC H4).
+        assertEquals(5.0 + 100.0 * 0.5 / 24.0, at("fix.corner", -0.05, 0.6)!!, 1e-9, "5 pt left of the box, beside the corner")
     }
 
     @Test
@@ -149,15 +155,15 @@ class SupplyInkTest {
 
     @Test
     fun `given a mirrored or flipped corner, then its ink moves and its box does not`() {
-        // (0.06, 0.9) is ink; its mirror image (0.94, 0.9) and its flip (0.06, 0.1)… the flip is the left
-        // band and stays ink, so the flip is probed with the bottom band instead.
-        assertEquals(0.0, at("fix.corner", 0.94, 0.9, mirrored = true))
-        assertTrue(at("fix.corner", 0.94, 0.9)!! > 0.0)
-        assertTrue(at("fix.corner", 0.06, 0.9, mirrored = true)!! > 0.0)
+        // (0.06, 0.3) is the left band; its mirror image (0.94, 0.3) is past the hypotenuse. The flip is
+        // probed with the top band, (0.5, 0.06), whose image (0.5, 0.94) is bare.
+        assertEquals(0.0, at("fix.corner", 0.94, 0.3, mirrored = true))
+        assertTrue(at("fix.corner", 0.94, 0.3)!! > 0.0)
+        assertTrue(at("fix.corner", 0.06, 0.3, mirrored = true)!! > 0.0)
 
-        assertEquals(0.0, at("fix.corner", 0.5, 0.05, flippedVertically = true))
-        assertTrue(at("fix.corner", 0.5, 0.05)!! > 0.0)
-        assertTrue(at("fix.corner", 0.5, 0.95, flippedVertically = true)!! > 0.0)
+        assertEquals(0.0, at("fix.corner", 0.5, 0.94, flippedVertically = true))
+        assertTrue(at("fix.corner", 0.5, 0.94)!! > 0.0)
+        assertTrue(at("fix.corner", 0.5, 0.06, flippedVertically = true)!! > 0.0)
     }
 
     @Test

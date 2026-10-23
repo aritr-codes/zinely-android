@@ -441,7 +441,7 @@ public object Copy {
     }
 
     /**
-     * **The thirty-four supplies** — the Zinely cabinet's current vocabulary
+     * **The supplies** (34 shipped; [ADR-139](../../../../../../../docs/DECISIONS.md#adr-139) wires the 124 of `v21-bench.html` A39) — the Zinely cabinet's current vocabulary
      * ([SUPPLIES-SPEC §4](../../../../../../../docs/design/SUPPLIES-SPEC.md),
      * [ADR-105](../../../../../../../docs/DECISIONS.md#adr-105) step S6). *Art* is the verb; Supplies is
      * the drawer (§1).
@@ -515,15 +515,32 @@ public object Copy {
          * remains familiar between openings.
          */
         public val BY_FAMILY: Map<String, Map<String, String>> = linkedMapOf(
+            // v21-bench.html A39 (ADR-139): each subject, then its variants, then the family's new subjects.
             TAPE_AND_FIXINGS to linkedMapOf(
                 "tape.torn" to "Torn tape",
+                "tape.tornb" to "Torn tape, long tear",
                 "fix.corner" to "Photo corner",
+                "fix.cornerb" to "Photo corner, sharp",
                 "fix.staple" to "Staple",
                 "fix.clip" to "Paper clip",
+                "fix.clipb" to "Paper clip, narrow",
+                "fix.clipc" to "Paper clip, slanted wire",
                 "tape.masking" to "Masking tape",
+                "tape.maskingb" to "Masking tape, wide",
                 "fix.stitch" to "Saddle stitch",
+                "fix.stitchb" to "Saddle stitch, thread",
+                "fix.stitchc" to "Saddle stitch, across fold",
                 "fix.grommet" to "Eyelet",
+                "fix.grommetb" to "Eyelet, flanged",
+                "fix.grommetc" to "Eyelet, wide bore",
                 "fix.pushpin" to "Push pin",
+                "fix.pushpinb" to "Push pin, tilted",
+                "fix.pushpinc" to "Push pin, upright",
+                "fix.pushpind" to "Push pin, drawn",
+                "fix.pushpine" to "Push pin, drawn tilted",
+                "fix.needle" to "Needle and thread",
+                "tape.plaster" to "Sticking plaster",
+                "fix.sticker" to "Sticker (peeling)",
             ),
             STAMPS_AND_MARKS to linkedMapOf(
                 "mark.asterisk" to "Star",
@@ -599,6 +616,23 @@ public object Copy {
             "shape.ring" to "ring circle hole shape",
             "paper.border" to "border frame thin edge scissors outline",
             "paper.round" to "round window hole circle frame porthole cutout",
+            // v21-bench.html A39 (ADR-139). A variant carries its subject's tags plus the words that set it apart.
+            "tape.tornb" to "tape torn strip sticky collage long tear",
+            "fix.cornerb" to "corner mount photo fixing sharp",
+            "fix.clipb" to "clip paper wire fixing narrow",
+            "fix.clipc" to "clip paper wire fixing slanted",
+            "tape.maskingb" to "masking tape clean sticky collage wide",
+            "fix.stitchb" to "saddle stitch binding thread",
+            "fix.stitchc" to "saddle stitch binding thread across fold",
+            "fix.grommetb" to "eyelet grommet hole binding flanged",
+            "fix.grommetc" to "eyelet grommet hole binding wide bore",
+            "fix.pushpinb" to "push pin tack fixing tilted",
+            "fix.pushpinc" to "push pin tack fixing upright",
+            "fix.pushpind" to "push pin tack fixing drawn",
+            "fix.pushpine" to "push pin tack fixing drawn tilted",
+            "fix.needle" to "needle thread sewing stitch binding",
+            "tape.plaster" to "sticking plaster bandage tape",
+            "fix.sticker" to "sticker peeling label sticky",
         )
 
         /** Stable, local name/tag search with an optional one-of-four family filter. */

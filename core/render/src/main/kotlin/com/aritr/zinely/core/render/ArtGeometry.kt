@@ -58,4 +58,48 @@ internal object ArtGeometry {
     /** One closed subpath of straight segments through [points], in order. */
     internal fun closed(vararg points: PtPoint): SupplyOutline =
         SupplyOutline(listOf(Subpath(points.first(), points.drop(1).map { Segment.LineTo(it) })))
+
+    /**
+     * An outline transcribed from a frozen sheet's SVG path (v21-bench.html A39, ADR-139), in the sheet's own
+     * 24-unit numbers: `m`, `l`, `c` and `z` are the absolute `M`, `L`, `C` and `Z`, each divided by 24 here
+     * so the source reads exactly like the frozen row it came from. `BenchArtSheetParityTest` holds every
+     * transcription to its row.
+     *
+     * Inline so each call is a flat run of statements (no lambda class per outline, no deep call chain).
+     */
+    internal inline fun path(draw: PathBuilder.() -> Unit): SupplyOutline = PathBuilder().apply(draw).build()
+
+    /** The pen behind [path]. A subpath ends at `z()` or at the next `m()`; closure is implicit (see [Subpath]). */
+    internal class PathBuilder {
+        private val subpaths = mutableListOf<Subpath>()
+        private val segments = mutableListOf<Segment>()
+        private var start: PtPoint? = null
+
+        private fun p(x: Double, y: Double) = PtPoint(x / 24.0, y / 24.0)
+
+        fun m(x: Double, y: Double) {
+            z()
+            start = p(x, y)
+        }
+
+        fun l(x: Double, y: Double) {
+            segments += Segment.LineTo(p(x, y))
+        }
+
+        fun c(x1: Double, y1: Double, x2: Double, y2: Double, x: Double, y: Double) {
+            segments += Segment.CubicTo(p(x1, y1), p(x2, y2), p(x, y))
+        }
+
+        fun z() {
+            val from = start ?: return
+            subpaths += Subpath(from, segments.toList())
+            segments.clear()
+            start = null
+        }
+
+        fun build(): SupplyOutline {
+            z()
+            return SupplyOutline(subpaths.toList())
+        }
+    }
 }

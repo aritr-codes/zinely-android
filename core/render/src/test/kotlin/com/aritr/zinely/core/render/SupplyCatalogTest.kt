@@ -29,9 +29,9 @@ class SupplyCatalogTest {
     private fun SupplyOutline.points(): List<PtPoint> =
         subpaths.flatMap { sub -> listOf(sub.start) + sub.segments.flatMap { it.points() } }
 
-    /** Shoelace over a subpath's on-curve points — zero means the contour encloses nothing. */
+    /** Shoelace over a subpath's flattened polygon (cubics sampled) — zero means the contour encloses nothing. */
     private fun Subpath.polygonArea(): Double {
-        val pts = listOf(start) + segments.map { it.to }
+        val pts = SupplyOutline(listOf(this)).polygons().single()
         return kotlin.math.abs(
             pts.indices.sumOf { i ->
                 val a = pts[i]
@@ -62,17 +62,24 @@ class SupplyCatalogTest {
         }
     }
 
+    /**
+     * The 17 shipped drawings the owner kept as picked in v21-bench.html A39 (ADR-139). They predate H4's
+     * margin, so they still fill their square on an axis; every other outline is drawn to H4.
+     */
+    private val keptAsShipped = setOf(
+        "fix.stitch", "fix.grommet", "fix.pushpin",
+        "mark.halftone", "mark.registration", "mark.crop", "mark.scan", "mark.perf", "mark.burst",
+        "paper.window", "paper.stub", "paper.stamp", "paper.deckle", "paper.hole", "paper.dogear",
+        "paper.border", "paper.round",
+    )
+
     @Test
-    fun `given every catalogue outline, when its extent is measured, then it fills the square on an axis`() {
+    fun `given every kept shipped outline, when its extent is measured, then it fills the square on an axis`() {
         // A supply authored small inside its square would land smaller than the maker asked for, and
-        // the maker would have no way to tell the outline from the box. So both axes must have real
-        // extent and at least one must run edge to edge.
-        //
-        // Only *one* axis, because `shape.rule` is deliberately a centred band with air above and
-        // below (see ShapeArt.RULE) — the margin is the whole difference between a rule and a
-        // rectangle. Requiring both axes would forbid the one supply that has a reason to say no.
-        for ((id, outline) in SupplyCatalog.OUTLINES) {
-            val pts = outline.points()
+        // the maker would have no way to tell the outline from the box. Only *one* axis, because a wide
+        // piece (Perforation, Ticket stub) has air above and below by design.
+        for (id in keptAsShipped) {
+            val pts = SupplyCatalog.outlineOf(id)!!.points()
             val spanX = pts.maxOf { it.x } - pts.minOf { it.x }
             val spanY = pts.maxOf { it.y } - pts.minOf { it.y }
             assertTrue(spanX > 0.0 && spanY > 0.0, "$id is degenerate on an axis (${spanX}x$spanY)")
@@ -84,12 +91,39 @@ class SupplyCatalogTest {
                 "paper.dogear" -> 20.0 / 24.0
                 else -> 1.0
             }
-            assertEquals(
-                expectedSpan,
-                maxOf(spanX, spanY),
-                1e-9,
-                "$id fills neither axis of its square — it would render smaller than its own box",
+            assertEquals(expectedSpan, maxOf(spanX, spanY), 1e-9, "$id fills neither axis of its square")
+        }
+    }
+
+    /**
+     * Shipped ids whose A39 redraw lands with its family's change (R-A7 (5)); until then they keep the shipped
+     * drawing. ⚠ Temporary: empty once the four family changes are in, and then deleted.
+     */
+    private val redrawPending = setOf(
+        "mark.asterisk", "mark.arrow", "mark.hand", "mark.bar",
+        "paper.strip", "paper.tag", "paper.underline",
+        "shape.rect", "shape.circle", "shape.triangle", "shape.rule", "shape.ring",
+    )
+
+    @Test
+    fun `given every outline drawn to H4, when its extent is measured, then it sits in the margin at its class size`() {
+        // SUPPLIES-SPEC H4 (G3): nothing crosses the 0.5-unit margin, control points included, and each
+        // piece is as large as its class allows: square about 21 units across, round 22.5, points and line
+        // 23. No class is smaller than about 21, so no piece drawn to H4 spans less than 20 of its 24 units.
+        val margin = 0.5 / 24.0
+        for ((id, outline) in SupplyCatalog.OUTLINES) {
+            if (id in keptAsShipped || id in redrawPending) continue
+            val pts = outline.points()
+            val minX = pts.minOf { it.x }
+            val minY = pts.minOf { it.y }
+            val maxX = pts.maxOf { it.x }
+            val maxY = pts.maxOf { it.y }
+            assertTrue(
+                minOf(minX, minY) >= margin - 1e-9 && maxOf(maxX, maxY) <= 1.0 - margin + 1e-9,
+                "$id crosses H4's 0.5-unit margin ($minX, $minY)..($maxX, $maxY)",
             )
+            val span = maxOf(maxX - minX, maxY - minY) * 24.0
+            assertTrue(span >= 20.0 - 1e-9, "$id spans $span of 24 units, under every H4 class size")
         }
     }
 
@@ -108,8 +142,8 @@ class SupplyCatalogTest {
                     "$id has a subpath of ${sub.segments.size} segment(s) — with implicit closure that fills nothing",
                 )
                 // …and a segment count is not an area: three collinear points pass the check above and
-                // still enclose nothing. Measured on the on-curve points, so a curved contour is
-                // under-counted, never over-counted — the assertion stays conservative.
+                // still enclose nothing. Measured on the flattened curve, so a dot drawn as two cubics
+                // (whose on-curve points are collinear) is measured as the disc it is.
                 assertTrue(
                     sub.polygonArea() > 1e-6,
                     "$id has a subpath enclosing no area (${sub.polygonArea()}) — that is a stroke, not a fill",
@@ -149,7 +183,7 @@ class SupplyCatalogTest {
     }
 
     @Test
-    fun `given the frozen expanded cabinet, when catalogue keys are read, then all thirty four are authored`() {
+    fun `given the frozen expanded cabinet, when catalogue keys are read, then every named supply is authored`() {
         assertEquals(
             Copy.Supplies.NAMES.keys,
             SupplyCatalog.OUTLINES.keys,
@@ -158,49 +192,56 @@ class SupplyCatalogTest {
         for (id in Copy.Supplies.NAMES.keys) assertNotNull(SupplyCatalog.outlineOf(id), "$id has no mark")
     }
 
+    /**
+     * The four shipped holed drawings kept as picked whose hole runs the same way as their paper (A39: they
+     * "still fill differently under non-zero, which is harmless: the renderer fills even-odd").
+     * `SupplyOutlineRingTest` pins why a same-direction ring must stay expressible.
+     */
+    private val sameDirectionRings = setOf("mark.registration", "paper.window", "paper.border", "paper.round")
+
+    /** Winding number of [polygons] about ([x], [y]), by a ray cast to `+x`. */
+    private fun winding(polygons: List<List<PtPoint>>, x: Double, y: Double): Int {
+        var w = 0
+        for (poly in polygons) for (i in poly.indices) {
+            val a = poly[i]
+            val b = poly[(i + 1) % poly.size]
+            if ((a.y <= y) != (b.y <= y) && a.x + (y - a.y) / (b.y - a.y) * (b.x - a.x) > x) {
+                w += if (b.y > a.y) 1 else -1
+            }
+        }
+        return w
+    }
+
+    /** How many of an [n]×[n] grid's samples (offset off the 0.01 lattice) fill differently under the two rules. */
+    private fun disagreements(outline: SupplyOutline, n: Int): Int {
+        val polygons = outline.polygons()
+        return (0 until n * n).count { k ->
+            val x = (k % n + 0.437) / n
+            val y = (k / n + 0.391) / n
+            (winding(polygons, x, y) != 0) != outline.isInked(x, y)
+        }
+    }
+
     @Test
-    fun `given the multi-subpath outlines, when their subpaths are compared, then none overlaps another`() {
-        // §4.1 rule 4 — "free of winding-dependent self-intersection" — is called an authoring rule
-        // no assertion can see, and in general that is true. But the specific way it breaks here IS
-        // visible: under an even-odd fill two overlapping subpaths cancel to a HOLE rather than
-        // uniting, so a registration mark drawn as a full plus laid across a ring would punch a gap
-        // exactly where the mark is densest, and two kissing halftone dots would notch each other.
-        //
-        // Bounding boxes, not exact geometry: a box test can only be conservative for convex parts
-        // like these (every subpath here is a rectangle, a triangle or a circle), so a pass is a real
-        // pass. It cannot see a concave near-miss, which is why rule 4 still needs a reviewer.
+    fun `given every outline, when sampled, then even-odd and non-zero fill the same points`() {
+        // §4.1 rule 4 — "free of winding-dependent self-intersection". Where the two rules agree, overlapping
+        // subpaths (a crossbar laid across a ring, two kissing dots) cannot cancel to a hole the drawing did
+        // not mean, and a backend that dropped the fill rule still draws the same piece. This replaces a
+        // bounding-box overlap heuristic that could not see a concave or curved near-miss.
         for ((id, outline) in SupplyCatalog.OUTLINES) {
-            if (outline.subpaths.size < 2) continue
-            val boxes = outline.subpaths.map { sub ->
-                val pts = listOf(sub.start) + sub.segments.flatMap { it.points() }
-                listOf(pts.minOf { it.x }, pts.minOf { it.y }, pts.maxOf { it.x }, pts.maxOf { it.y })
-            }
-            for (i in boxes.indices) {
-                for (j in i + 1 until boxes.size) {
-                    val (aMinX, aMinY, aMaxX, aMaxY) = boxes[i]
-                    val b = boxes[j]
-                    // Nesting is the one legitimate overlap: a ring, a window and a photo corner are
-                    // *defined* by an inner subpath sitting wholly inside an outer one. That is the
-                    // hole even-odd is for. What must never happen is a partial crossing.
-                    //
-                    // ⚠ **The two branches are not equally strong, and the weaker one is named here
-                    // rather than papered over.** Disjoint bounding boxes really do imply disjoint
-                    // shapes, so that branch is conservative and a pass is a real pass. *Nested*
-                    // bounding boxes do **not** imply a nested shape — `fix.corner` is two triangles,
-                    // and an inner triangle poking through the outer hypotenuse would still have a
-                    // contained bbox and would still pass here. Rule 4 keeps its reviewer; what this
-                    // test buys is that the mistake anyone actually makes — a crossbar laid across a
-                    // ring — cannot reach the drawer.
-                    val nested = (aMinX <= b[0] && aMinY <= b[1] && aMaxX >= b[2] && aMaxY >= b[3]) ||
-                        (b[0] <= aMinX && b[1] <= aMinY && b[2] >= aMaxX && b[3] >= aMaxY)
-                    val disjoint = aMaxX <= b[0] || b[2] <= aMinX || aMaxY <= b[1] || b[3] <= aMinY
-                    assertTrue(
-                        nested || disjoint,
-                        "$id: subpaths $i and $j partially overlap — even-odd will cancel them to a " +
-                            "hole where the mark should be solid",
-                    )
-                }
-            }
+            if (id in sameDirectionRings) continue
+            val disagree = disagreements(outline, 160)
+            assertEquals(0, disagree, "$id: even-odd and non-zero disagree at $disagree of ${160 * 160} samples")
+        }
+    }
+
+    @Test
+    fun `given the same-direction rings, then non-zero really would fill them differently`() {
+        for (id in sameDirectionRings) {
+            assertTrue(
+                disagreements(SupplyCatalog.outlineOf(id)!!, 100) > 0,
+                "$id is listed as a same-direction ring but non-zero agrees with even-odd; drop it from the list",
+            )
         }
     }
 

@@ -169,14 +169,14 @@ public object SupplyProvenanceCatalog {
             "https://raw.githubusercontent.com/tabler/tabler-icons/v3.49.0/icons/outline/bandage.svg",
             "tabler/outline_bandage.svg",
             "dc9cda84c40ba9366e2115f04ae088d5b744e2edb62c3165ee3b2ede3e2fc5db",
-            "Stroke outlined at width 2.5; zero-length dot lines became discs.",
+            "Stroke outlined at width 2.5; zero-length dot lines became discs; D-131: dots 2.02 wide, spread to 1.5 gaps.",
         ),
         imported(
             "fix.sticker", ArtSet.TABLER,
             "https://raw.githubusercontent.com/tabler/tabler-icons/v3.49.0/icons/outline/sticker.svg",
             "tabler/outline_sticker.svg",
             "a62fe7bc181ca2453f5d220a7094dfeeddb01233982c27a19a4b553a7f919a99",
-            "Stroke outlined at width 2.5.",
+            "Stroke outlined at width 2.5; D-131: the peel corners' micro-segments merged into one smooth arc each.",
         ),
         redrawn("mark.asterisk"),
         imported(

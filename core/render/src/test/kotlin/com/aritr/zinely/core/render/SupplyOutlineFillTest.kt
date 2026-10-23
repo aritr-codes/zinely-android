@@ -141,8 +141,9 @@ class SupplyOutlineFillTest {
         // Without its hole this supply is `shape.triangle`, which already ships. The hole IS the supply.
         probe(
             "fix.corner",
-            inked = listOf(0.06 to 0.9, 0.5 to 0.95),
-            bare = listOf(0.25 to 0.7, 0.9 to 0.2),
+            // The A39 corner (ADR-139): a pocket in the top-left, open along the hypotenuse.
+            inked = listOf(0.06 to 0.3, 0.5 to 0.06),
+            bare = listOf(0.25 to 0.25, 0.9 to 0.9),
         )
     }
 
@@ -150,8 +151,9 @@ class SupplyOutlineFillTest {
     fun `given the staple, when between its legs is probed, then the crown is not a solid block`() {
         probe(
             "fix.staple",
-            inked = listOf(0.5 to 0.35, 0.05 to 0.8, 0.95 to 0.8),
-            bare = listOf(0.5 to 0.8, 0.5 to 0.1),
+            // The A39 staple (ADR-139): crown at 7.2..9.7 of 24, legs down to 18.95.
+            inked = listOf(0.5 to 0.35, 0.09 to 0.6, 0.92 to 0.6),
+            bare = listOf(0.5 to 0.6, 0.5 to 0.1),
         )
     }
 

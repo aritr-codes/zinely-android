@@ -11,12 +11,21 @@ import org.junit.jupiter.api.Test
 class SupplyCatalogSnapshotTest {
     private fun lines(text: String) = text.trim().lines().sorted()
 
+    /**
+     * The shipped ids whose drawing ADR-139 changes (ADR-132 *As built*, v21-bench.html A39), wired one family
+     * per change: these are held by `SupplyRedrawBoundsTest` (old ink box) and `BenchArtSheetParityTest` (A39
+     * row) instead. Every other shipped id must still draw exactly as it did. Grows to the 17 redraws, no more.
+     */
+    private val redrawn = setOf("tape.torn", "fix.corner", "fix.staple", "fix.clip", "tape.masking")
+
     @Test
     fun `given the pre-split snapshot, when OUTLINES is serialised, then every id and coordinate is identical`() {
         val baseline = javaClass.getResource("/supply-outlines-v0.txt")!!.readText()
         // Restricted to the shipped ids (supply-id-baseline.txt) so later families can add ids without editing this.
         val ids = javaClass.getResource("/supply-id-baseline.txt")!!.readText().lines().map { it.trim() }.filter { it.isNotEmpty() }.toSet()
         assertEquals(34, ids.size, "the baseline is the 34 shipped ids")
-        assertEquals(lines(baseline), lines(SupplyCatalogSnapshot.serialize(SupplyCatalog.OUTLINES.filterKeys { it in ids })))
+        val kept = ids - redrawn
+        val baselineKept = lines(baseline).filter { line -> line.substringBefore("|") in kept }
+        assertEquals(baselineKept, lines(SupplyCatalogSnapshot.serialize(SupplyCatalog.OUTLINES.filterKeys { it in kept })))
     }
 }

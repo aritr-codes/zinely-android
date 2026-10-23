@@ -60,8 +60,8 @@ class SuppliesCopyTest {
     fun `the first expanded cabinet is present, named, and mutually distinct`() {
         val names = Copy.Supplies.NAMES.values.toList()
         assertEquals(
-            34, Copy.Supplies.NAMES.size,
-            "ADR-107 admits sixteen additions to the original sixteen; v21-bench.html A32 adds two frames",
+            Copy.Supplies.BY_FAMILY.values.sumOf { it.size }, Copy.Supplies.NAMES.size,
+            "a supply id is filed under exactly one family",
         )
         names.forEach { assertTrue(it.isNotBlank(), "A supply with no name cannot be spoken or drawn") }
         assertEquals(
@@ -95,7 +95,9 @@ class SuppliesCopyTest {
             assertTrue(SUPPLY_ID.matches(it), "supplyId \"$it\" does not match ${SUPPLY_ID.pattern} (§2.2)")
         }
         assertEquals(ids.size, ids.toSet().size, "Duplicate supplyId: ${ids.groupBy { it }.filterValues { g -> g.size > 1 }.keys}")
-        assertEquals(SPEC_IDS, ids, "The shipped ids are not SUPPLIES-SPEC §4's, in §4's order")
+        // Ids are add-only (ADR-139): every shipped id is still here, and A39's new ids sit after their
+        // subject's holder, so the shipped ids keep §4's relative order.
+        assertEquals(SPEC_IDS, ids.filter { it in SPEC_IDS }, "The shipped ids are not SUPPLIES-SPEC §4's, in §4's order")
     }
 
     @Test
@@ -110,7 +112,8 @@ class SuppliesCopyTest {
             Copy.Supplies.BY_FAMILY.keys.toList(),
             "SUPPLIES-SPEC §4 freezes four families (v21-bench.html:831)",
         )
-        assertEquals(listOf(8, 10, 11, 5), Copy.Supplies.BY_FAMILY.values.map { it.size })
+        // Tape & fixings carries v21-bench.html A39's 24 (ADR-139); the other three are wired one family per change.
+        assertEquals(listOf(24, 10, 11, 5), Copy.Supplies.BY_FAMILY.values.map { it.size })
     }
 
     @Test
@@ -118,7 +121,7 @@ class SuppliesCopyTest {
         assertEquals(listOf("mark.asterisk", "mark.burst"), Copy.Supplies.matchingIds("star"))
         assertEquals(listOf("mark.hand"), Copy.Supplies.matchingIds("manicule"))
         assertEquals(
-            listOf("tape.torn", "tape.masking"),
+            listOf("tape.torn", "tape.tornb", "tape.masking", "tape.maskingb", "tape.plaster"),
             Copy.Supplies.matchingIds("tape", Copy.Supplies.TAPE_AND_FIXINGS),
         )
         assertTrue(Copy.Supplies.matchingIds("not in this cabinet").isEmpty())

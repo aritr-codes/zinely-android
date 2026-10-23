@@ -197,26 +197,29 @@ class HitTestInkTest {
 
     @Test
     fun `a rotated photo corner - the ink turns with it`() {
-        // 90° clockwise about the centre (100, 100): local (x, y) → (−y, x). The bottom band's (0.5, 0.95)
-        // is local (0, 45) and lands at page (55, 100); where it used to be is now the empty half.
+        // 90° clockwise about the centre (100, 100): local (x, y) → (−y, x). The A39 corner (ADR-139) has its
+        // pocket top-left: the top band's (0.5, 0.06) is local (0, −44) and lands at page (144, 100), which
+        // unrotated is past the hypotenuse; the left band at (56, 100) turns onto the bare bottom half.
         val p = page(photo(), piece("fix.corner", rot = 90.0))
-        assertEquals("fix.corner", HitTest.topmostAt(p, PtPoint(55.0, 100.0)))
-        assertEquals("photo", HitTest.topmostAt(p, PtPoint(100.0, 145.0)))
-        assertEquals("fix.corner", HitTest.topmostAt(page(photo(), piece("fix.corner")), PtPoint(100.0, 145.0)))
+        val upright = page(photo(), piece("fix.corner"))
+        assertEquals("fix.corner", HitTest.topmostAt(p, PtPoint(144.0, 100.0)))
+        assertEquals("photo", HitTest.topmostAt(upright, PtPoint(144.0, 100.0)))
+        assertEquals("photo", HitTest.topmostAt(p, PtPoint(56.0, 100.0)))
+        assertEquals("fix.corner", HitTest.topmostAt(upright, PtPoint(56.0, 100.0)))
     }
 
     @Test
     fun `a mirrored photo corner - the ink swaps sides`() {
         val p = page(photo(), piece("fix.corner", mirrored = true))
-        assertEquals("fix.corner", HitTest.topmostAt(p, unit(0.94, 0.9)))
-        assertEquals("photo", HitTest.topmostAt(p, unit(0.06, 0.9)))
+        assertEquals("fix.corner", HitTest.topmostAt(p, unit(0.94, 0.3)))
+        assertEquals("photo", HitTest.topmostAt(p, unit(0.06, 0.3)))
     }
 
     @Test
     fun `a vertically flipped photo corner - the ink swaps ends`() {
         val p = page(photo(), piece("fix.corner", flipped = true))
-        assertEquals("fix.corner", HitTest.topmostAt(p, unit(0.5, 0.05)))
-        assertEquals("photo", HitTest.topmostAt(p, unit(0.5, 0.95)))
+        assertEquals("fix.corner", HitTest.topmostAt(p, unit(0.5, 0.94)))
+        assertEquals("photo", HitTest.topmostAt(p, unit(0.5, 0.06)))
     }
 
     // — 12: everything else keeps its box —
