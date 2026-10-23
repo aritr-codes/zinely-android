@@ -126,7 +126,7 @@ current failure. `Colophon` remains the architectural small-press term, but it i
 - Shelf action: **"About"**
 - Title and pane title: **"About Zinely"**
 - Credits row: **"Licences & credits"** / **"Open-source notices"**
-- Credits introduction: **"Zinely uses a few open-source typefaces. Their licence notices live here."**
+- Credits introduction: **"Zinely uses a few open-source typefaces and Art sets. Their licence notices live here."** (Art added by ADR-139, `v21-colophon.html` A39)
 - Credits Back label: **"Back to About Zinely"**
 - Licence Back label: **"Back to Licences & credits"**
 - Paper heading and explanation: **"Paper for new zines"** / **"We’ll suggest this paper when you start. You

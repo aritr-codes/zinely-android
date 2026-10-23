@@ -1288,7 +1288,9 @@ public object Copy {
         public const val CREDITS: String = "Licences & credits"
         public const val CREDITS_SUMMARY: String = "Open-source notices"
         public const val CREDITS_INTRO: String =
-            "Zinely uses a few open-source typefaces. Their licence notices live here."
+            "Zinely uses a few open-source typefaces and Art sets. Their licence notices live here."
+        public const val ART_HEADING: String = "Art"
+        public const val ART_LICENCE_TITLE: String = "Art licence"
         public const val LICENCE_ACTION: String = "Read font licence"
         public const val LICENCE_TITLE: String = "Font licence"
         public const val HOW_IT_WORKS: String = "Your zines stay yours"
@@ -1299,8 +1301,15 @@ public object Copy {
         public const val BACK_TO_COLOPHON: String = "Back to About Zinely"
         public const val BACK_TO_CREDITS: String = "Back to Licences & credits"
         public const val LICENCE_UNAVAILABLE: String = "This font licence couldn’t be opened."
+        public const val ART_LICENCE_UNAVAILABLE: String = "This Art licence couldn’t be opened."
         public const val PAPER_SAVE_FAILED: String = "Couldn’t save that paper choice."
         public fun licenceButton(family: String): String = "$family, $LICENCE_ACTION"
+
+        /** The Art credit row's second line: "13 Art pieces · CC0 1.0 · Khushmeen Sidhu" (v21-colophon A39). */
+        public fun artSetSummary(pieces: Int, licence: String, holder: String): String =
+            (if (pieces == 1) "1 Art piece" else "$pieces Art pieces") + " · $licence · $holder"
+
+        public fun artLicenceButton(title: String, summary: String): String = "$title, $summary"
         public fun paperSelected(paper: String): String = "$paper is now your default paper"
     }
 

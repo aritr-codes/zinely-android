@@ -96,7 +96,7 @@ The user arrives asking: **“What is Zinely, how is it made, and what small def
 | Choices | `A4` · `US Letter` |
 | Paper explanation | `We’ll suggest this paper when you start. You can always choose the other one.` |
 | Main credits row | `Licences & credits` · `Open-source notices` |
-| Credits introduction | `Zinely uses a few open-source typefaces. Their licence notices live here.` |
+| Credits introduction | `Zinely uses a few open-source typefaces and Art sets. Their licence notices live here.` (Art added by [ADR-139](DECISIONS.md#adr-139), frozen in `v21-colophon.html` A39; Art rows and the `Art` / `Art licence` labels live there) |
 | Typeface rows | `Averia Sans Libre` · `Fraunces` · `Inter` |
 | Licence row / child labels | `Read font licence` · `Font licence` |
 | Privacy heading | `Your zines stay yours` |

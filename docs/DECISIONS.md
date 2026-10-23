@@ -16914,7 +16914,12 @@ licences and its rule that credit never goes in the PDF; ADR-124's three passes 
   `shape.rect` as a box-filling fixture are restated in the Cut shapes wiring commit.
 - Every Art and Decor golden re-records on CI, reading each diff first. The release notes announce the redraw
   (ADR-136 decision 3) and say that an older build draws the 90 new ids as nothing.
-- Licences & credits gains an Art section, frozen first as the `v21-colophon.html` A39 amendment.
+- Licences & credits gains an Art section, frozen first as the `v21-colophon.html` A39 amendment. *As built
+  (Art 3):* `SupplyProvenance` and `ArtSet` in `:core:render` carry a kind for all 124 ids (67 drawn, 17 redrawn,
+  40 imported) and, for each import, the upstream URL at the pin, retrieval date, modification and sha256;
+  `SupplyProvenanceTest` checks them against the byte-identical upstream SVGs and licence texts kept as test
+  resources (`core/render/src/test/resources/art-provenance/`, never in the APK) and against both frozen HTML
+  files. The six notices ship as `assets/licences/art/<set>.txt`, and `ColophonScreen` lists the sets from `ArtSet`.
 - Each family's sheet length at 360dp, computed in A39: Tape & fixings 3.0 screens, Stamps & marks 4.7, Cut paper
   5.4, Cut shapes 2.2 (today 0.8 to 1.5).
 
