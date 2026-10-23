@@ -28,7 +28,7 @@ internal fun inkColourWords(name: InkColourName): String {
 }
 
 private fun hueWord(word: InkHueWord?): String =
-    when (requireNotNull(word) { "a hue or tinted-grey name carries a hue word" }) {
+    when (requireNotNull(word) // a HUE or TINTED_GREY name always carries a hue word (InkColourName)) {
         InkHueWord.RED -> Copy.InkName.RED
         InkHueWord.ORANGE -> Copy.InkName.ORANGE
         InkHueWord.YELLOW -> Copy.InkName.YELLOW
