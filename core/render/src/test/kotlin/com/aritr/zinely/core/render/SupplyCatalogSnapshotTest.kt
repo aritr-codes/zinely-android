@@ -15,7 +15,8 @@ class SupplyCatalogSnapshotTest {
     fun `given the pre-split snapshot, when OUTLINES is serialised, then every id and coordinate is identical`() {
         val baseline = javaClass.getResource("/supply-outlines-v0.txt")!!.readText()
         // Restricted to the shipped ids (supply-id-baseline.txt) so later families can add ids without editing this.
-        val ids = javaClass.getResource("/supply-id-baseline.txt")!!.readText().lines().filter { it.isNotBlank() }.toSet()
+        val ids = javaClass.getResource("/supply-id-baseline.txt")!!.readText().lines().map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+        assertEquals(34, ids.size, "the baseline is the 34 shipped ids")
         assertEquals(lines(baseline), lines(SupplyCatalogSnapshot.serialize(SupplyCatalog.OUTLINES.filterKeys { it in ids })))
     }
 }

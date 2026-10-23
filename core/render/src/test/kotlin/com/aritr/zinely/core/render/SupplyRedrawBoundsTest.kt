@@ -56,8 +56,8 @@ class SupplyRedrawBoundsTest {
 
     @Test
     fun `given the 34 shipped boxes, when listed, then they are exactly the baseline ids`() {
-        val baseline = javaClass.getResource("/supply-id-baseline.txt")!!.readText().lines().filter { it.isNotBlank() }
-        assertTrue(shipped.keys == baseline.toSet(), "literal boxes and baseline ids differ")
+        val baseline = javaClass.getResource("/supply-id-baseline.txt")!!.readText().lines().map { it.trim() }.filter { it.isNotEmpty() }
+        org.junit.jupiter.api.Assertions.assertEquals(baseline.toSet(), shipped.keys, "literal boxes and baseline ids differ")
     }
 
     @Test
