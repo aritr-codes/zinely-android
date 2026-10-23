@@ -13,6 +13,8 @@ import com.aritr.zinely.core.data.storage.DocumentSnapshotProvider
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Intent as EditorIntent
 import com.aritr.zinely.core.editor.cascadedPlacement
+import com.aritr.zinely.core.editor.ink.InkLibrary
+import com.aritr.zinely.core.editor.ink.InkLibraryEdit
 import com.aritr.zinely.core.imposition.Imposer
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.PtSize
@@ -20,6 +22,8 @@ import com.aritr.zinely.data.android.EditorAutosaveBinder
 import com.aritr.zinely.data.android.SaveFailureSink
 import com.aritr.zinely.data.android.di.EditorAutosaveBinderFactory
 import com.aritr.zinely.data.android.prefs.EditorOnboardingStore
+import com.aritr.zinely.data.android.prefs.InkLibraryStore
+import com.aritr.zinely.feature.editor.Announcer
 import com.aritr.zinely.home.BUSY_MESSAGE
 import com.aritr.zinely.feature.editor.AutosaveSink
 import com.aritr.zinely.feature.editor.DefaultEditorEffectRunner
@@ -30,6 +34,7 @@ import com.aritr.zinely.feature.editor.SavedSignal
 import com.aritr.zinely.render.android.AssetBytesSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.async
 import java.io.File
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -117,6 +122,7 @@ internal class EditorViewModel @Inject constructor(
     private val imageDecoder: ImportMasterDecoder,
     private val onboardingStore: EditorOnboardingStore,
     private val shareInbox: ShareInbox,
+    private val inkLibraryStore: InkLibraryStore,
     @param:AssetsDir private val assetsDir: File,
     // @param: pins the qualifier to the constructor value parameter (what Dagger reads) and opts out of
     // the KT-73255 default-target migration warning — same convention as EditorAutosaveBinderFactory.
@@ -270,6 +276,21 @@ internal class EditorViewModel @Inject constructor(
     fun markReframeCoachSeen() {
         viewModelScope.launch { onboardingStore.markReframeCoachSeen() }
     }
+
+    /**
+     * My inks and My palettes ([ADR-138](../../../../../../../docs/DECISIONS.md#adr-138)), app-wide: `null`
+     * until the store's first value, so the tray can tell "not loaded" from "empty".
+     */
+    val inkLibrary: StateFlow<InkLibrary?> =
+        inkLibraryStore.library.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
+
+    /**
+     * Applies [transform] to the stored library and returns its before and after (the caller offers Undo by
+     * restoring `before`). Invariant: the write runs in [viewModelScope], not the caller's scope, so a screen
+     * leaving mid-write cancels only its wait, never the write (ADR-138 decision 8).
+     */
+    suspend fun editInkLibrary(transform: (InkLibrary) -> InkLibrary): InkLibraryEdit =
+        viewModelScope.async { inkLibraryStore.update(transform) }.await()
 
     init {
         viewModelScope.launch(mainDispatcher) {

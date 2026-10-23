@@ -19,6 +19,10 @@ import com.aritr.zinely.data.android.AutosaveCoordinatorFactory
 import com.aritr.zinely.data.android.InMemorySaveFailureSink
 import com.aritr.zinely.data.android.di.EditorAutosaveBinderFactory
 import com.aritr.zinely.data.android.prefs.EditorOnboardingStore
+import kotlinx.coroutines.flow.MutableStateFlow
+import com.aritr.zinely.data.android.prefs.InkLibraryStore
+import com.aritr.zinely.core.editor.ink.InkLibraryEdit
+import com.aritr.zinely.core.editor.ink.InkLibrary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.flowOf
@@ -275,6 +279,7 @@ class ShareInDrainTest {
             imageDecoder = ImportMasterDecoder(context.contentResolver),
             onboardingStore = SeenOnboardingStore(),
             shareInbox = inbox,
+            inkLibraryStore = FakeInkLibraryStore(),
             assetsDir = File(context.cacheDir, "assets").apply { mkdirs() },
             mainDispatcher = dispatcher,
             ioDispatcher = dispatcher,
@@ -337,5 +342,12 @@ class ShareInDrainTest {
         override val reframeCoachSeen = flowOf(true)
         override suspend fun markMoveResizeHintSeen() = Unit
         override suspend fun markReframeCoachSeen() = Unit
+    }
+
+    /** No ink library in this test; the seam is constructed, never driven (ADR-138). */
+    private class FakeInkLibraryStore : InkLibraryStore {
+        override val library = MutableStateFlow(InkLibrary.EMPTY)
+        override suspend fun update(transform: (InkLibrary) -> InkLibrary) =
+            InkLibraryEdit(library.value, transform(library.value)).also { library.value = it.after }
     }
 }

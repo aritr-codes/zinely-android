@@ -1,5 +1,7 @@
 package com.aritr.zinely.feature.editor
 
+import com.aritr.zinely.core.editor.ink.InkLibrary
+import com.aritr.zinely.core.editor.ink.InkLibraryEdit
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -194,6 +196,13 @@ internal val LocalReframePhotoLoader = staticCompositionLocalOf { ProductionRefr
  *   screen without a proof destination (previews/tests) is unchanged; the app passes a navigate action.
  * @param onBack the way back to My Shelf from the status strip (`v21-bench.html` A42, D-143): the same pop the
  *   system Back does from an idle Bench. Autosave has already run, so nothing asks first. Defaults to a no-op.
+ * @param inkLibrary My inks and My palettes ([ADR-138](../DECISIONS.md#adr-138)), hoisted from the app's
+ *   `InkLibraryStore`. `null` = not loaded yet: the Ink tray draws My palettes and My inks only when this is
+ *   non-null, and every write is a transform through [onEditInkLibrary], so nothing loaded late is overwritten.
+ *   Defaults to an empty, loaded library (previews/tests).
+ * @param onEditInkLibrary applies a transform to the stored library and returns its before and after; the
+ *   caller offers Undo by restoring `before`. The app runs the write in the ViewModel's scope, so leaving the
+ *   screen cannot cancel it. Defaults to a no-op that changes nothing.
  */
 @Composable
 public fun EditorScreen(
@@ -214,6 +223,9 @@ public fun EditorScreen(
     onRetrySaveError: () -> Unit = {},
     onPreview: (() -> Unit)? = null,
     onBack: () -> Unit = {},
+    inkLibrary: InkLibrary? = InkLibrary.EMPTY,
+    onEditInkLibrary: suspend ((InkLibrary) -> InkLibrary) -> InkLibraryEdit =
+        { InkLibraryEdit(InkLibrary.EMPTY, InkLibrary.EMPTY) },
 ) {
     val uiState by store.uiState.collectAsStateWithLifecycle()
     val dispatch: (Intent) -> Unit = store::dispatch
