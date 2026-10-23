@@ -8191,7 +8191,7 @@ second reviewer, could not sign in.
 | **Artifacts** | `docs/design/mockups/v21-proof.html` (`.pcount`, `.ready .rl span`, `.btn-save small`, `.sect`, `.mp`, `.cutlbl`, `.stepno`, `.legend`, `.foldnow`, `.cellno`) · `feature/editor/.../ProofScreen.kt`, `ProofPrint.kt`, `ProofSheet.kt`, `ProofFold.kt` |
 | **Found** | W1 lane plan, item 13 (2026-10-22), from ADR-136 row W1 |
 | **Severity** | Legibility: the step counter, the fold legend, the cut tag and the section labels in Print details are 9.5–11.8sp on a screen the maker reads while holding paper |
-| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-proof.html` A44](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 9 Built by W1 Task 9 (`ProofTypeFloorTest`). |
+| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-proof.html` A44](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 9 (`ProofTypeFloorTest`). |
 
 | # | Finding | Outcome |
 |---|---|---|
@@ -8206,7 +8206,7 @@ second reviewer, could not sign in.
 | **Artifacts** | `docs/design/mockups/v21-proof.html` · `docs/design/v1/proof.html` (lines 73–74, "NO new error state") · `ExportViewModel.kt` (`:92`, `couldNotStart`) · `ZinelyNavHost.kt` (`ProofDestination`) · `ProofScreen.kt` (`ProofErrorPane`) · `core/copy/.../Copy.kt` (`Copy.Proof`) |
 | **Found** | W1 lane plan, items 7, 7b and 8 (2026-10-22), from ADR-136 row W1; the "Don't ask again" gap was recorded as a beta.5 Known Limitation in [ADR-054](../DECISIONS.md#adr-054) decision 8 |
 | **Severity** | Recovery: a maker out of space, out of memory or refused Storage reads the same "try once more" and cannot tell what to change. After "Don't ask again", Try again does nothing visible and nothing leads to Settings. After a save the band has no Share |
-| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-proof.html` A43](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 8 Built by W1 Task 8 (`ExportFailure`, `ProofErrorPane`). |
+| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-proof.html` A43](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 8 (`ExportFailure`, `ProofErrorPane`). |
 
 | # | Finding | Outcome |
 |---|---|---|
