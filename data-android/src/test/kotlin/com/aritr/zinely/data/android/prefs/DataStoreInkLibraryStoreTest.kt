@@ -130,4 +130,39 @@ class DataStoreInkLibraryStoreTest {
 
         assertEquals(edit.after, store.library.first())
     }
+
+    @Test
+    fun given_one_bad_hex_among_good_when_read_then_only_that_ink_is_dropped() = runTest {
+        val store = DataStoreInkLibraryStore(
+            storedWith(
+                """{"v":1,"inks":[{"hex":"2a9d8f","used":1},{"hex":"E76F51","used":2}],"palettes":[],"clock":2,"nextId":1,"open":null}""",
+            ),
+        )
+
+        assertEquals(listOf(InkHex("E76F51")), store.library.first().myInks.map { it.hex })
+    }
+
+    @Test
+    fun given_bad_hex_in_one_palette_when_read_then_other_palette_survives() = runTest {
+        val store = DataStoreInkLibraryStore(
+            storedWith(
+                """{"v":1,"inks":[],"palettes":[{"id":1,"name":"Bad","inks":["zzzzzz","E76F51"]},{"id":2,"name":"Good","inks":["2A9D8F","E76F51"]}],"clock":0,"nextId":3,"open":null}""",
+            ),
+        )
+
+        assertEquals(listOf("Good"), store.library.first().palettes.map { it.name })
+    }
+
+    @Test
+    fun given_unreadable_or_non_current_version_when_update_then_raw_value_untouched() = runTest {
+        for (v in listOf("0", "-1", "\"2\"", "2.5", "null")) {
+            val raw = """{"v":$v,"inks":[{"hex":"2A9D8F","used":1}],"palettes":[],"clock":1,"nextId":1,"open":null}"""
+            val fake = storedWith(raw)
+
+            val edit = DataStoreInkLibraryStore(fake).update { it.use(teal).library }
+
+            assertFalse(v, edit.changed)
+            assertEquals(v, raw, fake.data.first()[key])
+        }
+    }
 }
