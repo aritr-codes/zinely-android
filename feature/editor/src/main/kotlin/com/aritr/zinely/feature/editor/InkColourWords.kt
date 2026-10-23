@@ -46,20 +46,22 @@ internal fun hueWord(word: InkHueWord?): String =
         InkHueWord.BEIGE -> Copy.InkName.BEIGE
     }
 
-private fun Color.inkHex() = InkHex("%06X".format(java.util.Locale.ROOT, toArgb() and 0xFFFFFF))
+/** The six-digit hex of an opaque Compose colour (alpha dropped), as the ink library stores it. */
+internal fun Color.inkHex(): InkHex = InkHex("%06X".format(java.util.Locale.ROOT, toArgb() and 0xFFFFFF))
 
 /**
- * Prototype `inkName`, with one deliberate departure (task-5 brief: "the target's built-ins"): the prototype
- * searches the tints for every target, but a text target is not offered them, so for text a tint's hex is
- * only a colour and is worded ("light beige-grey"), not named ("Cream"). Otherwise a built-in's own name,
- * else the colour words.
- * Maker inks come before neutrals, as the prototype's `BUILT` does; `Ink` is in both with the same name.
+ * Prototype `inkName`: a built-in's own name (maker inks, neutrals, then the paper tints — `[...BUILT,
+ * ...TINTS]`), else the colour words. A tint is named by its tint for **every** target, text included
+ * (INK addendum R-I1), so "Ink · Cream. Pale in print: …" names what the maker tapped even where the tray
+ * does not offer tints. `Ink` is in both maker inks and neutrals with the same name.
+ *
+ * [kind] does not change the answer since R-I1; it stays in the signature (R-I2) so a target-specific
+ * rule can return without touching every caller.
  */
+@Suppress("UNUSED_PARAMETER")
 internal fun inkName(hex: InkHex, inks: ZinelyContentInks, kind: BenchVerbKind): String {
     inks.makerInks.firstOrNull { it.value.inkHex() == hex }?.let { return benchInkName(it.id) }
     inks.neutrals.firstOrNull { it.value.inkHex() == hex }?.let { return benchInkName(it.id) }
-    if (kind != BenchVerbKind.TEXT) {
-        inks.paperTints.firstOrNull { it.value.inkHex() == hex }?.let { return benchInkName(it.id) }
-    }
+    inks.paperTints.firstOrNull { it.value.inkHex() == hex }?.let { return benchInkName(it.id) }
     return inkColourWords(colourName(hex))
 }

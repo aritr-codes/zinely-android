@@ -84,9 +84,12 @@ class InkColourWordsTest {
         assertEquals("Slate", inkName(InkHex("5B5347"), inks, BenchVerbKind.TEXT))
     }
 
-    @Test fun `given a paper tint hex then only a target that takes paper names it`() {
-        assertEquals("light beige-grey", inkName(InkHex("F1E9D6"), inks, BenchVerbKind.TEXT))
+    // R-I1 (INK controller addendum): a tint hex is named by its tint for every target, text included, as
+    // the prototype's `inkName` does — so the pale-on-text snack reads "Ink · Cream. Pale in print: …".
+    @Test fun `given a paper tint hex when named for any target then the tint's own name wins`() {
+        assertEquals("Cream", inkName(InkHex("F1E9D6"), inks, BenchVerbKind.TEXT))
         assertEquals("Cream", inkName(InkHex("F1E9D6"), inks, BenchVerbKind.DECOR))
+        assertEquals("Kraft", inkName(InkHex("E4D3B4"), inks, BenchVerbKind.TEXT))
     }
 
     @Test fun `given a hex that is no built-in then the colour words name it`() {
