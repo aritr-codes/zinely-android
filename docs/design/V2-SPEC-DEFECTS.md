@@ -8284,7 +8284,6 @@ became "Dog-ear page" and "Long ticks" became "Long crop ticks" (table below is 
 | `shape.rectb` | Rectangle, landscape | Wide rectangle |
 | `shape.cloudb` | Three-lobe cloud | Puffy cloud |
 
-| 5 | `tape.plaster` (Tabler): G2 at the limit, 2.5 dots with 1.5 gaps that merge at 24 px | Widen the dot gaps, or accept at the printed-page check |
 
 ---
 
