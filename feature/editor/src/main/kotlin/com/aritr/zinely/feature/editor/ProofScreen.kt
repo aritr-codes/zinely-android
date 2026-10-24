@@ -85,6 +85,7 @@ import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.render.android.AssetBytesSource
+import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.components.ZIconButton
 import com.aritr.zinely.ui.components.ZSheet
 import com.aritr.zinely.ui.components.ZSheetClose
@@ -823,13 +824,14 @@ internal fun ProofIconButton(
     Box(
         modifier = modifier
             .size(48.dp)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                role = Role.Button,
+            // One named Button on the platform tree: the label and the role on the clickable node itself, its
+            // drawn children cleared. A plain `clickable` + `semantics` reached TalkBack as an unnamed `View`
+            // with the label on a child (phone pass, W1 09ae4668; A42).
+            .zinelyV2Control(
+                label = contentDescription,
                 onClick = onClick,
-            )
-            .semantics { this.contentDescription = contentDescription },
+                interactionSource = interactionSource,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Box(
