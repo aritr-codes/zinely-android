@@ -45,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),
   [D-143](docs/design/V2-SPEC-DEFECTS.md#d-143)), Proof A43 and A44, Backup A45 and Library A46. The Library
   mockup's paper-chooser and restored-note prototypes run again (merge damage repaired).
+- Website note, not the app: the roadmap's "Page backgrounds" line now says paper colour is shown on screen only and
+  is never printed, as [ADR-136](docs/DECISIONS.md#adr-136) decision 5 gives
+  ([#151](https://github.com/aritr-codes/zinely-android/pull/151)). Nothing in the app changes.
 - **My Shelf now tells you when a zine's details went back to an earlier copy.** If the small file that holds a
   zine's name, cover and folder is damaged, Zinely uses the copy from before the last change, as it did
   before; now a note under the heading names the zine (for example, "Letters to Gran" is called "Letters home"
