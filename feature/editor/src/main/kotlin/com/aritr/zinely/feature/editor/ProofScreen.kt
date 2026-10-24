@@ -283,7 +283,8 @@ private val ReaderMinHeight = 160.dp
  *   nothing reads as a broken button, not as a busy one. It was a Boolean until ADR-102, and a Boolean
  *   cannot say *which*, so both commit buttons reacted to either tap.
  * @param failedTarget **which** export failed, or `null` — shows the recoverable error overlay, named.
- * @param failure why [failedTarget] failed — picks the overlay's sentence (A43, D-142). The title stays.
+ * @param failure why [failedTarget] failed — picks the overlay's sentence (A43, D-142) and, with [failedTarget], its
+ *   title ("save" vs "make", D-146).
  * @param onRetryExport the error overlay's "Try again" — re-fires the export named by [failedTarget].
  * @param onOpenSettings non-null only while Storage is blocked for good ([ProofFailure.StorageBlocked]) and
  *   still off: the overlay's one button then reads "Open settings" and calls this instead of retrying.
@@ -469,6 +470,7 @@ public fun ProofScreen(
                 // state of its own (ADR-101 §3 item 1).
                 ProofErrorPane(
                     failure = failure,
+                    target = failedTarget,
                     onRetry = onRetryExport,
                     onOpenSettings = onOpenSettings.takeIf { failure == ProofFailure.StorageBlocked },
                     modifier = Modifier.fillMaxWidth(),
@@ -673,15 +675,23 @@ public fun ProofScreen(
  */
 public enum class ProofFailure { Other, OutOfMemory, OutOfSpace, StorageRefused, StorageBlocked }
 
+/** The causes where the PDF was made and only keeping it in Downloads failed (D-146). */
+private val SAVE_ONLY_FAILURES = setOf(ProofFailure.OutOfSpace, ProofFailure.StorageRefused, ProofFailure.StorageBlocked)
+
 /**
  * The recoverable export-error overlay — the frozen `#errwrap`: a coral warning badge, the honest
  * "your zine is safe" reassurance naming the cause (A43), and a single stamp button. One action only; the
  * top bar's loss-safe back is the other way out. The button is "Try again", or "Open settings" while
  * [onOpenSettings] is offered (A43.2) — never both.
+ *
+ * The title follows the cause ([D-146](../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-146)): "save" only
+ * for a failed Save PDF that ran out of space or was refused Storage, where the PDF was made and keeping it
+ * failed. A Share writes no Downloads file, so it keeps "make" — it can still come back [ProofFailure.OutOfSpace].
  */
 @Composable
 private fun ProofErrorPane(
     failure: ProofFailure,
+    target: ProofExportTarget,
     onRetry: () -> Unit,
     onOpenSettings: (() -> Unit)?,
     modifier: Modifier = Modifier,
@@ -691,7 +701,11 @@ private fun ProofErrorPane(
     val lit = rememberLitSheetPalette()
     Box(modifier, contentAlignment = Alignment.Center) {
         ZStatusPane(
-            title = Copy.Proof.COULDNT_MAKE_PDF,
+            title = if (target == ProofExportTarget.SAVE && failure in SAVE_ONLY_FAILURES) {
+                Copy.Proof.COULDNT_SAVE_PDF
+            } else {
+                Copy.Proof.COULDNT_MAKE_PDF
+            },
             body = when (failure) {
                 ProofFailure.Other -> Copy.Proof.ERROR_BODY
                 ProofFailure.OutOfMemory -> Copy.Proof.ERROR_OUT_OF_MEMORY

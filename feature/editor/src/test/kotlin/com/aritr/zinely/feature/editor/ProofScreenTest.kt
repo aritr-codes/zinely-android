@@ -899,6 +899,7 @@ class ProofScreenTest {
         }
 
         composeRule.onNodeWithTag(ProofErrorPaneTestTag).assertIsDisplayed()
+        // No cause given (ProofFailure.Other): the PDF itself was not made (D-146).
         composeRule.onNodeWithText("Couldn’t make the PDF").assertIsDisplayed()
         // The band is replaced too — no opener sitting beside a failure notice.
         composeRule.onNodeWithTag(ProofReadyTestTag).assertDoesNotExist()
@@ -935,12 +936,59 @@ class ProofScreenTest {
         // Given the save failed because the phone is out of space
         setProofFailed(ProofFailure.OutOfSpace)
 
-        // Then the A43 storage sentence shows, under the unchanged title
+        // Then the A43 storage sentence shows, under the D-146 "save" title
         composeRule.onNodeWithText(
             "Your zine is safe. This phone is out of space — free some up, then try again.",
         ).assertIsDisplayed()
-        composeRule.onNodeWithText("Couldn’t make the PDF").assertIsDisplayed()
+        composeRule.onNodeWithText("Couldn’t save the PDF").assertIsDisplayed()
         composeRule.onNodeWithTag(ProofRetryTestTag).assertTextEquals(Copy.Common.TRY_AGAIN)
+    }
+
+    /** D-146: a failed Save PDF's title says "save" only where the PDF was made and keeping it failed. */
+    @Test
+    fun a_failed_save_titles_follow_the_cause() {
+        // Given each cause of a failed Save PDF
+        val expected = mapOf(
+            ProofFailure.OutOfSpace to "Couldn’t save the PDF",
+            ProofFailure.StorageRefused to "Couldn’t save the PDF",
+            ProofFailure.StorageBlocked to "Couldn’t save the PDF",
+            ProofFailure.OutOfMemory to "Couldn’t make the PDF",
+            ProofFailure.Other to "Couldn’t make the PDF",
+        )
+        var failure by mutableStateOf(ProofFailure.Other)
+        composeRule.setContent {
+            ZinelyTheme {
+                ProofScreen(onBack = {}, failedTarget = ProofExportTarget.SAVE, failure = failure)
+            }
+        }
+        expected.forEach { (cause, title) ->
+            // When the overlay shows that cause
+            failure = cause
+            composeRule.waitForIdle()
+            // Then its title is the frozen one for it, and only that one
+            composeRule.onNodeWithText(title).assertIsDisplayed()
+            val other = if (title == "Couldn’t save the PDF") "Couldn’t make the PDF" else "Couldn’t save the PDF"
+            composeRule.onNodeWithText(other).assertDoesNotExist()
+        }
+    }
+
+    /** D-146: Share writes no Downloads file, so a failed Share keeps "make" even when out of space. */
+    @Test
+    fun a_failed_share_keeps_the_make_title_whatever_the_cause() {
+        // Given a Share that failed, for every cause the host can report
+        var failure by mutableStateOf(ProofFailure.OutOfSpace)
+        composeRule.setContent {
+            ZinelyTheme {
+                ProofScreen(onBack = {}, failedTarget = ProofExportTarget.SEND, failure = failure)
+            }
+        }
+        ProofFailure.entries.forEach { cause ->
+            failure = cause
+            composeRule.waitForIdle()
+            // Then the title never claims a save
+            composeRule.onNodeWithText("Couldn’t make the PDF").assertIsDisplayed()
+            composeRule.onNodeWithText("Couldn’t save the PDF").assertDoesNotExist()
+        }
     }
 
     /** Every cause says its own A43 sentence, word for word; anything else keeps the old one. */

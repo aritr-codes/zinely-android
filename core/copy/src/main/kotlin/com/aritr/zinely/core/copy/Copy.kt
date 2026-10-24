@@ -1312,6 +1312,8 @@ public object Copy {
         // already is, and they *disappear* at the ends, which a sentence at the top of the screen cannot.
         // The position it never carried is now the `.pcount` ticket's, in the frozen place.
         public const val COULDNT_MAKE_PDF: String = "Couldn’t make the PDF"
+        /** D-146: a Save PDF that failed only at keeping it in Downloads (out of space, Storage refused). */
+        public const val COULDNT_SAVE_PDF: String = "Couldn’t save the PDF"
         public const val ERROR_BODY: String =
             "Your zine is safe on this device — the export just didn’t finish. Try once more."
         // A43 / D-142: the same overlay and title, the body names the cause. Each opens "Your zine is safe."
