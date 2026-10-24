@@ -12,8 +12,8 @@ import com.aritr.zinely.core.render.ArtGeometry.path
  * The family is split across this object and [MarkArtPart2] (from Colour bar on) so each static initialiser
  * stays well under the JVM's 64 KB cap (R-A5); see `SupplyCatalogClinitHeadroomTest`. [OUTLINES] holds both.
  *
- * Six shipped drawings are kept as the owner picked them (Halftone, Registration, Crop marks, Copier streak,
- * Perforation, Starburst) and stay in their original form below. Every other outline is transcribed from its
+ * Six shipped drawings are kept as the owner picked them (Halftone, Crosshair, Crop marks, Copier streak,
+ * Tear line, Starburst) and stay in their original form below. Every other outline is transcribed from its
  * A39 row with [path], in the row's own 24-unit numbers; `BenchArtSheetParityTest` holds each one to its row.
  * Four of them redraw a shipped id (Star, Arrow, Pointing hand, Colour bar), each inside that id's old ink
  * box (Never #19, `SupplyRedrawBoundsTest`). Provenance per piece is `SupplyProvenanceCatalog`.
@@ -399,7 +399,7 @@ internal object MarkArt {
         m(16.25, 19.85); l(18.75, 19.85); l(18.75, 23.5); l(16.25, 23.5); z()
     }
 
-    /** Long ticks (`mark.cropc`): A39, drawn in-house. */
+    /** Long crop ticks (`mark.cropc`): A39, drawn in-house. */
     internal val MARK_CROPC: SupplyOutline = path {
         m(0.5, 7.8); c(0.5, 7.63, 0.63, 7.5, 0.8, 7.5); l(5.95, 7.5); c(6.12, 7.5, 6.25, 7.63, 6.25, 7.8)
         l(6.25, 8.7); c(6.25, 8.87, 6.12, 9.0, 5.95, 9.0); l(0.8, 9.0); c(0.63, 9.0, 0.5, 8.87, 0.5, 8.7); z()

@@ -111,7 +111,7 @@ internal object PaperArtPart2 {
         c(14.5, 2.06, 14.63, 1.92, 14.8, 1.92); c(14.88, 1.92, 14.96, 1.96, 15.01, 2.01); z()
     }
 
-    /** Dog-ear (`paper.page`): Doodle Icons by Oreo Design, imported. */
+    /** Dog-ear page (`paper.page`): Doodle Icons by Oreo Design, imported. */
     internal val PAPER_PAGE: SupplyOutline = path {
         m(4.26, 1.25); c(7.01, 1.0, 9.66, 0.94, 12.2, 1.06); l(12.15, 2.53)
         c(12.09, 4.72, 12.15, 6.85, 12.35, 8.91); c(12.39, 9.32, 12.75, 9.67, 13.16, 9.71)

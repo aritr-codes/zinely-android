@@ -64,10 +64,11 @@ class SuppliesCopyTest {
             "a supply id is filed under exactly one family",
         )
         names.forEach { assertTrue(it.isNotBlank(), "A supply with no name cannot be spoken or drawn") }
+        // Case-insensitive: TalkBack and the tile (D-132) cannot tell "Ring" from "ring" either.
         assertEquals(
-            names.size, names.toSet().size,
+            names.size, names.map { it.lowercase() }.toSet().size,
             "Two supplies share a name — TalkBack cannot tell them apart: " +
-                names.groupBy { it }.filterValues { it.size > 1 }.keys,
+                names.groupBy { it.lowercase() }.filterValues { it.size > 1 }.keys,
         )
     }
 

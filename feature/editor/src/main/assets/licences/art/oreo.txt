@@ -1,6 +1,6 @@
 Source: github.com/oreo-design/doodle-icons at 38de0ac.
 
-Pieces in Zinely from this set: Drawn pin, Drawn pin, tilted, Arrow, wobbly, Square balloon, Dog-ear, Sticky note, Bookmark ribbon, Gift tag, Puffy cloud.
+Pieces in Zinely from this set: Drawn pin, Drawn pin, tilted, Arrow, wobbly, Square balloon, Dog-ear page, Sticky note, Bookmark ribbon, Gift tag, Puffy cloud.
 
 MIT License
 

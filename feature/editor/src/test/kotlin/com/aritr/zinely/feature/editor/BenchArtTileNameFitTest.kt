@@ -33,29 +33,26 @@ class BenchArtTileNameFitTest {
 
     @Test
     fun every_art_name_lays_out_whole_in_two_lines_without_breaking_a_word() {
-        // Given the real Art sheet on a 360dp phone at font scale 1.0
+        // Given the real Art sheet on a 360dp phone at font scale 1.0, with empty Recents and Favourites rails
+        // (so each name tag sits on the grid tile alone; the grid tile is also narrower than a rail card)
         assertEquals(1f, composeRule.activity.resources.configuration.fontScale)
         composeRule.setContent { ZinelyTheme { BenchArtSheet(visible = true, onDismiss = {}, onPick = {}) } }
         composeRule.waitForIdle()
 
         // When each of the 124 tiles is scrolled into view and its name label is laid out
+        val slack = mutableMapOf<String, Float>()
         val failures = Copy.Supplies.NAMES.mapNotNull { (id, name) ->
             val tag = benchArtTileNameTestTag(id)
             composeRule.onNodeWithTag(BenchArtSheetTestTag).performScrollToNode(hasTestTag(tag))
             val layout = layoutOf(tag)
+            slack[name] = layout.size.width - (0 until layout.lineCount).maxOf { layout.getLineRight(it) }
             fitProblem(layout)?.let { "$id \"$name\": $it [${lines(layout).joinToString(" / ")}]" }
         }
+        // ponytail: reported, not asserted; the tightest names are the first to watch on a real phone.
+        println("tightest Art names (px to spare): " + slack.entries.sortedBy { it.value }.take(6).joinToString { "${it.key} ${it.value}" })
 
         // Then none clips, none needs a third line, and every line ends between words
         assertTrue("Art names that do not fit the A16 tile:\n" + failures.joinToString("\n"), failures.isEmpty())
-    }
-
-    @Test
-    fun every_art_name_is_unique_so_no_two_tiles_or_spoken_names_read_alike() {
-        // Given the 124 Art names; When they are compared ignoring case; Then no two are the same
-        val names = Copy.Supplies.NAMES.values.map { it.lowercase() }
-        val repeated = names.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
-        assertTrue("repeated Art names: $repeated", repeated.isEmpty())
     }
 
     private fun layoutOf(tag: String): TextLayoutResult {

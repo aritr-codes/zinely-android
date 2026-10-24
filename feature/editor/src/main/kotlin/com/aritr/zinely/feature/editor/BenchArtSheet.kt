@@ -90,6 +90,7 @@ public fun benchArtTileTestTag(supplyId: String): String = "bench-art-tile-$supp
 public fun benchArtRecentTileTestTag(supplyId: String): String = "bench-art-recent-tile-$supplyId"
 public fun benchArtFavouriteTileTestTag(supplyId: String): String = "bench-art-favourite-tile-$supplyId"
 public fun benchArtFavouriteTestTag(supplyId: String): String = "bench-art-favourite-$supplyId"
+/** The name label on a tile. Unique only while the Recents and Favourites rails do not also show that piece. */
 public fun benchArtTileNameTestTag(supplyId: String): String = "bench-art-tile-name-$supplyId"
 public fun benchArtLabelTestTag(family: String): String = "bench-art-label-$family"
 public fun benchArtFamilyFilterTestTag(family: String): String = "bench-art-filter-$family"
