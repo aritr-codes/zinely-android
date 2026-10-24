@@ -211,6 +211,41 @@ class DocumentRepositoryImplTest {
         assertEquals(backupDoc, (result as DataResult.Success).value)
     }
 
+    // ADR-140 decision 3: a page file put back from its earlier copy is reported, once; nothing else is.
+
+    @Test
+    fun repaired_document_is_reported_once() = runTest {
+        // Given a damaged document.json beside a good .bak
+        val root = tempRoot()
+        val backupDoc = writePrimaryWithValidBackup(root, "proj1", "this is not a json document".toByteArray())
+        val repaired = mutableListOf<String>()
+        val repo = DocumentRepositoryImpl(root, AtomicFileStore(NioFileSystemOps), onPagesRestored = { repaired += it })
+
+        // When it is loaded twice
+        val first = repo.load("proj1")
+        val second = repo.load("proj1")
+
+        // Then one pages repair for that zine, and both loads have the .bak's content
+        assertEquals(listOf("proj1"), repaired)
+        assertEquals(backupDoc, (first as DataResult.Success).value)
+        assertEquals(backupDoc, (second as DataResult.Success).value)
+    }
+
+    @Test
+    fun `a clean read and a read of a lone backup report no repair`() = runTest {
+        val root = tempRoot()
+        val repaired = mutableListOf<String>()
+        val repo = DocumentRepositoryImpl(root, AtomicFileStore(NioFileSystemOps), onPagesRestored = { repaired += it })
+        repo.save("clean", validDoc())
+        repo.load("clean")
+        // A lone .bak: an earlier repair that could not write back quarantined the primary (BackupOnly).
+        val lone = docPath(root, "lone")
+        writeFile(lone.resolveSibling("document.json.bak"), serializer.serialize(validDoc()).toByteArray())
+
+        assertTrue(repo.load("lone") is DataResult.Success)
+        assertEquals(emptyList<String>(), repaired)
+    }
+
     @Test
     fun `load rejects an invalid project id with Invalid`() = runTest {
         val error = (repo(tempRoot()).load("../etc/passwd") as DataResult.Failure).error

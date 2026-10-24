@@ -16,6 +16,7 @@ import com.aritr.zinely.data.android.ContentResolverLibrarySafTransport
 import com.aritr.zinely.data.android.LibraryBackupRepository
 import com.aritr.zinely.data.android.LibraryRestoreRepository
 import com.aritr.zinely.data.android.LibrarySafTransport
+import com.aritr.zinely.data.android.RepairNotes
 import com.aritr.zinely.data.android.RoomProjectRepository
 import com.aritr.zinely.data.android.SaveFailureSink
 import com.aritr.zinely.data.android.room.MIGRATION_1_2
@@ -56,8 +57,18 @@ internal object DataModule {
     fun provideDocumentRepository(
         @ApplicationContext context: Context,
         store: AtomicFileStore,
+        notes: RepairNotes,
     ): DocumentRepository =
-        DocumentRepositoryImpl(rootDir = context.filesDir.toPath(), store = store)
+        DocumentRepositoryImpl(rootDir = context.filesDir.toPath(), store = store, onPagesRestored = notes::addPages)
+
+    /**
+     * ADR-140 decision 4: the one store of zines waiting to be told they went back to an earlier copy, shared by
+     * both repositories so neither depends on the other.
+     */
+    @Provides
+    @Singleton
+    fun provideRepairNotes(@ApplicationContext context: Context, store: AtomicFileStore): RepairNotes =
+        RepairNotes(rootDir = context.filesDir.toPath(), store = store)
 
     /**
      * S6.1 (ADR-042): the local-only, app-private Room DB holding the rebuildable `projects` index.
@@ -85,6 +96,7 @@ internal object DataModule {
         database: ZinelyDatabase,
         documents: DocumentRepository,
         store: AtomicFileStore,
+        notes: RepairNotes,
         fs: FileSystemOps,
         autosaveFactory: AutosaveCoordinatorFactory,
         @IoDispatcher io: CoroutineDispatcher,
@@ -100,6 +112,7 @@ internal object DataModule {
         fs = fs,
         io = io,
         appVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "unknown",
+        notes = notes,
     )
 
     @Provides

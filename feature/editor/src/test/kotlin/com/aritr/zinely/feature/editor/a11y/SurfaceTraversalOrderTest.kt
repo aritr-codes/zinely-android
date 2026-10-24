@@ -459,7 +459,8 @@ class SurfaceTraversalOrderTest {
         assertLogicalTraversalOrder(
             "Editor",
             listOf(
-                // Chrome above the work.
+                // Chrome above the work. A42 / D-143: the way back to My Shelf is first in the status strip.
+                Copy.Status.BACK_TO_SHELF_SAVED,
                 Copy.Editor.PREVIEW,
                 // The blank-page invitation. The three sticker glyphs used to sit here — decoration the
                 // platform announced, pinned rather than filtered. CI-96, closed 2026-08-14; see the class

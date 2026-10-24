@@ -16,6 +16,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Never lose work, never get stuck (W1, [ADR-136](docs/DECISIONS.md#adr-136)).** Built; in no download yet.
+  Tried on a phone (Samsung SM-A176B, Android 16) and on emulators (Android 16, and Android 7 for the
+  storage permission). The screen-reader listen is still owed.
+  - Back while typing keeps your words. Backing out of a box you emptied removes it, with Undo.
+  - Back from Reframe returns to the page instead of leaving the Bench.
+  - A back button at the top of the Bench returns to My Shelf. Your work is already saved. It, and the Proof's
+    back and How to fold buttons, now carry their names for a screen reader on the button itself.
+  - A message's Undo disappears once you make another change, so it can no longer undo the wrong thing.
+  - Messages stay on screen longer when your phone asks for more time (Accessibility > Time to take action).
+    On My Shelf, two quick deletes or notices with the same words each get their own Undo window.
+  - A photo that can't be added now says so in the message bar, once. An unreadable photo says "This photo
+    can't be reframed. Try Replace."
+  - The Art sheet keeps its search and the Across-fold sheet stays open when the phone rotates; on My Shelf a
+    half-typed rename survives rotation.
+  - A Shelf that cannot be read still offers Backups and About ([D-145](docs/design/V2-SPEC-DEFECTS.md#d-145)).
+  - Proof: a failed save says why (out of memory, out of space, or Storage permission) and still says your zine
+    is safe. On Android 7-9, after "Don't ask again", the button opens Zinely's settings page. Share stays next
+    to Open PDF after a save (A43, [D-142](docs/design/V2-SPEC-DEFECTS.md#d-142)).
+  - Proof: when Save PDF fails for want of space or Storage permission, the title says "Couldn't save the PDF"
+    instead of "Couldn't make the PDF" ([D-146](docs/design/V2-SPEC-DEFECTS.md#d-146)).
+  - Proof: nothing is smaller than 12sp, and it grows with your phone's text size, including the fold
+    diagram's page numbers (A44, [D-140](docs/design/V2-SPEC-DEFECTS.md#d-140)).
+  - Bench: the page strip no longer slides when Android's Remove animations is on; the Add pill (and Reframe's
+    Done) grows instead of clipping at the largest text size.
+  - The Back up option on the shelf's Keep your zines sheet now says what happens next: "Next, your phone asks
+    where to save it." The option now gives a screen reader that line with its name (not yet heard with TalkBack)
+    ([D-144](docs/design/V2-SPEC-DEFECTS.md#d-144)).
+  - My Shelf now tells you, once, when a zine's pages went back to the copy from just before your last few
+    seconds of changes after its page file was damaged, in the same note as a repaired name, cover or folder
+    ([ADR-140](docs/DECISIONS.md#adr-140) Proposed, Library A46; refs #146). A repair found when a zine opens
+    on the Bench shows on My Shelf when you come back, without restarting.
+- Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),
+  [D-143](docs/design/V2-SPEC-DEFECTS.md#d-143)), Proof A43 and A44, Backup A45 and Library A46. The Library
+  mockup's paper-chooser and restored-note prototypes run again (merge damage repaired).
 - Website note, not the app: the roadmap's "Page backgrounds" line now says paper colour is shown on screen only and
   is never printed, as [ADR-136](docs/DECISIONS.md#adr-136) decision 5 gives
   ([#151](https://github.com/aritr-codes/zinely-android/pull/151)). Nothing in the app changes.
@@ -23,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   zine's name, cover and folder is damaged, Zinely uses the copy from before the last change, as it did
   before; now a note under the heading names the zine (for example, "Letters to Gran" is called "Letters home"
   again), says what went back, and stays until **Got it**, across restarts. Before, this happened without a
-  word. The note covers those details only: a zine's pages repaired the same way still say nothing
+  word. The note covers those details only; pages are covered by the W1 entry above
   ([#146](https://github.com/aritr-codes/zinely-android/issues/146)). Checked on an emulator, including the
   largest text on a 360dp screen; not yet on a real phone or with a screen reader by ear
   ([`v21-library.html` A37](docs/design/mockups/v21-library.html), [ADR-134](docs/DECISIONS.md#adr-134), [#128](https://github.com/aritr-codes/zinely-android/issues/128)).
@@ -135,6 +169,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known limitations
 
+- **W1 limits.** The Proof's done row wraps at normal text size on narrow phones: at 360dp Fold it up takes its
+  own line and the green button stretches across it (a 384dp phone wrapped it too, on an earlier build). A failed Share after a save says
+  "Couldn't make the PDF", which is right: Share makes the PDF, so making it is what failed
+  ([D-146](docs/design/V2-SPEC-DEFECTS.md#d-146)). The Proof's scroll after a save is still animated when the
+  phone is set to reduce motion. A zine repaired from a copy saved while a text box was being placed can keep
+  that box, empty and invisible but tappable ("Empty text").
 - **With larger text on a small phone, the fold guide and the screen after Save PDF scroll.** In the fold
   guide a step opens at its top and its instruction is below; after a save, the top bar scrolls away with the
   page. That scroll after a save is animated even when the phone is set to reduce motion.

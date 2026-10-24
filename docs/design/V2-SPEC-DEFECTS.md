@@ -8031,7 +8031,7 @@ FIXES**.
 | **Artifacts** | `core/data-storage/.../AtomicFileStore.kt` (`read`) · `data-android/.../RoomProjectRepository.kt` (`readMetaOrNull`) · `docs/design/mockups/v21-library.html` A37 (appended; nothing above it edited) |
 | **Found** | 2026-10-14, as D-116's second known limit (PR #127); filed as [issue #128](https://github.com/aritr-codes/zinely-android/issues/128) |
 | **Severity** | **Trust defect.** No pages are lost. After a repair, the Shelf shows a zine under its earlier name, cover or folder with no word of why, so a maker can believe a zine is missing or that the app undid their rename |
-| **Status** | **Designed 2026-10-15** under [ADR-134](../DECISIONS.md#adr-134) (Accepted under the owner's delegation); A37 frozen. **Built 2026-10-15** in PR #139 ([As built](../DECISIONS.md#adr-134-as-built)), in no release; **not accepted** until both device passes. Item 4 stays open |
+| **Status** | **Designed 2026-10-15** under [ADR-134](../DECISIONS.md#adr-134) (Accepted under the owner's delegation); A37 frozen. **Built 2026-10-15** in PR #139 ([As built](../DECISIONS.md#adr-134-as-built)), in no release; **not accepted** until both device passes. Item 4 stays open; **2026-10-22:** item 4 decided by [ADR-140](../DECISIONS.md#adr-140) (Proposed), A46 frozen |
 
 **What happens.** A zine's `meta.json` holds its title, createdAt, cover and folder. Each write keeps the
 previous file as `meta.json.bak`. If `meta.json` is found damaged, `AtomicFileStore.read` puts the `.bak`
@@ -8043,7 +8043,7 @@ rename, a move to a folder or a new cover made just before the damage is undone.
 | 1 | **The maker is never told.** D-116 fixed the data and listed this as a known limit. | **Designed.** Library A37: one paper note under the My Shelf heading, exact words in A37.3, dismissed only by "Got it", once per repair and kept until seen (ADR-134 decisions 1–3) |
 | 2 | **The store cannot say that it used the `.bak`.** `read` returns the same bytes either way, so no caller can tell a repaired read from a clean one. | **Built.** `AtomicFileStore.readReporting` returns `StoreRead.Read` / `Restored` / `BackupOnly`; `readMetaOrNull` records the waiting note; nothing new is caught. A mutation that reports every recovery as `Read` fails the store and repository tests (PR #139) |
 | 3 | **"Backup" is already taken on this screen.** Backups is a dock action that means library backups; "restored from a backup" would send the maker there. | **Designed around.** A37.4 bans the word; the note says "the copy from before the last change" |
-| 4 | **A page document put back from its own `.bak` is silent too.** `DocumentRepositoryImpl` reads `document.json` through the same `read` (ADR-021). Each autosave rewrites it, so the `.bak` is one autosave old and the maker may lose the last edits made before the damage, without a word. | **Not decided here; outside #128.** Proposed as its own issue for the main session. The sealed result of item 2 makes it cheap to report later |
+| 4 | **A page document put back from its own `.bak` is silent too.** `DocumentRepositoryImpl` reads `document.json` through the same `read` (ADR-021). Each autosave rewrites it, so the `.bak` is one autosave old and the maker may lose the last edits made before the damage, without a word. | **Not decided here; outside #128.** Proposed as its own issue for the main session. The sealed result of item 2 makes it cheap to report later. **2026-10-22: decided by [ADR-140](../DECISIONS.md#adr-140)** (Proposed; issue [#146](https://github.com/aritr-codes/zinely-android/issues/146)): told by the same note, in Library A46's words; not built |
 | 5 | **The prototype had no way to show font scale 2 at 360dp.** A28's large-text control is 1.8× on a 390px phone. | **Added** an A37 control, "text 2× at 360dp". With the several-zine note it fills most of the first screen at that size (676px of an 800px phone in review, Got it below the fold under the dock); every word shows and the note scrolls away with the zines (A37.8). Whether a large-text maker can still answer "Which zine do I want?" there is the first-time-user device pass's question |
 | 6 | **First draft said "your last change".** The last write to `meta.json` is not always the maker's: Zinely writes it too (a cover drawn for an older zine, D-026), so the words could blame the maker for a change they never made. | **Fixed in the self-check.** A37.3 says "the last change" |
 | 7 | **The first frozen words promised "Its pages weren't touched".** A page document is put back from its own `.bak` by the same store, silently (item 4), and a damaged `meta.json` often comes with a damaged `document.json`: in the reconcile scan the re-sync of a disagreeing row loads the document through `AtomicFileStore.read`, so the sentence could be false in the very case that raises the note. Found by review (RF-1). | **Fixed before merge.** A37.3 and ADR-134 decision 2: the note makes no claim about the pages |
@@ -8181,3 +8181,123 @@ second reviewer, could not sign in.
 | R31 relies on lane C renumbering | Observation | Same as above |
 | Duplicate also carries the description | Observation | **Accepted.** Decision 6: Duplicate keeps it; owed item 2 tests it |
 | Verified claims | Observation | No change |
+
+---
+
+### D-140 — the Proof's smallest labels sit under 12sp, on a screen read at arm's length {#d-140}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-proof.html` (`.pcount`, `.ready .rl span`, `.btn-save small`, `.sect`, `.mp`, `.cutlbl`, `.stepno`, `.legend`, `.foldnow`, `.cellno`) · `feature/editor/.../ProofScreen.kt`, `ProofPrint.kt`, `ProofSheet.kt`, `ProofFold.kt` |
+| **Found** | W1 lane plan, item 13 (2026-10-22), from ADR-136 row W1 |
+| **Severity** | Legibility: the step counter, the fold legend, the cut tag and the section labels in Print details are 9.5–11.8sp on a screen the maker reads while holding paper |
+| **Status** | **Built, unreleased (W1, 2026-10-23); emulator Pass 1 and Pass 2 done; a real phone at the largest text and TalkBack owed.** Emulator Pass 1 at 360dp, 1x and 2x (API 36, `fda3f095`) found the done row squeezing Fold it up (and Share breaking mid-word at 2x); fixed, and the fix looked at on the emulator at `909c71b9`; 2x and a 384dp phone after the fix are owed. Phone (SM-A176B, Android 16, `09ae4668`): ONE CUT chip clear of the cut line. [`v21-proof.html` A44](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 9 (`ProofTypeFloorTest`). |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **No type floor is written anywhere.** Not in `V21-SPEC.md`, not in `ZINE-DIRECTION`; the shared `sectionLabel` token is 10.5sp. | 🟦 **House ruling: 12sp on the Proof's text nodes**, scaling with font scale (controller ruling R-W4). The Proof only; `sectionLabel` is not changed globally. Not a platform rule: M3's smallest token, `labelSmall`, is 11sp, and 12sp is `bodySmall` (🟨 from the M3 type scale, not fetched). `ProofPrint.kt` already treats 12sp as the panel's smallest text |
+| 2 | **The fold-diagram numbers are not `Text` nodes.** `ProofFold.kt` draws them with a `TextMeasurer` in a `DrawScope`, at 9 diagram units × the diagram's scale, so a semantics test cannot see them. | **They take `max(diagram size, 12sp × fontScale)`** through a small pure helper with its own unit test (R-W4, Task 9). At 2× a one-digit number is about 15 units wide against a 44-unit cell pitch: no collision |
+| 3 | **The zine itself is not Proof text.** The leaf's words and `.pgn` page numbers are the maker's printed page drawn to scale. | **Exempt.** So is the prototype's own annotation chrome |
+
+### D-142 — a failed save says nothing about why, and Share disappears after a save {#d-142}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-proof.html` · `docs/design/v1/proof.html` (lines 73–74, "NO new error state") · `ExportViewModel.kt` (`:92`, `couldNotStart`) · `ZinelyNavHost.kt` (`ProofDestination`) · `ProofScreen.kt` (`ProofErrorPane`) · `core/copy/.../Copy.kt` (`Copy.Proof`) |
+| **Found** | W1 lane plan, items 7, 7b and 8 (2026-10-22), from ADR-136 row W1; the "Don't ask again" gap was recorded as a beta.5 Known Limitation in [ADR-054](../DECISIONS.md#adr-054) decision 8 |
+| **Severity** | Recovery: a maker out of space, out of memory or refused Storage reads the same "try once more" and cannot tell what to change. After "Don't ask again", Try again does nothing visible and nothing leads to Settings. After a save the band has no Share |
+| **Status** | **Built, unreleased (W1, 2026-10-23); phone Pass 1, API 24 emulator Pass 1 and Pass 2 done; TalkBack, a real Android 7-9 phone and a real out-of-space failure owed.** Phone (SM-A176B, Android 16, `09ae4668`): saved line and Open PDF · Share · Fold it up. API 24 emulator (`fda3f095`): deny, Don't ask again, Open settings, grant, return without retry, Try again, saved. Out of space could not be provoked on the emulator. [`v21-proof.html` A43](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 8 (`ExportFailure`, `ProofErrorPane`). |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **One sentence for every failure.** | **Same overlay, title and Try again; the body names the cause.** (The title was amended 2026-10-24 by [D-146](#d-146).) Final wording, exact: memory *"Your zine is safe. This phone ran short of memory making the PDF — try again in a moment."* · space *"Your zine is safe. This phone is out of space — free some up, then try again."* · permission *"Your zine is safe. Zinely needs permission to save to Downloads — tap Try again, then Allow."* · anything else: the existing `ERROR_BODY`, unchanged. The memory sentence does not say "close other apps": the limit is per app, so on Android 7 that advice would not help. Each opens "Your zine is safe." because the title alone reads as a loss ([BETA-UX-REVIEW](../BETA-UX-REVIEW.md), "it lost my work") |
+| 2 | **No route out of a permanent Storage denial.** | **The button reads "Open settings"** and opens Zinely's app-details page. Body, exact: *"Your zine is safe. Zinely needs permission to save to Downloads. Under Permissions, turn on Storage, then come back and tap Try again."* On return the overlay stays; no auto-retry; the button reads "Try again" once Storage is on. It says "Try again", not "Save PDF": the overlay covers the band, so Save PDF is not on screen |
+| 3 | **A missing photo could be mistaken for a failure.** | **It is not one.** The renderer draws a placeholder (`ImageBlitter`) and the save succeeds; the overlay never lists photos. W2b owns listing them before Save or Share |
+| 4 | **Share disappears after a save.** `.band.saved .commit` hides the commit row. | **The done block gains a quiet Share** between Open PDF and Fold it up, kept after the fold; `.commit` stays hidden. It sends a copy of the saved PDF: ADR-054's keep vs send, unchanged |
+| 5 | **ADR-054 decision 8 left the copy to an owner ruling.** | **Closed by this entry, under the owner's delegation of 2026-10-12.** ADR-054's text is not edited; its decision 8 note is answered here by ID |
+
+### D-141 — a snack's Undo can undo a later action than the one it names {#d-141}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (`toast()`, `#undoSnack`, `:801-811`) · `feature/editor/.../EditorScreen.kt` (the Bench snack and its Undo) · `core/editor/.../EditorReducer.kt` (history push, undo, redo) |
+| **Found** | W1 plan, 2026-10-22 ([ADR-136](../DECISIONS.md#adr-136) decision 1, row W1: "the snack's Undo undoes its own action (only while the newest history entry is still that action)") |
+| **Severity** | Loses work (Never #1). A maker who deletes a piece, then makes another edit while the snack is still up, and taps the snack's Undo, undoes the later edit while the snack says it will put the piece back |
+| **Status** | **Built, unreleased (W1, 2026-10-23); phone Pass 1 done; TalkBack owed.** Phone (SM-A176B, Android 16, `09ae4668`) and Pass 2 2026-10-24. *2026-10-24:* the snack's Undo now also acts only while the revision is its own, and a no-op never arms it (after the phone build; unit-tested only, not re-checked on a device). [`v21-bench.html` A41.2](mockups/v21-bench.html) frozen 2026-10-22 under the owner's delegation of 2026-10-12; the owner may overrule it. Built by W1 Task 5 (`historyRevision`). |
+
+**Ruling.** A snack's Undo is live only while the newest history entry is the one that raised it. As soon as any
+later history step lands (an edit, an Undo or Redo from the bar, a page command), the snack is retired: hidden
+at once, with no exit transition. The revision is recorded after the action's own history push, so a snack
+never retires itself (controller ruling R-W6). Every history mutation moves it, the fresh-blank removal of
+A41.1 included. A counter is used, not the undo depth: the depth repeats after undo-then-edit. Snacks without
+Undo keep their ordinary timeout.
+
+### D-143 — the Bench has no visible way back to My Shelf {#d-143}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (`.status`, `:567-571`) · `feature/editor/.../EditorScreen.kt` · `feature/editor/.../ProofScreen.kt` (`ICON_BACK`, the Proof's back control this reuses) |
+| **Found** | W1 plan, 2026-10-22 ([ADR-136](../DECISIONS.md#adr-136) decision 1, row W1: "a visible way back to the Shelf from the Bench") |
+| **Severity** | Gets stuck (Never #19, "a visible path"). Only the system Back gesture leaves the Bench; a maker who does not know it has no control to tap |
+| **Status** | **Built, unreleased (W1, 2026-10-23); phone Pass 1 done; TalkBack owed.** Phone (SM-A176B, Android 16, `09ae4668`): 48dp, edge taps reach My Shelf; its dump showed an unnamed `View`, fixed 2026-10-24 (one named Button, platform-tree test), not yet re-dumped. Pass 2 2026-10-24. [`v21-bench.html` A42](mockups/v21-bench.html) frozen 2026-10-22 under the owner's delegation of 2026-10-12; the owner may overrule it. Built by W1 Task 5 (`BenchShelfBack`, in the strip, not a z-index overlay). |
+
+**Ruling (controller ruling R-W10).** The Proof's own back control, reused: the same chevron in the same
+bordered round button, first in the Bench's status strip, before the time. No visible text, a touch target of
+at least 48dp, and the accessibility name "Back to My Shelf (your work is saved)", following the Proof's "Back
+to the bench (your work is saved)". It sits in the strip's start slot, which `BenchStatusStrip.kt` leaves
+empty today; the target overlaps the strip's padding, so the strip does not grow. It does exactly what system
+Back does from an idle Bench; autosave has already run, so nothing asks first (Never #17). It hides, without
+moving anything, whenever anything else on the Bench owns Back: the text session, the type bar, Reframe, the
+Ink tray, Flip, Arrange, All pages, Add and Across fold. So one control never means two things.
+
+| Alternative | Outcome |
+|---|---|
+| A Shelf icon in the bottom bar | **Rejected.** The bar is Undo · Redo · Add · Done; a fifth control crowds Add |
+| An overflow menu | **Rejected.** It hides the path, against Never #19 |
+| A "‹ Shelf" text button (the plan's first draft) | **Rejected by R-W10.** A second back control would look different from the Proof's for the same act |
+
+### D-144 — the Back up option says what the sheet already says, not what happens next {#d-144}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/backup-restore.html` (`#saveOption`, A45) · `core/copy/.../Copy.kt` (`SAVE_BODY`) · [`BACKUP-RESTORE-FREEZE.md`](../BACKUP-RESTORE-FREEZE.md) (A45 note) |
+| **Found** | W1 plan, item 10 (2026-10-22). The complaint behind "Save backup explains itself" is **uncited**: no source was found |
+| **Severity** | Clarity. The line under Back up repeated the sheet's own body instead of saying what the tap does next |
+| **Status** | **Built, unreleased (W1, 2026-10-23); seen on the phone (SM-A176B, Android 16, `09ae4668`); owner reading and TalkBack owed.** *2026-10-24:* the option's spoken name now carries the line (A45 note). [`backup-restore.html` A45](mockups/backup-restore.html) frozen under the owner's delegation of 2026-10-12 |
+
+**Ruling (controller ruling R-W5).** The line reads *"Next, your phone asks where to save it."* It says what happens
+next and does not repeat the sheet body. A delegated design call, not an answer to a cited complaint. The
+reviewer's doubt that "it" has no clear noun is not adopted yet; the owner's reading decides, and the fallback is
+"where to save the backup". The old line stays in the historical ADR text.
+
+### D-145 — a Shelf that cannot be read still offers Backups and About {#d-145}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../ZineLibraryScreen.kt` (the dock, the Keep your zines sheet) · `docs/design/mockups/v21-library.html` |
+| **Found** | W1 Task 7 (2026-10-22) |
+| **Severity** | Gets stuck (Never #2). In the Error state the dock lost its way to backups, so a maker with an unreadable Shelf had no path to restore |
+| **Status** | **Built, unreleased (W1, 2026-10-23); device pass owed.** Decided under the owner's delegation |
+
+**Ruling.** In the Error state the dock keeps **Backups** and **About**. Its label is "Backups", as the frozen
+library mockup already words that action. Because the zine list is empty when the read failed, the sheet opens
+**restore-only**, which is acceptable: restore is the way out.
+
+### D-146 — the Proof says it couldn't make the PDF when only saving it failed {#d-146}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-proof.html` (A43 note, table and overlay script) · `feature/editor/.../ProofScreen.kt` (`ProofErrorPane`) · `core/copy/.../Copy.kt` (`Copy.Proof.COULDNT_SAVE_PDF`) · `app/.../ExportViewModel.kt` (`classifyIo`, `couldNotStart`) |
+| **Found** | W1 device Pass 2 (2026-10-24), on A43 as built under [D-142](#d-142) |
+| **Severity** | Trust. "Couldn't make the PDF" over "This phone is out of space" or "Zinely needs permission to save to Downloads" reads as if the zine could not be turned into a PDF at all, when only keeping it in Downloads failed |
+| **Status** | **Built, unreleased (W1, 2026-10-24); device pass owed.** [`v21-proof.html` A43](mockups/v21-proof.html) amended 2026-10-24 by controller ruling after Pass 2 |
+
+**Ruling.** The title follows the cause. **"Couldn’t save the PDF"** for a failed Save PDF that was out of
+space or refused Storage (will ask again, or will not ask again with Open settings). **"Couldn’t make the
+PDF"** stays for out of memory and anything else. Bodies, buttons and behaviour are unchanged.
+
+**A failed Share keeps "make".** Share writes no Downloads file. A Share cannot be refused Storage (the
+permission gate is Downloads-only, `needsLegacyStoragePermission`), but it can come back out of space:
+`ExportViewModel.classifyIo` runs for every destination. So "save" is shown only when the failed action
+is Save PDF.
+

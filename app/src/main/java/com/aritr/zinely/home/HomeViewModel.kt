@@ -10,6 +10,7 @@ import com.aritr.zinely.core.data.repository.FolderNames
 import com.aritr.zinely.core.data.repository.ProjectShelfEntry
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
+import com.aritr.zinely.core.data.repository.RestoredDetails
 import com.aritr.zinely.core.data.repository.ProjectUnavailableReason
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
@@ -130,11 +131,17 @@ internal class HomeViewModel @Inject constructor(
     private val pendingDeletes = MutableStateFlow<Set<String>>(emptySet())
 
     /**
-     * Zines whose restored-details note the maker has dismissed with *Got it* while the store clears it
-     * ([dismissRestored], ADR-134), so the note goes at once. An id leaves when the store lists the zine without a
-     * waiting note, so a later repair of the same zine is told again (A37.6).
+     * Zines whose restored note the maker has dismissed with *Got it* while the store clears it
+     * ([dismissRestored], ADR-134), so the note goes at once, each with the note it dismissed. Only that same note is
+     * hidden: a different one for the zine (its pages went back after its details, ADR-140) shows at once, even
+     * before the store has listed the Shelf without the first. An id leaves when the store lists the zine without
+     * that note, so a later repair of the same zine is told again (A37.6).
      */
-    private val dismissedNotes = MutableStateFlow<Set<String>>(emptySet())
+    private val dismissedNotes = MutableStateFlow<Map<String, RestoredDetails>>(emptyMap())
+
+    /** The notes in the store's latest listing: what *Got it* dismisses. */
+    @Volatile
+    private var listedNotes: Map<String, RestoredDetails> = emptyMap()
 
     /**
      * The deletes the store has finished, kept in [pendingDeletes] only so a deleted card does not flash back
@@ -291,8 +298,9 @@ internal class HomeViewModel @Inject constructor(
                 finishedDeletes = finishedDeletes.filterTo(mutableSetOf()) { it in projectIds }
             }
             // Same convergence as above: a dismissed note the store no longer lists is over.
-            if (dismissed.any { id -> projects.none { it.id == id && it.restored != null } }) {
-                dismissedNotes.update { ids -> ids.filterTo(mutableSetOf()) { id -> projects.any { it.id == id && it.restored != null } } }
+            listedNotes = projects.mapNotNull { e -> e.restored?.let { e.id to it } }.toMap()
+            if (dismissed.any { (id, note) -> listedNotes[id] != note }) {
+                dismissedNotes.update { notes -> notes.filter { (id, note) -> listedNotes[id] == note } }
             }
             if (projects.isEmpty()) {
                 HomeUiState.Empty
@@ -317,8 +325,8 @@ internal class HomeViewModel @Inject constructor(
                     },
                     // A37.6: a zine whose delete is still waiting stays named until its undo has passed.
                     restored = projects.mapNotNull { entry ->
-                        entry.restored?.takeIf { entry.id !in dismissed }
-                            ?.let { RestoredZine(entry.id, entry.title, it.previousTitle) }
+                        entry.restored?.takeIf { it != dismissed[entry.id] }
+                            ?.let { RestoredZine(entry.id, entry.title, it.previousTitle, it.details, it.pages) }
                     },
                 )
             }
@@ -514,9 +522,11 @@ internal class HomeViewModel @Inject constructor(
      * once; if the store cannot clear it, it comes back with the warm failure message and is told again.
      */
     fun dismissRestored(ids: List<String>) {
-        dismissedNotes.update { it + ids }
+        val notes = listedNotes.filterKeys { it in ids }
+        dismissedNotes.update { it + notes }
         viewModelScope.launch {
-            val result = projectRepository.dismissRestoredDetails(ids)
+            // The notes as shown: one that changed since (a pages repair merged in) keeps waiting in the store.
+            val result = projectRepository.dismissRestoredDetails(notes)
             if (result is DataResult.Failure) {
                 dismissedNotes.update { it - ids.toSet() }
                 eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))

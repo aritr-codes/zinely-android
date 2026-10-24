@@ -66,9 +66,9 @@ public object Copy {
      *
      * ⚠ **The failure half is spoken, not shown** — [importSummary] rides `announceForAccessibility`,
      * so a maker without TalkBack sees photos appear and is told nothing about the ones that did not.
-     * That is the *existing* import pipeline's behaviour (`ImagePickResult.Failure` → `Announcer`), and
-     * this path deliberately inherits it rather than inventing a second, better-informed failure surface
-     * for one entry point. Recorded as a known gap in **D-081**, not as a claim that it is right.
+     * That was the import pipeline's behaviour when this path was built, and it was inherited rather than
+     * given a second failure surface. A single photo pick's failure is now shown in the Bench snack
+     * (`v21-bench.html` A41.3); this share-in path still only speaks. Recorded as a known gap in **D-081**.
      */
     public object ShareIn {
         public const val CHOOSE_ZINE: String = "Open a zine and your photos will be added to it."
@@ -644,6 +644,12 @@ public object Copy {
         public const val SAVED_MARK: String = "✿"
         public const val SAVED_WORD: String = "Saved"
         public const val SAVED_SPOKEN: String = "Saved"
+
+        /**
+         * The status strip's way back to the Shelf (`v21-bench.html` A42, D-143): the Proof's back chevron,
+         * no visible text, named after the Proof's own [Proof.BACK_TO_BENCH_SAVED].
+         */
+        public const val BACK_TO_SHELF_SAVED: String = "Back to My Shelf (your work is saved)"
     }
 
     /**
@@ -758,7 +764,7 @@ public object Copy {
         public const val FRAMING_RESET: String = "Framing reset. Cancel to undo."
         public const val REFRAMING_CANCELLED: String = "Reframing cancelled."
         public const val REFRAME_UNAVAILABLE: String =
-            "This photo can’t be reframed. Try adding it again."
+            "This photo can’t be reframed. Try Replace."
         public const val WHOLE_PHOTO_INERT: String =
             "Whole photo can’t be moved or zoomed. Choose Fill to adjust it."
         public const val PREVIEW: String = "Preview"
@@ -1186,13 +1192,35 @@ public object Copy {
          * only when both are known and differ. Up to four names in full; past four, three and "and {k} more",
          * so k is always 2 or more.
          */
-        public fun note(zines: List<Pair<String, String?>>): Pair<String, String> {
+        public fun note(zines: List<Pair<String, String?>>): Pair<String, String> =
+            noteFor(zines.map { (now, was) -> Zine(now, was) })
+
+        /**
+         * One zine on the note: [now] and [was] as in [note]; [details] when its name, cover and folder went back
+         * (A37), [pages] when its page file did (A46, [ADR-140](docs/DECISIONS.md#adr-140)).
+         */
+        public data class Zine(
+            val now: String,
+            val was: String?,
+            val details: Boolean = true,
+            val pages: Boolean = false,
+        )
+
+        /** [note] with each zine's kinds: `v21-library.html` A46.3, form by form; A37.3 when no page file went back. */
+        public fun noteFor(zines: List<Zine>): Pair<String, String> {
             require(zines.isNotEmpty()) { "a note names at least one zine" }
-            val wentBack = zines.map { (now, was) -> now to was?.takeIf { it != now } }
+            // A46.3: {was} belongs to a details repair only; a pages repair never changes a name.
+            val wentBack = zines.map { z -> z.now to z.was?.takeIf { z.details && it != z.now } }
             if (wentBack.size == 1) {
+                val z = zines.single()
                 val (now, was) = wentBack.single()
+                val body = when {
+                    !z.pages -> ONE_BODY
+                    !z.details -> PAGES_BODY
+                    else -> ONE_BODY + PAGES_TOO
+                }
                 return (if (was != null) "“$was” is called “$now” again" else "Zinely repaired “$now”") to
-                    ONE_BODY + (if (was != null) RENAME_AGAIN else "")
+                    body + (if (was != null) RENAME_AGAIN else "")
             }
             val names = wentBack.map { (now, was) -> if (was != null) "“$now” (was “$was”)" else "“$now”" }
             val list = if (names.size > 4) {
@@ -1200,7 +1228,12 @@ public object Copy {
             } else {
                 names.dropLast(1).joinToString(", ") + " and " + names.last()
             }
-            return "Zinely repaired ${zines.size} zines" to "$list. $SEVERAL_BODY"
+            val body = when {
+                zines.none { it.pages } -> SEVERAL_BODY
+                zines.none { it.details } -> SEVERAL_PAGES_BODY
+                else -> SEVERAL_MIXED_BODY
+            }
+            return "Zinely repaired ${zines.size} zines" to "$list. $body"
         }
 
         /** What TalkBack reads: the title and body as one node (A37.10). */
@@ -1211,6 +1244,17 @@ public object Copy {
         private const val RENAME_AGAIN: String = " You can rename it again."
         private const val SEVERAL_BODY: String = "Small files that hold their names, covers and folders were " +
             "damaged, so Zinely used the copies from before the last changes to them."
+
+        // A46.3. "Your last few seconds": only a Bench autosave rewrites an existing page file (ADR-140).
+        private const val PAGES_BODY: String = "A page file was damaged, so Zinely used the copy from just before " +
+            "your last few seconds of changes."
+        private const val PAGES_TOO: String = " A page file was damaged too, so its pages are from just before your " +
+            "last few seconds of changes."
+        private const val SEVERAL_PAGES_BODY: String = "Their page files were damaged, so Zinely used the copies " +
+            "from just before your last few seconds of changes."
+        private const val SEVERAL_MIXED_BODY: String = "Some of their files were damaged, so Zinely used the copies " +
+            "it kept. Names, covers and folders are from before the last change to them; pages are from just before " +
+            "your last few seconds of changes."
     }
 
     /** Paper-size display names, shared by the shelf chooser and the print recipe. */
@@ -1268,8 +1312,23 @@ public object Copy {
         // already is, and they *disappear* at the ends, which a sentence at the top of the screen cannot.
         // The position it never carried is now the `.pcount` ticket's, in the frozen place.
         public const val COULDNT_MAKE_PDF: String = "Couldn’t make the PDF"
+        /** D-146: a Save PDF that failed only at keeping it in Downloads (out of space, Storage refused). */
+        public const val COULDNT_SAVE_PDF: String = "Couldn’t save the PDF"
         public const val ERROR_BODY: String =
             "Your zine is safe on this device — the export just didn’t finish. Try once more."
+        // A43 / D-142: the same overlay, the body names the cause (the title, by D-146). Each opens "Your zine is safe."
+        // because the title alone reads as a loss. Exact, frozen wording.
+        public const val ERROR_OUT_OF_MEMORY: String =
+            "Your zine is safe. This phone ran short of memory making the PDF — try again in a moment."
+        public const val ERROR_OUT_OF_SPACE: String =
+            "Your zine is safe. This phone is out of space — free some up, then try again."
+        public const val ERROR_STORAGE_REFUSED: String =
+            "Your zine is safe. Zinely needs permission to save to Downloads — tap Try again, then Allow."
+        public const val ERROR_STORAGE_BLOCKED: String =
+            "Your zine is safe. Zinely needs permission to save to Downloads. Under Permissions, turn on " +
+                "Storage, then come back and tap Try again."
+        /** A43.2: after a permanent Storage denial the overlay's one button opens Zinely's app details. */
+        public const val OPEN_SETTINGS: String = "Open settings"
         public const val BACK_TO_BENCH_SAVED: String = "Back to the bench (your work is saved)"
 
         /**
@@ -1728,7 +1787,9 @@ public object Copy {
         public const val EMPTY_TITLE: String = "Bring your zines back"
         public const val EMPTY_BODY: String = "Choose a Zinely backup and its zines will be added to this shelf."
         public const val SAVE_ACTION: String = "Back up this shelf"
-        public const val SAVE_BODY: String = "Choose where to keep the backup file."
+        public const val SAVE_BODY: String = "Next, your phone asks where to save it."
+        // A45 note (2026-10-24): the Back up option is spoken as its title, a full stop, then its line.
+        public const val SAVE_SPOKEN: String = "$SAVE_ACTION. $SAVE_BODY"
         public const val RESTORE_ACTION: String = "Restore a backup"
         // Amendment N1 (ADR-121): a zine already on the shelf isn't added again; a changed one is added alongside.
         public const val RESTORE_BODY: String =

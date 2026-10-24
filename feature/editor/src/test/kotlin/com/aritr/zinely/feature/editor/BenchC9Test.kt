@@ -438,7 +438,8 @@ class BenchC9Test {
         val policy = Regex("""v2Motion|reduceMotion|durationMillis\(|\bmotion\.(settle|standard)""")
         val animation = Regex(
             """\b(tween|keyframes|spring|infiniteRepeatable|rememberInfiniteTransition|""" +
-                """animateFloatAsState|animateDpAsState|animateColorAsState|animateIntAsState)\s*\(""",
+                """animateFloatAsState|animateDpAsState|animateColorAsState|animateIntAsState|""" +
+                """animateScrollTo|animateScrollBy|animateScrollToItem)\s*\(""",
         )
         val boundVal = Regex("""\bval\s+(\w+)\s*=.*(?:v2Motion|reduceMotion|durationMillis\()""")
         val lines = file.readText().split("\n")

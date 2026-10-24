@@ -59,7 +59,6 @@ import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.security.MessageDigest
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
 import kotlin.random.Random
@@ -78,7 +77,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
@@ -137,6 +135,12 @@ internal class RoomProjectRepository(
     /** Free bytes on the disk holding [path]; the restore's free-space probe (ADR-122 R1), a seam for tests. */
     private val usableBytes: (Path) -> Long = { Files.getFileStore(it).usableSpace },
     private val restoreStager: ZineLibraryBackupStager = ZineLibraryBackupStager(),
+    /**
+     * The zines waiting to be told they went back to an earlier copy, shared with the document repository the Bench
+     * reads through ([ADR-140](docs/DECISIONS.md#adr-140) decision 4). The Shelf reads it and lists again when it
+     * changes.
+     */
+    private val notes: RepairNotes = RepairNotes(rootDir, store),
 ) : ProjectRepository, LibraryRestoreRepository, LibraryBackupRepository {
 
     private val libraryRoot = rootDir.toAbsolutePath().normalize()
@@ -158,14 +162,6 @@ internal class RoomProjectRepository(
      * index. In memory only: it carries no state, it only says "read the files again".
      */
     private val folderChanges = MutableStateFlow(0)
-
-    /**
-     * Zines whose `meta.json` this process put back from its earlier copy and that wait to be told
-     * ([ADR-134](docs/DECISIONS.md#adr-134)). Each is also written as a marker beside the zine's files, which is
-     * what survives a restart; this copy is what still shows the note for this run when that write fails
-     * (decision 4). The Shelf reads both ([waitingNoteOf]).
-     */
-    private val waitingNotes = ConcurrentHashMap<String, RestoredDetails>()
 
     /** Cleared whenever the index may have diverged from committed file truth. */
     @Volatile
@@ -193,6 +189,8 @@ internal class RoomProjectRepository(
                 }
             }
             .combine(folderChanges) { rows, _ -> rows }
+            // ADR-140 decision 6: a repair found off the Shelf (the Bench opening a zine) changes no row.
+            .combine(notes.changes) { rows, _ -> rows }
             .map(::toShelfEntries)
             .flowOn(io)
 
@@ -358,7 +356,7 @@ internal class RoomProjectRepository(
                 return@withLock failure(DataError.Io("failed to delete project '$id'", e))
             }
             // Its marker went with the directory (ADR-134 decision 3).
-            waitingNotes.remove(id)
+            notes.forget(id)
             try {
                 dao.deleteById(id)
             } catch (e: CancellationException) {
@@ -1197,10 +1195,8 @@ internal class RoomProjectRepository(
     /**
      * [id]'s `meta.json` was present but damaged and was put back from its earlier copy (ADR-134 decisions 3-5).
      *
-     * 1. The zine waits to be told, with the title its index row held (what the Shelf showed), unless it is
-     *    already waiting: the first repair's old name is the one the maker knew. The marker is written beside the
-     *    zine's files; if that write fails the note still shows for this run from [waitingNotes] and only its
-     *    survival across a restart is lost, so that failure ends here by design.
+     * 1. The zine waits to be told, with the title its index row held (what the Shelf showed), unless its details
+     *    already wait: the first repair's old name is the one the maker knew ([RepairNotes.addDetails]).
      * 2. The row is re-synced from the repaired file when it disagrees, whichever caller's read found the repair,
      *    so the tile and the note agree. The re-read inside [syncRowFromDisk] is of the repaired file, so this
      *    does not recur. A failed re-sync flags the index for the next reconcile itself, and an unreadable
@@ -1216,76 +1212,32 @@ internal class RoomProjectRepository(
         } catch (_: Exception) {
             null
         }
-        if (waitingNoteOf(id) == null) {
-            val note = RestoredDetails(previousTitle = row?.title)
-            waitingNotes[id] = note
-            val marker = paths.restoredNoteFile(id)
-            if (marker != null) {
-                try {
-                    store.write(
-                        marker,
-                        json.encodeToString(RestoredNoteFile.serializer(), RestoredNoteFile(note.previousTitle))
-                            .encodeToByteArray(),
-                    )
-                } catch (_: IOException) {
-                    // Decision 4: shown this run from waitingNotes; a full disk costs only its survival.
-                }
-            }
-        }
+        notes.addDetails(id, previousTitle = row?.title)
         if (row != null && row.disagreesWith(meta)) syncRowFromDisk(id, updatedAtEpochMs = row.updatedAtEpochMs)
     }
 
     /**
-     * The waiting note for [id], or `null`. A marker that cannot be read is still a repair waiting to be told,
-     * without its old name.
-     */
-    private fun waitingNoteOf(id: String): RestoredDetails? {
-        waitingNotes[id]?.let { return it }
-        val marker = paths.restoredNoteFile(id) ?: return null
-        if (!Files.exists(marker)) return null
-        val previous = try {
-            store.read(marker)?.let { json.decodeFromString(RestoredNoteFile.serializer(), it.decodeToString()) }
-                ?.previousTitle
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            null
-        }
-        return RestoredDetails(previous)
-    }
-
-    /**
-     * [id] stops waiting to be told. Throws when its marker cannot be removed; it is then told again next start.
-     * The `.bak` goes first: [waitingNoteOf] checks only the main marker, so a throw on either delete leaves the
-     * main marker in place and the failure is never a note silently lost.
-     */
-    private fun clearWaitingNote(id: String) {
-        waitingNotes.remove(id)
-        val marker = paths.restoredNoteFile(id) ?: return
-        Files.deleteIfExists(marker.resolveSibling(marker.fileName.toString() + ".bak"))
-        Files.deleteIfExists(marker)
-    }
-
-    /**
-     * [clearWaitingNote] after a committed rename or move. The change itself is done, so it is reported as done:
-     * a marker that cannot be removed stays on disk and the note is told again next start, which is harmless.
+     * After a committed rename or move: the zine's details stop waiting, its pages part does not (A46.5). The
+     * change itself is done, so it is reported as done: a marker that cannot be changed stays on disk, which is
+     * harmless. It tells the details again on the next listing in this run when nothing else waits for the zine
+     * (the note held in [RepairNotes] is gone, so the marker is read), else at the next start.
      */
     private fun clearWaitingNoteResult(id: String): DataResult<Unit> {
         try {
-            clearWaitingNote(id)
+            notes.clearDetails(id)
         } catch (_: IOException) {
-            // ponytail: the leftover marker is the record; next start tells the note again.
+            // ponytail: the leftover marker is the record; a later listing tells the note again.
         }
         return DataResult.Success(Unit)
     }
 
-    override suspend fun dismissRestoredDetails(ids: Collection<String>): DataResult<Unit> = withContext(io) {
+    override suspend fun dismissRestoredDetails(shown: Map<String, RestoredDetails>): DataResult<Unit> = withContext(io) {
         try {
             mutex.withLock {
                 var cause: IOException? = null
-                for (id in ids) {
+                for ((id, note) in shown) {
                     try {
-                        clearWaitingNote(id)
+                        notes.clear(id, shown = note)
                     } catch (e: IOException) {
                         cause = cause ?: e
                     }
@@ -1414,14 +1366,15 @@ internal class RoomProjectRepository(
                 // ADR-125 rule 14: the folder is read here, from the file, for a zine that opens and for one
                 // that does not. Missing or unreadable metadata is My Shelf. Under the lock, because this read
                 // can repair the file from its backup copy and must not race a folder operation's write.
-                // Read together, in this order and under one lock: a repair this very read finds is recorded by
-                // readMetaOrNull, so the same listing that shows the repaired title also carries its note.
-                val (meta, restored) = mutex.withLock { readMetaOrNull(id) to waitingNoteOf(id) }
+                val meta = mutex.withLock { readMetaOrNull(id) }
                 val folder = FolderNames.clean(meta?.folder)
                 // ADR-134 decision 4: a repair this read found has re-synced the row, so the tile is read from
                 // the row as it is now, and the tile and the note name the zine the same way.
                 val row = indexed[id]?.let { if (it.disagreesWith(meta)) freshRowOr(it) else it }
-                when (val loaded = documents.load(id)) {
+                val loaded = documents.load(id)
+                // After both reads (ADR-140 decision 6): a repair either of them found is in this same listing.
+                val restored = notes.noteOf(id)
+                when (loaded) {
                     is DataResult.Success -> {
                         row?.let(::toSummary)?.let { ProjectShelfEntry.Available(it, folder, restored) }
                     }
@@ -1560,10 +1513,6 @@ internal class RoomProjectRepository(
 
     /** A zine a backup left out, and whether the maker can find it on the shelf. */
     private data class LeftOutZine(val omission: ZineBackupOmission, val onShelf: Boolean)
-
-    /** `restored-note.json`: the title the Shelf showed before the repair, when known (ADR-134 decision 5). */
-    @Serializable
-    private data class RestoredNoteFile(val previousTitle: String? = null)
 
     private data class DocumentWirePeek(
         val schemaVersion: Int? = null,

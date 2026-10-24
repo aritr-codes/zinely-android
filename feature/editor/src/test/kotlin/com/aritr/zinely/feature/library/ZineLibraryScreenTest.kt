@@ -26,6 +26,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -142,6 +143,53 @@ class ZineLibraryScreenTest {
     }
 
     @Test
+    fun `a failed shelf still offers backups and about`() {
+        // D-145: `zines.isEmpty()` in Error means "could not read", not "empty", so the label is the
+        // frozen `v21-library.html` one, "Backups", and a maker whose shelf will not open can still reach
+        // a backup (restore only adds, ADR-121) and the colophon.
+        render(LibraryShelfState.Error)
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).assertIsDisplayed()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BRING_BACK)).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)).assertIsDisplayed().performClick()
+        composeRule.onNodeWithTag(ColophonScreenTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a failed shelf opens backups restore-only`() {
+        render(LibraryShelfState.Error)
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).performClick()
+        composeRule.onNodeWithTag(KeepSafeSheetTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(KeepSafeRestoreActionTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun `two same titled delete prompts each get their own undo window`() {
+        // Given two zines with one title, both prompts sent before idle, and a clock that only moves when told.
+        composeRule.mainClock.autoAdvance = false
+        content(zines(2))
+        events.trySend(HomeShelfEvent.DeletePrompt(idOf(0), "Cats"))
+        events.trySend(HomeShelfEvent.DeletePrompt(idOf(1), "Cats"))
+        // When 5 seconds pass, then 5 more.
+        composeRule.mainClock.advanceTimeBy(5_200L)
+        composeRule.mainClock.advanceTimeBy(5_200L)
+        // Then both deletes committed: the second bar had its own window, the collector did not stall.
+        assertEquals(listOf(idOf(0), idOf(1)), committed)
+    }
+
+    @Test
+    fun `two equal messages each get their own toast window`() {
+        composeRule.mainClock.autoAdvance = false
+        content(zines(1))
+        events.trySend(HomeShelfEvent.Message("Could not save"))
+        events.trySend(HomeShelfEvent.Message("Could not save"))
+        composeRule.mainClock.advanceTimeBy(2_400L)
+        composeRule.mainClock.advanceTimeBy(2_400L)
+        composeRule.mainClock.advanceTimeBy(100L)
+        composeRule.onNodeWithText("Could not save").assertDoesNotExist()
+    }
+
+    @Test
     fun `the dock stands in all four states`() {
         // `.dock` sits outside `.empty` and outside `.fail`, and **no** `body.is-*` rule targets it —
         // read off the frozen file rather than inferred. The ruling gives the reason: *"the dock is part
@@ -155,13 +203,8 @@ class ZineLibraryScreenTest {
     }
 
     @Test
-    fun `dock secondary actions appear only after the shelf has loaded`() {
+    fun `dock secondary actions appear only once the shelf has answered, loaded or failed`() {
         render(LibraryShelfState.Loading)
-        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).assertDoesNotExist()
-        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BRING_BACK)).assertDoesNotExist()
-        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)).assertDoesNotExist()
-
-        render(LibraryShelfState.Error)
         composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).assertDoesNotExist()
         composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BRING_BACK)).assertDoesNotExist()
         composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)).assertDoesNotExist()
@@ -526,6 +569,23 @@ class ZineLibraryScreenTest {
     }
 
     @Test
+    fun `a half typed zine rename survives recreation`() {
+        // Given Rename with a new title half typed.
+        render(LibraryShelfState.Content(zines(3)), restorable = true)
+        composeRule.onNodeWithTag(zineShelfMoreTestTag(1)).performClick()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Rename)).performClick()
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).performTextClearance()
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).performTextInput("Cof")
+
+        // When the Activity is saved and restored.
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+
+        // Then the sheet is up and still reads what was typed.
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).assertIsDisplayed().assertTextEquals("Cof")
+    }
+
+    @Test
     fun `Rename raises the existing rename input and saves against the pressed zine`() {
         val pressed = 1
         openSheetFor(pressed)
@@ -577,6 +637,7 @@ class ZineLibraryScreenTest {
     private var shelfState by mutableStateOf<LibraryShelfState>(LibraryShelfState.Loading)
     private var darkTheme by mutableStateOf(false)
     private var composed = false
+    private val restoration by lazy { StateRestorationTester(composeRule) }
 
     private fun fourStates(): List<LibraryShelfState> = listOf(
         LibraryShelfState.Content(zines(3)),
@@ -592,12 +653,12 @@ class ZineLibraryScreenTest {
      * One composition per test, driven by state — `setContent` may be called only once per rule, and
      * several of these tests deliberately walk the screen through more than one state.
      */
-    private fun render(state: LibraryShelfState, dark: Boolean = false) {
+    private fun render(state: LibraryShelfState, dark: Boolean = false, restorable: Boolean = false) {
         shelfState = state
         darkTheme = dark
         if (!composed) {
             composed = true
-            composeRule.setContent { Host() }
+            if (restorable) restoration.setContent { Host() } else composeRule.setContent { Host() }
         }
         composeRule.waitForIdle()
     }

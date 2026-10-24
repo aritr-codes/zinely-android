@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -40,6 +41,8 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -189,6 +192,8 @@ internal val LocalReframePhotoLoader = staticCompositionLocalOf { ProductionRefr
  *   [ADR-051](../DECISIONS.md#adr-051) — the reader's-booklet PreviewScreen it once opened is retired,
  *   superseded by the imposed-sheet-first Proof). `null` (the default) hides the affordance entirely, so a
  *   screen without a proof destination (previews/tests) is unchanged; the app passes a navigate action.
+ * @param onBack the way back to My Shelf from the status strip (`v21-bench.html` A42, D-143): the same pop the
+ *   system Back does from an idle Bench. Autosave has already run, so nothing asks first. Defaults to a no-op.
  */
 @Composable
 public fun EditorScreen(
@@ -208,6 +213,7 @@ public fun EditorScreen(
     onDismissSaveError: () -> Unit = {},
     onRetrySaveError: () -> Unit = {},
     onPreview: (() -> Unit)? = null,
+    onBack: () -> Unit = {},
 ) {
     val uiState by store.uiState.collectAsStateWithLifecycle()
     val dispatch: (Intent) -> Unit = store::dispatch
@@ -309,7 +315,7 @@ public fun EditorScreen(
     var addChooserOpen by remember { mutableStateOf(false) }
     // Frozen Bench A19: the selected photo whose two-page confirmation is open. The document is not
     // touched until confirmation; dismissal clears only this ephemeral id.
-    var spreadPhotoId by remember { mutableStateOf<String?>(null) }
+    var spreadPhotoId by rememberSaveable { mutableStateOf<String?>(null) }
     var spreadBusy by remember { mutableStateOf(false) }
 
     // The Art sheet — the frozen `openArt()` (ADR-105 step S7). Purpose remains separate from the chooser's
@@ -326,7 +332,7 @@ public fun EditorScreen(
     // know which. A `Boolean` plus an `artReplaceTarget: String?` beside it would be two states that can
     // disagree, which is exactly the shape [D-091](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-091)
     // cost this package a review cycle over. One nullable value, and the purpose is unconstructibly wrong.
-    var artSheetFor by remember { mutableStateOf<BenchArtPurpose?>(null) }
+    var artSheetFor by rememberSaveable(stateSaver = BenchArtPurposeSaver) { mutableStateOf<BenchArtPurpose?>(null) }
     val artSheetOpen = artSheetFor != null
 
     // ----- C5 (ADR-095) -------------------------------------------------------------------
@@ -351,6 +357,11 @@ public fun EditorScreen(
     // button at all and stands for 1600ms rather than 3200 — the frozen `applyInk` builds it that way
     // because an ink is one undoable command the bar's own Undo already reverses.
     var snackAction by remember { mutableStateOf<String?>(null) }
+    // How long a snack stands: its base, or longer if the phone's accessibility timeout ("time to take
+    // action") asks — the Shelf snack's rule (A28.13). Read when each timer starts, so a snack with Undo is
+    // given the longer controls timeout.
+    val accessibility = LocalAccessibilityManager.current
+    val snackHold = { base: Long -> benchSnackHoldMillis(accessibility, base, hasAction = snackAction != null) }
     val c4Scope = rememberCoroutineScope()
     val spreadJob = remember { arrayOfNulls<Job>(1) }
     // One job, cancelled on re-entry: two deletes in quick succession must not leave the first
@@ -380,9 +391,53 @@ public fun EditorScreen(
             snackVisible = true
             latestHistoryAnnounce(line)
             deleteJob[0] = c4Scope.launch {
-                delay(BenchSnackDeleteMillis)
+                delay(snackHold(BenchSnackDeleteMillis))
                 snackVisible = false
             }
+        }
+    }
+    // D-141 / A41.2: a snack's Undo is live only while the newest history step is the one that raised it.
+    // Every site that raises an Undo snack reads the revision BEFORE dispatching, offers Undo only if its own
+    // action moved it, and records the revision AFTER that push (R-W6), so the snack never retires itself; any later step (an edit, the bar's Undo or Redo, a page command)
+    // moves the revision and the snack goes at once. Bumping the step re-keys the snack's animation at
+    // zero, which is "hidden with no exit transition". Snacks without Undo keep their timeout.
+    var undoSnackRevision by remember { mutableLongStateOf(-1L) }
+    LaunchedEffect(uiState.historyRevision) {
+        if (snackVisible && snackAction != null && uiState.historyRevision != undoSnackRevision) {
+            deleteJob[0]?.cancel()
+            snackVisible = false
+            snackStep++
+        }
+    }
+    // A41.3: a photo that could not be added is shown, not only spoken. The snack's own polite live region
+    // says the line once; nothing else announces it. No button: there is nothing to undo.
+    LaunchedEffect(store) {
+        store.imagePickFailures.collect { line ->
+            deleteJob[0]?.cancel()
+            snackMessage = line
+            snackAction = null
+            snackStep++
+            snackVisible = true
+            deleteJob[0] = c4Scope.launch {
+                delay(snackHold(BenchSnackDeleteMillis))
+                snackVisible = false
+            }
+        }
+    }
+
+    // An undoable snack for an action already dispatched. [before] is the revision read BEFORE that dispatch:
+    // an action that pushed nothing (a no-op) raises no snack, so its Undo can never take back an older step.
+    // The revision after the push is recorded here, synchronously, before anything else can land.
+    val raiseUndoSnack: (Long, String) -> Unit = raise@{ before, line ->
+        if (currentState().historyRevision == before) return@raise
+        deleteJob[0]?.cancel()
+        snackMessage = line
+        snackAction = UndoActionLabel
+        undoSnackRevision = currentState().historyRevision
+        snackVisible = true
+        deleteJob[0] = c4Scope.launch {
+            delay(snackHold(BenchSnackDeleteMillis))
+            snackVisible = false
         }
     }
 
@@ -402,10 +457,12 @@ public fun EditorScreen(
             deleteJob[0]?.cancel()
             deleteJob[0] = c4Scope.launch {
                 deletingId = id
+                var revisionBefore = -1L
                 try {
                     animate(0f, 1f, animationSpec = tween(deleteFadeMillis)) { v, _ ->
                         deleteProgress = v
                     }
+                    revisionBefore = currentState().historyRevision
                     dispatch(Intent.Delete(ids))
                 } finally {
                     // An Undo or Redo inside the fade cancels this job before the delete lands; the element
@@ -413,10 +470,13 @@ public fun EditorScreen(
                     deletingId = null
                     deleteProgress = 0f
                 }
+                // A delete that pushed nothing (the piece was already gone) offers no Undo.
+                if (currentState().historyRevision == revisionBefore) return@launch
                 snackMessage = benchDeletedMessage(label)
                 snackAction = UndoActionLabel
+                undoSnackRevision = currentState().historyRevision
                 snackVisible = true
-                delay(BenchSnackDeleteMillis)
+                delay(snackHold(BenchSnackDeleteMillis))
                 snackVisible = false
             }
         }
@@ -473,15 +533,9 @@ public fun EditorScreen(
             null -> Unit
             // Add ▸ Art: a new element at page centre, at its family's size (§5, §5.1, §5.2).
             BenchArtPurpose.Place -> {
+                val before = currentState().historyRevision
                 dispatch(Intent.PlaceSupply(supplyId, supplyInk, benchSupplyPlacement(supplyId, pageSizePt)))
-                deleteJob[0]?.cancel()
-                deleteJob[0] = c4Scope.launch {
-                    snackMessage = Copy.Snack.PLACED
-                    snackAction = UndoActionLabel
-                    snackVisible = true
-                    delay(BenchSnackDeleteMillis)
-                    snackVisible = false
-                }
+                raiseUndoSnack(before, Copy.Snack.PLACED)
             }
             // §8 `Replace supply`. The transform is computed from the OUTGOING element, so the swap needs
             // it in hand — a target that has since been deleted resolves to null and the verb is dropped
@@ -540,7 +594,7 @@ public fun EditorScreen(
                 snackMessage = Copy.BenchInk.applied(name)
                 snackAction = null
                 snackVisible = true
-                delay(BenchSnackInkMillis)
+                delay(snackHold(BenchSnackInkMillis))
                 snackVisible = false
             }
         }
@@ -683,19 +737,25 @@ public fun EditorScreen(
                             latest.document.pages.getOrNull(sourcePageIndex)
                                 ?.elements?.any { it.id == target.id && it is ImageElement && it.assetId == target.assetId } == true
                     }
-                    if (intrinsic == null || !stillCurrent) {
+                    // A spread that pushed nothing did not happen, so it is told as one that could not be made.
+                    val spread = intrinsic != null && stillCurrent && run {
+                        val before = currentState().historyRevision
+                        dispatch(Intent.MakeImageSpread(target.id, intrinsic.aspect, pageSizePt))
+                        currentState().historyRevision != before
+                    }
+                    if (!spread) {
                         snackMessage = Copy.Spread.PHOTO_UNAVAILABLE
                         snackAction = null
                     } else {
-                        dispatch(Intent.MakeImageSpread(target.id, intrinsic.aspect, pageSizePt))
                         snackMessage = Copy.Spread.success(pages.first, pages.second)
                         snackAction = UndoActionLabel
+                        undoSnackRevision = currentState().historyRevision
                     }
                     spreadPhotoId = null
                     snackVisible = true
                     deleteJob[0]?.cancel()
                     deleteJob[0] = c4Scope.launch {
-                        delay(BenchSnackDeleteMillis)
+                        delay(snackHold(BenchSnackDeleteMillis))
                         snackVisible = false
                     }
                 } finally {
@@ -865,14 +925,14 @@ public fun EditorScreen(
             if (loaded.intrinsic == null) {
                 // A25: the refusal is visible and spoken once. BenchSnack owns the polite live-region
                 // announcement, so do not also send the same line through `sayReframe` and make TalkBack
-                // repeat it. The ordinary Add control returns as the truthful recovery path; Photo Replace
-                // remains an intentionally unavailable future enhancement and is never promised here.
+                // repeat it. Photo Replace ships, so the line points at it (A41.4); Add stays as the other
+                // way back.
                 deleteJob[0]?.cancel()
                 snackMessage = Copy.Editor.REFRAME_UNAVAILABLE
                 snackAction = null
                 snackVisible = true
                 deleteJob[0] = c4Scope.launch {
-                    delay(BenchSnackDeleteMillis)
+                    delay(snackHold(BenchSnackDeleteMillis))
                     snackVisible = false
                 }
                 dispatch(Intent.CancelReframe(rf.token))
@@ -1069,20 +1129,29 @@ public fun EditorScreen(
         inkAfterEditFor = null
         if (ctxElement?.id == pending) inkPopoverFor = pending
     }
-    // Text editing is a surface inside the editor, not a navigation destination. Own Back at the screen
-    // boundary where it can outrank the NavHost: a handler inside BasicTextField loses that race on real
-    // Samsung firmware once the IME has consumed its own Back. The first press may hide the keyboard; the
-    // next discards the draft and returns to the selected page instead of leaving for the shelf.
-    // CancelText also coalesces a freshly placed blank box away, so opening Text and backing out is clean.
-    BackHandler(enabled = editingElement != null) {
-        // Cancellation is a cancellation, never an implicit page change. A page target can only survive
-        // until the matching successful CommitText callback consumes it.
-        pageAfterEditIndex = null
-        editingTextSession?.let { dispatch(Intent.CancelText(it.id, it.token)) }
-    }
     // The frozen editing row's Done ends the session by clearing focus — see its call site for why that,
     // and not a dispatch, is the correct end (the draft is feature-ephemeral).
     val focusManager = LocalFocusManager.current
+    // Text editing is a surface inside the editor, not a navigation destination. Own Back at the screen
+    // boundary where it can outrank the NavHost: a handler inside BasicTextField loses that race on real
+    // Samsung firmware once the IME has consumed its own Back, so the first press may only hide the keyboard.
+    // The press this handler does receive COMMITS, exactly as Done does (`v21-bench.html` A41.1, replacing
+    // adaa6ee's "the next Back discards"): it clears focus, the session's own commit path. So the words are
+    // kept as one undo step and the piece stays selected; a fresh box left blank still goes with no undo
+    // step; an existing box emptied is deleted as one undoable step, with its snack (R-W7). It is composed
+    // after the type bar's handler, so while the bar is open one Back commits rather than only closing it.
+    BackHandler(enabled = editingElement != null) {
+        // Back is never an implicit page change: a queued page target is dropped, not followed.
+        pageAfterEditIndex = null
+        focusManager.clearFocus()
+        // Typing needs focus, so a field that never had it holds no draft, and closing its session is the
+        // same commit. (A focused field has already committed synchronously above, ending the session.)
+        val open = currentState().interaction as? Interaction.EditingText
+        if (open != null) dispatch(Intent.CancelText(open.id, open.token))
+    }
+    // Back while reframing is Reframe's own Cancel (`v21-reframe.html`), never a way off the Bench. Composed
+    // after every tray handler so it is the one that wins while a session is open.
+    BackHandler(enabled = reframing != null) { reframeCancel() }
     // Page navigation must use the same commit-before-transition boundary. GoToPage deliberately closes
     // an open text session; dispatching it first invalidates the field token before its feature-local
     // draft can be committed. Queue the target, clear focus (the session's established commit path), and
@@ -1124,6 +1193,11 @@ public fun EditorScreen(
     var arrangeTrayDockedTopPx by remember { mutableFloatStateOf(Float.NaN) }
     var canvasTopPx by remember { mutableFloatStateOf(Float.NaN) }
 
+    // A42 / D-143: the way back to My Shelf, shown only while nothing else on the Bench owns Back, so one
+    // control never means two things. The same terms as the BackHandlers above, plus the two sheets.
+    val shelfBackVisible = editingElement == null && !typeBarOpen && reframing == null && !inkPopoverVisible &&
+        !flipTrayVisible && !arrangeTrayVisible && !pageGridOpen && !addChooserOpen && !artSheetOpen &&
+        spreadPhotoId == null
     // The frozen `.kbstack` is anchored to the PHONE (`left/right/bottom:0; z-index:35`, `:259`) — not to
     // the canvas — so the editing row must overlay the whole screen, above the supply tray, rather than
     // dock at the canvas's bottom edge. It rode the canvas in the first cut of C3 and the screen-level
@@ -1195,7 +1269,11 @@ public fun EditorScreen(
         // sits directly inside `.phone`, above `.canvasArea`). It carries the autosave chip that
         // `EditorSavedConfirmation` used to float over the canvas - one message, one presentation,
         // per OD-14 - and its left slot is deliberately empty; see [BenchStatusStrip].
-        BenchStatusStrip(savedVisible = (savedVisible || doneSavedVisible) && !saveErrorVisible)
+        BenchStatusStrip(
+            savedVisible = (savedVisible || doneSavedVisible) && !saveErrorVisible,
+            backVisible = shelfBackVisible,
+            onBack = onBack,
+        )
 
         // The "Preview" entry to the unified Proof surface (M5, ADR-051). A quiet top-end nav
         // action (not a thumb-zone craft supply — it advances the journey, it doesn't place content);
@@ -1577,7 +1655,20 @@ public fun EditorScreen(
                             commitText = { intent ->
                                 val before = store.uiState.value
                                 dispatch(intent)
-                                store.uiState.value != before
+                                val after = store.uiState.value
+                                // A41.1: a box that had words, emptied and committed, is deleted as one
+                                // undoable step, and says so with the ordinary delete snack and its Undo.
+                                val hadWords = before.document.pages.any { page ->
+                                    page.elements.any { it.id == intent.id && it is TextElement && it.text.isNotBlank() }
+                                }
+                                val gone = after.document.pages.none { page -> page.elements.any { it.id == intent.id } }
+                                if (hadWords && intent.after.text.isBlank() && gone) {
+                                    raiseUndoSnack(
+                                        before.historyRevision,
+                                        benchDeletedMessage(benchDeleteLabel(before.document.pages, intent.id)),
+                                    )
+                                }
+                                after != before
                             },
                             screenPxPerPt = uiState.view.screenPxPerPt,
                             pageOffset = uiState.view.pageOffset,
@@ -1903,15 +1994,9 @@ public fun EditorScreen(
                                 flipReturnPending = false
                             }
                             Copy.BenchVerbs.DUPLICATE -> if (id != null) {
+                                val before = currentState().historyRevision
                                 dispatch(Intent.DuplicateElement(id, pageSizePt))
-                                deleteJob[0]?.cancel()
-                                snackMessage = Copy.Snack.DUPLICATED
-                                snackAction = UndoActionLabel
-                                snackVisible = true
-                                deleteJob[0] = c4Scope.launch {
-                                    delay(BenchSnackDeleteMillis)
-                                    snackVisible = false
-                                }
+                                raiseUndoSnack(before, Copy.Snack.DUPLICATED)
                             }
                             Copy.BenchVerbs.DELETE -> softDelete(uiState.selection)
                             // The same frozen label has two deliberately disjoint flows: Photo reuses the
@@ -1956,20 +2041,17 @@ public fun EditorScreen(
                             }
                             else -> false
                         }
+                        val before = currentState().historyRevision
                         dispatch(Intent.ToggleFlip(target.id, axis))
-                        deleteJob[0]?.cancel()
-                        snackMessage = when (axis to wasOn) {
-                            FlipAxis.HORIZONTAL to false -> Copy.Snack.FLIPPED_LEFT_RIGHT
-                            FlipAxis.HORIZONTAL to true -> Copy.Snack.LEFT_RIGHT_FLIP_REMOVED
-                            FlipAxis.VERTICAL to false -> Copy.Snack.FLIPPED_TOP_BOTTOM
-                            else -> Copy.Snack.TOP_BOTTOM_FLIP_REMOVED
-                        }
-                        snackAction = UndoActionLabel
-                        snackVisible = true
-                        deleteJob[0] = c4Scope.launch {
-                            delay(BenchSnackDeleteMillis)
-                            snackVisible = false
-                        }
+                        raiseUndoSnack(
+                            before,
+                            when (axis to wasOn) {
+                                FlipAxis.HORIZONTAL to false -> Copy.Snack.FLIPPED_LEFT_RIGHT
+                                FlipAxis.HORIZONTAL to true -> Copy.Snack.LEFT_RIGHT_FLIP_REMOVED
+                                FlipAxis.VERTICAL to false -> Copy.Snack.FLIPPED_TOP_BOTTOM
+                                else -> Copy.Snack.TOP_BOTTOM_FLIP_REMOVED
+                            },
+                        )
                     },
                     onDone = closeFlipTray,
                     firstFocusRequester = flipFirstFocus,
@@ -2107,7 +2189,9 @@ public fun EditorScreen(
                     onAction = {
                         deleteJob[0]?.cancel()
                         snackVisible = false
-                        dispatch(Intent.Undo)
+                        // D-141: the snack can still be on screen for a frame after a later step lands. Its
+                        // Undo then belongs to no step, so it does nothing; the bar's Undo takes back the newest.
+                        if (currentState().historyRevision == undoSnackRevision) dispatch(Intent.Undo)
                     },
                     colors = roomColors21,
                     modifier = Modifier.align(Alignment.BottomCenter),

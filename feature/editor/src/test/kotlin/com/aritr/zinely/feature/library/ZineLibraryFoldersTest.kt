@@ -207,6 +207,28 @@ class ZineLibraryFoldersTest {
     }
 
     @Test
+    fun `the folder naming sheet is still up after recreation`() {
+        // Given New folder with "Zin" typed. The sheet's own `Dialog` keeps its field text in the Activity's
+        // real saved-state registry, which StateRestorationTester does not save, so only the sheet's
+        // survival is provable here; the typed text is an emulator check (OWNER-CHECKLIST row, W1 T7).
+        zines = SEEDED.map { it.copy(folder = null) }
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent { Screen() }
+        composeRule.onNodeWithContentDescription("Actions for Riso tests").performClick()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Move)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FolderNameFieldTestTag).performTextInput("Zin")
+
+        // When the Activity is saved and restored.
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+
+        // Then the sheet is up again, for the same zine.
+        composeRule.onNodeWithTag(FolderNameSheetTestTag).assertExists()
+        composeRule.onNodeWithTag(ZineActionSubtitleTestTag).assertTextEquals("For “Riso tests”")
+    }
+
+    @Test
     fun `the chooser lists where the zine can go, and says where it already is`() {
         // A28, *What TalkBack hears*: "My Shelf, Out of the folder" · "Family, 2 zines" ·
         // "Family, It's here" (not a choice) · "New folder".

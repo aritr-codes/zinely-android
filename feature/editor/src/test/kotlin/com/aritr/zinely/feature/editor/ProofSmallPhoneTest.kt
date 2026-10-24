@@ -263,19 +263,23 @@ class ProofSmallPhoneTest {
     }
 
     /**
-     * A pin, not a proof: this held before the floor existed (161dp, measured). It is here so the floor
-     * stays low enough that a 360x640 window at font scale 2 still shows everything at once.
+     * Was a pin that a 360x640 window at font scale 2 shows everything with nothing to scroll. A43.3
+     * (D-142) adds Share to the done row, and the frozen 2× specimen wraps it: Fold it up takes a line of
+     * its own, the band grows by that line, and the save scrolls the bar out of view — as the 568dp case
+     * above already does, and as A44's note accepts ("on the phone the screen scrolls"). What must hold is
+     * what that case asserts: the zine keeps its floor, the hand-off lands in view, Back stays reachable.
      */
     @Test
     @Config(fontScale = 2f)
-    fun `a 640dp window at font scale 2 still shows the zine and the hand-off with nothing to scroll`() {
+    fun `a 640dp window at font scale 2 keeps the zine and lands a save on its whole hand-off`() {
         setProof()
         save()
 
         assertZineKeepsItsFloor()
-        tagged(ProofBackTestTag).assertWhollyVisible("Back")
         tagged(ProofFoldItUpTestTag).assertWhollyVisible("Fold it up")
         tagged(ProofOpenPdfTestTag).assertWhollyVisible("Open PDF")
+        tagged(ProofShareTestTag).assertWhollyVisible("Share")
+        assertReachableWhole(ProofBackTestTag, "Back")
     }
 
     /** A pin as well: the scroll is the fallback, not the layout — at the default size nothing moves. */
@@ -367,7 +371,8 @@ class ProofSmallPhoneTest {
     fun `the hand-off pair is the same height at font scale 1_4`() {
         setProof()
         save()
-        assertEquals(heightDp(ProofOpenPdfTestTag), heightDp(ProofFoldItUpTestTag), 0.5f)
+        // A43.3: the done row wraps, so "same height" is per line. Open PDF and Share share the first one.
+        assertEquals(heightDp(ProofOpenPdfTestTag), heightDp(ProofShareTestTag), 0.5f)
     }
 
     /** From 1.5 the pair stacks: each button the full width, so no label is broken inside a word. */
@@ -385,6 +390,67 @@ class ProofSmallPhoneTest {
         // …and the taller band did not push the top of the screen away.
         tagged(ProofBackTestTag).assertWhollyVisible("Back")
     }
+
+    // ---- P3b: the done row wraps whole buttons, never a word ----------------------------------------
+
+    /** Every word of the label sits whole on one line: no line ends or starts inside a word. */
+    private fun assertNoWordBroken(text: String, fontScale: Float) {
+        val layout = label(text).textLayout()
+        val lines = (0 until layout.lineCount).flatMap { i ->
+            text.substring(layout.getLineStart(i), layout.getLineEnd(i)).trim().split(' ').filter { it.isNotEmpty() }
+        }
+        assertEquals(
+            "\"$text\" breaks inside a word at font scale $fontScale: ${layout.describe()}",
+            text.split(' '),
+            lines,
+        )
+    }
+
+    /**
+     * A43.3: Open PDF · Share · Fold it up is one row that wraps, centred. FlowRow broke the row's lines
+     * on each button's longest word, then gave the earlier buttons their full width, so the last one got
+     * less than its word: the hero kept a 23dp remainder ("Fol / d it", "up" clipped; API 36 emulator,
+     * 360dp, font 1.0), and at 2.0 Share broke as "Shar / e" beside Open PDF. A button that cannot hold
+     * its whole one-line label goes to the next line instead — on this phone every label fits one line.
+     */
+    private fun assertDoneRowWrapsWholeButtons(fontScale: Float, busyTarget: ProofExportTarget? = null) {
+        setProof(busyTarget = busyTarget)
+        save()
+
+        val share = if (busyTarget == ProofExportTarget.SEND) Copy.Proof.PREPARING_SHARE else Copy.Proof.SHARE
+        listOf(Copy.Proof.OPEN_PDF, share, Copy.Proof.FOLD_IT_UP).forEach {
+            assertNoWordBroken(it, fontScale)
+            val layout = label(it).textLayout()
+            assertEquals("\"$it\" wraps at font scale $fontScale: ${layout.describe()}", 1, layout.lineCount)
+            assertFalse("\"$it\" is cut short at font scale $fontScale: ${layout.describe()}", layout.dropsText())
+        }
+
+        val hero = tagged(ProofFoldItUpTestTag).fetchSemanticsNode().boundsInRoot
+        val others = listOf(ProofOpenPdfTestTag, ProofShareTestTag).map { tagged(it).fetchSemanticsNode().boundsInRoot }
+        val aloneOnItsLine = others.none { it.top < hero.bottom && it.bottom > hero.top }
+        assertTrue(
+            "Fold it up is squeezed beside the other buttons at font scale $fontScale " +
+                "(${label(Copy.Proof.FOLD_IT_UP).textLayout().describe()}, hero $hero, others $others)",
+            aloneOnItsLine || label(Copy.Proof.FOLD_IT_UP).textLayout().lineCount == 1,
+        )
+    }
+
+    @Test
+    fun `the done row wraps whole buttons at font scale 1`() = assertDoneRowWrapsWholeButtons(1f)
+
+    @Test
+    @Config(fontScale = 1.3f)
+    fun `the done row wraps whole buttons at font scale 1_3`() = assertDoneRowWrapsWholeButtons(1.3f)
+
+    @Test
+    @Config(fontScale = 2f)
+    fun `the done row wraps whole buttons at font scale 2`() = assertDoneRowWrapsWholeButtons(2f)
+
+    /** "Preparing…" is the row's longest label, and it can push the hero to the next line mid-share. */
+    @Test
+    @Config(fontScale = 2f)
+    fun `the done row wraps whole buttons while a share is being prepared at font scale 2`() =
+        assertDoneRowWrapsWholeButtons(2f, busyTarget = ProofExportTarget.SEND)
 
     // ---- P4: the honesty legend wraps --------------------------------------------------------------
 

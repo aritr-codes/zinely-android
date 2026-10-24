@@ -26,9 +26,11 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -189,7 +191,12 @@ internal fun BenchAddArtSheet(
         }
     }
 
+    // W1 step 3: the search is held here, outside the sheet's Dialog window, because state saved inside
+    // that window did not come back after a recreation (EditorScreenTest.art_sheet_survives_recreation).
+    // Cleared whenever the cabinet is not showing, so each opening still starts unfiltered.
+    val artQuery = rememberSaveable { mutableStateOf("") }
     val showingArt = artPurpose != null
+    LaunchedEffect(showingArt) { if (!showingArt) artQuery.value = "" }
     ZSheet(
         visible = visible,
         onDismiss = onDismiss,
@@ -209,6 +216,7 @@ internal fun BenchAddArtSheet(
                 },
                 supplyPainter = supplyPainter,
                 modifier = Modifier.weight(1f),
+                queryState = artQuery,
             )
         } else {
             BenchAddChooserBody(
@@ -228,10 +236,11 @@ internal fun BenchArtSheetBody(
     onFavouriteChange: (supplyId: String, favourite: Boolean) -> Unit = { _, _ -> },
     supplyPainter: SupplyPainter? = null,
     modifier: Modifier = Modifier,
+    queryState: MutableState<String> = rememberSaveable { mutableStateOf("") },
 ) {
     val sharedSupplyPainter = supplyPainter ?: remember { SupplyPainter() }
     val colors = ZinelyTheme.v21Colors
-    var query by rememberSaveable { mutableStateOf("") }
+    var query by queryState
     var selectedFamily by rememberSaveable { mutableStateOf<String?>(null) }
     val matches = Copy.Supplies.matchingIds(query, selectedFamily)
     val narrowed = query.isNotBlank() || selectedFamily != null
@@ -677,6 +686,22 @@ internal sealed interface BenchArtPurpose {
     data object Place : BenchArtPurpose
     data class Replace(val id: String) : BenchArtPurpose
 }
+
+/**
+ * Keeps the open Art sheet's purpose across an activity recreation (W1, controller ruling R-W8: a `Saver`,
+ * not `@Parcelize`, which this module does not apply). `null` (no sheet) saves nothing; Place is `"P"` and
+ * Replace is `"R:"` + the element id, tagged so that no id, however odd, can be read back as Place.
+ */
+internal val BenchArtPurposeSaver: Saver<BenchArtPurpose?, String> = Saver(
+    save = { purpose ->
+        when (purpose) {
+            null -> null
+            BenchArtPurpose.Place -> "P"
+            is BenchArtPurpose.Replace -> "R:" + purpose.id
+        }
+    },
+    restore = { saved -> if (saved.startsWith("R:")) BenchArtPurpose.Replace(saved.removePrefix("R:")) else BenchArtPurpose.Place },
+)
 
 private val ArtPaperInk = Color(0xFF27270F)
 private val ArtPaperInkSoft = Color(0xFF6A452F)

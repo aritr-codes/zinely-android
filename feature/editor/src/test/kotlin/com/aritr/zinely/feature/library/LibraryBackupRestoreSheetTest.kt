@@ -245,6 +245,20 @@ class LibraryBackupRestoreSheetTest {
             .assertHasClickAction()
     }
 
+    @Test
+    fun `the Back up option speaks what happens next, not only its title (A45 note)`() {
+        // Given the chooser on a shelf with zines
+        chooser(lastBackup = null)
+
+        // When TalkBack reads the Back up option, Then its one name carries the A45 line too
+        composeRule.onNodeWithTag(KeepSafeSaveActionTestTag)
+            .assertContentDescriptionEquals("Back up this shelf. Next, your phone asks where to save it.")
+            .assertHasClickAction()
+        // And Restore keeps its title as its name
+        composeRule.onNodeWithTag(KeepSafeRestoreActionTestTag)
+            .assertContentDescriptionEquals(Copy.LibraryBackup.RESTORE_ACTION)
+    }
+
     // --- 1.x step 1: the frozen amendment 1a wording (backup-restore.html) ---
 
     @Test
@@ -256,7 +270,8 @@ class LibraryBackupRestoreSheetTest {
             "The backup file holds the zines and photos on this shelf. Keep a copy somewhere other than this phone.",
         ).assertIsDisplayed()
         // The option merges its text under its own label, so read the unmerged node.
-        composeRule.onNodeWithText("Choose where to keep the backup file.", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText("Next, your phone asks where to save it.", useUnmergedTree = true).assertExists() // A45
+        composeRule.onNodeWithText("Choose where to keep the backup file.", useUnmergedTree = true).assertDoesNotExist()
         composeRule.onNodeWithText("Your zines, kept safe", useUnmergedTree = true).assertDoesNotExist()
         composeRule.onNodeWithText("Choose where to keep a copy of this whole shelf.", useUnmergedTree = true)
             .assertDoesNotExist()

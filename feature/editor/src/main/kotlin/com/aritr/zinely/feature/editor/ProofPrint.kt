@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.ui.theme.ZinelyHaptic
+import com.aritr.zinely.ui.theme.ZinelyV2Typography
 import com.aritr.zinely.ui.theme.ZinelyTheme
 
 // Test tags for the print-details panel the ProofScreen suite addresses. The export row's tags moved to
@@ -269,7 +270,8 @@ private fun SectionLabel(text: String, first: Boolean = false, modifier: Modifie
         style = TextStyle(
             color = ZinelyTheme.v21Colors.inkSoft,
             fontFamily = ZinelyTheme.typography.shell,
-            fontSize = 10.5.sp,
+            // A44 / D-140: the Proof type floor (was 10.5.sp).
+            fontSize = ZinelyV2Typography.TypeFloor,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.13.em,
         ),

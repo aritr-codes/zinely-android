@@ -16,7 +16,9 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -59,16 +61,38 @@ class RoomProjectRepositoryRestoredNoteTest {
     }
 
     /** A new repository over the same files and index: a new process. */
-    private fun repo(store: AtomicFileStore = AtomicFileStore()): RoomProjectRepository = RoomProjectRepository(
-        rootDir = root,
-        dao = db.projectDao(),
-        documents = DocumentRepositoryImpl(rootDir = root, store = AtomicFileStore()),
-        store = store,
-        sessionGate = { true },
-        io = Dispatchers.Unconfined,
-        clock = { now++ },
-        newId = { "p${nextId++}" },
-    )
+    private fun repo(store: AtomicFileStore = AtomicFileStore()): RoomProjectRepository = process(store).first
+
+    /**
+     * A new process, wired as `DataModule` wires it: one [RepairNotes] shared by the project repository and the
+     * document repository the Bench reads through ([ADR-140](docs/DECISIONS.md#adr-140) decision 4).
+     */
+    private fun process(store: AtomicFileStore = AtomicFileStore()): Pair<RoomProjectRepository, DocumentRepositoryImpl> {
+        val notes = RepairNotes(root, store)
+        val documents = DocumentRepositoryImpl(rootDir = root, store = AtomicFileStore(), onPagesRestored = notes::addPages)
+        return RoomProjectRepository(
+            rootDir = root,
+            dao = db.projectDao(),
+            documents = documents,
+            store = store,
+            sessionGate = { true },
+            io = Dispatchers.Unconfined,
+            clock = { now++ },
+            newId = { "p${nextId++}" },
+            notes = notes,
+        ) to documents
+    }
+
+    private fun docFile(id: String): Path = root.resolve("projects/$id/document.json")
+
+    /** Saved a second time, so its page file has an earlier copy, then that page file damaged. */
+    private suspend fun damagePages(id: String) {
+        val documents = DocumentRepositoryImpl(rootDir = root, store = AtomicFileStore())
+        documents.save(id, documents.load(id).getOrNull()!!)
+        Files.write(docFile(id), "{".toByteArray())
+    }
+
+    private val pagesOnly = RestoredDetails(previousTitle = null, details = false, pages = true)
 
     /** A store on which an atomic replace of a file called [name] fails, as on a full disk. */
     private fun failing(name: String): AtomicFileStore = AtomicFileStore(
@@ -118,10 +142,28 @@ class RoomProjectRepositoryRestoredNoteTest {
         val restarted = repo()
         assertEquals("Letters to Gran", restarted.shelf().single().restored?.previousTitle)
 
-        assertTrue(restarted.dismissRestoredDetails(listOf(id)) is DataResult.Success)
+        assertTrue(restarted.dismissRestoredDetails(mapOf(id to RestoredDetails("Letters to Gran"))) is DataResult.Success)
         assertNull(restarted.shelf().single().restored)
         assertFalse(Files.exists(noteFile(id)))
         assertNull(repo().shelf().single().restored)
+    }
+
+    @Test
+    fun `Got it clears only the note shown, so a pages repair merged in after it survives`() = runTest {
+        // Given a details note on the Shelf
+        val id = renamedThenDamaged()
+        val shown = repo().shelf().single().restored!!
+        // And the zine's page file then found damaged and put back on the Bench, merging into the same note
+        val (repository, documents) = process()
+        damagePages(id)
+        documents.load(id)
+
+        // When Got it is pressed on the note as it was shown
+        assertTrue(repository.dismissRestoredDetails(mapOf(id to shown)) is DataResult.Success)
+
+        // Then the zine still waits, with both kinds, so the pages repair is told
+        assertEquals(shown.copy(pages = true), repository.shelf().single().restored)
+        assertTrue(Files.exists(noteFile(id)))
     }
 
     @Test
@@ -133,7 +175,7 @@ class RoomProjectRepositoryRestoredNoteTest {
         assertEquals("Letters home", first.title)
         assertEquals("Letters to Gran", first.restored?.previousTitle)
         assertFalse("the damaged file is quarantined", Files.exists(metaFile(id)))
-        diskFull.dismissRestoredDetails(listOf(id))
+        diskFull.dismissRestoredDetails(mapOf(id to first.restored!!))
 
         // Every later read takes the lone .bak again (still failing to put it back): the same repair, not a new one.
         assertNull(diskFull.shelf().single().restored)
@@ -203,7 +245,7 @@ class RoomProjectRepositoryRestoredNoteTest {
         repo().shelf()
         blockMarkerBackup(id)
 
-        assertTrue(repo().dismissRestoredDetails(listOf(id)) is DataResult.Failure)
+        assertTrue(repo().dismissRestoredDetails(mapOf(id to RestoredDetails("Letters to Gran"))) is DataResult.Failure)
 
         // The main marker went second, so it is still there: the note is not silently lost.
         assertTrue(Files.exists(noteFile(id)))
@@ -232,5 +274,110 @@ class RoomProjectRepositoryRestoredNoteTest {
 
         assertTrue(repo.shelf().single { it.id == id }.restored != null)
         assertNull(repo.shelf().single { it.id == copy }.restored)
+    }
+
+    // ---- ADR-140: a page file put back from its earlier copy joins the same note.
+
+    @Test
+    fun pages_repair_writes_a_pages_note() = runTest {
+        // Given a zine whose page file is damaged beside a good earlier copy
+        val id = repo().createProject("Coffee log", ZineFormat.SINGLE_SHEET_8, PaperSize.A4).getOrNull()!!.id
+        damagePages(id)
+
+        // When the Shelf lists it
+        val entry = repo().shelf().single()
+
+        // Then it opens, and one pages note waits, kept beside its files
+        assertTrue(entry is ProjectShelfEntry.Available)
+        assertEquals(pagesOnly, entry.restored)
+        assertTrue(Files.exists(noteFile(id)))
+        assertEquals("it survives a restart", pagesOnly, repo().shelf().single().restored)
+    }
+
+    @Test
+    fun `a details and a pages repair of one zine make one note, keeping the old name`() = runTest {
+        val id = renamedThenDamaged()
+        damagePages(id)
+
+        val entry = repo().shelf().single()
+
+        assertEquals(RestoredDetails(previousTitle = "Letters to Gran", details = true, pages = true), entry.restored)
+        assertEquals(entry.restored, repo().shelf().single().restored)
+    }
+
+    @Test
+    fun `a pages repair after a details repair already waiting adds to that note`() = runTest {
+        val id = renamedThenDamaged()
+        repo().shelf()
+        damagePages(id)
+
+        assertEquals(
+            RestoredDetails(previousTitle = "Letters to Gran", details = true, pages = true),
+            repo().shelf().single().restored,
+        )
+    }
+
+    @Test
+    fun `a marker written before ADR-140 still reads as a details repair with its old name`() = runTest {
+        val id = repo().createProject("Letters home", ZineFormat.SINGLE_SHEET_8, PaperSize.A4).getOrNull()!!.id
+        Files.write(noteFile(id), """{"previousTitle":"Letters to Gran"}""".toByteArray())
+
+        assertEquals(RestoredDetails(previousTitle = "Letters to Gran"), repo().shelf().single().restored)
+    }
+
+    @Test
+    fun `renaming or moving clears the details part only, and Got it clears both (A46_5)`() = runTest {
+        val renamed = renamedThenDamaged()
+        damagePages(renamed)
+        repo().shelf()
+        assertTrue(repo().renameProject(renamed, "Letters to Gran") is DataResult.Success)
+        assertEquals(pagesOnly, repo().shelf().single { it.id == renamed }.restored)
+        // A pages-only zine renamed again keeps its note: a rename acts on its name, not its pages.
+        assertTrue(repo().renameProject(renamed, "Letters") is DataResult.Success)
+        assertEquals(pagesOnly, repo().shelf().single { it.id == renamed }.restored)
+
+        val moved = repo().createProject("Coffee log", ZineFormat.SINGLE_SHEET_8, PaperSize.A4).getOrNull()!!.id
+        repo().renameProject(moved, "Coffee diary")
+        Files.write(metaFile(moved), "{".toByteArray())
+        damagePages(moved)
+        repo().shelf()
+        assertTrue(repo().moveProject(moved, "Kitchen") is DataResult.Success)
+        assertEquals(pagesOnly, repo().shelf().single { it.id == moved }.restored)
+
+        assertTrue(repo().dismissRestoredDetails(mapOf(renamed to pagesOnly, moved to pagesOnly)) is DataResult.Success)
+        assertTrue(repo().shelf().all { it.restored == null })
+        assertFalse(Files.exists(noteFile(renamed)))
+    }
+
+    @Test
+    fun `a pages repair reported for a zine already deleted brings back no directory`() = runTest {
+        // Given a zine deleted while the Bench was still reading its page file
+        val notes = RepairNotes(root, AtomicFileStore())
+
+        // When that read's repair is reported
+        notes.addPages("gone")
+
+        // Then nothing is written where the zine was
+        assertFalse(Files.exists(root.resolve("projects/gone")))
+    }
+
+    @Test
+    fun `a pages repair found when the Bench opens a zine is on the Shelf without a restart (R-W2)`() = runTest {
+        // Given My Shelf has drawn its zines, none waiting
+        val (repo, bench) = process()
+        val id = repo.createProject("Coffee log", ZineFormat.SINGLE_SHEET_8, PaperSize.A4).getOrNull()!!.id
+        val listings = Channel<List<ProjectShelfEntry>>(Channel.UNLIMITED)
+        val shelf = backgroundScope.launch(Dispatchers.Default) { repo.observeShelfProjects().collect(listings::send) }
+        assertNull(listings.receive().single().restored)
+
+        // When the page file is found damaged by the Bench, which reads with no project repository on its path
+        damagePages(id)
+        assertTrue(bench.load(id) is DataResult.Success)
+
+        // Then the Shelf lists again, and the note is there
+        var latest = listings.receive()
+        while (latest.single().restored == null) latest = listings.receive()
+        assertEquals(pagesOnly, latest.single().restored)
+        shelf.cancel()
     }
 }

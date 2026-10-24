@@ -89,9 +89,11 @@ public interface ProjectRepository {
     public suspend fun unpackFolder(name: String): DataResult<FolderChange>
 
     /**
-     * The maker pressed *Got it* on the restored-details note ([ADR-134](docs/DECISIONS.md#adr-134)): the zines
-     * [ids] stop waiting to be told, and the Shelf lists again. Every id is tried; fails with [DataError.Io] if a
-     * waiting note could not be removed, and that zine is then still told next time.
+     * The maker pressed *Got it* on the restored-details note ([ADR-134](docs/DECISIONS.md#adr-134)): each zine in
+     * [shown] stops waiting to be told, and the Shelf lists again. [shown] maps each zine to the note the maker saw;
+     * a zine whose waiting note has changed since (a repair merged in after it was shown) keeps waiting, so the new
+     * part is told. Every zine is tried; fails with [DataError.Io] if a waiting note could not be removed, and that
+     * zine is then still told on the next listing.
      */
-    public suspend fun dismissRestoredDetails(ids: Collection<String>): DataResult<Unit>
+    public suspend fun dismissRestoredDetails(shown: Map<String, RestoredDetails>): DataResult<Unit>
 }

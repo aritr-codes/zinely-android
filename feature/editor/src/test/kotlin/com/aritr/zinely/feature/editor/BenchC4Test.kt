@@ -2,7 +2,9 @@ package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -30,6 +32,7 @@ import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.ui.testing.FakeAccessibilityManager
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import kotlinx.coroutines.CoroutineScope
@@ -552,6 +555,129 @@ class BenchC4Test {
         assertEquals("the frozen delete window is 3200ms", 3200L, BenchSnackDeleteMillis)
     }
 
+    /** W1 Task 5 step 2: the phone's "time to take action" setting stretches the Bench snack. */
+    private fun deleteWithAccessibilityTimeout(): EditorStore {
+        val store = store()
+        composeRule.setContent {
+            ZinelyTheme {
+                CompositionLocalProvider(LocalAccessibilityManager provides FakeAccessibilityManager(10_000L)) {
+                    EditorScreen(store = store, pageSizePt = pageSizePt, modifier = Modifier.size(host.first, host.second))
+                }
+            }
+        }
+        composeRule.waitForIdle()
+        placedText(store)
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        deleteSelected()
+        composeRule.mainClock.advanceTimeBy(BenchDeleteFadeMillis + 100L)
+        composeRule.waitForIdle()
+        return store
+    }
+
+    @Test
+    fun snack_stays_for_the_accessibility_timeout() {
+        // Given a 10 000 ms accessibility timeout, When a delete raises the snack and 5 000 ms pass
+        deleteWithAccessibilityTimeout()
+        composeRule.mainClock.advanceTimeBy(5_000L)
+        composeRule.waitForIdle()
+        // Then it is still up, long past the 3200 ms default
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun snack_leaves_after_the_accessibility_timeout() {
+        deleteWithAccessibilityTimeout()
+        composeRule.mainClock.advanceTimeBy(11_000L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun snack_undo_retires_once_a_later_edit_lands() {
+        // Given two pieces, one deleted, and its snack showing Undo
+        val store = store()
+        setScreen(store)
+        val kept = placedText(store)
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 60.0, 18.0), "bye"))
+        composeRule.waitForIdle()
+        val doomed = store.uiState.value.selection.single()
+        composeRule.mainClock.autoAdvance = false
+        deleteSelected()
+        composeRule.mainClock.advanceTimeBy(BenchDeleteFadeMillis + 100L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertIsDisplayed()
+
+        // When a later edit lands (a duplicate)
+        store.dispatch(Intent.DuplicateElement(kept, pageSizePt))
+        composeRule.mainClock.advanceTimeBy(100L)
+        composeRule.waitForIdle()
+
+        // Then the snack's Undo is gone at once, and the bar's Undo takes back only the duplicate
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
+        store.dispatch(Intent.Undo)
+        val ids = store.uiState.value.document.pages[0].elements.map { it.id }
+        assertEquals(listOf(kept), ids)
+        assertFalse("the deleted piece stays deleted", doomed in ids)
+    }
+
+    @Test
+    fun snack_undo_tapped_in_the_frame_after_a_later_edit_takes_back_nothing() {
+        // Given two pieces, one deleted, and its snack showing Undo
+        val store = store()
+        setScreen(store)
+        val kept = placedText(store)
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 60.0, 18.0), "bye"))
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        deleteSelected()
+        composeRule.mainClock.advanceTimeBy(BenchDeleteFadeMillis + 100L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertIsDisplayed()
+
+        // When a later edit lands and the snack's Undo is tapped before any frame retires the snack
+        store.dispatch(Intent.DuplicateElement(kept, pageSizePt))
+        val afterDuplicate = store.uiState.value.document
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).performClick()
+
+        // Then the snack's Undo takes back nothing: not the duplicate, and not the delete behind it
+        assertEquals(afterDuplicate, store.uiState.value.document)
+    }
+
+    @Test
+    fun a_delete_that_pushes_nothing_offers_no_undo() {
+        // Given a piece fading out under the snack's delete
+        val store = store()
+        setScreen(store)
+        val id = placedText(store)
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        deleteSelected()
+        composeRule.mainClock.advanceTimeBy(50L)
+
+        // When another path removes it inside the fade, so the fade's own delete changes nothing
+        store.dispatch(Intent.Delete(setOf(id)))
+        composeRule.mainClock.advanceTimeBy(BenchDeleteFadeMillis + 100L)
+        composeRule.waitForIdle()
+
+        // Then no Undo is armed: there is no step of the fade's own to take back
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun the_snack_does_not_retire_itself() {
+        // R-W6: the revision is read after the delete's own push, so the delete alone never retires it.
+        val store = store()
+        setScreen(store)
+        placedText(store)
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        deleteSelected()
+        composeRule.mainClock.advanceTimeBy(BenchDeleteFadeMillis + 500L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertIsDisplayed()
+    }
+
     @Test
     fun the_snack_enters_from_eight_dp_below_where_it_comes_to_rest() {
         // Row 4.11's `translateY(8px) → 0` (`v21-bench.html:493`); V2 rose 16. `graphicsLayer`'s
@@ -736,3 +862,4 @@ class BenchC4Test {
         assertEquals(0.95f, BenchMaterialise.deleteScaleAt(0.5f), 0.0001f)
     }
 }
+

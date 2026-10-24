@@ -114,7 +114,8 @@ class HomeViewModelTest {
                     ProjectShelfEntry.Available(
                         summary,
                         folders[summary.id],
-                        restored = if (summary.id in restored) RestoredDetails(restored[summary.id]) else null,
+                        restored = restoredNotes[summary.id]
+                            ?: if (summary.id in restored) RestoredDetails(restored[summary.id]) else null,
                     )
                 }
             }
@@ -220,14 +221,25 @@ class HomeViewModelTest {
         /** Each waiting zine's previous title (null = not known), as its marker file would hold it. */
         val restored = mutableMapOf<String, String?>()
 
+        /** Waiting notes with their kinds (ADR-140); wins over [restored]. */
+        val restoredNotes = mutableMapOf<String, RestoredDetails>()
+
         /** When set, [dismissRestoredDetails] removes nothing and fails. */
         var dismissFailure = false
 
-        override suspend fun dismissRestoredDetails(ids: Collection<String>): DataResult<Unit> {
+        /** When cleared, a dismissal does not list the Shelf again: the Shelf was left before the store answered. */
+        var listAgainOnDismiss = true
+
+        /** The notes each Got it said the maker saw. */
+        val dismissedShown = mutableListOf<Map<String, RestoredDetails>>()
+
+        override suspend fun dismissRestoredDetails(shown: Map<String, RestoredDetails>): DataResult<Unit> {
+            val ids = shown.keys
             calls += "dismiss restored ${ids.joinToString()}"
+            dismissedShown += shown
             if (dismissFailure) return DataResult.Failure(DataError.Io("marker could not be removed"))
-            ids.forEach { restored.remove(it) }
-            listAgain()
+            ids.forEach { restored.remove(it); restoredNotes.remove(it) }
+            if (listAgainOnDismiss) listAgain()
             return DataResult.Success(Unit)
         }
     }
@@ -2369,6 +2381,11 @@ class HomeViewModelTest {
         // Then
         assertTrue((viewModel.state.value as HomeUiState.Content).restored.isEmpty())
         assertTrue("dismiss restored z1, z2" in repository.calls)
+        // Each zine goes down with the note the maker saw, so the store can keep one that changed since.
+        assertEquals(
+            listOf(mapOf("z1" to RestoredDetails("Letters to Gran"), "z2" to RestoredDetails(null))),
+            repository.dismissedShown,
+        )
         assertTrue(repository.restored.isEmpty())
 
         // And a later repair of the same zine is told again: the dismissed id did not stick.
@@ -2396,6 +2413,57 @@ class HomeViewModelTest {
         // Then
         assertEquals(listOf("z1"), (viewModel.state.value as HomeUiState.Content).restored.map { it.id })
         assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE)), events)
+        stateJob.cancel()
+        eventsJob.cancel()
+    }
+
+    // ---- ADR-140 / A46: a page file put back from its earlier copy, on the same note.
+
+    @Test
+    fun `a pages note reaches the screen with its kinds`() = runTest {
+        // Given
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.restoredNotes["z1"] = RestoredDetails(null, details = false, pages = true)
+        repository.restoredNotes["z2"] = RestoredDetails("Letters to Gran", details = true, pages = true)
+
+        // When
+        repository.projects.emit(listOf(summary("z1", "Coffee log", now), summary("z2", "Letters home", now)))
+
+        // Then
+        assertEquals(
+            listOf(
+                RestoredZine("z1", "Coffee log", null, details = false, pages = true),
+                RestoredZine("z2", "Letters home", "Letters to Gran", details = true, pages = true),
+            ),
+            (viewModel.state.value as HomeUiState.Content).restored,
+        )
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a pages repair after a dismissed details note is told, even before a clean listing (ADR-134 follow-up 4)`() = runTest {
+        // Given a details note dismissed, the Shelf left before the store listed it without the note
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect {} }
+        repository.restored["z1"] = "Letters to Gran"
+        repository.projects.emit(listOf(summary("z1", "Letters home", now)))
+        repository.listAgainOnDismiss = false
+        viewModel.dismissRestored(listOf("z1"))
+        assertTrue((viewModel.state.value as HomeUiState.Content).restored.isEmpty())
+
+        // When the Bench then finds the same zine's page file damaged, and the Shelf lists again
+        repository.restoredNotes["z1"] = RestoredDetails(null, details = false, pages = true)
+        repository.projects.emit(listOf(summary("z1", "Letters home", now)))
+
+        // Then the new note is not hidden by the old dismissal
+        assertEquals(
+            listOf(RestoredZine("z1", "Letters home", null, details = false, pages = true)),
+            (viewModel.state.value as HomeUiState.Content).restored,
+        )
         stateJob.cancel()
         eventsJob.cancel()
     }

@@ -50,7 +50,15 @@ import com.aritr.zinely.core.model.Transform
  */
 public object EditorReducer {
 
-    public fun reduce(model: EditorModel, intent: Intent): Reduction = when (intent) {
+    public fun reduce(model: EditorModel, intent: Intent): Reduction {
+        val reduction = reduceIntent(model, intent)
+        // D-141: one guard for every history mutation (push, undo, redo, the fresh-blank drop, and any later
+        // one): each builds a new History, so an identity check sees them all and nothing else.
+        return if (reduction.model.history === model.history) reduction
+        else reduction.copy(model = reduction.model.copy(historyRevision = model.historyRevision + 1))
+    }
+
+    private fun reduceIntent(model: EditorModel, intent: Intent): Reduction = when (intent) {
         // — selection (no document mutation ⇒ no autosave) —
         is Intent.Select -> Reduction(model.copy(selection = setOfNotNull(intent.id)))
         is Intent.SelectAt -> {
@@ -85,6 +93,7 @@ public object EditorReducer {
             Reduction(editing.model, placed.effects + editing.effects)
         }
         Intent.RequestAddImage -> Reduction(model, listOf(Effect.PickAndDecodeImage()))
+        is Intent.ReportImagePickFailure -> Reduction(model, listOf(Effect.ImagePickFailed(intent.message)))
         is Intent.RequestReplaceImage -> {
             val image = currentPage(model).elements.firstOrNull { it.id == intent.id } as? ImageElement
             if (image == null) Reduction(model)

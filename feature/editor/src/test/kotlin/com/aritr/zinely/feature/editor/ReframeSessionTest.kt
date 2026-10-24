@@ -220,6 +220,8 @@ class ReframeSessionTest {
                     LiveRegionMode.Polite,
                 ),
             )
+        // A41.4: photo Replace ships, so the refusal points at it (literal, so a copy edit cannot pass silently).
+        assertEquals("This photo can’t be reframed. Try Replace.", Copy.Editor.REFRAME_UNAVAILABLE)
         composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(BenchBarAddTag)
             .assertIsDisplayed()
@@ -316,6 +318,30 @@ class ReframeSessionTest {
         assertTrue("session closed", s.uiState.value.interaction is Interaction.Idle)
         assertEquals("cancel discards the draft", Fit.FILL, image(s).fit)
         assertEquals(Crop.FULL, image(s).crop)
+    }
+
+    @Test
+    fun back_cancels_reframe_and_stays_on_the_bench() {
+        // Given a photo in Reframe with the draft changed
+        val s = store()
+        val id = imageId(s)
+        val before = image(s)
+        val canUndoBefore = s.uiState.value.canUndo
+        render(s)
+        s.dispatch(Intent.BeginReframe(id))
+        composeRule.awaitReframeControls()
+        composeRule.onNodeWithContentDescription("Zoom in").performClick()
+        composeRule.waitForIdle()
+
+        // When the system Back is pressed
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeRule.waitForIdle()
+
+        // Then Reframe is cancelled, nothing is written, and the Bench is still the screen
+        assertTrue("session closed", s.uiState.value.interaction is Interaction.Idle)
+        assertEquals("Back discards the draft", before, image(s))
+        assertEquals(canUndoBefore, s.uiState.value.canUndo)
+        assertTrue("Back must not leave the Bench", !composeRule.activity.isFinishing)
     }
 
     @Test

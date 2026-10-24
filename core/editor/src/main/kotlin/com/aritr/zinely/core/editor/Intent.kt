@@ -37,6 +37,12 @@ public sealed interface Intent {
      */
     public data class RequestReplaceImage(val id: String) : Intent
     public data class CommitAddImage(val element: com.aritr.zinely.core.model.ImageElement) : Intent
+    /**
+     * A picked photo could not be added or replaced ([message] is the pipeline's own line). Not a document
+     * edit: it only raises [Effect.ImagePickFailed], which the Bench shows as a button-less snack
+     * (`v21-bench.html` A41.3). The snack's own live region speaks it, once.
+     */
+    public data class ReportImagePickFailure(val message: String) : Intent
 
     /**
      * Place one supply from the cabinet on the current page as a
@@ -258,6 +264,12 @@ public sealed interface Effect {
      *   from the model after the step, never from where the command started.
      */
     public data class HistoryStepped(val label: EditLabel, val isRedo: Boolean, val landedOnPage: Int?) : Effect
+
+    /**
+     * A photo pick failed ([Intent.ReportImagePickFailure]). Like [HistoryStepped] it is screen state, not
+     * I/O: the store hands [message] to the screen, which shows it in the Bench snack (A41.3).
+     */
+    public data class ImagePickFailed(val message: String) : Effect
 }
 
 /** The result of one reduction: the next model plus any side effects to run. */
