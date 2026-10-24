@@ -245,6 +245,20 @@ class LibraryBackupRestoreSheetTest {
             .assertHasClickAction()
     }
 
+    @Test
+    fun `the Back up option speaks what happens next, not only its title (A45 note)`() {
+        // Given the chooser on a shelf with zines
+        chooser(lastBackup = null)
+
+        // When TalkBack reads the Back up option, Then its one name carries the A45 line too
+        composeRule.onNodeWithTag(KeepSafeSaveActionTestTag)
+            .assertContentDescriptionEquals("Back up this shelf. Next, your phone asks where to save it.")
+            .assertHasClickAction()
+        // And Restore keeps its title as its name
+        composeRule.onNodeWithTag(KeepSafeRestoreActionTestTag)
+            .assertContentDescriptionEquals(Copy.LibraryBackup.RESTORE_ACTION)
+    }
+
     // --- 1.x step 1: the frozen amendment 1a wording (backup-restore.html) ---
 
     @Test

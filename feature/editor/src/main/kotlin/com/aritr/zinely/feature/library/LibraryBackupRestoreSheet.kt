@@ -205,6 +205,7 @@ internal fun KeepSafeSheet(
                 testTag = KeepSafeSaveActionTestTag,
                 label = Copy.LibraryBackup.SAVE_ACTION,
                 body = Copy.LibraryBackup.SAVE_BODY,
+                spokenLabel = Copy.LibraryBackup.SAVE_SPOKEN,
                 glyph = "⤓",
                 onClick = onSaveBackup,
                 focusRequester = firstActionFocus,
@@ -245,6 +246,8 @@ private fun KeepSafeOption(
     glyph: String,
     onClick: () -> Unit,
     focusRequester: FocusRequester? = null,
+    // What TalkBack says for the whole option; `zinelyV2Control` clears the visible text under it.
+    spokenLabel: String = label,
 ) {
     val colors = ZinelyTheme.v21Colors
     val interaction = remember { MutableInteractionSource() }
@@ -254,7 +257,7 @@ private fun KeepSafeOption(
             .fillMaxWidth()
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .testTag(testTag)
-            .zinelyV2Control(label = label, interactionSource = interaction, onClick = onClick)
+            .zinelyV2Control(label = spokenLabel, interactionSource = interaction, onClick = onClick)
             .background(if (pressed) colors.leafTint else androidx.compose.ui.graphics.Color.Transparent)
             .padding(horizontal = ZinelyV21Dimens.gapXl, vertical = ZinelyV21Dimens.gapLg),
         verticalAlignment = Alignment.Top,

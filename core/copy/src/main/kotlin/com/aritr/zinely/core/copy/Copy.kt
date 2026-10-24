@@ -1788,6 +1788,8 @@ public object Copy {
         public const val EMPTY_BODY: String = "Choose a Zinely backup and its zines will be added to this shelf."
         public const val SAVE_ACTION: String = "Back up this shelf"
         public const val SAVE_BODY: String = "Next, your phone asks where to save it."
+        // A45 note (2026-10-24): the Back up option is spoken as its title, a full stop, then its line.
+        public const val SAVE_SPOKEN: String = "$SAVE_ACTION. $SAVE_BODY"
         public const val RESTORE_ACTION: String = "Restore a backup"
         // Amendment N1 (ADR-121): a zine already on the shelf isn't added again; a changed one is added alongside.
         public const val RESTORE_BODY: String =
