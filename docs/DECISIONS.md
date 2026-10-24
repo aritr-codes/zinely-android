@@ -16808,7 +16808,7 @@ ask"), which the owner may overrule. It stays Proposed until the list under *Owe
 and `DefaultDocumentValidator.SUPPLY_ID` (`^[a-z]+\.[a-z]+$`), untouched; [ADR-107](#adr-107) R2 (no
 randomisation); outlines as reviewed Kotlin source, never a data file or a runtime SVG parse; ADR-104's permitted
 licences and its rule that credit never goes in the PDF; ADR-124's three passes and tolerance.
-**Defects:** [D-130](design/V2-SPEC-DEFECTS.md#d-130), [D-131](design/V2-SPEC-DEFECTS.md#d-131).
+**Defects:** [D-130](design/V2-SPEC-DEFECTS.md#d-130), [D-131](design/V2-SPEC-DEFECTS.md#d-131), [D-132](design/V2-SPEC-DEFECTS.md#d-132) (48 names shortened to fit the A16 tile, 2026-10-24).
 **Evidence:** [RESEARCH R34](RESEARCH.md#r34-the-a39-art-picks-gate-measurements-the-never-19-dry-run-and-the-licences-2026-10-22)
 (the dry run, the gate measurements, variant similarity, the licences); the sheet's data in
 `zinely-archive/2026-10-15-wave2/art-a39/` (`candidates.json`, `oss-src-*/LICENSE-RECORD.txt`).

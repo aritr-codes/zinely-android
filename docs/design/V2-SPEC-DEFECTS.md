@@ -8212,6 +8212,75 @@ second reviewer, could not sign in.
 | 4 | `shape.hex` (Phosphor): true geometry with no cut sign, the most UI-like piece picked (G8 risk) | **Fixed 2026-10-24 (ART 6d).** Each of the six corners moved 0.43–0.5 off true; each keeps Phosphor's rounding (trim and handle ratio), rebuilt tangent to the moved edges, so the joins stay smooth. A39 row and `ShapeArt.SHAPE_HEX` changed together |
 | 5 | `tape.plaster` (Tabler): G2 at the limit, 2.5 dots with 1.5 gaps that merge at 24 px | **Fixed 2026-10-23 (ART 6a).** Measured, the dots were 0.66 apart (the 1.5 is the gap to the pad's edge). Two 2.5 dots cannot sit across the 8.57-wide pad with 1.5 gaps, so the dots are 2.02 across and 2.5 from the centre: every gap is now at least 1.5, the ink at H2's floor. Still four dots in a diamond. A39 row and `TapeArt.TAPE_PLASTER` changed together |
 
+### D-132 — 48 A39 names clip on the A16 tile, so variants read alike {#d-132}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` A39 (`ART_A39` names; dated note "NAMES THAT FIT THE TILE") · A16 (the tile card, unchanged) · `Copy.Supplies.BY_FAMILY` and `TAGS` |
+| **Found** | 2026-10-24, reading the ART 6d golden diffs (`.superpowers/sdd/art-plan/task-6-report.md`, "Resumed 2026-10-24", concern 1); measured by `BenchArtTileNameFitTest` |
+| **Severity** | Recognition (G8) and Pass 2: on the sheet, a variant's telling word was clipped off ("Torn hole, ragged" showed "Torn / hole,"), so variants of one subject showed the same words; three shipped names broke inside a word ("Registrati / on", "Perforatio / n") and one A39 name too ("Dog-eare / d"). TalkBack always read the full name |
+| **Status** | **Fixed 2026-10-24.** A16 is frozen (tile size, grid, two lines, clip), so the names change, not the tile: 48 of 124 renamed so the whole name fits two lines at 360dp and font scale 1.0, no line breaks inside a word, the telling word first or alone. The other 76 already fit and keep their names. Ids unchanged; saved zines store ids only ([ADR-105](../DECISIONS.md#adr-105)), so nothing saved changes |
+
+The tile puts the first word on line one and the rest on line two (`BenchArtTile`, `replaceFirst(' ', '
+')`), each
+line about 51dp wide in Inter Bold 10sp, so each half of a name must fit one line. `BenchArtTileNameFitTest` lays out
+every tile's name on the real sheet and checks the platform's `TextLayoutResult` (no visual overflow, at most two
+lines, the whole text laid out, every line ending at a space); it failed on exactly these 48 and passes after. The
+spoken name is the same string as the tile's, so TalkBack says what the tile shows. Every renamed piece's tags keep
+every word of its old name (`SuppliesCopyTest`), so a search for "torn", "hole", "registration" or "perforation"
+still finds it.
+
+| Id | Old name (A39 as frozen 2026-10-22) | New name |
+|---|---|---|
+| `tape.tornb` | Torn tape, long tear | Long torn tape |
+| `fix.cornerb` | Photo corner, sharp | Sharp corner |
+| `fix.clipb` | Paper clip, narrow | Narrow clip |
+| `fix.clipc` | Paper clip, slanted wire | Slanted clip |
+| `tape.maskingb` | Masking tape, wide | Wide tape |
+| `fix.stitchb` | Saddle stitch, thread | Running stitch |
+| `fix.stitchc` | Saddle stitch, across fold | Stitched fold |
+| `fix.pushpinc` | Push pin, upright | Upright pin |
+| `fix.pushpind` | Push pin, drawn | Drawn pin |
+| `fix.pushpine` | Push pin, drawn tilted | Drawn pin, tilted |
+| `fix.needle` | Needle and thread | Threaded needle |
+| `mark.halftoneb` | Halftone dots, screen | Halftone screen |
+| `mark.registration` | Registration cross | Crosshair |
+| `mark.registrationb` | Registration cross, bold | Bold crosshair |
+| `mark.registrationc` | Registration cross, fine | Fine crosshair |
+| `mark.handb` | Pointing hand, cuffed | Cuffed hand |
+| `mark.handc` | Pointing hand, drawn | Drawn hand |
+| `mark.cropb` | Crop marks, outside trim | Corner marks |
+| `mark.cropc` | Crop marks, long ticks | Long ticks |
+| `mark.barb` | Colour bar, tone patches | Tone patch bar |
+| `mark.scanb` | Copier streak, toner | Toner streak |
+| `mark.scanc` | Copier streak, specks | Toner specks |
+| `mark.perf` | Perforation | Tear line |
+| `mark.perfb` | Perforation, slits | Slit tear line |
+| `mark.perfc` | Perforation, fine | Fine tear line |
+| `paper.stripb` | Torn strip, wavy | Wavy torn strip |
+| `paper.windowc` | Window frame, narrow | Narrow frame |
+| `paper.chat` | Speech balloon (square) | Square balloon |
+| `paper.underlineb` | Marker underline, round | Round underline |
+| `paper.stubb` | Ticket stub, torn end | Torn-end stub |
+| `paper.stubc` | Ticket stub, torn off | Torn-off stub |
+| `paper.ticket` | Admission ticket | Entry ticket |
+| `paper.stampb` | Postage stamp, bites | Bitten stamp |
+| `paper.stampc` | Postage stamp, corner bites | Corner bites |
+| `paper.deckleb` | Deckle edge, rough | Rough deckle |
+| `paper.holeb` | Torn hole, ragged | Ragged hole |
+| `paper.holec` | Torn hole, off-round | Lopsided hole |
+| `paper.dogearb` | Folded corner, flap | Corner flap |
+| `paper.dogearc` | Folded corner, portrait | Tall fold |
+| `paper.page` | Dog-eared page | Dog-ear |
+| `paper.borderb` | Snipped border, band | Snipped band |
+| `paper.borderc` | Snipped border, fine snips | Fine snips |
+| `paper.roundb` | Round window, smooth | Smooth window |
+| `paper.roundc` | Round window, narrow | Narrow window |
+| `paper.balloon` | Speech balloon (round) | Round balloon |
+| `paper.ribbon` | Bookmark ribbon (brush) | Brushed ribbon |
+| `shape.rectb` | Rectangle, landscape | Wide rectangle |
+| `shape.cloudb` | Three-lobe cloud | Puffy cloud |
+
 | 5 | `tape.plaster` (Tabler): G2 at the limit, 2.5 dots with 1.5 gaps that merge at 24 px | Widen the dot gaps, or accept at the printed-page check |
 
 ---
