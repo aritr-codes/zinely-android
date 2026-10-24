@@ -396,7 +396,7 @@ falls short and where that is scheduled.*
 
 | # | Zinely never… | Not yet true |
 |---|---|---|
-| 1 | loses a change: every edit is saved on the device before it matters, and every destructive act has undo | Built in W1 ([ADR-136](../DECISIONS.md#adr-136), unreleased, 2026-10-23; device passes owed): Back while typing keeps the words, and a snack's Undo retires once a later step lands. Partly built: the Art sheet, the Across-fold sheet and a half-typed rename survive rotation (tested); a half-typed folder name is unproven until the emulator pass. A deleted zine has only the snack's undo (Recently deleted, Later) |
+| 1 | loses a change: every edit is saved on the device before it matters, and every destructive act has undo | Built in W1 ([ADR-136](../DECISIONS.md#adr-136), unreleased, 2026-10-23; phone Pass 1 and Pass 2 done, TalkBack owed): Back while typing keeps the words, and a snack's Undo retires once a later step lands. Partly built: the Art sheet, the Across-fold sheet and a half-typed rename survive rotation (tested); a half-typed folder name is unproven until the emulator pass. A deleted zine has only the snack's undo (Recently deleted, Later) |
 | 2 | leaves a shelf with no way out: whole-library backup and standard PDF export stay free and easy to find | |
 | 3 | requires an account, a network, a licence check or an update to make, save, export or print | |
 | 4 | uploads, syncs, analyses or trains on user content, or ships an ad or tracker SDK | |
@@ -415,7 +415,7 @@ falls short and where that is scheduled.*
 | 17 | interrupts editing with a modal unless it prevents loss or wasted paper, asks twice after "no", or sends notifications, streaks or rating prompts | |
 | 18 | shows a first-run tour, or adds a feed, profile or community layer | |
 | 19 | ***breaks*** a saved zine after an update, or moves or removes a working tool without a visible path | *Breaks* means it fails to open, loses content, or moves ink outside the box a piece occupied. The one named exception is the pre-1.0 Art redraw of [ADR-132](../DECISIONS.md#adr-132), announced in the release notes and owed a bounding-box test ([ADR-136](../DECISIONS.md#adr-136) decision 3) |
-| 20 | asks for a permission a system picker or intent can replace, ships a surface that breaks at large text, lacks TalkBack labels or ignores reduced motion, or lets a user find out about a script limit only after typing | Built in W1 ([ADR-136](../DECISIONS.md#adr-136), unreleased, 2026-10-23; device passes owed): the Android 7–9 "Don't ask again" route to Settings and the Proof's 12sp type floor. Partly built: the Bench page strip honours reduced motion, but the Proof's scroll after a save still animates |
+| 20 | asks for a permission a system picker or intent can replace, ships a surface that breaks at large text, lacks TalkBack labels or ignores reduced motion, or lets a user find out about a script limit only after typing | Built in W1 ([ADR-136](../DECISIONS.md#adr-136), unreleased, 2026-10-23; emulator Pass 1 on API 24 and 360dp, TalkBack and a real Android 7–9 phone owed): the Android 7–9 "Don't ask again" route to Settings and the Proof's 12sp type floor. Partly built: the Bench page strip honours reduced motion, but the Proof's scroll after a save still animates |
 
 ---
 

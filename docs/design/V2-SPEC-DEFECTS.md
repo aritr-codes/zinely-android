@@ -8191,7 +8191,7 @@ second reviewer, could not sign in.
 | **Artifacts** | `docs/design/mockups/v21-proof.html` (`.pcount`, `.ready .rl span`, `.btn-save small`, `.sect`, `.mp`, `.cutlbl`, `.stepno`, `.legend`, `.foldnow`, `.cellno`) · `feature/editor/.../ProofScreen.kt`, `ProofPrint.kt`, `ProofSheet.kt`, `ProofFold.kt` |
 | **Found** | W1 lane plan, item 13 (2026-10-22), from ADR-136 row W1 |
 | **Severity** | Legibility: the step counter, the fold legend, the cut tag and the section labels in Print details are 9.5–11.8sp on a screen the maker reads while holding paper |
-| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-proof.html` A44](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 9 (`ProofTypeFloorTest`). |
+| **Status** | **Built, unreleased (W1, 2026-10-23); emulator Pass 1 and Pass 2 done; a real phone at the largest text and TalkBack owed.** Emulator Pass 1 at 360dp, 1x and 2x (API 36, `fda3f095`) found the done row squeezing Fold it up; fixed and re-checked at `909c71b9`. Phone (SM-A176B, Android 16, `09ae4668`): ONE CUT chip clear of the cut line. [`v21-proof.html` A44](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 9 (`ProofTypeFloorTest`). |
 
 | # | Finding | Outcome |
 |---|---|---|
@@ -8206,7 +8206,7 @@ second reviewer, could not sign in.
 | **Artifacts** | `docs/design/mockups/v21-proof.html` · `docs/design/v1/proof.html` (lines 73–74, "NO new error state") · `ExportViewModel.kt` (`:92`, `couldNotStart`) · `ZinelyNavHost.kt` (`ProofDestination`) · `ProofScreen.kt` (`ProofErrorPane`) · `core/copy/.../Copy.kt` (`Copy.Proof`) |
 | **Found** | W1 lane plan, items 7, 7b and 8 (2026-10-22), from ADR-136 row W1; the "Don't ask again" gap was recorded as a beta.5 Known Limitation in [ADR-054](../DECISIONS.md#adr-054) decision 8 |
 | **Severity** | Recovery: a maker out of space, out of memory or refused Storage reads the same "try once more" and cannot tell what to change. After "Don't ask again", Try again does nothing visible and nothing leads to Settings. After a save the band has no Share |
-| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-proof.html` A43](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 8 (`ExportFailure`, `ProofErrorPane`). |
+| **Status** | **Built, unreleased (W1, 2026-10-23); phone Pass 1, API 24 emulator Pass 1 and Pass 2 done; TalkBack, a real Android 7-9 phone and a real out-of-space failure owed.** Phone (SM-A176B, Android 16, `09ae4668`): saved line and Open PDF · Share · Fold it up. API 24 emulator (`fda3f095`): deny, Don't ask again, Open settings, grant, return without retry, Try again, saved. Out of space could not be provoked on the emulator. [`v21-proof.html` A43](mockups/v21-proof.html) frozen 2026-10-22 under the owner's delegation. Built by W1 Task 8 (`ExportFailure`, `ProofErrorPane`). |
 
 | # | Finding | Outcome |
 |---|---|---|
@@ -8223,7 +8223,7 @@ second reviewer, could not sign in.
 | **Artifacts** | `docs/design/mockups/v21-bench.html` (`toast()`, `#undoSnack`, `:801-811`) · `feature/editor/.../EditorScreen.kt` (the Bench snack and its Undo) · `core/editor/.../EditorReducer.kt` (history push, undo, redo) |
 | **Found** | W1 plan, 2026-10-22 ([ADR-136](../DECISIONS.md#adr-136) decision 1, row W1: "the snack's Undo undoes its own action (only while the newest history entry is still that action)") |
 | **Severity** | Loses work (Never #1). A maker who deletes a piece, then makes another edit while the snack is still up, and taps the snack's Undo, undoes the later edit while the snack says it will put the piece back |
-| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-bench.html` A41.2](mockups/v21-bench.html) frozen 2026-10-22 under the owner's delegation of 2026-10-12; the owner may overrule it. Built by W1 Task 5 (`historyRevision`). |
+| **Status** | **Built, unreleased (W1, 2026-10-23); phone Pass 1 done; TalkBack owed.** Phone (SM-A176B, Android 16, `09ae4668`) and Pass 2 2026-10-24. *2026-10-24:* the snack's Undo now also acts only while the revision is its own, and a no-op never arms it. [`v21-bench.html` A41.2](mockups/v21-bench.html) frozen 2026-10-22 under the owner's delegation of 2026-10-12; the owner may overrule it. Built by W1 Task 5 (`historyRevision`). |
 
 **Ruling.** A snack's Undo is live only while the newest history entry is the one that raised it. As soon as any
 later history step lands (an edit, an Undo or Redo from the bar, a page command), the snack is retired: hidden
@@ -8239,7 +8239,7 @@ Undo keep their ordinary timeout.
 | **Artifacts** | `docs/design/mockups/v21-bench.html` (`.status`, `:567-571`) · `feature/editor/.../EditorScreen.kt` · `feature/editor/.../ProofScreen.kt` (`ICON_BACK`, the Proof's back control this reuses) |
 | **Found** | W1 plan, 2026-10-22 ([ADR-136](../DECISIONS.md#adr-136) decision 1, row W1: "a visible way back to the Shelf from the Bench") |
 | **Severity** | Gets stuck (Never #19, "a visible path"). Only the system Back gesture leaves the Bench; a maker who does not know it has no control to tap |
-| **Status** | **Built, unreleased (W1, 2026-10-23); device passes owed.** [`v21-bench.html` A42](mockups/v21-bench.html) frozen 2026-10-22 under the owner's delegation of 2026-10-12; the owner may overrule it. Built by W1 Task 5 (`BenchShelfBack`, in the strip, not a z-index overlay). |
+| **Status** | **Built, unreleased (W1, 2026-10-23); phone Pass 1 done; TalkBack owed.** Phone (SM-A176B, Android 16, `09ae4668`): 48dp, edge taps reach My Shelf; its dump showed an unnamed `View`, fixed 2026-10-24 (one named Button, platform-tree test), not yet re-dumped. Pass 2 2026-10-24. [`v21-bench.html` A42](mockups/v21-bench.html) frozen 2026-10-22 under the owner's delegation of 2026-10-12; the owner may overrule it. Built by W1 Task 5 (`BenchShelfBack`, in the strip, not a z-index overlay). |
 
 **Ruling (controller ruling R-W10).** The Proof's own back control, reused: the same chevron in the same
 bordered round button, first in the Bench's status strip, before the time. No visible text, a touch target of
@@ -8263,7 +8263,7 @@ Ink tray, Flip, Arrange, All pages, Add and Across fold. So one control never me
 | **Artifacts** | `docs/design/mockups/backup-restore.html` (`#saveOption`, A45) · `core/copy/.../Copy.kt` (`SAVE_BODY`) · [`BACKUP-RESTORE-FREEZE.md`](../BACKUP-RESTORE-FREEZE.md) (A45 note) |
 | **Found** | W1 plan, item 10 (2026-10-22). The complaint behind "Save backup explains itself" is **uncited**: no source was found |
 | **Severity** | Clarity. The line under Back up repeated the sheet's own body instead of saying what the tap does next |
-| **Status** | **Built, unreleased (W1, 2026-10-23); owner reading owed.** [`backup-restore.html` A45](mockups/backup-restore.html) frozen under the owner's delegation of 2026-10-12 |
+| **Status** | **Built, unreleased (W1, 2026-10-23); seen on the phone (SM-A176B, Android 16, `09ae4668`); owner reading and TalkBack owed.** *2026-10-24:* the option's spoken name now carries the line (A45 note). [`backup-restore.html` A45](mockups/backup-restore.html) frozen under the owner's delegation of 2026-10-12 |
 
 **Ruling (controller ruling R-W5).** The line reads *"Next, your phone asks where to save it."* It says what happens
 next and does not repeat the sheet body. A delegated design call, not an answer to a cited complaint. The

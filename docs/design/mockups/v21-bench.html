@@ -2947,6 +2947,7 @@ const ART_A34=[
 A41 · 2026-10-22 · FROZEN under the owner's delegation of 2026-10-12 ("decide, do not
 ask"), ADR-136 decision 1 row W1.  The owner has not ruled on it personally and may
 overrule it.  D-141.  SPECIFIED, NOT YET BUILT.
+2026-10-24: built in W1 (branch feat/w1-never-lose-work); phone Pass 1 done, TalkBack owed.
 Your words and your undo stay yours.
 
 WHY.  Never #1 (docs/design/ZINE-DIRECTION.md §8): nothing loses a change.  Two Bench
@@ -2975,6 +2976,10 @@ same path, on focus loss (EditTextSession.kt); that is unchanged.
 Prototype: a capture-phase Escape handler below runs the Done path while the keyboard
 stack is up, and consumes the key, so closeOverlays() and deselect() (:928) do not also
 run on the same press.
+Platform note, 2026-10-24 (phone pass, Samsung SM-A176B, Android 16, W1 09ae4668): with
+the on-screen keyboard up, the first Back closes the keyboard (the IME consumes it) and
+the second commits.  That is the phone's behaviour, not a defect, and "one press does
+one thing" counts from the press that reaches the app.
 
 A41.2  UNDO RETIRES (D-141).  A snack's Undo is live only while the newest history entry
 is the one that raised it.  As soon as any later history step lands (an edit, an Undo
@@ -3010,6 +3015,7 @@ Removed / Put back lines, and every tray.
 A42 · 2026-10-22 · FROZEN under the owner's delegation of 2026-10-12 ("decide, do not
 ask"), ADR-136 decision 1 row W1.  The owner has not ruled on it personally and may
 overrule it.  D-143.  SPECIFIED, NOT YET BUILT.
+2026-10-24: built in W1 (branch feat/w1-never-lose-work); phone Pass 1 done, TalkBack owed.
 A way back to My Shelf.
 
 WHY.  The Bench has no visible way out.  System Back works, but a maker who does not know

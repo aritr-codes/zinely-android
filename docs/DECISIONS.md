@@ -16767,7 +16767,7 @@ resolves once PR #141 merges.
 becomes Accepted under that delegation only once it is built (W1 Task 11) and that build is reviewed; the owner
 has not ruled on it personally and may overrule it.
 **Builds:** library amendment A46 (frozen 2026-10-22, appended after A37 in `docs/design/mockups/v21-library.html`),
-then the Kotlin under the contract below, in one PR that closes #146.
+then the Kotlin under the contract below, in one PR that refs #146 (the issue stays open while this ADR is Proposed).
 **Extends:** [ADR-134](#adr-134), whose decision 7 ("Only `meta.json`") is left as written; this ADR decides the
 question it left open. **Evidence:** [RESEARCH R30](RESEARCH.md#r30-telling-someone-their-work-went-back-to-an-earlier-copy-2026-10-15)
 (no new research: the surface and its reasons are ADR-134's). **Findings:** [D-120](design/V2-SPEC-DEFECTS.md#d-120)
@@ -16905,7 +16905,9 @@ sequenceDiagram
 - **Owed before the build is accepted:** emulator Pass 1 (a hand-damaged `document.json` through `run-as` in
   the QA package, never the owner's app: the note once, the zine opens with the `.bak`'s pages) and Pass 2 (do
   the words say what was lost without alarm, and is the Shelf too late?); a TalkBack listen of the pages note
-  by a human; the owner's first-time reading of the words.
+  by a human; the owner's first-time reading of the words. *2026-10-24:* Pass 1 and Pass 2 were run on a phone
+  instead of an emulator (see *As built*, Device passes); the Bench-open-then-return path, the TalkBack listen and
+  the owner's reading are still owed.
 - D-120 item 4 is decided here. ADR-134 decision 7 is not rewritten; its *As built* carries a dated line
   pointing here.
 
@@ -16940,7 +16942,31 @@ notes, one `@Singleton` given to `DocumentRepositoryImpl` (as the function param
 `changes` is bumped after it. `restored-note.json` gains `details` (default true) and `pages` (default false); the
 saved-document format is untouched. The Shelf reads the note after the document load and re-lists on `changes`, so a
 repair found when a zine opens on the Bench shows on the Shelf on return, without a restart. ADR-134 follow-up 4 is
-fixed in `HomeViewModel`: a dismissal hides only the note it dismissed. Named follow-up: Got it clears both kinds
-unconditionally, so a pages repair landing in the instant before it clears is cleared unseen (compare-and-clear if it
-is ever seen). Two independent Review Agents returned GO on the build. Status stays **Proposed**: the emulator passes, the TalkBack listen and the
-owner's reading are owed ([OWNER-CHECKLIST](OWNER-CHECKLIST.md)).
+fixed in `HomeViewModel`: a dismissal hides only the note it dismissed. Two independent Review Agents returned GO on
+the build.
+
+*2026-10-24, whole-branch review fix:* Got it is now compare-and-clear. `dismissRestoredDetails` takes each zine's
+note as the maker saw it, and `RepairNotes.clear` clears only if the waiting note still equals it, inside the same
+atomic `compute`; a pages repair merged in after the note was shown survives Got it and is told. (Before, Got it
+cleared both kinds unconditionally.)
+
+**Device passes (2026-10-23/24).** Phone Pass 1 on Samsung SM-A176B, Android 16, build `09ae4668`, QA package:
+`document.json` damaged through `run-as` after a second save (so a `.bak` existed), relaunch: the A46.3 note once,
+in the A46 words; Got it hides it and it stays hidden after relaunch; two damaged zines give one combined note.
+Pass 2 (2026-10-24, from the phone and emulator walks, build `909c71b9`): the note is calm, says what happened and
+that a copy was used; "page file" is slightly technical but not alarming. Still owed: opening the damaged zine on
+the Bench first and coming back (the R-W2 path, unit-tested only), a human TalkBack listen of the pages note, and
+the owner's first-time reading, including whether the Shelf is too late (option B).
+
+**Known limitations.**
+- A `.bak` can hold a blank text box autosaved while it was being placed, so after a repair the zine has an
+  invisible, tappable "Empty text" box (seen on the phone). Follow-up: drop blank text on repair, or skip blank
+  placements in autosave. Not fixed in W1.
+- Not this ADR's subject, recorded here because W1 ships together: the phone's platform tree showed the Bench's
+  Back to My Shelf pill as a clickable `View` with an empty name and the label on a non-clickable child (the same
+  pattern as the Proof's back and How to fold, which share `ProofIconButton`). Fixed on this branch: the pill is
+  now one clickable `android.widget.Button` carrying its name, with a platform-tree test. Not yet re-dumped on a
+  device; the TalkBack listen is still owed.
+
+Status stays **Proposed**: the TalkBack listen, the Bench-open-then-return path and the owner's reading are owed
+([OWNER-CHECKLIST §2.5](OWNER-CHECKLIST.md)).

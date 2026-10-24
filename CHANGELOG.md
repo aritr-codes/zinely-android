@@ -16,11 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Never lose work, never get stuck (W1, [ADR-136](docs/DECISIONS.md#adr-136)).** Built; in no download yet,
-  and the phone and screen-reader checks are not done.
+- **Never lose work, never get stuck (W1, [ADR-136](docs/DECISIONS.md#adr-136)).** Built; in no download yet.
+  Tried on a phone (Samsung SM-A176B, Android 16) and on emulators (Android 16, and Android 7 for the
+  storage permission). The screen-reader listen is still owed.
   - Back while typing keeps your words. Backing out of a box you emptied removes it, with Undo.
   - Back from Reframe returns to the page instead of leaving the Bench.
-  - A back button at the top of the Bench returns to My Shelf. Your work is already saved.
+  - A back button at the top of the Bench returns to My Shelf. Your work is already saved. It, and the Proof's
+    back and How to fold buttons, now carry their names for a screen reader on the button itself.
   - A message's Undo disappears once you make another change, so it can no longer undo the wrong thing.
   - Messages stay on screen longer when your phone asks for more time (Accessibility > Time to take action).
     On My Shelf, two quick deletes or notices with the same words each get their own Undo window.
@@ -39,10 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Bench: the page strip no longer slides when Android's Remove animations is on; the Add pill (and Reframe's
     Done) grows instead of clipping at the largest text size.
   - The Back up option on the shelf's Keep your zines sheet now says what happens next: "Next, your phone asks
-    where to save it." ([D-144](docs/design/V2-SPEC-DEFECTS.md#d-144))
+    where to save it." A screen reader reads that line with the option's name
+    ([D-144](docs/design/V2-SPEC-DEFECTS.md#d-144)).
   - My Shelf now tells you, once, when a zine's pages went back to the copy from just before your last few
     seconds of changes after its page file was damaged, in the same note as a repaired name, cover or folder
-    ([ADR-140](docs/DECISIONS.md#adr-140) Proposed, Library A46; closes #146). A repair found when a zine opens
+    ([ADR-140](docs/DECISIONS.md#adr-140) Proposed, Library A46; refs #146). A repair found when a zine opens
     on the Bench shows on My Shelf when you come back, without restarting.
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),
   [D-143](docs/design/V2-SPEC-DEFECTS.md#d-143)), Proof A43 and A44, Backup A45 and Library A46. The Library
@@ -166,10 +169,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known limitations
 
-- **W1 limits.** The Proof's done row wraps Fold it up onto its own line at normal text size on a 360dp phone.
-  A failed Share after a save still says "Couldn't make the PDF". The Proof's scroll after a save is still
-  animated when the phone is set to reduce motion. A repair that lands in the instant before you tap Got it on
-  the pages note can be cleared unseen.
+- **W1 limits.** The Proof's done row puts Fold it up on its own line at normal text size on narrow phones
+  (seen at 360dp and 384dp wide), and the green button stretches across it. A failed Share after a save says
+  "Couldn't make the PDF", which is right: Share makes the PDF, so making it is what failed
+  ([D-146](docs/design/V2-SPEC-DEFECTS.md#d-146)). The Proof's scroll after a save is still animated when the
+  phone is set to reduce motion. A zine repaired from a copy saved while a text box was being placed can keep
+  that box, empty and invisible but tappable ("Empty text").
 - **With larger text on a small phone, the fold guide and the screen after Save PDF scroll.** In the fold
   guide a step opens at its top and its instruction is below; after a save, the top bar scrolls away with the
   page. That scroll after a save is animated even when the phone is set to reduce motion.
