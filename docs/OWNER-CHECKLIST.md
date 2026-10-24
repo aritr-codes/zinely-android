@@ -312,7 +312,7 @@ expose `stateDescription`** — so no dump I take substitutes for an ear.
 linked record; this table only points at it ([ADR-136](DECISIONS.md#adr-136) W1).
 
 Devices: phone Pass 1 on Samsung SM-A176B, Android 16, build `09ae4668` (2026-10-23); emulator Pass 1 on an API 36
-emulator and a temporary API 24 AVD, build `fda3f095` (2026-10-23), with the Proof done-row fix re-checked on the
+emulator and a temporary API 24 AVD, build `fda3f095` (2026-10-23), with the Proof done-row fix looked at on the
 API 36 emulator at `909c71b9`; Pass 2 on 2026-10-24 from those walks.
 
 | ☐ | Item | Where it is owned |
@@ -333,7 +333,8 @@ API 36 emulator at `909c71b9`; Pass 2 on 2026-10-24 from those walks.
 | ☐ | TalkBack listen of each save-failure body and of the done block's Share | [D-142](design/V2-SPEC-DEFECTS.md#d-142) |
 | ☑ | Pass 2 of the save results: the saved line answers "how do I print it?"; Fold it up on its own line reads as the next step; the Android 7 permission body reads right, and its old title led to [D-146](design/V2-SPEC-DEFECTS.md#d-146). **Done:** 2026-10-24 | [D-142](design/V2-SPEC-DEFECTS.md#d-142) |
 | ☐ | Your reading of the out-of-memory and out-of-space sentences: "my zine is fine, here is what to do"? (not shown on a device) | [D-142](design/V2-SPEC-DEFECTS.md#d-142) |
-| ☑ | 360dp at 1x and 2x text: the done row no longer squeezes Fold it up or breaks Share mid-word (fixed after the emulator pass, re-checked at `909c71b9`); ONE CUT chip clear of the cut line (SM-A176B); 2x text with animator scale 0: Add pill fits, Reframe Done grows, the page strip jumps (API 36 emulator, `fda3f095`) | [D-140](design/V2-SPEC-DEFECTS.md#d-140) |
+| ☑ | ONE CUT chip clear of the cut line (SM-A176B, `09ae4668`); 2x text with animator scale 0: Add pill fits, Reframe Done grows, the page strip jumps (API 36 emulator, `fda3f095`). The done row squeezed Fold it up at 360dp 1x and broke Share mid-word at 2x; fixed after the pass, and the fix looked at on the API 36 emulator at `909c71b9` (Fold it up on its own line; the pass record has no line for it) | [D-140](design/V2-SPEC-DEFECTS.md#d-140) |
+| ☐ | The done row after the fix: 360dp at 2x (Share whole, not "Shar / e") and a 384dp phone at 1x (the phone saw only the old build, where Fold it up wrapped inside its button). Record the result in the pass record | [D-140](design/V2-SPEC-DEFECTS.md#d-140) |
 | ☐ | Real phone at the largest text size: Add pill and Reframe Done; Proof ticket, ready summary ellipsis, Print details labels, fold legend; Fold steps 1-8, numbers not colliding | [D-140](design/V2-SPEC-DEFECTS.md#d-140) |
 | ☐ | Your reading of the Back up line "Next, your phone asks where to save it." (optional; fallback "where to save the backup"). Seen on SM-A176B; it is now spoken with the option's name, not yet heard | [D-144](design/V2-SPEC-DEFECTS.md#d-144) |
 | ☑ | ADR-140 Pass 1: `document.json` damaged through `run-as` after a second save, relaunch: the A46 note once; Got it hides it and it stays hidden after relaunch; two damaged zines give one combined note. Pass 2: calm, says what happened. **Done:** SM-A176B, `09ae4668`; Pass 2 2026-10-24 | [ADR-140](DECISIONS.md#adr-140) *Owed before accepted* |

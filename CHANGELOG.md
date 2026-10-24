@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Bench: the page strip no longer slides when Android's Remove animations is on; the Add pill (and Reframe's
     Done) grows instead of clipping at the largest text size.
   - The Back up option on the shelf's Keep your zines sheet now says what happens next: "Next, your phone asks
-    where to save it." A screen reader reads that line with the option's name
+    where to save it." The option now gives a screen reader that line with its name (not yet heard with TalkBack)
     ([D-144](docs/design/V2-SPEC-DEFECTS.md#d-144)).
   - My Shelf now tells you, once, when a zine's pages went back to the copy from just before your last few
     seconds of changes after its page file was damaged, in the same note as a repaired name, cover or folder
@@ -169,8 +169,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known limitations
 
-- **W1 limits.** The Proof's done row puts Fold it up on its own line at normal text size on narrow phones
-  (seen at 360dp and 384dp wide), and the green button stretches across it. A failed Share after a save says
+- **W1 limits.** The Proof's done row wraps at normal text size on narrow phones: at 360dp Fold it up takes its
+  own line and the green button stretches across it (a 384dp phone wrapped it too, on an earlier build). A failed Share after a save says
   "Couldn't make the PDF", which is right: Share makes the PDF, so making it is what failed
   ([D-146](docs/design/V2-SPEC-DEFECTS.md#d-146)). The Proof's scroll after a save is still animated when the
   phone is set to reduce motion. A zine repaired from a copy saved while a text box was being placed can keep

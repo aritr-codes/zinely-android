@@ -396,7 +396,7 @@ falls short and where that is scheduled.*
 
 | # | Zinely never… | Not yet true |
 |---|---|---|
-| 1 | loses a change: every edit is saved on the device before it matters, and every destructive act has undo | Built in W1 ([ADR-136](../DECISIONS.md#adr-136), unreleased, 2026-10-23; phone Pass 1 and Pass 2 done, TalkBack owed): Back while typing keeps the words, and a snack's Undo retires once a later step lands. Partly built: the Art sheet, the Across-fold sheet and a half-typed rename survive rotation (tested); a half-typed folder name is unproven until the emulator pass. A deleted zine has only the snack's undo (Recently deleted, Later) |
+| 1 | loses a change: every edit is saved on the device before it matters, and every destructive act has undo | Built in W1 ([ADR-136](../DECISIONS.md#adr-136), unreleased, 2026-10-23; phone Pass 1 and Pass 2 done, TalkBack owed): Back while typing keeps the words, and a snack's Undo retires once a later step lands. Partly built: the Art sheet, the Across-fold sheet and a half-typed rename survive rotation (tested); a half-typed folder name was not driven in the emulator pass and is owed. A deleted zine has only the snack's undo (Recently deleted, Later) |
 | 2 | leaves a shelf with no way out: whole-library backup and standard PDF export stay free and easy to find | |
 | 3 | requires an account, a network, a licence check or an update to make, save, export or print | |
 | 4 | uploads, syncs, analyses or trains on user content, or ships an ad or tracker SDK | |
