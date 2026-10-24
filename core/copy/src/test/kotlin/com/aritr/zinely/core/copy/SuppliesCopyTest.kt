@@ -164,7 +164,7 @@ class SuppliesCopyTest {
 
     @Test
     fun `a piece renamed to fit its tile is still found by every word of its old name`() {
-        // Given the 48 A39 names as frozen on 2026-10-22, before D-132 shortened them to fit the A16 tile
+        // Given the 56 A39 names as frozen on 2026-10-22, before D-132 shortened them to fit the A16 tile
         val oldNames = mapOf(
             "tape.tornb" to "Torn tape, long tear",
             "fix.cornerb" to "Photo corner, sharp",
@@ -214,14 +214,22 @@ class SuppliesCopyTest {
             "paper.ribbon" to "Bookmark ribbon (brush)",
             "shape.rectb" to "Rectangle, landscape",
             "shape.cloudb" to "Three-lobe cloud",
+            "mark.burstb" to "Starburst, cut",
+            "mark.burstc" to "Starburst, sharp",
+            "mark.burstd" to "Starburst, drawn",
+            "paper.stripc" to "Torn edge strip",
+            "paper.windowb" to "Window frame, cut",
+            "paper.decklec" to "Deckle edge, soft",
+            "paper.bookmark" to "Bookmark ribbon",
+            "shape.rect" to "Rectangle",
         )
         // When each old word is searched; Then the renamed piece is among the results
         val lost = oldNames.flatMap { (id, old) ->
             Regex("[a-z][a-z-]*").findAll(old.lowercase()).map { it.value }.filter { it != "and" }
                 .filterNot { id in Copy.Supplies.matchingIds(it) }.map { "$id: $it" }.toList()
         }
-        assertEquals(48, oldNames.size)
-        assertTrue(oldNames.all { (id, old) -> Copy.Supplies.NAMES.getValue(id) != old }, "D-132 renamed all 48")
+        assertEquals(56, oldNames.size)
+        assertTrue(oldNames.all { (id, old) -> Copy.Supplies.NAMES.getValue(id) != old }, "D-132 renamed all 56")
         assertTrue(lost.isEmpty(), "old words no longer found: $lost")
     }
 }

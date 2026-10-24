@@ -149,7 +149,7 @@ internal object PaperArt {
         z()
     }
 
-    /** Torn edge strip (`paper.stripc`): A39, drawn in-house. */
+    /** Half-torn strip (`paper.stripc`): A39, drawn in-house. */
     internal val PAPER_STRIPC: SupplyOutline = path {
         m(0.8, 7.2); l(23.2, 7.2); c(23.37, 7.2, 23.5, 7.33, 23.5, 7.5); l(23.5, 16.56)
         c(23.5, 16.7, 23.44, 16.82, 23.27, 16.86); l(22.98, 16.93); l(21.75, 18.15); l(21.09, 18.33)
@@ -160,7 +160,7 @@ internal object PaperArt {
         l(0.83, 16.77); c(0.67, 16.79, 0.5, 16.64, 0.5, 16.47); l(0.5, 7.5); c(0.5, 7.33, 0.63, 7.2, 0.8, 7.2); z()
     }
 
-    /** Window frame, cut (`paper.windowb`): A34, drawn in-house. */
+    /** Cut frame (`paper.windowb`): A34, drawn in-house. */
     internal val PAPER_WINDOWB: SupplyOutline = path {
         m(0.5, 0.7); l(12.2, 0.5); l(23.4, 0.6); l(23.5, 12.3); l(23.3, 23.4); l(11.8, 23.5); l(0.6, 23.3)
         l(0.7, 11.6); z()

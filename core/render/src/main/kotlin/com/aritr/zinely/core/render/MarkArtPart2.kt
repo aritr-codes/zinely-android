@@ -131,7 +131,7 @@ internal object MarkArtPart2 {
         z()
     }
 
-    /** Starburst, cut (`mark.burstb`): A34, drawn in-house. */
+    /** Cut starburst (`mark.burstb`): A34, drawn in-house. */
     internal val MARK_BURSTB: SupplyOutline = path {
         m(12.0, 0.5); l(13.89, 3.71); l(16.86, 1.91); l(17.17, 5.51); l(20.95, 4.86); l(19.75, 8.27); l(22.72, 9.55)
         l(20.4, 12.0); l(23.11, 14.54); l(19.39, 15.56); l(20.83, 19.05); l(17.33, 18.68); l(16.99, 22.36)
@@ -140,7 +140,7 @@ internal object MarkArtPart2 {
         l(7.03, 1.68); l(10.13, 3.81); z()
     }
 
-    /** Starburst, sharp (`mark.burstc`): A39, drawn in-house. */
+    /** Sharp starburst (`mark.burstc`): A39, drawn in-house. */
     internal val MARK_BURSTC: SupplyOutline = path {
         m(12.0, 0.5); l(13.68, 3.57); l(16.4, 1.38); l(16.78, 4.85); l(20.13, 3.87); l(19.15, 7.22); l(22.62, 7.6)
         l(20.43, 10.32); l(23.5, 12.0); l(20.43, 13.68); l(22.62, 16.4); l(19.15, 16.78); l(20.13, 20.13)
@@ -149,7 +149,7 @@ internal object MarkArtPart2 {
         l(1.38, 7.6); l(4.85, 7.22); l(3.87, 3.87); l(7.22, 4.85); l(7.6, 1.38); l(10.32, 3.57); z()
     }
 
-    /** Starburst, drawn (`mark.burstd`): Fluent Emoji (High Contrast), imported. */
+    /** Drawn starburst (`mark.burstd`): Fluent Emoji (High Contrast), imported. */
     internal val MARK_BURSTD: SupplyOutline = path {
         m(3.65, 0.88); l(3.63, 0.8); c(3.6, 0.69, 3.74, 0.57, 3.84, 0.6); l(3.96, 0.64); l(10.38, 5.36)
         l(10.5, 5.4); l(10.66, 5.32); l(13.07, 2.3); c(13.11, 2.24, 13.17, 2.22, 13.23, 2.22)

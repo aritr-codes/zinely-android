@@ -16,7 +16,7 @@ import com.aritr.zinely.core.render.ArtGeometry.path
  */
 internal object ShapeArt {
 
-    /** Rectangle (`shape.rect`): A34, drawn in-house, redraws the shipped drawing. */
+    /** Plain rectangle (`shape.rect`): A34, drawn in-house, redraws the shipped drawing. */
     internal val RECT: SupplyOutline = path {
         m(0.5, 0.8); l(23.4, 0.5); l(23.5, 23.3); l(0.7, 23.5); z()
     }

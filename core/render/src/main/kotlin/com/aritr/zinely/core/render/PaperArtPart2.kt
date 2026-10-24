@@ -26,7 +26,7 @@ internal object PaperArtPart2 {
         l(1.18, 9.5); l(1.37, 7.6); l(0.99, 6.5); l(1.59, 5.8); l(1.63, 4.2); l(1.18, 3.0); z()
     }
 
-    /** Deckle edge, soft (`paper.decklec`): A39, drawn in-house. */
+    /** Soft deckle (`paper.decklec`): A39, drawn in-house. */
     internal val PAPER_DECKLEC: SupplyOutline = path {
         m(2.1, 4.0); c(2.66, 4.0, 3.01, 4.16, 3.57, 4.16); c(4.18, 4.16, 4.57, 3.56, 5.18, 3.56)
         c(5.79, 3.56, 6.18, 3.95, 6.79, 3.95); c(7.46, 3.95, 7.88, 3.61, 8.54, 3.61)
@@ -252,7 +252,7 @@ internal object PaperArtPart2 {
         c(3.0, 5.94, 3.7, 5.24, 4.5, 5.24); l(6.79, 5.24); z()
     }
 
-    /** Bookmark ribbon (`paper.bookmark`): Doodle Icons by Oreo Design, imported. */
+    /** Book ribbon (`paper.bookmark`): Doodle Icons by Oreo Design, imported. */
     internal val PAPER_BOOKMARK: SupplyOutline = path {
         m(5.14, 1.0); c(9.82, 0.65, 14.48, 0.67, 18.82, 1.07); c(19.4, 1.12, 19.9, 1.64, 19.94, 2.23)
         c(20.34, 8.65, 20.36, 15.26, 20.01, 22.07); c(19.98, 22.64, 19.51, 23.15, 18.95, 23.24)

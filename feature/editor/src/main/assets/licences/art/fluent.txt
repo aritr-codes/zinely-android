@@ -1,6 +1,6 @@
 Source: github.com/microsoft/fluentui-emoji at 1ffb34c, the High Contrast style, drawn in one ink.
 
-Pieces in Zinely from this set: Threaded needle, Starburst, drawn, Sparkles, Entry ticket, Thought balloon, Shout balloon.
+Pieces in Zinely from this set: Threaded needle, Drawn starburst, Sparkles, Entry ticket, Thought balloon, Shout balloon.
 
 MIT License
 
