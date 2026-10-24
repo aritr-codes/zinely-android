@@ -522,7 +522,13 @@ class BenchC6Test {
      * **Inverted by A40 rev. 2.** Row 6.1i put `.inkpop` (42) above `.snack` (38), because C6's snack had
      * no button. A40 gives the tray's snack an Undo, so the frozen `.toast2` is `z-index:70` at
      * `bottom:96px` — ABOVE the open tray, or its Undo would sit under the card. Asserted as paint: across
-     * the snack's own bounds its `--ink` ground must win over the card's `--surface`.
+     * the snack's own bounds its ground must win over the card.
+     *
+     * The snack's ground is the room's `surfaceSoft` (`BenchSnack`: "a warm support scrap"), not `--ink`;
+     * the card's is `surface`. They are 40 channel steps apart in the light palette, so a pixel counts as
+     * the snack's only when it is within 16 of `surfaceSoft` — tighter than half that gap, so the card's
+     * own ground can never pass for it. Ink glyphs of the message count against, which is why the bar is
+     * half the line and not all of it.
      */
     @Test
     fun the_snack_is_drawn_above_the_open_tray() {
@@ -538,16 +544,16 @@ class BenchC6Test {
         val card = composeRule.onNodeWithTag(BenchInkPopoverTestTag).fetchSemanticsNode().boundsInWindow
         assertTrue("the snack stands over the card ($snack in $card)", snack.top > card.top && snack.bottom < card.bottom)
         val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
-        val paper = zinelyV21LightColors().surface.toArgb()
-        val ink = zinelyV21LightColors().ink.toArgb()
-        var onInk = 0
+        val ground = zinelyV21LightColors().surfaceSoft.toArgb()
+        var onGround = 0
         var total = 0
-        val y = snack.center.y.toInt()
-        for (x in (snack.left + 8f).toInt() until (snack.right - 8f).toInt()) {
+        // Just inside the pill's top edge: below the 1.5dp border, above the line of text.
+        val y = (snack.top + px(8.dp)).toInt()
+        for (x in (snack.left + px(24.dp)).toInt() until (snack.right - px(24.dp)).toInt()) {
             total++
-            if (channelDistance(bmp.getPixel(x, y), ink) < channelDistance(bmp.getPixel(x, y), paper)) onInk++
+            if (channelDistance(bmp.getPixel(x, y), ground) < 16) onGround++
         }
-        assertTrue("only $onInk of $total pixels across the snack show its ink ground; the tray covers it", onInk > total / 2)
+        assertTrue("only $onGround of $total pixels across the snack show its ground; the tray covers it", onGround > total / 2)
     }
 
     /**
@@ -712,7 +718,9 @@ class BenchC6Test {
         openInk(store)
         // Held so the 4000ms window does not open and close inside one `waitForIdle`.
         composeRule.mainClock.autoAdvance = false
-        composeRule.onNodeWithContentDescription(Copy.BenchInk.AQUA).performClick()
+        // Forest, not Aqua: Aqua is pale on text, so its snack takes the pale form (controller ruling
+        // 2026-10-22, covered by BenchInkTrayApplyTest's Cream case). This row pins the plain form.
+        composeRule.onNodeWithContentDescription(Copy.BenchInk.FOREST).performClick()
         composeRule.mainClock.advanceTimeBy(300L)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
@@ -720,7 +728,7 @@ class BenchC6Test {
         assertEquals(
             "the snack names the ink that landed",
             1,
-            composeRule.onAllNodesWithContentDescription(Copy.BenchInk.applied(Copy.BenchInk.AQUA))
+            composeRule.onAllNodesWithContentDescription(Copy.BenchInk.applied(Copy.BenchInk.FOREST))
                 .fetchSemanticsNodes().size,
         )
         // Counted by the snack's OWN action tag, never by the word: the bar below carries an `Undo` too.
