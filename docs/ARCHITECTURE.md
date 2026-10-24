@@ -706,6 +706,9 @@ path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds 
    **Expanded under ADR-107 / A16 (2026-08-26):** the catalogue now contains 32 locally authored,
    print-native outlines. The Art sheet searches names and curated local tags, filters by the four stable
    families, and renders every tile through the same `SupplyCatalog` outline used by the page renderer.
+   **Expanded under [ADR-139](DECISIONS.md#adr-139) / A39 (2026-10-24, `feat/art-picks`):** 124 outlines, split into
+   per-family objects (`TapeArt`, `MarkArt` + `MarkArtPart2`, `PaperArt` + `PaperArtPart2`, `ShapeArt`) behind the one
+   `SupplyCatalog.OUTLINES` map, so no static initialiser nears the JVM's 64 KB cap. Ids are add-only.
    A supply with no authored outline still draws nothing — `outlineOf()`
    returns `null` at the render boundary, which is deliberately *not* a validation failure, so a document
    made on a later build stays openable here.

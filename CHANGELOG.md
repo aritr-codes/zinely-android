@@ -47,6 +47,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     seconds of changes after its page file was damaged, in the same note as a repaired name, cover or folder
     ([ADR-140](docs/DECISIONS.md#adr-140) Proposed, Library A46; refs #146). A repair found when a zine opens
     on the Bench shows on My Shelf when you come back, without restarting.
+- **Art: the owner's 124 picks (W3 and W7, [ADR-139](docs/DECISIONS.md#adr-139) Proposed).** Built; in no download
+  yet. Art now offers 124 pieces in the same four families, each subject followed by its variants: 17 of the
+  shipped pieces take a cleaner drawing that fits inside their old size, so zines you already made keep their
+  layout, and 90 pieces are new. Forty are open-source drawings, credited in Licences & credits.
+  - Names shortened so variants are told apart: 56 names changed so the whole name shows on its tile (for
+    example "Torn hole, ragged" is now "Ragged hole", "Registration cross" is now "Crosshair"). A screen reader
+    says the same name the tile shows, and search still finds a piece by its old words
+    ([D-132](docs/design/V2-SPEC-DEFECTS.md#d-132)).
+  - Known limitations: the name fit is proven at 360dp and font scale 1.0 only; on a narrower phone or with a
+    larger font size a name can still be cut off. A zine that uses a new piece needs this version or later to
+    show and print it; an older version opens the zine and draws nothing for that piece. Not yet tried on a
+    phone or with a screen reader, and no page has been printed or photocopied yet.
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),
   [D-143](docs/design/V2-SPEC-DEFECTS.md#d-143)), Proof A43 and A44, Backup A45 and Library A46. The Library
   mockup's paper-chooser and restored-note prototypes run again (merge damage repaired).
