@@ -174,9 +174,10 @@ class ShapeReplayTest {
 
     @Test
     fun sceneRendererFold_putsAnAuthoredSupplyOnItsOwnBox() {
-        // End-to-end: Page -> SceneRenderer -> the one replayer. `shape.rect` is the full unit square,
-        // so the ink footprint IS the element box — which makes a missing scale term (§3.4.1) a
-        // 1pt x 1pt speck at the origin rather than a filled 40 x 25 box, visible in every probe below.
+        // End-to-end: Page -> SceneRenderer -> the one replayer. `shape.rect` fills its box to within
+        // H4's half-unit margin (A39, ADR-139), so the ink footprint is the element box — which makes a
+        // missing scale term (§3.4.1) a 1pt x 1pt speck at the origin rather than a filled 40 x 25 box,
+        // visible in every probe below.
         val decor = DecorElement(
             id = "d1",
             transform = Transform(xPt = 16.0, yPt = 24.0, widthPt = 40.0, heightPt = 25.0),

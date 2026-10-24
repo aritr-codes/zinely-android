@@ -63,8 +63,7 @@ class SupplyInkTest {
 
     @Test
     fun `given the scope, then it is the named list, each has an outline, and everything else is null`() {
-        // SUPPLIES-SPEC H9 (ADR-139): the eight of A32, then v21-bench.html A39's holed ids, one family per
-        // change. The eight are probed by hand above; every holed id is probed from its own ink by
+        // SUPPLIES-SPEC H9 (ADR-139): the eight of A32, then v21-bench.html A39's holed ids. The eight are probed by hand above; every holed id is probed from its own ink by
         // `HitTestInkTest` (core:editor), and `SupplyHolesDerivedTest` checks the list against the geometry.
         assertEquals(
             setOf(
@@ -74,9 +73,11 @@ class SupplyInkTest {
                 "mark.registrationb", "mark.registrationc", "mark.scissors", "mark.squiggle",
                 "paper.windowb", "paper.windowc", "paper.cutwindow", "paper.holeb", "paper.holec", "paper.holed",
                 "paper.borderb", "paper.borderc", "paper.borderd", "paper.roundb", "paper.roundc", "paper.gifttag",
+                "shape.ringb",
             ),
             SupplyInk.IN_SCOPE,
         )
+        assertEquals(31, SupplyInk.IN_SCOPE.size, "H9's named list is 31 (ADR-139)")
         assertTrue(holed.map { it.id }.toSet().all { it in SupplyInk.IN_SCOPE }, "every hand-probed piece is in scope")
         for (id in SupplyInk.IN_SCOPE) assertNotNull(SupplyCatalog.outlineOf(id), "$id has no outline")
 
@@ -110,9 +111,11 @@ class SupplyInkTest {
         for ((u, v) in onTheWindow) {
             assertEquals(0.0, at("paper.window", u, v)!!, 1e-9, "the window's boundary at ($u, $v)")
         }
-        // A ring leaves its box's corners bare: (√2/2 − 1/2) of a 100 pt box.
+        // A ring leaves its box's corners bare: (√2/2 − 11.25/24) of a 100 pt box, A39's ring being 11.25 of
+        // 24 units in radius (ADR-139).
+        val corner = (kotlin.math.sqrt(2.0) / 2.0 - 11.25 / 24.0) * 100.0
         for ((u, v) in listOf(0.0 to 0.0, 1.0 to 0.0, 1.0 to 1.0, 0.0 to 1.0)) {
-            assertEquals(20.71, at("shape.ring", u, v)!!, 0.01, "the ring's box corner ($u, $v)")
+            assertEquals(corner, at("shape.ring", u, v)!!, 0.01, "the ring's box corner ($u, $v)")
         }
     }
 
@@ -130,13 +133,16 @@ class SupplyInkTest {
         val w = 200.0
         val h = 100.0
         fun local(x: Double, y: Double) = SupplyInk.distancePt("shape.ring", x, y, w, h, false, false)!!
-        assertEquals(3.0, local(-w / 2 - 3.0, 0.0), 0.01, "left of the ring")
-        assertEquals(3.0, local(w / 2 + 3.0, 0.0), 0.01, "right of the ring")
-        assertEquals(3.0, local(0.0, -h / 2 - 3.0), 0.01, "above the ring")
-        assertEquals(3.0, local(0.0, h / 2 + 3.0), 0.01, "below the ring")
-        // …and inside the hole, 3 pt short of its edge on each axis (the hole is 7/12 of each side).
-        assertEquals(3.0, local(w * 7.0 / 24.0 - 3.0, 0.0), 0.01, "inside the hole, along x")
-        assertEquals(3.0, local(0.0, h * 7.0 / 24.0 - 3.0), 0.01, "inside the hole, along y")
+        // A39's ring (ADR-139): outer radius 11.25 and hole radius 6.25, of 24 units.
+        val outer = 11.25 / 24.0
+        val hole = 6.25 / 24.0
+        assertEquals(3.0, local(-w * outer - 3.0, 0.0), 0.01, "left of the ring")
+        assertEquals(3.0, local(w * outer + 3.0, 0.0), 0.01, "right of the ring")
+        assertEquals(3.0, local(0.0, -h * outer - 3.0), 0.01, "above the ring")
+        assertEquals(3.0, local(0.0, h * outer + 3.0), 0.01, "below the ring")
+        // …and inside the hole, 3 pt short of its edge on each axis.
+        assertEquals(3.0, local(w * hole - 3.0, 0.0), 0.01, "inside the hole, along x")
+        assertEquals(3.0, local(0.0, h * hole - 3.0), 0.01, "inside the hole, along y")
     }
 
     @Test

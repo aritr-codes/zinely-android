@@ -459,14 +459,14 @@ public object SupplyProvenanceCatalog {
             "https://raw.githubusercontent.com/tabler/tabler-icons/v3.49.0/icons/filled/flower.svg",
             "tabler/filled_flower.svg",
             "318b3c4bf44b3b943ecba9edfd6774128cd69bbd2323f83e45c00c8109b954fd",
-            "Silhouette only, scaled.",
+            "Silhouette only, scaled; D-131: each of the six petal cusps rounded with a 0.6 tangent arc.",
         ),
         imported(
             "shape.hex", ArtSet.PHOSPHOR,
             "https://raw.githubusercontent.com/phosphor-icons/core/v2.0.8/assets/fill/hexagon-fill.svg",
             "phosphor/fill_hexagon-fill.svg",
             "750b85cbc3245bfb5c176fb7ec24bfb5a941f230d30ceec2ec37a069cf519982",
-            "Silhouette and scale only.",
+            "Silhouette and scale; D-131: each corner moved up to 0.5 off true, its rounding kept.",
         ),
         imported(
             "shape.cloud", ArtSet.DOODLE,

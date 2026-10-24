@@ -78,8 +78,7 @@ class SupplyCatalogTest {
         // A supply authored small inside its square would land smaller than the maker asked for, and
         // the maker would have no way to tell the outline from the box. Only *one* axis, because a wide
         // piece (Perforation, Ticket stub) has air above and below by design.
-        // Until a redraw lands with its family (redrawPending), its shipped drawing is held here too.
-        for (id in keptAsShipped + redrawPending) {
+        for (id in keptAsShipped) {
             val pts = SupplyCatalog.outlineOf(id)!!.points()
             val spanX = pts.maxOf { it.x } - pts.minOf { it.x }
             val spanY = pts.maxOf { it.y } - pts.minOf { it.y }
@@ -96,14 +95,6 @@ class SupplyCatalogTest {
         }
     }
 
-    /**
-     * Shipped ids whose A39 redraw lands with its family's change (R-A7 (5)); until then they keep the shipped
-     * drawing. ⚠ Temporary: empty once the four family changes are in, and then deleted.
-     */
-    private val redrawPending = setOf(
-        "shape.rect", "shape.circle", "shape.triangle", "shape.rule", "shape.ring",
-    )
-
     @Test
     fun `given every outline drawn to H4, when its extent is measured, then it sits in the margin at its class size`() {
         // SUPPLIES-SPEC H4 (G3): nothing crosses the 0.5-unit margin, control points included, and each
@@ -111,7 +102,7 @@ class SupplyCatalogTest {
         // 23. No class is smaller than about 21, so no piece drawn to H4 spans less than 20 of its 24 units.
         val margin = 0.5 / 24.0
         for ((id, outline) in SupplyCatalog.OUTLINES) {
-            if (id in keptAsShipped || id in redrawPending) continue
+            if (id in keptAsShipped) continue
             val pts = outline.points()
             val minX = pts.minOf { it.x }
             val minY = pts.minOf { it.y }
@@ -356,18 +347,23 @@ class SupplyCatalogTest {
         val top = rule.minOf { it.y }
         val bottom = rule.maxOf { it.y }
         assertEquals(0.5, (top + bottom) / 2.0, 1e-9)
-        assertTrue(top > 0.0 && bottom < 1.0, "the rule needs air above and below")
+        // A band, not a block: about a fifth of its box's height (A34's straight rule, 4.8 of 24 units).
+        assertEquals(0.2, bottom - top, 1e-9)
     }
 
     @Test
-    fun `given the circle, when its four cubics are read, then they meet at the cardinal points`() {
+    fun `given the circle, when its four cubics are read, then they meet at the cardinal points of the inset circle`() {
+        // A39's circle (ADR-139): radius 11.25 about the centre, inside H4's margin, starting at the right.
         val sub = SupplyCatalog.outlineOf("shape.circle")!!.subpaths.single()
         assertEquals(4, sub.segments.size)
         assertTrue(sub.segments.all { it is Segment.CubicTo }, "a circle of lines is a polygon")
-        assertEquals(
-            listOf(PtPoint(1.0, 0.5), PtPoint(0.5, 1.0), PtPoint(0.0, 0.5), PtPoint(0.5, 0.0)),
-            sub.segments.map { it.to },
-        )
+        val lo = 0.75 / 24.0
+        val hi = 23.25 / 24.0
+        val expected = listOf(PtPoint(0.5, hi), PtPoint(lo, 0.5), PtPoint(0.5, lo), PtPoint(hi, 0.5))
+        expected.zip(sub.segments.map { it.to }).forEach { (want, got) ->
+            assertEquals(want.x, got.x, 1e-12)
+            assertEquals(want.y, got.y, 1e-12)
+        }
         assertEquals(sub.start, sub.segments.last().to, "the last cubic returns to the start")
     }
 

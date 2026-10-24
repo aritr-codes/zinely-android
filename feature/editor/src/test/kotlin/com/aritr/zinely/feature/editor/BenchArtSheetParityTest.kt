@@ -22,27 +22,6 @@ class BenchArtSheetParityTest {
     private val frozen = File("../../docs/design/mockups/v21-bench.html").readText()
     private val a16 = frozen.substringAfter("A16 ITERATION 3").substringBefore("</html>")
 
-    /** The A16/A32 sheet as shipped: 34 pieces in the order the sheet draws them. */
-    private fun shippedSupplies(): List<FrozenSupply> {
-        val original = Regex("""\['([a-z]+\.[a-z]+)','([^']*)','<path d="([^"]*)"/>'\]""")
-            .findAll(frozen.substringAfter("const SUP=[").substringBefore("];"))
-            .mapIndexed { index, match ->
-                FrozenSupply(
-                    family = Copy.Supplies.BY_FAMILY.keys.elementAt(index / 4),
-                    id = match.groupValues[1],
-                    name = match.groupValues[2],
-                    path = match.groupValues[3],
-                )
-            }
-            .toList()
-        // A32 keeps its two frames in a list of their own and pushes it onto ART_FIRST_WAVE when the page
-        // runs, so the sheet's order is the first wave and then the frames.
-        val expansion = listOf("const ART_FIRST_WAVE=[", "const ART_D5_FRAMES=[").flatMap { list -> rowsOf(list) }
-        return Copy.Supplies.BY_FAMILY.keys.flatMap { family ->
-            (original + expansion).filter { it.family == family }
-        }
-    }
-
     private fun rowsOf(list: String): List<FrozenSupply> =
         Regex("""\['([^']+)','([^']+)','([^']+)','<path d="([^"]*)"/>'\]""")
             .findAll(frozen.substringAfter(list).substringBefore("];"))
@@ -58,16 +37,6 @@ class BenchArtSheetParityTest {
 
     /** v21-bench.html A39 (ADR-139): the final 124, four fields per row, in `Copy.Supplies.BY_FAMILY` order. */
     private val a39: List<FrozenSupply> by lazy { rowsOf("const ART_A39=[") }
-
-    /**
-     * The families wired to A39 so far, one per change (R-A7 (5)); the rest still match the shipped sheet.
-     * ⚠ Temporary while the four family commits land: the last of them removes the shipped half.
-     */
-    private val wiredToA39 = setOf(Copy.Supplies.TAPE_AND_FIXINGS, Copy.Supplies.STAMPS_AND_MARKS, Copy.Supplies.CUT_PAPER)
-
-    private fun frozenSupplies(): List<FrozenSupply> = Copy.Supplies.BY_FAMILY.keys.flatMap { family ->
-        (if (family in wiredToA39) a39 else shippedSupplies()).filter { it.family == family }
-    }
 
     private fun cataloguePath(supplyId: String): String {
         val outline = SupplyCatalog.outlineOf(supplyId) ?: error("$supplyId has no authored outline")
@@ -152,7 +121,7 @@ class BenchArtSheetParityTest {
 
     @Test
     fun ids_names_families_order_and_geometry_match_the_freeze() {
-        val expected = frozenSupplies()
+        val expected = a39
         val actual = Copy.Supplies.BY_FAMILY.flatMap { (family, supplies) ->
             supplies.map { (id, name) -> Triple(family, id, name) }
         }

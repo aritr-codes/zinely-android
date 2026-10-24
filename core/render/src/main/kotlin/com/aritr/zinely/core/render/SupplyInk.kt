@@ -28,7 +28,7 @@ public object SupplyInk {
         // The two hand-cut frames (v21-bench.html A32).
         "paper.border",
         "paper.round",
-        // v21-bench.html A39 (SUPPLIES-SPEC H9, ADR-139), one family per change. Tape & fixings.
+        // v21-bench.html A39 (SUPPLIES-SPEC H9, ADR-139), by family. Tape & fixings.
         "fix.cornerb",
         "fix.grommetb",
         "fix.grommetc",
@@ -53,6 +53,8 @@ public object SupplyInk {
         "paper.roundb",
         "paper.roundc",
         "paper.gifttag",
+        // Cut shapes.
+        "shape.ringb",
     )
 
     /**

@@ -87,10 +87,14 @@ class SupplyPlacementTest {
     }
 
     @Test
-    fun `Given the exception list, When it is read, Then it holds only the supply the spec names`() {
-        // The override exists because §5.2 names `shape.rule` by name. A second entry would be the
-        // per-family rule quietly giving up, so the count is pinned rather than left to drift.
-        assertEquals(setOf("shape.rule"), BenchSupplyOverrides.keys)
+    fun `Given the exception list, When it is read, Then it holds only the rules the spec names`() {
+        // The override exists because §5.2 names `shape.rule` by name; A39's Wavy and Ripple rule (ADR-139)
+        // are the same divider. Any other entry would be the per-family rule quietly giving up, so the set
+        // is pinned rather than left to drift, and all three land identically.
+        assertEquals(setOf("shape.rule", "shape.ruleb", "shape.rulec"), BenchSupplyOverrides.keys)
+        val straight = benchSupplyPlacement("shape.rule", page)
+        assertEquals(straight, benchSupplyPlacement("shape.ruleb", page))
+        assertEquals(straight, benchSupplyPlacement("shape.rulec", page))
     }
 
     @Test

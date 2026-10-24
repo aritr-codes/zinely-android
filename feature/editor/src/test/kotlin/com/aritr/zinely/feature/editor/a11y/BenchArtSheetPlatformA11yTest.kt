@@ -103,7 +103,7 @@ class BenchArtSheetPlatformA11yTest {
             // explanation of an absence that does not exist.
             assertNull("$id is live and must not claim to be unavailable", node.stateDescription)
         }
-        assertEquals(111, SupplyCatalog.OUTLINES.size)
+        assertEquals(124, SupplyCatalog.OUTLINES.size)
     }
 
     @Test

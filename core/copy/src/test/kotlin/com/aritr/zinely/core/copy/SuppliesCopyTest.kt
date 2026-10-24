@@ -112,8 +112,8 @@ class SuppliesCopyTest {
             Copy.Supplies.BY_FAMILY.keys.toList(),
             "SUPPLIES-SPEC §4 freezes four families (v21-bench.html:831)",
         )
-        // Three families carry v21-bench.html A39's 24, 38 and 44 (ADR-139); one family per change.
-        assertEquals(listOf(24, 38, 44, 5), Copy.Supplies.BY_FAMILY.values.map { it.size })
+        // v21-bench.html A39's 124 (ADR-139): 24, 38, 44 and 18.
+        assertEquals(listOf(24, 38, 44, 18), Copy.Supplies.BY_FAMILY.values.map { it.size })
     }
 
     @Test
@@ -131,6 +131,8 @@ class SuppliesCopyTest {
             Copy.Supplies.matchingIds("tape", Copy.Supplies.TAPE_AND_FIXINGS),
         )
         assertTrue(Copy.Supplies.matchingIds("not in this cabinet").isEmpty())
+        // A rule's variants are found with it (A39); a search for "rule" finds the three dividers and nothing else.
+        assertEquals(listOf("shape.rule", "shape.ruleb", "shape.rulec"), Copy.Supplies.matchingIds("rule"))
         // The two frames (v21-bench.html A32) and their A39 variants are found by name and by tag, in the
         // cabinet's own order.
         assertEquals(listOf("paper.border", "paper.borderb", "paper.borderc"), Copy.Supplies.matchingIds("snipped"))

@@ -19,7 +19,7 @@ internal object ArtGeometry {
         bar(x0.toDouble() / 24.0, y0.toDouble() / 24.0, x1.toDouble() / 24.0, y1.toDouble() / 24.0)
 
     /**
-     * One circle of radius [r] about ([cx],[cy]), as the same four-cubic approximation [ShapeArt.CIRCLE] uses.
+     * One circle of radius [r] about ([cx],[cy]), as the usual four-cubic approximation.
      *
      * [KAPPA] is already folded by half for the unit-square circle, so it is doubled back out here and
      * re-scaled by [r] — the alternative is a second constant that means the same thing.

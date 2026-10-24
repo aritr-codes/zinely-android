@@ -143,17 +143,18 @@ internal val BenchSupplyDefaults: Map<String, BenchSupplyDefault> = mapOf(
  * The **one** per-supply exception §5.2 names by name: *"a rule lands wide"*.
  *
  * `shape.rule` is a divider — the thing you put *between* two things — and a divider that arrives as tall
- * as it is wide is not one. It lands at 70 % of the page's width on the outline's own 5:1 proportion (the
- * bar occupies the middle fifth of its box, `ShapeArt.RULE`), so the drawn ink is a line rather than a
- * band, and it is visibly not the rectangle its family-mate `shape.rect` places.
+ * as it is wide is not one. It lands at 70 % of the page's width on a 5:1 box (the straight bar is about a
+ * fifth of its box's height, `ShapeArt.RULE`), so the drawn ink is a line rather than a band, and it is
+ * visibly not the rectangle its family-mate `shape.rect` places. Its two A39 variants (Wavy rule, Ripple
+ * rule, ADR-139) are the same divider and land the same way.
  *
- * ⚠ Keep this map at one entry unless the spec grows another example. It exists because §5.2's own
+ * ⚠ Keep this map to the rules unless the spec grows another example. It exists because §5.2's own
  * illustration names a supply its stated mechanism cannot express — not because per-supply sizing is the
- * design. Every additional entry is a per-family constant quietly giving up.
+ * design. Every additional subject is a per-family constant quietly giving up.
  */
-internal val BenchSupplyOverrides: Map<String, BenchSupplyDefault> = mapOf(
-    "shape.rule" to BenchSupplyDefault(widthFraction = 0.70, aspect = 5.0),
-)
+internal val BenchSupplyOverrides: Map<String, BenchSupplyDefault> =
+    listOf("shape.rule", "shape.ruleb", "shape.rulec")
+        .associateWith { BenchSupplyDefault(widthFraction = 0.70, aspect = 5.0) }
 
 /**
  * No supply lands taller than this fraction of the page, whatever its family's aspect works out to.

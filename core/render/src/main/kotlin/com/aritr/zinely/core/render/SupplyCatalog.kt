@@ -9,18 +9,11 @@ package com.aritr.zinely.core.render
  * resolver. The whole supply system is therefore unit-testable in pure JVM, with no device and no
  * fixture files.
  *
- * ### The frozen cabinet is complete — 16 of 16
+ * ### The cabinet: 124 outlines in four families (ADR-139)
  *
- * Twelve outlines are derivable elementary geometry. The remaining four deliberately carry Zinely's
- * authored hand: one irregular tear voice serves `tape.torn`, `paper.strip` and `paper.underline`, while
- * `fix.clip` is drawn as the closed ribbon around a wire that a fill-only renderer requires. Their
- * silhouettes were ruled in `v21-bench.html` A11 before being transcribed here.
- *
- * ⚠ **The split was originally drawn at 4/12 along family lines, and that was wrong.** *Cut shapes*
- * looked like the derivable family because it was authored first; in fact derivability cuts across
- * all four families, and the eight added in the second package came from three of them. A step that
- * mixes "needs a house style" with "is a rectangle" always looks blocked by its hardest quarter
- * (SUPPLIES-SPEC §10).
+ * The owner's A39 picks (v21-bench.html, 2026-10-22): 17 shipped drawings kept as picked, 17 shipped ids
+ * redrawn inside their old ink boxes (Never #19), and 90 new ids. Each family's outlines live in its own
+ * object, transcribed from its A39 row; `BenchArtSheetParityTest` holds every one to that row.
  *
  * Unknown ids remain **explicit** rather than guessed: [outlineOf] returns `null` for a misspelled or
  * newer-schema `supplyId`, so it draws nothing at the render boundary — never a crash or invented shape.
@@ -36,14 +29,12 @@ package com.aritr.zinely.core.render
  * the rule: `mark.asterisk` is filed under *Stamps & marks*, `paper.window` under *Cut paper*, and
  * `fix.staple` under *Tape & fixings* — but nothing here knows that, and nothing here needs to.
  *
- * ### Attestation (§4.1, the definition of done)
+ * ### Provenance (§4.1, ADR-104, ADR-139)
  *
- * **All thirty-four outlines below were authored from scratch, in this package (since ADR-139 split across `ShapeArt`, `MarkArt`, `PaperArt` and `TapeArt`), by writing coordinates. No
- * reference art was traced, opened or consulted; they are elementary geometry — squares, inscribed
- * circles, polygons written vertex by vertex, and one star polygon evaluated at two radii — and they
- * carry no third-party licence. They are covered by the repository licence.** §4.1 requires one attestation per supply and there is
- * no colophon surface yet (X11 is unbuilt), so it lives here, next to the coordinates it is about; it
- * moves to the colophon when there is one.
+ * Every outline records where it came from in `SupplyProvenanceCatalog`: drawn in-house, a redraw of a
+ * shipped id, or imported from a permissively licensed set (with its upstream file's sha256 and the change
+ * made). Imported sets are credited in Licences & credits, never in the PDF. No outline is parsed from SVG
+ * at runtime: each is reviewed Kotlin source.
  */
 public object SupplyCatalog {
 

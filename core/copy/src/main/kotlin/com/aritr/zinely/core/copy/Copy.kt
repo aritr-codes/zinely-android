@@ -630,10 +630,23 @@ public object Copy {
             ),
             CUT_SHAPES to linkedMapOf(
                 "shape.rect" to "Rectangle",
+                "shape.rectb" to "Rectangle, landscape",
+                "shape.rectc" to "Hand-cut square",
+                "shape.rectd" to "Hand-cut card",
                 "shape.circle" to "Circle",
                 "shape.triangle" to "Triangle",
+                "shape.triangleb" to "Triangle, tall",
                 "shape.rule" to "Straight rule",
+                "shape.ruleb" to "Wavy rule",
+                "shape.rulec" to "Ripple rule",
                 "shape.ring" to "Ring",
+                "shape.ringb" to "Ring, wide hole",
+                "shape.blob" to "Blob",
+                "shape.scallop" to "Scalloped seal",
+                "shape.flower" to "Punched flower",
+                "shape.hex" to "Hexagon",
+                "shape.cloud" to "Cloud",
+                "shape.cloudb" to "Three-lobe cloud",
             ),
         )
 
@@ -755,6 +768,19 @@ public object Copy {
             "paper.bookmark" to "bookmark ribbon page marker",
             "paper.ribbon" to "bookmark ribbon brush page marker",
             "paper.gifttag" to "gift tag label present string",
+            "shape.rectb" to "rectangle square block shape landscape wide",
+            "shape.rectc" to "rectangle square block shape handcut",
+            "shape.rectd" to "rectangle square block shape handcut card",
+            "shape.triangleb" to "triangle shape tall",
+            "shape.ruleb" to "rule line shape divider wavy wave",
+            "shape.rulec" to "rule line shape divider ripple wave",
+            "shape.ringb" to "ring circle hole shape wide",
+            "shape.blob" to "blob organic splodge shape",
+            "shape.scallop" to "scalloped seal badge rosette shape",
+            "shape.flower" to "punched flower petals blossom shape",
+            "shape.hex" to "hexagon hex six sided shape",
+            "shape.cloud" to "cloud sky weather shape",
+            "shape.cloudb" to "cloud sky weather shape three lobe",
         )
 
         /** Stable, local name/tag search with an optional one-of-four family filter. */

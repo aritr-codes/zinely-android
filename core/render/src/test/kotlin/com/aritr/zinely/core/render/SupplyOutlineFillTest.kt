@@ -163,10 +163,10 @@ class SupplyOutlineFillTest {
 
     @Test
     fun `given every authored outline, when its square is sampled, then it is neither blank nor solid`() {
-        // A blanket floor under all twelve, including the four this file does not probe by name. An
+        // A blanket floor under every outline, including those this file does not probe by name. An
         // outline that fills its whole square is indistinguishable from its own bounding box; one that
-        // fills almost nothing renders as a speck the maker cannot see. `shape.rect` is the one supply
-        // that IS its box, so it is the stated exception rather than a loosened bound.
+        // fills almost nothing renders as a speck the maker cannot see. Since A39 no piece is its box, not
+        // even `shape.rect`, which keeps a floor of its own.
         for ((id, o) in SupplyCatalog.OUTLINES) {
             var inked = 0
             val n = 60
@@ -180,10 +180,11 @@ class SupplyOutlineFillTest {
             // pinpricks (true area 0.038 of its square; this 60-grid samples 0.041) and reads as a line.
             val floor = if (id == "mark.perfc") 0.035 else 0.05
             assertTrue(coverage > floor, "$id inks only ${"%.3f".format(coverage)} of its square — it would read as a speck")
+            assertTrue(coverage < 0.98, "$id inks ${"%.3f".format(coverage)} — it is indistinguishable from its box")
             if (id == "shape.rect") {
-                assertEquals(1.0, coverage, 1e-9, "shape.rect is its own box, by definition")
-            } else {
-                assertTrue(coverage < 0.98, "$id inks ${"%.3f".format(coverage)} — it is indistinguishable from its box")
+                // A39's rectangle (ADR-139, A34's hand-cut square inset to H4's margin) is still a box-filling
+                // panel by ruling: R34 names it the one sheet over the 85% band, at about 90%.
+                assertTrue(coverage > 0.85, "shape.rect inks only ${"%.3f".format(coverage)} — a rectangle is a panel")
             }
         }
     }

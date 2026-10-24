@@ -16927,7 +16927,7 @@ licences and its rule that credit never goes in the PDF; ADR-124's three passes 
 
 - The wiring, one family per commit (outlines, names and tags, holed ids and parity rows together), with the id
   baseline, Never #19 box, provenance and holes tests; the goldens re-recorded on CI.
-- The five drawing fixes of D-131.
+- The five drawing fixes of D-131. *Done 2026-10-23 and 2026-10-24, as each family was wired.*
 - A printed page and a second-generation photocopy of all 124 at their landing sizes: no hole may fill in
   (ADR-132's list).
 - Both device passes: G8 for each look-alike group (R34.4) with a first-time user, and TalkBack reading every
