@@ -8212,26 +8212,34 @@ second reviewer, could not sign in.
 | 4 | `shape.hex` (Phosphor): true geometry with no cut sign, the most UI-like piece picked (G8 risk) | **Fixed 2026-10-24 (ART 6d).** Each of the six corners moved 0.43–0.5 off true; each keeps Phosphor's rounding (trim and handle ratio), rebuilt tangent to the moved edges, so the joins stay smooth. A39 row and `ShapeArt.SHAPE_HEX` changed together |
 | 5 | `tape.plaster` (Tabler): G2 at the limit, 2.5 dots with 1.5 gaps that merge at 24 px | **Fixed 2026-10-23 (ART 6a).** Measured, the dots were 0.66 apart (the 1.5 is the gap to the pad's edge). Two 2.5 dots cannot sit across the 8.57-wide pad with 1.5 gaps, so the dots are 2.02 across and 2.5 from the centre: every gap is now at least 1.5, the ink at H2's floor. Still four dots in a diamond. A39 row and `TapeArt.TAPE_PLASTER` changed together |
 
-### D-132 — 48 A39 names clip on the A16 tile, so variants read alike {#d-132}
+### D-132 — A39 names clip on the A16 tile, so variants read alike {#d-132}
 
 | | |
 |---|---|
 | **Artifacts** | `docs/design/mockups/v21-bench.html` A39 (`ART_A39` names; dated note "NAMES THAT FIT THE TILE") · `v21-colophon.html` A39 (the Art notices' piece lists) · A16 (the tile card, unchanged) · `Copy.Supplies.BY_FAMILY` and `TAGS` |
 | **Found** | 2026-10-24, reading the ART 6d golden diffs (`.superpowers/sdd/art-plan/task-6-report.md`, "Resumed 2026-10-24", concern 1); measured by `BenchArtTileNameFitTest` |
 | **Severity** | Recognition (G8) and Pass 2: on the sheet, a variant's telling word was clipped off ("Torn hole, ragged" showed "Torn / hole,"), so variants of one subject showed the same words; two shipped names broke inside a word ("Registrati / on", "Perforatio / n") and one A39 name too ("Dog-eare / d"). TalkBack always read the full name |
-| **Status** | **Fixed 2026-10-24.** A16 is frozen (tile size, grid, two lines, clip), so the names change, not the tile: 48 of 124 renamed so the whole name fits two lines at 360dp and font scale 1.0, no line breaks inside a word, the telling word first or alone. The other 76 already fit and keep their names. Ids unchanged; saved zines store ids only ([ADR-105](../DECISIONS.md#adr-105)), so nothing saved changes |
+| **Status** | **Fixed 2026-10-24.** A16 is frozen (tile size, grid, two lines, clip), so the names change, not the tile: 56 of 124 renamed so the whole name fits two lines at 360dp and font scale 1.0 with at least 2dp spare on every line, no line breaks inside a word, the telling word first or alone. The other 68 fit with the margin and keep their names. Ids unchanged; saved zines store ids only ([ADR-105](../DECISIONS.md#adr-105)), so nothing saved changes |
 
 The tile puts the first word on line one and the rest on line two (`BenchArtTile`, `replaceFirst(' ', '\n')`), each
 line about 55dp wide in Inter Bold 10sp, so each half of a name must fit one line. `BenchArtTileNameFitTest` lays out
 every tile's name on the real sheet and checks the platform's `TextLayoutResult` (no visual overflow, at most two
-lines, the whole text laid out, every line ending at a space); it failed on exactly these 48 and passes after. The
+lines, the whole text laid out, every line ending at a space); it failed on 48 names and passed after. The
 spoken name is the same string as the tile's, so TalkBack says what the tile shows. Every renamed piece's tags keep
 every word of its old name (`SuppliesCopyTest`), so a search for "torn", "hole", "registration" or "perforation"
-still finds it. Eleven of the 48 are imported pieces, so their entries in the Art licence notices
+still finds it. Thirteen of the 56 are imported pieces, so their entries in the Art licence notices
 (`v21-colophon.html` A39 `ART_CREDITS` and the bundled `assets/licences/art/*.txt`) take the new names too, amended
 in the colophon first. Known limit: the fit is proven at 360dp and font scale 1.0 only; on a narrower phone or a
 larger font scale a name can still clip, since A16's two-line clip is frozen. Review fixes the same day: "Dog-ear"
-became "Dog-ear page" and "Long ticks" became "Long crop ticks" (table below is final).
+became "Dog-ear page" and "Long ticks" became "Long crop ticks".
+
+**The margin (ruled 2026-10-24).** Passing by a hair is not a fit: "Window frame, cut" had 0.27px spare and "Deckle
+edge, soft" 0.79px, which a different font rasteriser or a phone a few dp narrower than 360dp turns into a clip. So
+every line of a name must leave at least **2dp** of the label's width spare at 360dp and font scale 1.0, and
+`BenchArtTileNameFitTest` asserts it. Nine names then failed: the two above, the three starbursts ("Starburst,"
+left 1.6–2.6px), "Torn edge strip" (1.9px), "Long crop ticks" (3.5px), "Bookmark ribbon" (3.7px) and the shipped
+"Rectangle" (3.1px). All nine are renamed below ("Long crop ticks" a second time, now "Long trim ticks"), on the same
+rules. The table is final: 56 rows.
 
 | Id | Old name (A39 as frozen 2026-10-22) | New name |
 |---|---|---|
@@ -8253,7 +8261,7 @@ became "Dog-ear page" and "Long ticks" became "Long crop ticks" (table below is 
 | `mark.handb` | Pointing hand, cuffed | Cuffed hand |
 | `mark.handc` | Pointing hand, drawn | Drawn hand |
 | `mark.cropb` | Crop marks, outside trim | Corner marks |
-| `mark.cropc` | Crop marks, long ticks | Long crop ticks |
+| `mark.cropc` | Crop marks, long ticks | Long trim ticks |
 | `mark.barb` | Colour bar, tone patches | Tone patch bar |
 | `mark.scanb` | Copier streak, toner | Toner streak |
 | `mark.scanc` | Copier streak, specks | Toner specks |
@@ -8283,6 +8291,14 @@ became "Dog-ear page" and "Long ticks" became "Long crop ticks" (table below is 
 | `paper.ribbon` | Bookmark ribbon (brush) | Brushed ribbon |
 | `shape.rectb` | Rectangle, landscape | Wide rectangle |
 | `shape.cloudb` | Three-lobe cloud | Puffy cloud |
+| `mark.burstb` | Starburst, cut | Cut starburst |
+| `mark.burstc` | Starburst, sharp | Sharp starburst |
+| `mark.burstd` | Starburst, drawn | Drawn starburst |
+| `paper.stripc` | Torn edge strip | Half-torn strip |
+| `paper.windowb` | Window frame, cut | Cut frame |
+| `paper.decklec` | Deckle edge, soft | Soft deckle |
+| `paper.bookmark` | Bookmark ribbon | Book ribbon |
+| `shape.rect` | Rectangle | Plain rectangle |
 
 
 ---
