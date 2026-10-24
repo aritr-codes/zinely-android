@@ -76,6 +76,7 @@ import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.ink.InkHex
 import com.aritr.zinely.core.editor.ink.InkLibrary
 import com.aritr.zinely.core.editor.ink.InkLibraryEdit
+import com.aritr.zinely.core.editor.ink.PaletteDraft
 import com.aritr.zinely.core.editor.ink.isPale
 import com.aritr.zinely.core.model.ZineDocument
 import java.io.IOException
@@ -390,7 +391,8 @@ public fun EditorScreen(
     LaunchedEffect(uiState.document, inkLibrary) {
         val standing = inkUndo ?: return@LaunchedEffect
         val libraryMoved = standing.libraryAfter != null && inkLibrary != null && inkLibrary != standing.libraryAfter
-        if (uiState.document !== standing.document || libraryMoved) {
+        val documentMoved = standing.document != null && uiState.document !== standing.document
+        if (documentMoved || libraryMoved) {
             if (snackUndo === standing.undo) snackUndo = null
             inkUndo = null
         }
@@ -866,6 +868,59 @@ public fun EditorScreen(
     // summoned is one Android expects Back to dismiss. Enabled on the *derived* visibility, so Back can
     // never be captured by a popover that is not on screen.
     BackHandler(enabled = inkPopoverVisible) { inkPopoverFor = null }
+    // The palette being made or edited in the tray (INK task 7), hoisted so a snack's Undo can reopen it.
+    // It does not outlive the tray: closing the tray (a deselect, a page change) drops it.
+    var inkDraft by remember { mutableStateOf<PaletteDraft?>(null) }
+    LaunchedEffect(inkPopoverVisible) { if (!inkPopoverVisible) inkDraft = null }
+    val trayOpen by rememberUpdatedState(inkPopoverVisible)
+    // A tray Undo that reopens, or was raised over, a draft is withdrawn once the draft moves on (a toggle,
+    // a new draft), so it never throws later work away. Its own effect: the library one above must not
+    // read a library that has not caught up with the write yet.
+    LaunchedEffect(inkDraft) {
+        val standing = inkUndo ?: return@LaunchedEffect
+        if (standing.watchesDraft && inkDraft != standing.draft) {
+            if (snackUndo === standing.undo) snackUndo = null
+            inkUndo = null
+        }
+    }
+    /**
+     * The tray's palette and My-inks snacks (INK task 7): the line, and an Undo iff [BenchInkTrayUndo] is
+     * given. Undo runs here, in the screen's scope, so it still restores after the tray has closed: the
+     * library's `before` (withdrawn if the library has moved on since), and the draft, reopened only
+     * while the tray is open. It never dispatches `Intent.Undo`: none of these touch the page.
+     */
+    val raiseTraySnack: (String, BenchInkTrayUndo?) -> Unit = { message, trayUndo ->
+        val undo: (() -> Unit)? = trayUndo?.let { u ->
+            {
+                u.edit?.let { edit ->
+                    c4Scope.launch {
+                        try {
+                            onEditInkLibrary { edit.before }
+                        } catch (_: IOException) {
+                        }
+                    }
+                }
+                if (u.reopen != null && trayOpen) inkDraft = u.reopen
+            }
+        }
+        deleteJob[0]?.cancel()
+        snackMessage = message
+        snackUndo = undo
+        inkUndo = undo?.let {
+            BenchInkUndo(
+                document = null,
+                libraryAfter = trayUndo.edit?.after,
+                undo = it,
+                draft = inkDraft,
+                watchesDraft = trayUndo.reopen != null || inkDraft != null,
+            )
+        }
+        snackVisible = true
+        deleteJob[0] = c4Scope.launch {
+            delay(BenchSnackInkTrayMillis)
+            snackVisible = false
+        }
+    }
     val closeFlipTray = {
         flipTrayFor = null
         flipReturnPending = true
@@ -2193,6 +2248,9 @@ public fun EditorScreen(
                     modifier = ctxModifier.zIndex(1f).heightIn(max = panelMaxHeight),
                     inkLibrary = inkLibrary,
                     onEditInkLibrary = onEditInkLibrary,
+                    draft = inkDraft,
+                    onDraftChange = { inkDraft = it },
+                    onSnack = raiseTraySnack,
                 )
                 }
 
@@ -2577,5 +2635,15 @@ private fun centeredTextBox(page: PtSize): Transform {
     )
 }
 
-/** A standing Ink-tray Undo and what it was raised over; see `inkUndo` in [EditorScreen]. */
-private class BenchInkUndo(val document: ZineDocument, val libraryAfter: InkLibrary?, val undo: () -> Unit)
+/**
+ * A standing Ink-tray Undo and what it was raised over; see `inkUndo` in [EditorScreen]. [document] is
+ * `null` for a palette or My-inks Undo, which does not touch the page. [watchesDraft]: the Undo reopens or
+ * was raised over a palette draft, so it is withdrawn once the draft moves on from [draft].
+ */
+private class BenchInkUndo(
+    val document: ZineDocument?,
+    val libraryAfter: InkLibrary?,
+    val undo: () -> Unit,
+    val draft: PaletteDraft? = null,
+    val watchesDraft: Boolean = false,
+)

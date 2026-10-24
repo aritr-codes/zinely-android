@@ -1,6 +1,43 @@
 package com.aritr.zinely.feature.editor
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
+import com.aritr.zinely.core.editor.ink.PALETTE_CAP
+import com.aritr.zinely.core.editor.ink.PALETTE_MIN
+import com.aritr.zinely.core.editor.ink.PALETTE_NAME_MAX
+import com.aritr.zinely.core.editor.ink.PaletteDraft
+import com.aritr.zinely.core.editor.ink.PaletteResult
+import com.aritr.zinely.core.editor.ink.ToggleResult
+import com.aritr.zinely.ui.components.zinelyFocusRing
+import kotlinx.coroutines.CoroutineScope
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -127,6 +164,21 @@ internal const val BenchInkStartersTestTag: String = "bench-ink-starters"
 internal const val BenchInkStarterTestTag: String = "bench-ink-starter"
 internal const val BenchInkStarterPotTestTag: String = "bench-ink-starter-pot"
 internal const val BenchInkSaveCopyTestTag: String = "bench-ink-save-copy"
+/** Edit mode (INK task 7). */
+internal const val BenchInkPaletteNameTestTag: String = "bench-ink-palette-name"
+internal const val BenchInkPaletteNameHelpTestTag: String = "bench-ink-palette-name-help"
+internal const val BenchInkDraftStripTestTag: String = "bench-ink-draft-strip"
+internal const val BenchInkDraftPotTestTag: String = "bench-ink-draft-pot"
+internal const val BenchInkCountTestTag: String = "bench-ink-count"
+/** A kept or built-in ink as an edit-mode toggle. */
+internal const val BenchInkToggleTestTag: String = "bench-ink-toggle"
+/** A "Was in this palette" toggle. */
+internal const val BenchInkLostTestTag: String = "bench-ink-lost"
+internal const val BenchInkPickedBadgeTestTag: String = "bench-ink-picked"
+internal const val BenchInkCancelTestTag: String = "bench-ink-cancel"
+internal const val BenchInkSavePaletteTestTag: String = "bench-ink-save-palette"
+/** A menu row, suffixed `-‹label›`. */
+internal const val BenchInkMenuItemTestTag: String = "bench-ink-menu"
 
 /**
  * One built-in ink: the colour and the name the maker hears. [tint] marks the five paper tints, which the
@@ -248,13 +300,22 @@ internal fun benchInkName(id: ZinelyNeutralId): String = when (id) {
  * @param onPick a pot was tapped; the colour is the pot's own.
  * @param onDockedTopChanged the card's settled top edge in window coordinates (F-5 clearance). ⚠ Nothing is
  *   reported while hidden, so the consumer gates on its own open flag.
+ * ### Palette edit mode (INK task 7, prototype `startEdit` / `renderEdit` / `peCancel` / `peSave`)
+ *
+ * While [draft] is non-null the same card edits a palette: the title reads `New palette` / `Edit palette`,
+ * Done and Current ink hide, the body becomes [BenchInkEditBody] and a Cancel / Save palette bar is pinned
+ * below the scroll. Back is Cancel. The draft is hoisted ([onDraftChange]) because the snack's Undo, which
+ * the host owns, has to reopen it after the tray's own composition is gone.
+ *
+ * Every library write here is a transform through [onEditInkLibrary]; a store failure (`IOException`) is
+ * "nothing changed": no snack, nothing closed, never a crash. A snack offers Undo (a [BenchInkTrayUndo],
+ * which the host runs) only when the write changed the library or there is a draft to reopen.
+ *
  * @param inkLibrary My inks and My palettes, or `null` while loading.
- * @param onEditInkLibrary used here only to persist which palette strip is open. A store failure
- *   (`IOException`) leaves the strip where it was; the tray never crashes on storage.
- * @param onMix the Mix pot (the mixer is hosted in INK task 8b).
- * @param onNewPalette `+ New palette` (edit mode is INK task 7).
- * @param onPaletteMore the open palette's ⋯ (its menu is INK task 7).
- * @param onSaveStarterCopy a starter's `Save a copy` (INK task 7).
+ * @param onEditInkLibrary every library write: the open strip, palettes, a kept ink's removal.
+ * @param onMix the Mix pot, in the tray and in edit mode (the host tells them apart by the draft).
+ * @param draft the palette being made or edited, or `null` for the tray.
+ * @param onSnack a line for the host's snack, with what its Undo restores (`null`: no Undo).
  */
 @Composable
 internal fun BenchInkPopover(
@@ -269,9 +330,9 @@ internal fun BenchInkPopover(
     onEditInkLibrary: suspend ((InkLibrary) -> InkLibrary) -> InkLibraryEdit =
         { InkLibraryEdit(InkLibrary.EMPTY, InkLibrary.EMPTY) },
     onMix: () -> Unit = {},
-    onNewPalette: () -> Unit = {},
-    onPaletteMore: (InkPalette) -> Unit = {},
-    onSaveStarterCopy: (BenchStarterPalette) -> Unit = {},
+    draft: PaletteDraft? = null,
+    onDraftChange: (PaletteDraft?) -> Unit = {},
+    onSnack: (String, BenchInkTrayUndo?) -> Unit = { _, _ -> },
 ) {
     val colors = ZinelyTheme.v21Colors
     val motion = if (ZinelyTheme.motion.reduceMotion) 0 else BenchInkPopoverEnterMillis
@@ -286,6 +347,10 @@ internal fun BenchInkPopover(
         exit = slideOutVertically(tween(motion, easing = ZinelyV2Standard)) { enterPx } + fadeOut(spec),
     ) {
         val shape = RoundedCornerShape(BenchInkPopoverRadiusDp)
+        val current = (selected ?: colors.ink).inkHex()
+        val actions = rememberBenchInkTrayActions(inkLibrary, current, onEditInkLibrary, draft, onDraftChange, onSnack)
+        // Composed after the host's tray handler, so it wins while editing: Back is Cancel (`peCancel`).
+        BackHandler(enabled = draft != null) { actions.cancel() }
         Column(
             modifier = Modifier
                 .padding(BenchInkPopoverInsetDp)
@@ -311,7 +376,11 @@ internal fun BenchInkPopover(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = Copy.BenchInk.TITLE,
+                    text = when {
+                        draft == null -> Copy.BenchInk.TITLE
+                        draft.id == null -> Copy.BenchInk.NEW_PALETTE
+                        else -> Copy.BenchInk.EDIT_PALETTE
+                    },
                     fontFamily = ZinelyV21Fonts.Voice,
                     fontWeight = FontWeight.Bold,
                     fontSize = BenchInkTitleSp,
@@ -319,7 +388,7 @@ internal fun BenchInkPopover(
                     color = colors.ink,
                     modifier = Modifier.testTag(BenchInkTitleTestTag),
                 )
-                BenchInkDoneChip(onDone)
+                if (draft == null) BenchInkDoneChip(onDone)
             }
 
             // ⚠ Everything BELOW the header scrolls; the header does not (a tester's 891dp phone cut `Ink`
@@ -331,18 +400,21 @@ internal fun BenchInkPopover(
                     .verticalScroll(rememberScrollState())
                     .padding(bottom = ZinelyV21Dimens.gapMd),
             ) {
-                BenchInkTrayBody(
-                    kind = kind,
-                    selected = selected,
-                    onPick = onPick,
-                    inkLibrary = inkLibrary,
-                    onEditInkLibrary = onEditInkLibrary,
-                    onMix = onMix,
-                    onNewPalette = onNewPalette,
-                    onPaletteMore = onPaletteMore,
-                    onSaveStarterCopy = onSaveStarterCopy,
-                )
+                if (draft != null && inkLibrary != null) {
+                    BenchInkEditBody(draft, inkLibrary, kind, actions, onMix)
+                } else {
+                    BenchInkTrayBody(
+                        kind = kind,
+                        selected = selected,
+                        onPick = onPick,
+                        inkLibrary = inkLibrary,
+                        onEditInkLibrary = onEditInkLibrary,
+                        onMix = onMix,
+                        actions = actions,
+                    )
+                }
             }
+            if (draft != null && inkLibrary != null) BenchInkEditBar(draft.canSave(), actions)
         }
     }
 }
@@ -355,9 +427,7 @@ private fun BenchInkTrayBody(
     inkLibrary: InkLibrary?,
     onEditInkLibrary: suspend ((InkLibrary) -> InkLibrary) -> InkLibraryEdit,
     onMix: () -> Unit,
-    onNewPalette: () -> Unit,
-    onPaletteMore: (InkPalette) -> Unit,
-    onSaveStarterCopy: (BenchStarterPalette) -> Unit,
+    actions: BenchInkTrayActions,
 ) {
     val colors = ZinelyTheme.v21Colors
     val inks = ZinelyTheme.contentInks
@@ -375,7 +445,7 @@ private fun BenchInkTrayBody(
             label = Copy.BenchInk.MY_PALETTES,
             count = palettes.takeIf { it.isNotEmpty() }?.let { Copy.BenchInk.paletteCount(it.size) },
             countInline = true,
-        ) { BenchInkNewPaletteAction(onNewPalette) }
+        ) { BenchInkNewPaletteAction(actions::newPalette) }
         val open = inkLibrary.openPalette()
         if (open == null) {
             BenchInkPalettesEmpty()
@@ -389,7 +459,16 @@ private fun BenchInkTrayBody(
                 onPick = onPick,
                 tag = BenchInkPaletteTestTag,
                 potTag = BenchInkPalettePotTestTag,
-            ) { BenchInkPaletteMore(open.name) { onPaletteMore(open) } }
+            ) {
+                BenchInkPaletteMore(
+                    palette = open.name,
+                    items = listOf(
+                        Copy.BenchInk.EDIT to { actions.edit(open) },
+                        Copy.BenchInk.DUPLICATE to { actions.duplicate(open) },
+                        Copy.BenchInk.DELETE to { actions.delete(open) },
+                    ),
+                )
+            }
             if (palettes.size >= 2) {
                 BenchInkStrips(palettes = palettes, openId = open.id, big = big) { id ->
                     // Persisted, so the last opened stays open. A storage failure leaves the strip where it
@@ -415,7 +494,11 @@ private fun BenchInkTrayBody(
             columns = if (big) BenchInkLargeTextColumns else BenchInkGridColumns,
             modifier = Modifier.selectableGroup(),
         ) { kept, m ->
-            if (kept == null) BenchInkMixChoice(onMix, m) else BenchInkKeptChoice(kept, kept.hex == current, onPick, m)
+            if (kept == null) {
+                BenchInkMixChoice(onMix, m)
+            } else {
+                BenchInkKeptChoice(kept, kept.hex == current, onPick, { actions.removeKept(kept.hex) }, m)
+            }
         }
     }
 
@@ -454,7 +537,7 @@ private fun BenchInkTrayBody(
         spoken = { inkName(it, inks, kind) },
         big = big,
         onPick = onPick,
-        onSaveStarterCopy = onSaveStarterCopy,
+        onSaveStarterCopy = actions::saveCopy,
     )
 }
 
@@ -699,10 +782,11 @@ private fun BenchInkPaletteCard(
     }
 }
 
-/** `.pal-more` ⋯ — 48dp, spoken "More for ‹palette›". */
+/** `.pal-more` ⋯ — 48dp, spoken "More for ‹palette›"; opens [items] as a [BenchInkMenu] under itself. */
 @Composable
-private fun BenchInkPaletteMore(palette: String, onClick: () -> Unit) {
-    val tap = benchTap(action = onClick)
+private fun BenchInkPaletteMore(palette: String, items: List<Pair<String, () -> Unit>>) {
+    var open by remember { mutableStateOf(false) }
+    val tap = benchTap { open = true }
     Box(
         modifier = Modifier
             .size(BenchInkTouchDp)
@@ -723,7 +807,73 @@ private fun BenchInkPaletteMore(palette: String, onClick: () -> Unit) {
             fontWeight = FontWeight.Bold,
             color = BenchInkPaperInk,
         )
+        if (open) BenchInkMenu(items) { open = false }
     }
+}
+
+/**
+ * `.kept-menu` (prototype `menu`): a small popup under its anchor, right edges aligned, 48dp rows, the
+ * first row focused. A row closes the menu, then acts; a tap outside or Back closes it.
+ */
+@Composable
+private fun BenchInkMenu(items: List<Pair<String, () -> Unit>>, onDismiss: () -> Unit) {
+    val colors = ZinelyTheme.v21Colors
+    val shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
+    val first = remember { FocusRequester() }
+    Popup(
+        popupPositionProvider = BenchInkMenuPosition,
+        onDismissRequest = onDismiss,
+        properties = PopupProperties(focusable = true),
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(end = BenchInkMenuShadowDp, bottom = BenchInkMenuShadowDp)
+                .zinelyV21HardShadow(BenchInkMenuShadowDp, colors.inkLine, shape)
+                .background(colors.surface, shape)
+                .border(BenchInkPopoverBorderDp, colors.ink, shape)
+                .padding(ZinelyV21Dimens.gapXs)
+                .width(IntrinsicSize.Max),
+        ) {
+            items.forEachIndexed { i, (label, act) ->
+                val pick = benchTap { onDismiss(); act() }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = BenchInkTouchDp)
+                        .then(if (i == 0) Modifier.focusRequester(first) else Modifier)
+                        .clickable(role = Role.Button, onClick = pick)
+                        .padding(horizontal = ZinelyV21Dimens.gapMd)
+                        .testTag("$BenchInkMenuItemTestTag-$label"),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    Text(
+                        text = label,
+                        fontFamily = ZinelyV21Fonts.Work,
+                        fontSize = BenchInkMenuSp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.ink,
+                    )
+                }
+            }
+        }
+    }
+    LaunchedEffect(Unit) {
+        // ponytail: the popup's window attaches a frame later; a failed request leaves focus where it was.
+        runCatching { first.requestFocus() }
+    }
+}
+
+/** The prototype's `m.style.right = …; m.style.top = r.bottom`, kept inside the window. */
+private object BenchInkMenuPosition : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset = IntOffset(
+        x = (anchorBounds.right - popupContentSize.width).coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0)),
+        y = anchorBounds.bottom.coerceAtMost((windowSize.height - popupContentSize.height).coerceAtLeast(0)),
+    )
 }
 
 /**
@@ -791,8 +941,15 @@ private fun BenchInkStrips(palettes: List<InkPalette>, openId: Long, big: Boolea
  * "My ink, ‹colour words›, ‹spoken hex›" (prototype `mineHtml`: always `colourName`, even for a built-in hex).
  */
 @Composable
-private fun BenchInkKeptChoice(kept: MyInk, selected: Boolean, onPick: (Color) -> Unit, modifier: Modifier) {
+private fun BenchInkKeptChoice(
+    kept: MyInk,
+    selected: Boolean,
+    onPick: (Color) -> Unit,
+    onRemove: () -> Unit,
+    modifier: Modifier,
+) {
     val colour = kept.hex.toColorRgba().toComposeColor()
+    var menu by remember { mutableStateOf(false) }
     BenchInkChoice(
         colour = colour,
         spoken = Copy.BenchInk.myInkLabel(inkColourWords(colourName(kept.hex)), kept.hex.spoken()),
@@ -802,7 +959,13 @@ private fun BenchInkKeptChoice(kept: MyInk, selected: Boolean, onPick: (Color) -
         label = BenchInkHexPrefix + kept.hex.value,
         tabular = true,
         modifier = modifier,
-    )
+        // A long press offers the one-item menu (`oncontextmenu`); a screen reader's custom action removes
+        // directly — a one-item menu would only be an extra step for it. Either way it is undoable.
+        onLongClick = { menu = true },
+        removeAction = onRemove,
+    ) {
+        if (menu) BenchInkMenu(listOf(Copy.BenchInk.REMOVE_FROM_MY_INKS to onRemove)) { menu = false }
+    }
 }
 
 /**
@@ -821,19 +984,36 @@ private fun BenchInkChoice(
     minHeight: Dp = BenchInkChoiceMinHeightDp,
     label: String? = null,
     tabular: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
+    removeAction: (() -> Unit)? = null,
+    anchored: @Composable () -> Unit = {},
 ) {
     val colors = ZinelyTheme.v21Colors
     val pick = benchTap(ZinelyHaptic.Snap, onClick)
+    val press = if (onLongClick == null) {
+        Modifier.selectable(selected = selected, role = Role.RadioButton, onClick = pick)
+    } else {
+        Modifier.combinedClickable(
+            role = Role.RadioButton,
+            onLongClickLabel = Copy.BenchInk.REMOVE_FROM_MY_INKS,
+            onLongClick = onLongClick,
+            onClick = pick,
+        )
+    }
     Column(
         modifier = modifier
             .defaultMinSize(minHeight = minHeight)
-            .selectable(selected = selected, role = Role.RadioButton, onClick = pick)
+            .then(press)
             .testTag(tag)
             .clearAndSetSemantics {
                 contentDescription = spoken
                 role = Role.RadioButton
                 this.selected = selected
                 onClick { pick(); true }
+                if (onLongClick != null) onLongClick(Copy.BenchInk.REMOVE_FROM_MY_INKS) { onLongClick(); true }
+                if (removeAction != null) {
+                    customActions = listOf(CustomAccessibilityAction(Copy.BenchInk.REMOVE_FROM_MY_INKS) { removeAction(); true })
+                }
             },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(BenchInkChoiceGapDp, Alignment.CenterVertically),
@@ -852,6 +1032,7 @@ private fun BenchInkChoice(
                 color = colors.inkSoft,
             )
         }
+        anchored()
     }
 }
 
@@ -1132,6 +1313,523 @@ private fun BenchInkSwatchDot(colour: Color, selected: Boolean, size: Dp, border
     )
 }
 
+// — palette edit mode and the tray's library actions (INK task 7) —
+
+/**
+ * What a tray snack's Undo restores; the host runs it, so it still works after the tray has closed.
+ * [edit]'s `before` goes back to the store when it is non-null; [reopen] becomes the open draft again.
+ */
+internal data class BenchInkTrayUndo(val edit: InkLibraryEdit?, val reopen: PaletteDraft?)
+
+/**
+ * Every tray action that writes the library or the draft (prototype `wireTray`, `newPal`, `peSave`,
+ * `peCancel`, `renderEdit`'s toggles). The rules, in one place:
+ *  - a write is a transform through [onEditInkLibrary]; an `IOException` means "nothing changed" — no
+ *    snack, nothing closed (a draft stays open, so no typing is lost), never a crash;
+ *  - a snack offers Undo only when the write changed the library (`InkLibraryEdit.changed`) or there is a
+ *    draft to reopen; a refusal (palettes full, six inks, too few) never does;
+ *  - Undo after Save, and after Cancel of a changed draft, reopens the draft as it was.
+ *
+ * ponytail: writes run in the tray's own scope, so one still in flight when the tray closes is cancelled
+ * with it (a disk write is milliseconds). Undo does not have this ceiling: the host runs it.
+ */
+private class BenchInkTrayActions(
+    private val library: InkLibrary?,
+    private val current: InkHex,
+    private val scope: CoroutineScope,
+    private val onEditInkLibrary: suspend ((InkLibrary) -> InkLibrary) -> InkLibraryEdit,
+    private val draft: PaletteDraft?,
+    private val onDraftChange: (PaletteDraft?) -> Unit,
+    private val onSnack: (String, BenchInkTrayUndo?) -> Unit,
+    val nameFocus: FocusRequester,
+) {
+    fun newPalette() {
+        val lib = library ?: return
+        if (lib.palettes.size >= PALETTE_CAP) return onSnack(Copy.BenchInk.PALETTES_FULL, null)
+        onDraftChange(PaletteDraft.newDraft(lib, current, Copy.BenchInk.DEFAULT_PALETTE_NAME))
+    }
+
+    fun edit(p: InkPalette) = onDraftChange(PaletteDraft.editDraft(p))
+
+    fun duplicate(p: InkPalette) = palette(Copy.BenchInk.duplicated(p.name)) { it.duplicate(p.id, Copy.BenchInk.COPY_SUFFIX) }
+
+    fun delete(p: InkPalette) = write(Copy.BenchInk.deleted(p.name)) { it.deletePalette(p.id) }
+
+    fun saveCopy(starter: BenchStarterPalette) =
+        palette(Copy.BenchInk.savedCopy(starter.name)) { lib ->
+            lib.saveStarterCopy(starter.name, starter.inks.map { it.value.inkHex() })
+        }
+
+    fun removeKept(hex: InkHex) = write(Copy.BenchInk.removedInk(inkColourWords(colourName(hex)))) { it.remove(hex) }
+
+    fun toggle(hex: InkHex) {
+        val d = draft ?: return
+        when (val r = d.toggle(hex)) {
+            is ToggleResult.Added -> onDraftChange(r.draft)
+            is ToggleResult.Removed -> onDraftChange(r.draft)
+            ToggleResult.Full -> onSnack(Copy.BenchInk.PALETTE_HOLDS_SIX, null)
+        }
+    }
+
+    fun removeAt(index: Int) {
+        draft?.let { onDraftChange(it.removeAt(index)) }
+    }
+
+    /** The field's `maxlength="30"`. */
+    fun rename(name: String) {
+        draft?.let { onDraftChange(it.copy(name = name.take(PALETTE_NAME_MAX))) }
+    }
+
+    /** `peCancel`, and Back while editing. Silent when nothing changed. */
+    fun cancel() {
+        val d = draft ?: return
+        onDraftChange(null)
+        if (d.changed(current)) onSnack(Copy.BenchInk.PALETTE_NOT_SAVED, BenchInkTrayUndo(null, d))
+    }
+
+    /** `peSave`: no name focuses the name; fewer than two says so; otherwise add or update. */
+    fun save() {
+        val d = draft ?: return
+        val name = d.name.trim()
+        when {
+            name.isEmpty() -> runCatching { nameFocus.requestFocus() }
+            d.inks.size < PALETTE_MIN -> onSnack(Copy.BenchInk.PICK_AT_LEAST_TWO, null)
+            else -> palette(
+                message = if (d.id == null) Copy.BenchInk.newPalette(name) else Copy.BenchInk.saved(name),
+                reopen = d,
+                onDone = { onDraftChange(null) },
+            ) { lib -> d.id?.let { lib.updatePalette(it, name, d.inks) } ?: lib.addPalette(name, d.inks) }
+        }
+    }
+
+    /** A plain library write that cannot be refused: Delete, Remove from My inks. */
+    private fun write(message: String, op: (InkLibrary) -> InkLibrary) {
+        scope.launch {
+            val edit = try {
+                onEditInkLibrary(op)
+            } catch (_: IOException) {
+                return@launch
+            }
+            onSnack(message, BenchInkTrayUndo(edit, null).takeIf { edit.changed })
+        }
+    }
+
+    /** A palette write, which the library may refuse; a race to the cap answers `Full` here. */
+    private fun palette(
+        message: String,
+        reopen: PaletteDraft? = null,
+        onDone: () -> Unit = {},
+        op: (InkLibrary) -> PaletteResult,
+    ) {
+        scope.launch {
+            var result: PaletteResult? = null
+            val edit = try {
+                onEditInkLibrary { lib -> op(lib).also { result = it }.let { (it as? PaletteResult.Done)?.library ?: lib } }
+            } catch (_: IOException) {
+                return@launch
+            }
+            when (result) {
+                is PaletteResult.Done -> {
+                    onDone()
+                    onSnack(message, BenchInkTrayUndo(edit, reopen).takeIf { edit.changed })
+                }
+                PaletteResult.Full -> onSnack(Copy.BenchInk.PALETTES_FULL, null)
+                PaletteResult.TooFew -> onSnack(Copy.BenchInk.PICK_AT_LEAST_TWO, null)
+                // Unreachable from this UI (Save checks the name; a palette cannot vanish under its own
+                // menu); the draft stays open rather than guessing.
+                PaletteResult.NoName, PaletteResult.Missing, null -> Unit
+            }
+        }
+    }
+}
+
+@Composable
+private fun rememberBenchInkTrayActions(
+    library: InkLibrary?,
+    current: InkHex,
+    onEditInkLibrary: suspend ((InkLibrary) -> InkLibrary) -> InkLibraryEdit,
+    draft: PaletteDraft?,
+    onDraftChange: (PaletteDraft?) -> Unit,
+    onSnack: (String, BenchInkTrayUndo?) -> Unit,
+): BenchInkTrayActions {
+    val scope = rememberCoroutineScope()
+    val nameFocus = remember { FocusRequester() }
+    return BenchInkTrayActions(library, current, scope, onEditInkLibrary, draft, onDraftChange, onSnack, nameFocus)
+}
+
+/**
+ * `#editBody`: the name field and its help, the strip of chosen inks, the count line, "Was in this
+ * palette" when an edit dropped an ink nothing else offers, then My inks (and Mix) and the built-in inks as
+ * toggles. Focus opens on the count line, not the name (no keyboard springs up; prototype `startEdit`).
+ */
+@Composable
+private fun BenchInkEditBody(
+    draft: PaletteDraft,
+    library: InkLibrary,
+    kind: BenchVerbKind,
+    actions: BenchInkTrayActions,
+    onMix: () -> Unit,
+) {
+    val colors = ZinelyTheme.v21Colors
+    val inks = ZinelyTheme.contentInks
+    val big = LocalDensity.current.fontScale >= BenchInkLargeTextFontScale
+    val countFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { runCatching { countFocus.requestFocus() } }
+
+    BenchInkNameField(draft, library, actions)
+    BenchInkDraftStrip(draft, inks, kind, actions)
+    Text(
+        text = Copy.BenchInk.pickedCount(draft.inks.size),
+        fontFamily = ZinelyV21Fonts.Work,
+        fontSize = BenchInkEmptySp,
+        color = colors.inkSoft,
+        modifier = Modifier
+            .padding(top = ZinelyV21Dimens.gapXs, start = BenchInkHairInsetDp, end = BenchInkHairInsetDp)
+            .focusRequester(countFocus)
+            .focusable()
+            .testTag(BenchInkCountTestTag)
+            .semantics { liveRegion = LiveRegionMode.Polite },
+    )
+
+    val builtIns = benchBuiltInInks(inks, kind)
+    val columns = if (big) BenchInkLargeTextColumns else BenchInkGridColumns
+    val toggle: @Composable (InkHex, String, String, Modifier) -> Unit = { hex, spoken, tag, m ->
+        BenchInkToggleChoice(
+            colour = hex.toColorRgba().toComposeColor(),
+            spoken = spoken,
+            picked = hex in draft.inks,
+            onToggle = { actions.toggle(hex) },
+            tag = tag,
+            label = BenchInkHexPrefix + hex.value,
+            tabular = true,
+            modifier = m,
+        )
+    }
+    val lost = draft.lost(library, builtIns.map { it.value.inkHex() })
+    if (lost.isNotEmpty()) {
+        BenchInkSectionLabel(label = Copy.BenchInk.WAS_IN_PALETTE)
+        BenchInkGrid(items = lost, columns = columns) { hex, m ->
+            toggle(hex, Copy.BenchInk.pickInkLabel(inkColourWords(colourName(hex)), hex.spoken()), BenchInkLostTestTag, m)
+        }
+    }
+    BenchInkSectionLabel(label = Copy.BenchInk.MY_INKS)
+    BenchInkGrid(items = library.myInks + null, columns = columns) { kept, m ->
+        if (kept == null) {
+            BenchInkMixChoice(onMix, m)
+        } else {
+            toggle(kept.hex, Copy.BenchInk.pickInkLabel(inkColourWords(colourName(kept.hex)), kept.hex.spoken()), BenchInkToggleTestTag, m)
+        }
+    }
+    BenchInkSectionLabel(label = Copy.BenchInk.BUILT_IN_INKS)
+    val compactColumns = if (big) BenchInkGridColumns else BenchInkCompactColumns
+    val compact: @Composable (BenchInkSwatch, Modifier) -> Unit = { swatch, m ->
+        val hex = swatch.value.inkHex()
+        BenchInkToggleChoice(
+            colour = swatch.value,
+            spoken = Copy.BenchInk.swatchLabel(swatch.name),
+            picked = hex in draft.inks,
+            onToggle = { actions.toggle(hex) },
+            tag = BenchInkToggleTestTag,
+            potSize = BenchInkCompactPotDp,
+            minHeight = BenchInkCompactChoiceMinHeightDp,
+            modifier = m,
+        )
+    }
+    BenchInkGrid(items = builtIns.filterNot { it.tint }, columns = compactColumns, cell = compact)
+    val tints = builtIns.filter { it.tint }
+    if (tints.isNotEmpty()) {
+        BenchInkDashedRule(Modifier.padding(vertical = ZinelyV21Dimens.gapHair))
+        BenchInkGrid(items = tints, columns = compactColumns, cell = compact)
+    }
+}
+
+/** `.pe-name`: a visible label, the 48dp field (`maxlength=30`, not autofocused) and its help line. */
+@Composable
+private fun BenchInkNameField(draft: PaletteDraft, library: InkLibrary, actions: BenchInkTrayActions) {
+    val colors = ZinelyTheme.v21Colors
+    val shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
+    var focused by remember { mutableStateOf(false) }
+    Text(
+        text = Copy.BenchInk.PALETTE_NAME.uppercase(),
+        fontFamily = ZinelyV21Fonts.Work,
+        fontSize = BenchInkLabelActionSp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = BenchInkCurrentLabelTracking,
+        color = colors.inkSoft,
+        // The field carries the name itself (`<label for>`), so the visible label is not a second node.
+        modifier = Modifier
+            .padding(top = ZinelyV21Dimens.gapXs, bottom = ZinelyV21Dimens.gapXs)
+            .clearAndSetSemantics {},
+    )
+    BasicTextField(
+        value = draft.name,
+        onValueChange = actions::rename,
+        singleLine = true,
+        textStyle = TextStyle(
+            fontFamily = ZinelyV21Fonts.Voice,
+            fontWeight = FontWeight.Bold,
+            fontSize = BenchInkNameSp,
+            color = BenchInkPaperInk,
+        ),
+        cursorBrush = SolidColor(BenchInkPaperInk),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(actions.nameFocus)
+            .onFocusChanged { focused = it.isFocused }
+            // `.pe-name input:focus{outline:3px solid var(--berry);outline-offset:2px}`.
+            .zinelyFocusRing(focused, ZinelyV21Dimens.radiusMd, offset = BenchInkNameRingOffsetDp, color = colors.berry)
+            .testTag(BenchInkPaletteNameTestTag)
+            .semantics { contentDescription = Copy.BenchInk.PALETTE_NAME },
+        decorationBox = { inner ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = BenchInkTouchDp)
+                    .background(colors.paper, shape)
+                    .border(BenchInkPopoverBorderDp, colors.ink, shape)
+                    .padding(horizontal = ZinelyV21Dimens.gapMd),
+                contentAlignment = Alignment.CenterStart,
+            ) { inner() }
+        },
+    )
+    val empty = draft.name.trim().isEmpty()
+    val help = when {
+        empty -> Copy.BenchInk.NAME_EMPTY_HELP
+        draft.isDuplicateName(library) -> Copy.BenchInk.NAME_DUPLICATE_HELP
+        else -> null
+    }
+    // `.hexhelp:empty{display:none}`; `.err` is `--jam-text`, 600.
+    if (help != null) {
+        Text(
+            text = help,
+            fontFamily = ZinelyV21Fonts.Work,
+            fontSize = BenchInkSaveCopySp,
+            fontWeight = if (empty) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (empty) colors.jamText else colors.inkSoft,
+            modifier = Modifier
+                .padding(top = ZinelyV21Dimens.gapXs, start = BenchInkHairInsetDp, end = BenchInkHairInsetDp)
+                .testTag(BenchInkPaletteNameHelpTestTag)
+                .semantics { liveRegion = LiveRegionMode.Polite },
+        )
+    }
+}
+
+/**
+ * `.pe-strip`: the chosen inks in order on a dashed paper box, each a 48dp button with a × badge, spoken
+ * "Remove ‹name› from palette". Empty, it says "Tap inks below to add them".
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun BenchInkDraftStrip(draft: PaletteDraft, inks: ZinelyContentInks, kind: BenchVerbKind, actions: BenchInkTrayActions) {
+    val colors = ZinelyTheme.v21Colors
+    val shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
+    FlowRow(
+        modifier = Modifier
+            .padding(top = ZinelyV21Dimens.gapSm)
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = BenchInkStripBoxMinHeightDp)
+            .background(colors.paper, shape)
+            .benchDashedBorder(BenchInkPopoverBorderDp, colors.ink, ZinelyV21Dimens.radiusMd)
+            .padding(ZinelyV21Dimens.gapXs)
+            .testTag(BenchInkDraftStripTestTag)
+            .semantics { contentDescription = Copy.BenchInk.INKS_IN_PALETTE },
+        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapXs),
+    ) {
+        if (draft.inks.isEmpty()) {
+            Box(Modifier.height(BenchInkStripEmptyHeightDp), contentAlignment = Alignment.CenterStart) {
+                Text(
+                    text = Copy.BenchInk.TAP_INKS_TO_ADD,
+                    fontFamily = ZinelyV21Fonts.Work,
+                    fontSize = BenchInkEmptySp,
+                    color = BenchInkPaperSoft,
+                    modifier = Modifier.padding(start = ZinelyV21Dimens.gapSm),
+                )
+            }
+        }
+        draft.inks.forEachIndexed { i, hex ->
+            val remove = benchTap { actions.removeAt(i) }
+            Box(
+                modifier = Modifier
+                    .size(BenchInkTouchDp)
+                    .clickable(role = Role.Button, onClick = remove)
+                    .testTag(BenchInkDraftPotTestTag)
+                    .clearAndSetSemantics {
+                        contentDescription = Copy.BenchInk.removeFromPalette(inkName(hex, inks, kind))
+                        role = Role.Button
+                        onClick { remove(); true }
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    Modifier
+                        .size(BenchInkCompactPotDp)
+                        .background(hex.toColorRgba().toComposeColor(), CircleShape)
+                        .border(BenchInkSwatchBorderDp, BenchInkPaperInk, CircleShape),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = BenchInkRemoveBadgeInsetDp, end = BenchInkRemoveBadgeInsetDp)
+                        .size(BenchInkRemoveBadgeDp)
+                        .background(colors.paper, CircleShape)
+                        .border(1.dp, BenchInkPaperInk, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = BenchInkRemoveGlyph,
+                        fontFamily = ZinelyV21Fonts.Work,
+                        fontSize = BenchInkRemoveGlyphSp,
+                        lineHeight = BenchInkRemoveGlyphSp,
+                        fontWeight = FontWeight.Bold,
+                        color = BenchInkPaperInk,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * An ink as a toggle in edit mode (`.ink-choice[aria-pressed]`, `.picked`): a checkbox whose state is
+ * spoken, with a ✓ badge at the pot's top right (`.ink-choice.picked .pot::before`) — not colour alone.
+ */
+@Composable
+private fun BenchInkToggleChoice(
+    colour: Color,
+    spoken: String,
+    picked: Boolean,
+    onToggle: () -> Unit,
+    tag: String,
+    modifier: Modifier = Modifier,
+    potSize: Dp = BenchInkSwatchSizeDp,
+    minHeight: Dp = BenchInkChoiceMinHeightDp,
+    label: String? = null,
+    tabular: Boolean = false,
+) {
+    val colors = ZinelyTheme.v21Colors
+    val tap = benchTap(ZinelyHaptic.Snap, onToggle)
+    Column(
+        modifier = modifier
+            .defaultMinSize(minHeight = minHeight)
+            .toggleable(value = picked, role = Role.Checkbox, onValueChange = { tap() })
+            .testTag(tag)
+            .semantics { contentDescription = spoken },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(BenchInkChoiceGapDp, Alignment.CenterVertically),
+    ) {
+        Box {
+            BenchInkSwatchDot(colour, false, potSize, colors.ink)
+            if (picked) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = BenchInkPickedBadgeOverhangDp, y = -BenchInkPickedBadgeOverhangDp)
+                        .size(BenchInkPickedBadgeDp)
+                        .background(BenchInkPaperInk, CircleShape)
+                        .border(BenchInkPopoverBorderDp, BenchInkBadgeInk, CircleShape)
+                        .testTag(BenchInkPickedBadgeTestTag),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = BenchInkPickedGlyph,
+                        fontFamily = ZinelyV21Fonts.Work,
+                        fontSize = BenchInkPickedGlyphSp,
+                        lineHeight = BenchInkPickedGlyphSp,
+                        fontWeight = FontWeight.Bold,
+                        color = BenchInkBadgeInk,
+                        modifier = Modifier.clearAndSetSemantics {},
+                    )
+                }
+            }
+        }
+        if (label != null) {
+            Text(
+                text = label,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                fontFamily = ZinelyV21Fonts.Work,
+                fontSize = BenchInkChoiceNameSp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = if (tabular) BenchInkHexTracking else 0.em,
+                style = if (tabular) LocalTextStyle.current.copy(fontFeatureSettings = "tnum") else LocalTextStyle.current,
+                color = colors.inkSoft,
+                modifier = Modifier.clearAndSetSemantics {},
+            )
+        }
+    }
+}
+
+/**
+ * `.pe-bar`: Cancel and Save palette (`flex:1.6`), pinned under the scroll with a dashed `--hair` rule
+ * above; stacked at largest text. Save looks disabled at 50% until it can save, but stays enabled and
+ * focusable, so tapping it says why (`aria-disabled`, not `disabled`).
+ */
+@Composable
+private fun BenchInkEditBar(canSave: Boolean, actions: BenchInkTrayActions) {
+    val colors = ZinelyTheme.v21Colors
+    val big = LocalDensity.current.fontScale >= BenchInkLargeTextFontScale
+    val bar = Modifier
+        .fillMaxWidth()
+        .padding(top = ZinelyV21Dimens.gapSm)
+        .drawBehind { benchDashedLine(colors.hair, BenchInkPopoverBorderDp.toPx(), y = BenchInkPopoverBorderDp.toPx() / 2f) }
+        .padding(vertical = ZinelyV21Dimens.gapMd)
+    val cancel: @Composable (Modifier) -> Unit = {
+        BenchInkBarButton(Copy.BenchInk.CANCEL, primary = false, dim = false, onClick = actions::cancel, tag = BenchInkCancelTestTag, modifier = it)
+    }
+    val save: @Composable (Modifier) -> Unit = {
+        BenchInkBarButton(Copy.BenchInk.SAVE_PALETTE, primary = true, dim = !canSave, onClick = actions::save, tag = BenchInkSavePaletteTestTag, modifier = it)
+    }
+    if (big) {
+        Column(bar, verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm)) {
+            cancel(Modifier.fillMaxWidth())
+            save(Modifier.fillMaxWidth())
+        }
+    } else {
+        Row(bar, horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm)) {
+            cancel(Modifier.weight(1f))
+            save(Modifier.weight(BenchInkGoFlex))
+        }
+    }
+}
+
+/** `.pe-bar button` / `.mixbar button`: a 48dp pill on a 2dp printed shadow; `.go` is leaf, `.ghost` surface. */
+@Composable
+internal fun BenchInkBarButton(
+    text: String,
+    primary: Boolean,
+    dim: Boolean,
+    onClick: () -> Unit,
+    tag: String,
+    modifier: Modifier = Modifier,
+    minHeight: Dp = BenchInkTouchDp,
+    fontSize: TextUnit = BenchInkBarSp,
+) {
+    val colors = ZinelyTheme.v21Colors
+    val tap = benchTap(action = onClick)
+    Box(
+        modifier = modifier
+            .graphicsLayer { alpha = if (dim) BenchInkDimAlpha else 1f }
+            .zinelyV21HardShadow(BenchInkDoneShadowDp, colors.inkLine, BenchInkPillShape)
+            .clip(BenchInkPillShape)
+            .background(if (primary) colors.leaf else colors.surface)
+            .border(BenchInkPopoverBorderDp, colors.ink, BenchInkPillShape)
+            .clickable(role = Role.Button, onClick = tap)
+            .defaultMinSize(minHeight = minHeight)
+            .padding(horizontal = ZinelyV21Dimens.gapSm)
+            .testTag(tag),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            fontFamily = ZinelyV21Fonts.Work,
+            fontSize = fontSize,
+            fontWeight = FontWeight.Bold,
+            color = if (primary) colors.onLeaf else colors.ink,
+        )
+    }
+}
+
 // — the frozen numbers (`v21-bench.html:236-261`) —
 
 /** `.inkpop{left:12px;right:12px;bottom:12px}` (`:237`) — unchanged from V2. */
@@ -1304,6 +2002,41 @@ internal const val BenchInkMixGlyphStroke: Float = 2.4f
 /** `.disclose i{transition:transform .15s}` and its `&#9662;` chevron. */
 internal const val BenchInkChevronMillis: Int = 150
 internal const val BenchInkChevronGlyph: String = "▾"
+
+// — A40 rev. 2 edit mode and menus (`.pe-*`, `.kept-menu`, `.ink-choice.picked`) —
+
+/** `.kept-menu{box-shadow:3px 3px 0}`; `button{font:600 .8rem}`. */
+internal val BenchInkMenuShadowDp = 3.dp
+internal val BenchInkMenuSp = 12.8.sp
+
+/** `.pe-count`/`.hexhelp{margin:… 2px 0}`. */
+internal val BenchInkHairInsetDp = 2.dp
+
+/** `.pe-name input{font:700 .95rem var(--voice)}`; `:focus{outline-offset:2px}`. */
+internal val BenchInkNameSp = 15.2.sp
+internal val BenchInkNameRingOffsetDp = 2.dp
+
+/** `.pe-strip{min-height:52px;padding:var(--gap-xs)}`: 44dp inside the padding. */
+internal val BenchInkStripBoxMinHeightDp = 52.dp
+internal val BenchInkStripEmptyHeightDp = 44.dp
+
+/** `.pe-strip button::after` — the ×: 14dp at `right:3px;top:3px`, `font:700 .7rem/12px`. */
+internal val BenchInkRemoveBadgeDp = 14.dp
+internal val BenchInkRemoveBadgeInsetDp = 3.dp
+internal val BenchInkRemoveGlyphSp = 11.2.sp
+internal const val BenchInkRemoveGlyph: String = "×"
+
+/** `.ink-choice.picked .pot::before` — the ✓: 16dp at `right:-6px;top:-6px`, `font:700 .58rem`, `#FFF9DB` on `#27270F`. */
+internal val BenchInkPickedBadgeDp = 16.dp
+internal val BenchInkPickedBadgeOverhangDp = 6.dp
+internal val BenchInkPickedGlyphSp = 9.28.sp
+internal val BenchInkBadgeInk = Color(0xFFFFF9DB)
+internal const val BenchInkPickedGlyph: String = "✓"
+
+/** `.pe-bar .go{flex:1.6}`, `[aria-disabled]{opacity:.5}`, `button{font:700 .88rem}`. */
+internal const val BenchInkGoFlex: Float = 1.6f
+internal const val BenchInkDimAlpha: Float = 0.5f
+internal val BenchInkBarSp = 14.08.sp
 
 
 /**
