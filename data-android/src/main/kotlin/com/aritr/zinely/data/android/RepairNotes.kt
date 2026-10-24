@@ -55,12 +55,18 @@ internal class RepairNotes(rootDir: Path, private val store: AtomicFileStore) {
         }
     }
 
-    /** Got it: [id] stops waiting, both kinds. Throws when its marker cannot be removed; it is told again next start. */
-    fun clear(id: String) = change(id) { null }
+    /**
+     * Got it on [shown], the note the maker saw: [id] stops waiting, both kinds, only if its note is still [shown].
+     * The check is inside the atomic change, so a pages repair merged in after the note was shown survives and is
+     * told. Throws when its marker cannot be removed; the note held here is cleared all the same, and the marker
+     * left on disk brings it back on the next listing, in this run or the next.
+     */
+    fun clear(id: String, shown: RestoredDetails) = change(id) { held -> held.takeIf { it != shown } }
 
     /**
      * A rename or move: [id]'s details part only (A46.5, narrowing A37.6). A zine whose pages went back too keeps
-     * waiting, as a pages-only note. Throws as [clear] does.
+     * waiting, as a pages-only note. Throws when its marker cannot be changed; the note held here changes all the
+     * same, so the old marker is read again only once nothing is held for [id] (next listing, or next start).
      */
     fun clearDetails(id: String) = change(id) { held ->
         held?.takeIf { it.pages }?.copy(previousTitle = null, details = false)

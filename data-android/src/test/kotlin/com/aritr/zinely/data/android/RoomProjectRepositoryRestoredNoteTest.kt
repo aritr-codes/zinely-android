@@ -142,10 +142,28 @@ class RoomProjectRepositoryRestoredNoteTest {
         val restarted = repo()
         assertEquals("Letters to Gran", restarted.shelf().single().restored?.previousTitle)
 
-        assertTrue(restarted.dismissRestoredDetails(listOf(id)) is DataResult.Success)
+        assertTrue(restarted.dismissRestoredDetails(mapOf(id to RestoredDetails("Letters to Gran"))) is DataResult.Success)
         assertNull(restarted.shelf().single().restored)
         assertFalse(Files.exists(noteFile(id)))
         assertNull(repo().shelf().single().restored)
+    }
+
+    @Test
+    fun `Got it clears only the note shown, so a pages repair merged in after it survives`() = runTest {
+        // Given a details note on the Shelf
+        val id = renamedThenDamaged()
+        val shown = repo().shelf().single().restored!!
+        // And the zine's page file then found damaged and put back on the Bench, merging into the same note
+        val (repository, documents) = process()
+        damagePages(id)
+        documents.load(id)
+
+        // When Got it is pressed on the note as it was shown
+        assertTrue(repository.dismissRestoredDetails(mapOf(id to shown)) is DataResult.Success)
+
+        // Then the zine still waits, with both kinds, so the pages repair is told
+        assertEquals(shown.copy(pages = true), repository.shelf().single().restored)
+        assertTrue(Files.exists(noteFile(id)))
     }
 
     @Test
@@ -157,7 +175,7 @@ class RoomProjectRepositoryRestoredNoteTest {
         assertEquals("Letters home", first.title)
         assertEquals("Letters to Gran", first.restored?.previousTitle)
         assertFalse("the damaged file is quarantined", Files.exists(metaFile(id)))
-        diskFull.dismissRestoredDetails(listOf(id))
+        diskFull.dismissRestoredDetails(mapOf(id to first.restored!!))
 
         // Every later read takes the lone .bak again (still failing to put it back): the same repair, not a new one.
         assertNull(diskFull.shelf().single().restored)
@@ -227,7 +245,7 @@ class RoomProjectRepositoryRestoredNoteTest {
         repo().shelf()
         blockMarkerBackup(id)
 
-        assertTrue(repo().dismissRestoredDetails(listOf(id)) is DataResult.Failure)
+        assertTrue(repo().dismissRestoredDetails(mapOf(id to RestoredDetails("Letters to Gran"))) is DataResult.Failure)
 
         // The main marker went second, so it is still there: the note is not silently lost.
         assertTrue(Files.exists(noteFile(id)))
@@ -326,7 +344,7 @@ class RoomProjectRepositoryRestoredNoteTest {
         assertTrue(repo().moveProject(moved, "Kitchen") is DataResult.Success)
         assertEquals(pagesOnly, repo().shelf().single { it.id == moved }.restored)
 
-        assertTrue(repo().dismissRestoredDetails(listOf(renamed, moved)) is DataResult.Success)
+        assertTrue(repo().dismissRestoredDetails(mapOf(renamed to pagesOnly, moved to pagesOnly)) is DataResult.Success)
         assertTrue(repo().shelf().all { it.restored == null })
         assertFalse(Files.exists(noteFile(renamed)))
     }

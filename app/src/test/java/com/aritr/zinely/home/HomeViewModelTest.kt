@@ -230,8 +230,13 @@ class HomeViewModelTest {
         /** When cleared, a dismissal does not list the Shelf again: the Shelf was left before the store answered. */
         var listAgainOnDismiss = true
 
-        override suspend fun dismissRestoredDetails(ids: Collection<String>): DataResult<Unit> {
+        /** The notes each Got it said the maker saw. */
+        val dismissedShown = mutableListOf<Map<String, RestoredDetails>>()
+
+        override suspend fun dismissRestoredDetails(shown: Map<String, RestoredDetails>): DataResult<Unit> {
+            val ids = shown.keys
             calls += "dismiss restored ${ids.joinToString()}"
+            dismissedShown += shown
             if (dismissFailure) return DataResult.Failure(DataError.Io("marker could not be removed"))
             ids.forEach { restored.remove(it); restoredNotes.remove(it) }
             if (listAgainOnDismiss) listAgain()
@@ -2376,6 +2381,11 @@ class HomeViewModelTest {
         // Then
         assertTrue((viewModel.state.value as HomeUiState.Content).restored.isEmpty())
         assertTrue("dismiss restored z1, z2" in repository.calls)
+        // Each zine goes down with the note the maker saw, so the store can keep one that changed since.
+        assertEquals(
+            listOf(mapOf("z1" to RestoredDetails("Letters to Gran"), "z2" to RestoredDetails(null))),
+            repository.dismissedShown,
+        )
         assertTrue(repository.restored.isEmpty())
 
         // And a later repair of the same zine is told again: the dismissed id did not stick.

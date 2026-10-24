@@ -1218,25 +1218,26 @@ internal class RoomProjectRepository(
 
     /**
      * After a committed rename or move: the zine's details stop waiting, its pages part does not (A46.5). The
-     * change itself is done, so it is reported as done: a marker that cannot be changed stays on disk and the note
-     * is told again next start, which is harmless.
+     * change itself is done, so it is reported as done: a marker that cannot be changed stays on disk, which is
+     * harmless. It tells the details again on the next listing in this run when nothing else waits for the zine
+     * (the note held in [RepairNotes] is gone, so the marker is read), else at the next start.
      */
     private fun clearWaitingNoteResult(id: String): DataResult<Unit> {
         try {
             notes.clearDetails(id)
         } catch (_: IOException) {
-            // ponytail: the leftover marker is the record; next start tells the note again.
+            // ponytail: the leftover marker is the record; a later listing tells the note again.
         }
         return DataResult.Success(Unit)
     }
 
-    override suspend fun dismissRestoredDetails(ids: Collection<String>): DataResult<Unit> = withContext(io) {
+    override suspend fun dismissRestoredDetails(shown: Map<String, RestoredDetails>): DataResult<Unit> = withContext(io) {
         try {
             mutex.withLock {
                 var cause: IOException? = null
-                for (id in ids) {
+                for ((id, note) in shown) {
                     try {
-                        notes.clear(id)
+                        notes.clear(id, shown = note)
                     } catch (e: IOException) {
                         cause = cause ?: e
                     }

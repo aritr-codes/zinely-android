@@ -525,7 +525,8 @@ internal class HomeViewModel @Inject constructor(
         val notes = listedNotes.filterKeys { it in ids }
         dismissedNotes.update { it + notes }
         viewModelScope.launch {
-            val result = projectRepository.dismissRestoredDetails(ids)
+            // The notes as shown: one that changed since (a pages repair merged in) keeps waiting in the store.
+            val result = projectRepository.dismissRestoredDetails(notes)
             if (result is DataResult.Failure) {
                 dismissedNotes.update { it - ids.toSet() }
                 eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))

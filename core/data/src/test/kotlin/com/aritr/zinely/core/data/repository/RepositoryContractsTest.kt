@@ -84,7 +84,7 @@ class RepositoryContractsTest {
             DataResult.Success(FolderChange(folder = null, changedIds = emptyList()))
 
         // This fake never repairs a file, so no zine waits to be told (ADR-134).
-        override suspend fun dismissRestoredDetails(ids: Collection<String>): DataResult<Unit> = DataResult.Success(Unit)
+        override suspend fun dismissRestoredDetails(shown: Map<String, RestoredDetails>): DataResult<Unit> = DataResult.Success(Unit)
 
         override suspend fun load(projectId: String): DataResult<ZineDocument> =
             docs[projectId]?.let { DataResult.Success(it) } ?: DataResult.Failure(DataError.NotFound(projectId))
