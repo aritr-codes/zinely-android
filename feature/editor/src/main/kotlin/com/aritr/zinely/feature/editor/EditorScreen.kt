@@ -76,7 +76,9 @@ import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.ink.InkHex
 import com.aritr.zinely.core.editor.ink.InkLibrary
 import com.aritr.zinely.core.editor.ink.InkLibraryEdit
+import com.aritr.zinely.core.editor.ink.MixIntoPalette
 import com.aritr.zinely.core.editor.ink.PaletteDraft
+import com.aritr.zinely.core.editor.ink.colourName
 import com.aritr.zinely.core.editor.ink.isPale
 import com.aritr.zinely.core.model.ZineDocument
 import java.io.IOException
@@ -874,9 +876,14 @@ public fun EditorScreen(
     var inkDraft by remember { mutableStateOf<PaletteDraft?>(null) }
     // An Undo that would reopen a draft is withdrawn with the tray too: run after the tray closed, it would
     // take a saved palette away with no draft to come back to (and Cancel's Undo would do nothing at all).
+    // The mixer (INK task 8b) belongs to the tray: closing the tray closes it. Its state outlives a close so
+    // the sheet can slide out showing what it showed, and the next open keeps the strip's hue for a grey.
+    var mixerOpen by remember { mutableStateOf(false) }
+    var mixerState by remember { mutableStateOf(InkMixerState.open(InkMixerFallbackHex, null)) }
     LaunchedEffect(inkPopoverVisible) {
         if (inkPopoverVisible) return@LaunchedEffect
         inkDraft = null
+        mixerOpen = false
         val standing = inkUndo ?: return@LaunchedEffect
         if (standing.reopens) {
             if (snackUndo === standing.undo) snackUndo = null
@@ -927,6 +934,32 @@ public fun EditorScreen(
         deleteJob[0] = c4Scope.launch {
             delay(BenchSnackInkTrayMillis)
             snackVisible = false
+        }
+    }
+    /**
+     * Mix from edit mode (A40 rev. 2 rule 4, prototype `mixUse` with `mixReturn==='edit'`): the ink goes into
+     * My inks (`use`) and, if there is room and it is not already there, into the draft. The piece is not
+     * re-inked. Undo restores the library and reopens the draft as it was. A store failure changes nothing:
+     * the draft is left as it was too, so the snack never claims an ink My inks does not hold.
+     */
+    val mixIntoDraft: (InkHex) -> Unit = { hex ->
+        c4Scope.launch {
+            val edit = try {
+                onEditInkLibrary { it.use(hex).library }
+            } catch (_: IOException) {
+                return@launch
+            }
+            val before = inkDraft ?: return@launch
+            val name = inkColourWords(colourName(hex))
+            val message = when (val mixed = before.addMixed(hex)) {
+                is MixIntoPalette.Added -> {
+                    inkDraft = mixed.draft
+                    Copy.BenchInk.mixedAdded(name)
+                }
+                MixIntoPalette.AlreadyIn -> Copy.BenchInk.mixedAlreadyIn(name)
+                MixIntoPalette.PaletteFull -> Copy.BenchInk.mixedKept(name)
+            }
+            raiseTraySnack(message, BenchInkTrayUndo(edit.takeIf { it.changed }, reopen = before))
         }
     }
     val closeFlipTray = {
@@ -2259,6 +2292,35 @@ public fun EditorScreen(
                     draft = inkDraft,
                     onDraftChange = { inkDraft = it },
                     onSnack = raiseTraySnack,
+                    // Opens on the piece's own ink (prototype `openMixer(current)`).
+                    onMix = {
+                        val start = benchInkColorOf(inkTarget)?.let { InkHex.of(it) } ?: InkMixerFallbackHex
+                        mixerState = InkMixerState.open(start, mixerState.hsv.h)
+                        mixerOpen = true
+                    },
+                )
+                // The sheet is a Dialog: Back reaches it first and closes it (onCancel), the tray only after.
+                InkMixerSheet(
+                    visible = mixerOpen && inkPopoverVisible,
+                    state = mixerState,
+                    onState = { mixerState = it },
+                    kind = trayKind,
+                    // For text the preview is the piece's own first line; anything else shows the sample.
+                    sample = (inkTarget as? TextElement)?.text?.lineSequence()?.firstOrNull()?.takeIf { it.isNotBlank() }
+                        ?: Copy.InkMix.PREVIEW_SAMPLE,
+                    library = inkLibrary,
+                    useLabel = inkMixerUseLabel(inkDraft),
+                    onCancel = { mixerOpen = false },
+                    onUse = { hex ->
+                        mixerOpen = false
+                        if (inkDraft != null) {
+                            mixIntoDraft(hex)
+                        } else {
+                            // The single entry point (T6): one write, `use`, so Undo restores the library
+                            // from before it and the page's ink (A40 rule 5).
+                            applyInk(inkName(hex, contentInks, trayKind), hex.toColorRgba().toComposeColor()) { it.use(hex).library }
+                        }
+                    },
                 )
                 }
 
@@ -2657,3 +2719,6 @@ private class BenchInkUndo(
     val watchesDraft: Boolean = false,
     val reopens: Boolean = false,
 )
+
+/** The mixer's start when the piece has no ink of its own (unreachable: the tray opens only on an inkable piece). */
+private val InkMixerFallbackHex = InkHex("2A251E")
