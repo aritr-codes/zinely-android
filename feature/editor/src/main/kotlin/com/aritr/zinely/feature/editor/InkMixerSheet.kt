@@ -35,7 +35,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -44,6 +47,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -185,6 +189,9 @@ internal fun InkMixerSheet(
     onUse: (InkHex) -> Unit,
 ) {
     val maxHeight = LocalConfiguration.current.screenHeightDp.dp * InkMixerMaxHeightFraction
+    // The field's focus-loss commit can land as the closing dialog detaches; a closed mixer takes no writes.
+    val shown by rememberUpdatedState(visible)
+    val write: (InkMixerState) -> Unit = { if (shown) onState(it) }
     ZSheet(
         visible = visible,
         onDismiss = onCancel,
@@ -194,12 +201,12 @@ internal fun InkMixerSheet(
         foot = {
             InkMixerFoot(useLabel, onCancel = onCancel, onUse = {
                 val committed = state.commitHex()
-                onState(committed)
+                write(committed)
                 onUse(committed.hex)
             })
         },
     ) {
-        InkMixerBody(state, onState, kind, sample, library)
+        InkMixerBody(state, write, kind, sample, library)
     }
 }
 
@@ -235,30 +242,36 @@ internal fun InkMixerBody(
         library?.wouldEvict(hex)?.let { InkMixerFullNote(it) }
         InkMixerPreview(hex, kind, sample)
         InkMixerHexRow(state, onState)
-        // RF7: the three sliders TalkBack and keys use instead of the square and the strip, after the field.
-        InkMixerSlider(
-            tag = InkMixerStrengthTestTag,
-            label = Copy.InkMix.COLOUR_STRENGTH,
-            value = Copy.InkMix.strengthValue(words, percent(state.hsv.s)),
-            current = percent(state.hsv.s),
-            max = 100,
-        ) { emit(current.onSquare(it / 100.0, current.hsv.v)) }
-        InkMixerSlider(
-            tag = InkMixerLightTestTag,
-            label = Copy.InkMix.LIGHTNESS,
-            value = Copy.InkMix.lightValue(words, percent(state.hsv.v)),
-            current = percent(state.hsv.v),
-            max = 100,
-        ) { emit(current.onSquare(current.hsv.s, it / 100.0)) }
-        InkMixerSlider(
-            tag = InkMixerHueTestTag,
-            label = Copy.InkMix.HUE,
-            value = hueWord(hueName(state.hsv.h)),
-            current = state.hsv.h.roundToInt(),
-            max = HUE_MAX.toInt(),
-        ) { emit(current.onHue(it.toDouble())) }
-        InkMixerSquare(state.hsv, hex, if (big) InkMixerSquareBigDp else InkMixerSquareDp) { s, v ->
-            emit(current.onSquare(s, v))
+        // RF7: TalkBack's form of the square and the strip, after the field. They sit under the square's
+        // corner so they take no space (`.vh`) yet keep real on-screen bounds. Keyboard users have the field.
+        // ponytail: no arrow keys on these; add if a D-pad pass asks.
+        Box {
+            Row {
+                InkMixerSlider(
+                    tag = InkMixerStrengthTestTag,
+                    label = Copy.InkMix.COLOUR_STRENGTH,
+                    value = Copy.InkMix.strengthValue(words, percent(state.hsv.s)),
+                    current = percent(state.hsv.s),
+                    max = 100,
+                ) { emit(current.onSquare(it / 100.0, current.hsv.v)) }
+                InkMixerSlider(
+                    tag = InkMixerLightTestTag,
+                    label = Copy.InkMix.LIGHTNESS,
+                    value = Copy.InkMix.lightValue(words, percent(state.hsv.v)),
+                    current = percent(state.hsv.v),
+                    max = 100,
+                ) { emit(current.onSquare(current.hsv.s, it / 100.0)) }
+                InkMixerSlider(
+                    tag = InkMixerHueTestTag,
+                    label = Copy.InkMix.HUE,
+                    value = hueWord(hueName(state.hsv.h)),
+                    current = state.hsv.h.roundToInt(),
+                    max = HUE_MAX.toInt(),
+                ) { emit(current.onHue(it.toDouble())) }
+            }
+            InkMixerSquare(state.hsv, hex, if (big) InkMixerSquareBigDp else InkMixerSquareDp) { s, v ->
+                emit(current.onSquare(s, v))
+            }
         }
         InkMixerHints(big)
         InkMixerHue(state.hsv.h) { emit(current.onHue(it)) }
@@ -357,7 +370,7 @@ private fun InkMixerPreview(hex: InkHex, kind: BenchVerbKind, sample: String) {
         }
         Box(
             Modifier
-                .padding(top = ZinelyV21Dimens.gapXs)
+                .padding(top = ZinelyV21Dimens.gapXs * 2) // grid row-gap + `.legib` margin-top
                 .fillMaxWidth()
                 .defaultMinSize(minHeight = InkMixerLegibMinDp)
                 .background(if (pale) colors.butter else Color.Transparent)
@@ -372,8 +385,10 @@ private fun InkMixerPreview(hex: InkHex, kind: BenchVerbKind, sample: String) {
                 active = pale,
                 warn = true,
                 text = buildAnnotatedString {
+                    // `.legib b{display:block}` (the later rule wins): the lead is a line of its own.
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(Copy.InkMix.PALE_LEAD) }
-                    append(rest)
+                    append(InkMixerNewline)
+                    append(rest.trimStart())
                 },
             )
         }
@@ -447,6 +462,7 @@ private fun InkMixerHexRow(state: InkMixerState, onState: (InkMixerState) -> Uni
     val shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
     val current by rememberUpdatedState(state)
     var focused by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
     val err = state.help == InkMixerHelp.BAD_HEX
     val fieldStyle = TextStyle(
         fontFamily = ZinelyV21Fonts.Work,
@@ -468,7 +484,11 @@ private fun InkMixerHexRow(state: InkMixerState, onState: (InkMixerState) -> Uni
             keyboardType = KeyboardType.Ascii,
             imeAction = ImeAction.Done,
         ),
-        keyboardActions = KeyboardActions(onDone = { onState(current.commitHex()) }),
+        // `commitHex();$('hex').blur()`: Done also drops the keyboard, so the square and strip come back.
+        keyboardActions = KeyboardActions(onDone = {
+            onState(current.commitHex())
+            focusManager.clearFocus()
+        }),
         modifier = Modifier
             .padding(top = ZinelyV21Dimens.gapSm)
             .fillMaxWidth()
@@ -569,7 +589,6 @@ private fun InkMixerSquare(hsv: Hsv, hex: InkHex, height: Dp, onMove: (Double, D
             .padding(top = ZinelyV21Dimens.gapSm)
             .fillMaxWidth()
             .height(height)
-            .clip(shape)
             .border(BenchInkPopoverBorderDp, colors.ink, shape)
             .pointerInput(Unit) {
                 fun at(p: Offset) = move((p.x / size.width).toDouble(), 1.0 - (p.y / size.height))
@@ -577,8 +596,10 @@ private fun InkMixerSquare(hsv: Hsv, hex: InkHex, height: Dp, onMove: (Double, D
             }
             .clearAndSetSemantics { testTag = InkMixerSquareTestTag },
     ) {
-        drawRect(Brush.horizontalGradient(listOf(Color.White, pure)))
-        drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black)))
+        // Rounded fills, not a clip: the knob overhangs the edge, as `.sv` (no overflow:hidden).
+        val r = CornerRadius(ZinelyV21Dimens.radiusMd.toPx())
+        drawRoundRect(Brush.horizontalGradient(listOf(Color.White, pure)), cornerRadius = r)
+        drawRoundRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black)), cornerRadius = r)
         knob(Offset((hsv.s * size.width).toFloat(), ((1 - hsv.v) * size.height).toFloat()), mix)
     }
 }
@@ -616,13 +637,13 @@ private fun InkMixerHue(h: Double, onMove: (Double) -> Unit) {
     ) {
         val track = InkMixerHueTrackDp.toPx()
         val top = (size.height - track) / 2f
-        val radius = androidx.compose.ui.geometry.CornerRadius(track / 2f)
-        drawRoundRect(Brush.horizontalGradient(InkMixerRainbow), Offset(0f, top), androidx.compose.ui.geometry.Size(size.width, track), radius)
+        val radius = CornerRadius(track / 2f)
+        drawRoundRect(Brush.horizontalGradient(InkMixerRainbow), Offset(0f, top), Size(size.width, track), radius)
         val bw = BenchInkPopoverBorderDp.toPx()
         drawRoundRect(
             colors.ink,
             Offset(bw / 2f, top + bw / 2f),
-            androidx.compose.ui.geometry.Size(size.width - bw, track - bw),
+            Size(size.width - bw, track - bw),
             radius,
             style = Stroke(bw),
         )
@@ -631,7 +652,7 @@ private fun InkMixerHue(h: Double, onMove: (Double) -> Unit) {
 }
 
 /** A down and its drag, each position handed on; consumed so the sheet's scroll does not take it. */
-private suspend fun androidx.compose.ui.input.pointer.PointerInputScope.track(at: (Offset) -> Unit) {
+private suspend fun PointerInputScope.track(at: (Offset) -> Unit) {
     awaitEachGesture {
         val down = awaitFirstDown()
         down.consume()
@@ -742,6 +763,7 @@ private val InkMixerHelpSp = 11.52.sp
 /** `.hexbox.err{border-color:var(--jam-text);box-shadow:inset 0 0 0 1px}`: 1.5 + 1. */
 private val InkMixerHexErrBorderDp = 2.5.dp
 private const val InkMixerHash = "#"
+private const val InkMixerNewline = "\n"
 
 /** `.sv{height:132px}`, `[data-big] .sv{height:120px}`. */
 private val InkMixerSquareDp = 132.dp

@@ -12,6 +12,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -31,6 +36,7 @@ import com.aritr.zinely.core.editor.ink.InkLibrary
 import com.aritr.zinely.core.editor.ink.MyInk
 import com.aritr.zinely.core.editor.ink.PaletteDraft
 import com.aritr.zinely.core.editor.ink.colourName
+import com.aritr.zinely.core.editor.ink.hueName
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -51,6 +57,8 @@ class InkMixerSheetTest {
 
     private var state by mutableStateOf(InkMixerState.open(InkHex("2A251E"), null))
 
+    private lateinit var focus: FocusManager
+
     private fun words(hex: InkHex) = inkColourWords(colourName(hex))
 
     /** The body and foot in a plain host: a `Dialog` window would drop a test's font scale. */
@@ -62,6 +70,7 @@ class InkMixerSheetTest {
     ) {
         state = InkMixerState.open(start, null)
         composeRule.setContent {
+            focus = LocalFocusManager.current
             val base = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(base.density, fontScale)) {
                 ZinelyTheme {
@@ -76,6 +85,69 @@ class InkMixerSheetTest {
     }
 
     private fun field() = composeRule.onNodeWithTag(InkMixerHexFieldTestTag)
+
+    /** `.legib b{display:block}`: the lead is a line of its own. */
+    private fun pale(rest: String) = Copy.InkMix.PALE_LEAD + "\n" + rest.trimStart()
+
+    private fun helpText() = composeRule.onNodeWithTag(InkMixerHelpTestTag).fetchSemanticsNode()
+        .config[SemanticsProperties.Text].single().text
+
+    @Test
+    fun `given 505 when IME Done then the field lets go, so the keyboard drops`() {
+        host(InkHex("2A251E"))
+        field().performTextClearance()
+        field().performTextInput("505")
+        composeRule.waitForIdle()
+        field().assertIsFocused()
+        field().performImeAction()
+        composeRule.waitForIdle()
+        field().assertIsNotFocused()
+    }
+
+    @Test
+    fun `given 505 typed when the field loses focus then the three-digit code counts`() {
+        host(InkHex("2A251E"))
+        field().performTextClearance()
+        field().performTextInput("505")
+        composeRule.waitForIdle()
+        composeRule.runOnUiThread { focus.clearFocus() }
+        composeRule.waitForIdle()
+        assertEquals(InkHex("550055"), state.hex)
+        assertEquals("550055", state.hexField.text)
+    }
+
+    @Test
+    fun `given a partial code then the help says keep typing, and emptying the field keeps it`() {
+        val start = InkHex("2A251E")
+        host(start)
+        field().performTextClearance()
+        field().performTextInput("50")
+        composeRule.waitForIdle()
+        assertEquals(Copy.InkMix.keepTyping(start.value), helpText())
+        field().performTextClearance()
+        composeRule.waitForIdle()
+        assertEquals("the prototype leaves the help as it was", Copy.InkMix.keepTyping(start.value), helpText())
+    }
+
+    @Test
+    fun `given a grey opened with a kept hue then typing another grey keeps that hue`() {
+        val s = InkMixerState.open(InkHex("808080"), 200.0)
+        assertEquals(200.0, s.hsv.h, 0.0)
+        assertEquals(200.0, s.onHex(TextFieldValue("404040")).hsv.h, 0.0)
+        assertEquals(200.0, s.onSquare(Double.NaN, 0.5).hsv.h, 0.0)
+        assertEquals(0.0, s.onSquare(Double.NaN, 0.5).hsv.s, 0.0)
+        assertEquals(0.0, s.onHue(Double.NaN).hsv.h, 0.0)
+    }
+
+    @Test
+    fun `given the lightness slider set to 65 then v is 0_65 and its value reads light`() {
+        host(InkHex("505955"))
+        composeRule.onNodeWithTag(InkMixerLightTestTag).performSemanticsAction(SemanticsActions.SetProgress) { it(63f) }
+        composeRule.waitForIdle()
+        assertEquals("steps of 5", 0.65, state.hsv.v, 1e-9)
+        val node = composeRule.onNodeWithTag(InkMixerLightTestTag).fetchSemanticsNode()
+        assertEquals(Copy.InkMix.lightValue(words(state.hex), 65), node.config[SemanticsProperties.StateDescription])
+    }
 
     @Test
     fun `given 505955 typed one character at a time then the colour changes only at the sixth`() {
@@ -125,24 +197,24 @@ class InkMixerSheetTest {
     @Test
     fun `given a pale ink then the footer reads the pale line for the target, in the same slot height`() {
         host(InkHex("F2D7A6"), BenchVerbKind.TEXT)
-        composeRule.onNodeWithText(Copy.InkMix.PALE_LEAD + Copy.InkMix.PALE_TEXT).assertExistsAsOne()
+        composeRule.onNodeWithText(pale(Copy.InkMix.PALE_TEXT)).assertExistsAsOne()
         composeRule.onNodeWithText(Copy.InkMix.READS_CLEARLY).assertDoesNotExist()
         val paleHeight = slotHeight()
 
         state = InkMixerState.open(InkHex("505955"), null)
         composeRule.waitForIdle()
         composeRule.onNodeWithText(Copy.InkMix.READS_CLEARLY).assertExistsAsOne()
-        composeRule.onNodeWithText(Copy.InkMix.PALE_LEAD + Copy.InkMix.PALE_TEXT).assertDoesNotExist()
+        composeRule.onNodeWithText(pale(Copy.InkMix.PALE_TEXT)).assertDoesNotExist()
         assertEquals("one fixed slot: no layout jump", paleHeight, slotHeight(), 0.5f)
     }
 
     @Test
     fun `given a pale ink on decor then the footer says it is fine for a soft mark`() {
         host(InkHex("F2D7A6"), BenchVerbKind.DECOR)
-        composeRule.onNodeWithText(Copy.InkMix.PALE_LEAD + Copy.InkMix.PALE_ART).assertExistsAsOne()
+        composeRule.onNodeWithText(pale(Copy.InkMix.PALE_ART)).assertExistsAsOne()
     }
 
-    private fun androidx.compose.ui.test.SemanticsNodeInteraction.assertExistsAsOne() {
+    private fun SemanticsNodeInteraction.assertExistsAsOne() {
         fetchSemanticsNode()
     }
 
@@ -181,7 +253,7 @@ class InkMixerSheetTest {
         composeRule.waitForIdle()
         assertEquals(355.0, state.hsv.h, 1e-9)
         val node = composeRule.onNodeWithTag(InkMixerHueTestTag).fetchSemanticsNode()
-        assertEquals(hueWord(com.aritr.zinely.core.editor.ink.hueName(355.0)), node.config[SemanticsProperties.StateDescription])
+        assertEquals(hueWord(hueName(355.0)), node.config[SemanticsProperties.StateDescription])
         assertEquals(0f..355f, node.config[SemanticsProperties.ProgressBarRangeInfo].range)
     }
 
