@@ -47,6 +47,7 @@ import com.aritr.zinely.ui.theme.ZinelyMakerInkId
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.zinelyContentInks
 import java.io.IOException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -72,8 +73,11 @@ class BenchInkPaletteEditTest {
     private class FakeLibrary(initial: InkLibrary) {
         var library by mutableStateOf(initial)
         var fail = false
+        /** When set, every write waits for it: a write still in flight. */
+        var gate: CompletableDeferred<Unit>? = null
 
         suspend fun edit(transform: (InkLibrary) -> InkLibrary): InkLibraryEdit {
+            gate?.await()
             if (fail) throw IOException("disk full")
             val before = library
             library = transform(before)
@@ -550,9 +554,13 @@ class BenchInkPaletteEditTest {
         tap(composeRule.onNodeWithTag(BenchInkNewPaletteTestTag))
         tap(builtInToggle(Copy.BenchInk.FOREST))
         val save = composeRule.onNodeWithTag(BenchInkSavePaletteTestTag)
+        val gate = CompletableDeferred<Unit>().also { fake.gate = it }
 
         save.performClick()
+        advance()
         save.performClick()
+        advance()
+        gate.complete(Unit)
         advance()
 
         assertEquals(1, fake.library.palettes.size)
