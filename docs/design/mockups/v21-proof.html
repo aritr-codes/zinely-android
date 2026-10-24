@@ -1408,6 +1408,13 @@ if (prototypeParams.get('gallery') === 'fold') {
         changes, and it names the cause. Every body opens "Your zine is safe."
         because the title alone ("Couldn’t make the PDF") reads as a loss, the
         exact misreading the Beta UX review recorded ("it lost my work").
+        Amended 2026-10-24 after device Pass 2 (D-146): the TITLE now follows
+        the cause. "Couldn’t save the PDF" for OutOfSpace and both Permission
+        rows (will ask again; will not ask again / Open settings), where the
+        PDF was made and only keeping it in Downloads failed; "Couldn’t make
+        the PDF" stays for OutOfMemory and anything else. A failed Share writes
+        no Downloads file, so a Share keeps "make" whatever the cause. Bodies,
+        buttons and behaviour are unchanged.
           Cause                      Body (exact; Copy.Proof)
           OutOfMemory, sheet render  "Your zine is safe. This phone ran short of memory making the PDF — try again in a moment."
           OutOfSpace                 "Your zine is safe. This phone is out of space — free some up, then try again."
@@ -1514,7 +1521,7 @@ if (prototypeParams.get('gallery') === 'fold') {
 <section class="a43" id="a43" aria-labelledby="a43h">
   <p class="cap lead" id="a43h"><span class="badge">frozen · A43 · D-142</span><br>
   A43 — the Proof says what went wrong, and Share stays</p>
-  <p class="cap">When a save fails, the overlay is the one it always was: same title, same <b>Try again</b>.
+  <p class="cap">When a save fails, the overlay is the one it always was, with the same <b>Try again</b>.
   Its sentence now says <b>why</b>, so the maker knows what to do next, and it still starts by saying the zine
   is safe. After a save, <b>Share</b> no longer disappears. Decided under the owner’s delegation; why:
   <a href="../V2-SPEC-DEFECTS.md#d-142">D-142</a>, <a href="../../DECISIONS.md#adr-054">ADR-054</a> (keep vs send),
@@ -1522,16 +1529,21 @@ if (prototypeParams.get('gallery') === 'fold') {
 
   <h3>What the overlay says, by cause</h3>
   <table>
-    <thead><tr><th scope="col">Cause</th><th scope="col">Body, exactly</th><th scope="col">Button</th></tr></thead>
+    <thead><tr><th scope="col">Cause</th><th scope="col">Title</th><th scope="col">Body, exactly</th><th scope="col">Button</th></tr></thead>
     <tbody>
-      <tr><td>Out of memory while making the sheet</td><td class="said" data-a43="memory"></td><td>Try again</td></tr>
-      <tr><td>Phone out of space</td><td class="said" data-a43="space"></td><td>Try again</td></tr>
-      <tr><td>Android 7–9 refused Storage, and will ask again</td><td class="said" data-a43="permission"></td><td>Try again</td></tr>
-      <tr><td>Android 7–9 refused Storage, and will not ask again</td><td class="said" data-a43="settings"></td><td>Open settings, then Try again once Storage is on</td></tr>
-      <tr><td>Anything else</td><td class="said" data-a43="generic"></td><td>Try again</td></tr>
+      <tr><td>Out of memory while making the sheet</td><td class="said" data-a43t="memory"></td><td class="said" data-a43="memory"></td><td>Try again</td></tr>
+      <tr><td>Phone out of space</td><td class="said" data-a43t="space"></td><td class="said" data-a43="space"></td><td>Try again</td></tr>
+      <tr><td>Android 7–9 refused Storage, and will ask again</td><td class="said" data-a43t="permission"></td><td class="said" data-a43="permission"></td><td>Try again</td></tr>
+      <tr><td>Android 7–9 refused Storage, and will not ask again</td><td class="said" data-a43t="settings"></td><td class="said" data-a43="settings"></td><td>Open settings, then Try again once Storage is on</td></tr>
+      <tr><td>Anything else</td><td class="said" data-a43t="generic"></td><td class="said" data-a43="generic"></td><td>Try again</td></tr>
     </tbody>
   </table>
-  <p class="note">The title stays <q class="said">Couldn’t make the PDF</q> in every row. A missing photo is
+  <p class="note"><b>Amended 2026-10-24 after device Pass 2</b> (<a href="../V2-SPEC-DEFECTS.md#d-146">D-146</a>):
+  the title follows the cause. When the phone is out of space or Storage was refused, the PDF was made and only
+  keeping it in Downloads failed, so the title says <q class="said">Couldn’t save the PDF</q>; it stays
+  <q class="said">Couldn’t make the PDF</q> otherwise. A failed <b>Share</b> keeps <q class="said">Couldn’t make
+  the PDF</q> whatever the cause: it writes no Downloads file. Bodies and buttons are unchanged.</p>
+  <p class="note">A missing photo is
   <b>not</b> a failure: the PDF draws a placeholder in its place and the save succeeds, so it never appears
   here. Telling the maker about missing photos before Save or Share belongs to W2b.</p>
   <p class="note"><b>Open settings</b> opens Zinely’s own page in Android settings. Coming back does not retry
@@ -1593,14 +1605,18 @@ if (prototypeParams.get('gallery') === 'fold') {
     settings:   SAFE + 'Zinely needs permission to save to Downloads. Under Permissions, turn on Storage, then come back and tap Try again.',
     generic:    'Your zine is safe on this device — the export just didn’t finish. Try once more.'
   };
+  // D-146 (2026-10-24): the title follows the cause. Space and Storage failed only the keeping, so "save".
+  const MAKE = 'Couldn’t make the PDF', SAVE = 'Couldn’t save the PDF';
+  const A43_TITLE = { memory: MAKE, space: SAVE, permission: SAVE, settings: SAVE, generic: MAKE };
   document.querySelectorAll('[data-a43]').forEach(td => td.textContent = A43_BODY[td.dataset.a43]);
+  document.querySelectorAll('[data-a43t]').forEach(td => td.textContent = A43_TITLE[td.dataset.a43t]);
 
   const phone = document.querySelector('.phone');
   const err = document.createElement('div');
   err.className = 'a43err'; err.id = 'a43err'; err.hidden = true;
   err.innerHTML = '<span class="a43mk" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3l9-16z"/>'
     + '<path d="M12 9v4.5"/><path d="M12 16.6v.1"/></svg></span>'
-    + '<h2>Couldn’t make the PDF</h2><p id="a43body"></p>'
+    + '<h2 id="a43title"></h2><p id="a43body"></p>'
     + '<button class="btn btn-save" id="a43cta"></button>';
   phone.querySelector('.topbar').after(err);
   const cta = err.querySelector('#a43cta');
@@ -1610,6 +1626,7 @@ if (prototypeParams.get('gallery') === 'fold') {
     phone.classList.toggle('a43on', !!cause);
     err.hidden = !cause;
     if (!cause) return;
+    err.querySelector('#a43title').textContent = A43_TITLE[cause];
     err.querySelector('#a43body').textContent = A43_BODY[cause];
     cta.textContent = cause === 'settings' ? 'Open settings' : 'Try again';
   }

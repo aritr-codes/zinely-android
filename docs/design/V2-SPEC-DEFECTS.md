@@ -8210,7 +8210,7 @@ second reviewer, could not sign in.
 
 | # | Finding | Outcome |
 |---|---|---|
-| 1 | **One sentence for every failure.** | **Same overlay, title and Try again; the body names the cause.** Final wording, exact: memory *"Your zine is safe. This phone ran short of memory making the PDF — try again in a moment."* · space *"Your zine is safe. This phone is out of space — free some up, then try again."* · permission *"Your zine is safe. Zinely needs permission to save to Downloads — tap Try again, then Allow."* · anything else: the existing `ERROR_BODY`, unchanged. The memory sentence does not say "close other apps": the limit is per app, so on Android 7 that advice would not help. Each opens "Your zine is safe." because the title alone reads as a loss ([BETA-UX-REVIEW](../BETA-UX-REVIEW.md), "it lost my work") |
+| 1 | **One sentence for every failure.** | **Same overlay, title and Try again; the body names the cause.** (The title was amended 2026-10-24 by [D-146](#d-146).) Final wording, exact: memory *"Your zine is safe. This phone ran short of memory making the PDF — try again in a moment."* · space *"Your zine is safe. This phone is out of space — free some up, then try again."* · permission *"Your zine is safe. Zinely needs permission to save to Downloads — tap Try again, then Allow."* · anything else: the existing `ERROR_BODY`, unchanged. The memory sentence does not say "close other apps": the limit is per app, so on Android 7 that advice would not help. Each opens "Your zine is safe." because the title alone reads as a loss ([BETA-UX-REVIEW](../BETA-UX-REVIEW.md), "it lost my work") |
 | 2 | **No route out of a permanent Storage denial.** | **The button reads "Open settings"** and opens Zinely's app-details page. Body, exact: *"Your zine is safe. Zinely needs permission to save to Downloads. Under Permissions, turn on Storage, then come back and tap Try again."* On return the overlay stays; no auto-retry; the button reads "Try again" once Storage is on. It says "Try again", not "Save PDF": the overlay covers the band, so Save PDF is not on screen |
 | 3 | **A missing photo could be mistaken for a failure.** | **It is not one.** The renderer draws a placeholder (`ImageBlitter`) and the save succeeds; the overlay never lists photos. W2b owns listing them before Save or Share |
 | 4 | **Share disappears after a save.** `.band.saved .commit` hides the commit row. | **The done block gains a quiet Share** between Open PDF and Fold it up, kept after the fold; `.commit` stays hidden. It sends a copy of the saved PDF: ADR-054's keep vs send, unchanged |
@@ -8282,4 +8282,22 @@ reviewer's doubt that "it" has no clear noun is not adopted yet; the owner's rea
 **Ruling.** In the Error state the dock keeps **Backups** and **About**. Its label is "Backups", as the frozen
 library mockup already words that action. Because the zine list is empty when the read failed, the sheet opens
 **restore-only**, which is acceptable: restore is the way out.
+
+### D-146 — the Proof says it couldn't make the PDF when only saving it failed {#d-146}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-proof.html` (A43 note, table and overlay script) · `feature/editor/.../ProofScreen.kt` (`ProofErrorPane`) · `core/copy/.../Copy.kt` (`Copy.Proof.COULDNT_SAVE_PDF`) · `app/.../ExportViewModel.kt` (`classifyIo`, `couldNotStart`) |
+| **Found** | W1 device Pass 2 (2026-10-24), on A43 as built under [D-142](#d-142) |
+| **Severity** | Trust. "Couldn't make the PDF" over "This phone is out of space" or "Zinely needs permission to save to Downloads" reads as if the zine could not be turned into a PDF at all, when only keeping it in Downloads failed |
+| **Status** | **Built, unreleased (W1, 2026-10-24); device pass owed.** [`v21-proof.html` A43](mockups/v21-proof.html) amended 2026-10-24 by controller ruling after Pass 2 |
+
+**Ruling.** The title follows the cause. **"Couldn’t save the PDF"** for a failed Save PDF that was out of
+space or refused Storage (will ask again, or will not ask again with Open settings). **"Couldn’t make the
+PDF"** stays for out of memory and anything else. Bodies, buttons and behaviour are unchanged.
+
+**A failed Share keeps "make".** Share writes no Downloads file. A Share cannot be refused Storage (the
+permission gate is Downloads-only, `needsLegacyStoragePermission`), but it can come back out of space:
+`ExportViewModel.classifyIo` runs for every destination. So "save" is shown only when the failed action
+is Save PDF.
 

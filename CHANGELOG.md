@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Proof: a failed save says why (out of memory, out of space, or Storage permission) and still says your zine
     is safe. On Android 7-9, after "Don't ask again", the button opens Zinely's settings page. Share stays next
     to Open PDF after a save (A43, [D-142](docs/design/V2-SPEC-DEFECTS.md#d-142)).
+  - Proof: when Save PDF fails for want of space or Storage permission, the title says "Couldn't save the PDF"
+    instead of "Couldn't make the PDF" ([D-146](docs/design/V2-SPEC-DEFECTS.md#d-146)).
   - Proof: nothing is smaller than 12sp, and it grows with your phone's text size, including the fold
     diagram's page numbers (A44, [D-140](docs/design/V2-SPEC-DEFECTS.md#d-140)).
   - Bench: the page strip no longer slides when Android's Remove animations is on; the Add pill (and Reframe's
