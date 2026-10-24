@@ -200,9 +200,12 @@ internal fun InkMixerSheet(
         titleTrailing = { InkMixerName(state.hex) },
         foot = {
             InkMixerFoot(useLabel, onCancel = onCancel, onUse = {
-                val committed = state.commitHex()
-                write(committed)
-                onUse(committed.hex)
+                // The foot stays tappable while the sheet slides out: a second Use would be a second write.
+                if (shown) {
+                    val committed = state.commitHex()
+                    write(committed)
+                    onUse(committed.hex)
+                }
             })
         },
     ) {

@@ -26,6 +26,7 @@ import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.ink.InkHex
 import com.aritr.zinely.core.editor.ink.InkLibrary
 import com.aritr.zinely.core.editor.ink.InkLibraryEdit
+import com.aritr.zinely.core.editor.ink.InkPalette
 import com.aritr.zinely.core.editor.ink.MyInk
 import com.aritr.zinely.core.editor.ink.colourName
 import com.aritr.zinely.core.model.Page
@@ -64,8 +65,10 @@ class BenchInkMixerHostTest {
     private class FakeLibrary(initial: InkLibrary) {
         var library by mutableStateOf(initial)
         var fail = false
+        var edits = 0
 
         suspend fun edit(transform: (InkLibrary) -> InkLibrary): InkLibraryEdit {
+            edits++
             if (fail) throw IOException("disk full")
             val before = library
             library = transform(before)
@@ -191,6 +194,7 @@ class BenchInkMixerHostTest {
 
         type(slate)
         use()
+        assertEquals("one write: use, no touch after it", 1, fake.edits)
         assertFalse("Use closes the mixer", mixerOpen())
         assertEquals(slate.toColorRgba(), colour())
         assertEquals(listOf(slate), fake.library.myInks.map { it.hex })
@@ -278,6 +282,30 @@ class BenchInkMixerHostTest {
         assertEquals(1, stripPots())
         assertTrue(snackSays(Copy.BenchInk.mixedAlreadyIn(words(brick))))
         assertEquals(listOf(brick), fake.library.myInks.map { it.hex })
+    }
+
+    @Test
+    fun `given a palette of six being edited when Mix then Use, then the ink is only kept in My inks, and Undo restores it`() {
+        val six = listOf("C0392B", "2E6F95", "E8A87C", "6B4E71", "1F7A5C", "D4B000").map { InkHex(it) }
+        val start = InkLibrary(palettes = listOf(InkPalette(1, "Six", six)), nextPaletteId = 2)
+        val fake = FakeLibrary(start)
+        screen(fake)
+        tap(composeRule.onNodeWithTag(BenchInkPaletteMoreTestTag))
+        composeRule.onNodeWithTag("$BenchInkMenuItemTestTag-${Copy.BenchInk.EDIT}").performClick()
+        advance()
+        assertEquals(6, stripPots())
+        mix()
+        composeRule.onNodeWithTag(InkMixerUseTestTag).fetchSemanticsNode()
+            .config[SemanticsProperties.Text].single().text.let { assertEquals(Copy.InkMix.SAVE_TO_MY_INKS, it) }
+        use()
+        assertEquals(6, stripPots())
+        assertTrue(snackSays(Copy.BenchInk.mixedKept(words(brick))))
+        assertEquals(listOf(brick), fake.library.myInks.map { it.hex })
+        assertEquals(brick.toColorRgba(), colour())
+
+        undo()
+        assertEquals(start, fake.library)
+        assertEquals(6, stripPots())
     }
 
     @Test
