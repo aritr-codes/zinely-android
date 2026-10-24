@@ -4,7 +4,6 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.AccessibilityManager
 import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -33,6 +32,7 @@ import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.ui.testing.FakeAccessibilityManager
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import kotlinx.coroutines.CoroutineScope
@@ -560,7 +560,7 @@ class BenchC4Test {
         val store = store()
         composeRule.setContent {
             ZinelyTheme {
-                CompositionLocalProvider(LocalAccessibilityManager provides BenchFakeAccessibilityManager(10_000L)) {
+                CompositionLocalProvider(LocalAccessibilityManager provides FakeAccessibilityManager(10_000L)) {
                     EditorScreen(store = store, pageSizePt = pageSizePt, modifier = Modifier.size(host.first, host.second))
                 }
             }
@@ -619,6 +619,49 @@ class BenchC4Test {
         val ids = store.uiState.value.document.pages[0].elements.map { it.id }
         assertEquals(listOf(kept), ids)
         assertFalse("the deleted piece stays deleted", doomed in ids)
+    }
+
+    @Test
+    fun snack_undo_tapped_in_the_frame_after_a_later_edit_takes_back_nothing() {
+        // Given two pieces, one deleted, and its snack showing Undo
+        val store = store()
+        setScreen(store)
+        val kept = placedText(store)
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 60.0, 18.0), "bye"))
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        deleteSelected()
+        composeRule.mainClock.advanceTimeBy(BenchDeleteFadeMillis + 100L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertIsDisplayed()
+
+        // When a later edit lands and the snack's Undo is tapped before any frame retires the snack
+        store.dispatch(Intent.DuplicateElement(kept, pageSizePt))
+        val afterDuplicate = store.uiState.value.document
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).performClick()
+
+        // Then the snack's Undo takes back nothing: not the duplicate, and not the delete behind it
+        assertEquals(afterDuplicate, store.uiState.value.document)
+    }
+
+    @Test
+    fun a_delete_that_pushes_nothing_offers_no_undo() {
+        // Given a piece fading out under the snack's delete
+        val store = store()
+        setScreen(store)
+        val id = placedText(store)
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        deleteSelected()
+        composeRule.mainClock.advanceTimeBy(50L)
+
+        // When another path removes it inside the fade, so the fade's own delete changes nothing
+        store.dispatch(Intent.Delete(setOf(id)))
+        composeRule.mainClock.advanceTimeBy(BenchDeleteFadeMillis + 100L)
+        composeRule.waitForIdle()
+
+        // Then no Undo is armed: there is no step of the fade's own to take back
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
     }
 
     @Test
@@ -820,15 +863,3 @@ class BenchC4Test {
     }
 }
 
-/**
- * A stand-in for the phone's accessibility timeout. ponytail: private to this file until Task 7's shared
- * `com.aritr.zinely.ui.testing.FakeAccessibilityManager` (same constructor) merges; then swap to it (R-W9).
- */
-private class BenchFakeAccessibilityManager(private val recommendedMillis: Long) : AccessibilityManager {
-    override fun calculateRecommendedTimeoutMillis(
-        originalTimeoutMillis: Long,
-        containsIcons: Boolean,
-        containsText: Boolean,
-        containsControls: Boolean,
-    ): Long = maxOf(originalTimeoutMillis, recommendedMillis)
-}

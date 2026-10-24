@@ -146,6 +146,24 @@ class BenchArtPlacementTest {
     }
 
     @Test
+    fun `Given a placement's snack, When a later edit lands, Then the snack offers no Undo`() {
+        // D-141: the placement's revision is recorded at its dispatch, so any later step retires its Undo.
+        // ponytail: this guards the behaviour, not the timing. The test host runs a launched job eagerly, so
+        // it cannot see the old bug (the revision read inside a job that, on a phone, runs a frame later).
+        val store = store()
+        setScreen(store)
+        openArt()
+        reveal(benchArtTileTestTag("shape.circle"))
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertIsDisplayed()
+
+        store.dispatch(Intent.DuplicateElement(decor(store).single().id, pageSizePt))
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
+    }
+
+    @Test
     fun `Given the cabinet, When torn tape is tapped, Then the newly authored supply is placed`() {
         val store = store()
         setScreen(store)
