@@ -10,6 +10,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -856,10 +857,9 @@ private fun BenchInkMenu(items: List<Pair<String, () -> Unit>>, onDismiss: () ->
                 }
             }
         }
-    }
-    LaunchedEffect(Unit) {
-        // ponytail: the popup's window attaches a frame later; a failed request leaves focus where it was.
-        runCatching { first.requestFocus() }
+        // Inside the popup's own composition, where the requester's node lives. A request that still finds
+        // no attached window fails quietly and leaves focus where it was.
+        LaunchedEffect(Unit) { runCatching { first.requestFocus() } }
     }
 }
 
@@ -1330,8 +1330,9 @@ internal data class BenchInkTrayUndo(val edit: InkLibraryEdit?, val reopen: Pale
  *    draft to reopen; a refusal (palettes full, six inks, too few) never does;
  *  - Undo after Save, and after Cancel of a changed draft, reopens the draft as it was.
  *
- * ponytail: writes run in the tray's own scope, so one still in flight when the tray closes is cancelled
- * with it (a disk write is milliseconds). Undo does not have this ceiling: the host runs it.
+ * ponytail: the wait for a write runs in the tray's own scope. The write itself runs in the ViewModel's
+ * scope and completes, but if the tray closes inside those milliseconds its snack (and Undo) is not
+ * raised. Undo itself has no such ceiling: the host runs it.
  */
 private class BenchInkTrayActions(
     private val library: InkLibrary?,
@@ -1342,6 +1343,8 @@ private class BenchInkTrayActions(
     private val onDraftChange: (PaletteDraft?) -> Unit,
     private val onSnack: (String, BenchInkTrayUndo?) -> Unit,
     val nameFocus: FocusRequester,
+    /** A Save is being written; a second tap is ignored, or two taps would add the palette twice. */
+    private val saving: MutableState<Boolean>,
 ) {
     fun newPalette() {
         val lib = library ?: return
@@ -1394,11 +1397,16 @@ private class BenchInkTrayActions(
         when {
             name.isEmpty() -> runCatching { nameFocus.requestFocus() }
             d.inks.size < PALETTE_MIN -> onSnack(Copy.BenchInk.PICK_AT_LEAST_TWO, null)
-            else -> palette(
-                message = if (d.id == null) Copy.BenchInk.newPalette(name) else Copy.BenchInk.saved(name),
-                reopen = d,
-                onDone = { onDraftChange(null) },
-            ) { lib -> d.id?.let { lib.updatePalette(it, name, d.inks) } ?: lib.addPalette(name, d.inks) }
+            saving.value -> Unit
+            else -> {
+                saving.value = true
+                palette(
+                    message = if (d.id == null) Copy.BenchInk.newPalette(name) else Copy.BenchInk.saved(name),
+                    reopen = d,
+                    onDone = { onDraftChange(null) },
+                    onEnd = { saving.value = false },
+                ) { lib -> d.id?.let { lib.updatePalette(it, name, d.inks) } ?: lib.addPalette(name, d.inks) }
+            }
         }
     }
 
@@ -1419,6 +1427,7 @@ private class BenchInkTrayActions(
         message: String,
         reopen: PaletteDraft? = null,
         onDone: () -> Unit = {},
+        onEnd: () -> Unit = {},
         op: (InkLibrary) -> PaletteResult,
     ) {
         scope.launch {
@@ -1427,6 +1436,8 @@ private class BenchInkTrayActions(
                 onEditInkLibrary { lib -> op(lib).also { result = it }.let { (it as? PaletteResult.Done)?.library ?: lib } }
             } catch (_: IOException) {
                 return@launch
+            } finally {
+                onEnd()
             }
             when (result) {
                 is PaletteResult.Done -> {
@@ -1454,7 +1465,8 @@ private fun rememberBenchInkTrayActions(
 ): BenchInkTrayActions {
     val scope = rememberCoroutineScope()
     val nameFocus = remember { FocusRequester() }
-    return BenchInkTrayActions(library, current, scope, onEditInkLibrary, draft, onDraftChange, onSnack, nameFocus)
+    val saving = remember { mutableStateOf(false) }
+    return BenchInkTrayActions(library, current, scope, onEditInkLibrary, draft, onDraftChange, onSnack, nameFocus, saving)
 }
 
 /**

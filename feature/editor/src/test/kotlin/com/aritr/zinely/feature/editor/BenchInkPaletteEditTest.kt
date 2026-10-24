@@ -12,6 +12,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
@@ -21,6 +22,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
@@ -102,7 +104,12 @@ class BenchInkPaletteEditTest {
         )
     }
 
-    private fun screen(fake: FakeLibrary): EditorStore {
+    private fun screen(fake: FakeLibrary): EditorStore = screen({ fake.library }, fake::edit)
+
+    private fun screen(
+        shown: () -> InkLibrary,
+        edit: suspend ((InkLibrary) -> InkLibrary) -> InkLibraryEdit,
+    ): EditorStore {
         val store = store()
         composeRule.setContent {
             ZinelyTheme {
@@ -110,8 +117,8 @@ class BenchInkPaletteEditTest {
                     store = store,
                     pageSizePt = PtSize(100.0, 130.0),
                     modifier = Modifier.size(360.dp, 720.dp),
-                    inkLibrary = fake.library,
-                    onEditInkLibrary = fake::edit,
+                    inkLibrary = shown(),
+                    onEditInkLibrary = edit,
                 )
             }
         }
@@ -367,6 +374,7 @@ class BenchInkPaletteEditTest {
 
         assertFalse(editing())
         assertTrue(snackSays(Copy.BenchInk.PALETTE_NOT_SAVED))
+        assertEquals("the same Undo as Cancel", 1, undoButtons())
         composeRule.onNodeWithTag(BenchInkPopoverTestTag).assertExistsInTag(BenchInkPopoverTestTag)
         composeRule.onNodeWithTag(BenchInkDoneTestTag).assertExistsInTag(BenchInkDoneTestTag)
     }
@@ -478,5 +486,112 @@ class BenchInkPaletteEditTest {
 
         assertTrue("the maker's draft is not thrown away", editing())
         assertEquals(0, undoButtons())
+    }
+
+    @Test
+    fun `given a New draft then focus opens on the count line, and Save with no name focuses the name`() {
+        val fake = FakeLibrary(InkLibrary.EMPTY)
+        screen(fake)
+        tap(composeRule.onNodeWithTag(BenchInkNewPaletteTestTag))
+        composeRule.onNodeWithTag(BenchInkCountTestTag).assertIsFocused()
+
+        composeRule.onNodeWithTag(BenchInkPaletteNameTestTag).performTextReplacement("")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchInkCountTestTag).performSemanticsAction(SemanticsActions.RequestFocus)
+        press(composeRule.onNodeWithTag(BenchInkSavePaletteTestTag))
+
+        composeRule.onNodeWithTag(BenchInkPaletteNameTestTag).assertIsFocused()
+        assertEquals(0, undoButtons())
+        assertEquals(InkLibrary.EMPTY, fake.library)
+    }
+
+    @Test
+    fun `given an existing palette edited when Save then it is saved in place, and Undo restores it`() {
+        val start = InkLibrary(palettes = listOf(InkPalette(1, "Sea", listOf(forest, brick))), nextPaletteId = 2, openPaletteId = 1)
+        val fake = FakeLibrary(start)
+        screen(fake)
+        tap(composeRule.onNodeWithTag(BenchInkPaletteMoreTestTag))
+        menu(Copy.BenchInk.EDIT)
+        composeRule.onNodeWithTag(BenchInkTitleTestTag).fetchSemanticsNode()
+            .config[SemanticsProperties.Text].single().text.let { assertEquals(Copy.BenchInk.EDIT_PALETTE, it) }
+        composeRule.onNodeWithTag(BenchInkPaletteNameTestTag).performTextReplacement("Seaside")
+        composeRule.waitForIdle()
+
+        press(composeRule.onNodeWithTag(BenchInkSavePaletteTestTag))
+
+        assertEquals(listOf(InkPalette(1, "Seaside", listOf(forest, brick))), fake.library.palettes)
+        assertTrue(snackSays(Copy.BenchInk.saved("Seaside")))
+        undo()
+        assertEquals(start, fake.library)
+        assertEquals("Seaside", nameText())
+    }
+
+    @Test
+    fun `given the ninth palette lands while a New draft is open when Save then My palettes is full and the draft stays`() {
+        val fake = FakeLibrary(InkLibrary(palettes = nine().palettes.drop(1), nextPaletteId = 10))
+        screen(fake)
+        tap(composeRule.onNodeWithTag(BenchInkNewPaletteTestTag))
+        tap(builtInToggle(Copy.BenchInk.FOREST))
+        fake.library = nine()
+        composeRule.waitForIdle()
+
+        press(composeRule.onNodeWithTag(BenchInkSavePaletteTestTag))
+
+        assertTrue(snackSays(Copy.BenchInk.PALETTES_FULL))
+        assertEquals(0, undoButtons())
+        assertTrue(editing())
+        assertEquals(nine(), fake.library)
+    }
+
+    @Test
+    fun `given Save is tapped twice before the write lands then the palette is added once`() {
+        val fake = FakeLibrary(InkLibrary.EMPTY)
+        screen(fake)
+        tap(composeRule.onNodeWithTag(BenchInkNewPaletteTestTag))
+        tap(builtInToggle(Copy.BenchInk.FOREST))
+        val save = composeRule.onNodeWithTag(BenchInkSavePaletteTestTag)
+
+        save.performClick()
+        save.performClick()
+        advance()
+
+        assertEquals(1, fake.library.palettes.size)
+    }
+
+    @Test
+    fun `given the Undo of a Save is standing when the tray closes then the Undo is withdrawn and the palette stays`() {
+        val fake = FakeLibrary(InkLibrary.EMPTY)
+        screen(fake)
+        tap(composeRule.onNodeWithTag(BenchInkNewPaletteTestTag))
+        tap(builtInToggle(Copy.BenchInk.FOREST))
+        press(composeRule.onNodeWithTag(BenchInkSavePaletteTestTag))
+        assertEquals(1, undoButtons())
+
+        press(composeRule.onNodeWithTag(BenchInkDoneTestTag))
+
+        assertEquals("no Undo that would take the palette away with no draft to return to", 0, undoButtons())
+        assertEquals(1, fake.library.palettes.size)
+    }
+
+    @Test
+    fun `given the screen is a write behind the store when Undo then before is not written over a newer library`() {
+        // The real ViewModel's StateFlow can emit after the write returns; the screen's copy lags here forever.
+        val start = InkLibrary(palettes = listOf(InkPalette(1, "Sea", listOf(forest, brick))), nextPaletteId = 2, openPaletteId = 1)
+        var stored = start
+        val edit: suspend ((InkLibrary) -> InkLibrary) -> InkLibraryEdit = { t ->
+            val before = stored
+            stored = t(before)
+            InkLibraryEdit(before, stored)
+        }
+        screen({ start }, edit)
+        tap(composeRule.onNodeWithTag(BenchInkPaletteMoreTestTag))
+        menu(Copy.BenchInk.DELETE)
+        assertEquals(1, undoButtons())
+        val newer = InkLibrary(palettes = listOf(InkPalette(7, "Elsewhere", listOf(brick, forest))), nextPaletteId = 8)
+        stored = newer
+
+        undo()
+
+        assertEquals("the newer library is kept", newer, stored)
     }
 }

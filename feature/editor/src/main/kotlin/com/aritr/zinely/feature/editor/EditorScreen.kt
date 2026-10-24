@@ -388,6 +388,15 @@ public fun EditorScreen(
     // edit made since (a strip opened, a palette saved). Compared by identity with [snackUndo], so a newer
     // snack that took the slot is left alone.
     var inkUndo by remember { mutableStateOf<BenchInkUndo?>(null) }
+    // Every ink Undo's library restore, compare-and-set: `before` goes back only over the library the Undo
+    // was raised over. The withdraw effects below read the screen's copy, which can be a write behind the
+    // store; this reads the store itself. A store failure restores nothing and never crashes.
+    val restoreInkLibrary: suspend (InkLibraryEdit) -> Unit = { edit ->
+        try {
+            onEditInkLibrary { stored -> if (stored == edit.after) edit.before else stored }
+        } catch (_: IOException) {
+        }
+    }
     LaunchedEffect(uiState.document, inkLibrary) {
         val standing = inkUndo ?: return@LaunchedEffect
         val libraryMoved = standing.libraryAfter != null && inkLibrary != null && inkLibrary != standing.libraryAfter
@@ -650,22 +659,14 @@ public fun EditorScreen(
                 } catch (_: IOException) {
                     null
                 }
-                val restore = edit?.before
                 // A document change that landed while the write was awaited already ran the withdraw effect,
                 // so it is checked here too: no Undo is raised over a document that has moved on.
                 val undo: (() -> Unit)? =
-                    if ((docChanged || restore != null) && currentState().document === docAfter) {
+                    if ((docChanged || edit != null) && currentState().document === docAfter) {
                         undo@{
                             // The withdraw effect runs a frame after a change; this closes that frame.
                             if (currentState().document !== docAfter) return@undo
-                            if (restore != null) {
-                                c4Scope.launch {
-                                    try {
-                                        onEditInkLibrary { restore }
-                                    } catch (_: IOException) {
-                                    }
-                                }
-                            }
+                            if (edit != null) c4Scope.launch { restoreInkLibrary(edit) }
                             if (docChanged) dispatch(Intent.Undo)
                         }
                     } else {
@@ -871,7 +872,17 @@ public fun EditorScreen(
     // The palette being made or edited in the tray (INK task 7), hoisted so a snack's Undo can reopen it.
     // It does not outlive the tray: closing the tray (a deselect, a page change) drops it.
     var inkDraft by remember { mutableStateOf<PaletteDraft?>(null) }
-    LaunchedEffect(inkPopoverVisible) { if (!inkPopoverVisible) inkDraft = null }
+    // An Undo that would reopen a draft is withdrawn with the tray too: run after the tray closed, it would
+    // take a saved palette away with no draft to come back to (and Cancel's Undo would do nothing at all).
+    LaunchedEffect(inkPopoverVisible) {
+        if (inkPopoverVisible) return@LaunchedEffect
+        inkDraft = null
+        val standing = inkUndo ?: return@LaunchedEffect
+        if (standing.reopens) {
+            if (snackUndo === standing.undo) snackUndo = null
+            inkUndo = null
+        }
+    }
     val trayOpen by rememberUpdatedState(inkPopoverVisible)
     // A tray Undo that reopens, or was raised over, a draft is withdrawn once the draft moves on (a toggle,
     // a new draft), so it never throws later work away. Its own effect: the library one above must not
@@ -885,22 +896,18 @@ public fun EditorScreen(
     }
     /**
      * The tray's palette and My-inks snacks (INK task 7): the line, and an Undo iff [BenchInkTrayUndo] is
-     * given. Undo runs here, in the screen's scope, so it still restores after the tray has closed: the
-     * library's `before` (withdrawn if the library has moved on since), and the draft, reopened only
-     * while the tray is open. It never dispatches `Intent.Undo`: none of these touch the page.
+     * given. Undo runs here, in the screen's scope: the library's `before` ([restoreInkLibrary]), then the
+     * draft, reopened after the restore so it never draws over the palette it just saved. An Undo that
+     * reopens a draft is withdrawn when the tray closes. It never dispatches `Intent.Undo`: none of these
+     * touch the page.
      */
     val raiseTraySnack: (String, BenchInkTrayUndo?) -> Unit = { message, trayUndo ->
         val undo: (() -> Unit)? = trayUndo?.let { u ->
             {
-                u.edit?.let { edit ->
-                    c4Scope.launch {
-                        try {
-                            onEditInkLibrary { edit.before }
-                        } catch (_: IOException) {
-                        }
-                    }
+                c4Scope.launch {
+                    u.edit?.let { restoreInkLibrary(it) }
+                    if (u.reopen != null && trayOpen) inkDraft = u.reopen
                 }
-                if (u.reopen != null && trayOpen) inkDraft = u.reopen
             }
         }
         deleteJob[0]?.cancel()
@@ -913,6 +920,7 @@ public fun EditorScreen(
                 undo = it,
                 draft = inkDraft,
                 watchesDraft = trayUndo.reopen != null || inkDraft != null,
+                reopens = trayUndo.reopen != null,
             )
         }
         snackVisible = true
@@ -2638,7 +2646,8 @@ private fun centeredTextBox(page: PtSize): Transform {
 /**
  * A standing Ink-tray Undo and what it was raised over; see `inkUndo` in [EditorScreen]. [document] is
  * `null` for a palette or My-inks Undo, which does not touch the page. [watchesDraft]: the Undo reopens or
- * was raised over a palette draft, so it is withdrawn once the draft moves on from [draft].
+ * was raised over a palette draft, so it is withdrawn once the draft moves on from [draft]. [reopens]: it
+ * brings a draft back, so it is withdrawn when the tray closes.
  */
 private class BenchInkUndo(
     val document: ZineDocument?,
@@ -2646,4 +2655,5 @@ private class BenchInkUndo(
     val undo: () -> Unit,
     val draft: PaletteDraft? = null,
     val watchesDraft: Boolean = false,
+    val reopens: Boolean = false,
 )
