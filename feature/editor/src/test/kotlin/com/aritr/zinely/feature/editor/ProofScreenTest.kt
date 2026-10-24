@@ -975,7 +975,7 @@ class ProofScreenTest {
     /** D-146: Share writes no Downloads file, so a failed Share keeps "make" even when out of space. */
     @Test
     fun a_failed_share_keeps_the_make_title_whatever_the_cause() {
-        // Given a Share that failed, for every cause the host can report
+        // Given a failed Share, for every cause (stricter than the host: Share is never refused Storage)
         var failure by mutableStateOf(ProofFailure.OutOfSpace)
         composeRule.setContent {
             ZinelyTheme {

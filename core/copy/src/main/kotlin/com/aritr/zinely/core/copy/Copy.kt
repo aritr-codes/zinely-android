@@ -1316,7 +1316,7 @@ public object Copy {
         public const val COULDNT_SAVE_PDF: String = "Couldn’t save the PDF"
         public const val ERROR_BODY: String =
             "Your zine is safe on this device — the export just didn’t finish. Try once more."
-        // A43 / D-142: the same overlay and title, the body names the cause. Each opens "Your zine is safe."
+        // A43 / D-142: the same overlay, the body names the cause (the title, by D-146). Each opens "Your zine is safe."
         // because the title alone reads as a loss. Exact, frozen wording.
         public const val ERROR_OUT_OF_MEMORY: String =
             "Your zine is safe. This phone ran short of memory making the PDF — try again in a moment."
