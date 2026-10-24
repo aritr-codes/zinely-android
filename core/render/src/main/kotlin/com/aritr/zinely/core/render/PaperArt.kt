@@ -138,7 +138,7 @@ internal object PaperArt {
         z()
     }
 
-    /** Torn strip, wavy (`paper.stripb`): A34, drawn in-house. */
+    /** Wavy torn strip (`paper.stripb`): A34, drawn in-house. */
     internal val PAPER_STRIPB: SupplyOutline = path {
         m(0.6, 6.4); l(1.52, 7.01); l(2.86, 5.07); l(3.48, 5.76); l(5.2, 6.38); l(6.18, 5.7); l(7.71, 6.46)
         l(8.47, 5.25); l(10.48, 5.73); l(11.57, 5.19); l(12.27, 5.12); l(14.11, 6.65); l(15.27, 5.27)
@@ -167,7 +167,7 @@ internal object PaperArt {
         m(5.6, 18.5); l(18.5, 18.3); l(18.4, 5.5); l(5.5, 5.7); z()
     }
 
-    /** Window frame, narrow (`paper.windowc`): A39, drawn in-house. */
+    /** Narrow frame (`paper.windowc`): A39, drawn in-house. */
     internal val PAPER_WINDOWC: SupplyOutline = path {
         m(1.8, 1.5); l(22.2, 1.5); c(22.37, 1.5, 22.5, 1.63, 22.5, 1.8); l(22.5, 22.2)
         c(22.5, 22.37, 22.37, 22.5, 22.2, 22.5); l(1.8, 22.5); c(1.63, 22.5, 1.5, 22.37, 1.5, 22.2); l(1.5, 1.8)
@@ -211,7 +211,7 @@ internal object PaperArt {
         l(0.5, 16.5); z()
     }
 
-    /** Speech balloon (square) (`paper.chat`): Doodle Icons by Oreo Design, imported. */
+    /** Square balloon (`paper.chat`): Doodle Icons by Oreo Design, imported. */
     internal val PAPER_CHAT: SupplyOutline = path {
         m(2.47, 3.35); c(5.57, 3.01, 8.93, 2.84, 12.3, 2.85); c(15.52, 2.86, 18.66, 3.03, 21.42, 3.35)
         c(21.94, 3.41, 22.39, 3.84, 22.49, 4.35); c(22.84, 6.08, 23.01, 8.0, 23.0, 10.09)
@@ -234,13 +234,13 @@ internal object PaperArt {
         c(1.89, 15.91, 1.87, 15.94, 1.92, 15.84); l(3.19, 13.1); c(3.25, 12.98, 3.34, 12.94, 3.45, 12.94); z()
     }
 
-    /** Marker underline, round (`paper.underlineb`): A34, drawn in-house. */
+    /** Round underline (`paper.underlineb`): A34, drawn in-house. */
     internal val PAPER_UNDERLINEB: SupplyOutline = path {
         m(1.9, 10.4); c(7.0, 8.4, 15.0, 11.6, 22.2, 9.5); c(23.4, 9.3, 23.5, 12.8, 22.3, 13.0)
         c(15.0, 15.2, 7.5, 12.2, 1.7, 14.2); c(0.6, 14.5, 0.6, 10.6, 1.9, 10.4); z()
     }
 
-    /** Ticket stub, torn end (`paper.stubb`): A34, drawn in-house. */
+    /** Torn-end stub (`paper.stubb`): A34, drawn in-house. */
     internal val PAPER_STUBB: SupplyOutline = path {
         m(0.6, 4.2); l(21.6, 3.9); l(21.84, 4.99); l(21.46, 5.7); l(21.6, 7.3); l(21.86, 8.49); l(21.77, 10.6)
         l(21.65, 11.5); l(22.45, 12.88); l(21.97, 13.49); l(21.44, 15.21); l(21.86, 16.2); l(21.73, 17.7)
@@ -248,7 +248,7 @@ internal object PaperArt {
         c(3.5, 10.34, 2.16, 9.0, 0.5, 9.0); l(0.6, 4.2); z()
     }
 
-    /** Ticket stub, torn off (`paper.stubc`): A39, drawn in-house. */
+    /** Torn-off stub (`paper.stubc`): A39, drawn in-house. */
     internal val PAPER_STUBC: SupplyOutline = path {
         m(2.52, 5.25); l(14.82, 5.25); c(14.97, 5.25, 15.1, 5.36, 15.12, 5.51)
         c(15.2, 6.08, 15.52, 6.57, 16.0, 6.87); c(16.08, 6.92, 16.15, 6.88, 16.14, 7.13); l(16.13, 7.49)
@@ -270,7 +270,7 @@ internal object PaperArt {
         c(18.9, 5.37, 19.03, 5.25, 19.18, 5.25); z()
     }
 
-    /** Admission ticket (`paper.ticket`): Fluent Emoji (High Contrast), imported. */
+    /** Entry ticket (`paper.ticket`): Fluent Emoji (High Contrast), imported. */
     internal val PAPER_TICKET: SupplyOutline = path {
         m(19.35, 4.1); c(20.23, 4.1, 21.04, 4.78, 21.18, 5.65); c(21.24, 6.04, 21.55, 6.34, 21.94, 6.39)
         c(22.8, 6.5, 23.5, 7.28, 23.5, 8.15); l(23.5, 9.25); c(23.5, 9.68, 23.35, 10.08, 23.08, 10.4)
@@ -284,7 +284,7 @@ internal object PaperArt {
         c(2.42, 6.33, 2.74, 6.05, 2.81, 5.67); c(2.96, 4.8, 3.75, 4.1, 4.63, 4.1); z()
     }
 
-    /** Postage stamp, bites (`paper.stampb`): A34, drawn in-house. */
+    /** Bitten stamp (`paper.stampb`): A34, drawn in-house. */
     internal val PAPER_STAMPB: SupplyOutline = path {
         m(1.0, 1.0); l(3.0, 1.0); c(3.0, 1.55, 3.45, 2.0, 4.0, 2.0); c(4.55, 2.0, 5.0, 1.55, 5.0, 1.0); l(7.0, 1.0)
         c(7.0, 1.55, 7.45, 2.0, 8.0, 2.0); c(8.55, 2.0, 9.0, 1.55, 9.0, 1.0); l(11.0, 1.0)
@@ -308,7 +308,7 @@ internal object PaperArt {
         c(1.55, 5.0, 2.0, 4.55, 2.0, 4.0); c(2.0, 3.45, 1.55, 3.0, 1.0, 3.0); z()
     }
 
-    /** Postage stamp, corner bites (`paper.stampc`): A39, drawn in-house. */
+    /** Corner bites (`paper.stampc`): A39, drawn in-house. */
     internal val PAPER_STAMPC: SupplyOutline = path {
         m(3.44, 2.27); c(3.85, 2.18, 4.18, 1.85, 4.27, 1.44); c(4.3, 1.3, 4.43, 1.2, 4.57, 1.2); l(6.23, 1.2)
         c(6.37, 1.2, 6.5, 1.3, 6.53, 1.44); c(6.64, 1.94, 7.08, 2.3, 7.6, 2.3); c(8.12, 2.3, 8.56, 1.94, 8.67, 1.44)

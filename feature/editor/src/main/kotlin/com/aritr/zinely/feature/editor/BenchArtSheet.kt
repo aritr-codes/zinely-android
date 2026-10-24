@@ -90,6 +90,7 @@ public fun benchArtTileTestTag(supplyId: String): String = "bench-art-tile-$supp
 public fun benchArtRecentTileTestTag(supplyId: String): String = "bench-art-recent-tile-$supplyId"
 public fun benchArtFavouriteTileTestTag(supplyId: String): String = "bench-art-favourite-tile-$supplyId"
 public fun benchArtFavouriteTestTag(supplyId: String): String = "bench-art-favourite-$supplyId"
+public fun benchArtTileNameTestTag(supplyId: String): String = "bench-art-tile-name-$supplyId"
 public fun benchArtLabelTestTag(family: String): String = "bench-art-label-$family"
 public fun benchArtFamilyFilterTestTag(family: String): String = "bench-art-filter-$family"
 public fun benchArtFamilyCueTestTag(family: String): String = "bench-art-filter-cue-$family"
@@ -645,7 +646,8 @@ private fun BenchArtTile(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.CenterStart)
-                    .padding(start = 8.dp, end = 38.dp, top = 4.dp, bottom = 4.dp),
+                    .padding(start = 8.dp, end = 38.dp, top = 4.dp, bottom = 4.dp)
+                    .testTag(benchArtTileNameTestTag(supplyId)),
             )
             Box(
                 modifier = Modifier

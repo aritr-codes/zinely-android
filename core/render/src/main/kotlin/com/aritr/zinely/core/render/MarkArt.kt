@@ -278,7 +278,7 @@ internal object MarkArt {
         c(0.5, 11.32, 1.12, 10.75, 1.78, 10.75); z()
     }
 
-    /** Halftone dots, screen (`mark.halftoneb`): A39, drawn in-house. */
+    /** Halftone screen (`mark.halftoneb`): A39, drawn in-house. */
     internal val MARK_HALFTONEB: SupplyOutline = path {
         m(5.08, 3.19); c(5.08, 4.24, 4.24, 5.08, 3.19, 5.08); c(2.15, 5.08, 1.3, 4.24, 1.3, 3.19)
         c(1.3, 2.15, 2.15, 1.3, 3.19, 1.3); c(4.24, 1.3, 5.08, 2.15, 5.08, 3.19); z()
@@ -318,7 +318,7 @@ internal object MarkArt {
         c(20.74, 21.3, 21.3, 20.74, 21.99, 20.74); c(22.68, 20.74, 23.24, 21.3, 23.24, 21.99); z()
     }
 
-    /** Registration cross, bold (`mark.registrationb`): A34, drawn in-house. */
+    /** Bold crosshair (`mark.registrationb`): A34, drawn in-house. */
     internal val MARK_REGISTRATIONB: SupplyOutline = path {
         m(10.75, 0.75); l(13.25, 0.75); l(13.25, 4.86); c(16.26, 5.39, 18.61, 7.74, 19.14, 10.75); l(23.25, 10.75)
         l(23.25, 13.25); l(19.14, 13.25); c(18.61, 16.26, 16.26, 18.61, 13.25, 19.14); l(13.25, 23.25)
@@ -330,7 +330,7 @@ internal object MarkArt {
         m(10.75, 10.75); l(10.75, 7.42); c(9.13, 7.86, 7.86, 9.13, 7.42, 10.75); z()
     }
 
-    /** Registration cross, fine (`mark.registrationc`): A39, drawn in-house. */
+    /** Fine crosshair (`mark.registrationc`): A39, drawn in-house. */
     internal val MARK_REGISTRATIONC: SupplyOutline = path {
         m(0.5, 11.55); c(0.5, 11.38, 0.63, 11.25, 0.8, 11.25); l(3.53, 11.25)
         c(3.89, 7.15, 7.15, 3.89, 11.25, 3.53); l(11.25, 0.8); c(11.25, 0.63, 11.38, 0.5, 11.55, 0.5); l(12.45, 0.5)
@@ -357,7 +357,7 @@ internal object MarkArt {
         c(11.51, 18.22, 8.52, 18.12, 6.3, 17.16); z()
     }
 
-    /** Pointing hand, cuffed (`mark.handb`): A39, drawn in-house. */
+    /** Cuffed hand (`mark.handb`): A39, drawn in-house. */
     internal val MARK_HANDB: SupplyOutline = path {
         m(0.75, 4.05); c(0.75, 3.88, 0.88, 3.75, 1.05, 3.75); l(4.7, 3.75); c(4.87, 3.75, 5.0, 3.88, 5.0, 4.05)
         l(5.0, 6.1); c(7.29, 5.08, 9.53, 4.4, 10.6, 4.4); l(21.4, 4.4); c(22.28, 4.4, 23.0, 5.12, 23.0, 6.0)
@@ -370,7 +370,7 @@ internal object MarkArt {
         c(5.0, 20.12, 4.87, 20.25, 4.7, 20.25); l(1.05, 20.25); c(0.88, 20.25, 0.75, 20.12, 0.75, 19.95); z()
     }
 
-    /** Pointing hand, drawn (`mark.handc`): Doodle Icons by Khushmeen Sidhu, imported. */
+    /** Drawn hand (`mark.handc`): Doodle Icons by Khushmeen Sidhu, imported. */
     internal val MARK_HANDC: SupplyOutline = path {
         m(3.42, 19.52); c(2.26, 18.73, 1.42, 17.57, 1.01, 16.22); c(0.76, 15.39, 0.61, 14.57, 0.61, 13.77)
         c(0.61, 12.07, 1.2, 10.45, 2.37, 8.91); c(2.6, 8.61, 2.88, 8.34, 3.21, 8.14)
@@ -387,7 +387,7 @@ internal object MarkArt {
         l(10.95, 21.33); c(9.43, 21.37, 7.82, 21.11, 5.96, 20.66); c(5.05, 20.44, 4.19, 20.05, 3.42, 19.52); z()
     }
 
-    /** Crop marks, outside trim (`mark.cropb`): A34, drawn in-house. */
+    /** Corner marks (`mark.cropb`): A34, drawn in-house. */
     internal val MARK_CROPB: SupplyOutline = path {
         m(0.5, 5.25); l(4.15, 5.25); l(4.15, 7.75); l(0.5, 7.75); z()
         m(5.25, 0.5); l(7.75, 0.5); l(7.75, 4.15); l(5.25, 4.15); z()
@@ -399,7 +399,7 @@ internal object MarkArt {
         m(16.25, 19.85); l(18.75, 19.85); l(18.75, 23.5); l(16.25, 23.5); z()
     }
 
-    /** Crop marks, long ticks (`mark.cropc`): A39, drawn in-house. */
+    /** Long ticks (`mark.cropc`): A39, drawn in-house. */
     internal val MARK_CROPC: SupplyOutline = path {
         m(0.5, 7.8); c(0.5, 7.63, 0.63, 7.5, 0.8, 7.5); l(5.95, 7.5); c(6.12, 7.5, 6.25, 7.63, 6.25, 7.8)
         l(6.25, 8.7); c(6.25, 8.87, 6.12, 9.0, 5.95, 9.0); l(0.8, 9.0); c(0.63, 9.0, 0.5, 8.87, 0.5, 8.7); z()

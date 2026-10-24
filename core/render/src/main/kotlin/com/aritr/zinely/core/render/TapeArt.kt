@@ -51,7 +51,7 @@ internal object TapeArt {
         l(1.3, 4.13); l(1.42, 3.25); l(1.34, 1.6); l(1.85, 0.5); z()
     }
 
-    /** Torn tape, long tear (`tape.tornb`): A34, drawn in-house. */
+    /** Long torn tape (`tape.tornb`): A34, drawn in-house. */
     internal val TAPE_TORNB: SupplyOutline = path {
         m(1.9, 0.6); l(21.9, 0.5); l(21.38, 1.8); l(22.03, 2.6); l(21.75, 4.5); l(22.67, 5.6); l(21.74, 6.3)
         l(21.77, 7.9); l(22.4, 9.1); l(22.51, 11.2); l(22.18, 12.1); l(23.41, 13.49); l(22.32, 14.1); l(21.19, 15.8)
@@ -69,7 +69,7 @@ internal object TapeArt {
         m(3.0, 3.0); l(3.0, 12.33); l(4.6, 12.33); l(12.33, 4.6); l(12.33, 3.0); z()
     }
 
-    /** Photo corner, sharp (`fix.cornerb`): A34, drawn in-house. */
+    /** Sharp corner (`fix.cornerb`): A34, drawn in-house. */
     internal val FIX_CORNERB: SupplyOutline = path {
         m(23.5, 23.3); l(0.7, 23.5); l(0.5, 0.6); z()
         m(3.2, 10.1); l(3.15, 20.95); l(13.9, 20.85); z()
@@ -97,7 +97,7 @@ internal object TapeArt {
         c(3.81, 3.75, 3.25, 4.31, 3.25, 5.0); z()
     }
 
-    /** Paper clip, narrow (`fix.clipb`): A39, drawn in-house. */
+    /** Narrow clip (`fix.clipb`): A39, drawn in-house. */
     internal val FIX_CLIPB: SupplyOutline = path {
         m(9.9, 2.26); l(2.68, 9.47); c(1.29, 10.86, 0.52, 12.75, 0.52, 14.71)
         c(0.52, 18.8, 3.83, 22.11, 7.92, 22.11); c(9.88, 22.11, 11.76, 21.33, 13.15, 19.94); l(21.92, 11.17)
@@ -114,7 +114,7 @@ internal object TapeArt {
         c(10.45, 1.89, 10.13, 2.03, 9.9, 2.26); z()
     }
 
-    /** Paper clip, slanted wire (`fix.clipc`): Tabler Icons, imported. */
+    /** Slanted clip (`fix.clipc`): Tabler Icons, imported. */
     internal val FIX_CLIPC: SupplyOutline = path {
         m(15.75, 7.47); l(8.8, 14.42); c(8.49, 14.74, 8.41, 15.21, 8.61, 15.61)
         c(8.91, 16.2, 9.77, 16.33, 10.24, 15.86); l(17.19, 8.91); c(17.93, 8.18, 18.28, 7.1, 18.11, 6.07)
@@ -144,7 +144,7 @@ internal object TapeArt {
         l(3.99, 3.0); z()
     }
 
-    /** Masking tape, wide (`tape.maskingb`): A34, drawn in-house. */
+    /** Wide tape (`tape.maskingb`): A34, drawn in-house. */
     internal val TAPE_MASKINGB: SupplyOutline = path {
         m(2.2, 2.6); l(8.4, 2.85); l(14.2, 2.45); l(19.3, 2.75); l(22.6, 2.5); l(22.8, 3.41); l(21.89, 5.57)
         l(22.54, 6.6); l(22.27, 8.09); l(22.55, 8.91); l(21.97, 10.18); l(22.17, 11.99); l(21.62, 12.66)
@@ -154,7 +154,7 @@ internal object TapeArt {
         l(1.53, 9.35); l(2.34, 7.58); l(1.95, 6.76); l(2.41, 5.48); l(1.99, 4.66); z()
     }
 
-    /** Saddle stitch, thread (`fix.stitchb`): A34, drawn in-house. */
+    /** Running stitch (`fix.stitchb`): A34, drawn in-house. */
     internal val FIX_STITCHB: SupplyOutline = path {
         m(11.12, 2.71); l(10.52, 5.81); c(10.39, 6.49, 10.83, 7.15, 11.51, 7.28)
         c(12.19, 7.41, 12.85, 6.97, 12.98, 6.29); l(13.58, 3.19); c(13.71, 2.51, 13.27, 1.85, 12.59, 1.72)
@@ -167,7 +167,7 @@ internal object TapeArt {
         c(11.8, 16.61, 11.16, 17.09, 11.06, 17.77); z()
     }
 
-    /** Saddle stitch, across fold (`fix.stitchc`): A39, drawn in-house. */
+    /** Stitched fold (`fix.stitchc`): A39, drawn in-house. */
     internal val FIX_STITCHC: SupplyOutline = path {
         m(10.75, 1.75); c(10.75, 1.06, 11.31, 0.5, 12.0, 0.5); c(12.69, 0.5, 13.25, 1.06, 13.25, 1.75)
         l(13.25, 2.5); l(16.75, 2.5); c(17.44, 2.5, 18.0, 3.06, 18.0, 3.75); c(18.0, 4.44, 17.44, 5.0, 16.75, 5.0)
@@ -223,7 +223,7 @@ internal object TapeArt {
         c(12.83, 0.58, 13.18, 0.73, 13.43, 0.98); z()
     }
 
-    /** Push pin, upright (`fix.pushpinc`): A39, drawn in-house. */
+    /** Upright pin (`fix.pushpinc`): A39, drawn in-house. */
     internal val FIX_PUSHPINC: SupplyOutline = path {
         m(5.75, 0.5); l(18.25, 0.5); c(18.94, 0.5, 19.5, 1.06, 19.5, 1.75); l(19.5, 4.15)
         c(19.5, 4.48, 19.23, 4.75, 18.9, 4.75); l(15.6, 4.75); c(14.85, 5.74, 14.55, 6.75, 14.55, 7.88)
@@ -235,7 +235,7 @@ internal object TapeArt {
         c(4.5, 1.06, 5.06, 0.5, 5.75, 0.5); z()
     }
 
-    /** Push pin, drawn (`fix.pushpind`): Doodle Icons by Oreo Design, imported. */
+    /** Drawn pin (`fix.pushpind`): Doodle Icons by Oreo Design, imported. */
     internal val FIX_PUSHPIND: SupplyOutline = path {
         m(7.86, 0.81); c(10.62, 0.53, 13.38, 0.53, 16.14, 0.81); c(16.73, 0.87, 17.24, 1.39, 17.27, 1.99)
         c(17.4, 4.42, 17.65, 6.67, 18.02, 8.72); c(19.5, 9.72, 20.58, 11.04, 21.2, 12.65)
@@ -248,7 +248,7 @@ internal object TapeArt {
         c(6.76, 1.39, 7.27, 0.87, 7.86, 0.81); z()
     }
 
-    /** Push pin, drawn tilted (`fix.pushpine`): Doodle Icons by Oreo Design, imported. */
+    /** Drawn pin, tilted (`fix.pushpine`): Doodle Icons by Oreo Design, imported. */
     internal val FIX_PUSHPINE: SupplyOutline = path {
         m(16.16, 0.93); c(18.69, 3.01, 20.99, 5.31, 23.07, 7.84); c(23.44, 8.3, 23.42, 9.03, 23.03, 9.47)
         c(21.06, 11.65, 19.37, 13.78, 17.94, 15.84); c(18.36, 17.91, 18.17, 19.9, 17.35, 21.76)
@@ -261,7 +261,7 @@ internal object TapeArt {
         c(14.97, 0.58, 15.7, 0.56, 16.16, 0.93); z()
     }
 
-    /** Needle and thread (`fix.needle`): Fluent Emoji (High Contrast), imported. */
+    /** Threaded needle (`fix.needle`): Fluent Emoji (High Contrast), imported. */
     internal val FIX_NEEDLE: SupplyOutline = path {
         m(8.32, 13.75); l(6.49, 13.75); c(5.8, 13.75, 5.17, 14.09, 4.68, 14.72)
         c(4.17, 15.37, 3.88, 16.26, 3.88, 17.13); c(3.88, 17.76, 3.32, 18.31, 2.69, 18.31)

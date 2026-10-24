@@ -21,7 +21,7 @@ internal object ShapeArt {
         m(0.5, 0.8); l(23.4, 0.5); l(23.5, 23.3); l(0.7, 23.5); z()
     }
 
-    /** Rectangle, landscape (`shape.rectb`): A39, drawn in-house. */
+    /** Wide rectangle (`shape.rectb`): A39, drawn in-house. */
     internal val SHAPE_RECTB: SupplyOutline = path {
         m(1.8, 4.57); l(22.2, 4.57); c(22.37, 4.57, 22.5, 4.7, 22.5, 4.87); l(22.5, 19.13)
         c(22.5, 19.3, 22.37, 19.43, 22.2, 19.43); l(1.8, 19.43); c(1.63, 19.43, 1.5, 19.3, 1.5, 19.13); l(1.5, 4.87)
@@ -205,7 +205,7 @@ internal object ShapeArt {
         c(18.45, 9.94, 18.99, 10.05, 19.52, 10.21); z()
     }
 
-    /** Three-lobe cloud (`shape.cloudb`): Doodle Icons by Oreo Design, imported. */
+    /** Puffy cloud (`shape.cloudb`): Doodle Icons by Oreo Design, imported. */
     internal val SHAPE_CLOUDB: SupplyOutline = path {
         m(5.6, 19.53); c(3.5, 19.5, 1.75, 18.31, 1.07, 16.56); c(0.62, 15.42, 0.66, 14.07, 1.14, 12.95)
         c(1.7, 11.64, 2.88, 10.7, 4.29, 10.38); c(4.65, 9.35, 5.29, 8.46, 6.12, 7.8)

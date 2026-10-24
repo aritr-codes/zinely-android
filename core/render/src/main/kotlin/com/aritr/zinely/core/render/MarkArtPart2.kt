@@ -20,7 +20,7 @@ internal object MarkArtPart2 {
         m(19.25, 5.0); l(23.5, 5.0); l(23.5, 19.0); l(19.25, 19.0); z()
     }
 
-    /** Colour bar, tone patches (`mark.barb`): A39, drawn in-house. */
+    /** Tone patch bar (`mark.barb`): A39, drawn in-house. */
     internal val MARK_BARB: SupplyOutline = path {
         m(0.5, 6.9); c(0.5, 6.73, 0.63, 6.6, 0.8, 6.6); l(6.87, 6.6); c(7.03, 6.6, 7.17, 6.73, 7.17, 6.9)
         l(7.17, 17.1); c(7.17, 17.27, 7.03, 17.4, 6.87, 17.4); l(0.8, 17.4); c(0.63, 17.4, 0.5, 17.27, 0.5, 17.1)
@@ -56,7 +56,7 @@ internal object MarkArtPart2 {
         c(21.25, 15.6, 21.7, 15.15, 22.25, 15.15); c(22.8, 15.15, 23.25, 15.6, 23.25, 16.15); z()
     }
 
-    /** Copier streak, toner (`mark.scanb`): A34, drawn in-house. */
+    /** Toner streak (`mark.scanb`): A34, drawn in-house. */
     internal val MARK_SCANB: SupplyOutline = path {
         m(3.2, 0.5); l(6.6, 0.5); l(6.9, 5.0); l(6.4, 9.5); l(6.8, 14.0); l(6.3, 18.5); l(6.7, 23.5); l(3.4, 23.5)
         l(3.0, 19.0); l(3.5, 14.5); l(2.9, 10.0); l(3.3, 5.5); z()
@@ -66,7 +66,7 @@ internal object MarkArtPart2 {
         l(17.4, 19.6); l(16.7, 15.8); l(16.2, 11.2); l(16.6, 5.8); z()
     }
 
-    /** Copier streak, specks (`mark.scanc`): A39, drawn in-house. */
+    /** Toner specks (`mark.scanc`): A39, drawn in-house. */
     internal val MARK_SCANC: SupplyOutline = path {
         m(19.0, 0.5); l(20.6, 0.5); c(20.77, 0.5, 20.9, 0.63, 20.9, 0.8); l(20.9, 1.5)
         c(20.9, 2.8, 21.1, 4.1, 21.1, 5.4); c(21.1, 7.47, 21.25, 9.53, 21.25, 11.6)
@@ -100,7 +100,7 @@ internal object MarkArtPart2 {
         c(14.55, 19.34, 15.06, 18.88, 15.7, 18.88); c(16.34, 18.88, 16.85, 19.34, 16.85, 19.9); z()
     }
 
-    /** Perforation, slits (`mark.perfb`): A34, drawn in-house. */
+    /** Slit tear line (`mark.perfb`): A34, drawn in-house. */
     internal val MARK_PERFB: SupplyOutline = path {
         m(0.75, 10.75); l(3.95, 10.75); l(3.95, 13.25); l(0.75, 13.25); z()
         m(5.45, 10.75); l(8.65, 10.75); l(8.65, 13.25); l(5.45, 13.25); z()
@@ -109,7 +109,7 @@ internal object MarkArtPart2 {
         m(19.55, 10.75); l(22.75, 10.75); l(22.75, 13.25); l(19.55, 13.25); z()
     }
 
-    /** Perforation, fine (`mark.perfc`): A39, drawn in-house. */
+    /** Fine tear line (`mark.perfc`): A39, drawn in-house. */
     internal val MARK_PERFC: SupplyOutline = path {
         m(21.0, 11.55); c(21.0, 11.38, 21.13, 11.25, 21.3, 11.25); l(23.2, 11.25)
         c(23.37, 11.25, 23.5, 11.38, 23.5, 11.55); l(23.5, 12.45); c(23.5, 12.62, 23.37, 12.75, 23.2, 12.75)

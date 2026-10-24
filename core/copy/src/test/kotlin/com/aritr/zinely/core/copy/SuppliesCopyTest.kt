@@ -160,4 +160,67 @@ class SuppliesCopyTest {
     fun `every supply has searchable tags`() {
         assertEquals(Copy.Supplies.NAMES.keys, Copy.Supplies.TAGS.keys)
     }
+
+    @Test
+    fun `a piece renamed to fit its tile is still found by every word of its old name`() {
+        // Given the 48 A39 names as frozen on 2026-10-22, before D-132 shortened them to fit the A16 tile
+        val oldNames = mapOf(
+            "tape.tornb" to "Torn tape, long tear",
+            "fix.cornerb" to "Photo corner, sharp",
+            "fix.clipb" to "Paper clip, narrow",
+            "fix.clipc" to "Paper clip, slanted wire",
+            "tape.maskingb" to "Masking tape, wide",
+            "fix.stitchb" to "Saddle stitch, thread",
+            "fix.stitchc" to "Saddle stitch, across fold",
+            "fix.pushpinc" to "Push pin, upright",
+            "fix.pushpind" to "Push pin, drawn",
+            "fix.pushpine" to "Push pin, drawn tilted",
+            "fix.needle" to "Needle and thread",
+            "mark.halftoneb" to "Halftone dots, screen",
+            "mark.registration" to "Registration cross",
+            "mark.registrationb" to "Registration cross, bold",
+            "mark.registrationc" to "Registration cross, fine",
+            "mark.handb" to "Pointing hand, cuffed",
+            "mark.handc" to "Pointing hand, drawn",
+            "mark.cropb" to "Crop marks, outside trim",
+            "mark.cropc" to "Crop marks, long ticks",
+            "mark.barb" to "Colour bar, tone patches",
+            "mark.scanb" to "Copier streak, toner",
+            "mark.scanc" to "Copier streak, specks",
+            "mark.perf" to "Perforation",
+            "mark.perfb" to "Perforation, slits",
+            "mark.perfc" to "Perforation, fine",
+            "paper.stripb" to "Torn strip, wavy",
+            "paper.windowc" to "Window frame, narrow",
+            "paper.chat" to "Speech balloon (square)",
+            "paper.underlineb" to "Marker underline, round",
+            "paper.stubb" to "Ticket stub, torn end",
+            "paper.stubc" to "Ticket stub, torn off",
+            "paper.ticket" to "Admission ticket",
+            "paper.stampb" to "Postage stamp, bites",
+            "paper.stampc" to "Postage stamp, corner bites",
+            "paper.deckleb" to "Deckle edge, rough",
+            "paper.holeb" to "Torn hole, ragged",
+            "paper.holec" to "Torn hole, off-round",
+            "paper.dogearb" to "Folded corner, flap",
+            "paper.dogearc" to "Folded corner, portrait",
+            "paper.page" to "Dog-eared page",
+            "paper.borderb" to "Snipped border, band",
+            "paper.borderc" to "Snipped border, fine snips",
+            "paper.roundb" to "Round window, smooth",
+            "paper.roundc" to "Round window, narrow",
+            "paper.balloon" to "Speech balloon (round)",
+            "paper.ribbon" to "Bookmark ribbon (brush)",
+            "shape.rectb" to "Rectangle, landscape",
+            "shape.cloudb" to "Three-lobe cloud",
+        )
+        // When each old word is searched; Then the renamed piece is among the results
+        val lost = oldNames.flatMap { (id, old) ->
+            Regex("[a-z][a-z-]*").findAll(old.lowercase()).map { it.value }.filter { it != "and" }
+                .filterNot { id in Copy.Supplies.matchingIds(it) }.map { "$id: $it" }.toList()
+        }
+        assertEquals(48, oldNames.size)
+        assertTrue(oldNames.all { (id, old) -> Copy.Supplies.NAMES.getValue(id) != old }, "D-132 renamed all 48")
+        assertTrue(lost.isEmpty(), "old words no longer found: $lost")
+    }
 }

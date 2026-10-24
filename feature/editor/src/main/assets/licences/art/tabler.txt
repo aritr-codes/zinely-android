@@ -1,6 +1,6 @@
 Source: github.com/tabler/tabler-icons at v3.49.0.
 
-Pieces in Zinely from this set: Paper clip, slanted wire, Sticking plaster, Sticker (peeling), Asterisk, Postmark waves, Squiggle, Wavy rule, Blob, Punched flower.
+Pieces in Zinely from this set: Slanted clip, Sticking plaster, Sticker (peeling), Asterisk, Postmark waves, Squiggle, Wavy rule, Blob, Punched flower.
 
 MIT License
 

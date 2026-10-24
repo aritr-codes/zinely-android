@@ -1,6 +1,6 @@
 Source: khushmeen.com/icons.html, obtained via github.com/svatsa159/react-doodle-icons at b51da03.
 
-Pieces in Zinely from this set: Star, hand-cut, Arrow, brushed, Pointing hand, drawn, Heart, Tick, Cross, Scissors, Hand-cut window, Speech balloon (round), Bookmark ribbon (brush), Hand-cut square, Hand-cut card, Cloud.
+Pieces in Zinely from this set: Star, hand-cut, Arrow, brushed, Drawn hand, Heart, Tick, Cross, Scissors, Hand-cut window, Round balloon, Brushed ribbon, Hand-cut square, Hand-cut card, Cloud.
 
 The creator dedicates these icons to the public domain: "Free icons for commercial and personal use under CC0 license - no attribution required." Zinely credits the creator anyway.
 

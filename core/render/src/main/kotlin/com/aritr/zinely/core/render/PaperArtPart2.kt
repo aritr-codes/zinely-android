@@ -12,7 +12,7 @@ import com.aritr.zinely.core.render.ArtGeometry.path
  */
 internal object PaperArtPart2 {
 
-    /** Deckle edge, rough (`paper.deckleb`): A34, drawn in-house. */
+    /** Rough deckle (`paper.deckleb`): A34, drawn in-house. */
     internal val PAPER_DECKLEB: SupplyOutline = path {
         m(1.3, 1.4); l(2.9, 1.57); l(4.1, 1.26); l(6.2, 1.26); l(7.1, 1.42); l(8.49, 0.66); l(9.1, 1.24)
         l(10.8, 1.87); l(11.8, 1.34); l(13.3, 1.42); l(14.09, 0.7); l(16.1, 1.43); l(17.2, 1.35); l(17.9, 1.31)
@@ -49,7 +49,7 @@ internal object PaperArtPart2 {
         z()
     }
 
-    /** Torn hole, ragged (`paper.holeb`): A34, drawn in-house. */
+    /** Ragged hole (`paper.holeb`): A34, drawn in-house. */
     internal val PAPER_HOLEB: SupplyOutline = path {
         m(23.05, 12.0); l(21.89, 14.76); l(21.9, 16.55); l(20.94, 17.26); l(18.88, 18.59); l(17.84, 19.99)
         l(15.32, 21.99); l(13.79, 21.41); l(11.78, 22.49); l(10.79, 22.95); l(8.31, 21.74); l(6.61, 21.64)
@@ -63,7 +63,7 @@ internal object PaperArtPart2 {
         l(16.1, 15.1); l(17.41, 14.12); l(17.03, 12.3); z()
     }
 
-    /** Torn hole, off-round (`paper.holec`): A39, drawn in-house. */
+    /** Lopsided hole (`paper.holec`): A39, drawn in-house. */
     internal val PAPER_HOLEC: SupplyOutline = path {
         m(1.8, 1.5); l(22.2, 1.5); c(22.37, 1.5, 22.5, 1.63, 22.5, 1.8); l(22.5, 22.2)
         c(22.5, 22.37, 22.37, 22.5, 22.2, 22.5); l(1.8, 22.5); c(1.63, 22.5, 1.5, 22.37, 1.5, 22.2); l(1.5, 1.8)
@@ -95,13 +95,13 @@ internal object PaperArtPart2 {
         l(7.94, 5.19); l(7.56, 4.81); l(6.45, 4.96); l(5.8, 5.02); z()
     }
 
-    /** Folded corner, flap (`paper.dogearb`): A34, drawn in-house. */
+    /** Corner flap (`paper.dogearb`): A34, drawn in-house. */
     internal val PAPER_DOGEARB: SupplyOutline = path {
         m(0.7, 1.4); l(12.9, 1.1); l(13.0, 11.0); l(23.3, 11.1); l(23.4, 23.4); l(0.6, 23.3); z()
         m(15.0, 0.6); l(23.4, 9.0); l(15.0, 9.0); z()
     }
 
-    /** Folded corner, portrait (`paper.dogearc`): A39, drawn in-house. */
+    /** Tall fold (`paper.dogearc`): A39, drawn in-house. */
     internal val PAPER_DOGEARC: SupplyOutline = path {
         m(3.8, 1.5); l(12.7, 1.5); c(12.87, 1.5, 13.0, 1.63, 13.0, 1.8); l(13.0, 9.0); l(20.2, 9.0)
         c(20.37, 9.0, 20.5, 9.13, 20.5, 9.3); l(20.5, 22.2); c(20.5, 22.37, 20.37, 22.5, 20.2, 22.5); l(3.8, 22.5)
@@ -111,7 +111,7 @@ internal object PaperArtPart2 {
         c(14.5, 2.06, 14.63, 1.92, 14.8, 1.92); c(14.88, 1.92, 14.96, 1.96, 15.01, 2.01); z()
     }
 
-    /** Dog-eared page (`paper.page`): Doodle Icons by Oreo Design, imported. */
+    /** Dog-ear (`paper.page`): Doodle Icons by Oreo Design, imported. */
     internal val PAPER_PAGE: SupplyOutline = path {
         m(4.26, 1.25); c(7.01, 1.0, 9.66, 0.94, 12.2, 1.06); l(12.15, 2.53)
         c(12.09, 4.72, 12.15, 6.85, 12.35, 8.91); c(12.39, 9.32, 12.75, 9.67, 13.16, 9.71)
@@ -135,7 +135,7 @@ internal object PaperArtPart2 {
         z()
     }
 
-    /** Snipped border, band (`paper.borderb`): A34, drawn in-house. */
+    /** Snipped band (`paper.borderb`): A34, drawn in-house. */
     internal val PAPER_BORDERB: SupplyOutline = path {
         m(0.7, 1.0); l(8.6, 0.5); l(16.1, 0.9); l(23.4, 0.6); l(23.5, 7.6); l(23.1, 15.0); l(23.4, 23.2)
         l(15.5, 23.5); l(7.1, 23.1); l(0.9, 23.4); l(0.5, 16.4); l(0.9, 8.1); z()
@@ -143,7 +143,7 @@ internal object PaperArtPart2 {
         l(21.0, 8.0); l(20.9, 3.1); l(16.4, 3.4); l(9.0, 3.0); l(3.2, 3.5); z()
     }
 
-    /** Snipped border, fine snips (`paper.borderc`): A39, drawn in-house. */
+    /** Fine snips (`paper.borderc`): A39, drawn in-house. */
     internal val PAPER_BORDERC: SupplyOutline = path {
         m(1.78, 1.79); l(9.6, 1.5); l(22.12, 1.89); c(22.36, 1.9, 22.4, 1.94, 22.41, 2.18); l(22.7, 10.2)
         l(22.21, 22.12); c(22.2, 22.33, 22.16, 22.4, 21.92, 22.41); l(12.6, 22.7); l(1.87, 22.21)
@@ -194,14 +194,14 @@ internal object PaperArtPart2 {
         m(4.5, 4.5); l(4.5, 19.5); l(19.5, 19.5); l(19.5, 4.5); z()
     }
 
-    /** Round window, smooth (`paper.roundb`): A34, drawn in-house. */
+    /** Smooth window (`paper.roundb`): A34, drawn in-house. */
     internal val PAPER_ROUNDB: SupplyOutline = path {
         m(0.6, 0.9); l(23.4, 0.5); l(23.5, 23.3); l(0.7, 23.5); z()
         m(19.8, 12.1); c(19.8, 7.68, 16.31, 4.1, 12.0, 4.1); c(7.64, 4.1, 4.1, 7.68, 4.1, 12.1)
         c(4.1, 16.55, 7.64, 20.15, 12.0, 20.15); c(16.31, 20.15, 19.8, 16.55, 19.8, 12.1); z()
     }
 
-    /** Round window, narrow (`paper.roundc`): A39, drawn in-house. */
+    /** Narrow window (`paper.roundc`): A39, drawn in-house. */
     internal val PAPER_ROUNDC: SupplyOutline = path {
         m(1.8, 1.5); l(22.2, 1.5); c(22.37, 1.5, 22.5, 1.63, 22.5, 1.8); l(22.5, 22.2)
         c(22.5, 22.37, 22.37, 22.5, 22.2, 22.5); l(1.8, 22.5); c(1.63, 22.5, 1.5, 22.37, 1.5, 22.2); l(1.5, 1.8)
@@ -210,7 +210,7 @@ internal object PaperArtPart2 {
         c(5.0, 15.87, 8.13, 19.0, 12.0, 19.0); c(15.87, 19.0, 19.0, 15.87, 19.0, 12.0); z()
     }
 
-    /** Speech balloon (round) (`paper.balloon`): Doodle Icons by Khushmeen Sidhu, imported. */
+    /** Round balloon (`paper.balloon`): Doodle Icons by Khushmeen Sidhu, imported. */
     internal val PAPER_BALLOON: SupplyOutline = path {
         m(4.37, 17.14); c(2.51, 15.86, 1.41, 13.91, 1.07, 11.16); c(0.96, 10.25, 0.98, 9.34, 1.12, 8.44)
         c(1.45, 6.23, 2.86, 4.6, 5.43, 3.47); c(7.55, 2.54, 9.79, 2.07, 12.47, 2.09)
@@ -262,7 +262,7 @@ internal object PaperArtPart2 {
         c(4.02, 1.58, 4.54, 1.04, 5.14, 1.0); z()
     }
 
-    /** Bookmark ribbon (brush) (`paper.ribbon`): Doodle Icons by Khushmeen Sidhu, imported. */
+    /** Brushed ribbon (`paper.ribbon`): Doodle Icons by Khushmeen Sidhu, imported. */
     internal val PAPER_RIBBON: SupplyOutline = path {
         m(11.56, 16.4); c(11.46, 16.55, 11.37, 16.72, 11.23, 16.85); l(10.1, 17.96); l(6.88, 21.11); l(5.74, 22.23)
         c(5.43, 22.54, 5.1, 22.82, 4.73, 23.06); c(4.13, 23.45, 3.61, 23.21, 3.52, 22.48)
