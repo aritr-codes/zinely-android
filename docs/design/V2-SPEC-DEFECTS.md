@@ -8216,7 +8216,7 @@ second reviewer, could not sign in.
 
 | | |
 |---|---|
-| **Artifacts** | `docs/design/mockups/v21-bench.html` A39 (`ART_A39` names; dated note "NAMES THAT FIT THE TILE") · A16 (the tile card, unchanged) · `Copy.Supplies.BY_FAMILY` and `TAGS` |
+| **Artifacts** | `docs/design/mockups/v21-bench.html` A39 (`ART_A39` names; dated note "NAMES THAT FIT THE TILE") · `v21-colophon.html` A39 (the Art notices' piece lists) · A16 (the tile card, unchanged) · `Copy.Supplies.BY_FAMILY` and `TAGS` |
 | **Found** | 2026-10-24, reading the ART 6d golden diffs (`.superpowers/sdd/art-plan/task-6-report.md`, "Resumed 2026-10-24", concern 1); measured by `BenchArtTileNameFitTest` |
 | **Severity** | Recognition (G8) and Pass 2: on the sheet, a variant's telling word was clipped off ("Torn hole, ragged" showed "Torn / hole,"), so variants of one subject showed the same words; three shipped names broke inside a word ("Registrati / on", "Perforatio / n") and one A39 name too ("Dog-eare / d"). TalkBack always read the full name |
 | **Status** | **Fixed 2026-10-24.** A16 is frozen (tile size, grid, two lines, clip), so the names change, not the tile: 48 of 124 renamed so the whole name fits two lines at 360dp and font scale 1.0, no line breaks inside a word, the telling word first or alone. The other 76 already fit and keep their names. Ids unchanged; saved zines store ids only ([ADR-105](../DECISIONS.md#adr-105)), so nothing saved changes |
@@ -8228,7 +8228,9 @@ every tile's name on the real sheet and checks the platform's `TextLayoutResult`
 lines, the whole text laid out, every line ending at a space); it failed on exactly these 48 and passes after. The
 spoken name is the same string as the tile's, so TalkBack says what the tile shows. Every renamed piece's tags keep
 every word of its old name (`SuppliesCopyTest`), so a search for "torn", "hole", "registration" or "perforation"
-still finds it.
+still finds it. Eleven of the 48 are imported pieces, so their entries in the Art licence notices
+(`v21-colophon.html` A39 `ART_CREDITS` and the bundled `assets/licences/art/*.txt`) take the new names too, amended
+in the colophon first.
 
 | Id | Old name (A39 as frozen 2026-10-22) | New name |
 |---|---|---|
