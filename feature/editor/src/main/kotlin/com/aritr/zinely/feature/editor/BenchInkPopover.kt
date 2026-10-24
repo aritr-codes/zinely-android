@@ -11,6 +11,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -47,10 +48,8 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
@@ -411,7 +410,11 @@ private fun BenchInkTrayBody(
             count = inkLibrary.myInks.takeIf { it.isNotEmpty() }?.let { Copy.BenchInk.inkCount(it.size) },
         )
         // `null` is the Mix choice, which always closes the grid (prototype `mineHtml`).
-        BenchInkGrid(items = inkLibrary.myInks + null, columns = if (big) BenchInkLargeTextColumns else BenchInkGridColumns) { kept, m ->
+        BenchInkGrid(
+            items = inkLibrary.myInks + null,
+            columns = if (big) BenchInkLargeTextColumns else BenchInkGridColumns,
+            modifier = Modifier.selectableGroup(),
+        ) { kept, m ->
             if (kept == null) BenchInkMixChoice(onMix, m) else BenchInkKeptChoice(kept, kept.hex == current, onPick, m)
         }
     }
@@ -432,7 +435,7 @@ private fun BenchInkTrayBody(
             modifier = m,
         )
     }
-    BenchInkGrid(items = builtIns.filterNot { it.tint }, columns = columns, cell = compact)
+    BenchInkGrid(items = builtIns.filterNot { it.tint }, columns = columns, modifier = Modifier.selectableGroup(), cell = compact)
     val tints = builtIns.filter { it.tint }
     if (tints.isNotEmpty()) {
         // `.tint-sep{border-top:1.5px dashed var(--hair);margin:2px 0}` — decorative, so no semantics.
@@ -441,7 +444,7 @@ private fun BenchInkTrayBody(
                 .padding(vertical = ZinelyV21Dimens.gapHair)
                 .testTag(BenchInkTintSeparatorTestTag),
         )
-        BenchInkGrid(items = tints, columns = columns, cell = compact)
+        BenchInkGrid(items = tints, columns = columns, modifier = Modifier.selectableGroup(), cell = compact)
     }
 
     // — Starter palettes —
@@ -457,7 +460,7 @@ private fun BenchInkTrayBody(
 
 /**
  * The current-ink row: pot + "Current ink" + name. Not a live region (A40 rev. 2: the snack is the one
- * announcement); it stays a focusable node so focus can land on it after Undo (INK task 9).
+ * announcement); a focusable node, so focus can land on it after Undo (INK task 9).
  */
 @Composable
 private fun BenchInkCurrent(colour: Color, name: String) {
@@ -470,7 +473,10 @@ private fun BenchInkCurrent(colour: Color, name: String) {
             .border(BenchInkPopoverBorderDp, colors.ink, RoundedCornerShape(BenchInkCurrentRadiusDp))
             .padding(horizontal = ZinelyV21Dimens.gapMd, vertical = ZinelyV21Dimens.gapSm)
             .testTag(BenchInkCurrentTestTag)
-            .semantics { contentDescription = Copy.BenchInk.currentInk(name) },
+            // One spoken node ("Current ink, ‹name›"), not its two Texts as well; focusable so focus can be
+            // put here after Undo (INK task 9).
+            .clearAndSetSemantics { contentDescription = Copy.BenchInk.currentInk(name) }
+            .focusable(),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -664,7 +670,11 @@ private fun BenchInkPaletteCard(
             trailing()
         }
         // `.pal-pots{margin:-6px 0 0 -7px}`: the pots' own 40×48 cells overhang the card's padding.
-        FlowRow(modifier = Modifier.benchNegativeMargin(start = BenchInkPalettePotsPullStartDp, top = BenchInkPalettePotsPullTopDp)) {
+        FlowRow(
+            modifier = Modifier
+                .benchNegativeMargin(start = BenchInkPalettePotsPullStartDp, top = BenchInkPalettePotsPullTopDp)
+                .selectableGroup(),
+        ) {
             for (hex in hexes) {
                 val colour = hex.toColorRgba().toComposeColor()
                 val on = hex == current
@@ -1054,7 +1064,9 @@ private fun Modifier.benchDashedBorder(width: Dp, color: Color, radius: Dp): Mod
 private fun Modifier.benchNegativeMargin(start: Dp, top: Dp): Modifier = layout { measurable, constraints ->
     val dx = start.roundToPx()
     val dy = top.roundToPx()
-    val p = measurable.measure(constraints.copy(maxWidth = constraints.maxWidth + dx))
+    // An unbounded width stays unbounded: `Infinity + dx` would overflow the constraint.
+    val maxWidth = if (constraints.hasBoundedWidth) constraints.maxWidth + dx else constraints.maxWidth
+    val p = measurable.measure(constraints.copy(maxWidth = maxWidth))
     layout((p.width - dx).coerceAtLeast(0), (p.height - dy).coerceAtLeast(0)) { p.place(-dx, -dy) }
 }
 
@@ -1118,32 +1130,6 @@ private fun BenchInkSwatchDot(colour: Color, selected: Boolean, size: Dp, border
             .border(BenchInkSwatchBorderDp, border, CircleShape)
             .testTag(BenchInkPotTestTag),
     )
-}
-
-/**
- * `.inkuse svg` — the shield, authored on a 24-unit viewBox at `stroke-width:1.7`, `fill:none`, drawn in
- * the same 24-unit space scaled by `u = size / 24`, exactly as [ShelfGlyphs] does.
- */
-@Composable
-private fun BenchInkShield(tint: Color) {
-    Canvas(modifier = Modifier.size(BenchInkUseGlyphDp)) {
-        val u = size.minDimension / 24f
-        // d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"
-        val path = Path().apply {
-            moveTo(12f * u, 3f * u)
-            lineTo(19f * u, 6f * u)
-            lineTo(19f * u, 12f * u)
-            cubicTo(19f * u, 16f * u, 16f * u, 19f * u, 12f * u, 21f * u)
-            cubicTo(8f * u, 19f * u, 5f * u, 16f * u, 5f * u, 12f * u)
-            lineTo(5f * u, 6f * u)
-            close()
-        }
-        drawPath(
-            path = path,
-            color = tint,
-            style = Stroke(width = BenchInkUseGlyphStrokeDp.toPx(), join = StrokeJoin.Miter),
-        )
-    }
 }
 
 // — the frozen numbers (`v21-bench.html:236-261`) —
@@ -1223,9 +1209,6 @@ internal val BenchInkCurrentLabelTracking = 0.1.em
 internal val BenchInkCurrentNameSp = 14.08.sp
 internal val BenchInkPaperInk = Color(0xFF27270F)
 internal val BenchInkPaperSoft = Color(0xFF6A452F)
-
-/** `.pots{gap:var(--gap-sm)}` (`:249`) — 8, where V2 gapped 7. */
-internal val BenchInkSwatchGapDp = ZinelyV21Dimens.gapSm
 
 /** `.pot{width:30px;height:30px}` (`:250`), border-box. V2 drew 26. */
 internal val BenchInkSwatchSizeDp = 30.dp
@@ -1322,23 +1305,6 @@ internal const val BenchInkMixGlyphStroke: Float = 2.4f
 internal const val BenchInkChevronMillis: Int = 150
 internal const val BenchInkChevronGlyph: String = "▾"
 
-
-// — `.inkuse`: V2's numbers, carried forward. V2.1 does not draw this line at all — see [BenchInkPopover]. —
-
-/** `.inkuse{margin-top:9px}` (`v2-bench.html:389`). */
-internal val BenchInkUseTopGapDp = 9.dp
-
-/** `.inkuse{gap:6px}` (`v2-bench.html:389`). */
-internal val BenchInkUseGapDp = 6.dp
-
-/** `.inkuse{font-size:11px}` (`v2-bench.html:389`), re-tinted to `--ink-soft`: V2.1 has no `--ink-faint` text. */
-internal val BenchInkUseSp = 11.sp
-
-/** `.inkuse svg{width:13px;height:13px}` (`v2-bench.html:390`). */
-internal val BenchInkUseGlyphDp = 13.dp
-
-/** `.inkuse svg{stroke-width:1.7}` (`v2-bench.html:390`). */
-internal val BenchInkUseGlyphStrokeDp = 1.7.dp
 
 /**
  * The document's colour type and Compose's, both ways. `ColorRgba` is four 0..255 ints

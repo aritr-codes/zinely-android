@@ -381,14 +381,17 @@ public fun EditorScreen(
     // given the longer controls timeout.
     val accessibility = LocalAccessibilityManager.current
     val snackHold = { base: Long -> benchSnackHoldMillis(accessibility, base, hasAction = snackUndo != null) }
-    // The Ink tray's standing Undo and the document it was raised over. Withdrawn the moment the document
-    // moves on, so a 4s Undo can never pop an unrelated step (ADR-138 decision 5, step 4). Compared by
-    // identity with [snackUndo], so a newer snack that took the slot is left alone.
-    var inkUndo by remember { mutableStateOf<Pair<ZineDocument, () -> Unit>?>(null) }
-    LaunchedEffect(uiState.document) {
-        val (doc, undo) = inkUndo ?: return@LaunchedEffect
-        if (uiState.document !== doc) {
-            if (snackUndo === undo) snackUndo = null
+    // The Ink tray's standing Undo, the document it was raised over, and the library it would restore from
+    // (null when the tap did not change the library). Withdrawn the moment either moves on, so a 4s Undo
+    // can never pop an unrelated step (ADR-138 decision 5, step 4) nor write back a `before` over a library
+    // edit made since (a strip opened, a palette saved). Compared by identity with [snackUndo], so a newer
+    // snack that took the slot is left alone.
+    var inkUndo by remember { mutableStateOf<BenchInkUndo?>(null) }
+    LaunchedEffect(uiState.document, inkLibrary) {
+        val standing = inkUndo ?: return@LaunchedEffect
+        val libraryMoved = standing.libraryAfter != null && inkLibrary != null && inkLibrary != standing.libraryAfter
+        if (uiState.document !== standing.document || libraryMoved) {
+            if (snackUndo === standing.undo) snackUndo = null
             inkUndo = null
         }
     }
@@ -611,7 +614,7 @@ public fun EditorScreen(
      *     never crashes on storage.
      *  3. Raise the snack; offer Undo iff something changed. Undo restores the library's `before` if it
      *     changed and pops one document step if the document did — never `Intent.Undo` otherwise.
-     *  4. [inkUndo] withdraws that Undo if the document moves on while it stands.
+     *  4. [inkUndo] withdraws that Undo if the document or the library moves on while it stands.
      *
      * A pale ink (`isPale`) on a text piece says so in the same snack; it never blocks (ADR-138 Consequences).
      */
@@ -640,16 +643,19 @@ public fun EditorScreen(
             }
             deleteJob[0]?.cancel()
             deleteJob[0] = c4Scope.launch {
-                val restore = try {
-                    onEditInkLibrary(libraryTransform).takeIf { it.changed }?.before
+                val edit = try {
+                    onEditInkLibrary(libraryTransform).takeIf { it.changed }
                 } catch (_: IOException) {
                     null
                 }
+                val restore = edit?.before
                 // A document change that landed while the write was awaited already ran the withdraw effect,
                 // so it is checked here too: no Undo is raised over a document that has moved on.
                 val undo: (() -> Unit)? =
                     if ((docChanged || restore != null) && currentState().document === docAfter) {
-                        {
+                        undo@{
+                            // The withdraw effect runs a frame after a change; this closes that frame.
+                            if (currentState().document !== docAfter) return@undo
                             if (restore != null) {
                                 c4Scope.launch {
                                     try {
@@ -665,7 +671,7 @@ public fun EditorScreen(
                     }
                 snackMessage = message
                 snackUndo = undo
-                inkUndo = undo?.let { docAfter to it }
+                inkUndo = undo?.let { BenchInkUndo(docAfter, edit?.after, it) }
                 snackVisible = true
                 undoSnackRevision = currentState().historyRevision
                 delay(snackHold(BenchSnackInkTrayMillis))
@@ -2570,3 +2576,6 @@ private fun centeredTextBox(page: PtSize): Transform {
         heightPt = h,
     )
 }
+
+/** A standing Ink-tray Undo and what it was raised over; see `inkUndo` in [EditorScreen]. */
+private class BenchInkUndo(val document: ZineDocument, val libraryAfter: InkLibrary?, val undo: () -> Unit)

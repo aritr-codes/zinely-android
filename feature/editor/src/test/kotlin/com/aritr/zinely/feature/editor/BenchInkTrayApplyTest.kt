@@ -232,6 +232,7 @@ class BenchInkTrayApplyTest {
         tap(composeRule.onNodeWithContentDescription(Copy.BenchInk.BRICK))
         settle()
 
+        assertTrue("the tap was taken: its snack stands", snackSays(Copy.BenchInk.applied(Copy.BenchInk.BRICK)))
         assertEquals("no Undo over an unchanged document", 0, undoButtons())
         assertTrue("the box is still on the page", store.uiState.value.document.pages[0].elements.any { it.id == id })
     }
@@ -251,6 +252,33 @@ class BenchInkTrayApplyTest {
 
         assertEquals("a 4s Undo must never pop an unrelated step", 0, undoButtons())
         composeRule.onNodeWithTag(BenchSnackTestTag).assertExists()
+    }
+
+    /**
+     * Review fix (INK T6): the Undo restores the library's whole `before`, so a library edit made while it
+     * stands (here a strip opened) would be written back over. It is withdrawn instead, as for the document.
+     */
+    @Test
+    fun `given an ink snack's Undo is standing when the library changes then the Undo is withdrawn`() {
+        val store = store()
+        val pals = listOf(
+            InkPalette(2, "Night", listOf(hexOf(ZinelyMakerInkId.Ink), hexOf(ZinelyMakerInkId.Strawberry))),
+            InkPalette(1, "Sea", listOf(hexOf(ZinelyMakerInkId.Forest), hexOf(ZinelyMakerInkId.Aqua))),
+        )
+        val fake = FakeLibrary(
+            InkLibrary(myInks = listOf(MyInk(teal, 1)), clock = 1, palettes = pals, nextPaletteId = 3, openPaletteId = 2),
+        )
+        screen(store, fake)
+        openInk(store)
+        tap(composeRule.onNodeWithTag(BenchInkKeptTestTag))
+        settle()
+        assertEquals(1, undoButtons())
+
+        tap(composeRule.onNodeWithContentDescription(Copy.BenchInk.paletteGroup("Sea", 2)))
+        settle()
+
+        assertEquals(1L, fake.library.openPaletteId)
+        assertEquals("Undo must not write the old library back over the strip just opened", 0, undoButtons())
     }
 
     @Test

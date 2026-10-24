@@ -207,10 +207,10 @@ internal fun benchContextVerbs(
     //    ([Intent.ReplaceSupply]). The incoming family's §5.2 scale is applied at the outgoing element's
     //    centre and rotation — an owner ruling, because the freeze does not say what a swap does to size.
     //  - `Ink` is **live as of the decor-ink package**: [Intent.InkSupply] recolours a `DecorElement` and
-    //    `benchInkBands` already had the DECOR arm, so the popover's decor branch was a routing change,
-    //    not new material. Its enablement is unconditional because — unlike text, where a blank box cannot
-    //    be styled — *every* placed supply has an ink and can always be recoloured. There is no decor
-    //    counterpart to `styleable`.
+    //    the popover's built-in list (now `benchBuiltInInks`) already had the DECOR arm, so its decor
+    //    branch was a routing change, not new material. Its enablement is unconditional because —
+    //    unlike text, where a blank box cannot be styled — *every* placed supply has an ink and can
+    //    always be recoloured. There is no decor counterpart to `styleable`.
     // Delete is live because it is a shared verb that already works on any element id.
     BenchVerbKind.DECOR -> listOf(
         BenchVerb(

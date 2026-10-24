@@ -351,7 +351,11 @@ public object Copy {
         /** The popover's dismiss. The same word the editing row and the bar already ship. */
         public const val DONE: String = EditText.DONE
 
-        /** Kept (A40): still the spoken name of the tints group that follows the separator for Art. */
+        /**
+         * Kept by INK task 5's list, but **not spoken today**: A40 rev. 2's `.tint-sep` is `aria-hidden`, so the
+         * five tints follow the built-ins with no group name. Retire it if INK task 9's platform pass finds no
+         * use for it.
+         */
         public const val PAPER_TINTS: String = "Paper tints"
         public const val CURRENT_INK: String = "Current ink"
 
