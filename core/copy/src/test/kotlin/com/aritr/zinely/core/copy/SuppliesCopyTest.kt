@@ -146,7 +146,7 @@ class SuppliesCopyTest {
     }
 
     @Test
-    fun `the two frames follow Folded corner, in the order the owner ruled`() {
+    fun `the two frames keep their ruled order after Folded corner`() {
         // A32 closed Cut paper with them; A39 (ADR-139) adds variants and new subjects around them, so the
         // ruling that survives is their order among the shipped subjects.
         val cutPaper = Copy.Supplies.BY_FAMILY.getValue(Copy.Supplies.CUT_PAPER)

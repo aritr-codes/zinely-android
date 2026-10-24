@@ -743,7 +743,7 @@ public object Copy {
             "paper.dogearb" to "folded corner dog ear paper flap",
             "paper.dogearc" to "folded corner dog ear paper portrait",
             "paper.page" to "dog-eared page dog ear paper sheet folded corner",
-            "paper.sticky" to "sticky note post-it memo paper",
+            "paper.sticky" to "sticky note memo paper",
             "paper.borderb" to "border frame thin edge scissors outline band",
             "paper.borderc" to "border frame thin edge scissors outline fine snips",
             "paper.borderd" to "scalloped border frame edge wavy outline",
