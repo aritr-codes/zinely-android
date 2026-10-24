@@ -1213,7 +1213,7 @@ private fun BenchInkDashedRule(modifier: Modifier = Modifier) {
     )
 }
 
-private fun DrawScope.benchDashedLine(color: Color, width: Float, y: Float) {
+internal fun DrawScope.benchDashedLine(color: Color, width: Float, y: Float) {
     val dash = BenchInkSelDashDp.toPx()
     drawLine(
         color = color,
@@ -1236,7 +1236,7 @@ private fun DrawScope.benchDashedRoundRect(color: Color, width: Float, topLeft: 
 }
 
 /** A dashed border inside the bounds, as CSS's `border-style:dashed` (Compose's `border` is solid only). */
-private fun Modifier.benchDashedBorder(width: Dp, color: Color, radius: Dp): Modifier = drawBehind {
+internal fun Modifier.benchDashedBorder(width: Dp, color: Color, radius: Dp): Modifier = drawBehind {
     val w = width.toPx()
     benchDashedRoundRect(color, w, Offset(w / 2f, w / 2f), Size(size.width - w, size.height - w), radius.toPx() - w / 2f)
 }
