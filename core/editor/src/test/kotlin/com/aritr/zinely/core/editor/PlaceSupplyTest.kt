@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
  * `Intent.PlaceSupply` — taking a supply out of the drawer and putting it on the page (SUPPLIES-SPEC §5,
  * ADR-105 step S7).
  *
- * Every fixture here uses `shape.circle`, one of the **four authored** supplies. That is deliberate: a test
+ * Every fixture here uses `shape.circle`, an **authored** supply. That is deliberate: a test
  * about decor whose fixture names an unauthored id can pass for the wrong reason, because an unauthored
  * supply draws nothing and half of what one might assert is then vacuous. Absence is never the point below,
  * so absence is never in a fixture.

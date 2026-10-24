@@ -30,18 +30,18 @@ import com.aritr.zinely.core.model.Transform
  * argued from the material at its declaration so the ruling has something to accept or reject.
  *
  * ⚠ **And §5.2's third adjective does not fit its own mechanism.** *"A rule lands wide"* names
- * `shape.rule`, which is **not** a family — it is one of the four *Cut shapes*, alongside the rectangle,
- * the circle and the triangle, and a per-family constant cannot make one of the four wide without making
- * all four wide. So either §5.2 means per-*supply* defaults (and its own "one constant per family" costing
+ * `shape.rule`, which is **not** a family — it is one of the *Cut shapes*, alongside the rectangle,
+ * the circle and the triangle, and a per-family constant cannot make one shape wide without making
+ * every shape wide. So either §5.2 means per-*supply* defaults (and its own "one constant per family" costing
  * is wrong), or the rule example is loose.
  *
- * This implements **both**: per family, plus exactly one named exception ([BenchSupplyOverrides]) for the
- * supply §5.2 names. The first draft implemented only the family rule and left the rule square. Independent
+ * This implements **both**: per family, plus one named exception ([BenchSupplyOverrides]) for the
+ * supply §5.2 names — the rule, with its two A39 variants since §5.2's 2026-10-24 amendment. The first draft implemented only the family rule and left the rule square. Independent
  * review showed why that was the wrong half to drop: *Cut shapes* is the **only** family production can
  * currently reach, so the sole observable effect of §5.2 today was the one example the spec spells out —
- * and it was the one contradicted. `SupplyCatalog`'s own `RULE` KDoc, written before this package, already
- * assumed otherwise in as many words: *"without it the two outlines would be identical and only their
- * default size would differ."* A per-family-only reading makes `shape.rect` and `shape.rule` land in the
+ * and it was the one contradicted. The rule's shipped KDoc, written before this package, already assumed
+ * otherwise: without its margin, rule and rectangle would differ only by default size. A per-family-only
+ * reading makes `shape.rect` and `shape.rule` land in the
  * same box. **The exception is still owed the same ruling as the four constants** — it is not a licence to
  * add a second one without going back to the spec.
  */

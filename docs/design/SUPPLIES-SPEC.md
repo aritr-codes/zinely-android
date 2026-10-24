@@ -907,8 +907,14 @@ per-supply sizing is what §5.2 exists to refuse.
 | **Cut paper** | 0.45 | 1.0 | lands as a piece of paper |
 | **Cut shapes** | 0.30 | 1.0 | lands as a shape |
 | *override* `shape.rule` | 0.70 | 5.0 | lands wide — §5.2's own example |
+| *override* `shape.ruleb`, `shape.rulec` | 0.70 | 5.0 | the same divider — amended 2026-10-24, below |
 
 Plus a clamp at 0.6 of page height, so a landing can never exceed the page it lands on.
+
+*Amended 2026-10-24 ([ADR-139](../DECISIONS.md#adr-139), ART 6d).* A39 adds two variants of the rule (Wavy
+rule, Ripple rule). They are the same divider, so they land as `shape.rule` does: the one named override
+becomes **one subject, the rule, and its A39 variants**, and the test pins exactly those three ids, landing
+identically. Any other subject is still refused; the cap's point (no per-supply sizing) stands.
 
 ⚠ **AMENDED 2026-08-20 — the key is a *sizing group*, not a family, and the first column says so.**
 [D-092](V2-SPEC-DEFECTS.md#d-092-ruling): `fix.corner` is authored 1:1 and inherited tape's 4.5:1, so it

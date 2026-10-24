@@ -63,8 +63,9 @@ class SupplyInkTest {
 
     @Test
     fun `given the scope, then it is the named list, each has an outline, and everything else is null`() {
-        // SUPPLIES-SPEC H9 (ADR-139): the eight of A32, then v21-bench.html A39's holed ids. The eight are probed by hand above; every holed id is probed from its own ink by
-        // `HitTestInkTest` (core:editor), and `SupplyHolesDerivedTest` checks the list against the geometry.
+        // SUPPLIES-SPEC H9 (ADR-139): the eight of A32, then v21-bench.html A39's holed ids. The eight are
+        // probed by hand above; every holed id is probed from its own ink by `HitTestInkTest` (core:editor),
+        // and `SupplyHolesDerivedTest` checks the list against the geometry.
         assertEquals(
             setOf(
                 "paper.window", "paper.hole", "shape.ring", "fix.grommet", "fix.corner", "mark.registration",

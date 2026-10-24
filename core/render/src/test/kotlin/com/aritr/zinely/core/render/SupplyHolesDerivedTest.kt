@@ -9,9 +9,6 @@ import org.junit.jupiter.api.Test
  * that cannot reach the box edge is a hole. For every outline present in this build, the ids that have a
  * hole must be exactly [SupplyInk.IN_SCOPE], less the exclusions the owner ruled, which are named here
  * with their reason and nowhere else.
- *
- * An id that is not yet in `OUTLINES` (an A39 id before its family is wired) cannot be probed, so it is
- * not required in [SupplyInk.IN_SCOPE] yet; it joins in the change that wires its family (R-A7 (5)).
  */
 class SupplyHolesDerivedTest {
 
