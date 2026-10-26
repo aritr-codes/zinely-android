@@ -2,11 +2,13 @@ package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -46,6 +48,7 @@ import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.ui.theme.ZinelyMakerInkId
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.zinelyContentInks
+import com.aritr.zinely.ui.testing.FakeAccessibilityManager
 import java.io.IOException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -108,22 +111,27 @@ class BenchInkPaletteEditTest {
         )
     }
 
-    private fun screen(fake: FakeLibrary): EditorStore = screen({ fake.library }, fake::edit)
+    private fun screen(fake: FakeLibrary, a11yTimeoutMillis: Long? = null): EditorStore =
+        screen({ fake.library }, fake::edit, a11yTimeoutMillis)
 
     private fun screen(
         shown: () -> InkLibrary,
         edit: suspend ((InkLibrary) -> InkLibrary) -> InkLibraryEdit,
+        a11yTimeoutMillis: Long? = null,
     ): EditorStore {
         val store = store()
         composeRule.setContent {
             ZinelyTheme {
-                EditorScreen(
-                    store = store,
-                    pageSizePt = PtSize(100.0, 130.0),
-                    modifier = Modifier.size(360.dp, 720.dp),
-                    inkLibrary = shown(),
-                    onEditInkLibrary = edit,
-                )
+                val manager = a11yTimeoutMillis?.let { FakeAccessibilityManager(it) } ?: LocalAccessibilityManager.current
+                CompositionLocalProvider(LocalAccessibilityManager provides manager) {
+                    EditorScreen(
+                        store = store,
+                        pageSizePt = PtSize(100.0, 130.0),
+                        modifier = Modifier.size(360.dp, 720.dp),
+                        inkLibrary = shown(),
+                        onEditInkLibrary = edit,
+                    )
+                }
             }
         }
         composeRule.waitForIdle()
@@ -401,6 +409,37 @@ class BenchInkPaletteEditTest {
         assertEquals(1, undoButtons())
         undo()
         assertEquals(start, fake.library)
+    }
+
+    @Test
+    fun `given a Delete's Undo is standing when a page step lands then the snack retires at once (D-141)`() {
+        val start = InkLibrary(palettes = listOf(InkPalette(1, "Sea", listOf(forest, brick))), nextPaletteId = 2, openPaletteId = 1)
+        val fake = FakeLibrary(start)
+        val store = screen(fake)
+        tap(composeRule.onNodeWithTag(BenchInkPaletteMoreTestTag))
+        menu(Copy.BenchInk.DELETE)
+        assertTrue(snackSays(Copy.BenchInk.deleted("Sea")))
+
+        val id = store.uiState.value.selection.single()
+        composeRule.runOnUiThread { store.dispatch(Intent.StyleText(id, color = forest.toColorRgba())) }
+        advance()
+
+        assertFalse("A41.2: a later history step hides the snack, not just its button", snackSays(Copy.BenchInk.deleted("Sea")))
+        assertEquals(0, undoButtons())
+        assertTrue(fake.library.palettes.isEmpty())
+    }
+
+    @Test
+    fun `given a 10s accessibility timeout when Delete raises the tray snack then it stands past its 4s window`() {
+        val start = InkLibrary(palettes = listOf(InkPalette(1, "Sea", listOf(forest, brick))), nextPaletteId = 2, openPaletteId = 1)
+        screen(FakeLibrary(start), a11yTimeoutMillis = 10_000L)
+        tap(composeRule.onNodeWithTag(BenchInkPaletteMoreTestTag))
+        menu(Copy.BenchInk.DELETE)
+
+        composeRule.mainClock.advanceTimeBy(6_000L)
+        composeRule.waitForIdle()
+
+        assertTrue("A28.13: the phone's time to take action stretches the tray snack too", snackSays(Copy.BenchInk.deleted("Sea")))
     }
 
     @Test

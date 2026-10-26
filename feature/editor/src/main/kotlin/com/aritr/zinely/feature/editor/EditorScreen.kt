@@ -930,9 +930,11 @@ public fun EditorScreen(
                 reopens = trayUndo.reopen != null,
             )
         }
+        // D-141: a later page step retires this snack like any other Undo snack.
+        undoSnackRevision = currentState().historyRevision
         snackVisible = true
         deleteJob[0] = c4Scope.launch {
-            delay(BenchSnackInkTrayMillis)
+            delay(snackHold(BenchSnackInkTrayMillis))
             snackVisible = false
         }
     }
