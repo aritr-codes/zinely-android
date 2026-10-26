@@ -644,10 +644,11 @@ public fun EditorScreen(
      *     predicted: the reducer refuses a style on a blank text box and under the Book rule, and a predicted
      *     change there would make Undo pop the box's own placement.
      *  2. Apply [libraryTransform] and await it, so `before` exists by the time Undo can be tapped. A store
-     *     failure (`IOException`) counts as "the library did not change": the ink stays applied, and the tray
-     *     never crashes on storage.
+     *     failure (`IOException`) counts as "the library did not change": the ink stays applied, the snack
+     *     adds "Couldn't save that change." ([Copy.BenchInk.notKept]), and the tray never crashes on storage.
      *  3. Raise the snack; offer Undo iff something changed. Undo restores the library's `before` if it
-     *     changed and pops one document step if the document did — never `Intent.Undo` otherwise.
+     *     changed and pops one document step if the document did — never `Intent.Undo` otherwise. A failed
+     *     restore pops nothing and raises the failure line instead.
      *  4. [inkUndo] withdraws that Undo if the document or the library moves on while it stands.
      *
      * A pale ink (`isPale`) on a text piece says so in the same snack; it never blocks (ADR-138 Consequences).
@@ -677,9 +678,12 @@ public fun EditorScreen(
             }
             deleteJob[0]?.cancel()
             deleteJob[0] = c4Scope.launch {
+                var notKept = false
                 val edit = try {
                     onEditInkLibrary(libraryTransform).takeIf { it.changed }
                 } catch (_: IOException) {
+                    // The piece keeps its ink; the library did not change, and the snack says so (never silent).
+                    notKept = true
                     null
                 }
                 // A document change that landed while the write was awaited already ran the withdraw effect,
@@ -689,15 +693,18 @@ public fun EditorScreen(
                         undo@{
                             // The withdraw effect runs a frame after a change; this closes that frame.
                             if (currentState().document !== docAfter) return@undo
-                            if (edit != null) c4Scope.launch { if (!restoreInkLibrary(edit)) raiseInkFailure() }
-                            if (docChanged) dispatch(Intent.Undo)
-                            // The pressed Undo is gone with its snack; focus goes back to Current ink (INK task 9).
-                            if (inkTrayShown[0]) inkFocus = BenchInkFocusRequest(BenchInkFocus.Current)
+                            c4Scope.launch {
+                                // A failed restore undoes nothing, page included, and says so (A40 rev. 2 amendment).
+                                if (edit != null && !restoreInkLibrary(edit)) return@launch raiseInkFailure()
+                                if (docChanged && currentState().document === docAfter) dispatch(Intent.Undo)
+                                // The pressed Undo is gone with its snack; focus goes back to Current ink (INK task 9).
+                                if (inkTrayShown[0]) inkFocus = BenchInkFocusRequest(BenchInkFocus.Current)
+                            }
                         }
                     } else {
                         null
                     }
-                snackMessage = message
+                snackMessage = if (notKept) Copy.BenchInk.notKept(message) else message
                 snackUndo = undo
                 inkUndo = undo?.let { BenchInkUndo(docAfter, edit?.after, it) }
                 snackVisible = true

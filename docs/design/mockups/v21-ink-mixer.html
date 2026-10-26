@@ -989,9 +989,12 @@ the maker's own work first. Rev. 2 reorders the frozen Ink tray: <b>My palettes<
       a tap still puts focus in an empty name first). The prototype sets <code>aria-description</code> in <code>renderEdit</code>.</li>
     <li><b>A failed save is said, never silent.</b> When the phone cannot store a change to My inks or My palettes,
       nothing changes (an open edit stays open, no Undo) and the toast says <i>"Couldn’t save that change."</i> with no
-      button, the Shelf's paper-choice pattern. The prototype has no storage, so this state cannot be shown here.</li>
-    <li><b>Keys on the sliders.</b> Colour strength, Lightness and Hue take the arrow keys in 5-step moves, as a native range
-      input does; Hue's strip already did.</li>
+      button, the Shelf's paper-choice pattern. One exception, because the page already changed: an ink that is used but
+      cannot be kept in My inks stays on the piece, and its toast reads <i>"Ink · Red. Couldn’t save that change."</i> with its
+      usual Undo. An Undo whose library cannot be put back undoes nothing and says the same line. The prototype has no
+      storage, so these states cannot be shown here.</li>
+    <li><b>Keys on the sliders.</b> Colour strength, Lightness and Hue take Left and Right in 5-step moves on the 5-step grid,
+      as an Android slider does; Up and Down still move focus. Hue's strip already did.</li>
   </ul>
   <h3>Not in A40</h3>
   <p>Naming or reordering single inks; dragging palettes into an order (newest first is enough at 9); a palette that

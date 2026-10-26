@@ -561,8 +561,8 @@ private val UpperCase = VisualTransformation { TransformedText(AnnotatedString(i
 
 /**
  * A visually hidden `input type=range` (`.vh`): a 1dp node TalkBack can find and swipe, stepping by 5, and a
- * keyboard can focus and move with the arrow keys (±5, as a native range input; A40 rev. 2 amendment
- * 2026-10-26). [onSet] gets the stepped value; the state clamps it.
+ * keyboard can focus and move with Left/Right (±5 on the 5-step grid, as an Android SeekBar; A40 rev. 2
+ * amendment 2026-10-26). [onSet] gets the stepped value; the state clamps it.
  */
 @Composable
 private fun InkMixerSlider(tag: String, label: String, value: String, current: Int, max: Int, onSet: (Int) -> Unit) {
@@ -573,11 +573,13 @@ private fun InkMixerSlider(tag: String, label: String, value: String, current: I
             .size(1.dp)
             .onKeyEvent { e ->
                 val d = when (e.key) {
-                    Key.DirectionRight, Key.DirectionUp -> SLIDER_STEP
-                    Key.DirectionLeft, Key.DirectionDown -> -SLIDER_STEP
+                    // Left/Right only, as an Android SeekBar: Up/Down stay free to move focus off the 1dp node.
+                    Key.DirectionRight -> SLIDER_STEP
+                    Key.DirectionLeft -> -SLIDER_STEP
                     else -> return@onKeyEvent false
                 }
-                if (e.type == KeyEventType.KeyDown) set((now + d).coerceIn(0, max))
+                // Snaps to the 5-step grid first (a drag on the square can leave 37), as setProgress does.
+                if (e.type == KeyEventType.KeyDown) set(((now + d) / SLIDER_STEP * SLIDER_STEP).coerceIn(0, max))
                 true
             }
             .focusable()

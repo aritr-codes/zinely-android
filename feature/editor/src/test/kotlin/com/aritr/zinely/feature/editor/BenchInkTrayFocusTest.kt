@@ -68,9 +68,10 @@ class BenchInkTrayFocusTest {
     private class FakeLibrary(initial: InkLibrary) {
         var library by mutableStateOf(initial)
         var fail = false
+        var failed = 0
 
         suspend fun edit(transform: (InkLibrary) -> InkLibrary): InkLibraryEdit {
-            if (fail) throw IOException("disk full")
+            if (fail) { failed++; throw IOException("disk full") }
             val before = library
             library = transform(before)
             return InkLibraryEdit(before, library)
@@ -265,18 +266,29 @@ class BenchInkTrayFocusTest {
     // — never silent —
 
     @Test
-    fun `given the store fails on Delete, Remove or a strip then nothing changes and the snack says so, without Undo`() {
+    fun `given the store fails on Delete, Duplicate, Remove or a strip then nothing changes and the snack says so, without Undo`() {
         val start = twoPalettes()
         val fake = FakeLibrary(start)
         screen(fake)
         fake.fail = true
+        // Each step must reach the store and fail there (`failed` counts it), so a later step cannot pass on an
+        // earlier step's snack alone.
+        val step = { n: Int, act: () -> Unit ->
+            act()
+            assertEquals("step $n reached the store", n, fake.failed)
+            assertTrue("step $n is said", snackSays(Copy.BenchInk.SAVE_FAILED))
+        }
 
-        composeRule.onNodeWithTag(BenchInkPaletteMoreTestTag).act { performClick() }
-        menu(Copy.BenchInk.DELETE)
-        assertTrue(snackSays(Copy.BenchInk.SAVE_FAILED))
-
-        composeRule.onAllNodesWithTag(BenchInkStripTestTag)[1].act { performClick() }
-        assertTrue(snackSays(Copy.BenchInk.SAVE_FAILED))
+        step(1) { composeRule.onNodeWithTag(BenchInkPaletteMoreTestTag).act { performClick() }; menu(Copy.BenchInk.DELETE) }
+        step(2) { composeRule.onNodeWithTag(BenchInkPaletteMoreTestTag).act { performClick() }; menu(Copy.BenchInk.DUPLICATE) }
+        step(3) {
+            composeRule.onAllNodesWithTag(BenchInkKeptTestTag)[0].act {
+                val action = fetchSemanticsNode().config[SemanticsActions.CustomActions]
+                    .single { it.label == Copy.BenchInk.REMOVE_FROM_MY_INKS }
+                composeRule.runOnUiThread { action.action() }
+            }
+        }
+        step(4) { composeRule.onAllNodesWithTag(BenchInkStripTestTag)[1].act { performClick() } }
 
         assertEquals(start, fake.library)
         assertEquals(0, composeRule.onAllNodesWithTag(BenchSnackActionTestTag, useUnmergedTree = true).fetchSemanticsNodes().size)

@@ -284,7 +284,12 @@ class BenchInkPaletteEditTest {
             toggles().all { it.config.getOrNull(SemanticsProperties.ToggleableState) != null },
         )
         // The ✓ badge is paint inside the toggle's single node (INK task 9: the platform's CheckBox class needs
-        // a node with no semantic children); the edit-mode golden carries it.
+        // a node with no semantic children); the edit-mode golden carries it, and the state carries its meaning.
+        assertEquals(
+            "one checked toggle per picked ink",
+            6,
+            toggles().count { it.config.getOrNull(SemanticsProperties.ToggleableState) == ToggleableState.On },
+        )
     }
 
     @Test

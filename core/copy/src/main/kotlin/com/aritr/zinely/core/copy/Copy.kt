@@ -460,6 +460,8 @@ public object Copy {
         // trimmed typed name.
         /** [applied]'s pale-on-text form (ADR-138 controller ruling, 2026-10-22): the apply lands, the warning rides with it. */
         public fun appliedPale(name: String): String = "Ink · $name. Pale in print: words may be hard to read."
+        /** An applied ink whose keep in My inks failed: the piece is inked, the library is not (A40 rev. 2 amendment). */
+        public fun notKept(applied: String): String = "${applied.removeSuffix(".")}. $SAVE_FAILED"
         public fun removedInk(name: String): String = "Removed · $name. Pages and palettes using it keep it."
         public const val PALETTES_FULL: String = "My palettes holds 9. Delete one to make room."
         public fun duplicated(palette: String): String = "Duplicated · $palette"

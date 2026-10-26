@@ -325,6 +325,41 @@ class BenchInkMixerHostTest {
     }
 
     @Test
+    fun `given the store fails when Mix then Use with no draft, then the piece is inked, the snack says it was not kept, and Undo takes the ink off`() {
+        // Given
+        val fake = FakeLibrary(InkLibrary.EMPTY)
+        screen(fake)
+        mix()
+        type(slate)
+        fake.fail = true
+        // When
+        use()
+        // Then: the page changed, the library did not, and the maker hears both (A40 rev. 2 amendment)
+        assertEquals(slate.toColorRgba(), colour())
+        assertEquals(InkLibrary.EMPTY, fake.library)
+        assertTrue(snackSays(Copy.BenchInk.notKept(Copy.BenchInk.applied(inkName(slate, inks, BenchVerbKind.TEXT)))))
+        undo()
+        assertEquals(brick.toColorRgba(), colour())
+    }
+
+    @Test
+    fun `given Use kept an ink when the store fails on Undo, then nothing is undone, page included, and the failure is said`() {
+        // Given
+        val fake = FakeLibrary(InkLibrary.EMPTY)
+        screen(fake)
+        mix()
+        type(slate)
+        use()
+        fake.fail = true
+        // When
+        undo()
+        // Then
+        assertEquals("the page keeps the ink: a half Undo is not offered", slate.toColorRgba(), colour())
+        assertEquals(listOf(slate), fake.library.myInks.map { it.hex })
+        assertTrue(snackSays(Copy.BenchInk.SAVE_FAILED))
+    }
+
+    @Test
     fun `given the mixer is open when Back, then the mixer closes first and the tray only on a second Back`() {
         val fake = FakeLibrary(InkLibrary.EMPTY)
         screen(fake)

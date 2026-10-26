@@ -118,20 +118,21 @@ class InkMixerPlatformA11yTest {
     @OptIn(ExperimentalTestApi::class)
     @Test
     fun `given a focused slider when arrow keys are pressed then it moves in steps of five`() {
-        // Given Lightness at a multiple of five
-        host(InkHex("808080"))
-        composeRule.onNodeWithTag(InkMixerLightTestTag).performSemanticsAction(SemanticsActions.SetProgress) { it(50f) }
-        composeRule.waitForIdle()
-        assertEquals(50, (state.hsv.v * 100).roundToInt())
+        // Given Lightness off the grid (5E = 37%), as a drag on the square can leave it
+        host(InkHex("5E5E5E"))
+        assertEquals(37, (state.hsv.v * 100).roundToInt())
         composeRule.onNodeWithTag(InkMixerLightTestTag).performSemanticsAction(SemanticsActions.RequestFocus)
 
-        // When Right then Up, then Left three times (one press a frame, as a keyboard sends them)
+        // When Right (one press a frame, as a keyboard sends them), then it snaps onto the grid: 40, not 42
         val press = { k: Key -> composeRule.onNodeWithTag(InkMixerLightTestTag).performKeyInput { pressKey(k) }; composeRule.waitForIdle() }
         press(Key.DirectionRight)
+        assertEquals(40, (state.hsv.v * 100).roundToInt())
+        // And Up and Down are left to focus (an Android SeekBar takes Left/Right only), so the value stays
         press(Key.DirectionUp)
-        assertEquals(60, (state.hsv.v * 100).roundToInt())
+        assertEquals(40, (state.hsv.v * 100).roundToInt())
+        composeRule.onNodeWithTag(InkMixerLightTestTag).performSemanticsAction(SemanticsActions.RequestFocus)
         repeat(3) { press(Key.DirectionLeft) }
-        assertEquals(45, (state.hsv.v * 100).roundToInt())
+        assertEquals(25, (state.hsv.v * 100).roundToInt())
 
         // And Hue clamps at its far end
         composeRule.onNodeWithTag(InkMixerHueTestTag).performSemanticsAction(SemanticsActions.SetProgress) { it(355f) }
