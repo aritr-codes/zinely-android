@@ -319,6 +319,10 @@ private class UndoRequest(val id: String, val message: String, val outcome: Comp
  * @param onDeleteCommit the window closed without it — only now is the zine really deleted.
  * @param onRetry the shelf failed to open; ask the store again.
  * @param onDismissRestored *Got it* on the restored-details note, with every zine it names (A37.5).
+ * @param onDeleteZines several zines deleted at once (A47.8): hide them and open one undo window.
+ * @param onDeleteUndoMany that window closed with Undo pressed.
+ * @param onDeleteCommitMany it closed without: each zine is now deleted on its own (A47.9).
+ * @param onMoveZines `(ids, folder)`: several zines moved as one folder action with one Undo (A47.7).
  */
 @Composable
 public fun ZineLibraryScreen(
@@ -351,6 +355,10 @@ public fun ZineLibraryScreen(
     checkFolderName: (String) -> FolderNameVerdict,
     modifier: Modifier = Modifier,
     onDismissRestored: (List<String>) -> Unit = {},
+    onDeleteZines: (List<String>) -> Unit = {},
+    onDeleteUndoMany: (List<String>) -> Unit = {},
+    onDeleteCommitMany: (List<String>) -> Unit = {},
+    onMoveZines: (List<String>, String?) -> Unit = { _, _ -> },
 ) {
     val colors = ZinelyTheme.v21Colors
     val haptics = ZinelyTheme.haptics
@@ -388,6 +396,8 @@ public fun ZineLibraryScreen(
     val currentUndo by rememberUpdatedState(onDeleteUndo)
     val currentCommit by rememberUpdatedState(onDeleteCommit)
     val currentDeleteWaiting by rememberUpdatedState(isDeleteWaiting)
+    val currentUndoMany by rememberUpdatedState(onDeleteUndoMany)
+    val currentCommitMany by rememberUpdatedState(onDeleteCommitMany)
 
     LaunchedEffect(backupRestoreState) {
         if (backupRestoreState != null) openSheet = null
@@ -436,6 +446,21 @@ public fun ZineLibraryScreen(
                     } finally {
                         undo = null
                         if (!outcome.isCompleted) currentCommit(event.id)
+                    }
+                }
+
+                // A47.8: one window for the whole set. The ids a folder action has finished meanwhile are
+                // dropped; the rest share the one Undo.
+                is HomeShelfEvent.DeleteBatchPrompt -> {
+                    val ids = event.ids.filter { currentDeleteWaiting(it) }
+                    if (ids.isEmpty()) return@collect
+                    val outcome = CompletableDeferred<Boolean>()
+                    undo = UndoRequest(ids.first(), event.message, outcome)
+                    try {
+                        if (outcome.await()) currentUndoMany(ids) else currentCommitMany(ids)
+                    } finally {
+                        undo = null
+                        if (!outcome.isCompleted) currentCommitMany(ids)
                     }
                 }
 
