@@ -221,7 +221,7 @@ internal fun InkMixerSheet(
 
 /** `.sheet.mixer h3 small`: the colour's name beside the title. Not a live region (the sliders speak it). */
 @Composable
-private fun InkMixerName(hex: InkHex) {
+internal fun InkMixerName(hex: InkHex) {
     Text(
         text = inkColourWords(colourName(hex)),
         fontFamily = ZinelyV21Fonts.Work,
@@ -746,7 +746,7 @@ internal const val InkMixerUseTestTag = "ink-mixer-use"
 // — the frozen numbers (`v21-ink-mixer.html:747-829`) —
 
 /** `.sheet.mixer{max-height:92%}`. */
-private const val InkMixerMaxHeightFraction = 0.92f
+internal const val InkMixerMaxHeightFraction = 0.92f
 
 /** `.proofcard{border-radius:var(--br-xs) var(--br-md) var(--br-md) var(--br-xs)}`. */
 private val InkMixerCardShape = RoundedCornerShape(
