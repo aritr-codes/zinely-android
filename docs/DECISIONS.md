@@ -146,7 +146,7 @@
 | [ADR-135](#adr-135) | **Read speaks the page.** One stop per meaningful thing, in the Bench's spatial order, between Previous and Next page: text as written, a photo as `Photo` or `Photo: <description>`, Art only when described (by its name), `Blank page` / `Only Art on this page`; no role on a stop; a turn announces the ticket only. The PDF and paper carry no description, said once in the Describe field. `v21-proof.html` A38 frozen; part 1 needs no schema, part 2 is plan step 7 | Proposed (design frozen under the owner's delegation; not built) |
 | [ADR-136](#adr-136) | **Product direction 2026-10-15: keep, cut and the order of work.** W1 never lose work, never get stuck → W2a/W2b small things → W3 Art better before more → W4 photo descriptions (v4, alone) → W5 print guidance → W6 paper sizes (v5) and paper colour → W7 Art grows inside the four families → W8 your own artwork → W9 Hand voice; then Later. A cut list with reasons. Never #19 becomes "never *breaks* a saved zine", with ADR-132's pre-1.0 redraw as the one named exception. Records the owner's readings Q1 ("the paper is the medium, not the page") and Q2 ("§IV governs chrome; a document voice is content") | Accepted, under the owner's delegation; Q1 and Q2 are owner readings |
 | [ADR-137](#adr-137) | **One world: Art pieces from any source pass the same house gates; variants of one subject.** "One hand" becomes "one world": pieces we draw, pieces redrawn from public-domain or open-licence references, and imported open-licence pieces all pass nine gates and carry ADR-104's record per item. Variants of one subject sit together on the sheet. Still four families; curated, not capped. Amends SUPPLIES-SPEC §4.1 and §4.4 (by §4.5), ADR-107 R1's count target and ZINE-DIRECTION principle 3 | Proposed (direction ruled by the owner; A39 picked 2026-10-22, [ADR-139](#adr-139)) |
-| [ADR-138](#adr-138) | **Mix an ink, keep it, and keep inks together.** A hex picker in a sheet; *My inks* app-wide, 9 kept, least-recently-used removal named before Use; *My palettes* up to 9, 2–6 copied values each, never evicted; the Ink tray reordered so the maker's own work comes first. Stored in the app's Preferences DataStore, not the document (schema stays v3); pure helpers in `:core:editor`. Not carried by backups (Known Limitation). Amends A16, ADR-096 §2, OD-24's preset rule and ZINE-DIRECTION §8's colour-picker row; resolves D-060 | Proposed (design frozen as bench A40 rev. 2; not built) |
+| [ADR-138](#adr-138) | **Mix an ink, keep it, and keep inks together.** A hex picker in a sheet; *My inks* app-wide, 9 kept, least-recently-used removal named before Use; *My palettes* up to 9, 2–6 copied values each, never evicted; the Ink tray reordered so the maker's own work comes first. Stored in the app's Preferences DataStore, not the document (schema stays v3); pure helpers in `:core:editor`. Not carried by backups (Known Limitation). Amends A16, ADR-096 §2, OD-24's preset rule and ZINE-DIRECTION §8's colour-picker row; resolves D-060 | Proposed (design frozen as bench A40 rev. 2; built 2026-10-26 on `feat/ink-mixer`, in no download; device passes owed) |
 | [ADR-139](#adr-139) | **The A39 Art picks: 124 outlines from 125 picks, add-only ids, a named holed list of 31.** The owner's 125 picks; 34 shipped ids remain (17 keep their drawing, 17 take a redraw fitted inside the old ink box by a move and/or a scale of at least 0.90) and 90 letters-only ids are added; the A34 and A39 Circles collapse to one; H9 becomes a named list of 31; the gate numbers go into SUPPLIES-SPEC §4.4; six Fluent Emoji silhouettes admitted by the owner's pick. Bench A39 and colophon A39 | Proposed (built on `feat/art-picks` 2026-10-24, in no download; device passes owed) |
 | [ADR-140](#adr-140) | **When a zine's pages go back to their earlier copy, My Shelf says so once (extends ADR-134).** A `document.json` put back from its `.bak` is told by the A37 note in Library A46's words ("A page file was damaged, so Zinely used the copy from just before your last few seconds of changes"); one note covers a zine's details and pages. The store's `Restored` result is recorded in one lock-free repair-note store shared by both repositories; `BackupOnly` is silent. No Bench notice (named follow-up); no edit journal. Decides D-120 item 4, #146 | Proposed (A46 frozen 2026-10-22 under the owner's delegation; Accepted only once built and reviewed) |
 | [ADR-141](#adr-141) | **Selecting several things: the Bench stays single-select; My Shelf multi-select is Planned after W1 to W3.** Settles ADR-129's open question: no group selection on the Bench (page-level actions instead); a Shelf long-press selection with Move to a folder, Delete and one Undo for the batch is Planned, not in beta.8, design first. Proposed under delegation. |
@@ -16782,7 +16782,9 @@ resolves once PR #141 merges.
 **Status:** Proposed, 2026-10-22. Design frozen by the owner the same day as bench
 [A40](design/mockups/v21-bench.html#a40) and [A40 rev. 2](design/mockups/v21-bench.html#a40r2) (with the freeze-review
 fixes of `777374f`). The working prototype [`v21-ink-mixer.html`](design/mockups/v21-ink-mixer.html) is the behavioural
-spec, and its `<script>` is the reference for every pure helper below. Not built.
+spec, and its `<script>` is the reference for every pure helper below. *2026-10-26: built 2026-10-26 on `feat/ink-mixer`, in no download (INK Tasks 1–9;
+the A40 rev. 2 accessibility amendment of the same day, [D-123](design/V2-SPEC-DEFECTS.md#d-123)). Stays Proposed until
+everything under* Owed before Accepted *is done.*
 **Amends:** frozen bench **A16**'s Ink tray (its band order, "Starting palettes" and the `Apply …` action), superseded
 by A40 rev. 2 rules 1–3; [ADR-096](#adr-096) §2 (the four bands and the preset pills);
 [OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling)'s preset rule ("a preset applies `[0]`"), because every pot of a
@@ -16928,6 +16930,12 @@ document; [ADR-032](#adr-032)'s single Preferences DataStore; D-028's ruling tha
 
 - The implementation, both device passes (including the platform accessibility tree for the sliders, toggles and
   radios), a TalkBack listen, and pixel parity against the frozen prototype.
+- *2026-10-26:* the implementation is done and its platform tree is checked under Robolectric (not on a device).
+  Still owed: both device passes; a TalkBack listen (sliders, strips, toggles, the remove action, and whether
+  TalkBack follows the focus moves after Delete and Undo, which the tests prove for keyboard focus only); pixel
+  parity against `v21-ink-mixer.html`; the CI record of the five changed `bench_ink_popover_*` goldens; and the new
+  tray and mixer goldens of the plan's Task 10, which are not written yet. Listed in
+  [OWNER-CHECKLIST §2.6](OWNER-CHECKLIST.md#26-ink-mixer--built-unreleased-no-device-pass-yet).
 
 #### Review {#adr-138-review}
 
@@ -16953,7 +16961,20 @@ details (which name each snack says, the edit-mode pot label); the preview sampl
 pale note's polite status asserted; the TalkBack remove action removes directly; the ZINE-DIRECTION note reworded;
 `addMixed` precedence tested. Observations: prototype line numbers drifted after `777374f`, so the plan cites
 symbols; the prototype offers Undo on a no-op tap, recorded as a deviation in decision 5; RESEARCH had two `R33.7`
-headings (the second is now R33.8). The implementation review is recorded here when the work is done.
+headings (the second is now R33.8). The implementation review follows.
+
+**Implementation review, 2026-10-23 to 2026-10-26.** Each of Tasks 1–9 had two independent foreground reviewers:
+spec and prototype compliance, and code quality with accessibility and Undo. Verdicts were GO or GO WITH FIXES, never
+NO-GO, and every Required Fix was fixed in the same task. The ones that changed behaviour: one bad stored hex no
+longer wipes the library (each entry is dropped on its own), and any stored version other than 1 is never
+overwritten (Task 3); a frozen clock across a scroll was a test defect, not a product one (Task 6). In Task 9, both
+reviewers found the same Required Fix: using an ink whose keep in My inks failed was silent, and an Undo whose
+library restore failed still undid the page. Now the snack says "Couldn't save that change.", and a failed restore
+undoes nothing. The amendment says so ([D-123](design/V2-SPEC-DEFECTS.md#d-123)). Deviations the reviewers agreed
+with: a kept or built-in pot reports "Selected" as its checked state, not as ", selected" in its name, so
+TalkBack says it once; the current pot takes no click; and an edit toggle is one CheckBox node, with its tick as
+paint. Left for the owner: the dim Save speaks "Pick at least 2 inks." before the name hint, as the prototype
+orders them, while a tap goes to an empty name first.
 
 ## ADR-139 {#adr-139}
 

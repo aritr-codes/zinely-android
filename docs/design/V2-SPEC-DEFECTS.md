@@ -3491,6 +3491,9 @@ in `Neutrals` is not also called `Ink`. That is a change to a frozen surface's c
 `v2-bench.html` first and `Copy.BenchInk` second, and the amendment is the owner's to make. Until then the
 popover is correct and mildly confusing, which is a fair description of the freeze it implements.
 
+*2026-10-26: resolved by [ADR-138](../DECISIONS.md#adr-138) / [A40 rev. 2](mockups/v21-bench.html#a40r2). The built-in
+inks are one list with `Ink` drawn once (`benchBuiltInInks`), built 2026-10-26 on `feat/ink-mixer`, in no download.*
+
 ---
 
 ### D-059 — the miniature lost its paper, and in dark theme the page went with it {#d-059}
@@ -8181,6 +8184,21 @@ second reviewer, could not sign in.
 | R31 relies on lane C renumbering | Observation | Same as above |
 | Duplicate also carries the description | Observation | **Accepted.** Decision 6: Duplicate keeps it; owed item 2 tests it |
 | Verified claims | Observation | No change |
+
+### D-123 — the frozen ink tray says nothing when Save is dim or a save fails, and its sliders take no keys {#d-123}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-ink-mixer.html` ([amendment of 2026-10-26](mockups/v21-ink-mixer.html#a40r2-t9)) · `BenchInkPopover.kt` (`benchInkSaveReason`, `BenchInkTrayActions`) · `InkMixerSheet.kt` (`InkMixerSlider`) · `EditorScreen.kt` (`applyInk`, `raiseInkFailure`) · `Copy.BenchInk.SAVE_FAILED`, `notKept` |
+| **Found** | INK Tasks 7, 8b and 9 (2026-10-24 to 2026-10-26), by the implementer and the task reviewers; [ADR-138](../DECISIONS.md#adr-138) |
+| **Severity** | Accessibility and trust. A screen-reader user hears a dim Save palette as an ordinary button and is not told why it does nothing. A store failure dropped the change with no word. A keyboard user cannot move the hidden sliders |
+| **Status** | **Resolved in the frozen file, then built on `feat/ink-mixer` (2026-10-26), unreleased.** Accessibility fixes are allowed after a freeze, so the amendment is dated in the HTML first. Not yet tried on a device or with TalkBack ([OWNER-CHECKLIST §2.6](../OWNER-CHECKLIST.md#26-ink-mixer--built-unreleased-no-device-pass-yet)) |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **Dim Save is silent.** The prototype marks it `aria-disabled` with no reason. | **It carries the reason as its description**, in the edit's own words: "Pick at least 2 inks." or the name hint. In Compose it is the button's state description, and the button stays enabled and focusable |
+| 2 | **A failed store write is silent.** The HTML has no storage, so it drew no failure. | **Nothing changes, and a buttonless snack says "Couldn't save that change."**, the Shelf's paper-choice pattern. The one exception is a used ink whose keep fails. The piece keeps the ink and the snack reads "Ink · X. Couldn't save that change." with its usual Undo. An Undo whose library cannot be put back undoes nothing |
+| 3 | **The hidden sliders take no keys.** | **Left and Right move 5 on the 5-step grid**, as an Android SeekBar does. Up and Down stay free to move focus |
 
 ### D-130 — A39's colour bar cannot take `mark.bar` without breaking G2 {#d-130}
 

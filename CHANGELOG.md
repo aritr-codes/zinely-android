@@ -59,6 +59,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     larger font size a name can still be cut off. A zine that uses a new piece needs this version or later to
     show and print it; an older version opens the zine and draws nothing for that piece. Not yet tried on a
     phone or with a screen reader, and no page has been printed or photocopied yet.
+- **Mix your own ink, and keep inks together ([ADR-138](docs/DECISIONS.md#adr-138) Proposed).** Built; in no download
+  yet. Not yet tried on a phone or an emulator, and not listened to with a screen reader.
+  - In the Ink tray, Mix opens a colour mixer on the piece's ink: a square, three sliders and a hex code. Use inks
+    the piece and keeps the ink in My inks.
+  - My inks keeps the last 9 inks you used. When it is full, the mixer names the ink that will leave before you
+    tap Use.
+  - My palettes keeps up to 9 named sets of 2 to 6 inks. You can edit, duplicate and delete them, with Undo, and
+    save one of the three starter palettes as a copy.
+  - The built-in inks are one list, and the near-black Ink is shown once
+    ([D-060](docs/design/V2-SPEC-DEFECTS.md#d-060)).
+  - If the phone can't store a change to My inks or My palettes, Zinely says "Couldn't save that change."
+    ([D-123](docs/design/V2-SPEC-DEFECTS.md#d-123)).
+  - Known limitation: My inks and My palettes are not in a Zinely backup, so they don't move to a new phone. The
+    colours already on your pages are in your zines.
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),
   [D-143](docs/design/V2-SPEC-DEFECTS.md#d-143)), Proof A43 and A44, Backup A45 and Library A46. The Library
   mockup's paper-chooser and restored-note prototypes run again (merge damage repaired).
