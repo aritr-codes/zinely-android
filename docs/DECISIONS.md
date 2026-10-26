@@ -148,6 +148,7 @@
 | [ADR-137](#adr-137) | **One world: Art pieces from any source pass the same house gates; variants of one subject.** "One hand" becomes "one world": pieces we draw, pieces redrawn from public-domain or open-licence references, and imported open-licence pieces all pass nine gates and carry ADR-104's record per item. Variants of one subject sit together on the sheet. Still four families; curated, not capped. Amends SUPPLIES-SPEC §4.1 and §4.4 (by §4.5), ADR-107 R1's count target and ZINE-DIRECTION principle 3 | Proposed (direction ruled by the owner; A39 picked 2026-10-22, [ADR-139](#adr-139)) |
 | [ADR-139](#adr-139) | **The A39 Art picks: 124 outlines from 125 picks, add-only ids, a named holed list of 31.** The owner's 125 picks; 34 shipped ids remain (17 keep their drawing, 17 take a redraw fitted inside the old ink box by a move and/or a scale of at least 0.90) and 90 letters-only ids are added; the A34 and A39 Circles collapse to one; H9 becomes a named list of 31; the gate numbers go into SUPPLIES-SPEC §4.4; six Fluent Emoji silhouettes admitted by the owner's pick. Bench A39 and colophon A39 | Proposed (built on `feat/art-picks` 2026-10-24, in no download; device passes owed) |
 | [ADR-140](#adr-140) | **When a zine's pages go back to their earlier copy, My Shelf says so once (extends ADR-134).** A `document.json` put back from its `.bak` is told by the A37 note in Library A46's words ("A page file was damaged, so Zinely used the copy from just before your last few seconds of changes"); one note covers a zine's details and pages. The store's `Restored` result is recorded in one lock-free repair-note store shared by both repositories; `BackupOnly` is silent. No Bench notice (named follow-up); no edit journal. Decides D-120 item 4, #146 | Proposed (A46 frozen 2026-10-22 under the owner's delegation; Accepted only once built and reviewed) |
+| [ADR-141](#adr-141) | **Selecting several things: the Bench stays single-select; My Shelf multi-select is Planned after W1 to W3.** Settles ADR-129's open question: no group selection on the Bench (page-level actions instead); a Shelf long-press selection with Move to a folder, Delete and one Undo for the batch is Planned, not in beta.8, design first. Proposed under delegation. |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -17177,3 +17178,48 @@ the owner's first-time reading, including whether the Shelf is too late (option 
 
 Status stays **Proposed**: the TalkBack listen, the Bench-open-then-return path and the owner's reading are owed
 ([OWNER-CHECKLIST §2.5](OWNER-CHECKLIST.md)).
+
+---
+
+## ADR-141 {#adr-141}
+
+### Selecting several things: the Bench stays single-select; My Shelf multi-select is Planned after W1 to W3
+
+**Status:** Proposed, 2026-10-26, under the owner's delegation of 2026-10-12 ("decide, do not ask"). The owner
+agreed the shape on 2026-10-23. It is a ruling, not a build: nothing is designed in HTML or written in Kotlin.
+**Settles:** the question [ADR-129](#adr-129) left open in its Consequences ("If multi-selection is ever built, it
+needs its own ruling"). **Evidence:** [v1 `bench.html`](design/v1/bench.html) (line 82, "Multi-select is
+DELIBERATELY omitted"); [V2-BENCH-CRITIQUE §3.4](design/V2-BENCH-CRITIQUE.md) ("multi-select is a later question,
+not MVP"). **Why the Shelf:** [ADR-125](#adr-125) (folders). **Order:** [ADR-136](#adr-136).
+
+#### Context
+
+- ✅ The Bench was drawn single-select on purpose: a single-sheet, eight-panel zine holds few blocks, so a group
+  is rarely worth its chrome (v1 `bench.html`, line 82). The V2 critique kept it as "later".
+- ✅ [ADR-129](#adr-129) built the Arrange tray for one piece and said a multi-selection needs its own ruling.
+- ✅ [ADR-125](#adr-125) put zines in folders. Filing is one zine at a time, which is tedious once a shelf has
+  many zines. That is a Shelf problem ("which zine do I want?"), not a Bench one.
+- 🟨 No tester has asked for several pieces to move or recolour together.
+
+#### Decision
+
+1. **The Bench stays single-select.** One piece is selected at a time. If a need for groups appears, the answer is
+   a page-level action (for example Clear page), not a group selection.
+2. **My Shelf multi-select is Planned**, after the W1 to W3 direction work ([ADR-136](#adr-136)). Shape: a long
+   press enters selection; **Move to a folder** and **Delete** act on several zines; **one Undo covers the whole
+   batch**.
+3. **Not in `0.9.0-beta.8`, and nothing is built.** A design comes first: an HTML amendment to the frozen Library
+   mockup, then its freeze, then an ADR for the build, per the HTML-first workflow in
+   [CLAUDE.md](../CLAUDE.md). This ADR does not freeze any screen.
+
+#### Consequences
+
+- The Bench, its Arrange tray and its tests are untouched. ADR-129's open question is answered: no.
+- The Shelf gains a planned feature with no date. [ROADMAP](ROADMAP.md#planned) and the public roadmap list it as
+  Planned only.
+- No schema, storage or export change is implied (`CURRENT_SCHEMA_VERSION = 3`).
+
+#### Revisit trigger
+
+- **Bench:** a tester asks to move or recolour several pieces together.
+- **Shelf:** the W1 to W3 work is done, or a tester reports that filing zines one at a time is a chore sooner.
