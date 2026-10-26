@@ -57,6 +57,14 @@ if (new URLSearchParams(location.search).has('gallery')) {
      │  meta.json was put back from its earlier copy (D-116), My Shelf shows       │
      │  one paper note under its heading until the maker presses "Got it".         │
      │  Marked A37 in the CSS, markup and script below; nothing above changed.     │
+     │                                                                             │
+     │  A47 CHOOSING SEVERAL ZINES · FROZEN 2026-10-26 under the owner's          │
+     │  delegation of 2026-10-12, for ADR-142 (ADR-141 decision 2).                │
+     │  A long press on a zine, or "Select several" in its sheet, starts choosing.  │
+     │  Move to a folder and Delete act on every zine chosen; one Undo covers the  │
+     │  batch.  Folders cannot be chosen.  Rules A47.1–A47.13 are in the A47       │
+     │  script at the end of this file; the frozen functions are wrapped, not      │
+     │  edited.  The Bench stays single-select.                                    │
      └─────────────────────────────────────────────────────────────────────────────┘ -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1826,4 +1834,376 @@ $('rs8').onclick = () => {
     { name: 'Mum’s garden', was: null, pages: true }, { name: 'Tiny poems', was: null }].filter(z => byName(z.name)), 'rs8');
 };
 /* ===================== end of A46 script ===================== */
+</script>
+
+<style>
+/* ============================================================================
+   A47 · CHOOSING SEVERAL ZINES — FROZEN 2026-10-26 under the owner's delegation of
+   2026-10-12 ("decide, do not ask"), for ADR-142 (ADR-141 decision 2).
+   Rules A47.1–A47.n are in the A47 script below.  No rule above this line changed:
+   the frozen functions are wrapped, not edited, and with nothing chosen the Shelf is
+   the frozen Shelf.
+   ============================================================================ */
+/* the choosing bar takes the heading's place and stays put while the zines scroll under it */
+.a47-bar{position:absolute;left:0;right:0;top:0;z-index:30;display:none;align-items:center;gap:var(--gap-sm);
+  padding:var(--gap-lg) var(--gap-lg) var(--gap-md) var(--gap-sm);background:var(--desk);
+  border-bottom:1.5px dashed var(--hair)}
+.a47-on .a47-bar{display:flex}
+/* !important: the frozen state() writes the heading's visibility inline */
+.a47-on .shelf-head{visibility:hidden !important}
+.a47-on .restored{display:none}
+/* the close mark is DRAWN, as the back chevron and the three dots are: a mark the app owns */
+.a47-done svg{width:14px;height:14px;display:block}
+.a47-done{flex:none;width:48px;height:48px;padding:0;display:grid;place-items:center;border:1.5px solid var(--ink);
+  border-radius:var(--br-pill);background:var(--surface);color:var(--ink);cursor:pointer;
+  font:700 .86rem/1.2 var(--sans);box-shadow:2px 2px 0 var(--ink-line)}
+.a47-done:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink-line)}
+.a47-done:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.a47-count{flex:1;min-width:0;margin:0;font-family:var(--voice);font-weight:700;font-size:1.5rem;line-height:1.15;
+  overflow-wrap:anywhere}
+.a47-count:focus{outline:none}
+
+/* the tick: a paper disc on the cover's top-left corner while choosing; chosen = an inked disc with a
+   paper check.  PINNED in both themes like the stamp, with a paper ring so it holds on the dark desk */
+.a47-tick{position:absolute;left:-8px;top:-10px;z-index:5;width:30px;height:30px;border-radius:var(--br-pill);
+  background:#FFF6E8;border:1.5px solid #27270F;box-shadow:2px 2px 0 #27270F;display:none;place-items:center;
+  pointer-events:none}
+.a47-tick svg{width:15px;height:15px;display:block;opacity:0}
+.a47-on .zine:not(.pile) .a47-tick{display:grid}
+.zine.a47-picked .a47-tick{background:#27270F;color:#FFF6E8;box-shadow:0 0 0 2px #FFF6E8,2px 2px 0 2px #27270F}
+.zine.a47-picked .a47-tick svg{opacity:1}
+/* the chosen cover is ringed in ink, outside its own edge, so the cover itself is never repainted */
+.zine.a47-picked .cover{outline:3px solid var(--ink);outline-offset:5px}
+.a47-on .more{display:none}
+.a47-on .cap{padding-right:0}
+/* a folder cannot be chosen (A47.6): it stays where it is, quieter */
+.a47-on .zine.pile{opacity:.4}
+.a47-on .zine.pile .zine-open{cursor:default}
+
+/* the choosing dock: the two batch actions where Make a zine was.  They wrap, never clip (#156) */
+.a47-dock{display:none;pointer-events:auto;flex-wrap:wrap;justify-content:center;gap:var(--gap-md);
+  width:100%}
+.a47-on .dock .start,.a47-on .dock .quiet-actions{display:none}
+.a47-on .a47-dock{display:flex}
+.a47-dock button{min-height:48px;max-width:100%;border:1.5px solid var(--ink);border-radius:var(--br-pill);
+  padding:var(--gap-md) var(--gap-xl);cursor:pointer;font:700 .94rem/1.2 var(--sans);
+  overflow-wrap:anywhere;text-align:center;box-shadow:3px 3px 0 var(--ink-line)}
+.a47-dock button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
+.a47-dock button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.a47-move{background:var(--leaf);color:var(--on-leaf)}
+/* Delete keeps the zine sheet's consequence paint (A24): berry-tint ground, jam words */
+.a47-del{background:var(--surface);color:var(--jam-text)}
+
+/* prototype-only: Android font scale 1.8 on a 360dp phone, the size A47 is judged at */
+:root[data-a47narrow="on"] .phone{width:360px}
+/* ===================== end of A47 CSS ===================== */
+</style>
+
+<script>
+/* ============================================================================
+   A47 · CHOOSING SEVERAL ZINES — FROZEN 2026-10-26 under the owner's delegation of
+   2026-10-12 ("decide, do not ask"); the owner has not ruled on it personally and may
+   overrule it.  For ADR-142 (ADR-141 decision 2:
+   "a long press enters selection; Move to a folder and Delete act on several zines;
+   one Undo covers the whole batch").  The Bench stays single-select (ADR-141.1).
+   Extends A28: everything A28 says still holds unless a rule below names it.
+
+   THE RULES.  Cited as A47.n.  [shown] = this page performs it; [stated] = written down
+   only; both kinds are the amendment.  ADR-142 owns the batch semantics and storage;
+   this page owns what is on screen: the bar, the tick, the words, focus.
+
+  A47.1  [shown]  ENTER.  A long press on a zine starts choosing, with that zine chosen.
+                AMENDS A28's "[stated] The folder tile's long-press label is 'Actions', as a
+                zine's is": a zine's long press is now "Select"; a folder's stays "Actions".
+                The zine sheet gains one row, "Select several", above the Delete band: it
+                starts choosing with that zine chosen.  It is the way in that can be seen
+                (a long press cannot), and the way in for anyone who never presses long.
+  A47.2  [shown]  WHILE CHOOSING, a tap on a zine chooses it or lets it go.  Nothing opens.
+                The three dots are gone (they would open one zine's sheet in the middle of
+                a choice of several).  A chosen zine has an inked disc with a check on its
+                cover's corner and an ink ring around the cover; a zine not chosen has an
+                empty paper disc, so every tile shows that it can be chosen.
+  A47.3  [shown]  THE BAR.  The heading gives way to one bar that stays put while the zines
+                scroll: a drawn ✕ on the left, then the count, "1 selected" / "3 selected".  Never
+                "0 selected": letting go of the last zine stops choosing (A47.4).
+  A47.4  [shown]  LEAVE.  The ✕, system Back, letting go of the last zine, or finishing an
+                action.  Leaving chooses nothing and changes nothing.  Inside a folder,
+                Back first stops choosing; a second Back leaves the folder (A28.9).
+  A47.5  [shown]  THE DOCK.  While choosing, "Make a zine", Backups and About give way to
+                two actions: "Move to a folder" (Matcha, the action colour) and "Delete"
+                (the zine sheet's consequence paint, A24).  At any text size they wrap onto
+                two lines of the dock, never clip (#156).  Inside a folder Move reads
+                "Move somewhere else" (A28.15).
+  A47.6  [shown]  WHAT CAN BE CHOSEN.  Zines in the view you are in: My Shelf's loose zines,
+                or one folder's zines.  A folder pile is not a zine and cannot be chosen; while
+                choosing it is quieter, and a tap on it only says "To choose zines in a folder,
+                open it first" (the snack, no Undo).  To TalkBack it is dimmed.  So every chosen zine is always in the same place.
+  A47.7  [shown]  MOVE.  The A28 chooser rises for the set: its title is the count, "3
+                zines" (one zine: its name), its note where they are.  The row for where they already are is "It's
+                here", as A28.  New folder names the set ("For 3 zines"; "These zines will join
+                it").  One snack: "Moved 3 zines to “Family”" (one zine: its name), with Undo; Undo puts every one
+                back where it was, and the snack says "3 zines are back on My Shelf" (or "in
+                “Family”").  A folder left empty is put away, as A28.3 says.
+  A47.8  [shown]  DELETE.  No question first, as for one zine.  The chosen zines leave the
+                Shelf at once and one snack says "Deleted 3 zines", with Undo; Undo brings
+                every one back where it was, and the snack goes.  One zine says "Deleted “Riso tests”", the words
+                one zine's Delete already uses.
+  A47.9  [shown]  WHEN SOME DID NOT GO.  [stated] Each zine is deleted on its own once the
+                snack has gone (ADR-142); one that cannot be (it is still saving, or the phone
+                refused) comes back to the Shelf and the rest stay deleted.  [shown] One snack
+                names those that came back: "“Riso tests” wasn’t deleted. It’s back on your
+                shelf; try again in a moment." / "2 zines weren’t deleted: “A” and “B”. They’re
+                back on your shelf; try again in a moment."  More than three are named as A37.3
+                does: three, then "and 2 more".  Move is the same: "Moved 2 zines to “Family”.
+                “Riso tests” didn’t move; try again in a moment.", Undo covering those moved.
+  A47.10 [stated] KEPT AS FAR AS THE SHELF KEEPS THINGS.  The choice survives a rotation, and
+                Android stopping the app, exactly as the open folder and an open sheet do
+                (the screen's saved state); it is never written to the zines' storage.  A
+                chosen zine that is gone when the Shelf comes back is dropped from the choice;
+                if none is left, choosing stops.  Opening Backups or About, or making a zine,
+                stops choosing.
+  A47.11 [shown]  TALKBACK.  A zine while choosing: "Sunday market, selected" / "Sunday
+                market, not selected" (a state, spoken after the name), its tap "Select" /
+                "Unselect".  The ✕: "Stop selecting".  The count is a polite live region: "3
+                selected".  The dock: "Move 3 zines to a folder", "Delete 3 zines".  A dimmed
+                folder: "For the stall, folder, 3 zines, dimmed".  [stated] In the app each is
+                one platform Button (zinelyV2Control) and the zine's state is a
+                stateDescription; the device pass reads the platform tree, not Compose.
+  A47.12 [shown]  FOCUS.  Choosing starts with focus where it was (the zine just chosen).
+                The ✕ and Back put focus on the last zine touched, else the heading.  After
+                Delete focus goes to the heading; after Move, to the tile that now holds the
+                zines (A28 FOCUS).
+  A47.13 [stated] The Bench stays single-select (ADR-141.1).  No sort, no Select all, no drag
+                (A28.11): each was weighed and left out (ADR-142).
+   ============================================================================ */
+const A47 = { on: false, picked: new Set(), last: null, busy: false, undo: null };
+const TICK = '<svg viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.8 6.2 11 12 4.2"/></svg>';
+
+/* the bar, the dock and one tick per zine */
+const a47Bar = el('div', 'a47-bar'), a47Done = el('button', 'a47-done'), a47Count = el('p', 'a47-count');
+a47Done.setAttribute('aria-label', 'Stop selecting');
+a47Done.innerHTML = '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2 2 12"/></svg>';
+a47Count.setAttribute('role', 'status'); a47Count.setAttribute('aria-live', 'polite'); a47Count.tabIndex = -1;
+a47Bar.append(a47Done, a47Count); phone.appendChild(a47Bar);
+const a47Dock = el('div', 'a47-dock'), a47Move = el('button', 'a47-move'), a47Del = el('button', 'a47-del', 'Delete');
+a47Dock.append(a47Move, a47Del); dock.appendChild(a47Dock);
+lib.forEach(z => { const t = el('span', 'a47-tick'); t.innerHTML = TICK; z.el.querySelector('.cover').appendChild(t); });
+
+/* the sheet's new row (A47.1), above the Delete band */
+const a47Row = el('button', 'act'); a47Row.id = 'sheetSelect';
+a47Row.innerHTML = '<span class="ic" aria-hidden="true"><svg viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="6.5"/><path d="M5.4 8.7 7.6 10.9 11.6 6.4"/></svg></span> Select several';
+$('sheetDelete').before(a47Row);
+a47Row.onclick = () => { const z = cur; close(); if(z) a47Enter(z); };
+
+const chosen = () => lib.filter(z => A47.picked.has(z));
+const viewZines = () => openFolder ? members(openFolder) : lib.filter(z => !z.folder);
+function a47Names(zs){                                                       // A47.9, as A37.3 {list}
+  const w = zs.map(z => q(z.name));
+  if(w.length > 4) return w.slice(0, 3).join(', ') + ' and ' + (w.length - 3) + ' more';
+  return w.length < 2 ? w[0] : w.slice(0, -1).join(', ') + ' and ' + w[w.length - 1];
+}
+function a47Sync(){
+  const n = A47.picked.size;
+  phone.classList.toggle('a47-on', A47.on);
+  a47Count.textContent = A47.on ? n + ' selected' : '';                        // A47.3
+  const here = openFolder ? 'Move somewhere else' : 'Move to a folder';      // A47.5
+  a47Move.textContent = here;
+  a47Move.setAttribute('aria-label', 'Move ' + plural(n) + (openFolder ? ' somewhere else' : ' to a folder'));
+  a47Del.setAttribute('aria-label', 'Delete ' + plural(n));
+  lib.forEach(z => {                                                         // A47.2, A47.11
+    const b = z.el.querySelector('.zine-open'), on = A47.picked.has(z);
+    z.el.classList.toggle('a47-picked', A47.on && on);
+    b.setAttribute('aria-label', A47.on ? z.name + ', ' + (on ? 'selected' : 'not selected') : z.name);
+  });
+  shelf.querySelectorAll('.pile .zine-open').forEach(b => {                  // A47.6
+    if(A47.on) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled');
+  });
+  $('a47c0') && ['a47c0','a47c1','a47c2'].forEach(id => $(id).classList.remove('on'));
+}
+function a47Enter(z){
+  hideSnack(); A47.on = true; A47.picked = new Set([z]); A47.last = z; a47Sync();
+  z.el.querySelector('.zine-open').focus({ preventScroll: true });           // A47.12
+}
+function a47Leave(focus){
+  const last = A47.last; a47Moving = false; A47.on = false; A47.picked.clear(); A47.last = null; a47Sync();
+  if(focus) (last && last.el.isConnected ? last.el.querySelector('.zine-open') : h1).focus({ preventScroll: true });
+}
+function a47Toggle(z){
+  A47.last = z;
+  if(A47.picked.has(z)) A47.picked.delete(z); else A47.picked.add(z);
+  if(!A47.picked.size) return a47Leave(true);                                // A47.4
+  a47Sync();
+}
+a47Done.onclick = () => a47Leave(true);
+
+/* taps while choosing are caught before the frozen handlers see them */
+shelf.addEventListener('click', e => {
+  if(A47.suppress){ A47.suppress = false; e.stopPropagation(); e.preventDefault(); return; }
+  if(!A47.on) return;
+  const art = e.target.closest('.zine'); if(!art) return;
+  e.stopPropagation(); e.preventDefault();
+  if(art.classList.contains('pile')) return snack('To choose zines in a folder, open it first', false);   // A47.6
+  const z = lib.find(x => x.el === art); z && a47Toggle(z);
+}, true);
+/* the long press (A47.1); a right click or the context-menu key stands in for it on a desktop */
+let a47Timer = 0, a47At = null;
+shelf.addEventListener('pointerdown', e => {
+  const art = e.target.closest('.zine'); if(!art || art.classList.contains('pile') || A47.on) return;
+  a47At = [e.clientX, e.clientY];
+  a47Timer = setTimeout(() => { const z = lib.find(x => x.el === art); if(z){ A47.suppress = true; a47Enter(z); } }, 500);
+});
+shelf.addEventListener('pointermove', e => { if(a47At && Math.hypot(e.clientX - a47At[0], e.clientY - a47At[1]) > 10) clearTimeout(a47Timer); });
+['pointerup', 'pointercancel', 'pointerleave'].forEach(t => shelf.addEventListener(t, () => { clearTimeout(a47Timer); a47At = null; }));
+shelf.addEventListener('contextmenu', e => {
+  const art = e.target.closest('.zine'); if(!art || art.classList.contains('pile')) return;
+  e.preventDefault(); const z = lib.find(x => x.el === art);
+  if(!z) return; if(A47.on) a47Toggle(z); else a47Enter(z);
+});
+/* Back (Escape here): a raised sheet first, then choosing, then the folder (A47.4) */
+addEventListener('keydown', e => {
+  if(e.key !== 'Escape' || !A47.on) return;
+  if(document.querySelector('.sheet.show')) return;
+  e.stopImmediatePropagation(); a47Leave(true);
+}, true);
+
+/* the frozen render and state stop choosing when the view changes under them (A47.6, A47.10) */
+const a47Render = render; render = () => { a47Render(); a47Sync(); };
+const a47State = state; state = s => { if(A47.on) a47Leave(false); a47State(s); };
+back.addEventListener('click', e => { if(A47.on){ e.stopImmediatePropagation(); a47Leave(true); } }, true);
+
+/* ---------- the snack's Undo, for a batch (A47.7, A47.8) ---------- */
+const a47Hide = hideSnack; hideSnack = () => { a47Hide(); A47.undo = null; };
+$('snackUndo').addEventListener('click', e => {
+  if(!A47.undo) return;
+  e.stopImmediatePropagation();
+  const u = A47.undo; A47.undo = null; u();
+}, true);
+
+/* ---------- Move (A47.7) ---------- */
+let a47Moving = false;
+function a47OpenMove(){
+  const zs = chosen(); if(!zs.length) return;
+  a47Moving = true; cur = zs[0];
+  if(!folders().length) return openName('new', false);                     // A28.14
+  const from = zs[0].folder;
+  $('mvTtl').textContent = zs.length === 1 ? zs[0].name : plural(zs.length);
+  $('mvSub').textContent = (from ? 'In “' + from + '”' : 'On My Shelf') + ' · move to…';
+  $('moveSheet').setAttribute('aria-label', 'Move ' + plural(zs.length));
+  const box = $('moveRows'); box.textContent = '';
+  const row = (label, note, icon, fn, here) => {
+    const b = el('button', 'act' + (here ? ' here' : '')), ic = el('span', 'ic'), lines = el('span', 'lines');
+    ic.innerHTML = icon; ic.setAttribute('aria-hidden', 'true');
+    lines.appendChild(el('span', '', label)); if(note) lines.appendChild(el('span', 'note', note));
+    b.append(ic, lines);
+    if(here) b.setAttribute('aria-disabled', 'true'); else b.onclick = fn;
+    box.appendChild(b);
+  };
+  if(from) row('My Shelf', 'Out of the folder', SHELF, () => a47DoMove(null));
+  folders().forEach(f => row(f, f === from ? 'It’s here' : plural(members(f).length), PILE, () => a47DoMove(f), f === from));
+  row('New folder', '', '＋', () => openName('new', true));
+  show('moveSheet');
+}
+a47Move.onclick = a47OpenMove;
+function a47DoMove(to, made){
+  const zs = chosen(), from = zs[0].folder, was = zs.map(z => [z, z.folder]), wasOpen = openFolder;
+  const stuck = A47.busy ? zs.filter(z => z.name === 'Riso tests') : [];   // the demo's "one won't go"
+  const moved = zs.filter(z => !stuck.includes(z));
+  const emptied = from && from !== to && members(from).length === moved.length;
+  moved.forEach(z => z.folder = to);
+  a47Moving = false; close(); a47Leave(false); render();
+  const n = moved.length === 1 ? q(moved[0].name) : plural(moved.length);
+  let msg = made ? 'Made “' + to + '” with ' + n : 'Moved ' + n + ' to ' + (to ? '“' + to + '”' : 'My Shelf');
+  if(emptied) msg += '. “' + from + '” is empty, so it’s put away';
+  if(stuck.length) msg += '. ' + a47Names(stuck) + ' didn’t move; try again in a moment.';
+  if(moved.length){
+    snack(msg, true);
+    A47.undo = () => {
+      was.forEach(([z, f]) => { if(moved.includes(z)) z.folder = f; }); openFolder = wasOpen;
+      render(); snack(n + (moved.length === 1 ? ' is' : ' are') + ' back ' + (from ? 'in “' + from + '”' : 'on My Shelf'), false);
+      focusHome(moved[0]);
+    };
+  } else snack(a47Names(stuck) + ' didn’t move; try again in a moment.', false);
+  focusHome(moved[0] || stuck[0]);
+}
+/* the A28 name sheet, for a set: the frozen functions are wrapped, not edited */
+const a47OpenName = openName;
+openName = (mode, fromChooser) => {
+  a47OpenName(mode, fromChooser);
+  if(a47Moving && mode === 'new'){ const zs = chosen(); $('nmSub').textContent = 'For ' + (zs.length === 1 ? q(zs[0].name) : plural(zs.length)); }
+};
+const a47Check = checkName;
+checkName = () => {
+  a47Check();
+  if(!a47Moving || nameMode !== 'new') return;
+  const v = $('nmInput').value.trim(), hit = folders().find(f => same(f, v)), from = chosen()[0] && chosen()[0].folder;
+  $('nmGo').disabled = !v || same(v, 'My Shelf') || (hit && hit === from);
+  const t = !hit || same(v, 'My Shelf') ? null : hit === from ? 'They’re already in “' + hit + '”.' : 'You already have “' + hit + '”. These zines will join it.';
+  if(t !== null && $('nmHint').textContent !== t) $('nmHint').textContent = t;
+};
+$('nmInput').oninput = checkName;
+$('nmGo').addEventListener('click', e => {
+  if(!a47Moving || nameMode !== 'new') return;
+  e.stopImmediatePropagation();
+  const v = $('nmInput').value.trim(), hit = folders().find(f => same(f, v));
+  a47DoMove(hit || v, !hit);
+}, true);
+$('nmCancel').addEventListener('click', e => {
+  if(!a47Moving || nameMode !== 'new') return;
+  e.stopImmediatePropagation();
+  if(nameFromChooser) return a47OpenMove();
+  a47Moving = false; close(); a47Move.focus({ preventScroll: true });
+}, true);
+/* a sheet dismissed without acting keeps the choice, and focus returns to the dock */
+scrim.addEventListener('click', () => { if(a47Moving){ a47Moving = false; setTimeout(() => a47Move.focus({ preventScroll: true }), 0); } });
+
+/* ---------- Delete (A47.8, A47.9) ---------- */
+a47Del.onclick = () => {
+  const zs = chosen(); if(!zs.length) return;
+  const at = zs.map(z => [z, lib.indexOf(z)]);
+  zs.forEach(z => { lib.splice(lib.indexOf(z), 1); z.el.remove(); });
+  a47Leave(false); render();
+  snack(zs.length === 1 ? 'Deleted “' + zs[0].name + '”' : 'Deleted ' + plural(zs.length), true);
+  A47.undo = () => {
+    at.slice().sort((a, b) => a[1] - b[1]).forEach(([z, i]) => lib.splice(i, 0, z));
+    hideSnack(); render(); focusHome(zs[0]);                                 // as one zine's Undo: back, silently
+  };
+  h1.focus({ preventScroll: true });                                         // A47.12
+  /* the demo's "one won't go": when the snack goes, Riso tests comes back and is named (A47.9) */
+  if(A47.busy){
+    const stuck = at.filter(([z]) => z.name === 'Riso tests');
+    if(stuck.length) setTimeout(() => {
+      if(lib.includes(stuck[0][0])) return;                                  // Undo already brought it back
+      stuck.forEach(([z, i]) => lib.splice(Math.min(i, lib.length), 0, z)); render();
+      const s = stuck.map(([z]) => z);
+      snack(s.length === 1 ? a47Names(s) + ' wasn’t deleted. It’s back on your shelf; try again in a moment.'
+        : plural(s.length) + ' weren’t deleted: ' + a47Names(s) + '. They’re back on your shelf; try again in a moment.', false);
+    }, 4300);
+  }
+};
+
+/* ---------- caption and demo controls ---------- */
+const a47Cap = el('p', 'cap');
+a47Cap.innerHTML = '<span class="badge">A47 choosing several · frozen 2026-10-26 · not built</span><br>' +
+  '<b>Move or delete several zines at once (ADR-141, ADR-142).</b> Press and hold a zine (right-click here), or ' +
+  'choose <b>Select several</b> in its sheet. Tap more zines to choose them; the <b>✕</b> or Back stops selecting. ' +
+  '<b>Move to a folder</b> and <b>Delete</b> act on all of them, and one Undo puts every one back. A folder ' +
+  'cannot be chosen: open it to choose its zines. The <b>choosing</b> buttons below jump to each state.';
+[...document.querySelectorAll('p.cap')].find(p => p.textContent.startsWith('A37 restored details')).after(a47Cap);
+const a47Btns = [['a47c0', 'three selected'], ['a47c1', 'with folders'], ['a47c2', 'inside a folder'],
+  ['a47c3', 'move sheet'], ['a47c4', 'one won’t go'], ['a47c5', '1.8× at 360dp']]
+  .map(([id, t]) => { const b = el('button', 'ctl', t); b.id = id; return b; });
+document.querySelector('.controls .grp').before(el('span', 'grp', 'choosing several — A47'), ...a47Btns);
+const a47Pick = names => { A47.on = true; A47.picked = new Set(names.map(byName).filter(Boolean)); A47.last = [...A47.picked][0]; a47Sync(); };
+$('a47c0').onclick = () => { seed(false); render(); a47Pick(['Sunday market', 'Riso tests', 'Coffee log']); $('a47c0').classList.add('on'); };
+$('a47c1').onclick = () => { seed(true); render(); a47Pick(['Riso tests']); $('a47c1').classList.add('on'); };
+$('a47c2').onclick = () => { seed(true); openFolder = 'For the stall'; render(); a47Pick(['Sunday market', 'Coffee log']); $('a47c2').classList.add('on'); };
+$('a47c3').onclick = () => { seed(true); render(); a47Pick(['Riso tests']); a47OpenMove(); };
+$('a47c4').onclick = () => { A47.busy = !A47.busy; $('a47c4').classList.toggle('on', A47.busy); };
+$('a47c5').onclick = () => {
+  const on = R.getAttribute('data-a47narrow') !== 'on';
+  R.setAttribute('data-a47narrow', on ? 'on' : 'off'); R.setAttribute('data-large', on ? 'on' : 'off');
+  $('a47c5').classList.toggle('on', on); $('lg').classList.toggle('on', on);
+};
+a47Sync();
+/* ===================== end of A47 script ===================== */
 </script>
