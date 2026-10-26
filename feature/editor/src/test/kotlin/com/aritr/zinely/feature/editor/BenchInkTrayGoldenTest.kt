@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -240,7 +241,9 @@ class BenchInkTrayGoldenTest {
         val draft = PaletteDraft.newDraft(lib, InkHex("2A251E"), Copy.BenchInk.DEFAULT_PALETTE_NAME)
             .copy(name = "Night bus", inks = listOf("505955", "B0503F", "E7B53C").map(::InkHex))
         tray(lib, draft = draft)
-        composeRule.onNodeWithTag(BenchInkPaletteNameTestTag, useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag(BenchInkPaletteNameTestTag, useUnmergedTree = true)
+            .assertTextContains("Night bus", substring = true)
+        composeRule.onAllNodesWithTag(BenchInkDraftPotTestTag, useUnmergedTree = true).assertCountEquals(3)
         composeRule.onNodeWithTag(BenchInkSavePaletteTestTag, useUnmergedTree = true).assertExists()
         capture("bench_ink_tray_edit_light")
     }
@@ -257,11 +260,16 @@ class BenchInkTrayGoldenTest {
         capture("bench_ink_tray_starters_open_light")
     }
 
-    /** `tray3` under the `big` toggle: strips and My inks three a row, built-ins five. */
+    /**
+     * `many` under the `big` toggle: nine strips wrap three a row ("two rows (three at the largest text)"),
+     * My inks three a row, built-ins five. Nine palettes, not three, so the strip wrap is in the picture.
+     */
     @Test
     fun bench_ink_tray_largest_text_light() {
-        tray(trayThree(), fontScale = BenchInkLargeTextFontScale)
-        assertTrayThree()
+        tray(many(), fontScale = BenchInkLargeTextFontScale)
+        val stripRows = composeRule.onAllNodesWithTag(BenchInkStripTestTag, useUnmergedTree = true)
+            .fetchSemanticsNodes().map { it.positionInRoot.y }.distinct().size
+        check(stripRows == 3) { "nine strips at the largest text wrap into 3 rows of 3, got $stripRows rows" }
         capture("bench_ink_tray_largest_text_light")
     }
 
@@ -271,14 +279,14 @@ class BenchInkTrayGoldenTest {
     @Test
     fun bench_ink_mixer_light() {
         mixer("505955", seed(emptyList()))
-        assertMixer(pale = false, full = false)
+        assertMixer("505955", pale = false, full = false)
         capture("bench_ink_mixer_light")
     }
 
     @Test
     fun bench_ink_mixer_dark() {
         mixer("505955", seed(emptyList()), darkTheme = true)
-        assertMixer(pale = false, full = false)
+        assertMixer("505955", pale = false, full = false)
         capture("bench_ink_mixer_dark")
     }
 
@@ -286,7 +294,7 @@ class BenchInkTrayGoldenTest {
     @Test
     fun bench_ink_mixer_pale_light() {
         mixer("F2D7A6", seed(emptyList()))
-        assertMixer(pale = true, full = false)
+        assertMixer("F2D7A6", pale = true, full = false)
         capture("bench_ink_mixer_pale_light")
     }
 
@@ -294,7 +302,7 @@ class BenchInkTrayGoldenTest {
     @Test
     fun bench_ink_mixer_full_light() {
         mixer("7A3B69", seed(FULL_INKS))
-        assertMixer(pale = false, full = true)
+        assertMixer("7A3B69", pale = false, full = true)
         capture("bench_ink_mixer_full_light")
     }
 
@@ -302,11 +310,12 @@ class BenchInkTrayGoldenTest {
     @Test
     fun bench_ink_mixer_largest_text_light() {
         mixer("505955", seed(emptyList()), fontScale = BenchInkLargeTextFontScale)
-        assertMixer(pale = false, full = false)
+        assertMixer("505955", pale = false, full = false)
         capture("bench_ink_mixer_largest_text_light")
     }
 
-    private fun assertMixer(pale: Boolean, full: Boolean) {
+    private fun assertMixer(start: String, pale: Boolean, full: Boolean) {
+        composeRule.onNodeWithTag(InkMixerHexFieldTestTag, useUnmergedTree = true).assertTextContains(start, substring = true)
         composeRule.onNodeWithTag(InkMixerSquareTestTag, useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag(InkMixerUseTestTag, useUnmergedTree = true).assertExists()
         check(count(InkMixerLegibPaleTestTag) == (if (pale) 1 else 0)) { "pale note: expected $pale" }
