@@ -29,6 +29,13 @@ class InkHexTest {
     @Test fun `given a no-break space from a web paste then stripped`() =
         assertEquals(InkHex("ABCDEF"), parseHex(" ABC　DEF", final = false))
 
+    // Android's ICU regex rejects (?U), which the JVM accepts: a JVM-green regex crashed the editor on a phone.
+    @Test fun `given main sources then no regex uses the Unicode-class flag Android cannot compile`() {
+        val offenders = java.io.File("src/main").walkTopDown()
+            .filter { it.extension == "kt" && it.readText().contains("(?U)") }.map { it.name }.toList()
+        assertEquals(emptyList<String>(), offenders)
+    }
+
     @Test fun `spoken spaces every digit`() = assertEquals("5 0 5 9 5 5", InkHex("505955").spoken())
 
     @Test fun `of ignores alpha`() = assertEquals(InkHex("010203"), InkHex.of(ColorRgba(1, 2, 3, 10)))

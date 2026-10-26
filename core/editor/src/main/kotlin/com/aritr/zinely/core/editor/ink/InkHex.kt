@@ -28,10 +28,13 @@ public value class InkHex(public val value: String) {
 private val HEX6 = Regex("^[0-9A-F]{6}$")
 private val HEX_ANY6 = Regex("^[0-9a-fA-F]{6}$")
 private val HEX_ANY3 = Regex("^[0-9a-fA-F]{3}$")
-private val STRIP = Regex("(?U)[\\s\\u200B-\\u200D\\uFEFF#]") // (?U): JS \s is Unicode, e.g. a no-break space from a web paste
-
-/** Prototype `stripHex`: whitespace, zero-width characters and `#` removed. */
-public fun stripHex(raw: String): String = STRIP.replace(raw, "")
+/**
+ * Prototype `stripHex`: whitespace, zero-width characters and `#` removed. Kotlin's `isWhitespace` is Unicode-wide
+ * (a no-break space from a web paste counts), matching JS `\s`. Not a regex on purpose: Android's ICU rejects the
+ * Unicode-character-class flag that the JVM accepts, so a regex here passed every JVM test and crashed the editor on a phone.
+ */
+public fun stripHex(raw: String): String =
+    raw.filterNot { it.isWhitespace() || it in '​'..'‍' || it == '﻿' || it == '#' }
 
 /**
  * Prototype `parseHex(raw, final)`: six digits always; three digits only when [final] (Done / blur), so
