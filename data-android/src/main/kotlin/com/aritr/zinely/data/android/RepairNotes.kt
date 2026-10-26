@@ -37,8 +37,12 @@ internal class RepairNotes(rootDir: Path, private val store: AtomicFileStore) {
     /** Bumped whenever a note is added to or cleared: the Shelf lists again (decision 6). */
     val changes: StateFlow<Int> = changeCount.asStateFlow()
 
-    /** [id]'s waiting note, or `null`. A marker that cannot be read is still a details repair, without its old name. */
-    fun noteOf(id: String): RestoredDetails? = waiting[id] ?: readMarker(id)
+    /**
+     * [id]'s waiting note, or `null`. A marker that cannot be read is still a details repair, without its old name.
+     * The read goes through [ConcurrentHashMap.compute] too: a store read can repair the marker through its one
+     * `.tmp`, which must never overlap a write (#161).
+     */
+    fun noteOf(id: String): RestoredDetails? = waiting.compute(id) { _, held -> held ?: readMarker(id) }
 
     /** [id]'s page file was put back from its earlier copy. */
     fun addPages(id: String) = add(id) { it?.copy(pages = true) ?: RestoredDetails(null, details = false, pages = true) }
