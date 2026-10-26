@@ -3,6 +3,7 @@ package com.aritr.zinely.core.editor.ink
 import com.aritr.zinely.core.model.ColorRgba
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -31,7 +32,9 @@ class InkHexTest {
 
     // Android's ICU regex rejects (?U), which the JVM accepts: a JVM-green regex crashed the editor on a phone.
     @Test fun `given main sources then no regex uses the Unicode-class flag Android cannot compile`() {
-        val offenders = java.io.File("src/main").walkTopDown()
+        val main = java.io.File("src/main")
+        assertTrue(main.isDirectory, "run from the module directory, or this scan proves nothing")
+        val offenders = main.walkTopDown()
             .filter { it.extension == "kt" && it.readText().contains("(?U)") }.map { it.name }.toList()
         assertEquals(emptyList<String>(), offenders)
     }

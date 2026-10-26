@@ -34,7 +34,7 @@ private val HEX_ANY3 = Regex("^[0-9a-fA-F]{3}$")
  * Unicode-character-class flag that the JVM accepts, so a regex here passed every JVM test and crashed the editor on a phone.
  */
 public fun stripHex(raw: String): String =
-    raw.filterNot { it.isWhitespace() || it in '​'..'‍' || it == '﻿' || it == '#' }
+    raw.filterNot { it.isWhitespace() || it in '\u200B'..'\u200D' || it == '\uFEFF' || it == '#' }
 
 /**
  * Prototype `parseHex(raw, final)`: six digits always; three digits only when [final] (Done / blur), so
