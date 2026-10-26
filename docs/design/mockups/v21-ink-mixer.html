@@ -981,6 +981,18 @@ the maker's own work first. Rev. 2 reorders the frozen Ink tray: <b>My palettes<
   <h3>Largest text</h3>
   <p>The bench has no large-text rule for the Ink tray, so A40 <i>defines</i> one: three pots per row, 72 dp tall. The mixer keeps
     one column and scrolls; the two buttons stack and stay pinned; the square shrinks to 120 dp; type never does.</p>
+  <h3 id="a40r2-t9">Amendment, 2026-10-26 (INK task 9; accessibility fixes allowed after a freeze)</h3>
+  <ul>
+    <li><b>Dim Save says why.</b> Save palette stays focusable and tappable at 50% (<code>aria-disabled</code>). It also
+      carries the reason as its accessible description, in words the edit already uses: fewer than 2 inks reads
+      <i>"Pick at least 2 inks."</i>; no name reads <i>"Give it a name, like "Warm vintage"."</i> (inks are checked first,
+      as the tap does after the name). The prototype sets <code>aria-description</code> in <code>renderEdit</code>.</li>
+    <li><b>A failed save is said, never silent.</b> When the phone cannot store a change to My inks or My palettes,
+      nothing changes (an open edit stays open, no Undo) and the toast says <i>"Couldn’t save that change."</i> with no
+      button, the Shelf's paper-choice pattern. The prototype has no storage, so this state cannot be shown here.</li>
+    <li><b>Keys on the sliders.</b> Colour strength, Lightness and Hue take the arrow keys in 5-step moves, as a native range
+      input does; Hue's strip already did.</li>
+  </ul>
   <h3>Not in A40</h3>
   <p>Naming or reordering single inks; dragging palettes into an order (newest first is enough at 9); a palette that
     recolours a whole page; paper colour; eyedropper; whether a backup carries My inks and palettes (decided in ADR-138).</p>
@@ -1169,6 +1181,9 @@ function renderEdit(){
   $('peLostPots').innerHTML=lost.map(h=>choice(h,{cls:'',pressed:false,label:colourName(h)+', '+spokenHex(h),name:'#'+h})).join('');
   const ok=n>=PAL_MIN&&$('palName').value.trim().length>0;
   $('peSave').setAttribute('aria-disabled',!ok);
+  /* #a40r2-t9: the dim Save says why */
+  if(ok)$('peSave').removeAttribute('aria-description');
+  else $('peSave').setAttribute('aria-description',n<PAL_MIN?'Pick at least '+PAL_MIN+' inks.':'Give it a name, like "Warm vintage".');
   $('peStrip').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const h=edit.inks[+b.dataset.rm];edit.inks.splice(+b.dataset.rm,1);
     renderEdit();const t=$('editBody').querySelector(`.ink-choice[data-ink="${h}"]`)||$('peCount');t.focus();});
   $('editBody').querySelectorAll('.ink-choice[data-ink]').forEach(b=>b.onclick=()=>{const h=b.dataset.ink,i=edit.inks.indexOf(h);
