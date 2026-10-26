@@ -1487,6 +1487,77 @@ public object Copy {
     }
 
     /**
+     * Choosing several zines on My Shelf: the words of the frozen `v21-library.html` A47 amendment
+     * ([ADR-142](docs/DECISIONS.md#adr-142)), exactly. A choice of one zine never reaches the batch words
+     * below: it uses [Shelf.deletedMessage] and the [Folders] snack lines, as one zine's actions already do
+     * (A47.7, A47.8).
+     */
+    public object Select {
+        // A47.1: the zine sheet's row, and a zine's long-press label.
+        public const val SELECT_SEVERAL: String = "Select several"
+        public const val SELECT: String = "Select"
+        public const val UNSELECT: String = "Unselect"
+
+        // A47.11: a zine's state while choosing, spoken after its name.
+        public const val SELECTED: String = "Selected"
+        public const val NOT_SELECTED: String = "Not selected"
+
+        // A47.3: the bar.
+        public const val STOP_SELECTING: String = "Stop selecting"
+        public fun selectedCount(count: Int): String = "$count selected"
+
+        // A47.5, A47.11: the dock. [zines] is "3 zines".
+        public fun moveToAFolder(zines: String): String = "Move $zines to a folder"
+        public fun moveSomewhereElse(zines: String): String = "Move $zines somewhere else"
+        public fun delete(zines: String): String = "Delete $zines"
+
+        // A47.6: a tap on a folder while choosing.
+        public const val OPEN_FOLDER_FIRST: String = "To choose zines in a folder, open it first"
+
+        // A47.7: the chooser and the name sheet, for several.
+        public fun forZines(zines: String): String = "For $zines"
+        public fun alreadyIn(folder: String): String = "They’re already in “$folder”."
+        public fun willJoin(folder: String): String = "You already have “$folder”. These zines will join it."
+
+        // A47.7: the snack, for several.
+        public fun movedTo(zines: String, folder: String): String = "Moved $zines to “$folder”"
+        public fun madeWith(folder: String, zines: String): String = "Made “$folder” with $zines"
+        public fun movedToMyShelf(zines: String): String = "Moved $zines to My Shelf"
+        public fun areBackIn(zines: String, folder: String): String = "$zines are back in “$folder”"
+        public fun areBackOnMyShelf(zines: String): String = "$zines are back on My Shelf"
+
+        // A47.8
+        public fun deleted(zines: String): String = "Deleted $zines"
+
+        /**
+         * A47.9: the zines a batch could not act on, named. [titles] in Shelf order, at least one. Up to four
+         * names in full; past four, three and "and {k} more", as A37.3 lists.
+         */
+        public fun notDeleted(titles: List<String>): String =
+            if (titles.size == 1) {
+                "${names(titles)} wasn’t deleted. It’s back on your shelf; try again in a moment."
+            } else {
+                "${titles.size} zines weren’t deleted: ${names(titles)}. They’re back on your shelf; try again in a moment."
+            }
+
+        /** A47.9, Move: [line] is the snack line for the zines that did move, or `null` when none did. */
+        public fun notMoved(line: String?, titles: List<String>): String {
+            val tail = "${names(titles)} didn’t move; try again in a moment."
+            return if (line == null) tail else "$line. $tail"
+        }
+
+        private fun names(titles: List<String>): String {
+            require(titles.isNotEmpty()) { "names at least one zine" }
+            val q = titles.map { "“$it”" }
+            return when {
+                q.size == 1 -> q.single()
+                q.size > 4 -> q.take(3).joinToString(", ") + " and ${q.size - 3} more"
+                else -> q.dropLast(1).joinToString(", ") + " and " + q.last()
+            }
+        }
+    }
+
+    /**
      * The restored-details note on My Shelf: the words of the frozen `v21-library.html` A37.3, exactly
      * ([ADR-134](docs/DECISIONS.md#adr-134)). Never *backup*, *restore*, *error*, *corrupt*, *metadata* or a file
      * name (A37.4): Backups is a dock action that means library backups. No claim about the pages.

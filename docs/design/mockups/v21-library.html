@@ -1941,9 +1941,11 @@ $('rs8').onclick = () => {
   A47.7  [shown]  MOVE.  The A28 chooser rises for the set: its title is the count, "3
                 zines" (one zine: its name), its note where they are.  The row for where they already are is "It's
                 here", as A28.  New folder names the set ("For 3 zines"; "These zines will join
-                it").  One snack: "Moved 3 zines to “Family”" (one zine: its name), with Undo; Undo puts every one
+                it").  One snack: "Moved 3 zines to “Family”" ("Made “Family” with 3 zines",
+                "Moved 3 zines to My Shelf"), with Undo; Undo puts every one
                 back where it was, and the snack says "3 zines are back on My Shelf" (or "in
-                “Family”").  A folder left empty is put away, as A28.3 says.
+                “Family”").  A choice of ONE zine uses A28.12's words exactly ("Moved to
+                “Family”", "“Riso tests” is back on My Shelf"): it is the single move.  A folder left empty is put away, as A28.3 says.
   A47.8  [shown]  DELETE.  No question first, as for one zine.  The chosen zines leave the
                 Shelf at once and one snack says "Deleted 3 zines", with Undo; Undo brings
                 every one back where it was, and the snack goes.  One zine says "Deleted “Riso tests”", the words
@@ -2111,15 +2113,17 @@ function a47DoMove(to, made){
   const emptied = from && from !== to && members(from).length === moved.length;
   moved.forEach(z => z.folder = to);
   a47Moving = false; close(); a47Leave(false); render();
-  const n = moved.length === 1 ? q(moved[0].name) : plural(moved.length);
-  let msg = made ? 'Made “' + to + '” with ' + n : 'Moved ' + n + ' to ' + (to ? '“' + to + '”' : 'My Shelf');
+  const one = moved.length === 1, n = plural(moved.length);
+  /* one zine: A28.12's words exactly, so a choice of one is the single move */
+  let msg = one ? (made ? 'Made “' + to + '”' : to ? 'Moved to “' + to + '”' : 'Back on My Shelf')
+    : made ? 'Made “' + to + '” with ' + n : 'Moved ' + n + ' to ' + (to ? '“' + to + '”' : 'My Shelf');
   if(emptied) msg += '. “' + from + '” is empty, so it’s put away';
   if(stuck.length) msg += '. ' + a47Names(stuck) + ' didn’t move; try again in a moment.';
   if(moved.length){
     snack(msg, true);
     A47.undo = () => {
       was.forEach(([z, f]) => { if(moved.includes(z)) z.folder = f; }); openFolder = wasOpen;
-      render(); snack(n + (moved.length === 1 ? ' is' : ' are') + ' back ' + (from ? 'in “' + from + '”' : 'on My Shelf'), false);
+      render(); snack((one ? q(moved[0].name) + ' is' : n + ' are') + ' back ' + (from ? 'in “' + from + '”' : 'on My Shelf'), false);
       focusHome(moved[0]);
     };
   } else snack(a47Names(stuck) + ' didn’t move; try again in a moment.', false);
