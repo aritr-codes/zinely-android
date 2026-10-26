@@ -131,6 +131,10 @@ section, so its absence here was the defect, not the work.
   16 to 32 with local search, family filters, Recent and Favourites; the remaining candidates stay backlog.
   [D-080](design/V2-SPEC-DEFECTS.md#d-080) still gates production admission on rendered DESIGN FREEZE.
 
+**Also beyond MVP: inks you mix and keep (2026-10-26).** A maker can mix an ink, keep the last 9 mixed in My inks and keep
+palettes of 2 to 6 inks, stored on the phone and in no zine or backup. Built 2026-10-26 on `feat/ink-mixer`, in no download, under
+[ADR-138](DECISIONS.md#adr-138) (Proposed). No network path is added.
+
 *This row is a **record of scope that changed**, not a decision. The decisions are the ADRs it links.*
 
 ### 7.2 Explicitly OUT of MVP scope

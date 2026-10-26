@@ -1060,6 +1060,9 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
             val moveResizeHintSeen by viewModel.moveResizeHintSeen.collectAsStateWithLifecycle()
             // The first-run Reframe coach-mark gate (ADR-053 RF2), same load-aware tri-state as the hint.
             val reframeCoachSeen by viewModel.reframeCoachSeen.collectAsStateWithLifecycle()
+            // My inks and My palettes (ADR-138): `null` until loaded, so the tray never draws a library it has
+            // not read. Writes are transforms run in the ViewModel's scope.
+            val inkLibrary by viewModel.inkLibrary.collectAsStateWithLifecycle()
             // The unresolved-save-failure kind (ADR-035/ADR-036): the honest correction to "Saved ✨",
             // derived from the app-scoped SaveFailureSink (ADR-026 §5) and mapped to a feature-local
             // SaveErrorKind (null = none). Lifecycle-aware; the host renders the warm banner (copy keyed by
@@ -1098,6 +1101,8 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
                 onPreview = onPreview,
                 // A42 / D-143: the status strip's way back to My Shelf is the same pop as the system Back.
                 onBack = onBack,
+                inkLibrary = inkLibrary,
+                onEditInkLibrary = viewModel::editInkLibrary,
             )
         }
     }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -179,34 +180,30 @@ class BenchC6Test {
     // =================================================================================================
 
     /**
-     * Row 6.9 — **the ruling itself.** A text element is offered `Inks` and `Neutrals`, in that order,
-     * and **no paper tints**.
+     * Row 6.9, as A40 rev. 2 states it — **the ruling itself.** A text element is offered the thirteen
+     * built-in inks (ten maker inks, then Slate, Stone, Fog) and **no paper tints**.
      *
-     * Asserted as the exact label list rather than as "does not contain tints": a `!contains` passes on
-     * an empty popover, and it would still pass if a fourth band appeared. The list is the contract.
+     * Was: the band labels `Spot inks · Neutrals`. A40 rev. 2 merged the two bands into one Built-in grid
+     * with `Ink` listed once, so the contract is now the swatch list itself.
      */
     @Test
-    fun a_text_element_is_offered_inks_and_neutrals_and_no_paper_tints() {
-        assertEquals(
-            listOf(Copy.BenchInk.INKS, Copy.BenchInk.NEUTRALS),
-            benchInkBands(inks, BenchVerbKind.TEXT).map { it.label },
-        )
+    fun a_text_element_is_offered_the_thirteen_built_ins_and_no_paper_tints() {
+        val built = benchBuiltInInks(inks, BenchVerbKind.TEXT)
+        assertEquals(13, built.size)
+        assertTrue("no tint reaches a text target", built.none { it.tint })
     }
 
     /**
-     * Row 6.9b — the fence is a **fence**, not a deletion, which is
-     * [OD-21](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-047-ruling)'s own distinction carried
-     * into OD-24. Any other target still gets all three bands, so the day a paper target exists the band
-     * is already there rather than needing to be re-derived from a deleted list.
+     * Row 6.9b — the fence is a **fence**, not a deletion: any other target gets the thirteen and then the
+     * five tints (prototype `builtFor`). Was: "all three bands"; A40 rev. 2 has one grid and a separator.
      */
     @Test
-    fun any_other_ink_target_still_gets_all_three_frozen_bands() {
+    fun any_other_ink_target_gets_the_built_ins_then_the_five_tints() {
         listOf(BenchVerbKind.PHOTO, BenchVerbKind.DECOR).forEach { kind ->
-            assertEquals(
-                "bands for $kind",
-                listOf(Copy.BenchInk.INKS, Copy.BenchInk.PAPER_TINTS, Copy.BenchInk.NEUTRALS),
-                benchInkBands(inks, kind).map { it.label },
-            )
+            val built = benchBuiltInInks(inks, kind)
+            assertEquals("built-ins for $kind", benchBuiltInInks(inks, BenchVerbKind.TEXT), built.take(13))
+            assertEquals("tints for $kind", 5, built.drop(13).count { it.tint })
+            assertEquals(18, built.size)
         }
     }
 
@@ -225,18 +222,17 @@ class BenchC6Test {
                 Copy.BenchInk.SAGE to Color(0xFFE1E9D2),
                 Copy.BenchInk.KRAFT to Color(0xFFE4D3B4),
             ),
-            benchInkBands(inks, BenchVerbKind.PHOTO)[1].swatches.map { it.name to it.value },
+            benchBuiltInInks(inks, BenchVerbKind.PHOTO).filter { it.tint }.map { it.name to it.value },
         )
     }
 
     /**
-     * Row 6.7 — band 1, `INKS`, in the frozen order, by name **and** value.
-     *
-     * Both, because either alone is a half-assertion: names alone survive every colour being wrong, and
-     * values alone survive `Aqua` being labelled `Plum`.
+     * Rows 6.7 + 6.8, as A40 rev. 2 orders them (prototype `BUILT`): the ten maker inks, then the neutrals
+     * with the duplicate `Ink` shown **once** — by name **and** value, because either alone is a
+     * half-assertion. Was: two band tests, and `Ink` in both bands.
      */
     @Test
-    fun the_inks_band_is_the_frozen_ten_in_the_frozen_order() {
+    fun the_built_ins_are_the_ten_maker_inks_then_slate_stone_fog() {
         assertEquals(
             listOf(
                 Copy.BenchInk.MATCHA to Color(0xFF7C8A3F),
@@ -249,27 +245,17 @@ class BenchC6Test {
                 Copy.BenchInk.CORNFLOWER to Color(0xFF6E86C9),
                 Copy.BenchInk.PLUM to Color(0xFF8A5A9B),
                 Copy.BenchInk.INK to Color(0xFF2A251E),
-            ),
-            benchInkBands(inks, BenchVerbKind.TEXT)[0].swatches.map { it.name to it.value },
-        )
-    }
-
-    /** Row 6.8 — band 3, `NEUT`. `Ink` repeats band 1's, verbatim from the frozen source. */
-    @Test
-    fun the_neutrals_band_is_the_frozen_four_in_the_frozen_order() {
-        assertEquals(
-            listOf(
-                Copy.BenchInk.INK to Color(0xFF2A251E),
                 Copy.BenchInk.SLATE to Color(0xFF5B5347),
                 Copy.BenchInk.STONE to Color(0xFF8C8269),
                 Copy.BenchInk.FOG to Color(0xFFB7AD93),
             ),
-            benchInkBands(inks, BenchVerbKind.TEXT)[1].swatches.map { it.name to it.value },
+            benchBuiltInInks(inks, BenchVerbKind.TEXT).map { it.name to it.value },
         )
     }
 
+
     // =================================================================================================
-    // The presets (rows 6.10, 6.11)
+    // The starter palettes (rows 6.10, 6.11; A40 rev. 2)
     // =================================================================================================
 
     /** Row 6.10 — the three frozen recipes, by name and by every dot, in order. */
@@ -283,26 +269,10 @@ class BenchC6Test {
                 Copy.BenchInk.PRESET_COOL to
                     listOf(Color(0xFF3E5E3A), Color(0xFF57B0A9), Color(0xFFDDE9EE)),
             ),
-            benchInkPresets(inks).map { p -> p.name to p.dots.map { it.value } },
+            benchStarterPalettes(inks).map { p -> p.name to p.inks.map { it.value } },
         )
     }
 
-    /**
-     * Row 6.11 — **OD-24's second half**: a preset applies its *first* colour.
-     *
-     * The counter-values are asserted too. Without them the test passes on an implementation that
-     * happens to return the first element of a one-element list, and the whole point of the ruling is
-     * which of *three* is taken.
-     */
-    @Test
-    fun a_preset_applies_its_primary_ink_and_never_its_accent() {
-        val applied = benchInkPresets(inks).map { it.applied.value }
-        assertEquals(listOf(Color(0xFF2A251E), Color(0xFFB0503F), Color(0xFF3E5E3A)), applied)
-        val accents = listOf(Color(0xFFE27F89), Color(0xFFE7B53C), Color(0xFF57B0A9))
-        applied.forEachIndexed { i, c ->
-            assertTrue("preset $i must not apply its accent", c != accents[i])
-        }
-    }
 
     /**
      * Row 6.11b — the recipes are built **from the typed palette**, not from re-typed hexes, so a recipe
@@ -312,10 +282,10 @@ class BenchC6Test {
      */
     @Test
     fun two_of_the_three_recipes_end_in_a_paper_tint() {
-        val presets = benchInkPresets(inks)
-        assertEquals(inks[ZinelyPaperTintId.Cream].value, presets[1].dots.last().value)
-        assertEquals(inks[ZinelyPaperTintId.Sky].value, presets[2].dots.last().value)
-        assertEquals(inks[ZinelyMakerInkId.Ink].value, presets[0].applied.value)
+        val starters = benchStarterPalettes(inks)
+        assertEquals(inks[ZinelyPaperTintId.Cream].value, starters[1].inks.last().value)
+        assertEquals(inks[ZinelyPaperTintId.Sky].value, starters[2].inks.last().value)
+        assertEquals(inks[ZinelyMakerInkId.Ink].value, starters[0].inks.first().value)
     }
 
     // =================================================================================================
@@ -384,7 +354,7 @@ class BenchC6Test {
      */
     @Test
     fun a_swatch_survives_the_document_round_trip_byte_for_byte() {
-        (benchInkBands(inks, BenchVerbKind.TEXT).flatMap { it.swatches } + benchInkPresets(inks).map { it.applied })
+        (benchBuiltInInks(inks, BenchVerbKind.DECOR) + benchStarterPalettes(inks).flatMap { it.inks })
             .forEach { assertEquals(it.name, it.value, it.value.toColorRgba().toComposeColor()) }
     }
 
@@ -549,18 +519,19 @@ class BenchC6Test {
     }
 
     /**
-     * Row 6.1i — the frozen stacking order: `.ctx` 30 (`:357`) < `.snack` 38 (`:444`) < `.inkpop` 42
-     * (`:377`). The popover is drawn ABOVE the snack it raises.
+     * **Inverted by A40 rev. 2.** Row 6.1i put `.inkpop` (42) above `.snack` (38), because C6's snack had
+     * no button. A40 gives the tray's snack an Undo, so the frozen `.toast2` is `z-index:70` at
+     * `bottom:96px` — ABOVE the open tray, or its Undo would sit under the card. Asserted as paint: across
+     * the snack's own bounds its ground must win over the card.
      *
-     * Also a Device Pass 1 finding. `BenchSnack` is composed after `BenchInkPopover`, so the snack drew
-     * over the card and covered the `.inkuse` note — the one line that tells you what your zine now
-     * costs to print, hidden by the confirmation that you changed it.
-     *
-     * Asserted as paint, because z-order is paint: in the light palette the snack's `--ink` ground and
-     * the popover's `--paper` are at opposite ends of the scale, so one pixel inside the note settles it.
+     * The snack's ground is the room's `surfaceSoft` (`BenchSnack`: "a warm support scrap"), not `--ink`;
+     * the card's is `surface`. They are 40 channel steps apart in the light palette, so a pixel counts as
+     * the snack's only when it is within 16 of `surfaceSoft` — tighter than half that gap, so the card's
+     * own ground can never pass for it. Ink glyphs of the message count against, which is why the bar is
+     * half the line and not all of it.
      */
     @Test
-    fun the_popover_is_drawn_above_the_snack_it_raises() {
+    fun the_snack_is_drawn_above_the_open_tray() {
         val store = store()
         setScreen(store)
         openInk(store)
@@ -569,43 +540,28 @@ class BenchC6Test {
         composeRule.mainClock.advanceTimeBy(300)
         composeRule.waitForIdle()
 
-        // The band of the card the snack would cover: it docks at the same floor, inside the card's
-        // footprint. Read off the card rather than off the last palette, which since D-113 can sit below
-        // the tray's fold — the tray stops short of the canvas top now.
+        val snack = composeRule.onNodeWithTag(BenchSnackTestTag).fetchSemanticsNode().boundsInWindow
         val card = composeRule.onNodeWithTag(BenchInkPopoverTestTag).fetchSemanticsNode().boundsInWindow
-        val note = androidx.compose.ui.geometry.Rect(card.left + 40f, card.bottom - 60f, card.right - 40f, card.bottom - 20f)
+        assertTrue("the snack stands over the card ($snack in $card)", snack.top > card.top && snack.bottom < card.bottom)
         val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
-        val paper = zinelyV21LightColors().surface.toArgb()
-        val ink = zinelyV21LightColors().ink.toArgb()
-        // Counted across the whole note rather than sampled at one pixel: the note carries a shield
-        // glyph and a sentence, both in `--ink-soft`, and a single probe lands on whichever it hits.
-        // What settles the z-order is how much of the note's own GROUND survives.
-        var onPaper = 0
+        val ground = zinelyV21LightColors().surfaceSoft.toArgb()
+        var onGround = 0
         var total = 0
-        for (y in note.top.toInt() until note.bottom.toInt()) {
-            for (x in note.left.toInt() until note.right.toInt()) {
-                total++
-                if (channelDistance(bmp.getPixel(x, y), paper) < channelDistance(bmp.getPixel(x, y), ink)) {
-                    onPaper++
-                }
-            }
+        // Just inside the pill's top edge: below the 1.5dp border, above the line of text.
+        val y = (snack.top + px(8.dp)).toInt()
+        for (x in (snack.left + px(24.dp)).toInt() until (snack.right - px(24.dp)).toInt()) {
+            total++
+            if (channelDistance(bmp.getPixel(x, y), ground) < 16) onGround++
         }
-        assertTrue(
-            "only $onPaper of $total pixels of the ink note stand on the popover's --paper; the snack is " +
-                "drawn over the card it should sit behind",
-            onPaper > total / 2,
-        )
+        assertTrue("only $onGround of $total pixels across the snack show its ground; the tray covers it", onGround > total / 2)
     }
 
     /**
-     * Row 6.3 — four bands in the freeze, **three** for a text target. ADR-089's own table said three
-     * and `openInk` emits four; OD-24 then fenced `Paper tints` away from a text element, so a text
-     * target sees `Spot inks · Neutrals · Starting palettes`. The labels are asserted as an ordered list for
-     * the same reason the swatches are. (The name said "four" while the body asserted three, which
-     * independent review named — the count in a test's name is a claim like any other.)
+     * Row 6.3, as A40 rev. 2 labels the tray: `My palettes · My inks · Built-in inks`, then the Starter
+     * palettes disclosure (a button, not a label). Was: `Spot inks · Neutrals · Starting palettes`.
      */
     @Test
-    fun a_text_target_draws_three_of_the_freezes_four_labelled_bands() {
+    fun a_text_target_draws_the_three_a40_section_labels() {
         val store = store()
         setScreen(store)
         openInk(store)
@@ -614,9 +570,9 @@ class BenchC6Test {
             .mapNotNull { node -> node.config.getOrNull(SemanticsProperties.Text)?.firstOrNull()?.text }
         assertEquals(
             listOf(
-                Copy.BenchInk.INKS.uppercase(),
-                Copy.BenchInk.NEUTRALS.uppercase(),
-                Copy.BenchInk.PRESETS.uppercase(),
+                Copy.BenchInk.MY_PALETTES.uppercase(),
+                Copy.BenchInk.MY_INKS.uppercase(),
+                Copy.BenchInk.BUILT_IN_INKS.uppercase(),
             ),
             labels,
         )
@@ -626,26 +582,26 @@ class BenchC6Test {
     // The swatches (rows 6.4-6.6)
     // =================================================================================================
 
-    /** A16 — fourteen named targets for text, each retaining a frozen 30dp painted pot. */
+    /** A40 rev. 2 — thirteen built-in targets for text, each a compact 28dp pot (`.pots.compact .pot`). */
     @Test
-    fun every_swatch_is_the_frozen_thirty_dp() {
+    fun every_built_in_pot_is_the_compact_twenty_eight_dp() {
         val store = store()
         setScreen(store)
         openInk(store)
-        assertEquals("ten inks plus four neutrals", 14, count(BenchInkSwatchTestTag))
+        assertEquals("ten maker inks plus Slate, Stone, Fog", 13, count(BenchInkSwatchTestTag))
         val first = potBounds(0)
-        assertEquals(px(30.dp), first.width, 1f)
-        assertEquals(px(30.dp), first.height, 1f)
+        assertEquals(px(28.dp), first.width, 1f)
+        assertEquals(px(28.dp), first.height, 1f)
     }
 
-    /** A16 — the ten spot inks are a stable five-by-two grid with no orphan wrap. */
+    /** A40 rev. 2 — the built-ins are one grid, seven across (`.pots.compact{repeat(7,…)}`). Was: 5×2. */
     @Test
-    fun the_swatch_row_keeps_the_frozen_eight_dp_gap() {
+    fun the_built_in_grid_is_seven_across() {
         val store = store()
         setScreen(store)
         openInk(store)
-        val firstRow = (0 until 5).map(::swatchBounds)
-        val secondRow = (5 until 10).map(::swatchBounds)
+        val firstRow = (0 until 7).map(::swatchBounds)
+        val secondRow = (7 until 13).map(::swatchBounds)
         assertTrue(firstRow.zipWithNext().all { (a, b) -> kotlin.math.abs(a.top - b.top) <= 1f })
         assertTrue(secondRow.zipWithNext().all { (a, b) -> kotlin.math.abs(a.top - b.top) <= 1f })
         assertTrue(secondRow.first().top > firstRow.first().top)
@@ -674,27 +630,26 @@ class BenchC6Test {
         composeRule.mainClock.advanceTimeBy(300L)
         composeRule.waitForIdle()
         val pressed = swatchBounds(0)
-        assertEquals("the pot holds its 30dp under a finger", rest.width, pressed.width, 1f)
+        assertEquals("the choice holds its size under a finger", rest.width, pressed.width, 1f)
         assertEquals("…on both axes", rest.height, pressed.height, 1f)
         composeRule.onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)[0]
             .performTouchInput { up() }
     }
 
     /**
-     * Row 6.16 / [D-009](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp) —
-     * *extend the target, keep the paint*. The paint stays 30dp (asserted above); the target reaches the
-     * 48dp floor without `minimumInteractiveComponentSize()`, which would have moved the 8dp gaps.
+     * Row 6.16 / D-009 — *extend the target, keep the paint*. The compact pot paints at 28dp
+     * (A40 rev. 2); its choice reaches the 48dp floor (`.pots.compact .ink-choice{min-height:48px}`).
      */
     @Test
-    fun a_swatch_paints_at_thirty_and_is_touchable_at_forty_eight() {
+    fun a_built_in_paints_at_twenty_eight_and_is_touchable_at_forty_eight() {
         val store = store()
         setScreen(store)
         openInk(store)
         val node = composeRule.onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)
             .fetchSemanticsNodes()[0]
         val pot = potBounds(0)
-        assertEquals("the paint does not grow", px(30.dp), pot.width, 1f)
-        assertEquals("the paint remains circular", px(30.dp), pot.height, 1f)
+        assertEquals("the paint does not grow", px(28.dp), pot.width, 1f)
+        assertEquals("the paint remains circular", px(28.dp), pot.height, 1f)
         assertTrue(
             "the target reaches the floor: ${node.touchBoundsInRoot.width}px wide, " +
                 "${node.touchBoundsInRoot.height}px tall against ${px(48.dp)}px",
@@ -733,70 +688,65 @@ class BenchC6Test {
         assertEquals(before, textOf(store, id).style.color)
     }
 
-    /** Row 6.11c — a preset applies its primary through the same one command. */
+    /**
+     * Row 6.11c, as ADR-138 amends it: a starter's pot applies **its own** ink. OD-24's "a preset applies
+     * its first colour" is retired. Sunflower is Warm zine's second ink, so the old rule would ink Brick.
+     */
     @Test
-    fun choosing_a_preset_inks_the_element_with_its_primary() {
+    fun a_starter_pot_applies_its_own_ink_not_the_starters_first() {
         val store = store()
         setScreen(store)
         val id = openInk(store)
+        composeRule.onNodeWithTag(BenchInkStartersTestTag).performScrollTo().performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription(
-            Copy.BenchInk.presetLabel(Copy.BenchInk.PRESET_WARM, Copy.BenchInk.BRICK),
+            Copy.BenchInk.palettePot(Copy.BenchInk.SUNFLOWER, Copy.BenchInk.PRESET_WARM),
         ).performScrollTo().performClick()
         composeRule.waitForIdle()
-        assertEquals("Warm zine's [0], not its accent", ColorRgba(0xB0, 0x50, 0x3F), textOf(store, id).style.color)
+        assertEquals(ColorRgba(0xE7, 0xB5, 0x3C), textOf(store, id).style.color)
     }
 
     /**
-     * Row 6.13c — the frozen snack, and the half that makes it C6's rather than C4's: **no button**.
-     * ADR-094 row 4.15 owns the variant; this asserts that the ink path raises *that* one.
+     * Row 6.13c, as A40 rev. 2 states it: the snack names the ink and, because the tap changed the
+     * document, **carries Undo** for the frozen `toast` 4000ms. Was: C6's buttonless 1600ms snack (the bar's
+     * Undo did the work); rev. 2 puts Undo on the snack whenever something changed.
      */
     @Test
-    fun applying_an_ink_raises_the_buttonless_snack_that_names_it() {
+    fun applying_an_ink_raises_a_snack_that_names_it_and_offers_undo() {
         val store = store()
         setScreen(store)
         openInk(store)
-        // The clock is held for the same reason C4's delete-snack row holds it: with it running, the
-        // 1600ms window opens and closes inside a single `waitForIdle` and the assertion reads an
-        // absence it caused itself.
+        // Held so the 4000ms window does not open and close inside one `waitForIdle`.
         composeRule.mainClock.autoAdvance = false
-        composeRule.onNodeWithContentDescription(Copy.BenchInk.AQUA).performClick()
+        // Forest, not Aqua: Aqua is pale on text, so its snack takes the pale form (controller ruling
+        // 2026-10-22, covered by BenchInkTrayApplyTest's Cream case). This row pins the plain form.
+        composeRule.onNodeWithContentDescription(Copy.BenchInk.FOREST).performClick()
         composeRule.mainClock.advanceTimeBy(300L)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
-        // Read off the snack's own node rather than searched for by text: the popover covers the same
-        // 12dp inset the snack occupies, so a free text match resolves against a node the popover is
-        // drawn over and `assertIsDisplayed` reports the occlusion rather than the message.
-        // By content description, not by text: `BenchSnack` publishes its message through
-        // `clearAndSetSemantics` as a polite live region, so the words exist as a *name* and not as
-        // `Text` — which is also the form a screen reader hears them in.
+        // By content description: `BenchSnack` publishes its message as a name, not as `Text`.
         assertEquals(
             "the snack names the ink that landed",
             1,
-            composeRule.onAllNodesWithContentDescription(Copy.BenchInk.applied(Copy.BenchInk.AQUA))
+            composeRule.onAllNodesWithContentDescription(Copy.BenchInk.applied(Copy.BenchInk.FOREST))
                 .fetchSemanticsNodes().size,
         )
-        assertEquals(
-            // Counted by the snack's OWN action tag, never by the word: the bar below it carries an
-            // `Undo` of its own, so a bare text search would pass on a snack that did have a button.
-            "the ink snack carries no button",
-            0,
-            count(BenchSnackActionTestTag),
-        )
+        // Counted by the snack's OWN action tag, never by the word: the bar below carries an `Undo` too.
+        assertEquals("the ink snack carries Undo", 1, count(BenchSnackActionTestTag))
 
-        // Row 6.13d - the frozen 1600ms, in LITERAL milliseconds, and the half that distinguishes this
-        // snack from the delete one: at 3000ms the delete window is still open and this one is long shut.
-        composeRule.mainClock.advanceTimeBy(1200L)
+        composeRule.mainClock.advanceTimeBy(3400L)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
-        composeRule.mainClock.advanceTimeBy(700L)
+        composeRule.mainClock.advanceTimeBy(800L)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
-        assertEquals("the frozen ink window is 1600ms", 1600L, BenchSnackInkMillis)
+        assertEquals("the A40 tray snack window is 4000ms", 4000L, BenchSnackInkTrayMillis)
     }
 
     /**
-     * Row 6.6 — the ring follows the **document**, not the last tap. Asserted through the selection
-     * semantics `selectable` publishes, which is the same state the ring is drawn from.
+     * Row 6.6 — the ring follows the **document**, not the last tap, and marks exactly one built-in.
+     * A40 rev. 2 lists `Ink` once, so D-083's two spoken names (`Spot ink`, `Neutral ink`) are gone: the
+     * one `Ink` choice is spoken `Ink`. Was: both spoken names asserted present and the bare name absent.
      */
     @Test
     fun the_ring_marks_the_element_s_own_ink_and_only_that_one() {
@@ -808,23 +758,17 @@ class BenchC6Test {
         val selected = composeRule.onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)
             .fetchSemanticsNodes()
             .count { it.config.getOrNull(SemanticsProperties.Selected) == true }
-        assertEquals("exactly one swatch is chosen", 1, selected)
+        assertEquals("exactly one built-in is chosen", 1, selected)
         composeRule.onNodeWithContentDescription(Copy.BenchInk.FOREST)
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.Selected, true))
 
-        // The same pigment appears in two bands, but D-083/A9 gives each radio a distinct spoken name.
-        // The printed `Ink` label remains shared; a non-visual traversal can now tell which band it is in.
-        composeRule.onNodeWithContentDescription(Copy.BenchInk.SPOT_INK_SPOKEN).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(Copy.BenchInk.NEUTRAL_INK_SPOKEN).assertIsDisplayed()
-        assertEquals(
-            "the ambiguous bare Ink name must not survive on either swatch",
-            0,
-            composeRule.onAllNodesWithContentDescription(Copy.BenchInk.INK).fetchSemanticsNodes().size,
-        )
-        composeRule.onNodeWithContentDescription(Copy.BenchInk.SPOT_INK_SPOKEN).performClick()
+        assertEquals("Ink is one choice now", 1, composeRule.onAllNodesWithContentDescription(Copy.BenchInk.INK).fetchSemanticsNodes().size)
+        assertEquals(0, composeRule.onAllNodesWithContentDescription("Spot ink").fetchSemanticsNodes().size)
+        assertEquals(0, composeRule.onAllNodesWithContentDescription("Neutral ink").fetchSemanticsNodes().size)
+        composeRule.onNodeWithContentDescription(Copy.BenchInk.INK).performClick()
         composeRule.waitForIdle()
         assertEquals(
-            "the shared pigment rings exactly one swatch",
+            "the shared pigment rings exactly one built-in",
             1,
             composeRule.onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)
                 .fetchSemanticsNodes()
@@ -1007,28 +951,13 @@ class BenchC6Test {
         val store = store()
         setScreen(store)
         openInk(store)
-        val expected = benchInkBands(inks, BenchVerbKind.TEXT).flatMap { it.swatches }.map { it.spokenName }
+        val expected = benchBuiltInInks(inks, BenchVerbKind.TEXT).map { it.name }
         val announced = composeRule.onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)
             .fetchSemanticsNodes()
             .mapNotNull { it.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull() }
         assertEquals(expected, announced)
     }
 
-    /**
-     * Row 6.15b — a preset publishes **one** node naming the recipe *and* the ink it applies. Three
-     * overlapping circles are not speakable, and a reader told only "Warm zine" would not know which of
-     * its three colours it is about to get.
-     */
-    @Test
-    fun a_preset_announces_the_ink_it_will_actually_apply() {
-        val store = store()
-        setScreen(store)
-        openInk(store)
-        assertEquals(3, count(BenchInkPresetTestTag))
-        composeRule.onNodeWithContentDescription(
-            Copy.BenchInk.presetLabel(Copy.BenchInk.PRESET_COOL, Copy.BenchInk.FOREST),
-        ).performScrollTo().assertIsDisplayed()
-    }
 
     /** A16 — the current ink is visible, named, and updates through the same document-backed selection. */
     @Test
@@ -1043,36 +972,24 @@ class BenchC6Test {
             .assertIsDisplayed()
     }
 
-    /** A16 — palettes describe combinations but state the exact ink a tap applies. */
+    /**
+     * A40 rev. 2 — Starter palettes sit behind a disclosure that starts **closed**; opening it shows the
+     * three as palette cards, each with `Save a copy`. Was: A16's always-open "Apply …" pills.
+     */
     @Test
-    fun starting_palettes_show_their_honest_actions() {
+    fun starter_palettes_open_from_a_closed_disclosure_with_save_a_copy() {
         val store = store()
         setScreen(store)
         openInk(store)
-        assertEquals(Copy.BenchInk.PRESETS, "Starting palettes")
-        listOf(Copy.BenchInk.INK, Copy.BenchInk.BRICK, Copy.BenchInk.FOREST).forEach { ink ->
-            composeRule.onNodeWithText(Copy.BenchInk.apply(ink), useUnmergedTree = true)
-                .performScrollTo().assertIsDisplayed()
-        }
+        assertEquals("closed by default", 0, count(BenchInkStarterTestTag))
+        composeRule.onNodeWithTag(BenchInkStartersTestTag)
+            .assert(SemanticsMatcher.keyIsDefined(SemanticsActions.Expand))
+        composeRule.onNodeWithTag(BenchInkStartersTestTag).performScrollTo().performClick()
+        composeRule.waitForIdle()
+        assertEquals(3, count(BenchInkStarterTestTag))
+        assertEquals(3, count(BenchInkSaveCopyTestTag))
+        composeRule.onNodeWithTag(BenchInkStartersTestTag)
+            .assert(SemanticsMatcher.keyIsDefined(SemanticsActions.Collapse))
     }
 
-    /** A16 — a starting palette translates by one dp while pressed and returns exactly to rest. */
-    @Test
-    fun a_pressed_starting_palette_moves_by_the_frozen_one_dp() {
-        val store = store()
-        setScreen(store)
-        openInk(store)
-        val palette = composeRule.onAllNodesWithTag(BenchInkPresetTestTag, useUnmergedTree = true)[0]
-        val rest = palette.fetchSemanticsNode().boundsInRoot
-        palette.performTouchInput { down(center) }
-        composeRule.waitForIdle()
-        val pressed = palette.fetchSemanticsNode().boundsInRoot
-        assertEquals(px(1.dp), pressed.left - rest.left, 1f)
-        assertEquals(px(1.dp), pressed.top - rest.top, 1f)
-        palette.performTouchInput { up() }
-        composeRule.waitForIdle()
-        val released = palette.fetchSemanticsNode().boundsInRoot
-        assertEquals(rest.left, released.left, 1f)
-        assertEquals(rest.top, released.top, 1f)
-    }
 }

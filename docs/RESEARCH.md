@@ -1464,6 +1464,165 @@ for printer's marks; a tear rewritten as a running walk; a curve-quality rule (n
 recognition check at tile size. Outside sets do not match the house style: Phosphor (MIT) is a puffy UI style.
 These are the open numbers A39 sets ([SUPPLIES-SPEC §4.5](design/SUPPLIES-SPEC.md#one-world)).
 
+## R33. Mixing and keeping your own ink (2026-10-22)
+
+The evidence behind the ink-mixer lane (ADR-138, amendment A40). Research Agent pass, 2026-10-22. Findings come from
+search summaries and one fetch; this section has **not** had its own reviewer, so spot-check a quote before reusing
+it. A mixed ink is just another `ColorRgba` ([Document.kt:200](../core/model/src/main/kotlin/com/aritr/zinely/core/model/Document.kt)),
+so nothing here touches the saved-document format.
+
+### R33.1 How comparable apps let people mix and keep colours — ✅ VERIFIED (counts and scope as cited)
+
+| App | How a colour is made | What is kept, and where |
+|---|---|---|
+| Procreate | Disc, Classic (square + H/S/B sliders), Harmony, Value (sliders plus numeric and hex), Palettes, History ([handbook](https://help.procreate.com/procreate/handbook/colors/colors-interface)) | History holds the **last 10** colours; a Default Palette shows under every tab; palettes are app-wide |
+| Google Docs / Slides | Custom, then add: type hex or RGB, or use an eyedropper (Chrome/Edge only) ([help](https://support.google.com/docs/answer/13267978?hl=en)) | Custom colours are scoped to the **file**; a teacher reports they do not carry to another presentation ([post](https://alicekeeler.com/2012/10/12/color-picker-in-google-presentation/)) |
+| GoodNotes | Colour wheel, Custom palette, or a HEX value ([support](https://support.goodnotes.com/hc/en-us/articles/17476182494479)) | Per **tool** (Pen, Pencil, Highlighter…): 3 presets shown, up to **12 slots**; sets do not sync across tools, so a user copies the hex by hand |
+| Affinity | Colour panel adds to Swatches | **Document**, **application** and **system** palettes; add-current-colour, import and export ([help](https://affinity.help/photo2/en-US.lproj/pages/Panels/swatchesPanel.html)) |
+| Canva | Hex field in the picker; eyedropper | Brand Kit colours, apparently a paid feature (third-party tutorials only; no official page found) |
+
+- ✅ Every tool above offers a typed hex path. GoodNotes users keep asking for an eyedropper and re-type hex between
+  tools, which suggests the *scope* of "kept" is the friction, not the picker
+  ([GoodNotes feedback](https://feedback.goodnotes.com/forums/191274-customer-suggestions-for-goodnotes/suggestions/43309686-an-eyedropper-tool-so-that-you-can-copy-colours?page=3)).
+- ✅ Kept colours are small sets: 10 (Procreate history), 12 (GoodNotes). None is unbounded in the apps checked.
+- ⚠️ Adobe Fresco and Express, and Material You / a system colour picker, were not verified: the searches returned
+  nothing usable, and I could not confirm an Android system colour-picker dialog.
+- 🟦 App-wide beats per-document for a *maker's own* ink (Affinity's application palette, Procreate's palettes).
+  Google's per-file scope is the cautionary case.
+
+### R33.2 Hex entry conventions — ✅ VERIFIED (practice from forums and component docs; no style guide exists)
+
+- Accept **with or without `#`**, and 3-digit shorthand (`#abc` is `#aabbcc`). Photoshop and Affinity accept no `#`;
+  a Qt report asks for the same ([Subform](https://talk.subformapp.com/t/copy-paste-color-with/706.html),
+  [Qt](https://bugreports-test.qt.io/browse/QTBUG-111742), [Drupal](https://www.drupal.org/node/3055344)).
+- **Paste is where fixed-length fields break**: a 6-character limit silently drops the last digit of a pasted
+  `#rrggbb` ([Discourse](https://meta.discourse.org/t/allow-pasting-a-hex-color-string-with-a-leading-in-a-color-text-input-theme-customization/134715)).
+  Strip `#`, whitespace and hidden characters, then validate length. Illustrator users report copied hex failing
+  ([Adobe community](https://community.adobe.com/t5/illustrator-discussions/color-picker-not-wanting-to-validate-and-apply-correct-hex-color/m-p/9496436)).
+- Case-insensitive on input, **one normalised form stored** (six characters, upper case)
+  ([Semrush](https://developer.semrush.com/intergalactic/components/color-picker/color-picker)).
+- Show the swatch beside the text; show an inline invalid state when the text cannot be read as a colour
+  ([Verbb](https://docs.verbb.io/plugin-kit/web/components/color-input)).
+- 🟦 No 8-digit (alpha) hex: inks are opaque.
+
+### R33.3 Accessibility of a colour picker — ✅ VERIFIED (platform facts) / ⚠️ (colour naming has no official source)
+
+- ✅ A clickable is at least **48dp x 48dp** ([Android codelab](https://developer.android.com/codelabs/jetpack-compose-accessibility));
+  a swatch is padded to it.
+- ✅ A purely visual swatch needs a `contentDescription` of its colour; decorative images take `null` (same codelab).
+- ✅ For a custom slider, Compose documents `progressBarRangeInfo` (value, range, **step**) with `setProgress`
+  ([Compose semantics](https://developer.android.com/develop/ui/compose/semantics),
+  [setProgress](https://composables.com/docs/androidx.compose.ui/ui/functions/setProgress)).
+- ✅ The W3C slider pattern: arrow keys one step, Page Up/Down several (10 in its example), Home/End to the ends
+  ([APG colour viewer](https://www.w3.org/WAI/ARIA/apg/example-index/slider/slider-color-viewer.html)).
+- ✅ WCAG 1.4.11: slider thumb and track boundaries need **3:1** against their surroundings
+  ([Adobe Spectrum](https://spectrum.adobe.com/page/color-slider)).
+- ⚠️ A community write-up (May 2026, cites a Google issue; **not checked against the tracker**) says a node value
+  changing at frame rate can freeze TalkBack; throttle what the semantics tree sees while dragging
+  ([gist](https://gist.github.com/Digipom/d1dc1aef7623d8f58ff6b57cb6935d5b)).
+- ⚠️ I found **no** official guidance on naming colours for TalkBack and none for Material colour-picker semantics.
+- 🟦 A drag on a 2-D square cannot be swiped. The accessible path is the **hex field**, plus two adjustable strips
+  with `setProgress` steps and a spoken colour name. Large text: the sheet scrolls; the hex field and Done never
+  clip at 200% font scale.
+
+### R33.4 Printed legibility of a pale ink — ✅ VERIFIED (the measure) / 🟨 ASSUMPTION (what printers do)
+
+- ✅ WCAG 1.4.3: **4.5:1** for text, **3:1** for large text (18 pt, or 14 pt bold); ratio is `(L1+0.05)/(L2+0.05)`
+  ([W3C](https://www.w3.org/TR/WCAG22/#dfn-relative-luminance);
+  [Understanding 1.4.3](https://w3c.github.io/wcag/understanding/contrast-minimum)). Values are not rounded: 4.499
+  fails. The luminance constants were not on the fetched page; the repo already implements them in
+  `core/ui/src/test/.../theme/WcagContrast.kt:21-41` (sRGB, 0.03928 knee, 0.2126/0.7152/0.0722), a test-source helper.
+- ✅ Washed-out home print is a common report: draft mode gives lighter output, and low or dry ink or a dirty head
+  lightens colour ([Canon community](https://community.usa.canon.com/t5/Desktop-Inkjet-Printers/washed-out-color/td-p/301546));
+  white prints as bare paper (R32.4).
+- 🟨 Dot gain, toner density and ICC behaviour: searches found nothing citable. Treat on-screen contrast as the
+  **best case**: a screen pass is a floor, not a guarantee.
+- Worked values, ink on white (repo formula): #767676 4.54, #808080 3.95, #949494 **3.03**, #B0B0B0 2.17,
+  #E8A0A0 2.11, #9ACD32 1.88, #F2C14E 1.68, #FFD60A 1.41. On the screen page `#F4EFE6`
+  ([ZinelyColors.kt:176](../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyColors.kt),
+  [Theme.kt:155](../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/Theme.kt)) the same inks score about 0.4
+  lower (#949494 is 2.65), so the screen page is the wrong thing to measure.
+- **Which paper to measure against.** A page with no fill is "transparent / paper-white"
+  ([Document.kt:215](../core/model/src/main/kotlin/com/aritr/zinely/core/model/Document.kt)); `ColorRgba.WHITE` is
+  `Document.kt:208`; paper colour is shown on screen only (R32.4, [ADR-137](DECISIONS.md#adr-137)). Printed ink lands
+  on **white**: measure against `#FFFFFF`.
+- Precedent: [D-028](design/V2-SPEC-DEFECTS.md) deliberately imposes **no contrast floor** on in-page text ink.
+  A *warning* keeps that ruling; a block would reverse it.
+
+### R33.5 Where "My inks" lives — ✅ VERIFIED (guidance and repo pattern)
+
+- ✅ Google: Preferences DataStore for small key-value settings, Proto DataStore for a typed schema, Room for partial
+  updates, referential integrity or large or complex data
+  ([Android blog](https://android-developers.googleblog.com/2020/09/prefer-storing-data-with-jetpack.html),
+  [Proto codelab](https://developer.android.com/codelabs/android-proto-datastore)).
+- ✅ The repo already keeps small app-wide settings this way: `DataStorePreferredPaperStore`
+  (`data-android/src/main/kotlin/com/aritr/zinely/data/android/prefs/DataStorePreferredPaperStore.kt:15`), behind a
+  `Flow`-returning interface, wired in `PreferencesModule.kt`.
+
+### R33.6 Zinely application — 🟦 RECOMMENDATION
+
+| Decision | Recommendation | Why |
+|---|---|---|
+| "My inks" cap | **8** | Under Procreate's 10 and GoodNotes' 12; one tray row; when full say so and ask which to remove, never drop one silently |
+| Scope | **App-wide**, offered in every zine | R33.1; a used ink is already in that zine's own document, so the zine never depends on the list |
+| Order | Newest first; reusing moves it to the front | Procreate history behaviour |
+| Hex input | `#` optional, 3 or 6 digits, any case, whitespace and zero-width characters stripped, **no alpha**; stored `RRGGBB` upper case; invalid shows inline text, never a toast | R33.2 |
+| Warning threshold | contrast against `#FFFFFF` **below 3.0:1** (about luminance 0.30, lighter than `#949494`) | R33.4; 3:1 not 4.5 because zine text is mostly large and marks are graphics |
+| Warning behaviour | One gentle line under the preview ("Pale ink may print faintly"); **never blocks** Done or Save; no second stage | D-028; owner: warn, never block |
+| Measure on | White, not the screen page or a paper tint | R32.4, R33.4 |
+| Slider steps | Hue 5 degrees (72 stops); lightness 5% (20 stops); large step 5x; each change speaks the colour name; announcements throttled while dragging | R33.3 |
+| Touch targets | Swatches and Done 48dp minimum | R33.3 |
+
+**Naming (no network).** A pure `ColorRgba -> String` in `core/model` or `core/copy`, table-driven: convert to HSL;
+if saturation is below about 10% name by lightness only ("black", "dark grey", "grey", "light grey", "white");
+otherwise pick a hue word from about 12 sectors (red, orange, yellow, lime, green, teal, cyan, blue, indigo, purple,
+pink, plus brown for dark orange or red) and prefix "dark" or "light" by lightness band; low-to-mid saturation gives
+forms like "dark green-grey". 🟨 This is a design, not tested with TalkBack users. Also speak the hex for the exact
+case ("Green-grey, hex 5F7A6E"). Reuse a named ink's own name when the colour matches it exactly. Pin the sector
+edges in a unit test.
+
+**Storage.** **Preferences DataStore**, one string key holding at most 8 `RRGGBB` values joined by commas, behind a
+`MyInksStore` interface exposing `Flow<List<ColorRgba>>`, following `DataStorePreferredPaperStore`. Reasons: tiny,
+no queries or relations (Room's cases in R33.5), same pattern as the repo, and no document change (v3 stays). Room is
+rejected: a migration, a DAO and a table for 8 strings. 🟨 Open: whether `ZineLibraryBackupManifest` should carry
+preferences; check before deciding that a restore brings "My inks" back.
+
+**Not now.** No screen-wide eyedropper, no R/G/B boxes, no alpha, no harmony suggestions (Procreate's Harmony tab is
+where a picker becomes a palette tool). Revisit the eyedropper only if makers ask to match photo colours.
+
+### R33.7 Saving inks together: palettes in other tools (2026-10-22)
+
+Question: how do established tools let people save and reuse named colour combinations, and does a palette
+*reference* its colours or *copy* them? Sources are vendor help pages fetched or surfaced by search on 2026-10-22.
+Where a page did not say, this is stated; nothing below is inferred silently.
+
+| Tool | Create | Name / duplicate names | Edit, duplicate, delete, reorder | Cap | Reference or copy |
+|---|---|---|---|---|---|
+| **Illustrator** | Select swatches, then *New Swatch Group*; or *Selected Artwork* builds a group from the artwork's unique colours; a name is typed in the dialog ([Adobe: group swatches](https://helpx.adobe.com/vn_vi/illustrator/desktop/manage-colors/use-swatches/group-swatches.html), via search snippet) | Typed in the dialog; duplicate-name handling not stated | Recolor Artwork's *Swatch Groups* list edits, deletes and creates groups; *Delete Swatch Group* removes the group ([Adobe: Recolor options](https://helpx.adobe.com/illustrator/desktop/manage-colors/learn-color-basics/edit-colors-dialog-overview.html)) | Not stated | A group is a folder of the panel's swatches. *Convert Process to Global* turns colours into linked global swatches, so editing one updates the artwork. ✅ VERIFIED for global; effect of deleting a swatch that sits in a group ⚠️ not documented in anything reachable (Adobe's page returned 403 to a direct fetch) |
+| **Photoshop** | Groups are folders in the Swatches panel; no official page found for the create flow | Not found | Community answer: no "merge groups"; people drag swatches into a new group and delete the emptied ones ([Adobe community](https://community.adobe.com/t5/photoshop-ecosystem-discussions/photoshop-swatch-group-gt-how-to-save-to-quot-my-library-quot/m-p/14643041/highlight/true)) | Not found | Painting with a swatch **copies** the colour into the foreground; nothing in the document refers back to the swatch 🟨 (general behaviour, no page found) |
+| **Procreate** | Palettes tab, **+**; starts empty, named "Untitled", becomes the active palette | Tap the title to rename; no duplicate-name rule stated, the copy from Duplicate is appended at the bottom | Three-dot menu: Duplicate, Delete (confirm; "cannot be restored"), Set as active; press-and-hold a title and drag to reorder; a full palette's swatch is replaced by press-and-hold then *Set* ([Procreate handbook](https://help.procreate.com/procreate/handbook/colors/colors-palettes)) | A row holds 10 swatches (compact) or 3 (cards); the handbook states **no total cap**; a third-party page says 30, unconfirmed | Tapping a swatch sets the current colour (a **copy**); drag onto artwork flood-fills. Deleting a palette cannot touch artwork, because artwork holds pixels |
+| **Figma** | Colour *styles* and *variables* are created from a selection or the panel | Names are paths (`brand/primary`); same-name handling not read | Edit, delete, detach in the properties panel | Not stated | **Reference.** "Figma will automatically apply those changes to any objects using that style" ([Figma: Styles](https://help.figma.com/hc/en-us/articles/360039238753-Styles-in-Figma)). *Detach* keeps the object's existing colour as a plain value ([Figma help via search](https://figma-signup.helpjuice.com/use-libraries/apply-styles-to-layers-and-objects)). What deletion does to users of a deleted style: the page fetched did not say; ⚠️ not verified |
+| **Canva** | Brand Kit, Colors, add-to-category, *Add palette*; add colours with *Add new* | Click the palette's name to rename | More-options menu deletes; **the last palette cannot be deleted** ("at least one palette") | Free: 1 palette of 3 colours; Pro and up: 100 palettes of 100 colours (from the China-region help page only) | Applying is by colour pick or a *colour theme* that recolours background, elements and text together; themes cannot be authored from scratch ([Canva: colour palettes](https://www.canva.com/help/article/color-palettes/), [themes](https://www.canva.com/help/color-themes/)). Reference vs copy not stated |
+| **Adobe Express** | *Brands*, *Create brand*, name it; add colours by picker or hex/RGB; *Add Color palette* | Brand named at creation | Each tile has a three-dot menu: edit, duplicate, delete ([Adobe Express: brand kit](https://helpx.adobe.com/ee/express/how-to/create-brand-kit.html)) | Not stated | Applied from the colour picker in the editor; no documented link back |
+
+**What generalises.**
+
+- ✅ VERIFIED (Procreate, Canva, Express): **create = a "+" that makes an empty, auto-named, immediately active item; rename is by tapping the name in place.** Nobody asks for a name before the colours exist.
+- ✅ VERIFIED: **delete is confirmed and not undoable** in Procreate; Canva refuses to delete the last one rather than leave none.
+- ✅ VERIFIED: no tool found enforces unique names; none documents a duplicate-name error. Duplicate appends a copy at the end.
+- ✅ VERIFIED: **applying a palette colour to a target is "set the one colour"**. The palette is a picker, not a bundle that follows the target. Only Canva themes and Figma styles/variables apply many colours as one, and those are design-system features with a link.
+- ✅ VERIFIED: **linked semantics exist only where the document keeps the link** (Figma styles, Illustrator global swatches). Raster-style tools (Procreate, Photoshop) copy the value, so deleting a palette is harmless to finished work.
+- ⚠️ NOT VERIFIED: what Figma or Illustrator do to the *users* of a deleted style or swatch. Do not cite them for "delete detaches and keeps the value".
+
+### R33.8 Zinely application (palettes) — 🟦 RECOMMENDATION
+
+- **Copy, not reference.** A zine already stores each used ink's own value in its document (R33.6), so a saved combination is a list of `RRGGBB` values. Deleting a combination or one of its inks never changes any zine. That is Procreate's semantics, and it avoids the unverified delete-while-in-use case entirely.
+- **Create:** a "Save these inks" action that makes the combination already named ("Untitled", or the first ink's colour name), with the name field focused for rename in place. No name-first dialog.
+- **Names:** allow duplicates (the market norm); show the swatch strip beside the name so two "Sunset" rows stay tellable. Trim whitespace; empty falls back to "Untitled".
+- **Controls:** rename, duplicate (copy appended at the end), delete with a confirm that says it cannot be undone, and reorder. Never delete the last one silently; a zero-state is fine for Zinely, so Canva's last-one rule is not needed.
+- **Cap:** pick a small, stated number and say so when full, asking which to remove. Combinations hold at most the "My inks" cap of 8 colours. A combination cap is a product call; Procreate states none and Canva's 100 is a paid-tier figure, so neither is a precedent for a free offline app.
+- **Apply to a target that holds one colour:** do what every tool does, set the single colour. Offer a combination as a row of tappable swatches, each applying one ink; do not recolour a whole page in one tap (that is Canva's theme, a different and larger feature).
+
 ## R34. The A39 Art picks: gate measurements, the Never #19 dry run and the licences (2026-10-22)
 
 The evidence behind [ADR-139](DECISIONS.md#adr-139) and `v21-bench.html` A39. Measured on 2026-10-22 from the

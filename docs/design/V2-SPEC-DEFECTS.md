@@ -154,7 +154,7 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | ~~[**D-063**](#d-063)~~ | ✅ **WITHDRAWN 2026-08-06 as a DUPLICATE of [D-051](#d-051)** — C4's Pass 2 filed the same defect on 2026-08-04. C9's Pass 2 did not recognise it because [OD-21](#d-047-ruling)'s amendment had moved every address below it, so the two entries cite `:721` and `:808` for one row. **Address drift defeats duplicate-detection.** Its three new observations were merged into D-051; the owner's ruling on the substance is [**OD-26**](#d-051-ruling), recorded there | *(see [D-051](#d-051))* |
 | ~~[**D-062**](#d-062)~~ | ✅ **WITHDRAWN 2026-08-06 before it was ever presented — raised and closed inside the same Device Pass 1. Not a defect; no owner decision owed** | it claimed the dark grid cell loses the page's paper and takes its page number to **1.014:1**. That figure came from one guessed coordinate that missed the 9px glyph and compared the ground with itself. Re-measured over the badge's whole box: **3.396:1 light**, **3.449:1 dark** — both clear the ≥3:1 floor, and the dark figure is the flat `inkFaint`-on-`paper` token pair to three decimals. The dark cell is ruled, not broken: [OD-23](#d-059-ruling)'s own text at **`v2-bench.html:138`** reads *"THE PAGE GRID IS STILL NOT AMENDED. `.pgcell` draws no page content, so it has no artifact to dim"* — the owner considered this surface and withheld the island deliberately, because [OD-12](#d-035-ruling)'s principle is about the artifact and the cell holds none |
 | ~~[**D-061**](#d-061)~~ | ✅ **WITHDRAWN 2026-08-06 the day it was raised — by C9's Device Pass 1, which is the pass the entry itself asked for. Kept, not deleted: the way it was wrong is worth more than the entry was** | it claimed `inkFaint` on `desk` measures **2.880:1**, below [IA §C.4](V2-BENCH-IA-INTERACTION.md)'s ≥3:1 control floor, and that this put the IA against [V2-TOKENS.md](V2-TOKENS.md)'s floorless decorative `inkFaint`. The arithmetic was right and **the premise was invented**: the badge sits on the **cell**, not on the desk behind it. Real pixels — glyph `(141,131,106)` on `(247,242,231)` — measure **3.364:1** and clear the floor. The failing pairing is drawn nowhere. C6's lesson in a new costume: a computed check can be exactly right about a relationship that does not exist. What the device found instead is [D-062](#d-062), and it is worse |
-| [**D-060**](#d-060) | 🟦 **OPEN — raised by C6's Device Verification Pass 2, 2026-08-06; a defect in the FROZEN FILE, not in the Compose. Not a merge blocker; C6 is `Accepted` with it open** | the ink popover offers the swatch **`Ink` twice** — it is a member of both the `INKS` array (`v2-bench.html:596`) and the `NEUT` array (`:598`), and [OD-24](#d-028-ruling) draws both bands for a text target. On the device that is two near-identical near-black circles in two rows, announced identically to a screen reader, of which only one takes the selection ring. The owner already counted this — OD-24 says *"Inks + Neutrals — 13 distinct swatches"* over 14 drawn — so it is **not** a new decision; what is undecided is whether the duplicate should be **renamed** so the two can be told apart. A fix amends the frozen file first |
+| [**D-060**](#d-060) | ✅ **RESOLVED 2026-10-26 in the frozen A40 rev. 2 ([ADR-138](../DECISIONS.md#adr-138), Proposed); built on `feat/ink-mixer`, unreleased.** *Was:* OPEN — raised by C6's Device Verification Pass 2, 2026-08-06; a defect in the FROZEN FILE, not in the Compose | the ink popover offers the swatch **`Ink` twice** — it is a member of both the `INKS` array (`v2-bench.html:596`) and the `NEUT` array (`:598`), and [OD-24](#d-028-ruling) draws both bands for a text target. On the device that is two near-identical near-black circles in two rows, announced identically to a screen reader, of which only one takes the selection ring. The owner already counted this — OD-24 says *"Inks + Neutrals — 13 distinct swatches"* over 14 drawn — so it is **not** a new decision; what is undecided is whether the duplicate should be **renamed** so the two can be told apart. A fix amends the frozen file first |
 | ~~[**D-059**](#d-059)~~ | ✅ **RESOLVED 2026-08-05 — [owner ruling](#d-059-ruling), OD-23, Option (a); the frozen Bench is AMENDED for the seventh time** | [OD-22](#d-053-ruling) made the thumb's interior *the real page*. The sheet's ground is still the room's `--paper`, which in dark theme is `#2F2A22` — so in dark theme the miniature draws the page's content with **no paper under it**, and the user's own text measures **1.21:1** against the sheet (8.02:1 in light, same document, same words). This is [D-035](#d-035)'s failure a second time, one surface along; [OD-12](#d-035-ruling) ruled *the artifact does not dim* and the frozen file implements it as `.page{--paper:#F7F2E7}` (~~`v2-bench.html:222`~~ **`v2-bench.html:275`** *(re-verified and repaired 2026-08-09, D0 row 0.3)*) — an island scoped to `.page`, which the thumb is not. Extending it to `.pthumb` is a **seventh amendment to the frozen Bench** and therefore the owner's call, not the implementer's. |
 | ~~[**D-058**](#d-058)~~ | ✅ **FIXED 2026-08-05 — a C5 defect, found by independent review** | C5 emitted the frozen `.navrow` **below** the bar. The freeze opens `.navrow` at `v2-bench.html:481` and `.bar` at `:488`, both in `.phone`'s normal flow, so the sheets belong above `Undo · Redo · Add · Done`. Nothing caught it: every test measured one row against itself, and ADR-095's own device checklist described the frozen order while the build did the opposite. The row is moved and the *relation* is now asserted — in `BenchC5Test` and in CI-31's `SurfaceTraversalOrderTest`, where it is also the reading order. |
 | ~~[**D-057**](#d-057)~~ | ✅ **FIXED 2026-08-05 — a C5 defect, found by Device Pass 1** | The frozen `.cur{z-index:2}` was transcribed as `Modifier.zIndex`, which reorders the **platform accessibility tree** as well as the paint: the current sheet was published last, so a screen reader met page 1 after every other page. `traversalIndex` did not override it. The `zIndex` is dropped — a recorded deviation under the freeze's own allowance for post-freeze accessibility work — and its cost is a shadow tail, measured from the freeze's own geometry. |
@@ -3462,7 +3462,8 @@ on, and the comment there records this so the next author does not re-derive the
 
 ### D-060 — the ink popover offers the same swatch twice, under one name {#d-060}
 
-**Raised 2026-08-06 by C6's Device Verification Pass 2 on `SM-A176B` / Android 16.** 🟦 Open. **Not a merge
+**Raised 2026-08-06 by C6's Device Verification Pass 2 on `SM-A176B` / Android 16.** ✅ Resolved 2026-10-26 in the
+frozen A40 rev. 2 (see the dated line at the end; built, unreleased). *Was:* 🟦 Open. **Not a merge
 blocker — [ADR-096](../DECISIONS.md#adr-096) is `Accepted` with this open.** **This is a defect in the frozen
 file, not in the Compose implementation** — which is precisely why it is filed here, exactly as
 [D-051](#d-051) was.
@@ -3490,6 +3491,9 @@ in the ruling, and drew both bands anyway. The device measurement agrees from th
 in `Neutrals` is not also called `Ink`. That is a change to a frozen surface's copy, so it amends
 `v2-bench.html` first and `Copy.BenchInk` second, and the amendment is the owner's to make. Until then the
 popover is correct and mildly confusing, which is a fair description of the freeze it implements.
+
+*2026-10-26: resolved by [ADR-138](../DECISIONS.md#adr-138) / [A40 rev. 2](mockups/v21-bench.html#a40r2). The built-in
+inks are one list with `Ink` drawn once (`benchBuiltInInks`), built 2026-10-26 on `feat/ink-mixer`, in no download.*
 
 ---
 
@@ -8181,6 +8185,21 @@ second reviewer, could not sign in.
 | R31 relies on lane C renumbering | Observation | Same as above |
 | Duplicate also carries the description | Observation | **Accepted.** Decision 6: Duplicate keeps it; owed item 2 tests it |
 | Verified claims | Observation | No change |
+
+### D-123 — the frozen ink tray says nothing when Save is dim or a save fails, and its sliders take no keys {#d-123}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-ink-mixer.html` ([amendment of 2026-10-26](mockups/v21-ink-mixer.html#a40r2-t9)) · `BenchInkPopover.kt` (`benchInkSaveReason`, `BenchInkTrayActions`) · `InkMixerSheet.kt` (`InkMixerSlider`) · `EditorScreen.kt` (`applyInk`, `raiseInkFailure`) · `Copy.BenchInk.SAVE_FAILED`, `notKept` |
+| **Found** | INK Tasks 7, 8b and 9 (2026-10-24 to 2026-10-26), by the implementer and the task reviewers; [ADR-138](../DECISIONS.md#adr-138) |
+| **Severity** | Accessibility and trust. A screen-reader user hears a dim Save palette as an ordinary button and is not told why it does nothing. A store failure dropped the change with no word. A keyboard user cannot move the hidden sliders |
+| **Status** | **Resolved in the frozen file, then built on `feat/ink-mixer` (2026-10-26), unreleased.** Accessibility fixes are allowed after a freeze, so the amendment is dated in the HTML first. Not yet tried on a device or with TalkBack ([OWNER-CHECKLIST §2.6](../OWNER-CHECKLIST.md#26-ink-mixer--built-unreleased-no-device-pass-yet)) |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **Dim Save is silent.** The prototype marks it `aria-disabled` with no reason. | **It says why**, per the amendment's first bullet. In Compose the reason is the button's state description; the button stays enabled and focusable |
+| 2 | **A failed store write is silent.** The HTML has no storage, so it drew no failure. | **It is said**, per the amendment's second bullet, including its one exception for a used ink whose keep fails (`Copy.BenchInk.notKept`) |
+| 3 | **The hidden sliders take no keys.** | **They do**, per the amendment's third bullet (Left/Right only, as an Android SeekBar) |
 
 ### D-130 — A39's colour bar cannot take `mark.bar` without breaking G2 {#d-130}
 

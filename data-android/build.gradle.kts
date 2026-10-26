@@ -92,6 +92,7 @@ dependencies {
     implementation(project(":core:data"))          // DocumentRepository + DataResult/DataError contracts
     implementation(project(":core:data-storage"))  // AtomicFileStore, FileSystemOps seam, AutosaveCoordinator
     implementation(project(":core:model"))          // ZineDocument schema
+    implementation(project(":core:editor"))         // InkLibrary (ADR-138): the pure state the ink store persists
 
     // The in-memory SaveFailureSink (ADR-026) exposes autosave failures as a StateFlow; the editor
     // collects it for a "couldn't save" cue. coroutines-core is the only production runtime dep here.

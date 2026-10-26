@@ -119,6 +119,19 @@ public data class PlatformA11yNode(
      * tray's group names (ADR-129), whose merged-tree `Heading` key says nothing about this bit.
      */
     val isHeading: Boolean = false,
+    /**
+     * Every `AccessibilityAction` id the platform advertises (`ACTION_SET_PROGRESS`, `ACTION_SCROLL_FORWARD`, a
+     * custom action's generated id, …). Added for ADR-138's sliders and kept pots.
+     */
+    val actionIds: Set<Int> = emptySet(),
+    /** The labels of every advertised action that carries one: a custom action's name is only here. */
+    val actionLabels: List<String> = emptyList(),
+    /** `getRangeInfo()` as (min, max, current), or `null` when the node is not a range (a slider's form). */
+    val range: Triple<Float, Float, Float>? = null,
+    /** `getLiveRegion()`: `View.ACCESSIBILITY_LIVE_REGION_NONE` (0), `POLITE` (1) or `ASSERTIVE` (2). */
+    val liveRegion: Int = 0,
+    /** `isFocusable()`: whether input focus (a keyboard, a D-pad) can land here. */
+    val isFocusable: Boolean = false,
 ) {
     /** True when the platform bounds have positive area — a laid-out, hit-testable control. */
     val hasNonEmptyBounds: Boolean
@@ -181,6 +194,11 @@ public fun SemanticsNodeInteraction.platformNode(activity: Activity): PlatformA1
             },
             isSelected = info.isSelected,
             isHeading = info.isHeading,
+            actionIds = info.actionList.map { it.id }.toSet(),
+            actionLabels = info.actionList.mapNotNull { it.label?.toString() },
+            range = info.rangeInfo?.let { Triple(it.min, it.max, it.current) },
+            liveRegion = info.liveRegion,
+            isFocusable = info.isFocusable,
         )
     } finally {
         // Robolectric retains each framework object until it is explicitly recycled. Lazy-list platform

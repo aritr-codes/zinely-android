@@ -11,6 +11,8 @@ import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.DocumentRepository
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.Intent as EditorIntent
+import com.aritr.zinely.core.editor.ink.InkLibrary
+import com.aritr.zinely.core.editor.ink.InkLibraryEdit
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Transform
@@ -19,8 +21,10 @@ import com.aritr.zinely.data.android.AutosaveCoordinatorFactory
 import com.aritr.zinely.data.android.InMemorySaveFailureSink
 import com.aritr.zinely.data.android.di.EditorAutosaveBinderFactory
 import com.aritr.zinely.data.android.prefs.EditorOnboardingStore
+import com.aritr.zinely.data.android.prefs.InkLibraryStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.launch
@@ -275,6 +279,7 @@ class ShareInDrainTest {
             imageDecoder = ImportMasterDecoder(context.contentResolver),
             onboardingStore = SeenOnboardingStore(),
             shareInbox = inbox,
+            inkLibraryStore = FakeInkLibraryStore(),
             assetsDir = File(context.cacheDir, "assets").apply { mkdirs() },
             mainDispatcher = dispatcher,
             ioDispatcher = dispatcher,
@@ -337,5 +342,12 @@ class ShareInDrainTest {
         override val reframeCoachSeen = flowOf(true)
         override suspend fun markMoveResizeHintSeen() = Unit
         override suspend fun markReframeCoachSeen() = Unit
+    }
+
+    /** No ink library in this test; the seam is constructed, never driven (ADR-138). */
+    private class FakeInkLibraryStore : InkLibraryStore {
+        override val library = MutableStateFlow(InkLibrary.EMPTY)
+        override suspend fun update(transform: (InkLibrary) -> InkLibrary) =
+            InkLibraryEdit(library.value, transform(library.value)).also { library.value = it.after }
     }
 }

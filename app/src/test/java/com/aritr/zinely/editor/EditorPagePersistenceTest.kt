@@ -9,15 +9,19 @@ import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.DocumentRepository
 import com.aritr.zinely.core.editor.Intent
+import com.aritr.zinely.core.editor.ink.InkLibrary
+import com.aritr.zinely.core.editor.ink.InkLibraryEdit
 import com.aritr.zinely.core.imposition.SingleSheet8Imposer
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.data.android.AutosaveCoordinatorFactory
 import com.aritr.zinely.data.android.InMemorySaveFailureSink
 import com.aritr.zinely.data.android.di.EditorAutosaveBinderFactory
 import com.aritr.zinely.data.android.prefs.EditorOnboardingStore
+import com.aritr.zinely.data.android.prefs.InkLibraryStore
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
@@ -119,6 +123,7 @@ class EditorPagePersistenceTest {
             onboardingStore = SeenOnboardingStore(),
             // An empty share inbox — this suite is about persistence of place, not share-in.
             shareInbox = ShareInbox(),
+            inkLibraryStore = FakeInkLibraryStore(),
             assetsDir = File(context.cacheDir, "assets").apply { mkdirs() },
             mainDispatcher = dispatcher,
             ioDispatcher = dispatcher,
@@ -188,5 +193,12 @@ class EditorPagePersistenceTest {
         override val reframeCoachSeen = flowOf(true)
         override suspend fun markMoveResizeHintSeen() = Unit
         override suspend fun markReframeCoachSeen() = Unit
+    }
+
+    /** No ink library in this test; the seam is constructed, never driven (ADR-138). */
+    private class FakeInkLibraryStore : InkLibraryStore {
+        override val library = MutableStateFlow(InkLibrary.EMPTY)
+        override suspend fun update(transform: (InkLibrary) -> InkLibrary) =
+            InkLibraryEdit(library.value, transform(library.value)).also { library.value = it.after }
     }
 }

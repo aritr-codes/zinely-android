@@ -134,6 +134,11 @@ public data class ZSheetClose(val label: String, val onClose: () -> Unit)
  * @param scrollBody for a sheet whose words can outgrow a small phone at large text: the grip and title
  * stay, [sub] and the content scroll under them, and the sheet stops at 88% of the screen so its top is
  * clear of the status bar. Off by default, and a sheet that leaves it off is laid out exactly as before.
+ * @param titleTrailing drawn at the far end of the title row (the mixer's colour name, `.sheet.mixer h3
+ * small`); the title then keeps the mixer's `margin-bottom:var(--gap-sm)`. Null (default) draws none.
+ * @param foot a pinned foot (`.mixfoot`): the content scrolls under the title and above it, and the sheet
+ * drops its own bottom padding (`.sheet.mixer{padding-bottom:0}`), which the foot carries. Cap the sheet's
+ * height through [modifier]. Null (default) lays the sheet out exactly as before.
  */
 @Composable
 public fun ZSheet(
@@ -147,6 +152,8 @@ public fun ZSheet(
     onHidden: (() -> Unit)? = null,
     scrollBody: Boolean = false,
     subMaxLines: Int = Int.MAX_VALUE,
+    titleTrailing: (@Composable () -> Unit)? = null,
+    foot: (@Composable ColumnScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val visibleState = remember { MutableTransitionState(false) }
@@ -217,6 +224,8 @@ public fun ZSheet(
                     close = close,
                     scrollBody = scrollBody,
                     subMaxLines = subMaxLines,
+                    titleTrailing = titleTrailing,
+                    foot = foot,
                     content = content,
                 )
             }
@@ -243,6 +252,8 @@ public fun ZSheetSurface(
     close: ZSheetClose? = null,
     scrollBody: Boolean = false,
     subMaxLines: Int = Int.MAX_VALUE,
+    titleTrailing: (@Composable () -> Unit)? = null,
+    foot: (@Composable ColumnScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -299,8 +310,8 @@ public fun ZSheetSurface(
                 start = ZinelyV21Dimens.gapLg,
                 end = ZinelyV21Dimens.gapLg,
                 // A scrolling body carries this inside its scroll: a scroll clips at its edge, and the
-                // last button draws its shadow below itself.
-                bottom = if (scrollBody) 0.dp else ZinelyV21Dimens.gapXl,
+                // last button draws its shadow below itself. A foot carries its own.
+                bottom = if (scrollBody || foot != null) 0.dp else ZinelyV21Dimens.gapXl,
             )
             // D-087: make the whole sheet a pointer hit target so inert titles, gaps and padding cannot
             // fall through to the scrim sibling. Observe without consuming: descendant controls and
@@ -341,7 +352,12 @@ public fun ZSheetSurface(
                         // `margin:var(--gap-xs) var(--gap-hair) var(--gap-md)`. Where a `.sh-sub`
                         // follows, that subtitle carries the block's bottom margin instead — the
                         // Library nests both inside one `.sh-head` whose padding is the same 12.
-                        bottom = if (sub == null) ZinelyV21Dimens.gapMd else 0.dp,
+                        // `.sheet.mixer h3{margin-bottom:var(--gap-sm)}` where the title has a trailer.
+                        bottom = when {
+                            sub != null -> 0.dp
+                            titleTrailing != null -> ZinelyV21Dimens.gapSm
+                            else -> ZinelyV21Dimens.gapMd
+                        },
                     ),
                 style = TextStyle(
                     color = colors.ink,
@@ -351,6 +367,7 @@ public fun ZSheetSurface(
                     lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                 ),
             )
+            titleTrailing?.invoke()
             if (close != null) ZSheetCloseButton(close)
         }
         val body: @Composable ColumnScope.() -> Unit = {
@@ -392,15 +409,17 @@ public fun ZSheetSurface(
             }
             content()
         }
-        if (scrollBody) {
+        if (scrollBody || foot != null) {
             Column(
                 Modifier
                     .weight(1f, fill = false)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = ZinelyV21Dimens.gapXl),
+                    // Under a foot the body ends at the foot's rule; the foot carries the padding below.
+                    .padding(bottom = if (foot == null) ZinelyV21Dimens.gapXl else 0.dp),
                 content = body,
             )
+            foot?.invoke(this)
         } else {
             body()
         }

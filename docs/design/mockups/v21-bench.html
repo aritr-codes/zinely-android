@@ -3828,3 +3828,91 @@ ALTERNATIVES WEIGHED (D-143).
   });
 })();
 </script>
+
+<!-- ===================================================================================================
+     A40 · Mix an ink (frozen 2026-10-22, ADR-138). Append-only; nothing above changes.
+     The working prototype is its own page, v21-ink-mixer.html (same tokens and CSS as this file, copied
+     verbatim), because its ids would collide with this page's Ink tray. That page is the canonical A40.
+     =================================================================================================== -->
+<section class="a40-doc" id="a40" aria-label="A40: Mix an ink">
+  <h2>A40 · Mix an ink</h2>
+  <p>Owner ruling 2026-10-22: makers may mix their own ink with a hex picker, and keep up to 9 in <b>My inks</b> for every
+    zine. Owner looked at the prototype and ruled the cap of 9 the same day. Open the working prototype:
+    <a href="v21-ink-mixer.html">v21-ink-mixer.html</a> (five states, dark, largest text, 360dp).</p>
+  <ol class="a40-rules">
+    <li><b>Ink tray:</b> one band added, <i>My inks</i>, after Neutrals and before Starting palettes, for text and Art. It
+      ends with a dashed <i>Mix</i> pot ("Mix an ink"). Band label counts "N of 9" once one is kept.</li>
+    <li><b>Mixer sheet</b> opens on the selected piece's current ink: title + colour name; a full-cap note (only when 9 are
+      kept and this code is not one of them); a paper preview (title, a body line and a mark on white, "On white paper ·
+      about how it prints"); a fixed-height legibility line; the hex field; one shade square; one hue strip; Cancel and
+      <i>Use this ink</i> pinned.</li>
+    <li><b>Hex:</b> strip whitespace, zero-width characters and <code>#</code> before any length cap; only 6 hex digits move the
+      colour live; 3 digits count on Done or leaving the field; otherwise "Still showing #RRGGBB." Use settles the field first.
+      Stored upper-case RRGGBB, no alpha.</li>
+    <li><b>Legibility:</b> contrast against #FFFFFF below 3.0:1 shows "Pale in print", worded for text or for Art; never
+      blocks (D-028). Otherwise "Reads clearly on white paper." Same slot, same height.</li>
+    <li><b>My inks:</b> app-wide, cap 9 (9 + Mix = two rows of five). Display newest-made first, stable. At the cap the
+      least-recently-used ink is removed and the sheet names it (pot + colour name) before Use, with "Pages already using
+      it keep it." Reuse never duplicates. Undo after Use restores the page's ink and My inks. Long-press (TalkBack custom
+      action) "Remove from My inks", undoable.</li>
+    <li><b>TalkBack:</b> kept pot "My ink, &lt;name&gt;, &lt;digits spoken singly&gt;"; Mix "Mix an ink"; the square is
+      touch-only, with two one-axis sliders <i>Colour strength</i> and <i>Lightness</i> (5% steps) and the <i>Hue</i> slider
+      (5°, value = hue name); no live region on the heading name; hex error announced once; toast says the name.
+      Names come from the prototype's <code>colourName</code> and its 38-colour table, which the app's test copies.</li>
+    <li><b>Largest text:</b> A40 defines the large-text Ink tray (three pots a row, 72dp); the mixer is one scrolling column,
+      buttons stacked and pinned, square 120dp, type never shrinks.</li>
+  </ol>
+</section>
+<style>
+.a40-doc{max-width:680px;margin:var(--gap-2xl) 0;font-size:13.5px;color:var(--ink-soft)}
+.a40-doc h2{font-family:var(--voice);color:var(--ink)}
+.a40-doc b{color:var(--ink)} .a40-doc a{color:var(--leaf-text)}
+.a40-rules{padding-left:20px} .a40-rules li{margin-bottom:var(--gap-sm)}
+.a40-doc code{font-size:12px}
+</style>
+
+<!-- ===================================================================================================
+     A40 rev. 2 · Palettes and the tray's order (frozen 2026-10-22, ADR-138). Append-only; supersedes the
+     A40 rules above where they differ. Bug fix in the same change: the A40 section's class was renamed
+     .a40 -> .a40-doc, because the prototype's Ink tray also carries .a40 and the section's rule turned its
+     bold text cream-on-cream in dark theme. Rev. 1's prototype stays in git at 61c10f7.
+     =================================================================================================== -->
+<section class="a40-doc" id="a40r2" aria-label="A40 rev. 2: palettes">
+  <h2>A40 rev. 2 · Palettes</h2>
+  <p>Owner asked 2026-10-22 for named palettes and a tray that puts the maker's own work first; looked twice ("trim the
+    text, avoid the scroller"; palette cap 9, not 12) and said "freeze". Prototype: <a href="v21-ink-mixer.html">v21-ink-mixer.html</a>
+    (eight states, dark, largest text, 360dp).</p>
+  <ol class="a40-rules">
+    <li><b>Tray order:</b> Current ink → My palettes → My inks → Built-in inks → Starter palettes (closed disclosure,
+      "3 to copy"). Replaces rule 1's band order.</li>
+    <li><b>Built-in inks:</b> the 13 frozen Spot inks and Neutrals (Ink once) in one 7-across grid, 28dp pots in 48dp targets,
+      no visible names (Current ink shows the picked name; TalkBack reads every name). Paper tints follow for Art only.</li>
+    <li><b>My palettes:</b> up to <b>9</b>, newest first, never evicted; a 10th (New, Duplicate, Save a copy) asks to delete
+      one. Each holds 2–6 inks as <i>copies of values</i>, not links. One palette is open (name, ⋯, its pots); every
+      palette also shows as a colour strip in a radio group, five to a row; the last opened stays open. Tap a pot to use
+      that ink: a palette never recolours a page. ⋯ = Edit, Duplicate, Delete, each undoable.</li>
+    <li><b>New / Edit palette</b> in the tray: name field (unique default "My palette N", duplicates allowed and noted, not
+      autofocused), strip of chosen inks (tap to remove), every ink as an aria-pressed toggle with a ✓ badge, "Was in this
+      palette" row to put a removed ink back, Mix adds to the palette and My inks (a full palette says "Save to My inks").
+      New starts with the current ink. Save needs a name and 2 inks. Cancel or Back with changes: "Palette not saved · Undo".</li>
+    <li><b>Mixer, trimmed:</b> the legibility line is the paper preview's footer ("Reads clearly on white paper" /
+      "Pale in print. Words may be hard to read." / Art: "Fine for a soft mark or a tint."); the preview has no body line;
+      hex help is a placeholder and appears only for an error; full note: "My inks is full. This replaces &lt;name&gt;,
+      used longest ago. Your pages keep it." Fits without scrolling at default text; scrolls at the largest.</li>
+    <li><b>TalkBack:</b> the current ink reads ", selected"; palette pots "&lt;name&gt;, from &lt;palette&gt;"; strips
+      "&lt;palette&gt;, N inks" as radios; the toast is the one announcement of an ink change (Current ink is not a live
+      region). Focus stays on the control after a re-render; when the control is gone it goes to: after Delete,
+      Duplicate, Save a copy, Save or Cancel, the open palette's ⋯ (or + New palette); after Remove from My inks, the
+      first pot in My inks (Mix if none); after Undo, Current ink (or the edit strip's count, if Undo reopened an edit).</li>
+    <li><b>Undo:</b> a toast offers Undo only when it follows a change (never on a cap, "Pick at least 2" or "Ink tray
+      closes" toast). Undo after Save restores the palettes as they were and reopens the edit with your changes.
+      Every way in (New, Duplicate, Save a copy, Save) enforces the 9-palette cap in the reducer, not only the button.</li>
+    <li><b>Mix into a palette:</b> "added to the palette and My inks"; "already in this palette"; or, when it holds 6,
+      "kept in My inks (the palette is full)", with the button reading <i>Save to My inks</i>.</li>
+    <li><b>Largest text:</b> built-in inks five a row, palette strips three a row (nine palettes = three rows), the tray
+      scrolls; the mixer scrolls. Type never shrinks.</li>
+    <li><b>Retired from #a40:</b> rule 1's band order and "Starting palettes" (now <i>Starter palettes</i>); rule 2's preview
+      body line and "On white paper · about how it prints" note, and the separate legibility box (now the preview's footer,
+      still one fixed slot).</li>
+  </ol>
+</section>

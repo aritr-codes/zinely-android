@@ -207,10 +207,10 @@ internal fun benchContextVerbs(
     //    ([Intent.ReplaceSupply]). The incoming family's §5.2 scale is applied at the outgoing element's
     //    centre and rotation — an owner ruling, because the freeze does not say what a swap does to size.
     //  - `Ink` is **live as of the decor-ink package**: [Intent.InkSupply] recolours a `DecorElement` and
-    //    `benchInkBands` already had the DECOR arm, so the popover's decor branch was a routing change,
-    //    not new material. Its enablement is unconditional because — unlike text, where a blank box cannot
-    //    be styled — *every* placed supply has an ink and can always be recoloured. There is no decor
-    //    counterpart to `styleable`.
+    //    the popover's built-in list (now `benchBuiltInInks`) already had the DECOR arm, so its decor
+    //    branch was a routing change, not new material. Its enablement is unconditional because —
+    //    unlike text, where a blank box cannot be styled — *every* placed supply has an ink and can
+    //    always be recoloured. There is no decor counterpart to `styleable`.
     // Delete is live because it is a shared verb that already works on any element id.
     BenchVerbKind.DECOR -> listOf(
         BenchVerb(
@@ -547,7 +547,7 @@ private fun BenchVerbButton(
                 // keyboard, automation — could fire, and that `uiautomator dump` "would have read
                 // `clickable=\"false\"` on all seven". Measured with the instrument that settles it, on
                 // the real `AccessibilityNodeInfo`: with this line deleted the enabled verbs still report
-                // `isClickable = true` (`BenchInkPresetPlatformA11yTest`). The `clickable` sits ABOVE the
+                // `isClickable = true` (`BenchInkPresetPlatformA11yTest`, retired with the preset pill in INK task 6). The `clickable` sits ABOVE the
                 // `clearAndSetSemantics`, and its action survives; the disabled axis above genuinely does
                 // not, which is what made the wrong half plausible. The line stays — it pins what the
                 // action *is* if the chain is reordered — but it was never repairing a live defect, and a

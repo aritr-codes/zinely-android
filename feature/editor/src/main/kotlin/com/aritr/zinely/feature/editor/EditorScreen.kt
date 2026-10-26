@@ -20,6 +20,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -73,6 +74,15 @@ import com.aritr.zinely.core.editor.EditorUiState
 import com.aritr.zinely.core.editor.FramingMath
 import com.aritr.zinely.core.editor.FlipAxis
 import com.aritr.zinely.core.editor.Intent
+import com.aritr.zinely.core.editor.ink.InkHex
+import com.aritr.zinely.core.editor.ink.InkLibrary
+import com.aritr.zinely.core.editor.ink.InkLibraryEdit
+import com.aritr.zinely.core.editor.ink.MixIntoPalette
+import com.aritr.zinely.core.editor.ink.PaletteDraft
+import com.aritr.zinely.core.editor.ink.colourName
+import com.aritr.zinely.core.editor.ink.isPale
+import com.aritr.zinely.core.model.ZineDocument
+import java.io.IOException
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveTransform
 import com.aritr.zinely.core.editor.cascadedPlacement
@@ -194,6 +204,16 @@ internal val LocalReframePhotoLoader = staticCompositionLocalOf { ProductionRefr
  *   screen without a proof destination (previews/tests) is unchanged; the app passes a navigate action.
  * @param onBack the way back to My Shelf from the status strip (`v21-bench.html` A42, D-143): the same pop the
  *   system Back does from an idle Bench. Autosave has already run, so nothing asks first. Defaults to a no-op.
+ * @param inkLibrary My inks and My palettes ([ADR-138](../DECISIONS.md#adr-138)), hoisted from the app's
+ *   `InkLibraryStore`. `null` = not loaded yet: the Ink tray draws My palettes and My inks only when this is
+ *   non-null, and every write is a transform through [onEditInkLibrary], so nothing loaded late is overwritten.
+ *   Defaults to an empty, loaded library (previews/tests).
+ * @param onEditInkLibrary applies a transform to the stored library and returns its before and after; the
+ *   caller offers Undo by restoring `before`. The app runs the write in the ViewModel's scope, so closing the
+ *   tray or the mixer cannot cancel it. Rethrows the store's `IOException`. Defaults to a no-op that changes
+ *   nothing.
+ *   The Ink tray draws My palettes and My inks from the first, and `applyInk` writes through the second,
+ *   catching that `IOException` as "the library did not change".
  */
 @Composable
 public fun EditorScreen(
@@ -214,6 +234,9 @@ public fun EditorScreen(
     onRetrySaveError: () -> Unit = {},
     onPreview: (() -> Unit)? = null,
     onBack: () -> Unit = {},
+    inkLibrary: InkLibrary? = InkLibrary.EMPTY,
+    onEditInkLibrary: suspend ((InkLibrary) -> InkLibrary) -> InkLibraryEdit =
+        { InkLibraryEdit(InkLibrary.EMPTY, InkLibrary.EMPTY) },
 ) {
     val uiState by store.uiState.collectAsStateWithLifecycle()
     val dispatch: (Intent) -> Unit = store::dispatch
@@ -353,15 +376,46 @@ public fun EditorScreen(
     var deleteProgress by remember { mutableFloatStateOf(0f) }
     var snackVisible by remember { mutableStateOf(false) }
     var snackMessage by remember { mutableStateOf("") }
-    // Which snack is up. The delete snack carries `Undo`; the ink snack (C6, row 4.15) carries no
-    // button at all and stands for 1600ms rather than 3200 — the frozen `applyInk` builds it that way
-    // because an ink is one undoable command the bar's own Undo already reverses.
-    var snackAction by remember { mutableStateOf<String?>(null) }
+    // What the snack's `Undo` does; the button is shown iff this is non-null. Most snacks undo one document
+    // step ([undoDocument], declared with [undoSnackRevision]); the Ink tray's undoes what the tap actually changed
+    // (document, library, both), and offers nothing when the tap changed nothing (A40 rev. 2: Undo only after a change).
+    var snackUndo by remember { mutableStateOf<(() -> Unit)?>(null) }
     // How long a snack stands: its base, or longer if the phone's accessibility timeout ("time to take
     // action") asks — the Shelf snack's rule (A28.13). Read when each timer starts, so a snack with Undo is
     // given the longer controls timeout.
     val accessibility = LocalAccessibilityManager.current
-    val snackHold = { base: Long -> benchSnackHoldMillis(accessibility, base, hasAction = snackAction != null) }
+    val snackHold = { base: Long -> benchSnackHoldMillis(accessibility, base, hasAction = snackUndo != null) }
+    // The Ink tray's standing Undo, the document it was raised over, and the library it would restore from
+    // (null when the tap did not change the library). Withdrawn the moment either moves on, so a 4s Undo
+    // can never pop an unrelated step (ADR-138 decision 5, step 4) nor write back a `before` over a library
+    // edit made since (a strip opened, a palette saved). Compared by identity with [snackUndo], so a newer
+    // snack that took the slot is left alone.
+    var inkUndo by remember { mutableStateOf<BenchInkUndo?>(null) }
+    // Every ink Undo's library restore, compare-and-set: `before` goes back only over the library the Undo
+    // was raised over. The withdraw effects below read the screen's copy, which can be a write behind the
+    // store; this reads the store itself. A store failure restores nothing and never crashes; it returns
+    // false so the caller says so (A40 rev. 2 amendment 2026-10-26: never silent).
+    val restoreInkLibrary: suspend (InkLibraryEdit) -> Boolean = { edit ->
+        try {
+            onEditInkLibrary { stored -> if (stored == edit.after) edit.before else stored }
+            true
+        } catch (_: IOException) {
+            false
+        }
+    }
+    // Where the Ink tray puts focus next (INK task 9): the tray's own actions and the host's Undo both ask.
+    // Dropped when the tray closes, so a late Undo never steals focus on the next open.
+    var inkFocus by remember { mutableStateOf<BenchInkFocusRequest?>(null) }
+    val inkTrayShown = remember { booleanArrayOf(false) }
+    LaunchedEffect(uiState.document, inkLibrary) {
+        val standing = inkUndo ?: return@LaunchedEffect
+        val libraryMoved = standing.libraryAfter != null && inkLibrary != null && inkLibrary != standing.libraryAfter
+        val documentMoved = standing.document != null && uiState.document !== standing.document
+        if (documentMoved || libraryMoved) {
+            if (snackUndo === standing.undo) snackUndo = null
+            inkUndo = null
+        }
+    }
     val c4Scope = rememberCoroutineScope()
     val spreadJob = remember { arrayOfNulls<Job>(1) }
     // One job, cancelled on re-entry: two deletes in quick succession must not leave the first
@@ -386,7 +440,7 @@ public fun EditorScreen(
             deleteJob[0]?.cancel()
             snackMessage = line
             historyLine = line
-            snackAction = null
+            snackUndo = null
             snackStep++
             snackVisible = true
             latestHistoryAnnounce(line)
@@ -402,8 +456,10 @@ public fun EditorScreen(
     // moves the revision and the snack goes at once. Bumping the step re-keys the snack's animation at
     // zero, which is "hidden with no exit transition". Snacks without Undo keep their timeout.
     var undoSnackRevision by remember { mutableLongStateOf(-1L) }
+    // Undo for a snack raised over one document step: a no-op once a later step has moved the revision (D-141).
+    val undoDocument: () -> Unit = { if (currentState().historyRevision == undoSnackRevision) dispatch(Intent.Undo) }
     LaunchedEffect(uiState.historyRevision) {
-        if (snackVisible && snackAction != null && uiState.historyRevision != undoSnackRevision) {
+        if (snackVisible && snackUndo != null && uiState.historyRevision != undoSnackRevision) {
             deleteJob[0]?.cancel()
             snackVisible = false
             snackStep++
@@ -415,7 +471,7 @@ public fun EditorScreen(
         store.imagePickFailures.collect { line ->
             deleteJob[0]?.cancel()
             snackMessage = line
-            snackAction = null
+            snackUndo = null
             snackStep++
             snackVisible = true
             deleteJob[0] = c4Scope.launch {
@@ -432,11 +488,24 @@ public fun EditorScreen(
         if (currentState().historyRevision == before) return@raise
         deleteJob[0]?.cancel()
         snackMessage = line
-        snackAction = UndoActionLabel
+        snackUndo = undoDocument
         undoSnackRevision = currentState().historyRevision
         snackVisible = true
         deleteJob[0] = c4Scope.launch {
             delay(snackHold(BenchSnackDeleteMillis))
+            snackVisible = false
+        }
+    }
+
+    // A store write that failed: nothing changed, so a buttonless line (A40 rev. 2 amendment 2026-10-26).
+    val raiseInkFailure: () -> Unit = {
+        deleteJob[0]?.cancel()
+        snackMessage = Copy.BenchInk.SAVE_FAILED
+        snackUndo = null
+        snackStep++
+        snackVisible = true
+        deleteJob[0] = c4Scope.launch {
+            delay(snackHold(BenchSnackInkTrayMillis))
             snackVisible = false
         }
     }
@@ -473,7 +542,7 @@ public fun EditorScreen(
                 // A delete that pushed nothing (the piece was already gone) offers no Undo.
                 if (currentState().historyRevision == revisionBefore) return@launch
                 snackMessage = benchDeletedMessage(label)
-                snackAction = UndoActionLabel
+                snackUndo = undoDocument
                 undoSnackRevision = currentState().historyRevision
                 snackVisible = true
                 delay(snackHold(BenchSnackDeleteMillis))
@@ -496,16 +565,9 @@ public fun EditorScreen(
      * Read from [ZinelyContentInks] rather than written as a literal so the value cannot drift from the
      * palette, and so a `ColorRgba` constant does not appear in a second place.
      */
-    val supplyInk = ZinelyTheme.contentInks[ZinelyMakerInkId.Ink].value.toColorRgba()
+    val contentInks = ZinelyTheme.contentInks
+    val supplyInk = contentInks[ZinelyMakerInkId.Ink].value.toColorRgba()
 
-    // Frozen `applyInk()` (`v2-bench.html:699-704`), in the order the freeze performs it: set the ink,
-    // then say which one. The other two writes it makes are already delivered here by unidirectional
-    // data flow rather than by this lambda — `$('editSw').style.background` is `BenchStyleRow`'s own
-    // `inkSwatch`, which reads the element's live style, and `flashSaved()` is the `.status` chip C4
-    // moved the autosave reassurance into, which the document change raises by itself.
-    //
-    // One `Intent.StyleText` per tap: an immediate-commit style change, so each ink is one undoable
-    // command and the buttonless snack is honest — the bar's Undo is right there.
     /**
      * Frozen `openArt()`'s tile handler (`v21-bench.html:887-889`), in the order the freeze performs it:
      * close the sheet, put the supply on the page, say so.
@@ -573,14 +635,32 @@ public fun EditorScreen(
      *
      * The `when` is exhaustive on purpose. A fourth element kind must come here and declare whether it has
      * an ink, rather than inheriting text's verb by falling through.
+     *
+     * ### One entry point (ADR-138 decision 5, prototype `wireTray`)
+     *
+     * Every way of applying an ink comes here with the library change it implies: a tray pot passes
+     * `{ it.touch(hex) }`, the mixer's Use (INK task 8b) `{ it.use(hex).library }`. In order:
+     *  1. Style the piece, and **measure** whether the document changed (dispatch is synchronous). Not
+     *     predicted: the reducer refuses a style on a blank text box and under the Book rule, and a predicted
+     *     change there would make Undo pop the box's own placement.
+     *  2. Apply [libraryTransform] and await it, so `before` exists by the time Undo can be tapped. A store
+     *     failure (`IOException`) counts as "the library did not change": the ink stays applied, the snack
+     *     adds "Couldn't save that change." ([Copy.BenchInk.notKept]), and the tray never crashes on storage.
+     *  3. Raise the snack; offer Undo iff something changed. Undo restores the library's `before` if it
+     *     changed and pops one document step if the document did — never `Intent.Undo` otherwise. A failed
+     *     restore pops nothing and raises the failure line instead.
+     *  4. [inkUndo] withdraws that Undo if the document or the library moves on while it stands.
+     *
+     * A pale ink (`isPale`) on a text piece says so in the same snack; it never blocks (ADR-138 Consequences).
      */
-    val applyInk: (String, Color) -> Unit = { name, color ->
+    val applyInk: (String, Color, (InkLibrary) -> InkLibrary) -> Unit = { name, color, libraryTransform ->
         val id = uiState.selection.singleOrNull()
         val element = id?.let { selected ->
             uiState.document.pages.getOrNull(uiState.currentPageIndex)
                 ?.elements?.firstOrNull { it.id == selected }
         }
         if (element != null) {
+            val docBefore = currentState().document
             when (element) {
                 is TextElement -> dispatch(Intent.StyleText(element.id, color = color.toColorRgba()))
                 is DecorElement -> dispatch(Intent.InkSupply(element.id, color.toColorRgba()))
@@ -589,12 +669,47 @@ public fun EditorScreen(
                 // left to an `else` so it stays unreachable *visibly*.
                 is ImageElement -> Unit
             }
+            val docAfter = currentState().document
+            val docChanged = docAfter !== docBefore
+            val message = if (element is TextElement && isPale(InkHex.of(color.toColorRgba()))) {
+                Copy.BenchInk.appliedPale(name)
+            } else {
+                Copy.BenchInk.applied(name)
+            }
             deleteJob[0]?.cancel()
             deleteJob[0] = c4Scope.launch {
-                snackMessage = Copy.BenchInk.applied(name)
-                snackAction = null
+                var notKept = false
+                val edit = try {
+                    onEditInkLibrary(libraryTransform).takeIf { it.changed }
+                } catch (_: IOException) {
+                    // The piece keeps its ink; the library did not change, and the snack says so (never silent).
+                    notKept = true
+                    null
+                }
+                // A document change that landed while the write was awaited already ran the withdraw effect,
+                // so it is checked here too: no Undo is raised over a document that has moved on.
+                val undo: (() -> Unit)? =
+                    if ((docChanged || edit != null) && currentState().document === docAfter) {
+                        undo@{
+                            // The withdraw effect runs a frame after a change; this closes that frame.
+                            if (currentState().document !== docAfter) return@undo
+                            c4Scope.launch {
+                                // A failed restore undoes nothing, page included, and says so (A40 rev. 2 amendment).
+                                if (edit != null && !restoreInkLibrary(edit)) return@launch raiseInkFailure()
+                                if (docChanged && currentState().document === docAfter) dispatch(Intent.Undo)
+                                // The pressed Undo is gone with its snack; focus goes back to Current ink (INK task 9).
+                                if (inkTrayShown[0]) inkFocus = BenchInkFocusRequest(BenchInkFocus.Current)
+                            }
+                        }
+                    } else {
+                        null
+                    }
+                snackMessage = if (notKept) Copy.BenchInk.notKept(message) else message
+                snackUndo = undo
+                inkUndo = undo?.let { BenchInkUndo(docAfter, edit?.after, it) }
                 snackVisible = true
-                delay(snackHold(BenchSnackInkMillis))
+                undoSnackRevision = currentState().historyRevision
+                delay(snackHold(BenchSnackInkTrayMillis))
                 snackVisible = false
             }
         }
@@ -745,10 +860,10 @@ public fun EditorScreen(
                     }
                     if (!spread) {
                         snackMessage = Copy.Spread.PHOTO_UNAVAILABLE
-                        snackAction = null
+                        snackUndo = null
                     } else {
                         snackMessage = Copy.Spread.success(pages.first, pages.second)
-                        snackAction = UndoActionLabel
+                        snackUndo = undoDocument
                         undoSnackRevision = currentState().historyRevision
                     }
                     spreadPhotoId = null
@@ -786,6 +901,105 @@ public fun EditorScreen(
     // summoned is one Android expects Back to dismiss. Enabled on the *derived* visibility, so Back can
     // never be captured by a popover that is not on screen.
     BackHandler(enabled = inkPopoverVisible) { inkPopoverFor = null }
+    // The palette being made or edited in the tray (INK task 7), hoisted so a snack's Undo can reopen it.
+    // It does not outlive the tray: closing the tray (a deselect, a page change) drops it.
+    var inkDraft by remember { mutableStateOf<PaletteDraft?>(null) }
+    // An Undo that would reopen a draft is withdrawn with the tray too: run after the tray closed, it would
+    // take a saved palette away with no draft to come back to (and Cancel's Undo would do nothing at all).
+    // The mixer (INK task 8b) belongs to the tray: closing the tray closes it. Its state outlives a close so
+    // the sheet can slide out showing what it showed, and the next open keeps the strip's hue for a grey.
+    var mixerOpen by remember { mutableStateOf(false) }
+    var mixerState by remember { mutableStateOf(InkMixerState.open(InkMixerFallbackHex, null)) }
+    SideEffect { inkTrayShown[0] = inkPopoverVisible }
+    LaunchedEffect(inkPopoverVisible) {
+        if (inkPopoverVisible) return@LaunchedEffect
+        inkDraft = null
+        mixerOpen = false
+        inkFocus = null
+        val standing = inkUndo ?: return@LaunchedEffect
+        if (standing.reopens) {
+            if (snackUndo === standing.undo) snackUndo = null
+            inkUndo = null
+        }
+    }
+    val trayOpen by rememberUpdatedState(inkPopoverVisible)
+    // A tray Undo that reopens, or was raised over, a draft is withdrawn once the draft moves on (a toggle,
+    // a new draft), so it never throws later work away. Its own effect: the library one above must not
+    // read a library that has not caught up with the write yet.
+    LaunchedEffect(inkDraft) {
+        val standing = inkUndo ?: return@LaunchedEffect
+        if (standing.watchesDraft && inkDraft != standing.draft) {
+            if (snackUndo === standing.undo) snackUndo = null
+            inkUndo = null
+        }
+    }
+    /**
+     * The tray's palette and My-inks snacks (INK task 7): the line, and an Undo iff [BenchInkTrayUndo] is
+     * given. Undo runs here, in the screen's scope: the library's `before` ([restoreInkLibrary]), then the
+     * draft, reopened after the restore so it never draws over the palette it just saved. An Undo that
+     * reopens a draft is withdrawn when the tray closes. It never dispatches `Intent.Undo`: none of these
+     * touch the page.
+     */
+    val raiseTraySnack: (String, BenchInkTrayUndo?) -> Unit = { message, trayUndo ->
+        val undo: (() -> Unit)? = trayUndo?.let { u ->
+            {
+                c4Scope.launch {
+                    if (u.edit?.let { restoreInkLibrary(it) } == false) return@launch raiseInkFailure()
+                    val reopened = u.reopen != null && trayOpen
+                    if (reopened) inkDraft = u.reopen
+                    // INK task 9: focus lands on Current ink, or on the count line of the edit Undo reopened.
+                    if (trayOpen) inkFocus = BenchInkFocusRequest(if (reopened) BenchInkFocus.Count else BenchInkFocus.Current)
+                }
+            }
+        }
+        deleteJob[0]?.cancel()
+        snackMessage = message
+        snackUndo = undo
+        inkUndo = undo?.let {
+            BenchInkUndo(
+                document = null,
+                libraryAfter = trayUndo.edit?.after,
+                undo = it,
+                draft = inkDraft,
+                watchesDraft = trayUndo.reopen != null || inkDraft != null,
+                reopens = trayUndo.reopen != null,
+            )
+        }
+        // D-141: a later page step retires this snack like any other Undo snack.
+        undoSnackRevision = currentState().historyRevision
+        snackVisible = true
+        deleteJob[0] = c4Scope.launch {
+            delay(snackHold(BenchSnackInkTrayMillis))
+            snackVisible = false
+        }
+    }
+    /**
+     * Mix from edit mode (A40 rev. 2 rule 4, prototype `mixUse` with `mixReturn==='edit'`): the ink goes into
+     * My inks (`use`) and, if there is room and it is not already there, into the draft. The piece is not
+     * re-inked. Undo restores the library and reopens the draft as it was. A store failure changes nothing:
+     * the draft is left as it was too, so the snack never claims an ink My inks does not hold.
+     */
+    val mixIntoDraft: (InkHex) -> Unit = { hex ->
+        c4Scope.launch {
+            val edit = try {
+                onEditInkLibrary { it.use(hex).library }
+            } catch (_: IOException) {
+                // Nothing changed (the draft is left as it was), and the maker is told so: never silent.
+                return@launch raiseInkFailure()
+            }
+            val before = inkDraft ?: return@launch
+            val name = inkColourWords(colourName(hex))
+            val message = when (val mixed = before.addMixed(hex)) {
+                is MixIntoPalette.Added -> {
+                    inkDraft = mixed.draft
+                    Copy.BenchInk.mixedAdded(name)
+                }
+                MixIntoPalette.AlreadyIn -> Copy.BenchInk.mixedAlreadyIn(name)
+                MixIntoPalette.PaletteFull -> Copy.BenchInk.mixedKept(name)
+            }
+            raiseTraySnack(message, BenchInkTrayUndo(edit.takeIf { it.changed }, reopen = before))
+        }
+    }
     val closeFlipTray = {
         flipTrayFor = null
         flipReturnPending = true
@@ -929,7 +1143,7 @@ public fun EditorScreen(
                 // way back.
                 deleteJob[0]?.cancel()
                 snackMessage = Copy.Editor.REFRAME_UNAVAILABLE
-                snackAction = null
+                snackUndo = null
                 snackVisible = true
                 deleteJob[0] = c4Scope.launch {
                     delay(snackHold(BenchSnackDeleteMillis))
@@ -2083,40 +2297,70 @@ public fun EditorScreen(
                 // not the artifact (D-035). Drawn under the sheet island it would take the island's light
                 // `ink` onto the room's `sheet` — the exact 1.05:1 defect C2b measured on a device.
                 //
-                // ⚠ **No longer text-only.** This read `BenchVerbKind.TEXT` as a literal while decor's `Ink`
-                // verb was inert, and `benchInkBands` has carried a working `PHOTO, DECOR ->` arm the whole
-                // time — live code on an unreachable path. Passing `ctxKind` is what connects the two; the
-                // literal would have silently served a supply the *text* bands, which is a different palette
-                // and not the one the frozen decor branch specifies.
+                // ⚠ **No longer text-only.** Passing `ctxKind` is what gives a supply the Art built-ins
+                // (with the tints) rather than the text ones.
                 //
                 // `?: BenchVerbKind.TEXT` is unreachable rather than a default: `inkPopoverVisible` already
                 // requires a non-null `inkTarget`, and an ink target implies a `ctxKind`. It exists because
                 // `ctxKind` is nullable at the type level and this is the arm that must not invent a palette.
+                val trayKind = ctxKind ?: BenchVerbKind.TEXT
                 BenchInkPopover(
                     visible = inkPopoverVisible,
-                    bands = benchInkBands(ZinelyTheme.contentInks, ctxKind ?: BenchVerbKind.TEXT),
-                    presets = benchInkPresets(ZinelyTheme.contentInks),
+                    kind = trayKind,
                     // The element's OWN ink, not the last tap: the ring survives undo, a page change and
-                    // a reselect, and an ink applied from the Type bar (Coral, Teal, Blue — in no frozen
-                    // band) correctly rings nothing rather than ringing something stale. Via
+                    // a reselect, and an ink applied from the Type bar (Coral, Teal, Blue — in no built-in
+                    // list) correctly rings nothing rather than ringing something stale. Via
                     // [benchInkColorOf] so a supply's `ink` and a text box's `style.color` reach it through
                     // one binding — the same reason the target itself does.
                     selected = benchInkColorOf(inkTarget)?.toComposeColor(),
-                    onPick = { swatch -> applyInk(swatch.name, swatch.value) },
-                    // OD-24: the recipe's PRIMARY ink, and the snack says the recipe's name — which is
-                    // what the frozen `applyInk(c, PRESETS[i][0])` passes.
-                    onPreset = { preset -> applyInk(preset.name, preset.applied.value) },
+                    // Every pot applies its own ink (OD-24's "first colour" rule is retired, ADR-138), and a
+                    // kept one is bumped to most recently used; a hex that is not kept leaves the library be.
+                    onPick = { colour ->
+                        val hex = colour.inkHex()
+                        applyInk(inkName(hex, contentInks, trayKind), colour) { it.touch(hex) }
+                    },
                     onDone = { inkPopoverFor = null },
                     // F-5: the same clearance term the editing row feeds, from the panel that replaces it.
                     onDockedTopChanged = { inkPopoverDockedTopPx = it },
-                    // The frozen stacking order is explicit and this is the only place it can be
-                    // expressed: `.ctx` is `z-index:30` (`:357`), `.snack` is `38` (`:444`) and
-                    // `.inkpop` is `42` (`:377`) — the popover sits ABOVE the snack. `BenchSnack` is
-                    // composed after this call, so without a zIndex the snack drew over the card and
-                    // covered the `.inkuse` note; measured on device. Raising the popover rather than
-                    // reordering the composition keeps the snack above the verb bar, which is the other
-                    // half of the frozen order.
+                    // Above the verb bar's slot (`.inkpop` 42 > `.ctx` 30). The snack it raises is drawn
+                    // above it in turn while it is open (A40 `.toast2`, see the snack below).
                     modifier = ctxModifier.zIndex(1f).heightIn(max = panelMaxHeight),
+                    inkLibrary = inkLibrary,
+                    onEditInkLibrary = onEditInkLibrary,
+                    draft = inkDraft,
+                    onDraftChange = { inkDraft = it },
+                    onSnack = raiseTraySnack,
+                    focusRequest = inkFocus,
+                    onFocusRequest = { inkFocus = it },
+                    // Opens on the piece's own ink (prototype `openMixer(current)`).
+                    onMix = {
+                        val start = benchInkColorOf(inkTarget)?.let { InkHex.of(it) } ?: InkMixerFallbackHex
+                        mixerState = InkMixerState.open(start, mixerState.hsv.h)
+                        mixerOpen = true
+                    },
+                )
+                // The sheet is a Dialog: Back reaches it first and closes it (onCancel), the tray only after.
+                InkMixerSheet(
+                    visible = mixerOpen && inkPopoverVisible,
+                    state = mixerState,
+                    onState = { mixerState = it },
+                    kind = trayKind,
+                    // For text the preview is the piece's own first line; anything else shows the sample.
+                    sample = (inkTarget as? TextElement)?.text?.lineSequence()?.firstOrNull()?.takeIf { it.isNotBlank() }
+                        ?: Copy.InkMix.PREVIEW_SAMPLE,
+                    library = inkLibrary,
+                    useLabel = inkMixerUseLabel(inkDraft),
+                    onCancel = { mixerOpen = false },
+                    onUse = { hex ->
+                        mixerOpen = false
+                        if (inkDraft != null) {
+                            mixIntoDraft(hex)
+                        } else {
+                            // The single entry point (T6): one write, `use`, so Undo restores the library
+                            // from before it and the page's ink (A40 rule 5).
+                            applyInk(inkName(hex, contentInks, trayKind), hex.toColorRgba().toComposeColor()) { it.use(hex).library }
+                        }
+                    },
                 )
                 }
 
@@ -2184,24 +2428,30 @@ public fun EditorScreen(
                 BenchSnack(
                     visible = snackVisible,
                     message = snackMessage,
-                    // Null for the ink snack (row 4.15 / C6): the frozen `applyInk` hides the button.
-                    actionLabel = snackAction,
+                    // The button is shown iff there is something to undo ([snackUndo]).
+                    actionLabel = if (snackUndo != null) UndoActionLabel else null,
                     onAction = {
                         deleteJob[0]?.cancel()
                         snackVisible = false
                         // D-141: the snack can still be on screen for a frame after a later step lands. Its
-                        // Undo then belongs to no step, so it does nothing; the bar's Undo takes back the newest.
-                        if (currentState().historyRevision == undoSnackRevision) dispatch(Intent.Undo)
+                        // Undo then belongs to no step, so [undoDocument] does nothing; the bar's Undo takes back the newest.
+                        snackUndo?.invoke()
                     },
                     colors = roomColors21,
-                    modifier = Modifier.align(Alignment.BottomCenter),
+                    // A40 `.toast2{z-index:70}`: while the Ink tray is open its snack is drawn ABOVE the tray
+                    // (`zIndex` over the tray's 1f), or its Undo would sit under the card.
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .then(if (inkPopoverVisible) Modifier.zIndex(2f) else Modifier),
                     // D-089 / frozen Bench A8: placement raises both surfaces. Keep Undo and the newly
                     // selected element's verbs reachable by stacking the snack one complete bar footprint
                     // above the shared floor; its own 12dp inset becomes the required clear gap.
                     // D-113: the Flip tray gets the same courtesy. It is drawn above the snack, so a snack
-                    // left at the floor was hidden by the tray whose toggle raised it, Undo and all. The
-                    // Ink tray is not given it: the frozen order puts that tray over its buttonless snack.
+                    // left at the floor was hidden by the tray whose toggle raised it, Undo and all.
+                    // A40: over the open Ink tray the snack stands 96dp above the canvas foot
+                    // (`.toast2{bottom:96px}`), drawn on the tray rather than beside it.
                     bottomClearance = when {
+                        inkPopoverVisible -> BenchSnackInkTrayClearance
                         flipTrayVisible -> with(LocalDensity.current) { flipTrayHeightPx.toDp() }
                         arrangeTrayVisible -> with(LocalDensity.current) { arrangeTrayHeightPx.toDp() }
                         ctxVisible -> contextBarHeight + BenchSnackStackRotationAllowance
@@ -2213,7 +2463,7 @@ public fun EditorScreen(
                     // forward snack worded exactly like the last undo line would stay quiet. None is today
                     // (the one shared line, Across fold's, carries Undo going forward); if one ever is,
                     // carry a flag beside snackMessage instead.
-                    announce = !(snackAction == null && snackMessage == historyLine),
+                    announce = !(snackUndo == null && snackMessage == historyLine),
                 )
 
             }
@@ -2494,3 +2744,21 @@ private fun centeredTextBox(page: PtSize): Transform {
         heightPt = h,
     )
 }
+
+/**
+ * A standing Ink-tray Undo and what it was raised over; see `inkUndo` in [EditorScreen]. [document] is
+ * `null` for a palette or My-inks Undo, which does not touch the page. [watchesDraft]: the Undo reopens or
+ * was raised over a palette draft, so it is withdrawn once the draft moves on from [draft]. [reopens]: it
+ * brings a draft back, so it is withdrawn when the tray closes.
+ */
+private class BenchInkUndo(
+    val document: ZineDocument?,
+    val libraryAfter: InkLibrary?,
+    val undo: () -> Unit,
+    val draft: PaletteDraft? = null,
+    val watchesDraft: Boolean = false,
+    val reopens: Boolean = false,
+)
+
+/** The mixer's start when the piece has no ink of its own (unreachable: the tray opens only on an inkable piece). */
+private val InkMixerFallbackHex = InkHex("2A251E")

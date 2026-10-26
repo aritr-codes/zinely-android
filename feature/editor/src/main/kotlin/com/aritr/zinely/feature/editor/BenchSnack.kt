@@ -143,19 +143,17 @@ internal const val BenchSnackMillis: Int = 180
 public const val BenchSnackDeleteMillis: Long = 3200L
 
 /**
- * The buttonless ink snack stands for **1600ms**.
- *
- * C4 owns the *variant*, not what raises it: the ink path itself is **C6**'s. Declared here so the value
- * lives beside the one it is deliberately different from, and so C6 inherits a constant rather than a
- * re-measurement.
- *
- * ⚠ **No longer frozen.** V2's `applyInk()` gave the buttonless toast its own shorter life; V2.1 has a
- * single `toast(msg, undoable)` with one 3200ms timer for both variants (`v21-bench.html:759-763`). The
- * value is kept because shortening the dwell of a toast nobody can act on is a behaviour the product
- * already ships and P4 is a re-skin — but it is now a product decision with no frozen backing, and it is
- * `EditorScreen` that reads it. Owner call.
+ * An Ink tray snack stands for **4000ms** (A40 `v21-ink-mixer.html` `toast`). It replaces C6's 1600ms
+ * buttonless ink snack: since A40 rev. 2 the tray's snack carries Undo whenever the tap changed something,
+ * and an Undo needs time to be reached.
  */
-public const val BenchSnackInkMillis: Long = 1600L
+public const val BenchSnackInkTrayMillis: Long = 4000L
+
+/**
+ * While the Ink tray is open its snack stands `96dp` above the canvas foot (A40 `.toast2{bottom:96px}`):
+ * this clearance plus the snack's own 12dp inset.
+ */
+internal val BenchSnackInkTrayClearance = 84.dp
 
 /**
  * How long a Bench snack stands: [base], or longer when the phone's accessibility timeout ("time to take

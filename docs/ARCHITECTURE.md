@@ -578,6 +578,8 @@ flowchart BT
     editor["feature:editor (MVI)<br/>S4 ✅ surface on main · mounted in app · ADR-029"]
     export["export<br/>S5 ✅ (Preview · Export · Completion + auto-landing; ruler deferred)"]
     app["app shell / navigation<br/>✅ HomeRoute nav root · per-project editor (ADR-046)"]
+    coreed["core:editor<br/>S4 ✅ pure MVI core"]
+    da["data-android<br/>✅ files · Room index · Preferences DataStore"]
 
     imp --> model
     data --> model
@@ -592,14 +594,22 @@ flowchart BT
     export --> data
     app --> editor
     app --> export
+    editor --> coreed
+    coreed --> model
+    coreed --> render
+    da --> data
+    da --> coreed
+    app --> da
 
     classDef done fill:#dff5dd,stroke:#3a7;
     classDef next fill:#fff4d6,stroke:#e0a800;
-    class model,imp,data,render,ra,editor,app done;
+    class model,imp,data,render,ra,editor,app,coreed,da done;
     class export next;
 ```
 
-*Arrow `A → B` = "A depends on B." `core:model` is the universal sink (pure, depends on nothing); the `app` shell is the source. `data` is ✅ for the document vertical **and (S6.1, [ADR-042](DECISIONS.md#adr-042))** the Room-backed `ProjectRepository` — a rebuildable index over the per-project files; the asset GC/sweeper remains deferred ([§4](#4-data-models--storage)).*
+*Arrow `A → B` = "A depends on B." `core:model` is the universal sink (pure, depends on nothing); the `app` shell is the source. `data` is ✅ for the document vertical **and (S6.1, [ADR-042](DECISIONS.md#adr-042))** the Room-backed `ProjectRepository` — a rebuildable index over the per-project files; the asset GC/sweeper remains deferred ([§4](#4-data-models--storage)). `data-android → core:editor` is new with
+[ADR-138](DECISIONS.md#adr-138) (2026-10-26, `feat/ink-mixer`): the ink store persists `core:editor`'s pure `InkLibrary`.
+`core:editor` still does not see `core:copy`.*
 
 ### 15.2 Build order
 
@@ -735,6 +745,9 @@ path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds 
    `:data-android` behind the `EditorOnboardingStore` seam now persists the move/resize hint's
    across-sessions "seen" flag; the Settings choices grow into the same store (the full Settings ADR is
    still pending).
+   **Since [ADR-138](DECISIONS.md#adr-138) (2026-10-26, `feat/ink-mixer`, unreleased)** the same DataStore also
+   holds `ink_library`: My inks and My palettes as one versioned JSON value (`DataStoreInkLibraryStore`), which is
+   what adds the `:data-android` → `:core:editor` edge in the [§15.1 graph](#151-dependency-graph).
 
 5. **`:feature:preview` is a new render *consumer*, not new architecture.** The
    [preview](design/SCREEN-INVENTORY.md#preview) renders pages in **booklet reading order** (1→8), reusing
