@@ -596,6 +596,7 @@ flowchart BT
     app --> export
     editor --> coreed
     coreed --> model
+    coreed --> render
     da --> data
     da --> coreed
     app --> da

@@ -63,8 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   yet. Not yet tried on a phone or an emulator, and not listened to with a screen reader.
   - In the Ink tray, Mix opens a colour mixer on the piece's ink: a square, three sliders and a hex code. Use inks
     the piece and keeps the ink in My inks.
-  - My inks keeps the last 9 inks you used. When it is full, the mixer names the ink that will leave before you
-    tap Use.
+  - My inks keeps the last 9 inks you mixed and used. When it is full, the mixer names the ink that will leave
+    before you tap Use.
   - My palettes keeps up to 9 named sets of 2 to 6 inks. You can edit, duplicate and delete them, with Undo, and
     save one of the three starter palettes as a copy.
   - The built-in inks are one list, and the near-black Ink is shown once

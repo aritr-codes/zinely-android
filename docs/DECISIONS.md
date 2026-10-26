@@ -16782,7 +16782,7 @@ resolves once PR #141 merges.
 **Status:** Proposed, 2026-10-22. Design frozen by the owner the same day as bench
 [A40](design/mockups/v21-bench.html#a40) and [A40 rev. 2](design/mockups/v21-bench.html#a40r2) (with the freeze-review
 fixes of `777374f`). The working prototype [`v21-ink-mixer.html`](design/mockups/v21-ink-mixer.html) is the behavioural
-spec, and its `<script>` is the reference for every pure helper below. *2026-10-26: built 2026-10-26 on `feat/ink-mixer`, in no download (INK Tasks 1–9;
+spec, and its `<script>` is the reference for every pure helper below. *2026-10-26: built on `feat/ink-mixer`, in no download (INK Tasks 1–9;
 the A40 rev. 2 accessibility amendment of the same day, [D-123](design/V2-SPEC-DEFECTS.md#d-123)). Stays Proposed until
 everything under* Owed before Accepted *is done.*
 **Amends:** frozen bench **A16**'s Ink tray (its band order, "Starting palettes" and the `Apply …` action), superseded
