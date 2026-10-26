@@ -97,6 +97,7 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import com.aritr.zinely.ui.a11y.zinelyV2Control
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.collapse
 import androidx.compose.ui.semantics.contentDescription
@@ -1177,21 +1178,25 @@ private fun BenchInkStarters(
                 onPick = onPick,
                 tag = BenchInkStarterTestTag,
                 potTag = BenchInkStarterPotTestTag,
-            ) { BenchInkSaveCopy { onSaveStarterCopy(starter) } }
+            ) { BenchInkSaveCopy(starter.name) { onSaveStarterCopy(starter) } }
         }
     }
 }
 
-/** `.pal-copy` — an underlined text button, 48dp tall. */
+/**
+ * `.pal-copy` — an underlined text button, 48dp tall. One named Button on the platform tree, spoken with its
+ * palette's name: a plain `clickable` reached TalkBack as three identical unnamed Views (INK device pass F5).
+ */
 @Composable
-private fun BenchInkSaveCopy(onClick: () -> Unit) {
+private fun BenchInkSaveCopy(palette: String, onClick: () -> Unit) {
     val tap = benchTap(action = onClick)
     Box(
         modifier = Modifier
-            .clickable(role = Role.Button, onClick = tap)
+            // Tag before the control: its clearAndSetSemantics would drop a tag placed after it.
+            .testTag(BenchInkSaveCopyTestTag)
+            .zinelyV2Control(label = Copy.BenchInk.saveACopyOf(palette), onClick = tap)
             .defaultMinSize(minHeight = BenchInkTouchDp)
-            .padding(horizontal = ZinelyV21Dimens.gapSm)
-            .testTag(BenchInkSaveCopyTestTag),
+            .padding(horizontal = ZinelyV21Dimens.gapSm),
         contentAlignment = Alignment.Center,
     ) {
         Text(

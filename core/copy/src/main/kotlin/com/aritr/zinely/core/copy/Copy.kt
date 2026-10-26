@@ -413,6 +413,8 @@ public object Copy {
         public const val STARTER_PALETTES: String = "Starter palettes"
         public const val STARTER_COUNT: String = "3 to copy"
         public const val SAVE_A_COPY: String = "Save a copy"
+        /** Spoken label: three starters each show "Save a copy", so the name tells them apart. */
+        public fun saveACopyOf(palette: String): String = "Save a copy of $palette"
         public fun moreFor(palette: String): String = "More for $palette"
         public const val PALETTES_EMPTY_LEAD: String = "Inks that go together, one tap away."
         public const val PALETTES_EMPTY_REST: String = " Make one, or copy a starter below."

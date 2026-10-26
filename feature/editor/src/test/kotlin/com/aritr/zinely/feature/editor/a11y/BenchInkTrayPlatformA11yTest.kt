@@ -10,6 +10,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
@@ -24,7 +25,9 @@ import com.aritr.zinely.feature.editor.BenchInkKeptTestTag
 import com.aritr.zinely.feature.editor.BenchInkMixTestTag
 import com.aritr.zinely.feature.editor.BenchInkPalettePotTestTag
 import com.aritr.zinely.feature.editor.BenchInkPopover
+import com.aritr.zinely.feature.editor.BenchInkSaveCopyTestTag
 import com.aritr.zinely.feature.editor.BenchInkSavePaletteTestTag
+import com.aritr.zinely.feature.editor.BenchInkStartersTestTag
 import com.aritr.zinely.feature.editor.BenchInkStripTestTag
 import com.aritr.zinely.feature.editor.BenchInkSwatchTestTag
 import com.aritr.zinely.feature.editor.BenchInkToggleTestTag
@@ -132,6 +135,25 @@ class BenchInkTrayPlatformA11yTest {
         assertTrue(ink.isChecked)
         assertEquals("android.widget.RadioButton", ink.className)
         assertTrue(names.filter { it != Copy.BenchInk.INK }.none { tagged(BenchInkSwatchTestTag, names.indexOf(it)).isChecked })
+    }
+
+    @Test
+    fun `given the starters open then each Save a copy is a Button named with its own palette`() {
+        // Given the tray with the Starter palettes disclosure opened
+        tray(selected = red)
+        composeRule.onNodeWithTag(BenchInkStartersTestTag).performScrollTo().performClick()
+        composeRule.waitForIdle()
+
+        // Then every Save a copy is one platform Button whose name says which palette it copies
+        val copies = composeRule.onAllNodesWithTag(BenchInkSaveCopyTestTag).fetchSemanticsNodes().indices
+            .map { tagged(BenchInkSaveCopyTestTag, it) }
+        assertEquals(3, copies.size)
+        copies.forEach {
+            assertEquals("android.widget.Button", it.className)
+            assertTrue(it.isClickable)
+            assertTrue(it.contentDescription.orEmpty().startsWith("Save a copy of "))
+        }
+        assertEquals("three copies, three names", 3, copies.map { it.contentDescription }.toSet().size)
     }
 
     @Test
