@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.editor
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
@@ -47,6 +48,11 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -246,8 +252,7 @@ internal fun InkMixerBody(
         InkMixerPreview(hex, kind, sample)
         InkMixerHexRow(state, onState)
         // RF7: TalkBack's form of the square and the strip, after the field. They sit under the square's
-        // corner so they take no space (`.vh`) yet keep real on-screen bounds. Keyboard users have the field.
-        // ponytail: no arrow keys on these; add if a D-pad pass asks.
+        // corner so they take no space (`.vh`) yet keep real on-screen bounds; they take the arrow keys too.
         Box {
             Row {
                 InkMixerSlider(
@@ -412,7 +417,8 @@ private fun InkMixerLegibLine(active: Boolean, warn: Boolean, text: AnnotatedStr
                     Modifier.clearAndSetSemantics {}
                 },
             )
-            .drawWithContent { if (active) drawContent() },
+            .drawWithContent { if (active) drawContent() }
+            .testTag(if (warn) InkMixerLegibPaleTestTag else InkMixerLegibClearTestTag),
         horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -554,15 +560,27 @@ private fun InkMixerHexRow(state: InkMixerState, onState: (InkMixerState) -> Uni
 private val UpperCase = VisualTransformation { TransformedText(AnnotatedString(it.text.uppercase()), OffsetMapping.Identity) }
 
 /**
- * A visually hidden `input type=range` (`.vh`): a 1dp node TalkBack can find and swipe, stepping by 5.
- * [onSet] gets the stepped value; the state clamps it.
+ * A visually hidden `input type=range` (`.vh`): a 1dp node TalkBack can find and swipe, stepping by 5, and a
+ * keyboard can focus and move with the arrow keys (±5, as a native range input; A40 rev. 2 amendment
+ * 2026-10-26). [onSet] gets the stepped value; the state clamps it.
  */
 @Composable
 private fun InkMixerSlider(tag: String, label: String, value: String, current: Int, max: Int, onSet: (Int) -> Unit) {
     val set by rememberUpdatedState(onSet)
+    val now by rememberUpdatedState(current)
     Box(
         Modifier
             .size(1.dp)
+            .onKeyEvent { e ->
+                val d = when (e.key) {
+                    Key.DirectionRight, Key.DirectionUp -> SLIDER_STEP
+                    Key.DirectionLeft, Key.DirectionDown -> -SLIDER_STEP
+                    else -> return@onKeyEvent false
+                }
+                if (e.type == KeyEventType.KeyDown) set((now + d).coerceIn(0, max))
+                true
+            }
+            .focusable()
             .semantics {
                 contentDescription = label
                 stateDescription = value
@@ -713,6 +731,8 @@ internal fun InkMixerFoot(useLabel: String, onCancel: () -> Unit, onUse: () -> U
 internal const val InkMixerHexFieldTestTag = "ink-mixer-hex"
 internal const val InkMixerHelpTestTag = "ink-mixer-hex-help"
 internal const val InkMixerLegibTestTag = "ink-mixer-legib"
+internal const val InkMixerLegibPaleTestTag = "ink-mixer-legib-pale"
+internal const val InkMixerLegibClearTestTag = "ink-mixer-legib-clear"
 internal const val InkMixerFullNoteTestTag = "ink-mixer-full-note"
 internal const val InkMixerStrengthTestTag = "ink-mixer-strength"
 internal const val InkMixerLightTestTag = "ink-mixer-light"

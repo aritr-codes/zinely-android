@@ -309,7 +309,7 @@ class BenchInkMixerHostTest {
     }
 
     @Test
-    fun `given the store fails when Mix then Use in edit mode, then nothing changes and no snack claims it`() {
+    fun `given the store fails when Mix then Use in edit mode, then nothing changes and the snack says it could not save`() {
         val fake = FakeLibrary(InkLibrary.EMPTY)
         screen(fake)
         tap(composeRule.onNodeWithTag(BenchInkNewPaletteTestTag))
@@ -319,6 +319,9 @@ class BenchInkMixerHostTest {
         use()
         assertEquals(1, stripPots())
         assertEquals(0, composeRule.onAllNodesWithContentDescription(Copy.BenchInk.mixedAdded(words(slate))).fetchSemanticsNodes().size)
+        // INK task 9: never silent. The failure is said, with no Undo.
+        assertEquals(1, composeRule.onAllNodesWithContentDescription(Copy.BenchInk.SAVE_FAILED).fetchSemanticsNodes().size)
+        assertEquals(0, composeRule.onAllNodesWithTag(BenchSnackActionTestTag, useUnmergedTree = true).fetchSemanticsNodes().size)
     }
 
     @Test

@@ -468,6 +468,11 @@ public object Copy {
         public const val PALETTE_HOLDS_SIX: String = "A palette holds 6. Remove one first."
         public const val PALETTE_NOT_SAVED: String = "Palette not saved"
         public const val PICK_AT_LEAST_TWO: String = "Pick at least 2 inks."
+        /**
+         * A store write that failed (A40 rev. 2 amendment 2026-10-26): nothing changed, no Undo. The Shelf's
+         * `Colophon.PAPER_SAVE_FAILED` pattern, a buttonless snack.
+         */
+        public const val SAVE_FAILED: String = "Couldn’t save that change."
         public fun saved(palette: String): String = "Saved · $palette"
         public fun newPalette(palette: String): String = "New palette · $palette"
         public fun mixedAdded(name: String): String = "Mixed · $name, added to the palette and My inks"

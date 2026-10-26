@@ -20,6 +20,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -392,13 +393,20 @@ public fun EditorScreen(
     var inkUndo by remember { mutableStateOf<BenchInkUndo?>(null) }
     // Every ink Undo's library restore, compare-and-set: `before` goes back only over the library the Undo
     // was raised over. The withdraw effects below read the screen's copy, which can be a write behind the
-    // store; this reads the store itself. A store failure restores nothing and never crashes.
-    val restoreInkLibrary: suspend (InkLibraryEdit) -> Unit = { edit ->
+    // store; this reads the store itself. A store failure restores nothing and never crashes; it returns
+    // false so the caller says so (A40 rev. 2 amendment 2026-10-26: never silent).
+    val restoreInkLibrary: suspend (InkLibraryEdit) -> Boolean = { edit ->
         try {
             onEditInkLibrary { stored -> if (stored == edit.after) edit.before else stored }
+            true
         } catch (_: IOException) {
+            false
         }
     }
+    // Where the Ink tray puts focus next (INK task 9): the tray's own actions and the host's Undo both ask.
+    // Dropped when the tray closes, so a late Undo never steals focus on the next open.
+    var inkFocus by remember { mutableStateOf<BenchInkFocusRequest?>(null) }
+    val inkTrayShown = remember { booleanArrayOf(false) }
     LaunchedEffect(uiState.document, inkLibrary) {
         val standing = inkUndo ?: return@LaunchedEffect
         val libraryMoved = standing.libraryAfter != null && inkLibrary != null && inkLibrary != standing.libraryAfter
@@ -485,6 +493,19 @@ public fun EditorScreen(
         snackVisible = true
         deleteJob[0] = c4Scope.launch {
             delay(snackHold(BenchSnackDeleteMillis))
+            snackVisible = false
+        }
+    }
+
+    // A store write that failed: nothing changed, so a buttonless line (A40 rev. 2 amendment 2026-10-26).
+    val raiseInkFailure: () -> Unit = {
+        deleteJob[0]?.cancel()
+        snackMessage = Copy.BenchInk.SAVE_FAILED
+        snackUndo = null
+        snackStep++
+        snackVisible = true
+        deleteJob[0] = c4Scope.launch {
+            delay(snackHold(BenchSnackInkTrayMillis))
             snackVisible = false
         }
     }
@@ -668,8 +689,10 @@ public fun EditorScreen(
                         undo@{
                             // The withdraw effect runs a frame after a change; this closes that frame.
                             if (currentState().document !== docAfter) return@undo
-                            if (edit != null) c4Scope.launch { restoreInkLibrary(edit) }
+                            if (edit != null) c4Scope.launch { if (!restoreInkLibrary(edit)) raiseInkFailure() }
                             if (docChanged) dispatch(Intent.Undo)
+                            // The pressed Undo is gone with its snack; focus goes back to Current ink (INK task 9).
+                            if (inkTrayShown[0]) inkFocus = BenchInkFocusRequest(BenchInkFocus.Current)
                         }
                     } else {
                         null
@@ -880,10 +903,12 @@ public fun EditorScreen(
     // the sheet can slide out showing what it showed, and the next open keeps the strip's hue for a grey.
     var mixerOpen by remember { mutableStateOf(false) }
     var mixerState by remember { mutableStateOf(InkMixerState.open(InkMixerFallbackHex, null)) }
+    SideEffect { inkTrayShown[0] = inkPopoverVisible }
     LaunchedEffect(inkPopoverVisible) {
         if (inkPopoverVisible) return@LaunchedEffect
         inkDraft = null
         mixerOpen = false
+        inkFocus = null
         val standing = inkUndo ?: return@LaunchedEffect
         if (standing.reopens) {
             if (snackUndo === standing.undo) snackUndo = null
@@ -912,8 +937,11 @@ public fun EditorScreen(
         val undo: (() -> Unit)? = trayUndo?.let { u ->
             {
                 c4Scope.launch {
-                    u.edit?.let { restoreInkLibrary(it) }
-                    if (u.reopen != null && trayOpen) inkDraft = u.reopen
+                    if (u.edit?.let { restoreInkLibrary(it) } == false) return@launch raiseInkFailure()
+                    val reopened = u.reopen != null && trayOpen
+                    if (reopened) inkDraft = u.reopen
+                    // INK task 9: focus lands on Current ink, or on the count line of the edit Undo reopened.
+                    if (trayOpen) inkFocus = BenchInkFocusRequest(if (reopened) BenchInkFocus.Count else BenchInkFocus.Current)
                 }
             }
         }
@@ -949,7 +977,8 @@ public fun EditorScreen(
             val edit = try {
                 onEditInkLibrary { it.use(hex).library }
             } catch (_: IOException) {
-                return@launch
+                // Nothing changed (the draft is left as it was), and the maker is told so: never silent.
+                return@launch raiseInkFailure()
             }
             val before = inkDraft ?: return@launch
             val name = inkColourWords(colourName(hex))
@@ -2294,6 +2323,8 @@ public fun EditorScreen(
                     draft = inkDraft,
                     onDraftChange = { inkDraft = it },
                     onSnack = raiseTraySnack,
+                    focusRequest = inkFocus,
+                    onFocusRequest = { inkFocus = it },
                     // Opens on the piece's own ink (prototype `openMixer(current)`).
                     onMix = {
                         val start = benchInkColorOf(inkTarget)?.let { InkHex.of(it) } ?: InkMixerFallbackHex

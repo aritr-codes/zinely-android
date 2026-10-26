@@ -283,8 +283,8 @@ class BenchInkPaletteEditTest {
             "every toggle reads checked or unchecked",
             toggles().all { it.config.getOrNull(SemanticsProperties.ToggleableState) != null },
         )
-        val badges = composeRule.onAllNodesWithTag(BenchInkPickedBadgeTestTag, useUnmergedTree = true).fetchSemanticsNodes()
-        assertEquals("one ✓ per picked ink", 6, badges.size)
+        // The ✓ badge is paint inside the toggle's single node (INK task 9: the platform's CheckBox class needs
+        // a node with no semantic children); the edit-mode golden carries it.
     }
 
     @Test
@@ -518,7 +518,7 @@ class BenchInkPaletteEditTest {
     }
 
     @Test
-    fun `given the store fails on Save then the edit stays open and nothing is offered`() {
+    fun `given the store fails on Save then the edit stays open, no Undo is offered, and the snack says so`() {
         val fake = FakeLibrary(InkLibrary.EMPTY)
         screen(fake)
         tap(composeRule.onNodeWithTag(BenchInkNewPaletteTestTag))
@@ -529,6 +529,7 @@ class BenchInkPaletteEditTest {
 
         assertTrue("the maker's draft is not thrown away", editing())
         assertEquals(0, undoButtons())
+        assertTrue("INK task 9: never silent", snackSays(Copy.BenchInk.SAVE_FAILED))
     }
 
     @Test

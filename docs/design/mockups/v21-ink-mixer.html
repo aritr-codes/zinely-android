@@ -985,8 +985,8 @@ the maker's own work first. Rev. 2 reorders the frozen Ink tray: <b>My palettes<
   <ul>
     <li><b>Dim Save says why.</b> Save palette stays focusable and tappable at 50% (<code>aria-disabled</code>). It also
       carries the reason as its accessible description, in words the edit already uses: fewer than 2 inks reads
-      <i>"Pick at least 2 inks."</i>; no name reads <i>"Give it a name, like "Warm vintage"."</i> (inks are checked first,
-      as the tap does after the name). The prototype sets <code>aria-description</code> in <code>renderEdit</code>.</li>
+      <i>"Pick at least 2 inks."</i>; no name reads <i>"Give it a name, like "Warm vintage"."</i> (the inks are named first;
+      a tap still puts focus in an empty name first). The prototype sets <code>aria-description</code> in <code>renderEdit</code>.</li>
     <li><b>A failed save is said, never silent.</b> When the phone cannot store a change to My inks or My palettes,
       nothing changes (an open edit stays open, no Undo) and the toast says <i>"Couldn’t save that change."</i> with no
       button, the Shelf's paper-choice pattern. The prototype has no storage, so this state cannot be shown here.</li>
