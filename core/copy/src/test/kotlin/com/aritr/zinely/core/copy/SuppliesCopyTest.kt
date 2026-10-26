@@ -60,14 +60,15 @@ class SuppliesCopyTest {
     fun `the first expanded cabinet is present, named, and mutually distinct`() {
         val names = Copy.Supplies.NAMES.values.toList()
         assertEquals(
-            34, Copy.Supplies.NAMES.size,
-            "ADR-107 admits sixteen additions to the original sixteen; v21-bench.html A32 adds two frames",
+            Copy.Supplies.BY_FAMILY.values.sumOf { it.size }, Copy.Supplies.NAMES.size,
+            "a supply id is filed under exactly one family",
         )
         names.forEach { assertTrue(it.isNotBlank(), "A supply with no name cannot be spoken or drawn") }
+        // Case-insensitive: TalkBack and the tile (D-132) cannot tell "Ring" from "ring" either.
         assertEquals(
-            names.size, names.toSet().size,
+            names.size, names.map { it.lowercase() }.toSet().size,
             "Two supplies share a name — TalkBack cannot tell them apart: " +
-                names.groupBy { it }.filterValues { it.size > 1 }.keys,
+                names.groupBy { it.lowercase() }.filterValues { it.size > 1 }.keys,
         )
     }
 
@@ -95,7 +96,9 @@ class SuppliesCopyTest {
             assertTrue(SUPPLY_ID.matches(it), "supplyId \"$it\" does not match ${SUPPLY_ID.pattern} (§2.2)")
         }
         assertEquals(ids.size, ids.toSet().size, "Duplicate supplyId: ${ids.groupBy { it }.filterValues { g -> g.size > 1 }.keys}")
-        assertEquals(SPEC_IDS, ids, "The shipped ids are not SUPPLIES-SPEC §4's, in §4's order")
+        // Ids are add-only (ADR-139): every shipped id is still here, and A39's new ids sit after their
+        // subject's holder, so the shipped ids keep §4's relative order.
+        assertEquals(SPEC_IDS, ids.filter { it in SPEC_IDS }, "The shipped ids are not SUPPLIES-SPEC §4's, in §4's order")
     }
 
     @Test
@@ -110,38 +113,123 @@ class SuppliesCopyTest {
             Copy.Supplies.BY_FAMILY.keys.toList(),
             "SUPPLIES-SPEC §4 freezes four families (v21-bench.html:831)",
         )
-        assertEquals(listOf(8, 10, 11, 5), Copy.Supplies.BY_FAMILY.values.map { it.size })
+        // v21-bench.html A39's 124 (ADR-139): 24, 38, 44 and 18.
+        assertEquals(listOf(24, 38, 44, 18), Copy.Supplies.BY_FAMILY.values.map { it.size })
     }
 
     @Test
     fun `search is local deterministic and matches names plus curated tags`() {
-        assertEquals(listOf("mark.asterisk", "mark.burst"), Copy.Supplies.matchingIds("star"))
-        assertEquals(listOf("mark.hand"), Copy.Supplies.matchingIds("manicule"))
         assertEquals(
-            listOf("tape.torn", "tape.masking"),
+            listOf(
+                "mark.asterisk", "mark.asteriskb", "mark.asteriskc",
+                "mark.burst", "mark.burstb", "mark.burstc", "mark.burstd", "mark.sparkle",
+            ),
+            Copy.Supplies.matchingIds("star"),
+        )
+        assertEquals(listOf("mark.hand", "mark.handb", "mark.handc"), Copy.Supplies.matchingIds("manicule"))
+        assertEquals(
+            listOf("tape.torn", "tape.tornb", "tape.masking", "tape.maskingb", "tape.plaster"),
             Copy.Supplies.matchingIds("tape", Copy.Supplies.TAPE_AND_FIXINGS),
         )
         assertTrue(Copy.Supplies.matchingIds("not in this cabinet").isEmpty())
-        // The two frames (v21-bench.html A32) are found by name and by tag, in the cabinet's own order.
-        assertEquals(listOf("paper.border"), Copy.Supplies.matchingIds("snipped"))
-        assertEquals(listOf("paper.round"), Copy.Supplies.matchingIds("porthole"))
+        // A rule's variants are found with it (A39); a search for "rule" finds the three dividers and nothing else.
+        assertEquals(listOf("shape.rule", "shape.ruleb", "shape.rulec"), Copy.Supplies.matchingIds("rule"))
+        // The two frames (v21-bench.html A32) and their A39 variants are found by name and by tag, in the
+        // cabinet's own order.
+        assertEquals(listOf("paper.border", "paper.borderb", "paper.borderc"), Copy.Supplies.matchingIds("snipped"))
+        assertEquals(listOf("paper.round", "paper.roundb", "paper.roundc"), Copy.Supplies.matchingIds("porthole"))
         assertEquals(
-            listOf("paper.window", "paper.border", "paper.round"),
+            listOf(
+                "paper.window", "paper.windowb", "paper.windowc", "paper.cutwindow", "paper.holed",
+                "paper.border", "paper.borderb", "paper.borderc", "paper.borderd",
+                "paper.round", "paper.roundb", "paper.roundc",
+            ),
             Copy.Supplies.matchingIds("frame"),
         )
     }
 
     @Test
-    fun `the two frames close Cut paper, in the order the owner ruled`() {
-        val cutPaper = Copy.Supplies.BY_FAMILY.getValue(Copy.Supplies.CUT_PAPER).entries.toList()
-        assertEquals(
-            listOf("paper.dogear" to "Folded corner", "paper.border" to "Snipped border", "paper.round" to "Round window"),
-            cutPaper.takeLast(3).map { it.key to it.value },
-        )
+    fun `the two frames keep their ruled order after Folded corner`() {
+        // A32 closed Cut paper with them; A39 (ADR-139) adds variants and new subjects around them, so the
+        // ruling that survives is their order among the shipped subjects.
+        val cutPaper = Copy.Supplies.BY_FAMILY.getValue(Copy.Supplies.CUT_PAPER)
+        val ruled = listOf("paper.dogear" to "Folded corner", "paper.border" to "Snipped border", "paper.round" to "Round window")
+        assertEquals(ruled, cutPaper.entries.filter { it.key in ruled.toMap() }.map { it.key to it.value })
     }
 
     @Test
     fun `every supply has searchable tags`() {
         assertEquals(Copy.Supplies.NAMES.keys, Copy.Supplies.TAGS.keys)
+    }
+
+    @Test
+    fun `a piece renamed to fit its tile is still found by every word of its old name`() {
+        // Given the 56 A39 names as frozen on 2026-10-22, before D-132 shortened them to fit the A16 tile
+        val oldNames = mapOf(
+            "tape.tornb" to "Torn tape, long tear",
+            "fix.cornerb" to "Photo corner, sharp",
+            "fix.clipb" to "Paper clip, narrow",
+            "fix.clipc" to "Paper clip, slanted wire",
+            "tape.maskingb" to "Masking tape, wide",
+            "fix.stitchb" to "Saddle stitch, thread",
+            "fix.stitchc" to "Saddle stitch, across fold",
+            "fix.pushpinc" to "Push pin, upright",
+            "fix.pushpind" to "Push pin, drawn",
+            "fix.pushpine" to "Push pin, drawn tilted",
+            "fix.needle" to "Needle and thread",
+            "mark.halftoneb" to "Halftone dots, screen",
+            "mark.registration" to "Registration cross",
+            "mark.registrationb" to "Registration cross, bold",
+            "mark.registrationc" to "Registration cross, fine",
+            "mark.handb" to "Pointing hand, cuffed",
+            "mark.handc" to "Pointing hand, drawn",
+            "mark.cropb" to "Crop marks, outside trim",
+            "mark.cropc" to "Crop marks, long ticks",
+            "mark.barb" to "Colour bar, tone patches",
+            "mark.scanb" to "Copier streak, toner",
+            "mark.scanc" to "Copier streak, specks",
+            "mark.perf" to "Perforation",
+            "mark.perfb" to "Perforation, slits",
+            "mark.perfc" to "Perforation, fine",
+            "paper.stripb" to "Torn strip, wavy",
+            "paper.windowc" to "Window frame, narrow",
+            "paper.chat" to "Speech balloon (square)",
+            "paper.underlineb" to "Marker underline, round",
+            "paper.stubb" to "Ticket stub, torn end",
+            "paper.stubc" to "Ticket stub, torn off",
+            "paper.ticket" to "Admission ticket",
+            "paper.stampb" to "Postage stamp, bites",
+            "paper.stampc" to "Postage stamp, corner bites",
+            "paper.deckleb" to "Deckle edge, rough",
+            "paper.holeb" to "Torn hole, ragged",
+            "paper.holec" to "Torn hole, off-round",
+            "paper.dogearb" to "Folded corner, flap",
+            "paper.dogearc" to "Folded corner, portrait",
+            "paper.page" to "Dog-eared page",
+            "paper.borderb" to "Snipped border, band",
+            "paper.borderc" to "Snipped border, fine snips",
+            "paper.roundb" to "Round window, smooth",
+            "paper.roundc" to "Round window, narrow",
+            "paper.balloon" to "Speech balloon (round)",
+            "paper.ribbon" to "Bookmark ribbon (brush)",
+            "shape.rectb" to "Rectangle, landscape",
+            "shape.cloudb" to "Three-lobe cloud",
+            "mark.burstb" to "Starburst, cut",
+            "mark.burstc" to "Starburst, sharp",
+            "mark.burstd" to "Starburst, drawn",
+            "paper.stripc" to "Torn edge strip",
+            "paper.windowb" to "Window frame, cut",
+            "paper.decklec" to "Deckle edge, soft",
+            "paper.bookmark" to "Bookmark ribbon",
+            "shape.rect" to "Rectangle",
+        )
+        // When each old word is searched; Then the renamed piece is among the results
+        val lost = oldNames.flatMap { (id, old) ->
+            Regex("[a-z][a-z-]*").findAll(old.lowercase()).map { it.value }.filter { it != "and" }
+                .filterNot { id in Copy.Supplies.matchingIds(it) }.map { "$id: $it" }.toList()
+        }
+        assertEquals(56, oldNames.size)
+        assertTrue(oldNames.all { (id, old) -> Copy.Supplies.NAMES.getValue(id) != old }, "D-132 renamed all 56")
+        assertTrue(lost.isEmpty(), "old words no longer found: $lost")
     }
 }

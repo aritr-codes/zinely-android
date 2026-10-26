@@ -28,6 +28,33 @@ public object SupplyInk {
         // The two hand-cut frames (v21-bench.html A32).
         "paper.border",
         "paper.round",
+        // v21-bench.html A39 (SUPPLIES-SPEC H9, ADR-139), by family. Tape & fixings.
+        "fix.cornerb",
+        "fix.grommetb",
+        "fix.grommetc",
+        "fix.needle",
+        "tape.plaster",
+        "fix.sticker",
+        // Stamps & marks.
+        "mark.registrationb",
+        "mark.registrationc",
+        "mark.scissors",
+        "mark.squiggle",
+        // Cut paper.
+        "paper.windowb",
+        "paper.windowc",
+        "paper.cutwindow",
+        "paper.holeb",
+        "paper.holec",
+        "paper.holed",
+        "paper.borderb",
+        "paper.borderc",
+        "paper.borderd",
+        "paper.roundb",
+        "paper.roundc",
+        "paper.gifttag",
+        // Cut shapes.
+        "shape.ringb",
     )
 
     /**

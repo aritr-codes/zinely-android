@@ -15,3 +15,6 @@ gradlew text eol=lf
 *.jpg   binary
 *.keystore binary
 *.zine  binary
+
+# Upstream Art sources are sha256-pinned test resources (ADR-139): never normalise their bytes.
+core/render/src/test/resources/art-provenance/** -text

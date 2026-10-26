@@ -8182,6 +8182,125 @@ second reviewer, could not sign in.
 | Duplicate also carries the description | Observation | **Accepted.** Decision 6: Duplicate keeps it; owed item 2 tests it |
 | Verified claims | Observation | No change |
 
+### D-130 — A39's colour bar cannot take `mark.bar` without breaking G2 {#d-130}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` A39 (`mark.bar`, `mark.barb`) · the A39 candidate sheet (`art-a39/candidates.json`, the A39 `mark.bar`) |
+| **Found** | 2026-10-22, by the Never #19 dry run for [ADR-139](../DECISIONS.md#adr-139) ([RESEARCH R34.2](../RESEARCH.md#r34-the-a39-art-picks-gate-measurements-the-never-19-dry-run-and-the-licences-2026-10-22)) |
+| **Severity** | Print: a piece whose rails and tint dots are thinner than the house minimum, on every saved zine that holds a colour bar. Caught before freeze; nothing shipped |
+| **Status** | **Resolved in the freeze.** The A34 bar holds `mark.bar`; A39's is `mark.barb` at full size |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | **The fit that Never #19 needs undoes G2.** A39's tone-patch bar is 16.8 units tall against the shipped bar's 16, so it fits only at ×0.952. Its frame rails are drawn at the fine weight Wf = 1.5 and its tint dots at 2.0, so the shrink makes them 1.43 and 1.90: the verifier's thin-ink area goes from 2.6 to 65.9 square units. Moving the rails inward instead closes the 1.5 gap to the patches. | **The holder rule checks G2 after the fit** (ADR-139 decision 2). The A34 bar fits untouched and holds the id; the critique's tone-patch fix is offered as its own piece, so a maker who wants it picks it |
+
+### D-131 — five picked drawings fail or sit at a gate {#d-131}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` A39 (`fix.sticker`, `shape.flower`, `mark.scissors`, `shape.hex`, `tape.plaster`) · `art-a39/candidates.json` (their gate notes) |
+| **Found** | The A39 sheet's own gate notes (2026-10-15), confirmed by the recon and by R34.3 on 2026-10-22 |
+| **Severity** | Print and recognition: a kinked edge, gaps and holes that close on a home printer or a photocopy, one piece with no sign of being cut. None is wired |
+| **Status** | **Fixed, 5 of 5** (rows 1, 3 and 5 on 2026-10-23; rows 2 and 4 on 2026-10-24). Each fix is a bug fix under the A39 freeze, made as a dated note in A39 before the piece's family is wired ([ADR-139](../DECISIONS.md#adr-139) decision 9) |
+
+| # | Finding | Outcome |
+|---|---|---|
+| 1 | `fix.sticker` (Tabler): G6 fails, 4–14° kinks and micro-segments at both peel corners | **Fixed 2026-10-23 (ART 6a).** Each outer peel corner is one arc tangent to both sides (radius 1.26); the inner corners' slivers are gone. No join turns between 1° and 20°; the look is unchanged. A39 row and `TapeArt.FIX_STICKER` changed together |
+| 2 | `shape.flower` (Tabler): G2 fails, 1.2 square units of gap under 1.5 at the six petal cusps (1.4 as re-measured on 2026-10-24) | **Fixed 2026-10-24 (ART 6d).** Each of the six cusps is one arc of radius 0.6 tangent to both petals (0.5 left 0.43 sq units of gap; 0.6 leaves 0.13). No join turns between 1° and 20°. A39 row and `ShapeArt.SHAPE_FLOWER` changed together |
+| 3 | `mark.scissors` (Doodle Icons): the two finger holes sit at the 1.5 minimum and close at tile size | **Fixed 2026-10-23 (ART 6b).** Both holes scaled 1.2 about their own centres (the upper one moved 0.15 down so its ring stays even): the widest circle each hole holds grew from 2.06 and 2.02 to 2.45 and 2.44. The rings, blades and pivot are unchanged. A39 row and `MarkArtPart2.MARK_SCISSORS` changed together |
+| 4 | `shape.hex` (Phosphor): true geometry with no cut sign, the most UI-like piece picked (G8 risk) | **Fixed 2026-10-24 (ART 6d).** Each of the six corners moved 0.43–0.5 off true; each keeps Phosphor's rounding (trim and handle ratio), rebuilt tangent to the moved edges, so the joins stay smooth. A39 row and `ShapeArt.SHAPE_HEX` changed together |
+| 5 | `tape.plaster` (Tabler): G2 at the limit, 2.5 dots with 1.5 gaps that merge at 24 px | **Fixed 2026-10-23 (ART 6a).** Measured, the dots were 0.66 apart (the 1.5 is the gap to the pad's edge). Two 2.5 dots cannot sit across the 8.57-wide pad with 1.5 gaps, so the dots are 2.02 across and 2.5 from the centre: every gap is now at least 1.5, the ink at H2's floor. Still four dots in a diamond. A39 row and `TapeArt.TAPE_PLASTER` changed together |
+
+### D-132 — A39 names clip on the A16 tile, so variants read alike {#d-132}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` A39 (`ART_A39` names; dated note "NAMES THAT FIT THE TILE") · `v21-colophon.html` A39 (the Art notices' piece lists) · A16 (the tile card, unchanged) · `Copy.Supplies.BY_FAMILY` and `TAGS` |
+| **Found** | 2026-10-24, reading the ART 6d golden diffs (`.superpowers/sdd/art-plan/task-6-report.md`, "Resumed 2026-10-24", concern 1); measured by `BenchArtTileNameFitTest` |
+| **Severity** | Recognition (G8) and Pass 2: on the sheet, a variant's telling word was clipped off ("Torn hole, ragged" showed "Torn / hole,"), so variants of one subject showed the same words; two shipped names broke inside a word ("Registrati / on", "Perforatio / n") and one A39 name too ("Dog-eare / d"). TalkBack always read the full name |
+| **Status** | **Fixed 2026-10-24.** A16 is frozen (tile size, grid, two lines, clip), so the names change, not the tile: 56 of 124 renamed so the whole name fits two lines at 360dp and font scale 1.0 with at least 2dp spare on every line, no line breaks inside a word, the telling word first or alone. The other 68 fit with the margin and keep their names. Ids unchanged; saved zines store ids only ([ADR-105](../DECISIONS.md#adr-105)), so nothing saved changes |
+
+The tile puts the first word on line one and the rest on line two (`BenchArtTile`, `replaceFirst(' ', '\n')`), each
+line about 55dp wide in Inter Bold 10sp, so each half of a name must fit one line. `BenchArtTileNameFitTest` lays out
+every tile's name on the real sheet and checks the platform's `TextLayoutResult` (no visual overflow, at most two
+lines, the whole text laid out, every line ending at a space); it failed on 48 names and passed after. The
+spoken name is the same string as the tile's, so TalkBack says what the tile shows. Every renamed piece's tags keep
+every word of its old name (`SuppliesCopyTest`), so a search for "torn", "hole", "registration" or "perforation"
+still finds it. Thirteen of the 56 are imported pieces, so their entries in the Art licence notices
+(`v21-colophon.html` A39 `ART_CREDITS` and the bundled `assets/licences/art/*.txt`) take the new names too, amended
+in the colophon first. Known limit: the fit is proven at 360dp and font scale 1.0 only; on a narrower phone or a
+larger font scale a name can still clip, since A16's two-line clip is frozen. Review fixes the same day: "Dog-ear"
+became "Dog-ear page" and "Long ticks" became "Long crop ticks".
+
+**The margin (ruled 2026-10-24).** Passing by a hair is not a fit: "Window frame, cut" had 0.27px spare and "Deckle
+edge, soft" 0.79px, which a different font rasteriser or a phone a few dp narrower than 360dp turns into a clip. So
+every line of a name must leave at least **2dp** of the label's width spare at 360dp and font scale 1.0, and
+`BenchArtTileNameFitTest` asserts it. Nine names then failed: the two above, the three starbursts ("Starburst,"
+left 1.6–2.6px), "Torn edge strip" (1.9px), "Long crop ticks" (3.5px), "Bookmark ribbon" (3.7px) and the shipped
+"Rectangle" (3.1px). All nine are renamed below ("Long crop ticks" a second time, now "Long trim ticks"), on the same
+rules. The table is final: 56 rows.
+
+| Id | Old name (A39 as frozen 2026-10-22) | New name |
+|---|---|---|
+| `tape.tornb` | Torn tape, long tear | Long torn tape |
+| `fix.cornerb` | Photo corner, sharp | Sharp corner |
+| `fix.clipb` | Paper clip, narrow | Narrow clip |
+| `fix.clipc` | Paper clip, slanted wire | Slanted clip |
+| `tape.maskingb` | Masking tape, wide | Wide tape |
+| `fix.stitchb` | Saddle stitch, thread | Running stitch |
+| `fix.stitchc` | Saddle stitch, across fold | Stitched fold |
+| `fix.pushpinc` | Push pin, upright | Upright pin |
+| `fix.pushpind` | Push pin, drawn | Drawn pin |
+| `fix.pushpine` | Push pin, drawn tilted | Drawn pin, tilted |
+| `fix.needle` | Needle and thread | Threaded needle |
+| `mark.halftoneb` | Halftone dots, screen | Halftone screen |
+| `mark.registration` | Registration cross | Crosshair |
+| `mark.registrationb` | Registration cross, bold | Bold crosshair |
+| `mark.registrationc` | Registration cross, fine | Fine crosshair |
+| `mark.handb` | Pointing hand, cuffed | Cuffed hand |
+| `mark.handc` | Pointing hand, drawn | Drawn hand |
+| `mark.cropb` | Crop marks, outside trim | Corner marks |
+| `mark.cropc` | Crop marks, long ticks | Long trim ticks |
+| `mark.barb` | Colour bar, tone patches | Tone patch bar |
+| `mark.scanb` | Copier streak, toner | Toner streak |
+| `mark.scanc` | Copier streak, specks | Toner specks |
+| `mark.perf` | Perforation | Tear line |
+| `mark.perfb` | Perforation, slits | Slit tear line |
+| `mark.perfc` | Perforation, fine | Fine tear line |
+| `paper.stripb` | Torn strip, wavy | Wavy torn strip |
+| `paper.windowc` | Window frame, narrow | Narrow frame |
+| `paper.chat` | Speech balloon (square) | Square balloon |
+| `paper.underlineb` | Marker underline, round | Round underline |
+| `paper.stubb` | Ticket stub, torn end | Torn-end stub |
+| `paper.stubc` | Ticket stub, torn off | Torn-off stub |
+| `paper.ticket` | Admission ticket | Entry ticket |
+| `paper.stampb` | Postage stamp, bites | Bitten stamp |
+| `paper.stampc` | Postage stamp, corner bites | Corner bites |
+| `paper.deckleb` | Deckle edge, rough | Rough deckle |
+| `paper.holeb` | Torn hole, ragged | Ragged hole |
+| `paper.holec` | Torn hole, off-round | Lopsided hole |
+| `paper.dogearb` | Folded corner, flap | Corner flap |
+| `paper.dogearc` | Folded corner, portrait | Tall fold |
+| `paper.page` | Dog-eared page | Dog-ear page |
+| `paper.borderb` | Snipped border, band | Snipped band |
+| `paper.borderc` | Snipped border, fine snips | Fine snips |
+| `paper.roundb` | Round window, smooth | Smooth window |
+| `paper.roundc` | Round window, narrow | Narrow window |
+| `paper.balloon` | Speech balloon (round) | Round balloon |
+| `paper.ribbon` | Bookmark ribbon (brush) | Brushed ribbon |
+| `shape.rectb` | Rectangle, landscape | Wide rectangle |
+| `shape.cloudb` | Three-lobe cloud | Puffy cloud |
+| `mark.burstb` | Starburst, cut | Cut starburst |
+| `mark.burstc` | Starburst, sharp | Sharp starburst |
+| `mark.burstd` | Starburst, drawn | Drawn starburst |
+| `paper.stripc` | Torn edge strip | Half-torn strip |
+| `paper.windowb` | Window frame, cut | Cut frame |
+| `paper.decklec` | Deckle edge, soft | Soft deckle |
+| `paper.bookmark` | Bookmark ribbon | Book ribbon |
+| `shape.rect` | Rectangle | Plain rectangle |
+
+
 ---
 
 ### D-140 — the Proof's smallest labels sit under 12sp, on a screen read at arm's length {#d-140}

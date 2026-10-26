@@ -9,7 +9,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Source-level parity with the owner-approved A16 Art amendment, and A32's two frames. */
+/** Source-level parity with the owner-approved A16 Art amendment, A32's two frames, and A39's final list (ADR-139). */
 class BenchArtSheetParityTest {
 
     private data class FrozenSupply(
@@ -22,37 +22,21 @@ class BenchArtSheetParityTest {
     private val frozen = File("../../docs/design/mockups/v21-bench.html").readText()
     private val a16 = frozen.substringAfter("A16 ITERATION 3").substringBefore("</html>")
 
-    private fun frozenSupplies(): List<FrozenSupply> {
-        val original = Regex("""\['([a-z]+\.[a-z]+)','([^']*)','<path d="([^"]*)"/>'\]""")
-            .findAll(frozen.substringAfter("const SUP=[").substringBefore("];"))
-            .mapIndexed { index, match ->
+    private fun rowsOf(list: String): List<FrozenSupply> =
+        Regex("""\['([^']+)','([^']+)','([^']+)','<path d="([^"]*)"/>'\]""")
+            .findAll(frozen.substringAfter(list).substringBefore("];"))
+            .map { match ->
                 FrozenSupply(
-                    family = Copy.Supplies.BY_FAMILY.keys.elementAt(index / 4),
-                    id = match.groupValues[1],
-                    name = match.groupValues[2],
-                    path = match.groupValues[3],
+                    family = match.groupValues[1],
+                    id = match.groupValues[2],
+                    name = match.groupValues[3],
+                    path = match.groupValues[4],
                 )
             }
             .toList()
-        // A32 keeps its two frames in a list of their own and pushes it onto ART_FIRST_WAVE when the page
-        // runs, so the sheet's order is the first wave and then the frames.
-        val expansion = listOf("const ART_FIRST_WAVE=[", "const ART_D5_FRAMES=[").flatMap { list ->
-            Regex("""\['([^']+)','([^']+)','([^']+)','<path d="([^"]*)"/>'\]""")
-                .findAll(frozen.substringAfter(list).substringBefore("];"))
-                .map { match ->
-                    FrozenSupply(
-                        family = match.groupValues[1],
-                        id = match.groupValues[2],
-                        name = match.groupValues[3],
-                        path = match.groupValues[4],
-                    )
-                }
-                .toList()
-        }
-        return Copy.Supplies.BY_FAMILY.keys.flatMap { family ->
-            (original + expansion).filter { it.family == family }
-        }
-    }
+
+    /** v21-bench.html A39 (ADR-139): the final 124, four fields per row, in `Copy.Supplies.BY_FAMILY` order. */
+    private val a39: List<FrozenSupply> by lazy { rowsOf("const ART_A39=[") }
 
     private fun cataloguePath(supplyId: String): String {
         val outline = SupplyCatalog.outlineOf(supplyId) ?: error("$supplyId has no authored outline")
@@ -125,12 +109,22 @@ class BenchArtSheetParityTest {
     }
 
     @Test
-    fun all_thirty_four_ids_names_families_order_and_geometry_match_the_freeze() {
-        val expected = frozenSupplies()
+    fun a39_is_the_frozen_final_list_of_124_in_four_families() {
+        assertEquals(124, a39.size)
+        assertEquals(a39.size, a39.map { it.id }.toSet().size)
+        assertEquals(
+            listOf(24, 38, 44, 18),
+            Copy.Supplies.BY_FAMILY.keys.map { family -> a39.count { it.family == family } },
+        )
+        assertEquals(Copy.Supplies.BY_FAMILY.keys.toList(), a39.map { it.family }.distinct())
+    }
+
+    @Test
+    fun ids_names_families_order_and_geometry_match_the_freeze() {
+        val expected = a39
         val actual = Copy.Supplies.BY_FAMILY.flatMap { (family, supplies) ->
             supplies.map { (id, name) -> Triple(family, id, name) }
         }
-        assertEquals(34, expected.size)
         assertEquals(expected.map { Triple(it.family, it.id, it.name) }, actual)
         expected.forEach { supply ->
             assertEquals(supply.id, normalisePath(supply.path), normalisePath(cataloguePath(supply.id)))
@@ -143,7 +137,7 @@ class BenchArtSheetParityTest {
         val a32 = frozen.substringAfter("A32 · 2026-10-12 · FROZEN")
         assertTrue(a32.contains("ART_FIRST_WAVE.push(...ART_D5_FRAMES);"))
         assertTrue(a32.contains("Object.assign(ART_TAGS,ART_D5_TAGS);"))
-        val frames = frozenSupplies().filter { it.family == Copy.Supplies.CUT_PAPER }.takeLast(2)
+        val frames = rowsOf("const ART_D5_FRAMES=[")
         assertEquals(
             listOf(
                 Triple(Copy.Supplies.CUT_PAPER, "paper.border", "Snipped border"),

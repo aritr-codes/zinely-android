@@ -1,0 +1,95 @@
+package com.aritr.zinely.feature.editor
+
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.ui.theme.ZinelyTheme
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+
+/**
+ * D-132: every Art name is read whole on its A16 tile. A16 (tile size, grid, two lines, clip) is frozen,
+ * so the names fit the tile rather than the tile the names. Measured on the real sheet at the narrowest
+ * supported phone width and the default font scale, from the label's own laid-out text. Each line must also leave
+ * [MARGIN] spare, so a different rasteriser or a phone a few dp narrower does not clip a name that only just fits.
+ */
+@RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(qualifiers = "w360dp-h640dp-xhdpi")
+class BenchArtTileNameFitTest {
+
+    @get:Rule
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    private companion object {
+        /** D-132 (2026-10-24): every line of a name keeps this much of the label's width spare. */
+        val MARGIN = 2.dp
+    }
+
+    @Test
+    fun every_art_name_lays_out_whole_in_two_lines_without_breaking_a_word() {
+        // Given the real Art sheet on a 360dp phone at font scale 1.0, with empty Recents and Favourites rails
+        // (so each name tag sits on the grid tile alone; the grid tile is also narrower than a rail card)
+        assertEquals(1f, composeRule.activity.resources.configuration.fontScale)
+        composeRule.setContent { ZinelyTheme { BenchArtSheet(visible = true, onDismiss = {}, onPick = {}) } }
+        composeRule.waitForIdle()
+
+        // When each of the 124 tiles is scrolled into view and its name label is laid out
+        val slack = mutableMapOf<String, Float>()
+        val failures = Copy.Supplies.NAMES.mapNotNull { (id, name) ->
+            val tag = benchArtTileNameTestTag(id)
+            composeRule.onNodeWithTag(BenchArtSheetTestTag).performScrollToNode(hasTestTag(tag))
+            val layout = layoutOf(tag)
+            slack[name] = layout.size.width - (0 until layout.lineCount).maxOf { layout.getLineRight(it) }
+            fitProblem(layout)?.let { "$id \"$name\": $it [${lines(layout).joinToString(" / ")}]" }
+        }
+        // ponytail: reported, not asserted; the tightest names are the first to watch on a real phone.
+        println("tightest Art names (px to spare): " + slack.entries.sortedBy { it.value }.take(6).joinToString { "${it.key} ${it.value}" })
+
+        // Then none clips, none needs a third line, every line ends between words and leaves the margin spare
+        assertTrue("Art names that do not fit the A16 tile:\n" + failures.joinToString("\n"), failures.isEmpty())
+    }
+
+    private fun layoutOf(tag: String): TextLayoutResult {
+        val node = composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode()
+        val results = mutableListOf<TextLayoutResult>()
+        node.config[SemanticsActions.GetTextLayoutResult].action!!.invoke(results)
+        return results.single()
+    }
+
+    private fun lines(layout: TextLayoutResult): List<String> {
+        val text = layout.layoutInput.text.text
+        return (0 until layout.lineCount).map { text.substring(layout.getLineStart(it), layout.getLineEnd(it)).trim() }
+    }
+
+    private fun fitProblem(layout: TextLayoutResult): String? {
+        val margin = with(composeRule.density) { MARGIN.toPx() }
+        val text = layout.layoutInput.text.text
+        if (layout.hasVisualOverflow) return "visual overflow"
+        if (layout.didOverflowWidth) return "wider than the tile"
+        if (layout.lineCount > 2) return "${layout.lineCount} lines"
+        if (layout.getLineEnd(layout.lineCount - 1) != text.length) return "clipped after line ${layout.lineCount}"
+        for (line in 0 until layout.lineCount - 1) {
+            val end = layout.getLineEnd(line)
+            // A break between words leaves whitespace (the forced '\n' or a wrapped space) on one side.
+            if (!text[end - 1].isWhitespace() && !text[end].isWhitespace()) return "breaks inside a word at $end"
+        }
+        for (line in 0 until layout.lineCount) {
+            val spare = layout.size.width - layout.getLineRight(line)
+            if (spare < margin) return "line ${line + 1} leaves ${spare}px spare, under the ${margin}px margin"
+        }
+        return null
+    }
+}

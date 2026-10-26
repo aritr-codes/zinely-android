@@ -93,7 +93,8 @@ class SupplyOutlineFillTest {
         // so the probe is placed where a leaning tail has ink and an upright one does not.
         probe(
             "paper.tag",
-            inked = listOf(0.5 to 0.30, 0.18 to 0.80),
+            // A39's tag (ADR-139): base 5.4..11.6 at y 16, apex (3.4, 22.6), so (5.76, 19.2) is in the leaning tail.
+            inked = listOf(0.5 to 0.30, 0.24 to 0.80),
             bare = listOf(0.70 to 0.85, 0.05 to 0.90, 0.95 to 0.95),
         )
     }
@@ -129,10 +130,11 @@ class SupplyOutlineFillTest {
     fun `given the arrow, when its shaft and head are probed, then it points right`() {
         // Right, not up: the maker has rotate, and §5.1 lands every supply at 0°. If this ever reads as
         // an up arrow the default landing is wrong for every maker who does not think to rotate it.
+        // A39's arrow (ADR-139) sweeps from the left edge up to a head at the top right.
         probe(
             "mark.arrow",
-            inked = listOf(0.10 to 0.5, 0.95 to 0.5, 0.60 to 0.15),
-            bare = listOf(0.10 to 0.15, 0.10 to 0.85, 0.95 to 0.10),
+            inked = listOf(0.0625 to 0.686, 0.667 to 0.329, 0.908 to 0.5),
+            bare = listOf(0.10 to 0.15, 0.10 to 0.85, 0.5 to 0.3, 0.95 to 0.95),
         )
     }
 
@@ -141,8 +143,9 @@ class SupplyOutlineFillTest {
         // Without its hole this supply is `shape.triangle`, which already ships. The hole IS the supply.
         probe(
             "fix.corner",
-            inked = listOf(0.06 to 0.9, 0.5 to 0.95),
-            bare = listOf(0.25 to 0.7, 0.9 to 0.2),
+            // The A39 corner (ADR-139): a pocket in the top-left, open along the hypotenuse.
+            inked = listOf(0.06 to 0.3, 0.5 to 0.06),
+            bare = listOf(0.25 to 0.25, 0.9 to 0.9),
         )
     }
 
@@ -150,8 +153,9 @@ class SupplyOutlineFillTest {
     fun `given the staple, when between its legs is probed, then the crown is not a solid block`() {
         probe(
             "fix.staple",
-            inked = listOf(0.5 to 0.35, 0.05 to 0.8, 0.95 to 0.8),
-            bare = listOf(0.5 to 0.8, 0.5 to 0.1),
+            // The A39 staple (ADR-139): crown at 7.2..9.7 of 24, legs down to 18.95.
+            inked = listOf(0.5 to 0.35, 0.09 to 0.6, 0.92 to 0.6),
+            bare = listOf(0.5 to 0.6, 0.5 to 0.1),
         )
     }
 
@@ -159,10 +163,10 @@ class SupplyOutlineFillTest {
 
     @Test
     fun `given every authored outline, when its square is sampled, then it is neither blank nor solid`() {
-        // A blanket floor under all twelve, including the four this file does not probe by name. An
+        // A blanket floor under every outline, including those this file does not probe by name. An
         // outline that fills its whole square is indistinguishable from its own bounding box; one that
-        // fills almost nothing renders as a speck the maker cannot see. `shape.rect` is the one supply
-        // that IS its box, so it is the stated exception rather than a loosened bound.
+        // fills almost nothing renders as a speck the maker cannot see. Since A39 no piece is its box, not
+        // even `shape.rect`, which keeps a floor of its own.
         for ((id, o) in SupplyCatalog.OUTLINES) {
             var inked = 0
             val n = 60
@@ -172,11 +176,15 @@ class SupplyOutlineFillTest {
                 }
             }
             val coverage = inked.toDouble() / (n * n)
-            assertTrue(coverage > 0.05, "$id inks only ${"%.3f".format(coverage)} of its square — it would read as a speck")
+            // ponytail: one stated exception, not a lowered floor: A39's fine perforation is a frozen row of
+            // pinpricks (true area 0.038 of its square; this 60-grid samples 0.041) and reads as a line.
+            val floor = if (id == "mark.perfc") 0.035 else 0.05
+            assertTrue(coverage > floor, "$id inks only ${"%.3f".format(coverage)} of its square — it would read as a speck")
+            assertTrue(coverage < 0.98, "$id inks ${"%.3f".format(coverage)} — it is indistinguishable from its box")
             if (id == "shape.rect") {
-                assertEquals(1.0, coverage, 1e-9, "shape.rect is its own box, by definition")
-            } else {
-                assertTrue(coverage < 0.98, "$id inks ${"%.3f".format(coverage)} — it is indistinguishable from its box")
+                // A39's rectangle (ADR-139, A34's hand-cut square inset to H4's margin) is still a box-filling
+                // panel by ruling: R34 names it the one sheet over the 85% band, at about 90%.
+                assertTrue(coverage > 0.85, "shape.rect inks only ${"%.3f".format(coverage)} — a rectangle is a panel")
             }
         }
     }

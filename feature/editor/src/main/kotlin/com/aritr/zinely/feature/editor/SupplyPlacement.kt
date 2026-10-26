@@ -30,18 +30,18 @@ import com.aritr.zinely.core.model.Transform
  * argued from the material at its declaration so the ruling has something to accept or reject.
  *
  * ⚠ **And §5.2's third adjective does not fit its own mechanism.** *"A rule lands wide"* names
- * `shape.rule`, which is **not** a family — it is one of the four *Cut shapes*, alongside the rectangle,
- * the circle and the triangle, and a per-family constant cannot make one of the four wide without making
- * all four wide. So either §5.2 means per-*supply* defaults (and its own "one constant per family" costing
+ * `shape.rule`, which is **not** a family — it is one of the *Cut shapes*, alongside the rectangle,
+ * the circle and the triangle, and a per-family constant cannot make one shape wide without making
+ * every shape wide. So either §5.2 means per-*supply* defaults (and its own "one constant per family" costing
  * is wrong), or the rule example is loose.
  *
- * This implements **both**: per family, plus exactly one named exception ([BenchSupplyOverrides]) for the
- * supply §5.2 names. The first draft implemented only the family rule and left the rule square. Independent
+ * This implements **both**: per family, plus one named exception ([BenchSupplyOverrides]) for the
+ * supply §5.2 names — the rule, with its two A39 variants since §5.2's 2026-10-24 amendment. The first draft implemented only the family rule and left the rule square. Independent
  * review showed why that was the wrong half to drop: *Cut shapes* is the **only** family production can
  * currently reach, so the sole observable effect of §5.2 today was the one example the spec spells out —
- * and it was the one contradicted. `SupplyCatalog`'s own `RULE` KDoc, written before this package, already
- * assumed otherwise in as many words: *"without it the two outlines would be identical and only their
- * default size would differ."* A per-family-only reading makes `shape.rect` and `shape.rule` land in the
+ * and it was the one contradicted. The rule's shipped KDoc, written before this package, already assumed
+ * otherwise: without its margin, rule and rectangle would differ only by default size. A per-family-only
+ * reading makes `shape.rect` and `shape.rule` land in the
  * same box. **The exception is still owed the same ruling as the four constants** — it is not a licence to
  * add a second one without going back to the spec.
  */
@@ -59,7 +59,7 @@ import com.aritr.zinely.core.model.Transform
 internal data class BenchSupplyDefault(val widthFraction: Double, val aspect: Double)
 
 /**
- * The six **fixings** — the half of *Tape & fixings* that is not tape.
+ * The **fixings** — the half of *Tape & fixings* that is not long tape.
  *
  * ⚠ **Enumerated, never prefix-matched.** `supplyId.startsWith("fix.")` would have been shorter and is the
  * same mistake this file's [benchSupplyFamily] already warns about from the other direction: a prefix is
@@ -74,6 +74,23 @@ internal val BenchFixings: Set<String> = setOf(
     "fix.stitch",
     "fix.grommet",
     "fix.pushpin",
+    // v21-bench.html A39 (ADR-139): every new fixing is drawn square, as its subject is.
+    "fix.cornerb",
+    "fix.clipb",
+    "fix.clipc",
+    "fix.stitchb",
+    "fix.stitchc",
+    "fix.grommetb",
+    "fix.grommetc",
+    "fix.pushpinb",
+    "fix.pushpinc",
+    "fix.pushpind",
+    "fix.pushpine",
+    "fix.needle",
+    "fix.sticker",
+    // A `tape.*` id sized as a fixing — the case this list exists for. The plaster is drawn on the diagonal
+    // of a square; tape's 4.5:1 would flatten it into a sliver. The torn and masking variants stay tape.
+    "tape.plaster",
 )
 
 /**
@@ -126,17 +143,18 @@ internal val BenchSupplyDefaults: Map<String, BenchSupplyDefault> = mapOf(
  * The **one** per-supply exception §5.2 names by name: *"a rule lands wide"*.
  *
  * `shape.rule` is a divider — the thing you put *between* two things — and a divider that arrives as tall
- * as it is wide is not one. It lands at 70 % of the page's width on the outline's own 5:1 proportion (the
- * bar occupies the middle fifth of its box, `SupplyCatalog.RULE`), so the drawn ink is a line rather than a
- * band, and it is visibly not the rectangle its family-mate `shape.rect` places.
+ * as it is wide is not one. It lands at 70 % of the page's width on a 5:1 box (the straight bar is about a
+ * fifth of its box's height, `ShapeArt.RULE`), so the drawn ink is a line rather than a band, and it is
+ * visibly not the rectangle its family-mate `shape.rect` places. Its two A39 variants (Wavy rule, Ripple
+ * rule, ADR-139) are the same divider and land the same way.
  *
- * ⚠ Keep this map at one entry unless the spec grows another example. It exists because §5.2's own
+ * ⚠ Keep this map to the rules unless the spec grows another example. It exists because §5.2's own
  * illustration names a supply its stated mechanism cannot express — not because per-supply sizing is the
- * design. Every additional entry is a per-family constant quietly giving up.
+ * design. Every additional subject is a per-family constant quietly giving up.
  */
-internal val BenchSupplyOverrides: Map<String, BenchSupplyDefault> = mapOf(
-    "shape.rule" to BenchSupplyDefault(widthFraction = 0.70, aspect = 5.0),
-)
+internal val BenchSupplyOverrides: Map<String, BenchSupplyDefault> =
+    listOf("shape.rule", "shape.ruleb", "shape.rulec")
+        .associateWith { BenchSupplyDefault(widthFraction = 0.70, aspect = 5.0) }
 
 /**
  * No supply lands taller than this fraction of the page, whatever its family's aspect works out to.
@@ -151,8 +169,8 @@ private const val BenchSupplyMaxHeightFraction: Double = 0.6
  * The family [supplyId] belongs to, or `null` if the copy layer does not know it.
  *
  * ⚠ Read from [Copy.Supplies.BY_FAMILY], **never** from `supplyId.substringBefore('.')`. Five prefixes
- * (`tape`, `fix`, `mark`, `paper`, `shape`) carry four families, because *Tape & fixings* mixes two tapes
- * with six fixings. Deriving
+ * (`tape`, `fix`, `mark`, `paper`, `shape`) carry four families, because *Tape & fixings* mixes tapes
+ * with fixings. Deriving
  * a family from an id is how TalkBack shipped saying *"Rect shape"*.
  */
 internal fun benchSupplyFamily(supplyId: String): String? =
@@ -161,7 +179,7 @@ internal fun benchSupplyFamily(supplyId: String): String? =
 /**
  * A [Transform] for a newly placed supply: centred on the page, at 0°, sized by its family (§5, §5.1, §5.2).
  *
- * @throws IllegalArgumentException if [supplyId] is not one of the thirty-four. That is a programming error,
+ * @throws IllegalArgumentException if [supplyId] is not in `Copy.Supplies`. That is a programming error,
  *   not a runtime condition — the only caller is the Art sheet, which iterates the same map this reads —
  *   and a silent fallback size would be the app inventing craft knowledge it does not have.
  */
@@ -224,7 +242,7 @@ internal fun benchSupplyReplacement(
  * the two cannot disagree about what a family's default is — the whole point of the replace ruling is that
  * a replaced supply gets *the same* size a freshly-placed one would.
  *
- * @throws IllegalArgumentException if [supplyId] is not one of the thirty-four. That is a programming error,
+ * @throws IllegalArgumentException if [supplyId] is not in `Copy.Supplies`. That is a programming error,
  *   not a runtime condition — the callers iterate the same map this reads — and a silent fallback size
  *   would be the app inventing craft knowledge it does not have.
  */

@@ -87,10 +87,14 @@ class SupplyPlacementTest {
     }
 
     @Test
-    fun `Given the exception list, When it is read, Then it holds only the supply the spec names`() {
-        // The override exists because §5.2 names `shape.rule` by name. A second entry would be the
-        // per-family rule quietly giving up, so the count is pinned rather than left to drift.
-        assertEquals(setOf("shape.rule"), BenchSupplyOverrides.keys)
+    fun `Given the exception list, When it is read, Then it holds only the rules the spec names`() {
+        // The override exists because §5.2 names `shape.rule` by name; A39's Wavy and Ripple rule (ADR-139)
+        // are the same divider. Any other entry would be the per-family rule quietly giving up, so the set
+        // is pinned rather than left to drift, and all three land identically.
+        assertEquals(setOf("shape.rule", "shape.ruleb", "shape.rulec"), BenchSupplyOverrides.keys)
+        val straight = benchSupplyPlacement("shape.rule", page)
+        assertEquals(straight, benchSupplyPlacement("shape.ruleb", page))
+        assertEquals(straight, benchSupplyPlacement("shape.rulec", page))
     }
 
     @Test
@@ -124,8 +128,8 @@ class SupplyPlacementTest {
     }
 
     @Test
-    fun `Given the six fixings, When they are placed, Then all six share one sizing constant`() {
-        // The split is per *sizing group*, not per supply — all six are the same kind
+    fun `Given the fixings, When they are placed, Then all share one sizing constant`() {
+        // The split is per *sizing group*, not per supply — all are the same kind
         // of compact object, and giving each its own number would be per-supply sizing with extra steps,
         // which is what §5.2 exists to refuse.
         val sizes = BenchFixings.map { benchSupplyPlacement(it, page) }.map { it.widthPt to it.heightPt }
@@ -138,7 +142,7 @@ class SupplyPlacementTest {
         assertEquals(
             "every member of Tape & fixings must be either tape or an enumerated fixing",
             family,
-            BenchFixings + setOf("tape.torn", "tape.masking"),
+            BenchFixings + setOf("tape.torn", "tape.tornb", "tape.masking", "tape.maskingb"),
         )
     }
 
@@ -156,7 +160,7 @@ class SupplyPlacementTest {
     }
 
     @Test
-    fun `Given every one of the thirty four, When its family is read, Then the copy layer names one`() {
+    fun `Given every supply, When its family is read, Then the copy layer names one`() {
         for (id in Copy.Supplies.NAMES.keys) {
             assertTrue("$id must belong to a family", benchSupplyFamily(id) != null)
         }

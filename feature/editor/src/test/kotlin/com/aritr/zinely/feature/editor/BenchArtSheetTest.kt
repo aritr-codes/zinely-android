@@ -59,7 +59,7 @@ class BenchArtSheetTest {
     }
 
     @Test
-    fun all_thirty_four_supplies_and_the_four_family_filters_are_present() {
+    fun every_supply_and_the_four_family_filters_are_present() {
         render()
         Copy.Supplies.BY_FAMILY.keys.forEach { family ->
             composeRule.onNodeWithTag(benchArtFamilyFilterTestTag(family)).assertExists()
@@ -72,21 +72,22 @@ class BenchArtSheetTest {
             reveal(benchArtLabelTestTag(family))
             composeRule.onNodeWithTag(benchArtLabelTestTag(family)).assertExists()
         }
-        assertEquals(34, Copy.Supplies.NAMES.size)
+        assertEquals("v21-bench.html A39 (ADR-139): the final 124", 124, Copy.Supplies.NAMES.size)
     }
 
     @Test
     fun name_and_tag_search_is_local_deterministic_and_resettable() {
         render()
         composeRule.onNodeWithTag(BenchArtSearchTestTag).performTextInput("manicule")
-        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("1 piece")
+        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("3 pieces")
         composeRule.onNodeWithTag(benchArtTileTestTag("mark.hand")).assertExists()
+        composeRule.onNodeWithTag(benchArtTileTestTag("mark.handc")).assertExists()
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).assertDoesNotExist()
 
         composeRule.onNodeWithTag(BenchArtSearchTestTag).performTextInput(" no-such-piece")
         composeRule.onNodeWithTag(BenchArtNoResultsTestTag).assertExists()
         composeRule.onNodeWithTag(BenchArtShowAllTestTag).performClick()
-        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("34 pieces")
+        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("${Copy.Supplies.NAMES.size} pieces")
         reveal(benchArtTileTestTag("shape.circle"))
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).assertExists()
     }
@@ -96,13 +97,13 @@ class BenchArtSheetTest {
         render()
         val family = Copy.Supplies.CUT_SHAPES
         composeRule.onNodeWithTag(benchArtFamilyFilterTestTag(family)).performScrollTo().performClick()
-        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("5 pieces")
+        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("${Copy.Supplies.BY_FAMILY.getValue(family).size} pieces")
         composeRule.onNodeWithTag(benchArtFamilyCueTestTag(family), useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.rect")).assertExists()
         composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).assertDoesNotExist()
 
         composeRule.onNodeWithTag(benchArtFamilyFilterTestTag(family)).performScrollTo().performClick()
-        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("34 pieces")
+        composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("${Copy.Supplies.NAMES.size} pieces")
         composeRule.onNodeWithTag(benchArtFamilyCueTestTag(family), useUnmergedTree = true).assertDoesNotExist()
         reveal(benchArtTileTestTag("tape.torn"))
         composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).assertExists()

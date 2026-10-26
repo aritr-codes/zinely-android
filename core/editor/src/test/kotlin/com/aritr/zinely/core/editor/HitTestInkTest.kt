@@ -12,13 +12,14 @@ import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.core.render.SupplyInk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * Taps pass through the empty part of eight holed pieces (ADR-124, and A32's two frames): drawn, then
+ * Taps pass through the empty part of the holed pieces (`SupplyInk.IN_SCOPE`) (ADR-124, and A32's two frames): drawn, then
  * near, then box.
  *
  * Every distance here is in **page points** — `HitTest` knows nothing of dp. Unless a test says
@@ -52,18 +53,11 @@ class HitTestInkTest {
     /** Unit point of the default 100×100 piece at (50, 50), as a page point. */
     private fun unit(u: Double, v: Double) = PtPoint(50.0 + 100.0 * u, 50.0 + 100.0 * v)
 
-    /** Supply id → a unit point on its ink, and unit points in its hole or bare paper. */
-    private val holed: Map<String, Pair<PtPoint, List<PtPoint>>> = mapOf(
-        "paper.window" to (unit(0.05, 0.5) to listOf(unit(0.5, 0.5))),
-        "paper.hole" to (unit(0.125, 0.5) to listOf(unit(0.5, 0.5))),
-        "shape.ring" to (unit(0.1, 0.5) to listOf(unit(0.5, 0.5))),
-        "fix.grommet" to (unit(0.1, 0.5) to listOf(unit(0.5, 0.5))),
-        "fix.corner" to (unit(0.06, 0.9) to listOf(unit(0.25, 0.7), unit(0.9, 0.2))),
-        "mark.registration" to (unit(0.05, 0.5) to listOf(unit(0.5, 0.5), unit(0.15, 0.15))),
-        // The two hand-cut frames (v21-bench.html A32).
-        "paper.border" to (unit(0.05, 0.5) to listOf(unit(0.5, 0.5), unit(0.15, 0.5))),
-        "paper.round" to (unit(0.05, 0.5) to listOf(unit(0.5, 0.5), unit(0.25, 0.5))),
-    )
+    /** Supply id → a unit point on its ink, and unit points in its hole; sampled from the drawn ink (ART-4). */
+    private val holed: Map<String, Pair<PtPoint, List<PtPoint>>> = SupplyInk.IN_SCOPE.associateWith { id ->
+        val probes = InkSampler.probes(id)
+        unit(probes.ink.first, probes.ink.second) to probes.bare.map { unit(it.first, it.second) }
+    }
 
     // — 7, 8: each holed piece —
 
@@ -203,26 +197,29 @@ class HitTestInkTest {
 
     @Test
     fun `a rotated photo corner - the ink turns with it`() {
-        // 90° clockwise about the centre (100, 100): local (x, y) → (−y, x). The bottom band's (0.5, 0.95)
-        // is local (0, 45) and lands at page (55, 100); where it used to be is now the empty half.
+        // 90° clockwise about the centre (100, 100): local (x, y) → (−y, x). The A39 corner (ADR-139) has its
+        // pocket top-left: the top band's (0.5, 0.06) is local (0, −44) and lands at page (144, 100), which
+        // unrotated is past the hypotenuse; the left band at (56, 100) turns onto the bare bottom half.
         val p = page(photo(), piece("fix.corner", rot = 90.0))
-        assertEquals("fix.corner", HitTest.topmostAt(p, PtPoint(55.0, 100.0)))
-        assertEquals("photo", HitTest.topmostAt(p, PtPoint(100.0, 145.0)))
-        assertEquals("fix.corner", HitTest.topmostAt(page(photo(), piece("fix.corner")), PtPoint(100.0, 145.0)))
+        val upright = page(photo(), piece("fix.corner"))
+        assertEquals("fix.corner", HitTest.topmostAt(p, PtPoint(144.0, 100.0)))
+        assertEquals("photo", HitTest.topmostAt(upright, PtPoint(144.0, 100.0)))
+        assertEquals("photo", HitTest.topmostAt(p, PtPoint(56.0, 100.0)))
+        assertEquals("fix.corner", HitTest.topmostAt(upright, PtPoint(56.0, 100.0)))
     }
 
     @Test
     fun `a mirrored photo corner - the ink swaps sides`() {
         val p = page(photo(), piece("fix.corner", mirrored = true))
-        assertEquals("fix.corner", HitTest.topmostAt(p, unit(0.94, 0.9)))
-        assertEquals("photo", HitTest.topmostAt(p, unit(0.06, 0.9)))
+        assertEquals("fix.corner", HitTest.topmostAt(p, unit(0.94, 0.3)))
+        assertEquals("photo", HitTest.topmostAt(p, unit(0.06, 0.3)))
     }
 
     @Test
     fun `a vertically flipped photo corner - the ink swaps ends`() {
         val p = page(photo(), piece("fix.corner", flipped = true))
-        assertEquals("fix.corner", HitTest.topmostAt(p, unit(0.5, 0.05)))
-        assertEquals("photo", HitTest.topmostAt(p, unit(0.5, 0.95)))
+        assertEquals("fix.corner", HitTest.topmostAt(p, unit(0.5, 0.94)))
+        assertEquals("photo", HitTest.topmostAt(p, unit(0.5, 0.06)))
     }
 
     // — 12: everything else keeps its box —

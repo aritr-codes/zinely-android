@@ -54,11 +54,12 @@ class HitTestInkPropertiesTest {
         val fold = SceneRenderer.buildScene(p, PtSize(800.0, 800.0), DocumentDefaults())
             .commands.filterIsInstance<DrawShape>().single().localToPage
 
-        for ((u, v) in listOf(0.06 to 0.9, 0.5 to 0.95)) {
+        // The A39 corner (ADR-139): left and top bands; then its pocket and the half past the hypotenuse.
+        for ((u, v) in listOf(0.06 to 0.3, 0.5 to 0.06)) {
             assertEquals("corner", HitTest.topmostAt(p, fold.map(PtPoint(u, v))), "ink at unit ($u, $v)")
         }
         // The pocket, and the half of the box that was never ink.
-        for ((u, v) in listOf(0.25 to 0.7, 0.9 to 0.2)) {
+        for ((u, v) in listOf(0.25 to 0.25, 0.9 to 0.9)) {
             assertEquals("photo", HitTest.topmostAt(p, fold.map(PtPoint(u, v))), "bare paper at unit ($u, $v)")
         }
     }

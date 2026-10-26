@@ -26,6 +26,9 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.core.render.ArtSet
+import com.aritr.zinely.core.render.SupplyProvenanceCatalog
+import kotlinx.coroutines.runBlocking
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -128,6 +131,117 @@ class ColophonScreenTest {
             .assertContentDescriptionEquals(Copy.Colophon.BACK_TO_COLOPHON)
             .performClick()
         composeRule.onNodeWithTag(ColophonCreditsRowTestTag).assertIsDisplayed().assertIsFocused()
+    }
+
+    @Test
+    fun `credits lists the six Art sets with their pieces, licence and holder`() {
+        setContent(
+            preferredPaper = PaperSize.A4,
+            appVersion = "v1",
+            onBackToShelf = {},
+            onPreferredPaperChange = {},
+        )
+
+        openCredits()
+        composeRule.onNodeWithText(Copy.Colophon.CREDITS_INTRO).assertIsDisplayed()
+        assertEquals(6, ArtSet.entries.size)
+        ArtSet.entries.forEach { set ->
+            composeRule.onNodeWithTag(ColophonScreenTestTag).performScrollToNode(hasTestTag(colophonArtSetTestTag(set)))
+            val row = composeRule.onNodeWithTag(colophonArtSetTestTag(set)).assertIsDisplayed()
+            val summary = Copy.Colophon.artSetSummary(
+                SupplyProvenanceCatalog.piecesIn(set).size, set.licenceLabel, set.holder,
+            )
+            row.assertContentDescriptionEquals(Copy.Colophon.artLicenceButton(set.title, summary))
+            // The row is one merged control, so its second line is only in the unmerged tree.
+            composeRule.onNodeWithText(summary, useUnmergedTree = true).assertExists()
+            // size, not boundsInRoot: bounds are clipped to the visible window, size is the whole row.
+            assertTrue("${set.key} row is at least 48 dp tall", row.fetchSemanticsNode().size.height >= 48)
+        }
+        assertEquals("13 Art pieces · CC0 1.0 · Khushmeen Sidhu", Copy.Colophon.artSetSummary(13, "CC0 1.0", "Khushmeen Sidhu"))
+        assertEquals("1 Art piece · ISC · Lucide Icons and Contributors", Copy.Colophon.artSetSummary(1, "ISC", "Lucide Icons and Contributors"))
+    }
+
+    @Test
+    fun `an Art licence opens with the set title and its notice and returns focus to its row`() {
+        val set = ArtSet.TABLER
+        setContent(
+            preferredPaper = PaperSize.A4,
+            appVersion = "v1",
+            onBackToShelf = {},
+            onPreferredPaperChange = {},
+            loadLicence = { error("a typeface licence must not load for an Art row") },
+            loadArtLicence = {
+                assertEquals(set, it)
+                "Locally bundled Art notice"
+            },
+        )
+
+        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
+        openCredits()
+        scrollToTag(colophonArtSetTestTag(set))
+        composeRule.onNodeWithTag(colophonArtSetTestTag(set)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Locally bundled Art notice").assertIsDisplayed()
+        composeRule.onNodeWithText(Copy.Colophon.ART_LICENCE_TITLE).assertIsDisplayed()
+        composeRule.onNodeWithText(set.title).assertIsDisplayed()
+        composeRule.onNodeWithTag(ColophonBackTestTag)
+            .assertContentDescriptionEquals(Copy.Colophon.BACK_TO_CREDITS)
+            .performClick()
+        composeRule.onNodeWithTag(colophonArtSetTestTag(set)).assertIsDisplayed().assertIsFocused()
+    }
+
+    @Test
+    fun `system back unwinds an Art licence to credits and about`() {
+        var backCalls = 0
+        val set = ArtSet.DOODLE
+        setContent(
+            preferredPaper = PaperSize.A4,
+            appVersion = "v1",
+            onBackToShelf = { backCalls++ },
+            onPreferredPaperChange = {},
+            loadArtLicence = { "Art notice" },
+        )
+
+        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
+        openCredits()
+        scrollToTag(colophonArtSetTestTag(set))
+        composeRule.onNodeWithTag(colophonArtSetTestTag(set)).performClick()
+        composeRule.onNodeWithText("Art notice").assertIsDisplayed()
+
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeRule.onNodeWithTag(colophonArtSetTestTag(set)).assertIsDisplayed().assertIsFocused()
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeRule.onNodeWithTag(ColophonCreditsRowTestTag).assertIsDisplayed().assertIsFocused()
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeRule.waitForIdle()
+        assertEquals(1, backCalls)
+    }
+
+    @Test
+    fun `an Art licence that cannot load shows the Art unavailable line`() {
+        setContent(
+            preferredPaper = PaperSize.A4,
+            appVersion = "v1",
+            onBackToShelf = {},
+            onPreferredPaperChange = {},
+            loadArtLicence = { throw IllegalStateException("local failure") },
+        )
+
+        openCredits()
+        scrollToTag(colophonArtSetTestTag(ArtSet.LUCIDE))
+        composeRule.onNodeWithTag(colophonArtSetTestTag(ArtSet.LUCIDE)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(Copy.Colophon.ART_LICENCE_UNAVAILABLE).assertIsDisplayed()
+    }
+
+    @Test
+    fun `every Art set ships a bundled notice in the APK assets`() {
+        ArtSet.entries.forEach { set ->
+            val text = runBlocking { readBundledArtLicence(composeRule.activity, set) }
+            assertTrue("${set.key} notice is empty", text.isNotBlank())
+            assertTrue("${set.key} notice names its source", text.startsWith("Source: "))
+            assertTrue("${set.key} notice lists its pieces", text.contains("Pieces in Zinely from this set: "))
+        }
     }
 
     @Test
@@ -292,6 +406,7 @@ class ColophonScreenTest {
         onPreferredPaperChange: (PaperSize) -> Unit,
         loadLicence: (suspend (ColophonTypeface) -> String)? = null,
         fontScale: Float = 1f,
+        loadArtLicence: (suspend (ArtSet) -> String)? = null,
     ) = composeRule.setContent {
         var selectedPaper by remember { mutableStateOf(preferredPaper) }
         inputMode = LocalInputModeManager.current
@@ -307,6 +422,7 @@ class ColophonScreenTest {
                     },
                     onBackToShelf = onBackToShelf,
                     loadLicence = loadLicence,
+                    loadArtLicence = loadArtLicence,
                     modifier = androidx.compose.ui.Modifier,
                 )
             }

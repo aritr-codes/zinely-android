@@ -128,7 +128,8 @@ class BenchArtSheetGoldenTest {
         capture("bench_art_sheet_dark", darkTheme = true) { Sheet() }
 
     /**
-     * Cut paper at eleven pieces, scrolled to its last row: the two hand-cut frames of `v21-bench.html` A32.
+     * Cut paper, scrolled to the two hand-cut frames of `v21-bench.html` A32 (since A39, ADR-139, no longer
+     * its last row: their variants and the family's new subjects follow).
      * The two captures above stop inside Tape & fixings, so without this one the frames' tiles are in no
      * picture at all.
      */
@@ -140,7 +141,7 @@ class BenchArtSheetGoldenTest {
             prepare = {
                 composeRule.onNodeWithTag(benchArtFamilyFilterTestTag(Copy.Supplies.CUT_PAPER))
                     .performScrollTo().performClick()
-                composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("11 pieces")
+                composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("${Copy.Supplies.BY_FAMILY.getValue(Copy.Supplies.CUT_PAPER).size} pieces")
                 composeRule.onNodeWithTag(BenchArtSheetTestTag)
                     .performScrollToNode(hasTestTag(benchArtTileTestTag("paper.round")))
                 composeRule.onNodeWithTag(benchArtTileTestTag("paper.border")).assertIsDisplayed()

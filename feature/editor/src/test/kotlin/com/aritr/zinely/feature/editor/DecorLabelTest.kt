@@ -34,7 +34,7 @@ class DecorLabelTest {
     fun `the two worst cases of the old derivation are named, as readable examples`() {
         // The assertion above is the real guard — it is exact, and any derivation breaks it. These two
         // exist so the next reader can see what the bug SOUNDED like without reconstructing it.
-        assertEquals("Rectangle", EditorA11y.decorLabel("shape.rect")) // was "Rect shape"
+        assertEquals("Plain rectangle", EditorA11y.decorLabel("shape.rect")) // was "Rect shape", then "Rectangle" (D-132)
         assertEquals("Photo corner", EditorA11y.decorLabel("fix.corner")) // was "Corner fix"
     }
 

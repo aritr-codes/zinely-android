@@ -1463,3 +1463,268 @@ against the shipped set. Proposed (🟦): optical size per shape class; a covera
 for printer's marks; a tear rewritten as a running walk; a curve-quality rule (no kinks, smooth joins); a
 recognition check at tile size. Outside sets do not match the house style: Phosphor (MIT) is a puffy UI style.
 These are the open numbers A39 sets ([SUPPLIES-SPEC §4.5](design/SUPPLIES-SPEC.md#one-world)).
+
+## R34. The A39 Art picks: gate measurements, the Never #19 dry run and the licences (2026-10-22)
+
+The evidence behind [ADR-139](DECISIONS.md#adr-139) and `v21-bench.html` A39. Measured on 2026-10-22 from the
+owner's 125 picks (`.claude/handoffs/2026-10-22-a39-picks.txt`, also verbatim in A39) and the candidate sheet's
+data (`zinely-archive/2026-10-15-wave2/art-a39/candidates.json`, every path, gate note and licence). Every pick was
+matched by script to exactly one record. The measuring scripts are an independent copy of the sheet's own verifier
+(`art-a39/qa/verify.py`): each outline is rasterised at 20 px per unit with the even-odd rule; holes are paper
+regions a flood fill from the border does not reach; thin ink and narrow gaps are what a morphological opening
+of radius 1 unit (0.75 for printer's marks at the fine weight) removes. An independent review of the plan re-derived the counts, the
+holes and the ink boxes with a separate parser at 12 px per unit and found the same. The scripts lived in the
+session scratchpad and are not in the repository; the method above is what reproduces them.
+
+### R34.1 Counts — ✅ VERIFIED
+
+- **125 picks**: 38 A39, 30 A34, 17 shipped, 40 open-source. Per family: Tape & fixings 24, Stamps & marks 38, Cut
+  paper 44, Cut shapes 19.
+- **124 offered outlines**: the A34 and A39 Circles are one drawing (R34.4), so the A39 Circle holds
+  `shape.circle` and the A34 Circle gets no id. Cut shapes offers 18.
+- **34 shipped ids remain, 90 are added.** 17 shipped drawings are kept on their ids; 17 ids take a picked
+  redraw (R34.2). Every final id matches `DefaultDocumentValidator.SUPPLY_ID` (`^[a-z]+\.[a-z]+$`), none repeats,
+  and every display name is unique.
+
+### R34.2 Never #19 dry run and the transform per redrawn id — ✅ VERIFIED
+
+The test of [ADR-136](DECISIONS.md#adr-136) decision 3: the new outline's ink box (on-curve points with every cubic
+flattened, inside the unit square) must sit inside the shipped outline's ink box. The rule tried (see
+[ADR-139](DECISIONS.md#adr-139) decision 2): A39 first, else A34; a drawing qualifies if a move and/or a uniform scale of at least 0.90 fits it,
+and the scaled drawing does not lose more than 1 square unit to G2 (the verifier re-run after the fit; R34.3).
+The scale is about the drawing's own ink-box centre, then the smallest move that fits; coordinates are rounded to
+two decimals and the box re-checked after rounding. Boxes are [left, top, right, bottom] in units of the 24 box.
+
+| id | shipped ink box | picked redraws tried | holder | transform | final ink box |
+|---|---|---|---|---|---|
+| `tape.torn` | [0, 0, 24, 24] | A39 needs ×1, G2 Δ +0/+0; A34 needs ×1, G2 Δ +0/+0 | **A39** | none | [1.3, 0.5, 22.78, 23.5] |
+| `fix.corner` | [0, 0, 24, 24] | A39 needs ×1, G2 Δ +0/+0; A34 needs ×1, G2 Δ +0/+0 | **A39** | none | [0.5, 0.5, 21.4, 21.4] |
+| `fix.staple` | [0, 7.2, 24, 24] | A39 needs ×1, G2 Δ +0/+0 | **A39** | move +0, +0.95 | [1, 7.2, 23, 18.95] |
+| `fix.clip` | [1.44, 0, 21.12, 24] | A39 needs ×0.857 ✗; A34 needs ×1, G2 Δ +0/+0 | **A34** | none | [3.25, 0.5, 20.75, 23.5] |
+| `tape.masking` | [0, 3, 24, 21] | A39 needs ×0.947, G2 Δ +0.03/+0.01; A34 needs ×0.94, G2 Δ +0.02/+0.02 | **A39** | ×0.947 | [1.39, 3, 22.48, 21] |
+| `mark.asterisk` | [0, 0.59, 24, 23.41] | A39 needs ×1, G2 Δ +0.08/+0 | **A39** | move +0, +0.04 | [0.7, 0.59, 23.3, 22.08] |
+| `mark.arrow` | [0, 1.44, 24, 22.56] | A39 needs ×1, G2 Δ +0/+0; A34 needs ×1, G2 Δ +0/+0 | **A39** | none | [0.5, 6.29, 23.42, 17.71] |
+| `mark.hand` | [0, 5, 24, 18] | A39 needs ×0.788 ✗; A34 needs ×0.965, G2 Δ -0.05/-0.05 | **A34** | ×0.965, move +0, -1.835 | [0.89, 5, 22.51, 18] |
+| `mark.bar` | [0, 4, 24, 20] | A39 needs ×0.952, G2 Δ +63.25/+1.02 ✗; A34 needs ×1, G2 Δ +0/+0 | **A34** | none | [0.5, 5, 23.5, 19] |
+| `paper.strip` | [0, 3.84, 24, 20.16] | A39 needs ×1, G2 Δ +0/+0; A34 needs ×1, G2 Δ +0/+0 | **A39** | none | [0.5, 5.14, 23.5, 19.21] |
+| `paper.tag` | [0, 0, 24, 24] | A39 needs ×1, G2 Δ +0/+0; A34 needs ×1, G2 Δ +0/+0 | **A39** | none | [1.5, 2, 22.5, 22.6] |
+| `paper.underline` | [0, 9.84, 24, 16.32] | A39 needs ×0.919, G2 Δ -0.05/+0.01; A34 needs ×1, G2 Δ +0/+0 | **A39** | ×0.919, move +0, +0.443 | [1.89, 9.84, 22.03, 16.32] |
+| `shape.rect` | [0, 0, 24, 24] | A39 needs ×1, G2 Δ +0/+0; A34 needs ×1, G2 Δ +0/+0 | **A34** (ruling) | none | [0.5, 0.5, 23.5, 23.5] |
+| `shape.circle` | [0, 0, 24, 24] | A39 needs ×1, G2 Δ +0/+0; A34 needs ×1, G2 Δ +0/+0 | **A39** | none | [0.75, 0.75, 23.25, 23.25] |
+| `shape.triangle` | [0, 0, 24, 24] | A39 needs ×1, G2 Δ +0/+0; A34 needs ×1, G2 Δ +0/+0 | **A39** | none | [0.6, 1.18, 23.4, 21.2] |
+| `shape.rule` | [0, 9.6, 24, 14.4] | A34 needs ×0.97, G2 Δ +0/+0 | **A34** | ×0.969, move +0, -0.023 | [0.86, 9.6, 23.14, 14.4] |
+| `shape.ring` | [0, 0, 24, 24] | A39 needs ×1, G2 Δ +0/+0; A34 needs ×1, G2 Δ +0/+0 | **A39** | none | [0.75, 0.75, 23.25, 23.25] |
+
+- **All 17 pass**, so no shipped id is left without a drawing and nothing is retired.
+- `shape.rect` goes to A34 by ruling although A39's passes: A39's is a 21 × 14.9 landscape, so every saved
+  full-page panel would shrink to about 62% of its height.
+- `mark.bar` is the one place the G2 re-run decides. A39's tone-patch bar fits at ×0.952, but its rails are 1.5
+  and its tint dots 2.0, so the shrink puts both under the minimum (raster thin ink 2.6 → 65.9 sq units). The A34
+  bar fits untouched and holds the id; A39's is offered as `mark.barb` at full size
+  ([D-130](design/V2-SPEC-DEFECTS.md#d-130)).
+- `mark.hand` takes A34 at ×0.965 and `fix.clip` takes A34 untouched; A39's would need ×0.788 and ×0.857.
+- `shape.rule` (A34, the only picked redraw of its subject) fits at ×0.969, which keeps its band at 4.8 high.
+
+### R34.3 Gate measurements — ✅ VERIFIED (measured) · 🟦 RECOMMENDATION (the numbers written into §4.4)
+
+**What was measured, per id** (table below): coverage (ink share of the 24 box, %), raster thin ink and narrow
+gap (sq units narrower than G2's minimum; a point that tapers, which H2 allows, shows up here too, so a small
+number is not a failure), and holes (count, total area in sq units). The class is the G3/G4 shape class.
+
+**G3 classes and G4 bands.** Four classes cover the set. Measured coverage: line 4.0–30.5%, mark 22.5–58.1%,
+frame (a band of paper round a hole) 30.8–62.7%, sheet 29.5–90.5%. Proposed bands, written into
+[SUPPLIES-SPEC §4.4](design/SUPPLIES-SPEC.md#house-style): line 4–35%, mark 25–65%, frame 30–65%, sheet 40–85%.
+Five pieces sit outside their band and are named exceptions: `shape.rect` 90.5% (a rectangle is a box-filling
+panel, by ruling); `paper.deckle` 88.7% and `paper.stamp` 85.1% and `fix.pushpin` 22.5% (shipped drawings the owner
+kept); `tape.plaster` 29.5% (an outline idiom the owner picked).
+
+**G5 and G6** were measured by the sheet's own tooling and are read from each candidate's gate note in
+`candidates.json`, not re-derived here: G5 is the lag-1 autocorrelation of a tear's offsets (at least 0, so never a
+zig-zag); G6 is join angle, handle length and polyline curves. Known failures among the picks: `fix.sticker` G6
+(4–14° kinks and micro-segments at both peel corners); `shape.flower` G2 (1.2 sq units of gap under 1.5 at the
+petal cusps). At a minimum: `mark.scissors` (finger holes at 1.5), `tape.plaster` (2.5 dots, 1.5 gaps). G8 risk:
+`shape.hex` (true geometry, no cut sign). These are [D-131](design/V2-SPEC-DEFECTS.md#d-131).
+
+**G7 holes: 31 pieces.** The eight of A32 (`fix.corner`, `paper.window`, `mark.registration`, `fix.grommet`,
+`paper.hole`, `shape.ring`, `paper.border`, `paper.round`) and 23 new ids. The full list: `fix.corner`, `fix.cornerb`, `fix.grommet`, `fix.grommetb`, `fix.grommetc`, `fix.needle`, `tape.plaster`, `fix.sticker`, `mark.registration`, `mark.registrationb`, `mark.registrationc`, `mark.scissors`, `mark.squiggle`, `paper.window`, `paper.windowb`, `paper.windowc`, `paper.cutwindow`, `paper.hole`, `paper.holeb`, `paper.holec`, `paper.holed`, `paper.border`, `paper.borderb`, `paper.borderc`, `paper.borderd`, `paper.round`, `paper.roundb`, `paper.roundc`, `paper.gifttag`, `shape.ring`, `shape.ringb`.
+The recon's "34 holed picks" was an arithmetic slip; the review and this run both count 31. Eight A34 variants
+(`fix.cornerb`, `fix.grommetb`, `mark.registrationb`, `paper.windowb`, `paper.holeb`, `paper.borderb`,
+`paper.roundb`, `shape.ringb`) wind each hole the same way as the outer contour; reversing one contour (the inner
+one, or for `fix.cornerb` the outer) makes even-odd equal non-zero (residual 0.0 sq units) with the fill unchanged,
+and A39 carries them so. The four shipped holed drawings kept as picked still differ under non-zero; the renderer
+fills even-odd, so this is harmless. The
+smallest holes are the scissors' finger loops and the gift tag's eyelet; a tap there hits what lies beneath, as
+[ADR-124](DECISIONS.md#adr-124) intends.
+
+| id | source | class | coverage % | thin ink u² | narrow gap u² | holes (area u²) |
+|---|---|---|---|---|---|---|
+| `tape.torn` | A39 | sheet | 78 | 0.9 | 0.1 |  |
+| `tape.tornb` | A34 | sheet | 79.9 | 3.95 | 1.01 |  |
+| `fix.corner` | A39 | mark | 35.3 | 0.8 | 0.52 | 1 (57.59) |
+| `fix.cornerb` | A34 | mark | 35.3 | 2.9 | 1.68 | 1 (58.86) |
+| `fix.staple` | A39 | line | 17 | 0.14 | 0.23 |  |
+| `fix.clip` | A34 | mark | 37.1 | 0.27 | 0.08 |  |
+| `fix.clipb` | A39 | mark | 35.5 | 0.23 | 0.14 |  |
+| `fix.clipc` | oss | mark | 36.9 | 0.21 | 0.12 |  |
+| `tape.masking` | A39 | sheet | 58 | 1.12 | 0.04 |  |
+| `tape.maskingb` | A34 | sheet | 66.2 | 2.22 | 0.3 |  |
+| `fix.stitch` | shipped | line | 25.4 | 2.12 | 0 |  |
+| `fix.stitchb` | A34 | line | 6.8 | 0.14 | 0 |  |
+| `fix.stitchc` | A39 | line | 25.7 | 0.7 | 2.44 |  |
+| `fix.grommet` | shipped | mark | 51.9 | 0.02 | 0.02 | 1 (154.9) |
+| `fix.grommetb` | A34 | mark | 45 | 0.08 | 12.29 | 2 (156.92) |
+| `fix.grommetc` | A39 | mark | 49.3 | 17.2 | 6.85 | 2 (114.52) |
+| `fix.pushpin` | shipped | mark | 22.5 | 3.29 | 0.08 |  |
+| `fix.pushpinb` | A39 | mark | 29.6 | 3.24 | 0.45 |  |
+| `fix.pushpinc` | A39 | mark | 25.4 | 3.34 | 0.5 |  |
+| `fix.pushpind` | oss | mark | 36.2 | 0.24 | 0.36 |  |
+| `fix.pushpine` | oss | mark | 47.2 | 0.17 | 0.3 |  |
+| `fix.needle` | oss | mark | 29.4 | 0.31 | 3.99 | 1 (12.23) |
+| `tape.plaster` | oss | sheet | 29.5 | 0.55 | 3.88 | 1 (147.03) |
+| `fix.sticker` | oss | mark | 30.4 | 0.11 | 2.94 | 2 (145.66) |
+| `mark.asterisk` | A39 | mark | 30.5 | 7.87 | 0.31 |  |
+| `mark.asteriskb` | oss | mark | 38.4 | 4.48 | 0.4 |  |
+| `mark.asteriskc` | oss | mark | 26.3 | 0.32 | 2.54 |  |
+| `mark.arrow` | A39 | line | 16.9 | 0.2 | 1.87 |  |
+| `mark.arrowb` | A34 | line | 16 | 3.76 | 0.47 |  |
+| `mark.arrowc` | A39 | mark | 36.2 | 2.83 | 0.32 |  |
+| `mark.arrowd` | oss | line | 16.9 | 0.43 | 2.48 |  |
+| `mark.arrowe` | oss | line | 17 | 0.15 | 1.59 |  |
+| `mark.halftone` | shipped | mark | 29.9 | 3.99 | 0.24 |  |
+| `mark.halftoneb` | A39 | mark | 25 | 1.49 | 0.13 |  |
+| `mark.registration` | shipped | line | 15.3 | 50.19 | 0.96 | 1 (65.81) |
+| `mark.registrationb` | A34 | line | 30.5 | 1.31 | 4.37 | 4 (31.11) |
+| `mark.registrationc` | A39 | line | 22.6 | 41.95 | 3.4 | 4 (116.42) |
+| `mark.hand` | A34 | mark | 31.6 | 1.4 | 0.82 |  |
+| `mark.handb` | A39 | mark | 43.5 | 1.09 | 1.45 |  |
+| `mark.handc` | oss | mark | 40.6 | 0.24 | 0.96 |  |
+| `mark.crop` | shipped | line | 22.5 | 3.15 | 0.63 |  |
+| `mark.cropb` | A34 | line | 13.1 | 5.04 | 0 |  |
+| `mark.cropc` | A39 | line | 12.4 | 4.34 | 0 |  |
+| `mark.bar` | A34 | mark | 42 | 2.52 | 0 |  |
+| `mark.barb` | A39 | mark | 33.7 | 2.6 | 16.96 |  |
+| `mark.scan` | shipped | mark | 50.6 | 3.13 | 0 |  |
+| `mark.scanb` | A34 | mark | 31.8 | 7.12 | 0 |  |
+| `mark.scanc` | A39 | mark | 29.3 | 3.92 | 0.05 |  |
+| `mark.perf` | shipped | line | 11.4 | 3.15 | 0 |  |
+| `mark.perfb` | A34 | line | 7.2 | 3.15 | 8.01 |  |
+| `mark.perfc` | A39 | line | 4 | 3.25 | 0 |  |
+| `mark.burst` | shipped | mark | 41.4 | 21.77 | 3.27 |  |
+| `mark.burstb` | A34 | mark | 51.8 | 9.57 | 2.15 |  |
+| `mark.burstc` | A39 | mark | 53.8 | 13.22 | 3.33 |  |
+| `mark.burstd` | oss | mark | 33.1 | 15.23 | 1.56 |  |
+| `mark.sparkle` | oss | mark | 33.8 | 7.57 | 0.07 |  |
+| `mark.cancel` | oss | mark | 31.3 | 0.55 | 0.2 |  |
+| `mark.heart` | oss | mark | 58.1 | 0.27 | 0.2 |  |
+| `mark.tick` | oss | line | 14.1 | 0.18 | 0.2 |  |
+| `mark.cross` | oss | line | 23.3 | 0.36 | 0.61 |  |
+| `mark.scissors` | oss | line | 26.8 | 0.28 | 1.82 | 2 (8.84) |
+| `mark.squiggle` | oss | line | 26.4 | 0.26 | 1.73 | 1 (52.93) |
+| `paper.strip` | A39 | sheet | 47.9 | 2.04 | 0.43 |  |
+| `paper.stripb` | A34 | sheet | 48.8 | 4.13 | 1.34 |  |
+| `paper.stripc` | A39 | sheet | 41.2 | 1.25 | 0.27 |  |
+| `paper.window` | shipped | frame | 48 | 1.06 | 0.63 | 1 (299.29) |
+| `paper.windowb` | A34 | frame | 61.9 | 1.06 | 0.64 | 1 (165.78) |
+| `paper.windowc` | A39 | frame | 57.6 | 0.97 | 0.63 | 1 (111.05) |
+| `paper.cutwindow` | oss | frame | 35.6 | 0.05 | 0.61 | 1 (187.34) |
+| `paper.tag` | A39 | sheet | 54.9 | 3.05 | 0.28 |  |
+| `paper.tagb` | A34 | sheet | 65.1 | 3.42 | 0.26 |  |
+| `paper.chat` | oss | sheet | 54.9 | 0.12 | 0.06 |  |
+| `paper.underline` | A39 | line | 11.4 | 1.74 | 0.01 |  |
+| `paper.underlineb` | A34 | line | 14 | 0.37 | 0.01 |  |
+| `paper.stub` | shipped | sheet | 70.3 | 1.74 | 0.03 |  |
+| `paper.stubb` | A34 | sheet | 56.7 | 1.48 | 0.12 |  |
+| `paper.stubc` | A39 | sheet | 47 | 1.73 | 0.08 |  |
+| `paper.ticket` | oss | sheet | 58.6 | 0.21 | 0.28 |  |
+| `paper.stamp` | shipped | sheet | 85.1 | 5.49 | 2.7 |  |
+| `paper.stampb` | A34 | sheet | 79 | 5.44 | 0.62 |  |
+| `paper.stampc` | A39 | sheet | 61 | 3.13 | 0.49 |  |
+| `paper.deckle` | shipped | sheet | 88.7 | 0.62 | 0.14 |  |
+| `paper.deckleb` | A34 | sheet | 80.1 | 2 | 0.54 |  |
+| `paper.decklec` | A39 | sheet | 60.3 | 0.6 | 0.13 |  |
+| `paper.hole` | shipped | frame | 56.6 | 0.5 | 0.25 | 1 (102.6) |
+| `paper.holeb` | A34 | frame | 46.1 | 0.91 | 0.58 | 1 (82) |
+| `paper.holec` | A39 | frame | 58 | 1.17 | 0.31 | 1 (109.2) |
+| `paper.holed` | A39 | frame | 44.1 | 1.53 | 1.2 | 1 (188.84) |
+| `paper.dogear` | shipped | sheet | 67.6 | 0.86 | 0 |  |
+| `paper.dogearb` | A34 | sheet | 75.8 | 4.22 | 0.16 |  |
+| `paper.dogearc` | A39 | sheet | 55.7 | 3.84 | 13.24 |  |
+| `paper.page` | oss | sheet | 58.3 | 2.99 | 0.03 |  |
+| `paper.sticky` | oss | sheet | 64.8 | 2.91 | 0.02 |  |
+| `paper.border` | shipped | frame | 30.8 | 14.6 | 0.6 | 1 (375.24) |
+| `paper.borderb` | A34 | frame | 34.9 | 1.08 | 0.67 | 1 (310.23) |
+| `paper.borderc` | A39 | frame | 34 | 0.87 | 1.02 | 1 (245.09) |
+| `paper.borderd` | A39 | frame | 34.9 | 0.43 | 2.25 | 1 (226.5) |
+| `paper.round` | shipped | frame | 62.7 | 1.06 | 0.07 | 1 (191.17) |
+| `paper.roundb` | A34 | frame | 55.6 | 1.06 | 0.01 | 1 (198.66) |
+| `paper.roundc` | A39 | frame | 50 | 0.97 | 0.02 | 1 (154.9) |
+| `paper.balloon` | oss | sheet | 55 | 0.25 | 0.1 |  |
+| `paper.thought` | oss | sheet | 54.3 | 0.29 | 0.47 |  |
+| `paper.shout` | oss | sheet | 46.8 | 0.24 | 0.55 |  |
+| `paper.bookmark` | oss | sheet | 57.6 | 0.14 | 0.13 |  |
+| `paper.ribbon` | oss | sheet | 56.7 | 0.84 | 0.2 |  |
+| `paper.gifttag` | oss | sheet | 56.6 | 0.09 | 0.06 | 1 (7.08) |
+| `shape.rect` | A34 | sheet | 90.5 | 1.06 | 0 |  |
+| `shape.rectb` | A39 | sheet | 54.4 | 0.97 | 0 |  |
+| `shape.rectc` | oss | sheet | 67.7 | 0.26 | 0 |  |
+| `shape.rectd` | oss | sheet | 51.4 | 0.3 | 0 |  |
+| `shape.circle` | A39 | sheet | 69.2 | 0.03 | 0 |  |
+| `shape.triangle` | A39 | sheet | 41.2 | 2.06 | 0 |  |
+| `shape.triangleb` | A34 | sheet | 45.7 | 2.24 | 0 |  |
+| `shape.rule` | A34 | line | 17.8 | 1.06 | 0 |  |
+| `shape.ruleb` | oss | line | 10.2 | 0.2 | 0.03 |  |
+| `shape.rulec` | oss | line | 10.5 | 0.14 | 0.07 |  |
+| `shape.ring` | A39 | sheet | 47.8 | 0.03 | 0.02 | 1 (123.03) |
+| `shape.ringb` | A34 | sheet | 48.8 | 0.03 | 0.04 | 1 (131.58) |
+| `shape.blob` | oss | sheet | 67.1 | 0.07 | 0.03 |  |
+| `shape.scallop` | oss | sheet | 60.4 | 0.21 | 0.2 |  |
+| `shape.flower` | oss | sheet | 58.2 | 0.28 | 1.4 |  |
+| `shape.hex` | oss | sheet | 59.9 | 0.06 | 0.01 |  |
+| `shape.cloud` | oss | sheet | 42 | 0.07 | 0.1 |  |
+| `shape.cloudb` | oss | sheet | 44 | 0.1 | 0.14 |  |
+
+### R34.4 Variant similarity — ✅ VERIFIED (measure) · 🟨 ASSUMPTION (that it stands in for the eye)
+
+Pairwise intersection-over-union of the picks of one subject, after stretching each ink box to the full square,
+best over mirror x, mirror y and a half turn, at 240 px. A high score means scale or mirror nearly makes one from
+the other (the §4.3.1 filter). For solid silhouettes it under-weights edge character (a torn or hand-cut edge), so
+it is a review list, not a verdict.
+
+- **≥ 0.99, the same drawing:** A34 / A39 Circle, 1.00. Collapsed ([ADR-139](DECISIONS.md#adr-139) decision 4).
+- **0.95–0.98, kept as picked** (the owner's eye is the G8 ruling, confirmed at the first-time-user pass): A34 /
+  A39 Rectangle 0.98, and with the two hand-cut Doodle rectangles 0.95–0.98; A34 / A39 Ring 0.98; A34 / A39
+  Triangle 0.96.
+- **0.86–0.94, the look-alike groups G8 checks:** Torn tape 0.94; Deckle edge ×3 0.92–0.94; Bookmark ribbon /
+  Bookmark ribbon (brush) 0.94; Folded corner ×5 with Dog-eared page and Sticky note 0.86–0.94; Speech tag 0.93
+  and with Speech balloon (square) 0.86; Round window ×3 0.91–0.93; Ticket stub shipped / A34 0.93 and with
+  Admission ticket 0.86–0.88; Masking tape 0.92; Torn strip ×3 0.88–0.91; Postage stamp ×3 0.88–0.90; Cloud ×2
+  0.90; Window frame 0.89; Snipped border A39 / Scalloped border 0.89.
+- The sheet's own look-alike notes add pairs across subjects: Eyelet, Ring, Registration cross and Round window;
+  Blob and Circle; Scalloped seal and Punched flower; Wavy rule, Squiggle and Marker underline; Admission ticket
+  against tape, stamp and rectangle; the two slanted paper clips; the two tilted push pins.
+
+### R34.5 Licences of the 40 imported pieces — ✅ VERIFIED (read on the pinned licence files)
+
+Every set is on [ADR-104](DECISIONS.md#adr-104)'s permitted list (MIT, ISC, CC0-1.0); none puts an obligation on
+the user's zine. Each item's file, URL at the pin and sha256 are in `art-a39/oss-src-*/LICENSE-RECORD.txt`.
+
+| Set | Pieces (final ids) | SPDX | Holder, from the licence file at the pin | Pin |
+|---|---|---|---|---|
+| [Tabler Icons](https://github.com/tabler/tabler-icons/blob/bbed884d15354b5cebf2493371f20dc2d5e83eaf/LICENSE) | 9: `fix.clipc`, `tape.plaster`, `fix.sticker`, `mark.asteriskc`, `mark.cancel`, `mark.squiggle`, `shape.ruleb`, `shape.blob`, `shape.flower` | MIT | © 2020-2026 Paweł Kuna | v3.49.0 = `bbed884` |
+| [Fluent Emoji, High Contrast](https://github.com/microsoft/fluentui-emoji/blob/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/LICENSE) | 6: `fix.needle`, `mark.burstd`, `mark.sparkle`, `paper.ticket`, `paper.thought`, `paper.shout` | MIT | © Microsoft Corporation | `1ffb34c` |
+| [Doodle Icons by Oreo Design](https://github.com/oreo-design/doodle-icons/blob/38de0ac9fc7524870c8e1f18373cf56f32a5028b/LICENSE) | 9: `fix.pushpind`, `fix.pushpine`, `mark.arrowe`, `paper.chat`, `paper.page`, `paper.sticky`, `paper.bookmark`, `paper.gifttag`, `shape.cloudb` | MIT | © 2026 Nicole Tang | `38de0ac` |
+| Doodle Icons by Khushmeen Sidhu ([creator](https://khushmeen.com/icons.html); [mirror](https://github.com/svatsa159/react-doodle-icons/tree/b51da0371e992b5d03e768fd1f570e8e9500c617)) | 13: `mark.asteriskb`, `mark.arrowd`, `mark.handc`, `mark.heart`, `mark.tick`, `mark.cross`, `mark.scissors`, `paper.cutwindow`, `paper.balloon`, `paper.ribbon`, `shape.rectc`, `shape.rectd`, `shape.cloud` | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/legalcode) (creator: "Free icons for commercial and personal use under CC0 license - no attribution required") | none required; the mirror's own MIT (© 2022 Srivatsa Rampalli) covers its React package code | mirror `b51da03` |
+| [Phosphor Icons core](https://github.com/phosphor-icons/core/blob/v2.0.8/LICENSE) | 2: `shape.scallop`, `shape.hex` | MIT | © 2023 Phosphor Icons | v2.0.8 |
+| [Lucide](https://github.com/lucide-icons/lucide/blob/1.57.0/LICENSE) | 1: `shape.rulec` (`waves-horizontal`) | ISC | © 2026 Lucide Icons and Contributors; the same file carries Feather's MIT notice (© 2013-present Cole Bemis) for the Feather-derived icons, and `waves-horizontal` is not one of them | 1.57.0 |
+
+- ⚠️ **DISPUTED: Doodle Icons by Khushmeen Sidhu.** The creator's page says CC0. One redistributor relabels the
+  set "MIT © Khushmeen Sidhu". The pieces come from the MIT-licensed mirror. Under either reading the obligation
+  is a notice in the APK at most (ADR-104). The credit therefore names the creator under CC0 and ships the
+  mirror's MIT text as a precaution; the diff against the creator's own release (a $0 Gumroad download behind an
+  email) is owed before beta.8.
+- 🟨 **ASSUMPTION: Oreo Design's names mirror Lucide.** If an Oreo glyph redraws a Lucide or Feather path, their
+  ISC and MIT notices also apply (still APK-only). Lucide's licence text ships anyway, so the fix, if needed, is
+  one credit line.
+- Six pieces are Fluent **emoji** silhouettes in one ink. The licence is fine; the world-match question
+  (SUPPLIES-SPEC §4.5 G9, "not … an emoji", and ADR-136's cut of "Fluent emoji stickers") is the owner's pick,
+  recorded in ADR-139.

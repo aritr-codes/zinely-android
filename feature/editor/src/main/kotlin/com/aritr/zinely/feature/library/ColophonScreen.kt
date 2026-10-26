@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.core.render.ArtSet
+import com.aritr.zinely.core.render.SupplyProvenanceCatalog
 import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
@@ -70,6 +72,7 @@ public const val ColophonVersionTestTag: String = "colophon-version"
 public fun colophonPaperTestTag(paper: PaperSize): String = "colophon-paper-${paper.name.lowercase()}"
 public fun colophonTypefaceTestTag(typeface: ColophonTypeface): String =
     "colophon-typeface-${typeface.name.lowercase()}"
+public fun colophonArtSetTestTag(set: ArtSet): String = "colophon-art-${set.key}"
 
 public enum class ColophonTypeface(
     public val family: String,
@@ -83,11 +86,27 @@ public enum class ColophonTypeface(
     INTER("Inter", "fonts/OFL-Inter.txt"),
 }
 
+/** One row of Licences & credits that opens a licence page: a bundled typeface, or an Art set (ADR-139). */
+public sealed interface ColophonLicenceRow {
+    public data class Font(val typeface: ColophonTypeface) : ColophonLicenceRow
+    public data class Art(val set: ArtSet) : ColophonLicenceRow
+}
+
 public sealed interface ColophonDestination {
     public data object Main : ColophonDestination
     public data object Credits : ColophonDestination
-    public data class Licence(val typeface: ColophonTypeface) : ColophonDestination
+    public data class Licence(val row: ColophonLicenceRow) : ColophonDestination
 }
+
+/** Asset path of an Art set's notice: where its pieces came from, their names, then the licence as shipped. */
+internal fun artLicenceAssetPath(set: ArtSet): String = "licences/art/${set.key}.txt"
+
+public suspend fun readBundledArtLicence(context: Context, set: ArtSet): String =
+    withContext(Dispatchers.IO) {
+        runInterruptible {
+            context.assets.open(artLicenceAssetPath(set)).bufferedReader().use { it.readText() }
+        }
+    }
 
 public suspend fun readBundledTypefaceLicence(context: Context, typeface: ColophonTypeface): String =
     withContext(Dispatchers.IO) {
@@ -104,17 +123,30 @@ public fun ColophonScreen(
     onBackToShelf: () -> Unit,
     modifier: Modifier = Modifier,
     loadLicence: (suspend (ColophonTypeface) -> String)? = null,
+    loadArtLicence: (suspend (ArtSet) -> String)? = null,
 ) {
     val context = LocalContext.current
-    val effectiveLicenceLoader: suspend (ColophonTypeface) -> String = remember(context, loadLicence) {
-        loadLicence ?: { typeface -> readBundledTypefaceLicence(context, typeface) }
-    }
+    val effectiveLicenceLoader: suspend (ColophonLicenceRow) -> String =
+        remember(context, loadLicence, loadArtLicence) {
+            val fonts: suspend (ColophonTypeface) -> String = loadLicence ?: { typeface -> readBundledTypefaceLicence(context, typeface) }
+            val art: suspend (ArtSet) -> String = loadArtLicence ?: { set -> readBundledArtLicence(context, set) }
+            val loader: suspend (ColophonLicenceRow) -> String = { row ->
+                when (row) {
+                    is ColophonLicenceRow.Font -> fonts(row.typeface)
+                    is ColophonLicenceRow.Art -> art(row.set)
+                }
+            }
+            loader
+        }
     var destination by remember { mutableStateOf<ColophonDestination>(ColophonDestination.Main) }
-    val typefaceFocusRequesters = remember {
-        ColophonTypeface.entries.associateWith { FocusRequester() }
+    val licenceFocusRequesters = remember {
+        buildMap<ColophonLicenceRow, FocusRequester> {
+            ColophonTypeface.entries.forEach { put(ColophonLicenceRow.Font(it), FocusRequester()) }
+            ArtSet.entries.forEach { put(ColophonLicenceRow.Art(it), FocusRequester()) }
+        }
     }
     val creditsFocusRequester = remember { FocusRequester() }
-    var returnFocusTo by remember { mutableStateOf<ColophonTypeface?>(null) }
+    var returnFocusTo by remember { mutableStateOf<ColophonLicenceRow?>(null) }
     var returnFocusToCredits by remember { mutableStateOf(false) }
     // Keep the licence row composed when returning from its separate destination.
     val mainScrollState = rememberLazyListState()
@@ -128,7 +160,7 @@ public fun ColophonScreen(
                 destination = ColophonDestination.Main
             }
             is ColophonDestination.Licence -> {
-                returnFocusTo = current.typeface
+                returnFocusTo = current.row
                 destination = ColophonDestination.Credits
             }
         }
@@ -153,16 +185,16 @@ public fun ColophonScreen(
                 destination = ColophonDestination.Main
             },
             onOpenLicence = { destination = ColophonDestination.Licence(it) },
-            typefaceFocusRequesters = typefaceFocusRequesters,
+            licenceFocusRequesters = licenceFocusRequesters,
             scrollState = creditsScrollState,
             returnFocusTo = returnFocusTo,
             onFocusRestored = { returnFocusTo = null },
             modifier = modifier,
         )
         is ColophonDestination.Licence -> LicenceScreen(
-            typeface = current.typeface,
+            row = current.row,
             onBack = {
-                returnFocusTo = current.typeface
+                returnFocusTo = current.row
                 destination = ColophonDestination.Credits
             },
             loadLicence = effectiveLicenceLoader,
@@ -329,10 +361,10 @@ private fun ColophonMain(
 @Composable
 private fun CreditsScreen(
     onBack: () -> Unit,
-    onOpenLicence: (ColophonTypeface) -> Unit,
-    typefaceFocusRequesters: Map<ColophonTypeface, FocusRequester>,
+    onOpenLicence: (ColophonLicenceRow) -> Unit,
+    licenceFocusRequesters: Map<ColophonLicenceRow, FocusRequester>,
     scrollState: LazyListState,
-    returnFocusTo: ColophonTypeface?,
+    returnFocusTo: ColophonLicenceRow?,
     onFocusRestored: () -> Unit,
     modifier: Modifier,
 ) {
@@ -360,51 +392,109 @@ private fun CreditsScreen(
         item { SectionHeading(Copy.Colophon.CREDITS) }
         item { BodyText(Copy.Colophon.CREDITS_INTRO) }
         items(ColophonTypeface.entries, key = { it.name }) { typeface ->
-            // Lazy rows attach after the parent destination effect. Restore focus here, once this row exists.
-            LaunchedEffect(returnFocusTo) {
-                if (returnFocusTo == typeface) {
-                    typefaceFocusRequesters.getValue(typeface).requestFocus()
-                    onFocusRestored()
-                }
-            }
-            val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-            Row(
-                Modifier
-                    .testTag(colophonTypefaceTestTag(typeface))
-                    .focusRequester(typefaceFocusRequesters.getValue(typeface))
-                    .fillMaxWidth()
-                    .sizeIn(minHeight = 48.dp)
-                    .background(printed.surface, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
-                    .zinelyV2Control(
-                        label = Copy.Colophon.licenceButton(typeface.family),
-                        interactionSource = interaction,
-                        onClick = { onOpenLicence(typeface) },
-                    )
-                    .padding(ZinelyV21Dimens.gapLg),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(typeface.family, color = printed.ink, fontWeight = FontWeight.Bold)
-                    Text(Copy.Colophon.LICENCE_ACTION, color = printed.leafText, fontSize = 12.sp)
-                }
-                Text("›", color = printed.inkSoft, fontSize = 24.sp)
-            }
+            val row = ColophonLicenceRow.Font(typeface)
+            LicenceRow(
+                row = row,
+                tag = colophonTypefaceTestTag(typeface),
+                label = Copy.Colophon.licenceButton(typeface.family),
+                title = typeface.family,
+                subtitle = Copy.Colophon.LICENCE_ACTION,
+                subtitleColor = printed.leafText,
+                focusRequesters = licenceFocusRequesters,
+                returnFocusTo = returnFocusTo,
+                onFocusRestored = onFocusRestored,
+                onOpen = onOpenLicence,
+            )
+        }
+        // The Art card (v21-colophon.html A39): one row per open-source set Art pieces were imported
+        // from, in the frozen order. Credit lives here and nowhere else (ADR-104).
+        item { SectionHeading(Copy.Colophon.ART_HEADING) }
+        items(ArtSet.entries, key = { "art-" + it.key }) { set ->
+            val summary = Copy.Colophon.artSetSummary(
+                SupplyProvenanceCatalog.piecesIn(set).size,
+                set.licenceLabel,
+                set.holder,
+            )
+            LicenceRow(
+                row = ColophonLicenceRow.Art(set),
+                tag = colophonArtSetTestTag(set),
+                label = Copy.Colophon.artLicenceButton(set.title, summary),
+                title = set.title,
+                subtitle = summary,
+                subtitleColor = printed.inkSoft,
+                focusRequesters = licenceFocusRequesters,
+                returnFocusTo = returnFocusTo,
+                onFocusRestored = onFocusRestored,
+                onOpen = onOpenLicence,
+            )
         }
         item { Spacer(Modifier.height(ZinelyV21Dimens.gapXl)) }
     }
 }
 
 @Composable
+private fun LicenceRow(
+    row: ColophonLicenceRow,
+    tag: String,
+    label: String,
+    title: String,
+    subtitle: String,
+    subtitleColor: Color,
+    focusRequesters: Map<ColophonLicenceRow, FocusRequester>,
+    returnFocusTo: ColophonLicenceRow?,
+    onFocusRestored: () -> Unit,
+    onOpen: (ColophonLicenceRow) -> Unit,
+) {
+    val printed = remember { zinelyV21LightColors() }
+    // Lazy rows attach after the parent destination effect. Restore focus here, once this row exists.
+    LaunchedEffect(returnFocusTo) {
+        if (returnFocusTo == row) {
+            focusRequesters.getValue(row).requestFocus()
+            onFocusRestored()
+        }
+    }
+    val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    Row(
+        Modifier
+            .testTag(tag)
+            .focusRequester(focusRequesters.getValue(row))
+            .fillMaxWidth()
+            .sizeIn(minHeight = 48.dp)
+            .background(printed.surface, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
+            .zinelyV2Control(
+                label = label,
+                interactionSource = interaction,
+                onClick = { onOpen(row) },
+            )
+            .padding(ZinelyV21Dimens.gapLg),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, color = printed.ink, fontWeight = FontWeight.Bold)
+            Text(subtitle, color = subtitleColor, fontSize = 12.sp)
+        }
+        Text("›", color = printed.inkSoft, fontSize = 24.sp)
+    }
+}
+
+@Composable
 private fun LicenceScreen(
-    typeface: ColophonTypeface,
+    row: ColophonLicenceRow,
     onBack: () -> Unit,
-    loadLicence: suspend (ColophonTypeface) -> String,
+    loadLicence: suspend (ColophonLicenceRow) -> String,
     modifier: Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
     val printed = remember { zinelyV21LightColors() }
-    val result by produceState<Result<String>?>(null, typeface, loadLicence) {
-        value = runCatching { loadLicence(typeface) }
+    val title = when (row) {
+        is ColophonLicenceRow.Font -> row.typeface.family
+        is ColophonLicenceRow.Art -> row.set.title
+    }
+    val lead = if (row is ColophonLicenceRow.Art) Copy.Colophon.ART_LICENCE_TITLE else Copy.Colophon.LICENCE_TITLE
+    val unavailable =
+        if (row is ColophonLicenceRow.Art) Copy.Colophon.ART_LICENCE_UNAVAILABLE else Copy.Colophon.LICENCE_UNAVAILABLE
+    val result by produceState<Result<String>?>(null, row, loadLicence) {
+        value = runCatching { loadLicence(row) }
     }
     Column(
         modifier
@@ -413,12 +503,12 @@ private fun LicenceScreen(
             .background(colors.desk)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .semantics { paneTitle = typeface.family }
+            .semantics { paneTitle = title }
             .padding(horizontal = ZinelyV21Dimens.gapXl),
     ) {
         ColophonHeader(Copy.Colophon.BACK_TO_CREDITS, onBack, Modifier.testTag(ColophonBackTestTag))
-        SectionHeading(typeface.family)
-        Text(Copy.Colophon.LICENCE_TITLE, color = colors.inkSoft, fontSize = 13.sp)
+        SectionHeading(title)
+        Text(lead, color = colors.inkSoft, fontSize = 13.sp)
         Spacer(Modifier.height(ZinelyV21Dimens.gapLg))
         Box(
             Modifier
@@ -440,7 +530,7 @@ private fun LicenceScreen(
                         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
                     )
                 }
-                else -> BodyText(Copy.Colophon.LICENCE_UNAVAILABLE, color = printed.inkSoft)
+                else -> BodyText(unavailable, color = printed.inkSoft)
             }
         }
         Spacer(Modifier.height(ZinelyV21Dimens.gapXl))

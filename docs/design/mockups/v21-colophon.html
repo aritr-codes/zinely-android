@@ -19,6 +19,8 @@
   - 2026-09-16 amendment / ADR-117: About shows one compact Licences & credits row near the bottom.
     Typeface names and complete local notices move to a child screen; decorative role blurbs are retired.
   - Palette amended 2026-08-24 by THEME-37596-FREEZE; the interaction ruling is unchanged.
+  - 2026-10-22 amendment A39 / ADR-139: Licences & credits gains an Art card, one row per open-source
+    Art set, each opening its notice. The amendment block is at the end of this file.
 -->
 
 <style>
@@ -213,3 +215,117 @@ addEventListener('keydown',event=>{
   else if(event.key==='Escape')document.getElementById('shelfBack').click();
 });
 </script>
+<!-- ===========================================================================
+A39 · 2026-10-22 · Licences & credits gains Art.  ADR-139 (Proposed), with v21-bench.html A39 (the
+picks).  DESIGN FROZEN under the owner's delegation of 2026-10-12; the owner may overrule it.
+SPECIFIED, NOT YET BUILT.
+
+WHAT CHANGES.  The credits screen keeps its typeface card and gains an Art card under it, one row per
+open-source set that Art pieces were imported from (40 of the 124 pieces): the set's name, then how
+many pieces, the licence and the holder.  A row opens the licence screen, titled with the set's
+name (set smaller when it is long, so it fits the bar on a 360dp phone), with "Art licence" as the lead and that set's notice text: where the pieces came from (the set
+and the pinned version), then the name of every piece taken from it (so each piece has its entry,
+ADR-137), then the licence text exactly as the set ships it.  The lead line reads
+"Zinely uses a few open-source typefaces and Art sets. Their licence notices live here."
+
+DOODLE ICONS BY KHUSHMEEN SIDHU.  The creator gives the icons under CC0 ("no attribution required");
+Zinely credits her anyway.  The pieces were taken from the react-doodle-icons copy, whose own MIT
+notice (© 2022 Srivatsa Rampalli) covers its package code; it is shipped too, as a precaution, with
+the CC0 1.0 legal code.  The diff against the creator's own release is owed (ADR-139).
+
+WHAT DOES NOT CHANGE.  The About row, the typeface rows and their notices, Back and Escape (one level
+at a time), focus returning to the row that opened a licence, and day or night.  Credit appears only
+here, never in a zine, its PDF or its pictures (ADR-104).  The notice texts are bundled with the app
+as local files, like the font notices; nothing is fetched.  The texts below are the files in
+zinely-archive/2026-10-15-wave2/art-a39/oss-src-*/, whose sha256 each set's LICENSE-RECORD.txt holds.
+
+Amended 2026-10-24 (D-132, with v21-bench.html A39 "NAMES THAT FIT THE TILE"): thirteen imported pieces
+take their shortened names in the "Pieces in Zinely from this set" lines below (and in the bundled
+notices), so each piece's entry still names it as the Art sheet does.  The licence texts are untouched.
+=========================================================================== -->
+<script>
+const ART_CREDITS=[
+[
+"doodle",
+"Doodle Icons by Khushmeen Sidhu",
+13,
+"CC0 1.0",
+"Khushmeen Sidhu",
+"Source: khushmeen.com/icons.html, obtained via github.com/svatsa159/react-doodle-icons at b51da03.\n\nPieces in Zinely from this set: Star, hand-cut, Arrow, brushed, Drawn hand, Heart, Tick, Cross, Scissors, Hand-cut window, Round balloon, Brushed ribbon, Hand-cut square, Hand-cut card, Cloud.\n\nThe creator dedicates these icons to the public domain: \"Free icons for commercial and personal use under CC0 license - no attribution required.\" Zinely credits the creator anyway.\n\nThe copy Zinely used came from react-doodle-icons. Its own licence covers its package code; it is included here as a precaution.\n\n----- react-doodle-icons -----\nMIT License\n\nCopyright (c) 2022 Srivatsa Rampalli\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n\n----- CC0 1.0 Universal -----\nCreative Commons Legal Code\n\nCC0 1.0 Universal\n\n    CREATIVE COMMONS CORPORATION IS NOT A LAW FIRM AND DOES NOT PROVIDE\n    LEGAL SERVICES. DISTRIBUTION OF THIS DOCUMENT DOES NOT CREATE AN\n    ATTORNEY-CLIENT RELATIONSHIP. CREATIVE COMMONS PROVIDES THIS\n    INFORMATION ON AN \"AS-IS\" BASIS. CREATIVE COMMONS MAKES NO WARRANTIES\n    REGARDING THE USE OF THIS DOCUMENT OR THE INFORMATION OR WORKS\n    PROVIDED HEREUNDER, AND DISCLAIMS LIABILITY FOR DAMAGES RESULTING FROM\n    THE USE OF THIS DOCUMENT OR THE INFORMATION OR WORKS PROVIDED\n    HEREUNDER.\n\nStatement of Purpose\n\nThe laws of most jurisdictions throughout the world automatically confer\nexclusive Copyright and Related Rights (defined below) upon the creator\nand subsequent owner(s) (each and all, an \"owner\") of an original work of\nauthorship and/or a database (each, a \"Work\").\n\nCertain owners wish to permanently relinquish those rights to a Work for\nthe purpose of contributing to a commons of creative, cultural and\nscientific works (\"Commons\") that the public can reliably and without fear\nof later claims of infringement build upon, modify, incorporate in other\nworks, reuse and redistribute as freely as possible in any form whatsoever\nand for any purposes, including without limitation commercial purposes.\nThese owners may contribute to the Commons to promote the ideal of a free\nculture and the further production of creative, cultural and scientific\nworks, or to gain reputation or greater distribution for their Work in\npart through the use and efforts of others.\n\nFor these and/or other purposes and motivations, and without any\nexpectation of additional consideration or compensation, the person\nassociating CC0 with a Work (the \"Affirmer\"), to the extent that he or she\nis an owner of Copyright and Related Rights in the Work, voluntarily\nelects to apply CC0 to the Work and publicly distribute the Work under its\nterms, with knowledge of his or her Copyright and Related Rights in the\nWork and the meaning and intended legal effect of CC0 on those rights.\n\n1. Copyright and Related Rights. A Work made available under CC0 may be\nprotected by copyright and related or neighboring rights (\"Copyright and\nRelated Rights\"). Copyright and Related Rights include, but are not\nlimited to, the following:\n\n  i. the right to reproduce, adapt, distribute, perform, display,\n     communicate, and translate a Work;\n ii. moral rights retained by the original author(s) and/or performer(s);\niii. publicity and privacy rights pertaining to a person's image or\n     likeness depicted in a Work;\n iv. rights protecting against unfair competition in regards to a Work,\n     subject to the limitations in paragraph 4(a), below;\n  v. rights protecting the extraction, dissemination, use and reuse of data\n     in a Work;\n vi. database rights (such as those arising under Directive 96/9/EC of the\n     European Parliament and of the Council of 11 March 1996 on the legal\n     protection of databases, and under any national implementation\n     thereof, including any amended or successor version of such\n     directive); and\nvii. other similar, equivalent or corresponding rights throughout the\n     world based on applicable law or treaty, and any national\n     implementations thereof.\n\n2. Waiver. To the greatest extent permitted by, but not in contravention\nof, applicable law, Affirmer hereby overtly, fully, permanently,\nirrevocably and unconditionally waives, abandons, and surrenders all of\nAffirmer's Copyright and Related Rights and associated claims and causes\nof action, whether now known or unknown (including existing as well as\nfuture claims and causes of action), in the Work (i) in all territories\nworldwide, (ii) for the maximum duration provided by applicable law or\ntreaty (including future time extensions), (iii) in any current or future\nmedium and for any number of copies, and (iv) for any purpose whatsoever,\nincluding without limitation commercial, advertising or promotional\npurposes (the \"Waiver\"). Affirmer makes the Waiver for the benefit of each\nmember of the public at large and to the detriment of Affirmer's heirs and\nsuccessors, fully intending that such Waiver shall not be subject to\nrevocation, rescission, cancellation, termination, or any other legal or\nequitable action to disrupt the quiet enjoyment of the Work by the public\nas contemplated by Affirmer's express Statement of Purpose.\n\n3. Public License Fallback. Should any part of the Waiver for any reason\nbe judged legally invalid or ineffective under applicable law, then the\nWaiver shall be preserved to the maximum extent permitted taking into\naccount Affirmer's express Statement of Purpose. In addition, to the\nextent the Waiver is so judged Affirmer hereby grants to each affected\nperson a royalty-free, non transferable, non sublicensable, non exclusive,\nirrevocable and unconditional license to exercise Affirmer's Copyright and\nRelated Rights in the Work (i) in all territories worldwide, (ii) for the\nmaximum duration provided by applicable law or treaty (including future\ntime extensions), (iii) in any current or future medium and for any number\nof copies, and (iv) for any purpose whatsoever, including without\nlimitation commercial, advertising or promotional purposes (the\n\"License\"). The License shall be deemed effective as of the date CC0 was\napplied by Affirmer to the Work. Should any part of the License for any\nreason be judged legally invalid or ineffective under applicable law, such\npartial invalidity or ineffectiveness shall not invalidate the remainder\nof the License, and in such case Affirmer hereby affirms that he or she\nwill not (i) exercise any of his or her remaining Copyright and Related\nRights in the Work or (ii) assert any associated claims and causes of\naction with respect to the Work, in either case contrary to Affirmer's\nexpress Statement of Purpose.\n\n4. Limitations and Disclaimers.\n\n a. No trademark or patent rights held by Affirmer are waived, abandoned,\n    surrendered, licensed or otherwise affected by this document.\n b. Affirmer offers the Work as-is and makes no representations or\n    warranties of any kind concerning the Work, express, implied,\n    statutory or otherwise, including without limitation warranties of\n    title, merchantability, fitness for a particular purpose, non\n    infringement, or the absence of latent or other defects, accuracy, or\n    the present or absence of errors, whether or not discoverable, all to\n    the greatest extent permissible under applicable law.\n c. Affirmer disclaims responsibility for clearing rights of other persons\n    that may apply to the Work or any use thereof, including without\n    limitation any person's Copyright and Related Rights in the Work.\n    Further, Affirmer disclaims responsibility for obtaining any necessary\n    consents, permissions or other rights required for any use of the\n    Work.\n d. Affirmer understands and acknowledges that Creative Commons is not a\n    party to this document and has no duty or obligation with respect to\n    this CC0 or use of the Work."
+],
+[
+"oreo",
+"Doodle Icons by Oreo Design",
+9,
+"MIT",
+"Nicole Tang",
+"Source: github.com/oreo-design/doodle-icons at 38de0ac.\n\nPieces in Zinely from this set: Drawn pin, Drawn pin, tilted, Arrow, wobbly, Square balloon, Dog-ear page, Sticky note, Book ribbon, Gift tag, Puffy cloud.\n\nMIT License\n\nCopyright (c) 2026 Nicole Tang\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
+],
+[
+"fluent",
+"Fluent Emoji (High Contrast)",
+6,
+"MIT",
+"Microsoft Corporation",
+"Source: github.com/microsoft/fluentui-emoji at 1ffb34c, the High Contrast style, drawn in one ink.\n\nPieces in Zinely from this set: Threaded needle, Drawn starburst, Sparkles, Entry ticket, Thought balloon, Shout balloon.\n\nMIT License\n\n    Copyright (c) Microsoft Corporation.\n\n    Permission is hereby granted, free of charge, to any person obtaining a copy\n    of this software and associated documentation files (the \"Software\"), to deal\n    in the Software without restriction, including without limitation the rights\n    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n    copies of the Software, and to permit persons to whom the Software is\n    furnished to do so, subject to the following conditions:\n\n    The above copyright notice and this permission notice shall be included in all\n    copies or substantial portions of the Software.\n\n    THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n    SOFTWARE"
+],
+[
+"lucide",
+"Lucide",
+1,
+"ISC",
+"Lucide Icons and Contributors",
+"Source: github.com/lucide-icons/lucide at 1.57.0.\n\nPieces in Zinely from this set: Ripple rule.\n\nISC License\n\nCopyright (c) 2026 Lucide Icons and Contributors\n\nPermission to use, copy, modify, and/or distribute this software for any\npurpose with or without fee is hereby granted, provided that the above\ncopyright notice and this permission notice appear in all copies.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\" AND THE AUTHOR DISCLAIMS ALL WARRANTIES\nWITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF\nMERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR\nANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES\nWHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN\nACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF\nOR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.\n\n---\n\nThe following Lucide icons are derived from the Feather project:\n\nairplay, alert-circle, alert-octagon, alert-triangle, aperture, arrow-down-circle, arrow-down-left, arrow-down-right, arrow-down, arrow-left-circle, arrow-left, arrow-right-circle, arrow-right, arrow-up-circle, arrow-up-left, arrow-up-right, arrow-up, at-sign, calendar, cast, check, chevron-down, chevron-left, chevron-right, chevron-up, chevrons-down, chevrons-left, chevrons-right, chevrons-up, circle, clipboard, clock, code, columns, command, compass, corner-down-left, corner-down-right, corner-left-down, corner-left-up, corner-right-down, corner-right-up, corner-up-left, corner-up-right, crosshair, database, divide-circle, divide-square, dollar-sign, download, external-link, feather, frown, hash, headphones, help-circle, info, italic, key, layout, life-buoy, link-2, link, loader, lock, log-in, log-out, maximize, meh, minimize, minimize-2, minus-circle, minus-square, minus, monitor, moon, more-horizontal, more-vertical, move, music, navigation-2, navigation, octagon, pause-circle, percent, plus-circle, plus-square, plus, power, radio, rss, search, server, share, shopping-bag, sidebar, smartphone, smile, square, table-2, tablet, target, terminal, trash-2, trash, triangle, tv, type, upload, x-circle, x-octagon, x-square, x, zoom-in, zoom-out\n\nThe MIT License (MIT) (for the icons listed above)\n\nCopyright (c) 2013-present Cole Bemis\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
+],
+[
+"phosphor",
+"Phosphor Icons",
+2,
+"MIT",
+"Phosphor Icons",
+"Source: github.com/phosphor-icons/core at v2.0.8.\n\nPieces in Zinely from this set: Scalloped seal, Hexagon.\n\nMIT License\n\nCopyright (c) 2023 Phosphor Icons\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
+],
+[
+"tabler",
+"Tabler Icons",
+9,
+"MIT",
+"Paweł Kuna",
+"Source: github.com/tabler/tabler-icons at v3.49.0.\n\nPieces in Zinely from this set: Slanted clip, Sticking plaster, Sticker (peeling), Asterisk, Postmark waves, Squiggle, Wavy rule, Blob, Punched flower.\n\nMIT License\n\nCopyright (c) 2020-2026 Paweł Kuna\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
+]
+];
+(function(){
+  const scroll=document.querySelector('#creditsScreen .scroll');
+  scroll.querySelector('.licence-lead').textContent='Zinely uses a few open-source typefaces and Art sets. Their licence notices live here.';
+  const fonts=scroll.querySelector('.card');
+  const label=document.createElement('h2');
+  label.className='eyebrow a39-label';label.id='artCreditsTitle';label.textContent='Art';
+  const card=document.createElement('div');
+  card.className='card';card.setAttribute('role','group');card.setAttribute('aria-labelledby','artCreditsTitle');
+  ART_CREDITS.forEach(([key,name,count,licence,holder])=>{
+    const row=document.createElement('button');
+    row.className='font-row';row.dataset.name=name;row.dataset.art=key;
+    row.innerHTML='<span><b></b><small></small></span><span class="arrow">→</span>';
+    row.querySelector('b').textContent=name;
+    row.querySelector('small').textContent=count+(count===1?' Art piece':' Art pieces')+' · '+licence+' · '+holder;
+    row.onclick=()=>openLicence(row);
+    card.appendChild(row);
+  });
+  fonts.after(label,card);
+  const lead=document.querySelector('#licenceScreen .licence-lead');
+  const escape=text=>text.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const openLicenceBeforeA39=openLicence;
+  openLicence=function(button){
+    const set=ART_CREDITS.find(row=>row[0]===button.dataset.art);
+    if(!set){title.classList.remove('a39-long');lead.textContent='Font licence';frame.removeAttribute('srcdoc');frame.title='Typeface licence text';openLicenceBeforeA39(button);return;}
+    title.textContent=set[1];title.classList.toggle('a39-long',set[1].length>14);lead.textContent='Art licence';frame.title=set[1]+' licence text';
+    frame.removeAttribute('src');
+    frame.srcdoc='<pre style="white-space:pre-wrap;font:13px/1.5 system-ui,sans-serif;margin:12px">'+escape(set[5])+'</pre>';
+    credits.classList.add('hide');licence.classList.add('show');document.getElementById('licenceBack').focus();
+  };
+})();
+</script>
+<style>
+.a39-label{margin-top:24px}
+.top h1.a39-long{font-size:19px}
+</style>
