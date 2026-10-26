@@ -3,7 +3,7 @@ package com.aritr.zinely.data.android
 import com.aritr.zinely.core.data.repository.RestoredDetails
 import com.aritr.zinely.core.data.storage.AtomicFileStore
 import java.nio.file.Files
-import java.util.concurrent.CountDownLatch
+import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
@@ -31,12 +31,11 @@ class RepairNotesConcurrencyTest {
         val ids = (1..200).map { "z$it" }
         ids.forEach { Files.createDirectories(root.resolve("projects/$it")) }
 
-        // When each zine's two repairs are reported from two threads released together
+        // When each zine's two repairs are reported from two threads released together, zine by zine
         val pool = Executors.newFixedThreadPool(2)
-        val start = CountDownLatch(1)
-        val details = pool.submit { start.await(); ids.forEach { notes.addDetails(it, previousTitle = "Old $it") } }
-        val pages = pool.submit { start.await(); ids.reversed().forEach { notes.addPages(it) } }
-        start.countDown()
+        val together = CyclicBarrier(2)
+        val details = pool.submit { ids.forEach { together.await(); notes.addDetails(it, previousTitle = "Old $it") } }
+        val pages = pool.submit { ids.forEach { together.await(); notes.addPages(it) } }
         details.get(30, TimeUnit.SECONDS)
         pages.get(30, TimeUnit.SECONDS)
         pool.shutdown()
