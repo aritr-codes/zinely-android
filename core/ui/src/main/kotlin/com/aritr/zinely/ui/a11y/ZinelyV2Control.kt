@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.stateDescription
 
 /**
  * The V2 control seam: a pressable that reaches the **platform** accessibility tree as its role, carrying
@@ -106,6 +107,9 @@ import androidx.compose.ui.semantics.selected
  *   the platform as `ACTION_LONG_CLICK` on the same node as the click.
  * @param onLongClickLabel the spoken name of that gesture, required whenever [onLongClick] is supplied —
  *   the "named custom action twin" the implementation guide asks for.
+ * @param stateDescription a state spoken after the label ("Selected"), or `null` for none. Inside the clear,
+ *   because `clickable` cannot say it.
+ * @param onClickLabel the spoken name of the click ("Select"), or `null` for the platform's own.
  */
 public fun Modifier.zinelyV2Control(
     label: String,
@@ -117,6 +121,8 @@ public fun Modifier.zinelyV2Control(
     indication: Indication? = null,
     onLongClick: (() -> Unit)? = null,
     onLongClickLabel: String? = null,
+    stateDescription: String? = null,
+    onClickLabel: String? = null,
 ): Modifier = this
     .minimumInteractiveComponentSize()
     // `clickable` sits OUTSIDE `clearAndSetSemantics` so its click action is not among the semantics the
@@ -128,6 +134,7 @@ public fun Modifier.zinelyV2Control(
                 interactionSource = interactionSource,
                 indication = indication,
                 enabled = enabled,
+                onClickLabel = onClickLabel,
                 role = role,
                 onClick = onClick,
             )
@@ -139,6 +146,7 @@ public fun Modifier.zinelyV2Control(
                 interactionSource = interactionSource,
                 indication = indication,
                 enabled = enabled,
+                onClickLabel = onClickLabel,
                 role = role,
                 // The caller fires its own verb inside onLongClick; the platform's would be a second one.
                 hapticFeedbackEnabled = false,
@@ -155,4 +163,5 @@ public fun Modifier.zinelyV2Control(
     .clearAndSetSemantics {
         contentDescription = label
         selected?.let { this.selected = it }
+        stateDescription?.let { this.stateDescription = it }
     }
