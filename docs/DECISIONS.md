@@ -17190,7 +17190,7 @@ agreed the shape on 2026-10-23. It is a ruling, not a build: nothing is designed
 **Settles:** the question [ADR-129](#adr-129) left open in its Consequences ("If multi-selection is ever built, it
 needs its own ruling"). **Evidence:** [v1 `bench.html`](design/v1/bench.html) (line 82, "Multi-select is
 DELIBERATELY omitted"); [V2-BENCH-CRITIQUE §3.4](design/V2-BENCH-CRITIQUE.md) ("multi-select is a later question,
-not MVP"). **Why the Shelf:** [ADR-125](#adr-125) (folders). **Order:** [ADR-136](#adr-136).
+not MVP"). **Why the Shelf:** [ADR-125](#adr-125) (folders). **Order:** this ADR places it after W1 to W3 of [ADR-136](#adr-136); ADR-136 itself does not list it.
 
 #### Context
 
@@ -17214,7 +17214,7 @@ not MVP"). **Why the Shelf:** [ADR-125](#adr-125) (folders). **Order:** [ADR-136
 
 #### Consequences
 
-- The Bench, its Arrange tray and its tests are untouched. ADR-129's open question is answered: no.
+- The Bench, its Arrange tray and its tests are untouched. ADR-129's open question is answered: no. Multi-selection stays unreachable from the interface, as ADR-129 recorded.
 - The Shelf gains a planned feature with no date. [ROADMAP](ROADMAP.md#planned) and the public roadmap list it as
   Planned only.
 - No schema, storage or export change is implied (`CURRENT_SCHEMA_VERSION = 3`).
