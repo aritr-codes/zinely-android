@@ -64,6 +64,13 @@ class SelectCopyTest {
     }
 
     @Test
+    fun `A47-11 - what a tile's state sounds like while choosing`() {
+        assertEquals("Selected", Copy.Select.SELECTED)
+        assertEquals("Not selected", Copy.Select.NOT_SELECTED)
+        assertEquals("Dimmed", Copy.Select.DIMMED)
+    }
+
+    @Test
     fun `the bar, the dock and the name sheet`() {
         assertEquals("3 selected", Copy.Select.selectedCount(3))
         assertEquals("Move 3 zines to a folder", Copy.Select.moveToAFolder("3 zines"))

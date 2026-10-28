@@ -333,6 +333,23 @@ class HomeViewModelTest {
             ids -= id
             return true
         }
+
+        /** Writes that reached the store through [addAll] / [removeAll]: a batch is one each. */
+        var batchWrites = 0
+
+        override fun addAll(ids: Collection<String>): Boolean {
+            if (!writesSucceed || ids.any { it in unmarkable }) return false
+            batchWrites++
+            this.ids += ids
+            return true
+        }
+
+        override fun removeAll(ids: Collection<String>): Boolean {
+            if (!writesSucceed) return false
+            batchWrites++
+            this.ids -= ids.toSet()
+            return true
+        }
     }
 
     private val dispatcher = UnconfinedTestDispatcher()
@@ -2401,56 +2418,44 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `a chosen zine whose marker cannot be written is not hidden, and is named when the batch closes`() = runTest {
-        // Given: b's marker cannot be written, so a restart could not finish its delete
+    fun `a batch whose markers cannot all be written hides nothing and says so once`() = runTest {
+        // Given: b's marker cannot be written; the batch is all or nothing
         val shelf = folderShelf("a" to null, "b" to null, "c" to null)
         pendingDeleteStore.unmarkable = setOf("b")
 
         // When
         shelf.viewModel.deleteMany(listOf("a", "b", "c"))
 
-        // Then: b stays on the Shelf; the prompt covers only what was hidden
-        assertEquals(listOf("b"), shelf.zines.map { it.id })
-        assertEquals(HomeShelfEvent.DeleteBatchPrompt(listOf("a", "c"), "Deleted 2 zines"), shelf.events.single())
-
-        // And when the window closes, with c still saving, one message names both, in Shelf order
-        repository.undeletable = setOf("c")
-        shelf.viewModel.commitDeletes(listOf("a", "c"))
-        assertEquals(listOf("a", "c"), repository.deleted)
-        assertEquals(listOf("b", "c"), shelf.zines.map { it.id })
-        assertEquals(
-            HomeShelfEvent.Message(
-                "2 zines weren’t deleted: “b” and “c”. They’re back on your shelf; try again in a moment.",
-            ),
-            shelf.events.last(),
-        )
+        // Then
+        assertEquals(listOf("a", "b", "c"), shelf.zines.map { it.id })
+        assertTrue(pendingDeleteStore.ids.isEmpty())
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE)), shelf.events)
         shelf.close()
     }
 
     @Test
-    fun `an unmarked zine is named once even when only one other was marked, and not at all after Undo`() = runTest {
+    fun `a batch delete and its Undo each write the markers once`() = runTest {
         val shelf = folderShelf("a" to null, "b" to null, "c" to null)
-        pendingDeleteStore.unmarkable = setOf("b")
 
-        // One marked: the one-zine prompt, whose commit still names b.
+        shelf.viewModel.deleteMany(listOf("a", "b", "c"))
+        assertEquals(1, pendingDeleteStore.batchWrites)
+
+        shelf.viewModel.undoDeletes(listOf("a", "b", "c"))
+        assertEquals(2, pendingDeleteStore.batchWrites)
+        shelf.close()
+    }
+
+    @Test
+    fun `an Undo whose marker write fails brings nothing back and says so`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null)
         shelf.viewModel.deleteMany(listOf("a", "b"))
-        assertEquals(HomeShelfEvent.DeletePrompt("a", "a"), shelf.events.single())
-        shelf.viewModel.commitDelete("a")
-        assertEquals(listOf("a"), repository.deleted)
-        assertEquals(
-            HomeShelfEvent.Message("“b” wasn’t deleted. It’s back on your shelf; try again in a moment."),
-            shelf.events.last(),
-        )
+        pendingDeleteStore.writesSucceed = false
 
-        // Undo: every chosen zine is on the Shelf, so there is nothing to name.
-        shelf.viewModel.deleteMany(listOf("b", "c"))
-        val before = shelf.events.size
-        shelf.viewModel.undoDelete("c")
-        // A late commit call (the screen's `finally`) must not name b from a leaked entry either.
-        shelf.viewModel.commitDelete("c")
-        assertEquals(before, shelf.events.size)
-        assertTrue(shelf.zines.any { it.id == "c" })
-        assertEquals(listOf("a"), repository.deleted)
+        shelf.viewModel.undoDeletes(listOf("a", "b"))
+
+        assertTrue(shelf.zines.isEmpty())
+        assertEquals(setOf("a", "b"), pendingDeleteStore.ids)
+        assertEquals(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE), shelf.events.last())
         shelf.close()
     }
 
