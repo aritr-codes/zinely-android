@@ -157,10 +157,14 @@ class HomeViewModelTest {
         /** When set, [deleteProject] suspends on it: lets a test hold a delete in flight. */
         var deleteGate: CompletableDeferred<Unit>? = null
 
+        /** Zines whose delete is refused as Busy (a live editor session), the rest as [deleteResult]. */
+        var undeletable = setOf<String>()
+
         override suspend fun deleteProject(id: String): DataResult<Unit> {
             deleted += id
             calls += "delete $id"
             deleteGate?.await()
+            if (id in undeletable) return DataResult.Failure(DataError.Busy("live session"))
             return deleteResult()
         }
 
@@ -313,10 +317,13 @@ class HomeViewModelTest {
         val ids = initialIds.toMutableSet()
         var writesSucceed = true
 
+        /** Ids whose marker cannot be written (the rest can). */
+        var unmarkable = setOf<String>()
+
         override fun pendingIds(): Set<String> = ids.toSet()
 
         override fun add(id: String): Boolean {
-            if (!writesSucceed) return false
+            if (!writesSucceed || id in unmarkable) return false
             ids += id
             return true
         }
@@ -2285,6 +2292,325 @@ class HomeViewModelTest {
         repository.moveGate!!.complete(Unit)
 
         assertEquals(listOf("move a -> Family"), repository.calls)
+        shelf.close()
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Several zines at once (ADR-142; the words are `v21-library.html` A47's, written out as literals)
+    // ---------------------------------------------------------------------------------------------
+
+    @Test
+    fun `a batch delete hides every chosen zine at once under one prompt, and touches no file`() = runTest {
+        // Given
+        val shelf = folderShelf("a" to null, "b" to null, "c" to null)
+
+        // When
+        shelf.viewModel.deleteMany(listOf("c", "a"))
+
+        // Then: hidden at once, one prompt in Shelf order, every marker written, nothing deleted yet
+        assertEquals(listOf("b"), shelf.zines.map { it.id })
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.DeleteBatchPrompt(listOf("a", "c"), "Deleted 2 zines")), shelf.events)
+        assertEquals(setOf("a", "c"), pendingDeleteStore.ids)
+        assertTrue(repository.deleted.isEmpty())
+        shelf.close()
+    }
+
+    @Test
+    fun `Undo of a batch delete brings every zine back and clears every marker`() = runTest {
+        // Given
+        val shelf = folderShelf("a" to null, "b" to null, "c" to null)
+        shelf.viewModel.deleteMany(listOf("a", "b", "c"))
+
+        // When
+        shelf.viewModel.undoDeletes(listOf("a", "b", "c"))
+
+        // Then
+        assertEquals(listOf("a", "b", "c"), shelf.zines.map { it.id })
+        assertTrue(pendingDeleteStore.ids.isEmpty())
+        assertTrue(repository.deleted.isEmpty())
+        assertEquals(1, shelf.events.size) // the prompt only: no message
+        shelf.close()
+    }
+
+    @Test
+    fun `a batch commit deletes each zine, and one message names in Shelf order those that came back`() = runTest {
+        // Given: one is still saving
+        val shelf = folderShelf("a" to null, "b" to null, "c" to null)
+        repository.undeletable = setOf("b")
+        shelf.viewModel.deleteMany(listOf("a", "b", "c"))
+
+        // When
+        shelf.viewModel.commitDeletes(listOf("a", "b", "c"))
+
+        // Then: each tried, the refused one is back, the rest stay deleted, one message
+        assertEquals(listOf("a", "b", "c"), repository.deleted)
+        assertEquals(listOf("b"), shelf.zines.map { it.id })
+        assertTrue(pendingDeleteStore.ids.isEmpty())
+        assertEquals(
+            listOf<HomeShelfEvent>(
+                HomeShelfEvent.DeleteBatchPrompt(listOf("a", "b", "c"), "Deleted 3 zines"),
+                HomeShelfEvent.Message("“b” wasn’t deleted. It’s back on your shelf; try again in a moment."),
+            ),
+            shelf.events,
+        )
+        shelf.close()
+    }
+
+    @Test
+    fun `two zines a batch could not delete are named together, in Shelf order`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null, "c" to null)
+        repository.undeletable = setOf("c", "a")
+        shelf.viewModel.deleteMany(listOf("a", "b", "c"))
+
+        shelf.viewModel.commitDeletes(listOf("c", "b", "a"))
+
+        assertEquals(listOf("a", "c"), shelf.zines.map { it.id })
+        assertEquals(
+            HomeShelfEvent.Message(
+                "2 zines weren’t deleted: “a” and “c”. They’re back on your shelf; try again in a moment.",
+            ),
+            shelf.events.last(),
+        )
+        assertEquals(1, shelf.events.filterIsInstance<HomeShelfEvent.Message>().size)
+        shelf.close()
+    }
+
+    @Test
+    fun `a batch commit that deletes every zine says nothing more`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null)
+        shelf.viewModel.deleteMany(listOf("a", "b"))
+
+        shelf.viewModel.commitDeletes(listOf("a", "b"))
+
+        assertEquals(listOf("a", "b"), repository.deleted)
+        assertTrue(shelf.zines.isEmpty())
+        assertEquals(1, shelf.events.size)
+        shelf.close()
+    }
+
+    @Test
+    fun `a choice of one zine is the one-zine delete, with its words`() = runTest {
+        // A47.8: also when the choice became one because the other zine is no longer shown.
+        val shelf = folderShelf("a" to null, "b" to null)
+
+        shelf.viewModel.deleteMany(listOf("a", "gone"))
+
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.DeletePrompt("a", "a")), shelf.events)
+        assertEquals(listOf("b"), shelf.zines.map { it.id })
+        shelf.close()
+    }
+
+    @Test
+    fun `a chosen zine whose marker cannot be written is not hidden, and is named when the batch closes`() = runTest {
+        // Given: b's marker cannot be written, so a restart could not finish its delete
+        val shelf = folderShelf("a" to null, "b" to null, "c" to null)
+        pendingDeleteStore.unmarkable = setOf("b")
+
+        // When
+        shelf.viewModel.deleteMany(listOf("a", "b", "c"))
+
+        // Then: b stays on the Shelf; the prompt covers only what was hidden
+        assertEquals(listOf("b"), shelf.zines.map { it.id })
+        assertEquals(HomeShelfEvent.DeleteBatchPrompt(listOf("a", "c"), "Deleted 2 zines"), shelf.events.single())
+
+        // And when the window closes, with c still saving, one message names both, in Shelf order
+        repository.undeletable = setOf("c")
+        shelf.viewModel.commitDeletes(listOf("a", "c"))
+        assertEquals(listOf("a", "c"), repository.deleted)
+        assertEquals(listOf("b", "c"), shelf.zines.map { it.id })
+        assertEquals(
+            HomeShelfEvent.Message(
+                "2 zines weren’t deleted: “b” and “c”. They’re back on your shelf; try again in a moment.",
+            ),
+            shelf.events.last(),
+        )
+        shelf.close()
+    }
+
+    @Test
+    fun `an unmarked zine is named once even when only one other was marked, and not at all after Undo`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null, "c" to null)
+        pendingDeleteStore.unmarkable = setOf("b")
+
+        // One marked: the one-zine prompt, whose commit still names b.
+        shelf.viewModel.deleteMany(listOf("a", "b"))
+        assertEquals(HomeShelfEvent.DeletePrompt("a", "a"), shelf.events.single())
+        shelf.viewModel.commitDelete("a")
+        assertEquals(listOf("a"), repository.deleted)
+        assertEquals(
+            HomeShelfEvent.Message("“b” wasn’t deleted. It’s back on your shelf; try again in a moment."),
+            shelf.events.last(),
+        )
+
+        // Undo: every chosen zine is on the Shelf, so there is nothing to name.
+        shelf.viewModel.deleteMany(listOf("b", "c"))
+        val before = shelf.events.size
+        shelf.viewModel.undoDelete("c")
+        assertEquals(before, shelf.events.size)
+        assertTrue(shelf.zines.any { it.id == "c" })
+        shelf.close()
+    }
+
+    @Test
+    fun `no marker written means nothing hidden and the one warm message`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null)
+        pendingDeleteStore.writesSucceed = false
+
+        shelf.viewModel.deleteMany(listOf("a", "b"))
+
+        assertEquals(listOf("a", "b"), shelf.zines.map { it.id })
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE)), shelf.events)
+        shelf.close()
+    }
+
+    @Test
+    fun `a batch move is one snack in Shelf order, and its Undo puts every zine back`() = runTest {
+        // Given
+        val shelf = folderShelf("a" to null, "b" to null, "c" to "Family")
+
+        // When: joins Family in its own spelling
+        shelf.viewModel.moveMany(listOf("b", "a"), "family")
+
+        // Then
+        assertEquals(listOf("move a -> Family", "move b -> Family"), repository.calls)
+        assertEquals(
+            HomeShelfEvent.FolderSnack("Moved 2 zines to “Family”", FolderSnackAction.Undo, zineId = "a", folder = "Family"),
+            shelf.events.single(),
+        )
+
+        // When Undo
+        shelf.viewModel.folderSnackAction()
+
+        // Then
+        assertEquals(null, shelf.folderOf("a"))
+        assertEquals(null, shelf.folderOf("b"))
+        assertEquals(HomeShelfEvent.FolderSnack("2 zines are back on My Shelf", zineId = "a", folder = null), shelf.events.last())
+        shelf.close()
+    }
+
+    @Test
+    fun `a batch move to a new name makes the folder with them, and out of a folder says so`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null, "c" to "Family", "d" to "Family", "e" to "Family")
+
+        shelf.viewModel.moveMany(listOf("a", "b"), " Trips ")
+        assertEquals("Made “Trips” with 2 zines", shelf.snacks().last().message)
+
+        shelf.viewModel.moveMany(listOf("c", "d"), null)
+        assertEquals("Moved 2 zines to My Shelf", shelf.snacks().last().message)
+        shelf.viewModel.folderSnackAction()
+        assertEquals(HomeShelfEvent.FolderSnack("2 zines are back in “Family”", zineId = "c", folder = "Family"), shelf.events.last())
+        shelf.close()
+    }
+
+    @Test
+    fun `a batch move that empties a folder says it is put away`() = runTest {
+        // A28.3, A47.7
+        val shelf = folderShelf("a" to "Solo", "b" to "Solo", "c" to null)
+
+        shelf.viewModel.moveMany(listOf("a", "b"), null)
+
+        assertEquals("Moved 2 zines to My Shelf. “Solo” is empty, so it’s put away", shelf.snacks().last().message)
+        shelf.close()
+    }
+
+    @Test
+    fun `zines a batch move could not move are named in the same line, and Undo covers only those moved`() = runTest {
+        // Given
+        val shelf = folderShelf("a" to null, "b" to null, "c" to null, "d" to "Family")
+        repository.unwritable = setOf("b")
+
+        // When
+        shelf.viewModel.moveMany(listOf("a", "b", "c"), "Family")
+
+        // Then
+        assertEquals(
+            HomeShelfEvent.FolderSnack(
+                "Moved 2 zines to “Family”. “b” didn’t move; try again in a moment.",
+                FolderSnackAction.Undo,
+                zineId = "a",
+                folder = "Family",
+            ),
+            shelf.events.single(),
+        )
+        repository.calls.clear()
+        shelf.viewModel.folderSnackAction()
+        assertEquals(listOf("move a -> null", "move c -> null"), repository.calls)
+        shelf.close()
+    }
+
+    @Test
+    fun `a batch move that moved only one zine speaks as the single move`() = runTest {
+        // A47.7: a choice of one uses A28.12's words, and so does a batch where one moved.
+        val shelf = folderShelf("a" to "Solo", "b" to "Solo", "c" to null)
+        repository.unwritable = setOf("b")
+
+        shelf.viewModel.moveMany(listOf("a", "b"), null)
+
+        // Solo still holds b, so it is not put away.
+        assertEquals("Back on My Shelf. “b” didn’t move; try again in a moment.", shelf.snacks().last().message)
+        shelf.viewModel.folderSnackAction()
+        assertEquals(HomeShelfEvent.FolderSnack("“a” is back in “Solo”", zineId = "a", folder = "Solo"), shelf.events.last())
+        shelf.close()
+    }
+
+    @Test
+    fun `a batch move where nothing moved names them and offers no Undo`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null, "c" to "Family")
+        repository.unwritable = setOf("a", "b")
+
+        shelf.viewModel.moveMany(listOf("a", "b"), "Family")
+
+        assertEquals(
+            listOf<HomeShelfEvent>(HomeShelfEvent.Message("“a” and “b” didn’t move; try again in a moment.")),
+            shelf.events,
+        )
+        repository.calls.clear()
+        shelf.viewModel.folderSnackAction()
+        assertTrue(repository.calls.isEmpty())
+        shelf.close()
+    }
+
+    @Test
+    fun `a choice of one moved zine is the single move`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to "Family")
+
+        shelf.viewModel.moveMany(listOf("a", "gone"), "Family")
+
+        assertEquals(
+            HomeShelfEvent.FolderSnack("Moved to “Family”", FolderSnackAction.Undo, zineId = "a", folder = "Family"),
+            shelf.events.single(),
+        )
+        shelf.close()
+    }
+
+    @Test
+    fun `an Undo that puts back only some says where the rest are`() = runTest {
+        // R6: moved into a folder, the rest are still in it.
+        val into = folderShelf("a" to null, "b" to null, "c" to null)
+        into.viewModel.moveMany(listOf("a", "b", "c"), "Family")
+        repository.unwritable = setOf("b")
+        into.viewModel.folderSnackAction()
+        assertEquals(
+            HomeShelfEvent.FolderSnack("Some zines didn’t go back. They’re still in “Family”, nothing is lost"),
+            into.events.last(),
+        )
+        assertEquals("Family", into.folderOf("b"))
+        assertEquals(null, into.folderOf("c")) // every zine is tried
+        into.close()
+    }
+
+    @Test
+    fun `an Undo of a batch moved to My Shelf that puts back only some says they are on My Shelf`() = runTest {
+        val shelf = folderShelf("a" to "Family", "b" to "Family", "c" to "Family")
+        shelf.viewModel.moveMany(listOf("a", "b"), null)
+        repository.unwritable = setOf("a")
+
+        shelf.viewModel.folderSnackAction()
+
+        assertEquals(
+            HomeShelfEvent.FolderSnack("Some zines didn’t go back. They’re on My Shelf, nothing is lost"),
+            shelf.events.last(),
+        )
         shelf.close()
     }
 
