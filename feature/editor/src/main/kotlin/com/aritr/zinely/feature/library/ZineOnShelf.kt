@@ -53,8 +53,6 @@ import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.ui.a11y.zinelyV2Control
-import androidx.compose.ui.semantics.disabled
-import androidx.compose.ui.semantics.semantics
 import com.aritr.zinely.ui.components.zinelyV21Dimmed
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.theme.ZinelyHaptic
@@ -161,7 +159,7 @@ internal fun ZineOnShelf(
     val fill = zine.recipe.surface.v21Fill(colors)
     val markInk = zine.recipe.surface.v21MarkInk(colors)
     // A47.6: while choosing, a pile cannot be chosen. `.a47-on .zine.pile{opacity:.4}`, and to the platform it
-    // is dimmed (disabled) — but a tap still reaches the screen, which says why.
+    // reads "Dimmed" — but it stays enabled and a tap still reaches the screen, which says why.
     val dimmed = zine.choosing && pile != null
     val choosingZine = zine.choosing && pile == null
 
@@ -187,11 +185,8 @@ internal fun ZineOnShelf(
                 // Before the seam, never after: the seam ends in `clearAndSetSemantics`, and a tag
                 // chained behind it leaves a node no test and no service can find.
                 .testTag(zineShelfCoverTestTag(index))
-                // A47.6, A47.11: a dimmed pile tells the platform it is disabled ("dimmed"), declared before the
-                // seam so it lands on the same node, while its `clickable` stays live: a finger's tap still
-                // reaches the screen, which says why it cannot be chosen. ponytail: TalkBack's double-tap on a
-                // disabled node does nothing, so a TalkBack user hears "dimmed" but not the reason.
-                .then(if (dimmed) Modifier.semantics { disabled() } else Modifier)
+                // A47.6, A47.11: a dimmed pile is NOT disabled to the platform: its state reads "Dimmed" and its
+                // click stays live, so a TalkBack double-tap reaches the screen, which says why it cannot be chosen.
                 .then(
                     if (zine.choosing) {
                         // A47.11: the zine's name, then its state; its tap is "Select" / "Unselect".
@@ -199,8 +194,12 @@ internal fun ZineOnShelf(
                             label = if (pile != null) Copy.Folders.tileLabel(zine.title, zine.subtitle) else zine.title,
                             interactionSource = interaction,
                             onClick = { haptics.perform(ZinelyHaptic.Tick); onOpen(index) },
-                            selected = if (choosingZine) zine.chosen else null,
-                            stateDescription = if (!choosingZine) null else if (zine.chosen) Copy.Select.SELECTED else Copy.Select.NOT_SELECTED,
+                            // No `selected`: Compose would turn it into checkable/checked, a "checkbox" the tile is not.
+                            stateDescription = when {
+                                dimmed -> Copy.Select.DIMMED
+                                zine.chosen -> Copy.Select.SELECTED
+                                else -> Copy.Select.NOT_SELECTED
+                            },
                             onClickLabel = if (!choosingZine) null else if (zine.chosen) Copy.Select.UNSELECT else Copy.Select.SELECT,
                         )
                     } else {

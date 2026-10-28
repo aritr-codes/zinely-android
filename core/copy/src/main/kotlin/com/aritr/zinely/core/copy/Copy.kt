@@ -1501,6 +1501,7 @@ public object Copy {
         // A47.11: a zine's state while choosing, spoken after its name.
         public const val SELECTED: String = "Selected"
         public const val NOT_SELECTED: String = "Not selected"
+        public const val DIMMED: String = "Dimmed"
 
         // A47.3: the bar.
         public const val STOP_SELECTING: String = "Stop selecting"

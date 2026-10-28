@@ -24,6 +24,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import android.view.accessibility.AccessibilityNodeInfo
@@ -409,9 +410,8 @@ class ZineLibrarySelectTest {
         val chosen = composeRule.onNodeWithContentDescription("Riso tests").platformNode(composeRule.activity)
         assertEquals("android.widget.Button", chosen.className)
         assertEquals("Riso tests", chosen.contentDescription)
-        // Compose reports `selected` on a non-Tab role as a checkable, checked node; the state TalkBack speaks is
-        // the stateDescription, which replaces "checked".
-        assertTrue(chosen.isCheckable && chosen.isChecked)
+        // Not `selected(...)`: Compose would report that on a non-Tab role as a checkable, checked node.
+        assertFalse(chosen.isCheckable)
         assertEquals("Selected", chosen.stateDescription)
         assertTrue(chosen.isClickable)
         assertTrue("its tap is named Unselect", "Unselect" in chosen.actionLabels)
@@ -434,11 +434,18 @@ class ZineLibrarySelectTest {
     }
 
     @Test
-    fun `a folder while choosing is dimmed to the platform`() {
+    fun `a folder while choosing reads Dimmed but stays enabled, so a TalkBack click says why`() {
         choose("Riso tests")
-        val pile = composeRule.onNodeWithContentDescription("Family, folder, 2 zines").platformNode(composeRule.activity)
+        val pileNode = composeRule.onNodeWithContentDescription("Family, folder, 2 zines")
+        val pile = pileNode.platformNode(composeRule.activity)
         assertEquals("android.widget.Button", pile.className)
-        assertFalse("TalkBack says dimmed", pile.isEnabled)
+        assertTrue("enabled, so a double-tap is delivered", pile.isEnabled)
+        assertEquals("Dimmed", pile.stateDescription)
+        // The platform's click is the node's OnClick action.
+        pileNode.performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackVoiceTestTag, useUnmergedTree = true)
+            .assert(hasContentDescription("To choose zines in a folder, open it first"))
     }
 
     @Test
@@ -461,7 +468,9 @@ class ZineLibrarySelectTest {
     // Harness
     // ---------------------------------------------------------------------------------------------
 
-    private fun selected(on: Boolean) = SemanticsMatcher.expectValue(SemanticsProperties.Selected, on)
+    // A tile's chosen state is its stateDescription, not `selected` (which Compose turns into a checkbox).
+    private fun selected(on: Boolean) =
+        SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, if (on) "Selected" else "Not selected")
 
     private fun paneTitled(title: String) = SemanticsMatcher.expectValue(SemanticsProperties.PaneTitle, title)
 
