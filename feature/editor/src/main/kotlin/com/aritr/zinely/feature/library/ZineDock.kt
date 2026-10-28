@@ -47,7 +47,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.ui.text.style.TextAlign
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.a11y.zinelyV2Control
+import com.aritr.zinely.ui.components.zinelyFocusRing
+import com.aritr.zinely.ui.components.zinelyV21Pressable
 import com.aritr.zinely.ui.components.zinelyV21Frame
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -117,25 +122,14 @@ internal fun ZineDock(
     onStart: () -> Unit,
     modifier: Modifier = Modifier,
     secondaryActions: List<ZineDockSecondaryAction> = emptyList(),
+    choosing: ZineDockChoosing? = null,
 ) {
-    val desk = ZinelyTheme.v21Colors.desk
-
-    Box(
-        modifier
-            .testTag(ZineDockTestTag)
-            .fillMaxWidth()
-            // CSS paints a background over the padding box, so the gradient is declared before the
-            // padding it has to cover — including the fade that is the whole point of the band.
-            .background(dockGradient(desk))
-            .windowInsetsPadding(SafeAreaBottom)
-            .padding(
-                start = DockPaddingHorizontal,
-                end = DockPaddingHorizontal,
-                top = DockPaddingTop,
-                bottom = DockPaddingBottom,
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
+    // A47.5: while choosing, Make a zine, Backups and About give way to the two batch actions.
+    if (choosing != null) {
+        ZineDockBand(modifier) { ChoosingActions(choosing) }
+        return
+    }
+    ZineDockBand(modifier) {
         androidx.compose.foundation.layout.Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
@@ -154,6 +148,113 @@ internal fun ZineDock(
         }
     }
 }
+
+/** The band itself: its gradient, the safe area and its padding, around whatever stands in it. */
+@Composable
+private fun ZineDockBand(modifier: Modifier, content: @Composable () -> Unit) {
+    val desk = ZinelyTheme.v21Colors.desk
+    Box(
+        modifier
+            .testTag(ZineDockTestTag)
+            .fillMaxWidth()
+            // CSS paints a background over the padding box, so the gradient is declared before the
+            // padding it has to cover — including the fade that is the whole point of the band.
+            .background(dockGradient(desk))
+            .windowInsetsPadding(SafeAreaBottom)
+            .padding(
+                start = DockPaddingHorizontal,
+                end = DockPaddingHorizontal,
+                top = DockPaddingTop,
+                bottom = DockPaddingBottom,
+            ),
+        contentAlignment = Alignment.Center,
+    ) { content() }
+}
+
+/**
+ * What the dock holds while choosing several zines (A47.5): two actions where *Make a zine* was.
+ *
+ * @property moveLabel the printed words, *Move to a folder* or, inside a folder, *Move somewhere else*.
+ * @property moveName / [deleteName] what TalkBack hears: *Move 3 zines to a folder*, *Delete 3 zines*.
+ */
+internal data class ZineDockChoosing(
+    val moveLabel: String,
+    val moveName: String,
+    val deleteName: String,
+    val onMove: () -> Unit,
+    val onDelete: () -> Unit,
+)
+
+internal const val ZineDockMoveTestTag = "zine-dock-move"
+internal const val ZineDockDeleteTestTag = "zine-dock-delete"
+
+/**
+ * `.a47-dock` — Move in Matcha, the action colour, and Delete in the zine sheet's consequence paint (A24).
+ *
+ * ```css
+ * .a47-dock{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--gap-md);width:100%}
+ * .a47-dock button{min-height:48px;max-width:100%;border:1.5px solid var(--ink);border-radius:var(--br-pill);
+ *   padding:var(--gap-md) var(--gap-xl);font:700 .94rem/1.2 var(--sans);overflow-wrap:anywhere;
+ *   text-align:center;box-shadow:3px 3px 0 var(--ink-line)}
+ * .a47-dock button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
+ * .a47-move{background:var(--leaf);color:var(--on-leaf)}  .a47-del{background:var(--surface);color:var(--jam-text)}
+ * ```
+ *
+ * **They wrap, never clip (#156).** A `FlowRow`, and each button's text wraps inside it: at 2× text on a 360dp
+ * phone an older selection bar printed "Delet".
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun ChoosingActions(choosing: ZineDockChoosing) {
+    val colors = ZinelyTheme.v21Colors
+    androidx.compose.foundation.layout.FlowRow(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        ChoosingAction(choosing.moveLabel, choosing.moveName, colors.leaf, colors.onLeaf, choosing.onMove, ZineDockMoveTestTag)
+        ChoosingAction(Copy.Shelf.DELETE, choosing.deleteName, colors.surface, colors.jamText, choosing.onDelete, ZineDockDeleteTestTag)
+    }
+}
+
+@Composable
+private fun ChoosingAction(label: String, name: String, fill: Color, ink: Color, onClick: () -> Unit, tag: String) {
+    val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val focused by interaction.collectIsFocusedAsState()
+    Box(
+        Modifier
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Raised, colors.inkLine, StartShape)
+            .zinelyFocusRing(focused, ZinelyV21Dimens.radiusPill, ChoosingFocusOffset)
+            .clip(StartShape)
+            .background(fill)
+            .border(StartBorder, colors.ink, StartShape)
+            .testTag(tag)
+            .zinelyV2Control(label = name, interactionSource = interaction, onClick = onClick)
+            .defaultMinSize(minHeight = ChoosingMinHeight)
+            .padding(horizontal = ZinelyV21Dimens.gapXl, vertical = ZinelyV21Dimens.gapMd),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            textAlign = TextAlign.Center,
+            style = TextStyle(
+                fontFamily = ZinelyV21Fonts.Work,
+                fontWeight = FontWeight.Bold,
+                fontSize = ChoosingTextSize,
+                lineHeight = ChoosingTextSize * 1.2f,
+                color = ink,
+            ),
+        )
+    }
+}
+
+/** `.a47-dock button{min-height:48px;font:700 .94rem/1.2}`, `:focus-visible{outline-offset:3px}`. */
+private val ChoosingMinHeight = 48.dp
+private val ChoosingTextSize = 15.04.sp
+private val ChoosingFocusOffset = 3.dp
 
 @Composable
 internal fun QuietAction(action: ZineDockSecondaryAction) {

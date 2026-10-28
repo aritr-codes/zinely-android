@@ -157,6 +157,12 @@ private sealed interface LibrarySheet {
 
     /** A28: renaming one folder. */
     data class RenameFolder(val name: String) : LibrarySheet
+
+    /** A47.7: where several chosen zines can go. A choice of one uses [Move]. */
+    data class MoveMany(val zineIds: List<String>) : LibrarySheet
+
+    /** A47.7: naming a new folder for several chosen zines. */
+    data class NewFolderMany(val zineIds: List<String>, val fromChooser: Boolean) : LibrarySheet
 }
 
 /**
@@ -175,6 +181,8 @@ private val LibrarySheetSaver: Saver<LibrarySheet?, Any> = Saver(
             is LibrarySheet.NewFolder -> listOf("newFolder", sheet.zineId, sheet.fromChooser)
             is LibrarySheet.Folder -> listOf("folder", sheet.name)
             is LibrarySheet.RenameFolder -> listOf("renameFolder", sheet.name)
+            is LibrarySheet.MoveMany -> listOf<Any>("moveMany") + sheet.zineIds
+            is LibrarySheet.NewFolderMany -> listOf<Any>("newFolderMany", sheet.fromChooser) + sheet.zineIds
         }
     },
     restore = { saved ->
@@ -190,6 +198,8 @@ private val LibrarySheetSaver: Saver<LibrarySheet?, Any> = Saver(
                 "newFolder" -> LibrarySheet.NewFolder(f[1] as String, f[2] as Boolean)
                 "folder" -> LibrarySheet.Folder(f[1] as String)
                 "renameFolder" -> LibrarySheet.RenameFolder(f[1] as String)
+                "moveMany" -> LibrarySheet.MoveMany(f.drop(1).map { it as String })
+                "newFolderMany" -> LibrarySheet.NewFolderMany(f.drop(2).map { it as String }, f[1] as Boolean)
                 else -> null
             }
         }.getOrNull()
@@ -206,6 +216,9 @@ private sealed interface FocusWish {
 
     /** After an action: the tile that now holds this zine, once the zine is in [folder]. */
     data class Zine(val id: String, val folder: String?) : FocusWish
+
+    /** The heading: after several zines are deleted, or when choosing stops with no zine to return to (A47.12). */
+    data object Heading : FocusWish
 }
 
 /**
@@ -377,6 +390,8 @@ public fun ZineLibraryScreen(
     // A28. The open folder is saved, so it survives a trip to the Bench even if Android stopped the app
     // meanwhile; a fresh start has nothing saved and opens My Shelf (A28.9).
     var openFolder by rememberSaveable { mutableStateOf<String?>(null) }
+    // A47.10: the zines being chosen, saved exactly as the open folder is, and never written to the zines' storage.
+    var selection by rememberSaveable(stateSaver = ShelfSelection.Saver) { mutableStateOf<ShelfSelection?>(null) }
     val shelfGrid = rememberLazyGridState()
     val folderGrid = rememberLazyGridState()
     val shelfFocus = remember { ShelfFocus() }
@@ -497,6 +512,17 @@ public fun ZineLibraryScreen(
     val folders = shelfFolders(zines)
     val tiles = shelfTiles(zines, openFolder)
 
+    // A47.6, A47.10: only the zines of the view being shown can be chosen. A chosen zine that has gone is dropped,
+    // and a choice made in another view (a folder opened or left) is over. Judged as the Shelf draws, so a gone
+    // zine is never shown chosen for a frame; not while it is still loading, when there are no zines to judge by.
+    val choice = if (state is LibraryShelfState.Loading) {
+        null
+    } else {
+        selection?.prune(openFolder, tiles.mapNotNull { (it as? ShelfTile.Zine)?.zine?.id })
+    }
+    if (state !is LibraryShelfState.Loading) SideEffect { if (choice != selection) selection = choice }
+    val choosing = choice != null
+
     // A37: the restored-details note, on My Shelf only (A37.2). It is ANNOUNCED only when it arrives on a My Shelf
     // that has already drawn its zines in this visit (A37.10). See [NoteArrival].
     val restored = (state as? LibraryShelfState.Content)?.restored.orEmpty()
@@ -549,7 +575,7 @@ public fun ZineLibraryScreen(
     LaunchedEffect(focusWish, tiles) {
         val wish = focusWish ?: return@LaunchedEffect
         val index = when (wish) {
-            FocusWish.Back -> -1
+            FocusWish.Back, FocusWish.Heading -> -1
             is FocusWish.Pile -> tiles.indexOfFirst { it is ShelfTile.Pile && it.name == wish.folder }
             is FocusWish.Zine -> {
                 if (zines.firstOrNull { it.id == wish.id }?.let { it.folder == wish.folder } != true) return@LaunchedEffect
@@ -576,6 +602,8 @@ public fun ZineLibraryScreen(
         undo?.outcome?.complete(false)
         folderAtAction = openFolder
         openSheet = null
+        // A47.4: finishing an action stops choosing. Only the dock's Move reaches here while choosing.
+        selection = null
         then()
     }
     // Into a folder: from the top, with focus on the control that leads back out.
@@ -585,6 +613,25 @@ public fun ZineLibraryScreen(
         focusWish = FocusWish.Back
         scope.launch { folderGrid.scrollToItem(0) }
         Unit
+    }
+
+    // ---- A47: choosing several zines ---------------------------------------------------------------
+    // Starting keeps focus where it was, on the zine just chosen (A47.12), and puts the snack away.
+    val startChoosing = { id: String ->
+        snackUp = false
+        selection = ShelfSelection.start(id, openFolder)
+    }
+    // ✕ and Back: focus to the zine touched last, else the heading (A47.12). Leaving changes nothing.
+    val stopChoosing = {
+        val last = choice?.last
+        selection = null
+        focusWish = if (last != null && zines.any { it.id == last }) FocusWish.Zine(last, openFolder) else FocusWish.Heading
+    }
+    val toggleChosen = { id: String ->
+        val next = choice?.toggle(id)
+        selection = next
+        // Letting go of the last zine stops choosing, with focus on that zine (A47.4, A47.12).
+        if (next == null) focusWish = FocusWish.Zine(id, openFolder)
     }
 
     if (showColophon) {
@@ -618,6 +665,9 @@ public fun ZineLibraryScreen(
         openFolder = null
     }
     BackHandler(enabled = openFolder != null, onBack = leaveFolder)
+    // A47.4: registered after the folder's, so it is asked first: inside a folder, Back stops choosing and a
+    // second Back leaves the folder (A28.9).
+    BackHandler(enabled = choosing, onBack = stopChoosing)
 
     Box(
         modifier
@@ -664,17 +714,38 @@ public fun ZineLibraryScreen(
                 ZineShelf(
                     zines = tiles.map { tile ->
                         when (tile) {
-                            is ShelfTile.Zine -> ZineShelfItem(tile.zine.title, tile.zine.cover, tile.zine.subtitle)
+                            is ShelfTile.Zine -> ZineShelfItem(
+                                title = tile.zine.title,
+                                recipe = tile.zine.cover,
+                                subtitle = tile.zine.subtitle,
+                                choosing = choosing,
+                                chosen = choice?.ids?.contains(tile.zine.id) == true,
+                            )
                             is ShelfTile.Pile -> ZineShelfItem(
                                 title = tile.name,
                                 recipe = tile.zines.first().cover,
                                 subtitle = pluralZineCount(tile.zines.size),
                                 pile = tile.zines.map { it.cover },
+                                choosing = choosing,
                             )
                         }
                     },
                     onOpen = { index ->
-                        when (val tile = tiles.getOrNull(index)) {
+                        val tile = tiles.getOrNull(index)
+                        // A47.2, A47.6: while choosing, a tap chooses a zine, and a folder only says why it cannot be.
+                        if (choosing) {
+                            when (tile) {
+                                is ShelfTile.Zine -> toggleChosen(tile.zine.id)
+                                is ShelfTile.Pile -> {
+                                    snack = HomeShelfEvent.FolderSnack(Copy.Select.OPEN_FOLDER_FIRST)
+                                    snackStep++
+                                    snackUp = true
+                                }
+                                null -> Unit
+                            }
+                            return@ZineShelf
+                        }
+                        when (tile) {
                             is ShelfTile.Zine ->
                                 if (tile.zine.unavailableReason == null) {
                                     onOpenZine(tile.zine.id)
@@ -700,7 +771,10 @@ public fun ZineLibraryScreen(
                     state = if (openFolder == null) shelfGrid else folderGrid,
                     focus = shelfFocus,
                     focusTile = focusTile,
-                    note = if (!noteUp) {
+                    onSelect = { index -> (tiles.getOrNull(index) as? ShelfTile.Zine)?.let { startChoosing(it.zine.id) } },
+                    choosing = choosing,
+                    // `.a47-on .restored{display:none}`: the note waits until choosing is over.
+                    note = if (!noteUp || choosing) {
                         null
                     } else {
                         {
@@ -751,6 +825,9 @@ public fun ZineLibraryScreen(
                 ),
         )
 
+        // A47.3: `.a47-bar{z-index:30}` — over the shelf and its grain, under the dock and the sheets.
+        choice?.let { ShelfChoosingBar(count = it.ids.size, onStop = stopChoosing, modifier = Modifier.align(Alignment.TopCenter)) }
+
         // `.dock{position:absolute;left:0;right:0;bottom:0}` — over the shelf, which scrolls under it and
         // clears it with bottom padding of its own (188dp on `.shelf`, 206dp on `.empty`; the failure
         // surface is cleared by the measured dock height),
@@ -792,6 +869,33 @@ public fun ZineLibraryScreen(
                 else -> emptyList()
             },
             modifier = Modifier.align(Alignment.BottomCenter).onSizeChanged { dockHeight = it.height },
+            choosing = choice?.let { chosen ->
+                val several = pluralZineCount(chosen.ids.size)
+                ZineDockChoosing(
+                    moveLabel = if (openFolder == null) Copy.Folders.MOVE_TO_A_FOLDER else Copy.Folders.MOVE_SOMEWHERE_ELSE,
+                    moveName = if (openFolder == null) Copy.Select.moveToAFolder(several) else Copy.Select.moveSomewhereElse(several),
+                    deleteName = Copy.Select.delete(several),
+                    // A47.7. A choice of one is the single move, words and all; A28.14's first folder skips the chooser.
+                    onMove = {
+                        haptics.perform(ZinelyHaptic.Tick)
+                        val ids = chosen.ids
+                        openSheet = when {
+                            ids.size == 1 && folders.isEmpty() -> LibrarySheet.NewFolder(ids.single(), fromChooser = false)
+                            ids.size == 1 -> LibrarySheet.Move(ids.single())
+                            folders.isEmpty() -> LibrarySheet.NewFolderMany(ids, fromChooser = false)
+                            else -> LibrarySheet.MoveMany(ids)
+                        }
+                    },
+                    // A47.8: no question first, as for one zine; focus goes to the heading (A47.12).
+                    onDelete = {
+                        haptics.perform(ZinelyHaptic.Boundary)
+                        val ids = chosen.ids
+                        selection = null
+                        focusWish = FocusWish.Heading
+                        if (ids.size == 1) onDeleteZine(ids.single()) else onDeleteZines(ids)
+                    },
+                )
+            },
         )
 
         // `.snack` — the Shelf's own, for folder actions (A28.12, A28.13): *the Bench's support-paper
@@ -945,6 +1049,15 @@ public fun ZineLibraryScreen(
                         LibrarySheet.Move(zine.id)
                     }
                 }
+                // A47.1: the way in that can be seen.
+                ZineAction.Select -> {
+                    haptics.perform(ZinelyHaptic.Tick)
+                    openSheet = null
+                    startChoosing(zine.id)
+                    // A47.12: focus on the zine just chosen. The sheet's window would hand it back to the `⋯`,
+                    // which is gone while choosing. (A long press needs none: focus is already on the tile.)
+                    focusWish = FocusWish.Zine(zine.id, zine.folder)
+                }
                 ZineAction.Delete -> {
                     haptics.perform(ZinelyHaptic.Boundary)
                     openSheet = null
@@ -964,29 +1077,39 @@ public fun ZineLibraryScreen(
 
     // ---- A28: the three folder sheets ---------------------------------------------------------------
     val moving = (openSheet as? LibrarySheet.Move)?.let { open -> zines.firstOrNull { it.id == open.zineId } }
+    // A47.7: the chooser for a set, which is the zines still shown of those chosen. Its title is their count.
+    val movingMany = (openSheet as? LibrarySheet.MoveMany)?.zineIds?.filter { id -> zines.any { it.id == id } }
+        ?.takeIf { it.isNotEmpty() }
     FolderMoveSheet(
-        target = moving?.let { FolderMoveTarget(it.title, it.folder, folders) },
-        onMove = { folder ->
-            moving?.let { zine ->
-                haptics.perform(ZinelyHaptic.Snap)
-                confirmFolderAction { onMoveZine(zine.id, folder) }
+        target = when {
+            moving != null -> FolderMoveTarget(moving.title, moving.folder, folders)
+            movingMany != null -> pluralZineCount(movingMany.size).let { several ->
+                FolderMoveTarget(several, openFolder, folders, paneTitle = Copy.Select.movePane(several))
             }
+            else -> null
+        },
+        onMove = { folder ->
+            haptics.perform(ZinelyHaptic.Snap)
+            moving?.let { zine -> confirmFolderAction { onMoveZine(zine.id, folder) } }
+            movingMany?.let { ids -> confirmFolderAction { onMoveZines(ids, folder) } }
         },
         onNewFolder = {
-            moving?.let { zine ->
-                haptics.perform(ZinelyHaptic.Tick)
-                openSheet = LibrarySheet.NewFolder(zine.id, fromChooser = true)
-            }
+            haptics.perform(ZinelyHaptic.Tick)
+            moving?.let { zine -> openSheet = LibrarySheet.NewFolder(zine.id, fromChooser = true) }
+            movingMany?.let { ids -> openSheet = LibrarySheet.NewFolderMany(ids, fromChooser = true) }
         },
         onDismiss = { openSheet = null },
     )
 
     val naming = openSheet as? LibrarySheet.NewFolder
     val namingFor = naming?.let { open -> zines.firstOrNull { it.id == open.zineId } }
+    val namingMany = openSheet as? LibrarySheet.NewFolderMany
+    val namingForMany = namingMany?.zineIds?.filter { id -> zines.any { it.id == id } }?.takeIf { it.isNotEmpty() }
     val renamingFolder = (openSheet as? LibrarySheet.RenameFolder)?.name?.takeIf { it in folders }
     FolderNameSheet(
         target = when {
             namingFor != null -> FolderNameTarget(zineTitle = namingFor.title, zineFolder = namingFor.folder)
+            namingForMany != null -> FolderNameTarget(zineFolder = openFolder, zines = pluralZineCount(namingForMany.size))
             renamingFolder != null -> FolderNameTarget(renaming = renamingFolder, count = folders.getValue(renamingFolder))
             else -> null
         },
@@ -997,12 +1120,17 @@ public fun ZineLibraryScreen(
         onGo = { name ->
             when {
                 namingFor != null -> confirmFolderAction { onMoveZine(namingFor.id, name) }
+                namingForMany != null -> confirmFolderAction { onMoveZines(namingForMany, name) }
                 renamingFolder != null -> confirmFolderAction { onRenameFolder(renamingFolder, name) }
             }
         },
         // A28.14: Cancel returns to the chooser when the sheet came from the chooser.
         onCancel = {
-            openSheet = if (naming != null && naming.fromChooser) LibrarySheet.Move(naming.zineId) else null
+            openSheet = when {
+                naming != null && naming.fromChooser -> LibrarySheet.Move(naming.zineId)
+                namingMany != null && namingMany.fromChooser -> LibrarySheet.MoveMany(namingMany.zineIds)
+                else -> null
+            }
         },
         onDismiss = { openSheet = null },
     )
