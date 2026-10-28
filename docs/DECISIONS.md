@@ -17497,8 +17497,11 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 
 #### Consequences
 
-- `HomeShelfEvent.DeletePrompt` carries a set of ids; the one-zine path is the set of one. The screen's single undo
-  window (`UndoRequest`) covers the set.
+- One-zine delete keeps `HomeShelfEvent.DeletePrompt(id, title)`; a batch emits
+  `HomeShelfEvent.DeleteBatchPrompt(ids, message)`, handled by the screen's same single Undo window
+  (`onDeleteUndoMany` / `onDeleteCommitMany`). A set of one uses `DeletePrompt`.
+- A batch's pending-delete markers are written in one write (`PendingDeleteStore.addAll`), all or nothing; if it
+  fails nothing is hidden and the maker is told at once. Undo clears them in one write too (`removeAll`).
 - A28's "[stated] the folder tile's long-press label is 'Actions', as a zine's is" is amended by A47.1.
 - New goldens for the selection states; the zine sheet goldens change (one row).
 - **Owed before Accepted:** both device passes, a TalkBack listen (owner), 390dp parity.
