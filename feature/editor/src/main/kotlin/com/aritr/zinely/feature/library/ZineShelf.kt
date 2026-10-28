@@ -40,6 +40,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -99,6 +100,13 @@ internal data class ZineShelfItem(
      * name and [subtitle] its count (`"3 zines"`), which stands where a zine's date stands.
      */
     val pile: List<ZineCoverRecipe>? = null,
+    /**
+     * The Shelf is choosing several zines (A47): a tap chooses rather than opens, and a pile is quieter. Set on
+     * every tile while choosing, so each one shows it can be chosen, or that it cannot.
+     */
+    val choosing: Boolean = false,
+    /** While [choosing]: this zine is chosen. */
+    val chosen: Boolean = false,
 )
 
 /**
@@ -226,6 +234,8 @@ internal const val ZineShelfHeadTestTag: String = "shelf-head"
  * @param focusTile the position of the tile [focus]'s tile requester is attached to, or `-1`.
  * @param note a full-width cell directly under the heading and its count, above the first zine: the
  *   restored-details note (A37.2). It scrolls with the zines and never covers one.
+ * @param onSelect a zine's long press, by its position: start choosing several (A47.1).
+ * @param choosing the Shelf is choosing several (A47): the heading is hidden under the screen's bar.
  */
 @Composable
 internal fun ZineShelf(
@@ -241,6 +251,8 @@ internal fun ZineShelf(
     focus: ShelfFocus = remember { ShelfFocus() },
     focusTile: Int = -1,
     note: (@Composable () -> Unit)? = null,
+    onSelect: (Int) -> Unit = {},
+    choosing: Boolean = false,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(ShelfColumns),
@@ -286,7 +298,12 @@ internal fun ZineShelf(
                 folder = folder,
                 onBack = onBack,
                 focus = focus,
-                modifier = if (hidden) {
+                reachable = !choosing,
+                // A47.3: `.a47-on .shelf-head{visibility:hidden}` — the choosing bar stands in its place and
+                // says what it said. Hidden, so it keeps its space and nothing below it moves.
+                modifier = if (choosing) {
+                    Modifier.alpha(0f).clearAndSetSemantics {}
+                } else if (hidden) {
                     Modifier.alpha(0f).clearAndSetSemantics {
                         contentDescription = Copy.Shelf.LOADING_YOUR_ZINES
                         liveRegion = LiveRegionMode.Polite
@@ -317,6 +334,7 @@ internal fun ZineShelf(
                 onOpen = onOpen,
                 onActions = onActions,
                 focusRequester = focus.tile.takeIf { index == focusTile },
+                onSelect = onSelect,
             )
         }
     }
@@ -377,8 +395,11 @@ private fun ShelfHeading(
     onBack: () -> Unit,
     focus: ShelfFocus,
     modifier: Modifier = Modifier,
+    // `false` while the head is hidden under the choosing bar: a key must not reach a back control nobody can see.
+    reachable: Boolean = true,
 ) {
     val colors = ZinelyTheme.v21Colors
+    val reach = Modifier.focusProperties { canFocus = reachable }
     Row(
         modifier
             .testTag(ZineShelfHeadTestTag)
@@ -389,7 +410,7 @@ private fun ShelfHeading(
         verticalAlignment = Alignment.Bottom,
     ) {
         Column(if (folder != null) Modifier.weight(1f, fill = false) else Modifier) {
-            if (folder != null) ShelfBack(onBack, Modifier.focusRequester(focus.back))
+            if (folder != null) ShelfBack(onBack, Modifier.focusRequester(focus.back).then(reach))
             Text(
                 text = folder ?: ShelfHeadingText,
                 style = TextStyle(
@@ -402,7 +423,7 @@ private fun ShelfHeading(
                 ),
                 maxLines = if (folder != null) FolderHeadingMaxLines else Int.MAX_VALUE,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.focusRequester(focus.heading).focusable().semantics { heading() },
+                modifier = Modifier.focusRequester(focus.heading).then(reach).focusable().semantics { heading() },
             )
             val swipe = rememberShelfSwipePath()
             Canvas(

@@ -22,6 +22,12 @@ internal interface PendingDeleteStore {
     fun add(id: String): Boolean
 
     fun remove(id: String): Boolean
+
+    /** All of [ids] in one write: all marked or none ([add] for a batch). */
+    fun addAll(ids: Collection<String>): Boolean
+
+    /** All of [ids] cleared in one write: all or none. */
+    fun removeAll(ids: Collection<String>): Boolean
 }
 
 @Singleton
@@ -39,6 +45,12 @@ internal class SharedPreferencesPendingDeleteStore @Inject constructor(
 
     @Synchronized
     override fun remove(id: String): Boolean = write(pendingIds() - id)
+
+    @Synchronized
+    override fun addAll(ids: Collection<String>): Boolean = write(pendingIds() + ids)
+
+    @Synchronized
+    override fun removeAll(ids: Collection<String>): Boolean = write(pendingIds() - ids.toSet())
 
     private fun write(ids: Set<String>): Boolean =
         preferences.edit().putStringSet(PendingIdsKey, ids).commit()

@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.ui.a11y.zinelyV2Control
+import com.aritr.zinely.ui.components.zinelyV21Dimmed
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -134,6 +135,8 @@ internal fun zineShelfMoreTestTag(index: Int): String = "shelf-more-$index"
  * @param onActions long-press, or the `⋯`.
  * @param focusRequester set on the tile the Shelf wants focus to land on after a folder action (A28,
  *   *Focus*); `null` for every other tile.
+ * @param onSelect a zine's long press: start choosing several with it (A47.1). While [ZineShelfItem.choosing],
+ *   a tap reports [onOpen] and the screen chooses; the long press and the `⋯` are gone.
  */
 @Composable
 internal fun ZineOnShelf(
@@ -143,6 +146,7 @@ internal fun ZineOnShelf(
     onActions: (Int) -> Unit,
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester? = null,
+    onSelect: (Int) -> Unit = {},
 ) {
     val colors = ZinelyTheme.v21Colors
     val haptics = ZinelyTheme.haptics
@@ -154,8 +158,12 @@ internal fun ZineOnShelf(
 
     val fill = zine.recipe.surface.v21Fill(colors)
     val markInk = zine.recipe.surface.v21MarkInk(colors)
+    // A47.6: while choosing, a pile cannot be chosen. `.a47-on .zine.pile{opacity:.4}`, and to the platform it
+    // reads "Dimmed" — but it stays enabled and a tap still reaches the screen, which says why.
+    val dimmed = zine.choosing && pile != null
+    val choosingZine = zine.choosing && pile == null
 
-    Box(modifier) {
+    Box(modifier.zinelyV21Dimmed(if (dimmed) DimmedPileAlpha else 1f)) {
         Column(
             Modifier
                 // `.start:focus-visible{outline:2px solid var(--ink);outline-offset:5px}`. A CSS outline
@@ -177,7 +185,28 @@ internal fun ZineOnShelf(
                 // Before the seam, never after: the seam ends in `clearAndSetSemantics`, and a tag
                 // chained behind it leaves a node no test and no service can find.
                 .testTag(zineShelfCoverTestTag(index))
-                .zinelyV2Control(
+                // A47.6, A47.11: a dimmed pile is NOT disabled to the platform: its state reads "Dimmed" and its
+                // click stays live, so a TalkBack double-tap reaches the screen, which says why it cannot be chosen.
+                .then(
+                    if (zine.choosing) {
+                        // A47.11: the zine's name, then its state; its tap is "Select" / "Unselect".
+                        Modifier.zinelyV2Control(
+                            label = if (pile != null) Copy.Folders.tileLabel(zine.title, zine.subtitle) else zine.title,
+                            interactionSource = interaction,
+                            onClick = { haptics.perform(ZinelyHaptic.Tick); onOpen(index) },
+                            // No `selected`: Compose would turn it into checkable/checked, a "checkbox" the tile is not.
+                            stateDescription = when {
+                                dimmed -> Copy.Select.DIMMED
+                                zine.chosen -> Copy.Select.SELECTED
+                                else -> Copy.Select.NOT_SELECTED
+                            },
+                            onClickLabel = if (!choosingZine) null else if (zine.chosen) Copy.Select.UNSELECT else Copy.Select.SELECT,
+                        )
+                    } else {
+                        Modifier
+                    },
+                )
+                .then(if (zine.choosing) Modifier else Modifier.zinelyV2Control(
                     // `.zine` carries no `aria-label` — it is a `<button>` whose accessible name is its
                     // own text content, which is the name *and* the date. This seam ends in
                     // `clearAndSetSemantics`, so the caption's two `Text`s have no nodes of their own and
@@ -190,12 +219,13 @@ internal fun ZineOnShelf(
                     label = if (pile != null) Copy.Folders.tileLabel(zine.title, zine.subtitle) else zine.title,
                     interactionSource = interaction,
                     onClick = { haptics.perform(ZinelyHaptic.Tick); onOpen(index) },
+                    // A47.1: a zine's long press starts choosing several with it; a folder's still opens its sheet.
                     onLongClick = {
                         haptics.perform(ZinelyHaptic.Boundary)
-                        onActions(index)
+                        if (pile != null) onActions(index) else onSelect(index)
                     },
-                    onLongClickLabel = LongPressActionLabel,
-                ),
+                    onLongClickLabel = if (pile != null) LongPressActionLabel else Copy.Select.SELECT,
+                )),
             verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
         ) {
             if (pile != null) ZinePile(pile, pressed, Modifier.fillMaxWidth()) else ZineV21Cover(
@@ -204,6 +234,7 @@ internal fun ZineOnShelf(
                 index = index,
                 pressed = pressed,
                 borderInk = zine.recipe.surface.v21BorderInk(colors),
+                chosen = if (choosingZine) zine.chosen else null,
                 modifier = Modifier.fillMaxWidth(),
             ) { markModifier ->
                 Image(
@@ -218,7 +249,8 @@ internal fun ZineOnShelf(
 
             // `.name` / `.sub`. The end padding is the `⋯`'s: it is a sibling, so it takes no layout
             // of its own, and without the reservation a long name would run under it.
-            Column(Modifier.padding(end = MoreSize)) {
+            // `.a47-on .cap{padding-right:0}`: no `⋯` while choosing, so nothing to reserve room for.
+            Column(Modifier.padding(end = if (zine.choosing) 0.dp else MoreSize)) {
                 Text(
                     text = zine.title,
                     style = NameStyle(colors.ink),
@@ -269,7 +301,8 @@ internal fun ZineOnShelf(
             }
         }
 
-        MoreButton(
+        // A47.2: `.a47-on .more{display:none}` — one zine's sheet in the middle of a choice of several.
+        if (!zine.choosing) MoreButton(
             label = if (pile != null) Copy.Folders.actionsForFolder(zine.title) else "Actions for ${zine.title}",
             ink = colors.inkSoft,
             // The same sheet the long press opens, and the long press already buzzes — a tile whose two
@@ -574,3 +607,6 @@ private val MoreLitWash = Color.Black.copy(alpha = 0.10f)
  * shortest name consistent with the sheet's own `aria-label="Zine actions"`.
  */
 private const val LongPressActionLabel = "Actions"
+
+/** `.a47-on .zine.pile{opacity:.4}` (A47.6). */
+private const val DimmedPileAlpha = 0.4f

@@ -143,6 +143,10 @@ internal class HomeViewModel @Inject constructor(
     @Volatile
     private var listedNotes: Map<String, RestoredDetails> = emptyMap()
 
+    /** Every zine's title in the store's latest listing, hidden ones too: what a batch names when it fails. */
+    @Volatile
+    private var listedTitles: Map<String, String> = emptyMap()
+
     /**
      * The deletes the store has finished, kept in [pendingDeletes] only so a deleted card does not flash back
      * before the store lists the Shelf without it.
@@ -299,6 +303,7 @@ internal class HomeViewModel @Inject constructor(
             }
             // Same convergence as above: a dismissed note the store no longer lists is over.
             listedNotes = projects.mapNotNull { e -> e.restored?.let { e.id to it } }.toMap()
+            listedTitles = projects.associate { it.id to it.title }
             if (dismissed.any { (id, note) -> listedNotes[id] != note }) {
                 dismissedNotes.update { notes -> notes.filter { (id, note) -> listedNotes[id] == note } }
             }
@@ -544,26 +549,110 @@ internal class HomeViewModel @Inject constructor(
      * Put a zine in [folder], or back on My Shelf (`null`). The snack says where it went, and that its old
      * folder is put away if this was the last zine in it (A28.3); Undo puts it back where it was.
      */
-    fun moveZine(id: String, folder: String?) = folderAction {
+    fun moveZine(id: String, folder: String?) = folderAction { runMove(id, folder) }
+
+    /**
+     * Move several zines at once (A47.7, [ADR-142](docs/DECISIONS.md#adr-142)): one folder action, so a waiting
+     * delete is finished first (rule 11) and only one runs at a time. [ids] are all in one place (the screen lets
+     * no folder be chosen); a choice of one, after dropping zines no longer shown, is the single move with A28's
+     * words. Each zine is moved on its own, in Shelf order, and one that cannot be is named (A47.9). Undo puts each
+     * zine that moved back where it was.
+     */
+    fun moveMany(ids: List<String>, folder: String?) = folderAction {
         val zines = shownZines()
-        val zine = zines.firstOrNull { it.id == id } ?: return@folderAction
-        val from = zine.folder
-        // The spelling the store will write: the folder's own if it exists, else the name as cleaned.
-        val joined = folder?.let { name -> zines.firstNotNullOfOrNull { z -> z.folder?.takeIf { FolderNames.same(it, name) } } }
-        val to = joined ?: FolderNames.clean(folder)
-        if (!projectRepository.moveProject(id, to).sentMessageOnFailure()) return@folderAction
-        val line = when {
-            to == null -> Copy.Folders.BACK_ON_MY_SHELF
-            joined == null -> Copy.Folders.made(to)
-            else -> Copy.Folders.movedTo(to)
+        val chosen = zines.filter { it.id in ids }
+        when (chosen.size) {
+            0 -> Unit
+            1 -> runMove(chosen.single().id, folder)
+            else -> runMoveMany(zines, chosen, folder)
         }
-        val emptied = from != null && from != to && zines.count { it.folder == from } == 1
-        snackAction = {
-            if (projectRepository.moveProject(id, from).sentMessageOnFailure()) {
-                val back = if (from != null) Copy.Folders.backIn(zine.title, from) else Copy.Folders.backOnMyShelf(zine.title)
-                eventQueue.send(HomeShelfEvent.FolderSnack(back, zineId = id, folder = from))
+    }
+
+    private suspend fun runMoveMany(zines: List<LibraryZine>, chosen: List<LibraryZine>, folder: String?) {
+        val from = chosen.first().folder
+        val joined = joinedSpelling(zines, folder)
+        val to = joined ?: FolderNames.clean(folder)
+        // Every zine is tried, as unpack's Undo tries every one (rule 18): what the Shelf then shows is true.
+        val (moved, refused) = chosen.partition { projectRepository.moveProject(it.id, to) is DataResult.Success }
+        val refusedTitles = refused.map { it.title }
+        if (moved.isEmpty()) {
+            // As a refused single move: a message, and no Undo, because nothing moved.
+            eventQueue.send(HomeShelfEvent.Message(Copy.Select.notMoved(null, refusedTitles)))
+            return
+        }
+        // One zine moved is spoken as the single move (A47.7: "uses A28.12's words exactly"), the prototype's `one`.
+        val one = moved.singleOrNull()
+        val n = zineCount(moved.size)
+        val line = when {
+            one != null -> oneMoveLine(to, joined)
+            to == null -> Copy.Select.movedToMyShelf(n)
+            joined == null -> Copy.Select.madeWith(to, n)
+            else -> Copy.Select.movedTo(n, to)
+        }
+        // Only when every zine in it moved; a refused zine keeps its folder on the Shelf.
+        val emptied = from != null && from != to && zines.count { it.folder == from } == moved.size
+        val said = if (emptied) Copy.Folders.putAway(line, from!!) else line
+        snackAction = if (one != null) {
+            { undoOneMove(one) }
+        } else {
+            {
+                // Every zine is tried even after one fails (rule 18).
+                val allBack = moved.map { projectRepository.moveProject(it.id, it.folder) is DataResult.Success }.all { it }
+                eventQueue.send(
+                    when {
+                        allBack -> HomeShelfEvent.FolderSnack(
+                            if (from != null) Copy.Select.areBackIn(n, from) else Copy.Select.areBackOnMyShelf(n),
+                            zineId = moved.first().id,
+                            folder = from,
+                        )
+                        // A47.9 / R6: those left are where the batch put them.
+                        to != null -> HomeShelfEvent.FolderSnack(Copy.Select.notAllBack(to))
+                        else -> HomeShelfEvent.FolderSnack(Copy.Folders.NOT_EVERY_ZINE_WENT_BACK)
+                    },
+                )
             }
         }
+        eventQueue.send(
+            HomeShelfEvent.FolderSnack(
+                message = if (refused.isEmpty()) said else Copy.Select.notMoved(said, refusedTitles),
+                action = FolderSnackAction.Undo,
+                zineId = moved.first().id,
+                folder = to,
+            ),
+        )
+    }
+
+    /** The spelling the store will write for [folder]: the folder's own if one on the Shelf is the same name. */
+    private fun joinedSpelling(zines: List<LibraryZine>, folder: String?): String? =
+        folder?.let { name -> zines.firstNotNullOfOrNull { z -> z.folder?.takeIf { FolderNames.same(it, name) } } }
+
+    /** A28.12's line for one zine moved to [to]; [joined] is set when it joined a folder already on the Shelf. */
+    private fun oneMoveLine(to: String?, joined: String?): String = when {
+        to == null -> Copy.Folders.BACK_ON_MY_SHELF
+        joined == null -> Copy.Folders.made(to)
+        else -> Copy.Folders.movedTo(to)
+    }
+
+    /** One moved zine's Undo: back to the folder the Shelf showed it in. */
+    private suspend fun undoOneMove(zine: LibraryZine) {
+        val from = zine.folder
+        if (projectRepository.moveProject(zine.id, from).sentMessageOnFailure()) {
+            val back = if (from != null) Copy.Folders.backIn(zine.title, from) else Copy.Folders.backOnMyShelf(zine.title)
+            eventQueue.send(HomeShelfEvent.FolderSnack(back, zineId = zine.id, folder = from))
+        }
+    }
+
+    private suspend fun runMove(id: String, folder: String?) {
+        val zines = shownZines()
+        val zine = zines.firstOrNull { it.id == id } ?: return
+        val from = zine.folder
+        // The spelling the store will write: the folder's own if it exists, else the name as cleaned.
+        val joined = joinedSpelling(zines, folder)
+        val to = joined ?: FolderNames.clean(folder)
+        if (!projectRepository.moveProject(id, to).sentMessageOnFailure()) return
+        val line = oneMoveLine(to, joined)
+        val emptied = from != null && from != to && zines.count { it.folder == from } == 1
+        snackAction = { undoOneMove(zine) }
         eventQueue.send(
             HomeShelfEvent.FolderSnack(
                 message = if (emptied) Copy.Folders.putAway(line, from!!) else line,
@@ -682,6 +771,32 @@ internal class HomeViewModel @Inject constructor(
     }
 
     /**
+     * Delete several zines with one Undo (A47.8, [ADR-142](docs/DECISIONS.md#adr-142)): [delete], for a set. Every
+     * zine's marker is written in **one** write: all or none. If it fails nothing is hidden (with no marker a
+     * restart would bring a zine back unannounced) and the maker is told at once, as for one zine. Otherwise they
+     * are hidden together under **one** [HomeShelfEvent.DeleteBatchPrompt]. A set of one, however it came to be one, is [delete] with its words.
+     */
+    fun deleteMany(ids: List<String>) {
+        val zines = (state.value as? HomeUiState.Content)?.zines ?: return
+        val shown = zines.filter { it.id in ids }
+        if (shown.size <= 1) {
+            shown.firstOrNull()?.let { delete(it.id) }
+            return
+        }
+        if (!pendingDeleteStore.addAll(shown.map { it.id })) {
+            eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
+            return
+        }
+        val markedIds = shown.map { it.id }
+        settling = settling - markedIds.toSet()
+        finishedDeletes = finishedDeletes - markedIds.toSet()
+        pendingDeletes.update { it + markedIds }
+        eventQueue.trySend(
+            HomeShelfEvent.DeleteBatchPrompt(markedIds, Copy.Select.deleted(zineCount(markedIds.size))),
+        )
+    }
+
+    /**
      * Whether [id]'s delete can still be undone. The screen asks before it offers Undo: prompts queue, so
      * one can reach the screen after a folder action has already finished its delete (rule 11), or after a
      * restore, an open or a new zine has ([finishedDeletes]), and an Undo offered then would do nothing.
@@ -699,6 +814,16 @@ internal class HomeViewModel @Inject constructor(
         pendingDeletes.update { it - id }
     }
 
+    /** Undo for a batch: [undoDelete] for all of them, markers cleared in one write; if that fails none comes back. */
+    fun undoDeletes(ids: List<String>) {
+        if (!pendingDeleteStore.removeAll(ids)) {
+            eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
+            return
+        }
+        finishedDeletes = finishedDeletes - ids.toSet()
+        pendingDeletes.update { it - ids.toSet() }
+    }
+
     /**
      * The undo window closed: perform the store delete. On success the id STAYS in
      * [pendingDeletes] — unhiding here would flash the deleted card back for the window between
@@ -713,6 +838,29 @@ internal class HomeViewModel @Inject constructor(
         // A folder action is finishing this one, or has: once is enough, and a second failure would say so twice.
         if (id in settling) return
         viewModelScope.launch { performCommit(id) }
+    }
+
+    /**
+     * A batch's undo window closed without Undo: each zine is deleted on its own, in order (A47.9). One that cannot
+     * be comes back exactly as in [commitDelete], and the rest stay deleted; instead of one warm message per zine,
+     * **one** message names, in Shelf order, every chosen zine that is on the Shelf and not deleted.
+     */
+    fun commitDeletes(ids: List<String>) {
+        val mine = ids.filter { it !in settling }
+        if (mine.isEmpty()) return
+        viewModelScope.launch {
+            val failed = mine.filterNot { performCommit(it, warn = false) }
+            // Named only if it is on the Shelf now: not one whose marker could not be cleared (still hidden, so
+            // still deleting).
+            val back = failed.filter { it !in pendingDeletes.value }.toSet()
+            // listedTitles is in Shelf order, and the store still lists every zine that was not deleted.
+            val titles = listedTitles.filterKeys { it in back }.values.toList()
+            when {
+                titles.isNotEmpty() && titles.size == back.size ->
+                    eventQueue.send(HomeShelfEvent.Message(Copy.Select.notDeleted(titles)))
+                failed.isNotEmpty() -> eventQueue.send(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
+            }
+        }
     }
 
     /**
@@ -741,8 +889,10 @@ internal class HomeViewModel @Inject constructor(
      * Accepted limit: a caller that waited behind a commit which then **failed** is also answered `true`,
      * where it once made its own store call and got its own failure. The failed delete has by then put the
      * card back and said so, so the Shelf that caller goes on to act on is true.
+     *
+     * @param warn whether a failure is said here. [commitDeletes] passes `false` and names its failures together.
      */
-    private suspend fun performCommit(id: String): Boolean = commitMutex.withLock {
+    private suspend fun performCommit(id: String, warn: Boolean = true): Boolean = commitMutex.withLock {
         if (id in finishedDeletes) return@withLock true
         if (id !in pendingDeletes.value) {
             // Undone, or the zine was already gone and the store's list dropped it. A marker with no delete
@@ -764,7 +914,7 @@ internal class HomeViewModel @Inject constructor(
                 // Only show the real card again after clearing the durable retry intent. Otherwise the next
                 // process would legitimately finish a delete the current UI appeared to cancel.
                 if (pendingDeleteStore.remove(id)) pendingDeletes.update { it - id }
-                eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
+                if (warn) eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
                 false
             }
         }
@@ -1099,3 +1249,6 @@ internal fun editedLabel(updatedAtEpochMs: Long, nowEpochMs: Long): String {
 }
 
 private fun plural(n: Long, unit: String): String = if (n == 1L) unit else "${unit}s"
+
+/** "1 zine" / "3 zines": the count [Copy.Select]'s batch words take. */
+private fun zineCount(n: Int): String = if (n == 1) "1 zine" else "$n zines"

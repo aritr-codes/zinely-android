@@ -70,6 +70,13 @@ public sealed interface HomeShelfEvent {
      */
     public data class DeletePrompt(val id: String, val title: String) : HomeShelfEvent
 
+    /**
+     * Several zines were deleted at once (`v21-library.html` A47.8, [ADR-142](docs/DECISIONS.md#adr-142)) and are
+     * already hidden: one undo snackbar with [message] covers all of [ids]. Undo → `onDeleteUndoMany(ids)`,
+     * dismiss/timeout → `onDeleteCommitMany(ids)`. A delete of one zine is always a [DeletePrompt].
+     */
+    public data class DeleteBatchPrompt(val ids: List<String>, val message: String) : HomeShelfEvent
+
     /** A warm, transient message (a failed mutation). */
     public data class Message(val text: String) : HomeShelfEvent
 

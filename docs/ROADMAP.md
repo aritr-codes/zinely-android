@@ -123,6 +123,14 @@ a test, not seen on a device; [#149](https://github.com/aritr-codes/zinely-andro
   In no APK and not yet tried on a device; what is owed is listed in
   [OWNER-CHECKLIST §2.6](OWNER-CHECKLIST.md#26-ink-mixer--built-unreleased-no-device-pass-yet).
 
+- **My Shelf multi-select:** press and hold a zine to choose several, then Move to a folder or Delete them, with one
+  Undo for the whole batch. Moved from Planned on 2026-10-26, when the owner asked for it in `0.9.0-beta.8`:
+  designed as `v21-library.html` A47 (frozen under delegation) and being built for beta.8
+  ([ADR-142](DECISIONS.md#adr-142), Proposed; it replaces [ADR-141](DECISIONS.md#adr-141) decision 3). Beta.8 is not
+  cut, so it is in no APK. What is owed before it is accepted is in
+  [OWNER-CHECKLIST §2.7](OWNER-CHECKLIST.md#27-shelf-multi-select--being-built-no-device-pass-yet). The Bench stays
+  single-select.
+
 Shelf folders and document voices (Book and Plain) shipped in `0.9.0-beta.7` on 2026-10-11
 ([CHANGELOG.md](../CHANGELOG.md#090-beta7--2026-10-11--folders-and-a-second-font)). Both shipped **not accepted**:
 
@@ -162,7 +170,6 @@ its HTML specification frozen and an ADR before any Compose work.
   [ADR-133](DECISIONS.md#adr-133) chose US Legal and A5 and made the imposition engine take any sheet; the
   sizes need their own schema bump after v4 before anyone can choose them; the picker is designed
   (`v21-library.html` A35, frozen 2026-10-15) and not built. *W6.*
-- **My Shelf multi-select:** long-press a zine to select several, then Move to a folder or Delete them, with one Undo for the whole batch (ruled 2026-10-26, [ADR-141](DECISIONS.md#adr-141), Proposed). Folders ([ADR-125](DECISIONS.md#adr-125)) made filing one zine at a time tedious. After the W1 to W3 work ([ADR-136](DECISIONS.md#adr-136)); not in `0.9.0-beta.8`. Nothing is designed or built: the HTML amendment and its freeze come first. The Bench stays single-select.
 - **Google Play publication**, after owner account verification, mandatory testing and store review. Account
   verification remains blocked; the signed GitHub beta and public policy already exist. This is a distribution
   task, not a reason to rebuild or overwrite the current beta. [Release authority](RELEASING.md#3-beta-distribution-side-load).
@@ -497,6 +504,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-26 | **My Shelf multi-select moved to In development for `0.9.0-beta.8`.** The owner asked for it in beta.8; ADR-142 replaces ADR-141 decision 3 ("not in beta.8"). Designed as `v21-library.html` A47 (frozen under delegation), evidence in RESEARCH R36. Being built; beta.8 is not cut, so it is in no APK. Owed: both device passes, a TalkBack listen, 390dp parity. Public roadmap updated to match | [ADR-142](DECISIONS.md#adr-142) · [R36](RESEARCH.md#r36) |
 | 2026-10-26 | **Inks you mix yourself built, not released.** On `feat/ink-mixer`: Mix opens a colour mixer on the piece's ink; My inks keeps the last 9 mixed and used; My palettes keeps up to 9 named sets of 2 to 6 inks, with Undo; the built-in inks are one list with `Ink` shown once (D-060). A store failure is said, and the dim Save says why (A40 rev. 2 amendment, D-123). Not in any APK; not yet tried on a phone or an emulator. My inks and palettes are not in backups (Known Limitation). Owed: both device passes, a TalkBack listen, pixel parity, the CI golden record and the new tray goldens | [ADR-138](DECISIONS.md#adr-138) · [D-123](design/V2-SPEC-DEFECTS.md#d-123) · [D-060](design/V2-SPEC-DEFECTS.md#d-060) |
 | 2026-10-26 | **Selecting several things ruled (docs only).** The Bench stays single-select (page-level actions if groups are needed). My Shelf multi-select is Planned after W1 to W3, not in beta.8; nothing designed or built. Public roadmap lists it as Planned | [ADR-141](DECISIONS.md#adr-141) |
 | 2026-10-24 | **Art picks built, not released (W3, W7).** On `feat/art-picks`: the 124 A39 pieces in the four families, 17 shipped ids redrawn inside their old ink box, 90 new ids, a holed list of 31, Art credits in Licences & credits; 56 names shortened so variants are told apart on the tile, every line with 2dp spare at 360dp and font scale 1.0 (a larger font or a narrower phone can still clip). In no APK. Owed: the CI golden re-record, a printed and photocopied page, both device passes, the Doodle Icons diff | [ADR-139](DECISIONS.md#adr-139) · [D-130..D-132](design/V2-SPEC-DEFECTS.md#d-130) |

@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
@@ -84,8 +85,9 @@ import com.aritr.zinely.ui.theme.ZinelyV2ShadowLayer
 import kotlin.math.roundToInt
 
 /**
- * The six things the frozen sheet offers, in the frozen order. Five came with the sheet; **Move** is the
- * A28 folders amendment's row ([ADR-125](docs/DECISIONS.md#adr-125)).
+ * The seven things the frozen sheet offers, in the frozen order. Five came with the sheet; **Move** is the
+ * A28 folders amendment's row ([ADR-125](docs/DECISIONS.md#adr-125)) and **Select several** the A47 one,
+ * above the Delete band ([ADR-142](docs/DECISIONS.md#adr-142)).
  *
  * The labels and the glyphs are the design's own bytes, which is why they live on the enum rather than
  * at the draw site: a row's icon is not a decoration chosen by the renderer, it is part of what the
@@ -118,6 +120,9 @@ internal enum class ZineAction(
 
     /** A28: live for a zine that will not open, as Rename is. [ZineActionTarget.inFolder] changes its words. */
     Move(Copy.Folders.MOVE_TO_A_FOLDER, "", icon = SheetIcon.Pile),
+
+    /** A47.1: starts choosing several zines, with this one chosen. The way in a long press cannot show. */
+    Select(Copy.Select.SELECT_SEVERAL, "", icon = SheetIcon.Select),
     Delete("Delete", "⌫", danger = true),
 }
 
@@ -685,12 +690,22 @@ internal fun SheetRow(
  *
  * @property paths in paint order; `true` marks the one the frozen file fills with `var(--butter)`.
  */
-internal enum class SheetIcon(val paths: List<Pair<String, Boolean>>) {
+internal enum class SheetIcon(
+    val paths: List<Pair<String, Boolean>>,
+    val stroke: Float = SheetIconStroke,
+    val cap: StrokeCap = StrokeCap.Butt,
+) {
     /** Two sheets held by a band: a folder, and the way into or out of one. */
     Pile(listOf("M6 2.2 13.6 3.4 12.4 13 4.8 11.8Z" to false, "M3 4h8.4v10.4H3Z" to true, "M1.8 10h10.8" to false)),
 
     /** Two zines standing on a shelf: My Shelf. */
     Shelf(listOf("M3 2.5h4.5v9H3Zm6.5 0H14v9H9.5Z" to false, "M1.5 14.5h14" to false)),
+
+    /**
+     * A47.1, *Select several*: `<circle cx="8.5" cy="8.5" r="6.5"/><path d="M5.4 8.7 7.6 10.9 11.6 6.4"/>` at
+     * `stroke-width="1.6"`. The circle is written as two arcs, which is what a path can say.
+     */
+    Select(listOf("M2 8.5a6.5 6.5 0 1 0 13 0a6.5 6.5 0 1 0 -13 0Z" to false, "M5.4 8.7 7.6 10.9 11.6 6.4" to false), stroke = 1.6f, cap = StrokeCap.Round),
 }
 
 /**
@@ -705,7 +720,7 @@ private fun SheetIconMark(icon: SheetIcon, stroke: Color, fill: Color) {
         scale(size.width / SheetIconViewBox, pivot = Offset.Zero) {
             paths.forEach { (path, filled) ->
                 if (filled) drawPath(path, fill)
-                drawPath(path, stroke, style = Stroke(width = SheetIconStroke, join = StrokeJoin.Round))
+                drawPath(path, stroke, style = Stroke(width = icon.stroke, cap = icon.cap, join = StrokeJoin.Round))
             }
         }
     }
@@ -784,5 +799,5 @@ private const val A28MaxHeight = 0.88f
 
 private fun ZineActionTarget.isEnabled(action: ZineAction): Boolean = when (action) {
     ZineAction.Open, ZineAction.ShareExport, ZineAction.Duplicate -> unavailableReason == null
-    ZineAction.Rename, ZineAction.Move, ZineAction.Delete -> true
+    ZineAction.Rename, ZineAction.Move, ZineAction.Select, ZineAction.Delete -> true
 }

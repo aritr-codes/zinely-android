@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import com.aritr.zinely.feature.editor.BenchBottomBarTestTag
 import com.aritr.zinely.feature.editor.HomeEmptyHeadline
 import com.aritr.zinely.export.ExportDestination
@@ -315,7 +316,8 @@ class ZinelyNavHostTest {
         waitForCard(SEEDED_TITLE)
 
         composeRule.onNodeWithContentDescription("Actions for $SEEDED_TITLE").performClick()
-        composeRule.onNodeWithContentDescription(Copy.Shelf.DELETE).performClick()
+        // The sheet gained a row (A47 Select several); on the test screen Delete is now below the fold.
+        composeRule.onNodeWithContentDescription(Copy.Shelf.DELETE).performScrollTo().performClick()
         composeRule.waitForIdle()
 
         composeRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)

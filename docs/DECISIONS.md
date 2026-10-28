@@ -150,6 +150,7 @@
 | [ADR-139](#adr-139) | **The A39 Art picks: 124 outlines from 125 picks, add-only ids, a named holed list of 31.** The owner's 125 picks; 34 shipped ids remain (17 keep their drawing, 17 take a redraw fitted inside the old ink box by a move and/or a scale of at least 0.90) and 90 letters-only ids are added; the A34 and A39 Circles collapse to one; H9 becomes a named list of 31; the gate numbers go into SUPPLIES-SPEC §4.4; six Fluent Emoji silhouettes admitted by the owner's pick. Bench A39 and colophon A39 | Proposed (built on `feat/art-picks` 2026-10-24, in no download; device passes owed) |
 | [ADR-140](#adr-140) | **When a zine's pages go back to their earlier copy, My Shelf says so once (extends ADR-134).** A `document.json` put back from its `.bak` is told by the A37 note in Library A46's words ("A page file was damaged, so Zinely used the copy from just before your last few seconds of changes"); one note covers a zine's details and pages. The store's `Restored` result is recorded in one lock-free repair-note store shared by both repositories; `BackupOnly` is silent. No Bench notice (named follow-up); no edit journal. Decides D-120 item 4, #146 | Proposed (A46 frozen 2026-10-22 under the owner's delegation; Accepted only once built and reviewed) |
 | [ADR-141](#adr-141) | **Selecting several things: the Bench stays single-select; My Shelf multi-select is Planned after W1 to W3.** Settles ADR-129's open question: no group selection on the Bench (page-level actions instead); a Shelf long-press selection with Move to a folder, Delete and one Undo for the batch is Planned, not in beta.8, design first. Proposed under delegation. |
+| [ADR-142](#adr-142) | **My Shelf: choose several zines, then move or delete them with one Undo.** Long press or "Select several" starts choosing; Move to a folder and Delete act on the set; one Undo covers the batch; folders cannot be chosen; a zine that cannot be acted on comes back and is named (skip-and-list). Builds ADR-141 decision 2 for beta.8; design Library A47. | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -17413,6 +17414,8 @@ not MVP"). **Why the Shelf:** [ADR-125](#adr-125) (folders). **Order:** this ADR
 3. **Not in `0.9.0-beta.8`, and nothing is built.** A design comes first: an HTML amendment to the frozen Library
    mockup, then its freeze, then an ADR for the build, per the HTML-first workflow in
    [CLAUDE.md](../CLAUDE.md). This ADR does not freeze any screen.
+   **Amended 2026-10-26:** the owner asked for Shelf multi-select in `0.9.0-beta.8`. Library A47 was frozen and
+   [ADR-142](#adr-142) builds it; decision 2's shape is unchanged.
 
 #### Consequences
 
@@ -17425,3 +17428,85 @@ not MVP"). **Why the Shelf:** [ADR-125](#adr-125) (folders). **Order:** this ADR
 
 - **Bench:** a tester asks to move or recolour several pieces together.
 - **Shelf:** the W1 to W3 work is done, or a tester reports that filing zines one at a time is a chore sooner.
+
+## ADR-142 {#adr-142}
+
+### My Shelf: choose several zines, then move or delete them with one Undo
+
+**Status:** Proposed, 2026-10-26, under the owner's delegation of 2026-10-12 ("decide, do not ask"). The owner
+asked on 2026-10-26 for Shelf multi-select in `0.9.0-beta.8`. **Builds:** [ADR-141](#adr-141) decision 2, whose
+decision 3 ("Not in `0.9.0-beta.8`") this ADR replaces. **Design:** the frozen
+[`v21-library.html`](design/mockups/v21-library.html) A47 amendment (rules A47.1–A47.13; frozen 2026-10-26 under the
+same delegation). **Extends:** [ADR-125](#adr-125) (folders; A28) and the one-zine undoable delete
+([ADR-044](#adr-044), [ADR-046](#adr-046)). **Evidence:** [RESEARCH R36](RESEARCH.md#r36). Accepted only after both
+device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
+
+#### Context
+
+- ✅ Filing is one zine at a time ([ADR-141](#adr-141) context). The owner agreed the shape on 2026-10-23: a long press
+  enters selection; Move to a folder and Delete act on several zines; one Undo covers the batch; the Bench stays
+  single-select.
+- ✅ A long press on a zine opened its sheet ("Actions"); the ⋯ opens the same sheet, so the long press is free to
+  change meaning without losing a route (`ZineOnShelf.kt`, KDoc: "long-press must never be the only route").
+- ✅ The repository acts on one zine per call (`deleteProject`, `moveProject`); each refuses a zine with a live
+  editor session (`DataError.Busy`). There is no batch transaction, and none is added: Take the zines out
+  ([ADR-125](#adr-125) rule 18) already loops and reports a partial result.
+- ✅ A hidden gesture needs a visible twin (NN/g; [R36](RESEARCH.md#r36)); a screen-reader action does not replace a
+  visible route ([R28.2](RESEARCH.md)).
+
+#### Decision
+
+1. **Entry.** A long press on a zine starts selection with that zine chosen (its long-press label becomes "Select"); a
+   folder's long press stays "Actions". The zine sheet gains one row, **Select several**, above the Delete band: the
+   visible way in (A47.1).
+2. **While selecting** a tap toggles a zine; nothing opens; the ⋯ is hidden. Folders cannot be chosen: they dim and a tap
+   says "To choose zines in a folder, open it first" (A47.6). So every chosen zine is in one place, and the move chooser
+   and its "It's here" row work exactly as for one zine.
+3. **The bar and the dock.** A bar that stays put replaces the heading: a drawn ✕ ("Stop selecting") and "N selected", a
+   polite live region. The dock's Make a zine, Backups and About give way to **Move to a folder** and **Delete**, which wrap
+   and never clip (A47.3, A47.5). Leaving: the ✕, system Back (before the folder's own Back), letting go of the last zine,
+   or finishing an action.
+4. **Delete** is the existing deferred delete, extended to a set: every chosen zine's durable marker is written and the
+   set is hidden at once; **one** snack, "Deleted 3 zines" + Undo; Undo removes every marker and unhides the set; the
+   snack closing without Undo commits each zine on its own. A zine that cannot be deleted (Busy, or any failure) comes
+   back and the rest stay deleted; **one** message names those that came back (A47.9). *Skip-and-list*, as the owner
+   ruled for a poisoned photo. A set of one uses the one-zine words and message unchanged.
+5. **Move** of a set is one folder action and **one undo step**: each zine is moved in Shelf order; those that moved are
+   named by one snack with Undo; Undo moves each back to where it was. Zines that did not move are named in the same line
+   (A47.9). A set of one is the single move, with A28.12's words.
+6. **Selection state** lives in the screen's saved state (`rememberSaveable`), as the open folder and the open sheet do:
+   it survives rotation and process death as far as they do, is pruned to zines still shown, and is never written to
+   storage. Opening a folder, leaving it, Backups, About or making a zine ends it.
+7. **Out of scope:** Select all, sort, drag, Rename/Duplicate/Share for a set, and any Bench multi-select. Schema stays v3
+   (`CURRENT_SCHEMA_VERSION = 3`); no storage or export change.
+8. **Accessibility:** each zine stays one platform Button (`zinelyV2Control`), with `selected` and a stateDescription
+   ("Selected" / "Not selected") while choosing and the click label "Select" / "Unselect"; the dock's labels carry the
+   count ("Delete 3 zines"). Verified on the platform tree, not only Compose semantics.
+
+#### Rulings recorded (decide, do not ask)
+
+| # | Question | Ruling | Why |
+|---|---|---|---|
+| R1 | Confirm a batch delete? | No: Undo, as for one zine | One Undo covering the batch is the owner's shape; a dialog for three zines and not for one is two rules |
+| R2 | Actions in a top bar (M3) or the dock? | The dock | The Shelf has no app bar; its actions already live in the dock, within thumb reach, as words not icons |
+| R3 | Can a folder be chosen? | No | Keeps every chosen zine in one place, so the chooser needs no "mixed" state; Take the zines out already moves a folder's zines |
+| R4 | Exit at 0? | Yes | AOSP Files finishes its action mode on an empty selection ([R36](RESEARCH.md#r36)); "0 selected" offers nothing |
+| R5 | Words for the count | "N selected" | The platform's own word, and what TalkBack users hear elsewhere |
+| R6 | Undo of a batch moved *into* a folder puts back only some | "Some zines didn’t go back. They’re still in “Family”, nothing is lost" (A47.9, 2026-10-28) | A28's line says "They’re on My Shelf", which is false here; the words say where they are now, in the same manner |
+| R7 | The chooser's pane title for a set | "Move 3 zines" (A47.11, 2026-10-28) | A28's "Move zine" with the count, so TalkBack names what is being moved |
+
+#### Consequences
+
+- One-zine delete keeps `HomeShelfEvent.DeletePrompt(id, title)`; a batch emits
+  `HomeShelfEvent.DeleteBatchPrompt(ids, message)`, handled by the screen's same single Undo window
+  (`onDeleteUndoMany` / `onDeleteCommitMany`). A set of one uses `DeletePrompt`.
+- A batch's pending-delete markers are written in one write (`PendingDeleteStore.addAll`), all or nothing; if it
+  fails nothing is hidden and the maker is told at once. Undo clears them in one write too (`removeAll`).
+- A28's "[stated] the folder tile's long-press label is 'Actions', as a zine's is" is amended by A47.1.
+- New goldens for the selection states; the zine sheet goldens change (one row).
+- **Owed before Accepted:** both device passes, a TalkBack listen (owner), 390dp parity.
+
+#### Revisit trigger
+
+- A tester asks for Select all, or to rename/share several zines.
+- Pass 2 finds the dimmed folder or the long-press change confusing.
