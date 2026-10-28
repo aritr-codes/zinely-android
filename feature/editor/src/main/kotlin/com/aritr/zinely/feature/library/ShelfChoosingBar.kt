@@ -21,8 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -65,7 +63,7 @@ internal const val ShelfChoosingCountTestTag: String = "shelf-choosing-count"
  * @param count how many are chosen; never 0 (A47.4).
  */
 @Composable
-internal fun ShelfChoosingBar(count: Int, onStop: () -> Unit, modifier: Modifier = Modifier, stopFocus: FocusRequester? = null) {
+internal fun ShelfChoosingBar(count: Int, onStop: () -> Unit, modifier: Modifier = Modifier) {
     val colors = ZinelyTheme.v21Colors
     Row(
         modifier
@@ -94,7 +92,7 @@ internal fun ShelfChoosingBar(count: Int, onStop: () -> Unit, modifier: Modifier
         horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        StopChoosing(onStop, if (stopFocus != null) Modifier.focusRequester(stopFocus) else Modifier)
+        StopChoosing(onStop)
         Text(
             text = Copy.Select.selectedCount(count),
             style = TextStyle(

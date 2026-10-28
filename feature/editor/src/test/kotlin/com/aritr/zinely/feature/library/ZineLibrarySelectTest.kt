@@ -7,6 +7,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.InputModeManager
+import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -69,6 +73,8 @@ class ZineLibrarySelectTest {
     private val committedMany = mutableListOf<List<String>>()
     private val events = Channel<HomeShelfEvent>(Channel.BUFFERED)
     private var zines by mutableStateOf(SEEDED)
+    private var loading by mutableStateOf(false)
+    private lateinit var inputMode: InputModeManager
 
     // ---------------------------------------------------------------------------------------------
     // A47.1: the ways in
@@ -204,6 +210,64 @@ class ZineLibrarySelectTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(ShelfChoosingCountTestTag).assert(hasContentDescription("2 selected"))
         composeRule.onNodeWithContentDescription("Tiny poems").assert(selected(true))
+    }
+
+    @Test
+    fun `the choice is kept while the Shelf reloads`() {
+        // A47.10: not judged while loading, when there are no zines to judge by.
+        choose("Riso tests", "Coffee log")
+        loading = true
+        composeRule.waitForIdle()
+        loading = false
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ShelfChoosingCountTestTag).assert(hasContentDescription("2 selected"))
+    }
+
+    @Test
+    fun `the chooser for a set is still up after recreation`() {
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent { Screen() }
+        composeRule.onNodeWithContentDescription("Riso tests").performTouchInput { longClick() }
+        composeRule.onNodeWithContentDescription("Coffee log").performClick()
+        composeRule.onNodeWithTag(ZineDockMoveTestTag).performClick()
+        composeRule.waitForIdle()
+
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FolderMoveSheetTestTag).assert(paneTitled("Move 2 zines"))
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // A47.12: focus, with a keyboard (in touch mode a tappable control takes no focus by request; see
+    // ZineLibraryFoldersTest)
+    // ---------------------------------------------------------------------------------------------
+
+    @Test
+    fun `with a keyboard, Select several puts focus on the zine just chosen`() {
+        shelf()
+        keyboard()
+        composeRule.onNodeWithContentDescription("Actions for Coffee log").performClick()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Select)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Coffee log").assertIsFocused()
+    }
+
+    @Test
+    fun `with a keyboard, the cross puts focus on the zine touched last`() {
+        choose("Riso tests", "Coffee log")
+        keyboard()
+        composeRule.onNodeWithContentDescription("Stop selecting").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Coffee log").assertIsFocused()
+    }
+
+    @Test
+    fun `with a keyboard, after Delete focus goes to the heading`() {
+        choose("Riso tests", "Coffee log")
+        keyboard()
+        composeRule.onNodeWithTag(ZineDockDeleteTestTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNode(isHeading()).assertIsFocused()
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -401,6 +465,11 @@ class ZineLibrarySelectTest {
 
     private fun paneTitled(title: String) = SemanticsMatcher.expectValue(SemanticsProperties.PaneTitle, title)
 
+    private fun keyboard() {
+        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
+        composeRule.waitForIdle()
+    }
+
     private fun back() {
         composeRule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         composeRule.waitForIdle()
@@ -423,8 +492,9 @@ class ZineLibrarySelectTest {
     @Composable
     private fun Screen() {
         ZinelyTheme {
+            inputMode = LocalInputModeManager.current
             ZineLibraryScreen(
-                state = LibraryShelfState.Content(zines),
+                state = if (loading) LibraryShelfState.Loading else LibraryShelfState.Content(zines),
                 events = events.receiveAsFlow(),
                 backupRestoreState = null,
                 lastBackup = null,

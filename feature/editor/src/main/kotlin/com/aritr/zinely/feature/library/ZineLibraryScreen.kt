@@ -1054,6 +1054,9 @@ public fun ZineLibraryScreen(
                     haptics.perform(ZinelyHaptic.Tick)
                     openSheet = null
                     startChoosing(zine.id)
+                    // A47.12: focus on the zine just chosen. The sheet's window would hand it back to the `⋯`,
+                    // which is gone while choosing. (A long press needs none: focus is already on the tile.)
+                    focusWish = FocusWish.Zine(zine.id, zine.folder)
                 }
                 ZineAction.Delete -> {
                     haptics.perform(ZinelyHaptic.Boundary)
