@@ -17492,6 +17492,8 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 | R3 | Can a folder be chosen? | No | Keeps every chosen zine in one place, so the chooser needs no "mixed" state; Take the zines out already moves a folder's zines |
 | R4 | Exit at 0? | Yes | AOSP Files finishes its action mode on an empty selection ([R36](RESEARCH.md#r36)); "0 selected" offers nothing |
 | R5 | Words for the count | "N selected" | The platform's own word, and what TalkBack users hear elsewhere |
+| R6 | Undo of a batch moved *into* a folder puts back only some | "Some zines didn’t go back. They’re still in “Family”, nothing is lost" (A47.9, 2026-10-28) | A28's line says "They’re on My Shelf", which is false here; the words say where they are now, in the same manner |
+| R7 | The chooser's pane title for a set | "Move 3 zines" (A47.11, 2026-10-28) | A28's "Move zine" with the count, so TalkBack names what is being moved |
 
 #### Consequences
 

@@ -1514,7 +1514,8 @@ public object Copy {
         // A47.6: a tap on a folder while choosing.
         public const val OPEN_FOLDER_FIRST: String = "To choose zines in a folder, open it first"
 
-        // A47.7: the chooser and the name sheet, for several.
+        // A47.7, A47.11: the chooser and the name sheet, for several. [movePane] is the chooser's pane title.
+        public fun movePane(zines: String): String = "Move $zines"
         public fun forZines(zines: String): String = "For $zines"
         public fun alreadyIn(folder: String): String = "They’re already in “$folder”."
         public fun willJoin(folder: String): String = "You already have “$folder”. These zines will join it."
@@ -1525,6 +1526,13 @@ public object Copy {
         public fun movedToMyShelf(zines: String): String = "Moved $zines to My Shelf"
         public fun areBackIn(zines: String, folder: String): String = "$zines are back in “$folder”"
         public fun areBackOnMyShelf(zines: String): String = "$zines are back on My Shelf"
+
+        /**
+         * A47.9: Undo of a batch moved into [folder] put back only some. Those left are still in [folder]; a batch
+         * moved to My Shelf uses [Folders.NOT_EVERY_ZINE_WENT_BACK], which already says where they are.
+         */
+        public fun notAllBack(folder: String): String =
+            "Some zines didn’t go back. They’re still in “$folder”, nothing is lost"
 
         // A47.8
         public fun deleted(zines: String): String = "Deleted $zines"
