@@ -186,6 +186,7 @@ Amending a frozen V2 surface is reserved to you (V2-CONSTITUTION §VI); an imple
 | ☐ | [ADR-137](DECISIONS.md#adr-137) | "One world" Art from any source, variants of one subject, curated not capped, on your 2026-10-15 ruling. *2026-10-22: you picked the A39 sheet; it is frozen under ADR-139 (row below).* Still Proposed until the first batch's provenance records are reviewed against the items; also yours, the first-time recognition check (gate G8) | Before W3's Compose work and before any W7 batch |
 | ☐ | [ADR-139](DECISIONS.md#adr-139) | Your A39 Art picks, frozen as `v21-bench.html` A39 under delegation; you may overrule any call. **Most yours:** `shape.rect`, `fix.clip`, `mark.hand` and `mark.bar` keep their place with the A34 drawing (A39's would shrink saved pieces, or thin the bar below the house minimum); the A34 Circle is not offered (it is the A39 Circle's twin); six Fluent Emoji silhouettes admitted on your pick. **Also yours:** download Doodle Icons from the creator's Gumroad page (a $0 checkout that asks for an email) so the pieces can be diffed against the creator's own files before beta.8. *2026-10-24, built on `feat/art-picks`:* **also owed** a printed and photocopied page of the new pieces; both device passes (Pass 2 on the look-alike groups in [RESEARCH R34.4](RESEARCH.md#r34-the-a39-art-picks-gate-measurements-the-never-19-dry-run-and-the-licences-2026-10-22), whose names are the pre-rename ones: map them with the [D-132](design/V2-SPEC-DEFECTS.md#d-132) table, and a TalkBack listen of the names); and, if you want, overrule any of the 56 shortened names ([D-132](design/V2-SPEC-DEFECTS.md#d-132)) | Before the Art wiring is merged; the Doodle diff before beta.8 |
 | ☐ | [ADR-138](DECISIONS.md#adr-138) | Inks you mix and keep, and palettes (`v21-bench.html` A40 rev. 2, frozen by you 2026-10-22). Built 2026-10-26 on `feat/ink-mixer`, in no download; the device checks are in §2.6. **Yours:** whether Save palette's spoken reason should name the missing name first, since a tap goes there first ([D-123](design/V2-SPEC-DEFECTS.md#d-123)) | Accepting the build, after §2.6 |
+| ☐ | [ADR-142](DECISIONS.md#adr-142) | Shelf multi-select (`v21-library.html` A47), Proposed and frozen under delegation 2026-10-26; you may overrule it. The device checks are in §2.7 | Accepting the build, after §2.7 |
 | ☐ | [ADR-017](DECISIONS.md#adr-017) | Bleed, clip and safe-area semantics | V2 print-shop export |
 | ☐ | [ADR-018](DECISIONS.md#adr-018) | Versioning of imposition convention names and fold/cut ids | **Must be decided before any enters a persisted `.zine` schema** |
 | ☐ | — | The butter allow-list conflict, V2.1 §3.2 vs §4.1 — *"owner ruling owed"*, stated twice | The next butter-token question |
@@ -357,6 +358,17 @@ table only points at it. Built on `feat/ink-mixer` (2026-10-26); no emulator or 
 | ☐ | Pixel parity against `v21-ink-mixer.html`, including the no-Undo-on-a-no-op tap (ADR-138 decision 5) | [ADR-138](DECISIONS.md#adr-138) |
 | ☐ | **CI goldens:** record the five changed `bench_ink_popover_*` goldens with `record-goldens.yml` and read every `*_compare.png` first. The new tray and mixer goldens (plan Task 10) are not written yet | [ADR-138](DECISIONS.md#adr-138) |
 | ☐ | A keyboard user cannot see which hidden slider has focus (1dp, no ring); judge on a device | [D-123](design/V2-SPEC-DEFECTS.md#d-123) |
+
+### 2.7 Shelf multi-select — being built; no device pass yet
+**Reason:** Judgement / Physical · **Blocks:** accepting ADR-142 · Authority for each item is the linked record; this
+table only points at it. Being built for `0.9.0-beta.8` (2026-10-26); no emulator or phone has run it.
+
+| ☐ | Item | Where it is owned |
+|---|---|---|
+| ☐ | **Yours:** the A47 design was frozen under delegation on 2026-10-26; you may overrule it, or any of ADR-142's rulings R1–R5 | [ADR-142](DECISIONS.md#adr-142) · [`v21-library.html` A47](design/mockups/v21-library.html) |
+| ☐ | **Yours:** TalkBack listen of selection mode (switch TalkBack on for this pass only; it stays off otherwise) | [ADR-142](DECISIONS.md#adr-142) *Owed before Accepted* |
+| ☐ | Pixel parity against A47 at 390dp | [ADR-142](DECISIONS.md#adr-142) *Owed before Accepted* |
+| ☐ | Device Pass 1 and Pass 2, both before ADR-142 can be Accepted | [ADR-142](DECISIONS.md#adr-142) · [CLAUDE.md](../CLAUDE.md#device-verification-mandatory) |
 
 ---
 

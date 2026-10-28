@@ -1887,3 +1887,123 @@ the user's zine. Each item's file, URL at the pin and sha256 are in `art-a39/oss
 - Six pieces are Fluent **emoji** silhouettes in one ink. The licence is fine; the world-match question
   (SUPPLIES-SPEC §4.5 G9, "not … an emoji", and ADR-136's cut of "Fluent emoji stickers") is the owner's pick,
   recorded in ADR-139.
+
+<a id="r36"></a>
+
+## R36. Choosing several items in a list or grid (2026-10-26)
+
+Asked before deciding [ADR-142](DECISIONS.md#adr-142) and freezing library A47
+([`v21-library.html`](design/mockups/v21-library.html), rules A47.1–A47.13): how do Android apps let someone choose
+several items, act on them, and leave, and how does a screen-reader user follow it? **Numbering:** R35 was reserved
+for the W1 lane (wave-3 working rules, `.superpowers/wave3-scratch/RULES.md`) and was never written, which is why
+this section is R36. Collected by the Research Agent on 2026-10-26. Two gaps in the reading: the Android Developers
+blog post on a multiselect photo grid returned 403 and rests on a search-result summary only; m3.material.io
+rendered empty in the fetcher, so Material's behaviour is cited from the
+[MDC-Android](https://github.com/material-components/material-components-android) component docs instead.
+
+Already settled elsewhere and not restated: several-at-once is a reading and photo pattern, not a creative-app one
+([R22.2](#r222-creative-apps-move-a-work-into-one-place-several-at-once-is-a-reading-and-photo-pattern---verified));
+deleting follows from what a container holds ([R22.1](#r221-a-container-either-holds-a-work-or-points-at-it-and-deleting-follows-from-that---verified));
+every gesture has a menu twin ([R22.3](#r223-dragging-one-onto-another-is-the-phones-own-gesture-and-the-careful-apps-also-give-a-menu---verified),
+[R22.8](#r228-zinely-application---recommendation)); a screen-reader action does not replace a visible route
+([R28.2](#r282-the-tap-only-path-may-sit-one-step-away-the-elements-own-screen-reader-actions-do-not-replace-it---verified--for-the-inference))
+and hiding controls has a cost ([R28.4](#r284-hiding-controls-has-a-measured-cost---verified)); snackbar versus a
+must-see message, wording, and status messages spoken without moving focus
+([R30.1](#r301-a-message-the-person-must-see-stays-until-they-dismiss-it-a-snackbar-by-default-does-not---verified),
+[R30.3](#r303-how-to-word-it---verified), [R30.4](#r304-a-status-message-is-spoken-without-moving-focus---verified));
+the editor's accessibility floor ([R10.2](#r102-requirements-the-real-editor-must-meet---verified---recommendation));
+a state told by colour alone is not told ([R24.3](#r243-a-state-told-by-a-2211-fill-is-told-by-colour-alone---verified)).
+
+### R36.1 A long press starts selection in Google's own apps — ✅ VERIFIED, with a 🟨 ASSUMPTION edge
+
+- Google Photos Help ([Select multiple photos](https://support.google.com/photos/answer/6128858?co=GENIE.Platform%3DAndroid)):
+  "Tap and hold a photo… You can select multiple photos".
+- Material's checkable Card ([MDC-Android, Making cards checkable](https://github.com/material-components/material-components-android/blob/master/docs/components/Card.md#making-cards-checkable))
+  toggles its checked state on a long click.
+- The Android Developers tutorial on a photo grid with multiselect in Compose
+  ([Medium, Android Developers](https://medium.com/androiddevelopers/create-a-photo-grid-with-multiselect-behavior-using-jetpack-compose-9a8d588a9b63))
+  has a long press enter selection and a drag extend it. ⚠️ The page returned 403; this rests on a search-result
+  summary, not the article's text.
+- 🟨 **ASSUMPTION:** once selecting, a plain tap toggles an item instead of opening it. Google Photos and Files
+  behave this way; no normative text saying so was found.
+
+**Sources:** as linked above.
+
+### R36.2 A hidden trigger needs a visible twin — ✅ VERIFIED
+
+- NN/g, [Designing effective contextual menus](https://www.nngroup.com/articles/contextual-menus/): "There should
+  always be an additional way" to reach what a hidden menu offers.
+- NN/g, [Contextual swipe](https://www.nngroup.com/articles/contextual-swipe/): "most users won't discover these
+  actions" when a gesture is the only route.
+- A long press is such a hidden trigger, so selection needs a visible way in as well (the same rule as
+  [R22.3](#r223-dragging-one-onto-another-is-the-phones-own-gesture-and-the-careful-apps-also-give-a-menu---verified)).
+
+**Sources:** as linked above.
+
+### R36.3 The selection bar: close, count, actions, and it ends when nothing is chosen — ✅ VERIFIED
+
+- MDC-Android, [Top app bar — contextual action bar](https://github.com/material-components/material-components-android/blob/master/docs/components/TopAppBar.md#contextual-action-bar):
+  "An app bar can transform into a contextual action bar, remaining active until an action is taken or it is
+  dismissed"; it shows a close button, a title such as "1 selected", and the contextual actions.
+- AOSP Files, [`ActionModeController.java`](https://android.googlesource.com/platform/packages/apps/DocumentsUI/+/refs/heads/main/src/com/android/documentsui/ActionModeController.java)
+  (around lines 81–104): the title is a plural count (`R.plurals.elements_selected`), it is also set as the window
+  title, the close control is relabelled "Cancel", and `mActionMode.finish()` is called when the selection becomes
+  empty, so selection ends at zero.
+
+**Sources:** as linked above.
+
+### R36.4 Back leaves selection first — ✅ VERIFIED
+
+- Android Developers, [Predictive back gesture](https://developer.android.com/guide/navigation/custom-back/predictive-back-gesture):
+  a `BackHandler` / `PredictiveBackHandler` should be enabled only while it has something to handle, and the
+  innermost enabled handler runs first. A selection-mode handler, enabled only while selecting, therefore takes Back
+  before an outer one (such as an open folder's).
+
+**Sources:** as linked above.
+
+### R36.5 A chosen item is shown by more than colour — ✅ VERIFIED
+
+- MDC-Android Card ([Making cards checkable](https://github.com/material-components/material-components-android/blob/master/docs/components/Card.md#making-cards-checkable)):
+  a checked card shows a check-circle icon, changes its foreground colour, and its stroke changes from
+  `colorOutline` to `colorSecondary`. The icon carries the state for anyone who cannot tell the colours apart
+  ([R24.3](#r243-a-state-told-by-a-2211-fill-is-told-by-colour-alone---verified)).
+
+**Sources:** as linked above.
+
+### R36.6 What a screen reader needs — ✅ VERIFIED
+
+- Compose [semantics](https://developer.android.com/develop/ui/compose/accessibility/semantics): toggleable and
+  selectable semantics, and `stateDescription` for a custom state's words.
+- Android [accessibility principles](https://developer.android.com/guide/topics/ui/accessibility/principles): label
+  the long-click action (`onLongClickLabel`) so TalkBack says what a long press does.
+- [API 36 diff, `android.view.View`](https://developer.android.com/sdk/api_diff/36/changes/android.view.View):
+  `announceForAccessibility` is deprecated; occasional changes such as a count are told by a live region instead
+  (as in [R30.4](#r304-a-status-message-is-spoken-without-moving-focus---verified)).
+
+**Sources:** as linked above.
+
+### R36.7 Acting on several at once: undo, not a dialog — ✅ VERIFIED, with a 🟨 ASSUMPTION edge
+
+- NN/g, [Contextual swipe](https://www.nngroup.com/articles/contextual-swipe/): destructive actions should "support
+  easy undo", and the undo should be "highly salient".
+- MDC-Android [Snackbar](https://github.com/material-components/material-components-android/blob/master/docs/components/Snackbar.md):
+  an Undo action on the snackbar, with notes on how it behaves under TalkBack.
+- Google Photos Help ([Select multiple photos](https://support.google.com/photos/answer/6128858?co=GENIE.Platform%3DAndroid)):
+  deleted photos go to the trash and stay there for 30 days.
+- 🟨 **ASSUMPTION:** no published convention was found for what to tell someone when some items of a batch fail and
+  the rest succeed.
+
+**Sources:** as linked above.
+
+### R36.8 Zinely application — 🟦 RECOMMENDATION
+
+[ADR-142](DECISIONS.md#adr-142) owns the decision and A47 the design; this is the trail from the evidence to them.
+Followed: long press enters with that zine chosen (R36.1); a visible way in, the sheet row "Select several"
+(R36.2), not an overflow menu, because the zine sheet is already where a zine's actions live; a tap toggles while
+selecting (R36.1, 🟨); a close control and the count "N selected" (R36.3), told by a polite live region rather than
+an announcement call (R36.6); selection ends when the last zine is let go, as in AOSP Files (R36.3); Back leaves
+selection before the folder (R36.4); a chosen zine shows a mark, not only a colour (R36.5); one Undo for the batch,
+no confirm (R36.7). **Departs from M3:** the actions sit in the Shelf's dock as words, not as icons in a top bar,
+because the Shelf has no app bar and its actions already live in the dock within thumb reach (ADR-142 ruling R2).
+For a partial failure, where no convention was found (R36.7), ADR-142 uses skip-and-list: the rest stay done and one
+message names those that came back.
