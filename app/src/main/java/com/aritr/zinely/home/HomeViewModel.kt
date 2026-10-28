@@ -773,8 +773,12 @@ internal class HomeViewModel @Inject constructor(
 
     /**
      * Zines a batch delete could not write a marker for, so never hid: each marked id of that batch → those ids.
-     * They are named, with any zine whose delete then fails, in the batch's one closing message (A47.9), so a zine
-     * the maker chose is never silently left behind. Dropped on Undo, where every chosen zine is on the Shelf anyway.
+     * They are named, with any zine whose delete then fails, in the batch's one closing message (A47.9). Dropped on
+     * Undo, where every chosen zine is on the Shelf anyway.
+     *
+     * Accepted limit: a batch finished early by a folder action, an open, a new zine or a restore
+     * ([commitPendingDeletesNow], rule 11) never reaches [commitDeletes], so its unmarked zines are not named. They
+     * were never hidden, so the Shelf still shows them truly; only the word is missing. Needs a marker write to fail.
      */
     private var unmarked: Map<String, List<String>> = emptyMap()
 

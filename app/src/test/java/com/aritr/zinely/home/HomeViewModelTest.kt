@@ -2446,8 +2446,11 @@ class HomeViewModelTest {
         shelf.viewModel.deleteMany(listOf("b", "c"))
         val before = shelf.events.size
         shelf.viewModel.undoDelete("c")
+        // A late commit call (the screen's `finally`) must not name b from a leaked entry either.
+        shelf.viewModel.commitDelete("c")
         assertEquals(before, shelf.events.size)
         assertTrue(shelf.zines.any { it.id == "c" })
+        assertEquals(listOf("a"), repository.deleted)
         shelf.close()
     }
 
