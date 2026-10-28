@@ -25,8 +25,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -113,6 +120,9 @@ internal fun ZineV21Cover(
     borderInk: Color = ZinelyTheme.v21Colors.ink,
     tilt: Float = tiltFor(index),
     taped: Boolean = true,
+    // A47.2: while choosing several, `true` / `false` draw the tick (and, when chosen, the ink ring); `null`
+    // is the Shelf at rest. Inside the cover's own layer, so both lean with its tilt as the frozen ones do.
+    chosen: Boolean? = null,
     mark: @Composable BoxScope.(Modifier) -> Unit = {},
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -260,9 +270,86 @@ internal fun ZineV21Cover(
                     .border(CoverBorderV21, printed.ink, StampShapeV21)
                     .padding(horizontal = ZinelyV21Dimens.gapSm, vertical = ZinelyV21Dimens.gapHair),
             )
+
+            // `.a47-tick{left:-8px;top:-10px;z-index:5}`, against the padding box like the tape and the stamp.
+            if (chosen != null) ChoosingTick(chosen, Modifier.align(Alignment.TopStart).offset(x = TickOffsetX, y = TickOffsetY))
+        }
+
+        // `.zine.a47-picked .cover{outline:3px solid var(--ink);outline-offset:5px}`: outside the cover's own
+        // edge, so the cover itself is never repainted.
+        if (chosen == true) {
+            val ink = colors.ink
+            Box(
+                Modifier.fillMaxSize().drawBehind {
+                    val w = ChosenRingWidth.toPx()
+                    val out = ChosenRingOffset.toPx() + w / 2f
+                    // ponytail: the cover's own radii, not grown by the offset as a CSS outline's are; a 1-2dp
+                    // difference at the corners. Grow them if the parity pass sees it.
+                    val outline = CoverShapeV21.createOutline(
+                        Size(size.width + 2 * out, size.height + 2 * out),
+                        layoutDirection,
+                        this,
+                    )
+                    translate(-out, -out) { drawOutline(outline, ink, style = Stroke(width = w)) }
+                },
+            )
         }
     }
 }
+
+/**
+ * `.a47-tick` — a paper disc on the cover's corner while choosing; chosen, an inked disc with a paper check, a
+ * paper ring and its hard shadow. **Pinned** in both themes, like the stamp, so it holds on the dark desk.
+ *
+ * ```css
+ * .a47-tick{width:30px;height:30px;border-radius:var(--br-pill);background:#FFF6E8;
+ *   border:1.5px solid #27270F;box-shadow:2px 2px 0 #27270F}
+ * .zine.a47-picked .a47-tick{background:#27270F;color:#FFF6E8;box-shadow:0 0 0 2px #FFF6E8,2px 2px 0 2px #27270F}
+ * <path d="M3 7.8 6.2 11 12 4.2"/>  (viewBox 15, drawn at 15px, stroke-width 2.2)
+ * ```
+ *
+ * Silent: what it says is the tile's state, which the tile itself speaks (A47.11).
+ */
+@Composable
+private fun ChoosingTick(chosen: Boolean, modifier: Modifier = Modifier) {
+    Canvas(modifier.size(TickSize)) {
+        val r = size.minDimension / 2f
+        val shadow = TickShadow.toPx()
+        if (chosen) {
+            val ring = TickRing.toPx()
+            drawCircle(TickInk, r + ring, center + Offset(shadow, shadow))
+            drawCircle(TickPaper, r + ring)
+            drawCircle(TickInk, r)
+            val k = TickCheckSize.toPx() / TickCheckViewBox
+            val o = (size.width - TickCheckSize.toPx()) / 2f
+            val check = Path().apply {
+                moveTo(o + 3f * k, o + 7.8f * k)
+                lineTo(o + 6.2f * k, o + 11f * k)
+                lineTo(o + 12f * k, o + 4.2f * k)
+            }
+            drawPath(check, TickPaper, style = Stroke(width = TickCheckStroke * k, cap = StrokeCap.Round, join = StrokeJoin.Round))
+        } else {
+            drawCircle(TickInk, r, center + Offset(shadow, shadow))
+            drawCircle(TickPaper, r)
+            val line = TickLine.toPx()
+            drawCircle(TickInk, r - line / 2f, style = Stroke(width = line))
+        }
+    }
+}
+
+private val TickSize = 30.dp
+private val TickOffsetX = (-8).dp
+private val TickOffsetY = (-10).dp
+private val TickShadow = 2.dp
+private val TickRing = 2.dp
+private val TickLine = 1.5.dp
+private val TickCheckSize = 15.dp
+private const val TickCheckViewBox = 15f
+private const val TickCheckStroke = 2.2f
+private val TickPaper = Color(0xFFFFF6E8)
+private val TickInk = Color(0xFF27270F)
+private val ChosenRingWidth = 3.dp
+private val ChosenRingOffset = 5.dp
 
 /**
  * `.tape` — a translucent strip holding paper to the desk, turned by [rotation] degrees. The cover's, and the

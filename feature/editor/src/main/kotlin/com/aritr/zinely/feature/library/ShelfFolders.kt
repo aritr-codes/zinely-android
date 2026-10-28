@@ -67,16 +67,31 @@ internal data class FolderNameAnswer(
  * folder and takes its spelling.
  *
  * @param keys each existing folder by its key.
+ * @param several the sheet is naming a folder for a set of zines (A47.7): the hints say *they* and *these zines*.
  */
-internal fun newFolderAnswer(verdict: FolderNameVerdict, keys: Map<String, String>, current: String?): FolderNameAnswer =
+internal fun newFolderAnswer(
+    verdict: FolderNameVerdict,
+    keys: Map<String, String>,
+    current: String?,
+    several: Boolean = false,
+): FolderNameAnswer =
     when (verdict) {
         FolderNameVerdict.Blank -> FolderNameAnswer(Copy.Folders.MAKE_FOLDER, enabled = false)
         FolderNameVerdict.MyShelf ->
             FolderNameAnswer(Copy.Folders.MAKE_FOLDER, enabled = false, hint = Copy.Folders.MY_SHELF_IS_TAKEN)
         is FolderNameVerdict.Name -> when (val hit = keys[verdict.key]) {
             null -> FolderNameAnswer(Copy.Folders.MAKE_FOLDER, enabled = true, name = verdict.name)
-            current -> FolderNameAnswer(Copy.Folders.moveTo(hit), enabled = false, hint = Copy.Folders.alreadyIn(hit))
-            else -> FolderNameAnswer(Copy.Folders.moveTo(hit), enabled = true, hint = Copy.Folders.willJoin(hit), name = hit)
+            current -> FolderNameAnswer(
+                Copy.Folders.moveTo(hit),
+                enabled = false,
+                hint = if (several) Copy.Select.alreadyIn(hit) else Copy.Folders.alreadyIn(hit),
+            )
+            else -> FolderNameAnswer(
+                Copy.Folders.moveTo(hit),
+                enabled = true,
+                hint = if (several) Copy.Select.willJoin(hit) else Copy.Folders.willJoin(hit),
+                name = hit,
+            )
         }
     }
 

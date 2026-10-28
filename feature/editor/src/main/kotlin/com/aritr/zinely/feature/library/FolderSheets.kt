@@ -89,8 +89,15 @@ internal const val FolderUnpackTestTag: String = "folder-unpack"
  *
  * @property current the folder the zine is in now, or `null` on My Shelf.
  * @property folders every folder on the Shelf with its count, in the order their piles stand.
+ * @property paneTitle what TalkBack hears on entering the chooser: *Move zine*, or *Move 3 zines* for a set
+ *   (A47.11), whose [title] is then the count.
  */
-internal data class FolderMoveTarget(val title: String, val current: String?, val folders: Map<String, Int>)
+internal data class FolderMoveTarget(
+    val title: String,
+    val current: String?,
+    val folders: Map<String, Int>,
+    val paneTitle: String = Copy.Folders.MOVE_PANE,
+)
 
 /**
  * `#moveSheet` — where a zine can go.
@@ -117,7 +124,7 @@ internal fun FolderMoveSheetSurface(drawn: FolderMoveTarget, onMove: (String?) -
     LibrarySheetSurface(
         title = drawn.title,
         subtitle = drawn.current?.let(Copy.Folders::inFolderMoveTo) ?: Copy.Folders.ON_MY_SHELF_MOVE_TO,
-        paneTitle = Copy.Folders.MOVE_PANE,
+        paneTitle = drawn.paneTitle,
         modifier = Modifier.testTag(FolderMoveSheetTestTag),
     ) {
         if (drawn.current != null) {
@@ -157,12 +164,15 @@ internal fun FolderMoveSheetSurface(drawn: FolderMoveTarget, onMove: (String?) -
  * @property zineTitle *New folder* only: the zine it is for.
  * @property zineFolder *New folder* only: the folder that zine is in now.
  * @property count *Rename folder* only: how many zines it holds.
+ * @property zines *New folder* for several zines (A47.7): their count, `"3 zines"`, which the sheet names in
+ *   place of [zineTitle] and whose hints speak of *these zines*. `null` for one zine.
  */
 internal data class FolderNameTarget(
     val renaming: String? = null,
     val zineTitle: String = "",
     val zineFolder: String? = null,
     val count: Int = 0,
+    val zines: String? = null,
 )
 
 /**
@@ -235,7 +245,7 @@ internal fun FolderNameSheetSurface(
     }
     val verdict = check(draft.text)
     val answer = if (renaming == null) {
-        newFolderAnswer(verdict, keys, drawn.zineFolder)
+        newFolderAnswer(verdict, keys, drawn.zineFolder, several = drawn.zines != null)
     } else {
         renameFolderAnswer(verdict, keys, renaming)
     }
@@ -249,7 +259,11 @@ internal fun FolderNameSheetSurface(
 
     LibrarySheetSurface(
         title = title,
-        subtitle = if (renaming == null) Copy.Folders.forZine(drawn.zineTitle) else pluralZineCount(drawn.count),
+        subtitle = when {
+            renaming != null -> pluralZineCount(drawn.count)
+            drawn.zines != null -> Copy.Select.forZines(drawn.zines)
+            else -> Copy.Folders.forZine(drawn.zineTitle)
+        },
         paneTitle = title,
         modifier = Modifier.testTag(FolderNameSheetTestTag),
     ) {

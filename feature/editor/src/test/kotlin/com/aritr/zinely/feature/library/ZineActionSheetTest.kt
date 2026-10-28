@@ -279,7 +279,7 @@ class ZineActionSheetTest {
     // ---------------------------------------------------------------------------------------------
 
     @Test
-    fun `the six actions stand in the frozen order`() {
+    fun `the seven actions stand in the frozen order`() {
         surface()
         // `:173-177`. The order is the design's argument about consequence — Open first, Delete last and
         // apart — so it is asserted by placement rather than by the enum's own declaration order, which
@@ -295,6 +295,8 @@ class ZineActionSheetTest {
             ZineAction.Duplicate,
             // A28: `#sheetMove`, after Duplicate and before the boundary that sets Delete apart.
             ZineAction.Move,
+            // A47.1: `#sheetSelect`, "above the Delete band".
+            ZineAction.Select,
             ZineAction.Delete,
         )
         assertEquals(

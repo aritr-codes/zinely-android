@@ -166,6 +166,7 @@ class ZineOnShelfTest {
 
     private val opened = mutableListOf<Int>()
     private val actioned = mutableListOf<Int>()
+    private val selecting = mutableListOf<Int>()
 
     // ---------------------------------------------------------------------------------------------
     // The two ways in, and the third — `:199`: "tap = open zine · long-press = actions · ... = actions"
@@ -181,14 +182,16 @@ class ZineOnShelfTest {
     }
 
     @Test
-    fun `a long press asks for the actions, and does not also open the zine`() {
+    fun `a long press starts choosing, and does not also open the zine or its actions`() {
+        // A47.1 amends A28: a zine's long press is now "Select"; a folder's stays "Actions".
         item()
         composeRule.onNodeWithTag(zineShelfCoverTestTag(INDEX)).performTouchInput { longClick() }
 
         // Both halves matter. A `combinedClickable` whose `onLongClick` is null delivers a long press as a
-        // *click*, so a test that only checked `actioned` would pass while the shelf opened the zine.
-        assertEquals("a long press must ask for the actions", listOf(INDEX), actioned)
+        // *click*, so a test that only checked `selecting` would pass while the shelf opened the zine.
+        assertEquals("a long press must start choosing with this zine", listOf(INDEX), selecting)
         assertEquals("and must not also open it", emptyList<Int>(), opened)
+        assertEquals("nor its sheet", emptyList<Int>(), actioned)
     }
 
     @Test
@@ -561,7 +564,8 @@ class ZineOnShelfTest {
         // The implementation guide's rule is that *"every gesture has a named custom action twin"*. An
         // unnamed ACTION_LONG_CLICK is present but undiscoverable, so the label is the assertion.
         assertTrue("the platform node must offer a long-press action", node.isLongClickable)
-        assertEquals("and must name it", "Actions", node.longClickLabel)
+        // A47.1: a zine's long press is "Select" (a folder's stays "Actions", ZineLibrarySelectTest).
+        assertEquals("and must name it", "Select", node.longClickLabel)
     }
 
     @Test
@@ -604,6 +608,7 @@ class ZineOnShelfTest {
                     onOpen = { opened += it },
                     onActions = { actioned += it },
                     modifier = Modifier.width(COLUMN),
+                    onSelect = { selecting += it },
                 )
             }
         }

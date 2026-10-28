@@ -99,6 +99,13 @@ internal data class ZineShelfItem(
      * name and [subtitle] its count (`"3 zines"`), which stands where a zine's date stands.
      */
     val pile: List<ZineCoverRecipe>? = null,
+    /**
+     * The Shelf is choosing several zines (A47): a tap chooses rather than opens, and a pile is quieter. Set on
+     * every tile while choosing, so each one shows it can be chosen, or that it cannot.
+     */
+    val choosing: Boolean = false,
+    /** While [choosing]: this zine is chosen. */
+    val chosen: Boolean = false,
 )
 
 /**
@@ -226,6 +233,8 @@ internal const val ZineShelfHeadTestTag: String = "shelf-head"
  * @param focusTile the position of the tile [focus]'s tile requester is attached to, or `-1`.
  * @param note a full-width cell directly under the heading and its count, above the first zine: the
  *   restored-details note (A37.2). It scrolls with the zines and never covers one.
+ * @param onSelect a zine's long press, by its position: start choosing several (A47.1).
+ * @param choosing the Shelf is choosing several (A47): the heading is hidden under the screen's bar.
  */
 @Composable
 internal fun ZineShelf(
@@ -241,6 +250,8 @@ internal fun ZineShelf(
     focus: ShelfFocus = remember { ShelfFocus() },
     focusTile: Int = -1,
     note: (@Composable () -> Unit)? = null,
+    onSelect: (Int) -> Unit = {},
+    choosing: Boolean = false,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(ShelfColumns),
@@ -286,7 +297,11 @@ internal fun ZineShelf(
                 folder = folder,
                 onBack = onBack,
                 focus = focus,
-                modifier = if (hidden) {
+                // A47.3: `.a47-on .shelf-head{visibility:hidden}` — the choosing bar stands in its place and
+                // says what it said. Hidden, so it keeps its space and nothing below it moves.
+                modifier = if (choosing) {
+                    Modifier.alpha(0f).clearAndSetSemantics {}
+                } else if (hidden) {
                     Modifier.alpha(0f).clearAndSetSemantics {
                         contentDescription = Copy.Shelf.LOADING_YOUR_ZINES
                         liveRegion = LiveRegionMode.Polite
@@ -317,6 +332,7 @@ internal fun ZineShelf(
                 onOpen = onOpen,
                 onActions = onActions,
                 focusRequester = focus.tile.takeIf { index == focusTile },
+                onSelect = onSelect,
             )
         }
     }
