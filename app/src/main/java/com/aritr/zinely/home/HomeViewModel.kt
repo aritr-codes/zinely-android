@@ -766,28 +766,15 @@ internal class HomeViewModel @Inject constructor(
         }
         settling = settling - id
         finishedDeletes = finishedDeletes - id
-        unmarked = unmarked - id
         pendingDeletes.update { it + id }
         eventQueue.trySend(HomeShelfEvent.DeletePrompt(id, title))
     }
 
     /**
-     * Zines a batch delete could not write a marker for, so never hid: each marked id of that batch → those ids.
-     * They are named, with any zine whose delete then fails, in the batch's one closing message (A47.9). Dropped on
-     * Undo, where every chosen zine is on the Shelf anyway.
-     *
-     * Accepted limit: a batch finished early by a folder action, an open, a new zine or a restore
-     * ([commitPendingDeletesNow], rule 11) never reaches [commitDeletes], so its unmarked zines are not named. They
-     * were never hidden, so the Shelf still shows them truly; only the word is missing. Needs a marker write to fail.
-     */
-    private var unmarked: Map<String, List<String>> = emptyMap()
-
-    /**
-     * Delete several zines with one Undo (A47.8, [ADR-142](docs/DECISIONS.md#adr-142)): [delete], for a set. Each
-     * zine's marker is written. A zine whose marker cannot be is **not hidden** (with no marker a restart would
-     * bring it back unannounced) and is named when the batch's window closes ([commitDeletes]); if no marker
-     * could be written the maker is told at once, as for one zine. The marked are hidden at once under **one**
-     * [HomeShelfEvent.DeleteBatchPrompt]. A set of one, however it came to be one, is [delete] with its words.
+     * Delete several zines with one Undo (A47.8, [ADR-142](docs/DECISIONS.md#adr-142)): [delete], for a set. Every
+     * zine's marker is written in **one** write: all or none. If it fails nothing is hidden (with no marker a
+     * restart would bring a zine back unannounced) and the maker is told at once, as for one zine. Otherwise they
+     * are hidden together under **one** [HomeShelfEvent.DeleteBatchPrompt]. A set of one, however it came to be one, is [delete] with its words.
      */
     fun deleteMany(ids: List<String>) {
         val zines = (state.value as? HomeUiState.Content)?.zines ?: return
@@ -796,24 +783,16 @@ internal class HomeViewModel @Inject constructor(
             shown.firstOrNull()?.let { delete(it.id) }
             return
         }
-        val (marked, notMarked) = shown.partition { pendingDeleteStore.add(it.id) }
-        if (marked.isEmpty()) {
+        if (!pendingDeleteStore.addAll(shown.map { it.id })) {
             eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
             return
         }
-        val markedIds = marked.map { it.id }
-        // Replaces any entry a settled earlier batch left: these ids start a new delete.
-        unmarked = unmarked - markedIds.toSet() +
-            if (notMarked.isEmpty()) emptyMap() else markedIds.associateWith { notMarked.map { z -> z.id } }
+        val markedIds = shown.map { it.id }
         settling = settling - markedIds.toSet()
         finishedDeletes = finishedDeletes - markedIds.toSet()
         pendingDeletes.update { it + markedIds }
         eventQueue.trySend(
-            if (marked.size == 1) {
-                HomeShelfEvent.DeletePrompt(marked.single().id, marked.single().title)
-            } else {
-                HomeShelfEvent.DeleteBatchPrompt(markedIds, Copy.Select.deleted(zineCount(marked.size)))
-            },
+            HomeShelfEvent.DeleteBatchPrompt(markedIds, Copy.Select.deleted(zineCount(markedIds.size))),
         )
     }
 
@@ -827,7 +806,6 @@ internal class HomeViewModel @Inject constructor(
 
     /** Undo within the window: clear the durable intent, then unhide; the project store was never called. */
     fun undoDelete(id: String) {
-        unmarked = unmarked - id
         if (!pendingDeleteStore.remove(id)) {
             eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
             return
@@ -836,13 +814,14 @@ internal class HomeViewModel @Inject constructor(
         pendingDeletes.update { it - id }
     }
 
-    /** Undo for a batch: [undoDelete] for each zine, and at most one failure message. */
+    /** Undo for a batch: [undoDelete] for all of them, markers cleared in one write; if that fails none comes back. */
     fun undoDeletes(ids: List<String>) {
-        unmarked = unmarked - ids.toSet()
-        val undone = ids.filter { pendingDeleteStore.remove(it) }.toSet()
-        finishedDeletes = finishedDeletes - undone
-        pendingDeletes.update { it - undone }
-        if (undone.size < ids.toSet().size) eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
+        if (!pendingDeleteStore.removeAll(ids)) {
+            eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
+            return
+        }
+        finishedDeletes = finishedDeletes - ids.toSet()
+        pendingDeletes.update { it - ids.toSet() }
     }
 
     /**
@@ -856,8 +835,6 @@ internal class HomeViewModel @Inject constructor(
      * has already finished that delete. [performCommit] makes such a call a no-op.
      */
     fun commitDelete(id: String) {
-        // A batch that left zines unmarked prompts as one zine when only one was marked; it still names them.
-        if (id in unmarked) return commitDeletes(listOf(id))
         // A folder action is finishing this one, or has: once is enough, and a second failure would say so twice.
         if (id in settling) return
         viewModelScope.launch { performCommit(id) }
@@ -866,19 +843,16 @@ internal class HomeViewModel @Inject constructor(
     /**
      * A batch's undo window closed without Undo: each zine is deleted on its own, in order (A47.9). One that cannot
      * be comes back exactly as in [commitDelete], and the rest stay deleted; instead of one warm message per zine,
-     * **one** message names, in Shelf order, every chosen zine that is on the Shelf and not deleted: those that came
-     * back and those [deleteMany] could not mark.
+     * **one** message names, in Shelf order, every chosen zine that is on the Shelf and not deleted.
      */
     fun commitDeletes(ids: List<String>) {
-        val leftOut = ids.flatMap { unmarked[it].orEmpty() }.toSet()
-        unmarked = unmarked - ids.toSet()
         val mine = ids.filter { it !in settling }
         if (mine.isEmpty()) return
         viewModelScope.launch {
             val failed = mine.filterNot { performCommit(it, warn = false) }
             // Named only if it is on the Shelf now: not one whose marker could not be cleared (still hidden, so
-            // still deleting), nor an unmarked one the maker has since deleted on its own.
-            val back = (failed + leftOut).filter { it !in pendingDeletes.value }.toSet()
+            // still deleting).
+            val back = failed.filter { it !in pendingDeletes.value }.toSet()
             // listedTitles is in Shelf order, and the store still lists every zine that was not deleted.
             val titles = listedTitles.filterKeys { it in back }.values.toList()
             when {
