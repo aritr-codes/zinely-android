@@ -2801,4 +2801,131 @@ class HomeViewModelTest {
         stateJob.cancel()
         eventsJob.cancel()
     }
+
+    // ---- #166: batch follow-ups --------------------------------------------------------------------
+
+    private fun HomeShelfEvent.text() = (this as HomeShelfEvent.Message).text
+
+    @Test
+    fun `Undo of a batch whose deletes already finished brings nothing back and names them`() = runTest {
+        // Given: Home was left (ON_STOP flush) while the snack stood
+        val shelf = folderShelf("a" to null, "b" to null, "c" to null)
+        shelf.viewModel.deleteMany(listOf("a", "b", "c"))
+        shelf.viewModel.flushPendingDeletes()
+
+        // When
+        shelf.viewModel.undoDeletes(listOf("a", "b", "c"))
+
+        // Then
+        assertEquals(listOf("a", "b", "c"), repository.deleted)
+        assertTrue(shelf.zines.isEmpty())
+        assertEquals(
+            "3 zines were already deleted, so they can’t come back: “a”, “b” and “c”",
+            shelf.events.last().text(),
+        )
+        shelf.close()
+    }
+
+    @Test
+    fun `Undo of a batch of which only some deletes finished brings back the rest and names the others`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null)
+        shelf.viewModel.deleteMany(listOf("a", "b"))
+        shelf.viewModel.commitDeletes(listOf("a"))
+
+        shelf.viewModel.undoDeletes(listOf("a", "b"))
+
+        assertEquals(listOf("b"), shelf.zines.map { it.id })
+        assertTrue(pendingDeleteStore.ids.isEmpty())
+        assertEquals("“a” was already deleted, so it can’t come back", shelf.events.last().text())
+        shelf.close()
+    }
+
+    @Test
+    fun `Undo of one zine whose delete already finished says so`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null)
+        shelf.viewModel.delete("a")
+        shelf.viewModel.flushPendingDeletes()
+
+        shelf.viewModel.undoDelete("a")
+
+        assertEquals(listOf("b"), shelf.zines.map { it.id })
+        assertEquals("“a” was already deleted, so it can’t come back", shelf.events.last().text())
+        shelf.close()
+    }
+
+    @Test
+    fun `a batch finished early by a folder action says its failures once, and the action does not run`() = runTest {
+        // Given: two of the three are still saving
+        val shelf = folderShelf("a" to null, "b" to null, "c" to null, "d" to null)
+        repository.undeletable = setOf("a", "c")
+        shelf.viewModel.deleteMany(listOf("a", "b", "c"))
+
+        // When
+        shelf.viewModel.moveZine("d", "Family")
+
+        // Then
+        val messages = shelf.events.filterIsInstance<HomeShelfEvent.Message>()
+        assertEquals(
+            listOf("2 zines weren’t deleted: “a” and “c”. They’re back on your shelf; try again in a moment."),
+            messages.map { it.text },
+        )
+        assertEquals(listOf("a", "c", "d"), shelf.zines.map { it.id })
+        assertTrue(repository.calls.none { it.startsWith("move") })
+        shelf.close()
+    }
+
+    @Test
+    fun `a zine deleted alone and finished early by a folder action keeps its own message`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null)
+        repository.deleteResult = { DataResult.Failure(DataError.Busy("live session")) }
+        shelf.viewModel.delete("a")
+
+        shelf.viewModel.moveZine("b", "Family")
+
+        val messages = shelf.events.filterIsInstance<HomeShelfEvent.Message>()
+        assertEquals(1, messages.size)
+        assertTrue("weren’t deleted" !in messages.single().text && "wasn’t deleted" !in messages.single().text)
+        shelf.close()
+    }
+
+    @Test
+    fun `Undo of a batch move leaves a zine deleted meanwhile alone and does not name it`() = runTest {
+        // Given
+        val shelf = folderShelf("a" to null, "b" to null, "c" to null)
+        shelf.viewModel.moveMany(listOf("a", "b", "c"), "Family")
+        shelf.viewModel.delete("b")
+        repository.calls.clear()
+
+        // When
+        shelf.viewModel.folderSnackAction()
+
+        // Then: only a and c are put back, in the plain words
+        assertEquals(listOf("move a -> null", "move c -> null"), repository.calls.filter { it.startsWith("move") })
+        assertEquals(
+            HomeShelfEvent.FolderSnack("2 zines are back on My Shelf", zineId = "a", folder = null),
+            shelf.events.last(),
+        )
+        shelf.close()
+    }
+
+    @Test
+    fun `Undo of a batch move with one zine left speaks as the single move`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null)
+        shelf.viewModel.moveMany(listOf("a", "b"), "Family")
+        shelf.viewModel.delete("b")
+        shelf.viewModel.folderSnackAction()
+        assertEquals(Copy.Folders.backOnMyShelf("a"), shelf.snacks().last().message)
+        shelf.close()
+    }
+
+    @Test
+    fun `Undo of a batch move whose zines were all deleted meanwhile says nothing`() = runTest {
+        val other = folderShelf("x" to null, "y" to null)
+        other.viewModel.moveMany(listOf("x", "y"), "Family")
+        other.viewModel.deleteMany(listOf("x", "y"))
+        val seen = other.events.size
+        other.viewModel.folderSnackAction()
+        assertEquals(seen, other.events.size)
+        other.close()
+    }
 }
