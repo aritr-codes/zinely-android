@@ -17,6 +17,7 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import com.aritr.zinely.core.model.PaperSize
@@ -226,6 +227,46 @@ class ShelfSheetsTest {
         val smile = "😀"
         assertEquals("a".repeat(59) + smile, capTitle("a".repeat(59) + smile + smile))
         assertEquals("a".repeat(60), capTitle("a".repeat(61)))
+    }
+
+    private fun cps(s: String) = s.codePointCount(0, s.length)
+
+    /** R1: a duplicate's " copy" can leave a title over 60; editing it must not eat the tail. */
+    @Test
+    fun `editing one letter of an already-long title keeps its tail and length`() {
+        val old = "a".repeat(60) + " copy"
+        assertEquals(65, cps(old))
+        val edited = old.replaceRange(10, 11, "b")
+        val out = titleEdit(old, TextFieldValue(edited, TextRange(11)))
+        assertEquals(edited, out.text)
+        assertEquals(TextRange(11), out.selection)
+    }
+
+    @Test
+    fun `an edit may not grow a long title past where it already was`() {
+        val old = "a".repeat(65)
+        assertEquals(65, cps(titleEdit(old, TextFieldValue(old + "zzz")).text))
+    }
+
+    /** I1: truncating mid-text must not throw the cursor to the end. */
+    @Test
+    fun `a capped edit keeps the cursor clamped, not jumped to the end`() {
+        val old = "a".repeat(60)
+        val out = titleEdit(old, TextFieldValue("a".repeat(30) + "XY" + "a".repeat(30), TextRange(32)))
+        assertEquals(60, cps(out.text))
+        assertEquals(TextRange(32), out.selection)
+    }
+
+    /** I2: the cut falls on a grapheme-cluster boundary. */
+    @Test
+    fun `the cap never splits a ZWJ emoji, a flag or a combining mark`() {
+        val family = "👨‍👩‍👧"   // 5 code points, 1 cluster
+        val flag = "🇺🇸"                              // 2 code points, 1 cluster
+        val accent = "é"                                             // 2 code points, 1 cluster
+        assertEquals("a".repeat(58), capTitle("a".repeat(58) + family))
+        assertEquals("a".repeat(59), capTitle("a".repeat(59) + flag))
+        assertEquals("a".repeat(59), capTitle("a".repeat(59) + accent))
+        assertEquals("a".repeat(58) + accent, capTitle("a".repeat(58) + accent + "b"))
     }
 
     private fun selectionOfRenameField(): TextRange =
