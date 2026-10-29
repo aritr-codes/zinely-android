@@ -2033,3 +2033,26 @@ Added 2026-10-29 for the lighter chosen ring (owner request; [ADR-142](DECISIONS
   (ring, badge fill, halo, hard shadow); A47.2 now keeps one light ring beside the unchanged tick.
 
 **Sources:** as linked above.
+
+## R38. Cancel beside a committing button on a sheet (2026-10-29)
+
+Asked before deciding [ADR-144](DECISIONS.md#adr-144) and freezing library A49: how do design systems draw a dismiss
+beside a committing button, especially when the commit is disabled until valid? **Numbering:** R38 was reserved for this lane. Collected by the Research Agent on 2026-10-29; the in-repo precedent (the frozen
+mockups' Cancels) is in the ADR, not here. Gaps: m3.material.io and NN/g did not render or return anything citable; the
+Google Keep, Drive and Files dialogs were not retrieved and nothing here rests on them.
+
+- ✅ VERIFIED: Material 3's `AlertDialog` takes a `confirmButton` and an optional `dismissButton`, and the reference sample
+  fills both with `TextButton` ([AlertDialog](https://developer.android.com/reference/kotlin/androidx/compose/material3/AlertDialog.composable);
+  [composables.com](https://composables.com/components/material-3-compose/alertdialog)). Both are text: the pair is symmetric.
+  Zinely's pair (filled + text) is not an M3 pair, so "M3 uses text for Cancel" does not carry over.
+- ✅ VERIFIED: `TextButton` is for lower-emphasis actions, outlined sits between text and filled
+  ([TextButton](https://developer.android.com/reference/kotlin/androidx/compose/material3/TextButton.composable);
+  [Material buttons](https://material.io/go/design-buttons)).
+- ✅ VERIFIED: a text cancel beside a filled submit is documented where the submit is live, and the same pages advise against
+  disabled buttons ([Cox Automotive Prism](https://prism.coxautoinc.com/docs/components/action-components/button/);
+  [Scottish Government](https://designsystem.gov.scot/components/button)). Zinely keeps its disabled-until-valid commit
+  (A28.10, with a hint line), so the mitigation is on the dismiss: give it a body.
+- ✅ VERIFIED: an Android touch target is at least 48dp, with at least 8dp between targets
+  ([Android accessibility](https://developer.android.com/guide/topics/ui/accessibility/apps)). Both options keep 48dp.
+- 🟦 RECOMMENDATION: the paper-filled bordered sibling (ADR-144 decision 1), because every other frozen Cancel already
+  is one.
