@@ -2,11 +2,17 @@ package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.text.input.ImeAction
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.Intent
@@ -30,7 +36,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * The text-edit session UI (ADR-029 §5.6): typing stays feature-ephemeral; the keyboard Done action
+ * The text-edit session UI (ADR-029 §5.6): typing stays feature-ephemeral; the Done chip (focus loss)
  * commits the whole draft as one [Intent.CommitText] against a real [EditorStore]; the token guard makes a
  * second commit a no-op. Robolectric NATIVE.
  */
@@ -63,8 +69,16 @@ class EditTextSessionTest {
         return s
     }
 
+    // The style row's Done chip commits by clearing focus (EditorScreen `onDone`), so this is that exact path.
+    private var focusManager: FocusManager? = null
+
+    private fun pressDone() {
+        composeRule.runOnIdle { focusManager!!.clearFocus() }
+    }
+
     private fun setSession(store: EditorStore, onCommitted: () -> Unit = {}) {
         composeRule.setContent {
+            focusManager = LocalFocusManager.current
             ZinelyTheme {
                 val state by store.uiState.collectAsState()
                 val session = state.interaction
@@ -96,7 +110,7 @@ class EditTextSessionTest {
         // Mid-typing the document still holds the original — the draft is feature-ephemeral.
         assertEquals("old", (store.uiState.value.document.pages[0].elements.single { it.id == id } as TextElement).text)
 
-        composeRule.onNodeWithTag(EditTextSessionTestTag).performImeAction()
+        pressDone()
         composeRule.waitForIdle()
 
         val el = store.uiState.value.document.pages[0].elements.single { it.id == id } as TextElement
@@ -109,6 +123,30 @@ class EditTextSessionTest {
     }
 
     @Test
+    fun enter_inserts_a_newline_and_does_not_commit() {
+        val store = store(initialText = "")
+        val id = store.uiState.value.selection.single()
+        var commits = 0
+        setSession(store, onCommitted = { commits += 1 })
+
+        // A soft keyboard's Enter key sends the field's IME action when it is Done (commit) and a newline
+        // when it is Default, so the action the field advertises to the platform is what decides it.
+        composeRule.onNodeWithTag(EditTextSessionTestTag)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.ImeAction, ImeAction.Default))
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextInput("one")
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextInput("\n")
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextInput("two")
+        composeRule.waitForIdle()
+
+        assertEquals(0, commits)
+        assertTrue("still editing", store.uiState.value.interaction is Interaction.EditingText)
+        pressDone()
+        composeRule.waitForIdle()
+        val el = store.uiState.value.document.pages[0].elements.single { it.id == id } as TextElement
+        assertEquals("one\ntwo", el.text)
+    }
+
+    @Test
     fun done_commits_once_even_though_disposal_also_fires() {
         // After Done the session goes Idle and the composable leaves composition; the onDispose commit must
         // be a no-op (committed latch + token guard), so the single edit stays a single undo step.
@@ -117,7 +155,7 @@ class EditTextSessionTest {
         setSession(store)
 
         composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("edited")
-        composeRule.onNodeWithTag(EditTextSessionTestTag).performImeAction()
+        pressDone()
         composeRule.waitForIdle()
 
         store.dispatch(Intent.Undo)
