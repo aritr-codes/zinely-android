@@ -161,6 +161,19 @@ internal class HomeViewModel @Inject constructor(
      */
     private var finishedDeletes: Set<String> = emptySet()
 
+    /**
+     * Titles of the zines whose delete was asked for here, so an Undo that comes too late can name them: by then
+     * the Shelf no longer lists them ([Copy.Select.alreadyDeleted]).
+     */
+    private var deletedTitles: Map<String, String> = emptyMap()
+
+    /**
+     * Which batch ([deleteMany]) each hidden zine was deleted with, so a batch finished early (by a folder action
+     * or a restore) says its failures once, as [commitDeletes] does (A47.9). A zine deleted on its own has none.
+     */
+    private var batchOf: Map<String, Int> = emptyMap()
+    private var batchCount = 0
+
     /** One commit at a time, so two callers finishing the same delete ask the store once ([performCommit]). */
     private val commitMutex = Mutex()
 
@@ -595,22 +608,7 @@ internal class HomeViewModel @Inject constructor(
         snackAction = if (one != null) {
             { undoOneMove(one) }
         } else {
-            {
-                // Every zine is tried even after one fails (rule 18).
-                val allBack = moved.map { projectRepository.moveProject(it.id, it.folder) is DataResult.Success }.all { it }
-                eventQueue.send(
-                    when {
-                        allBack -> HomeShelfEvent.FolderSnack(
-                            if (from != null) Copy.Select.areBackIn(n, from) else Copy.Select.areBackOnMyShelf(n),
-                            zineId = moved.first().id,
-                            folder = from,
-                        )
-                        // A47.9 / R6: those left are where the batch put them.
-                        to != null -> HomeShelfEvent.FolderSnack(Copy.Select.notAllBack(to))
-                        else -> HomeShelfEvent.FolderSnack(Copy.Folders.NOT_EVERY_ZINE_WENT_BACK)
-                    },
-                )
-            }
+            { undoManyMoves(moved, from, to) }
         }
         eventQueue.send(
             HomeShelfEvent.FolderSnack(
@@ -619,6 +617,29 @@ internal class HomeViewModel @Inject constructor(
                 zineId = moved.first().id,
                 folder = to,
             ),
+        )
+    }
+
+    /** A batch move's Undo. [moved] went from [from] to [to]; one deleted since is neither put back nor named (#166). */
+    private suspend fun undoManyMoves(moved: List<LibraryZine>, from: String?, to: String?) {
+        val present = shownZines().mapTo(HashSet()) { it.id }
+        val here = moved.filter { it.id in present }
+        if (here.size == 1) return undoOneMove(here.single())
+        if (here.isEmpty()) return
+        val n = zineCount(here.size)
+        // Every zine is tried even after one fails (rule 18).
+        val allBack = here.map { projectRepository.moveProject(it.id, it.folder) is DataResult.Success }.all { it }
+        eventQueue.send(
+            when {
+                allBack -> HomeShelfEvent.FolderSnack(
+                    if (from != null) Copy.Select.areBackIn(n, from) else Copy.Select.areBackOnMyShelf(n),
+                    zineId = here.first().id,
+                    folder = from,
+                )
+                // A47.9 / R6: those left are where the batch put them.
+                to != null -> HomeShelfEvent.FolderSnack(Copy.Select.notAllBack(to))
+                else -> HomeShelfEvent.FolderSnack(Copy.Folders.NOT_EVERY_ZINE_WENT_BACK)
+            },
         )
     }
 
@@ -766,6 +787,8 @@ internal class HomeViewModel @Inject constructor(
         }
         settling = settling - id
         finishedDeletes = finishedDeletes - id
+        batchOf = batchOf - id
+        deletedTitles = deletedTitles + (id to title)
         pendingDeletes.update { it + id }
         eventQueue.trySend(HomeShelfEvent.DeletePrompt(id, title))
     }
@@ -790,6 +813,9 @@ internal class HomeViewModel @Inject constructor(
         val markedIds = shown.map { it.id }
         settling = settling - markedIds.toSet()
         finishedDeletes = finishedDeletes - markedIds.toSet()
+        val batch = ++batchCount
+        batchOf = batchOf + markedIds.associateWith { batch }
+        deletedTitles = deletedTitles + shown.associate { it.id to it.title }
         pendingDeletes.update { it + markedIds }
         eventQueue.trySend(
             HomeShelfEvent.DeleteBatchPrompt(markedIds, Copy.Select.deleted(zineCount(markedIds.size))),
@@ -804,8 +830,16 @@ internal class HomeViewModel @Inject constructor(
     fun isDeleteWaiting(id: String): Boolean =
         id in pendingDeletes.value && id !in settling && id !in finishedDeletes
 
+    /** Gone for good: the delete finished, or the store no longer lists it. A failed commit or a restore leaves it listed, so it is not "already deleted". */
+    private fun isGone(id: String): Boolean = id in finishedDeletes || id !in listedTitles
+
     /** Undo within the window: clear the durable intent, then unhide; the project store was never called. */
     fun undoDelete(id: String) {
+        // Too late: the delete finished while the prompt stood (Home was left). Nothing to bring back, so say so.
+        if (!isDeleteWaiting(id)) {
+            if (isGone(id)) deletedTitles[id]?.let { eventQueue.trySend(HomeShelfEvent.Message(Copy.Select.alreadyDeleted(listOf(it)))) }
+            return
+        }
         if (!pendingDeleteStore.remove(id)) {
             eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
             return
@@ -816,12 +850,18 @@ internal class HomeViewModel @Inject constructor(
 
     /** Undo for a batch: [undoDelete] for all of them, markers cleared in one write; if that fails none comes back. */
     fun undoDeletes(ids: List<String>) {
-        if (!pendingDeleteStore.removeAll(ids)) {
-            eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
-            return
+        // Only the zines whose delete is still waiting can come back; the rest are named, once.
+        val (waiting, late) = ids.partition { isDeleteWaiting(it) }
+        if (waiting.isNotEmpty()) {
+            if (!pendingDeleteStore.removeAll(waiting)) {
+                eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
+                return
+            }
+            finishedDeletes = finishedDeletes - waiting.toSet()
+            pendingDeletes.update { it - waiting.toSet() }
         }
-        finishedDeletes = finishedDeletes - ids.toSet()
-        pendingDeletes.update { it - ids.toSet() }
+        val titles = late.filter { isGone(it) }.mapNotNull { deletedTitles[it] }
+        if (titles.isNotEmpty()) eventQueue.trySend(HomeShelfEvent.Message(Copy.Select.alreadyDeleted(titles)))
     }
 
     /**
@@ -848,19 +888,23 @@ internal class HomeViewModel @Inject constructor(
     fun commitDeletes(ids: List<String>) {
         val mine = ids.filter { it !in settling }
         if (mine.isEmpty()) return
-        viewModelScope.launch {
-            val failed = mine.filterNot { performCommit(it, warn = false) }
-            // Named only if it is on the Shelf now: not one whose marker could not be cleared (still hidden, so
-            // still deleting).
-            val back = failed.filter { it !in pendingDeletes.value }.toSet()
-            // listedTitles is in Shelf order, and the store still lists every zine that was not deleted.
-            val titles = listedTitles.filterKeys { it in back }.values.toList()
-            when {
-                titles.isNotEmpty() && titles.size == back.size ->
-                    eventQueue.send(HomeShelfEvent.Message(Copy.Select.notDeleted(titles)))
-                failed.isNotEmpty() -> eventQueue.send(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
-            }
+        viewModelScope.launch { commitBatch(mine) }
+    }
+
+    /** Deletes [ids] one by one and says the failures once, together. True when every one is deleted or was not waiting. */
+    private suspend fun commitBatch(ids: List<String>): Boolean {
+        val failed = ids.filterNot { performCommit(it, warn = false) }
+        // Named only if it is on the Shelf now: not one whose marker could not be cleared (still hidden, so
+        // still deleting).
+        val back = failed.filter { it !in pendingDeletes.value }.toSet()
+        // listedTitles is in Shelf order, and the store still lists every zine that was not deleted.
+        val titles = listedTitles.filterKeys { it in back }.values.toList()
+        when {
+            titles.isNotEmpty() && titles.size == back.size ->
+                eventQueue.send(HomeShelfEvent.Message(Copy.Select.notDeleted(titles)))
+            failed.isNotEmpty() -> eventQueue.send(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
         }
+        return failed.isEmpty()
     }
 
     /**
@@ -952,8 +996,13 @@ internal class HomeViewModel @Inject constructor(
      * dismissal would have made. A failed commit rolls back visibly through [performCommit] (unhide +
      * warm message, seen on return) and **never blocks** the requested open/create.
      */
-    private suspend fun commitPendingDeletesNow(): Boolean =
-        pendingDeletes.value.map { performCommit(it) }.all { it }
+    private suspend fun commitPendingDeletesNow(): Boolean {
+        // A batch finished early still says its failures once (A47.9); a zine deleted alone says its own.
+        val results = pendingDeletes.value.groupBy { batchOf[it] }.map { (batch, ids) ->
+            if (batch == null) ids.map { performCommit(it) }.all { it } else commitBatch(ids)
+        }
+        return results.all { it }
+    }
 
     private fun requestBackupRestorePicker(request: LibraryBackupRestorePickerRequest) {
         if (backupRestoreJob?.isActive == true || backupRestorePickerPending) return

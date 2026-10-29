@@ -33,6 +33,17 @@ class SelectCopyTest {
     }
 
     @Test
+    fun `alreadyDeleted names one, two and five zines`() {
+        assertEquals("“A” was already deleted, so it can’t come back", Copy.Select.alreadyDeleted(one))
+        assertEquals("2 zines were already deleted, so they can’t come back: “A” and “B”", Copy.Select.alreadyDeleted(two))
+        assertEquals(
+            "5 zines were already deleted, so they can’t come back: “A”, “B”, “C” and 2 more",
+            Copy.Select.alreadyDeleted(five),
+        )
+        assertThrows<IllegalArgumentException> { Copy.Select.alreadyDeleted(emptyList()) }
+    }
+
+    @Test
     fun `notMoved names one, two, four and five zines, after the line or alone`() {
         val line = "Moved 2 zines to “Family”"
         assertEquals("$line. “A” didn’t move; try again in a moment.", Copy.Select.notMoved(line, one))

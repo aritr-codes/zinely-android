@@ -17494,6 +17494,7 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 | R5 | Words for the count | "N selected" | The platform's own word, and what TalkBack users hear elsewhere |
 | R6 | Undo of a batch moved *into* a folder puts back only some | "Some zines didn’t go back. They’re still in “Family”, nothing is lost" (A47.9, 2026-10-28) | A28's line says "They’re on My Shelf", which is false here; the words say where they are now, in the same manner |
 | R7 | The chooser's pane title for a set | "Move 3 zines" (A47.11, 2026-10-28) | A28's "Move zine" with the count, so TalkBack names what is being moved |
+| R8 | Undo after a zine's delete already finished | “{title}” was already deleted, so it can’t come back / “{n} zines were already deleted, so they can’t come back: {names}” (A47.9, 2026-10-29) | Says what happened and that nothing is broken; only zines actually gone are named, never one that is back on the Shelf (#166) |
 
 #### Consequences
 

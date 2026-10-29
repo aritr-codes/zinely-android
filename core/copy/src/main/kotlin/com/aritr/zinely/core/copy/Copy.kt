@@ -1549,6 +1549,17 @@ public object Copy {
                 "${titles.size} zines weren’t deleted: ${names(titles)}. They’re back on your shelf; try again in a moment."
             }
 
+        /**
+         * Undo was pressed after [titles] (Shelf order, at least one) had already been deleted for good (Home was
+         * left while the snack stood, [ADR-142](docs/DECISIONS.md#adr-142), #166). Words ruled 2026-10-29: ADR-142 R8, A47.9.
+         */
+        public fun alreadyDeleted(titles: List<String>): String =
+            if (titles.size == 1) {
+                "${names(titles)} was already deleted, so it can’t come back"
+            } else {
+                "${titles.size} zines were already deleted, so they can’t come back: ${names(titles)}"
+            }
+
         /** A47.9, Move: [line] is the snack line for the zines that did move, or `null` when none did. */
         public fun notMoved(line: String?, titles: List<String>): String {
             val tail = "${names(titles)} didn’t move; try again in a moment."
