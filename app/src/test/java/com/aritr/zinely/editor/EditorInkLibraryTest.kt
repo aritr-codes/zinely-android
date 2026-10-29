@@ -19,7 +19,10 @@ import com.aritr.zinely.data.android.InMemorySaveFailureSink
 import com.aritr.zinely.data.android.di.EditorAutosaveBinderFactory
 import com.aritr.zinely.data.android.prefs.EditorOnboardingStore
 import com.aritr.zinely.data.android.prefs.InkLibraryStore
+import com.aritr.zinely.core.editor.ArtShortcuts
+import com.aritr.zinely.data.android.prefs.ArtShortcutsStore
 import java.io.File
+import java.io.IOException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -100,9 +103,40 @@ class EditorInkLibraryTest {
         assertEquals(stored.use(InkHex("00FF00")).library, store.state.value)
     }
 
+    @Test
+    fun `given the shortcuts store fails with an IOException, when editArtShortcuts runs, then nothing crashes`() {
+        var attempts = 0
+        val failing = object : ArtShortcutsStore {
+            override val shortcuts = MutableStateFlow(ArtShortcuts())
+            override suspend fun update(transform: (ArtShortcuts) -> ArtShortcuts) {
+                attempts++
+                throw IOException("disk full")
+            }
+        }
+        val vm = viewModel(FakeInkLibraryStore(stored), failing)
+        // An exception escaping a viewModelScope launch is reported to the thread's uncaught handler (on a
+        // device that is a process crash), so capture it there.
+        val thread = Thread.currentThread()
+        val previous = thread.uncaughtExceptionHandler
+        val escaped = mutableListOf<Throwable>()
+        thread.uncaughtExceptionHandler = Thread.UncaughtExceptionHandler { _, e -> escaped += e }
+        try {
+            vm.editArtShortcuts { it.picked("shape.circle") }
+            idleMain()
+        } finally {
+            thread.uncaughtExceptionHandler = previous
+        }
+
+        assertEquals(1, attempts)
+        assertEquals(emptyList<Throwable>(), escaped)
+    }
+
     private fun idleMain() = shadowOf(Looper.getMainLooper()).idle()
 
-    private fun viewModel(inkStore: InkLibraryStore): EditorViewModel {
+    private fun viewModel(
+        inkStore: InkLibraryStore,
+        artStore: ArtShortcutsStore = FakeArtShortcutsStore(),
+    ): EditorViewModel {
         val dispatcher = UnconfinedTestDispatcher()
         val scope = CoroutineScope(dispatcher + SupervisorJob())
         val repository = InMemoryRepository()
@@ -122,7 +156,7 @@ class EditorInkLibraryTest {
             onboardingStore = SeenOnboardingStore(),
             shareInbox = ShareInbox(),
             inkLibraryStore = inkStore,
-            artShortcutsStore = FakeArtShortcutsStore(),
+            artShortcutsStore = artStore,
             assetsDir = File(context.cacheDir, "assets").apply { mkdirs() },
             mainDispatcher = dispatcher,
             ioDispatcher = dispatcher,

@@ -7,6 +7,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -171,6 +173,42 @@ class BenchArtSheetTest {
         assertEquals(2, edits.size)
         assertEquals(listOf("shape.circle"), edits[0](ArtShortcuts()).recent)
         assertEquals(listOf("shape.circle"), edits[1](ArtShortcuts()).favourites)
+    }
+
+    @Test
+    fun two_rapid_star_taps_before_the_store_catches_up_end_unstarred_and_send_on_then_off() {
+        val edits = mutableListOf<(ArtShortcuts) -> ArtShortcuts>()
+        composeRule.setContent {
+            ZinelyTheme {
+                // The store never answers, as in the window between a tap and the write landing.
+                BenchAddArtSheet(
+                    visible = true,
+                    artPurpose = BenchArtPurpose.Place,
+                    onDismiss = {},
+                    onAddText = {},
+                    onAddPhoto = {},
+                    onAddArt = {},
+                    onPick = {},
+                    persisted = ArtShortcuts(),
+                    onEditPersisted = { edits += it },
+                )
+            }
+        }
+        composeRule.waitForIdle()
+        reveal(benchArtFavouriteTestTag("shape.circle"))
+        val star = composeRule.onNodeWithTag(benchArtFavouriteTestTag("shape.circle"))
+
+        star.performScrollTo().performClick()
+        composeRule.waitForIdle()
+        // Starred, the piece also sits on the Favourites rail, so its star now exists twice; either toggles it.
+        composeRule.onAllNodesWithTag(benchArtFavouriteTestTag("shape.circle")).onFirst().performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(2, edits.size)
+        val afterFirst = edits[0](ArtShortcuts())
+        assertEquals(listOf("shape.circle"), afterFirst.favourites)
+        assertEquals(emptyList<String>(), edits[1](afterFirst).favourites)
+        composeRule.onNodeWithTag(benchArtFavouriteTileTestTag("shape.circle")).assertDoesNotExist()
     }
 
     @Test

@@ -192,7 +192,15 @@ internal fun BenchAddArtSheet(
     // rule); until then, and in hosts with no store, the saveable session lists above still work.
     val stored = persisted?.sanitized(Copy.Supplies.NAMES.keys)
     val shownRecent = stored?.recent ?: sessionRecent
-    val favourites = stored?.favourites ?: sessionFavourites
+    // A tap shows at once and the next tap reads this, not the store: otherwise two quick taps both send
+    // "on" and the un-star is lost. An entry retires when the store agrees with it.
+    var overlay by remember { mutableStateOf(emptyMap<String, Boolean>()) }
+    LaunchedEffect(stored) {
+        val s = stored ?: return@LaunchedEffect
+        overlay = overlay.filter { (id, on) -> (id in s.favourites) != on }
+    }
+    val baseFavourites = stored?.favourites ?: sessionFavourites
+    val favourites = baseFavourites.filterNot { overlay[it] == false } + overlay.filterValues { it }.keys
     val supplyPainter = remember { SupplyPainter() }
 
     LaunchedEffect(supplyPainter) {
@@ -225,6 +233,7 @@ internal fun BenchAddArtSheet(
                 onFavouriteChange = { id, favourite ->
                     sessionFavourites =
                         if (favourite) (sessionFavourites + id).distinct() else sessionFavourites.filterNot { it == id }
+                    overlay = overlay + (id to favourite)
                     onEditPersisted { it.favourite(id, favourite) }
                 },
                 supplyPainter = supplyPainter,

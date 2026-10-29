@@ -36,6 +36,7 @@ import com.aritr.zinely.render.android.AssetBytesSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import java.io.File
+import java.io.IOException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -301,9 +302,19 @@ internal class EditorViewModel @Inject constructor(
     val artShortcuts: StateFlow<ArtShortcuts?> =
         artShortcutsStore.shortcuts.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
 
-    /** Applies [transform] to the stored shortcuts in [viewModelScope], so closing the sheet cannot cancel it. */
+    /**
+     * Applies [transform] to the stored shortcuts in [viewModelScope], so closing the sheet cannot cancel it.
+     * A store `IOException` (disk full, unreadable file) is swallowed: a lost star or recent is acceptable, a
+     * crash from a convenience is not.
+     */
     fun editArtShortcuts(transform: (ArtShortcuts) -> ArtShortcuts) {
-        viewModelScope.launch { artShortcutsStore.update(transform) }
+        viewModelScope.launch {
+            try {
+                artShortcutsStore.update(transform)
+            } catch (_: IOException) {
+                // Intentionally silent.
+            }
+        }
     }
 
     init {
