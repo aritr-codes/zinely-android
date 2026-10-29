@@ -107,6 +107,7 @@ Website, docs and test-only changes that are not part of the beta.8 app, moved h
 
 ### Fixed
 
+- Saved PDF is named after the zine (it was always "zine.pdf"). Empty or unusual titles still save as "zine".
 - The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
   privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
   the files.

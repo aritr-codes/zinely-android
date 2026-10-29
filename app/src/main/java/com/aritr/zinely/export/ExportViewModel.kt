@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import com.aritr.zinely.editor.ProofRoute
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.model.PtSize
@@ -87,16 +89,12 @@ internal class ExportViewModel(
     private val titleOf: suspend () -> String = { "" },
 ) : ViewModel() {
 
-    // The Proof route's own argument (type-safe nav puts `projectId` in this entry's SavedStateHandle), so no
-    // host or EditorViewModel plumbing. A missing zine or a failed read is "" → ExportNaming's "zine".
+    // The Proof route's own argument is in this entry's SavedStateHandle, so no host or EditorViewModel plumbing.
     @Inject
     constructor(exporter: SheetExporter, projects: ProjectRepository, handle: SavedStateHandle) : this(
         exporter,
         ::sharedStorageFreeBytes,
-        {
-            val id = handle.get<String>("projectId")
-            (id?.let { (projects.getProject(it) as? DataResult.Success)?.value?.title }) ?: ""
-        },
+        projectTitleOf(handle, projects),
     )
 
     private val _state = MutableStateFlow<ExportUiState>(ExportUiState.Idle)
@@ -200,4 +198,19 @@ internal class ExportViewModel(
  * the app's cache that Share writes to). The storage root always exists, so no walk-up is needed.
  */
 @Suppress("DEPRECATION") // getExternalStorageDirectory: statfs only, no file access.
+/**
+ * The title of the zine the Proof route is open on, read at call time. A missing route argument, a missing
+ * zine or a failing read all yield "" — [ExportNaming] turns that into "zine", so a save never fails over a name.
+ */
+internal fun projectTitleOf(handle: SavedStateHandle, projects: ProjectRepository): suspend () -> String = {
+    try {
+        val id = handle.toRoute<ProofRoute>().projectId
+        (projects.getProject(id) as? DataResult.Success)?.value?.title ?: ""
+    } catch (ce: CancellationException) {
+        throw ce
+    } catch (e: Exception) {
+        ""
+    }
+}
+
 private fun sharedStorageFreeBytes(): Long = Environment.getExternalStorageDirectory().usableSpace
