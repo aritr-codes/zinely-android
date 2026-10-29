@@ -1076,10 +1076,13 @@ public fun ZineLibraryScreen(
     )
 
     // ---- A28: the three folder sheets ---------------------------------------------------------------
-    val moving = (openSheet as? LibrarySheet.Move)?.let { open -> zines.firstOrNull { it.id == open.zineId } }
     // A47.7: the chooser for a set, which is the zines still shown of those chosen. Its title is their count.
-    val movingMany = (openSheet as? LibrarySheet.MoveMany)?.zineIds?.filter { id -> zines.any { it.id == id } }
+    // A set that has shrunk to one zine while open is that zine's chooser, in A28's words (#166).
+    val shownOfMany = (openSheet as? LibrarySheet.MoveMany)?.zineIds?.filter { id -> zines.any { it.id == id } }
         ?.takeIf { it.isNotEmpty() }
+    val moving = (openSheet as? LibrarySheet.Move)?.let { open -> zines.firstOrNull { it.id == open.zineId } }
+        ?: shownOfMany?.singleOrNull()?.let { id -> zines.firstOrNull { it.id == id } }
+    val movingMany = shownOfMany?.takeIf { it.size > 1 }
     FolderMoveSheet(
         target = when {
             moving != null -> FolderMoveTarget(moving.title, moving.folder, folders)
@@ -1109,6 +1112,9 @@ public fun ZineLibraryScreen(
     FolderNameSheet(
         target = when {
             namingFor != null -> FolderNameTarget(zineTitle = namingFor.title, zineFolder = namingFor.folder)
+            namingForMany != null && namingForMany.size == 1 ->
+                zines.firstOrNull { it.id == namingForMany.single() }
+                    ?.let { FolderNameTarget(zineTitle = it.title, zineFolder = it.folder) }
             namingForMany != null -> FolderNameTarget(zineFolder = openFolder, zines = pluralZineCount(namingForMany.size))
             renamingFolder != null -> FolderNameTarget(renaming = renamingFolder, count = folders.getValue(renamingFolder))
             else -> null

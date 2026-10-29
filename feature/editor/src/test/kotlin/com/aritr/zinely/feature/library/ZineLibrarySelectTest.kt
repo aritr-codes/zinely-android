@@ -362,6 +362,24 @@ class ZineLibrarySelectTest {
     }
 
     @Test
+    fun `a chooser for a set that shrinks to one zine while open speaks as the single zine's`() {
+        choose("Riso tests", "Coffee log")
+        composeRule.onNodeWithTag(ZineDockMoveTestTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FolderMoveSheetTestTag).assert(paneTitled("Move 2 zines"))
+
+        zines = SEEDED.filter { it.id != "Coffee log" } // the other zine was deleted meanwhile
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(FolderMoveSheetTestTag).assert(paneTitled("Move zine"))
+        composeRule.onNodeWithTag(ZineActionTitleTestTag).assertTextEquals("Riso tests")
+        composeRule.onNodeWithTag(folderMoveRowTestTag("Family")).performClick()
+        composeRule.waitForIdle()
+        assertEquals(listOf<Pair<String, String?>>("Riso tests" to "Family"), moved)
+        assertTrue(movedMany.isEmpty())
+    }
+
+    @Test
     fun `a new folder for the set names the set, and Cancel goes back to the chooser`() {
         choose("Riso tests", "Coffee log")
         composeRule.onNodeWithTag(ZineDockMoveTestTag).performClick()
