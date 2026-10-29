@@ -286,7 +286,10 @@ internal class RoomProjectRepository(
             } catch (e: IOException) {
                 return@withLock failure(DataError.Io("failed to write project metadata for '$id'", e))
             }
-            when (val synced = syncRowFromDisk(id, updatedAtEpochMs = clock())) {
+            // A28.4: a rename is not an edit, so the row keeps its recency (same fallback chain as reconcile).
+            // meta.json is the only file written; the display max(row, document mtime) is unaffected.
+            val keptUpdatedAt = dao.findById(id)?.updatedAtEpochMs ?: fileMtimeOrNull(docFile) ?: clock()
+            when (val synced = syncRowFromDisk(id, updatedAtEpochMs = keptUpdatedAt)) {
                 is DataResult.Failure -> DataResult.Failure(synced.error)
                 // ADR-134 decision 3: the maker has acted on this zine, so it stops waiting to be told.
                 is DataResult.Success -> clearWaitingNoteResult(id)
