@@ -14,7 +14,9 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
@@ -640,6 +642,51 @@ class ZineLibraryFoldersTest {
         zines = SEEDED.map { if (it.id == "Riso tests") it.copy(folder = "Family") else it }
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("Family, folder, 3 zines").assertIsFocused()
+    }
+
+    @Test
+    fun `with a keyboard, a duplicate's copy takes focus once the Shelf lists it - and no snack is raised`() {
+        // The copy is told before the Shelf lists it (the same race as a move), so focus waits, then lands on it.
+        shelf()
+        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
+        events.trySend(HomeShelfEvent.Reveal("Riso copy", null))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
+
+        zines = SEEDED + SEEDED.first { it.id == "Riso tests" }.copy(id = "Riso copy", title = "Riso copy")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Riso copy").assertIsFocused()
+    }
+
+    @Test
+    fun `in touch mode a copy made far down a long Shelf is scrolled into view`() {
+        // The copy sorts to the top; the maker is looking at the bottom. Focus cannot help (no requester exists for a
+        // tile that is not composed, and touch mode takes none), so the Shelf itself must scroll to it.
+        val many = (0 until 40).map { zine("Zine $it", null) }
+        zines = many
+        shelf()
+        composeRule.onNodeWithTag(ZineLibraryShelfTestTag).performScrollToIndex(many.size)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Zine 0").assertDoesNotExist()
+
+        events.trySend(HomeShelfEvent.Reveal("Zine copy", null))
+        zines = listOf(zine("Zine copy", null)) + many
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("Zine copy").assertIsDisplayed()
+    }
+
+    @Test
+    fun `with a keyboard, a copy made inside a folder is revealed inside that folder`() {
+        shelf()
+        composeRule.onNodeWithContentDescription("Family, folder, 2 zines").performClick()
+        composeRule.waitForIdle()
+        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
+        events.trySend(HomeShelfEvent.Reveal("Letters copy", "Family"))
+
+        zines = SEEDED + SEEDED.first { it.id == "Letters home" }.copy(id = "Letters copy", title = "Letters copy")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Letters copy").assertIsFocused()
     }
 
     @Test

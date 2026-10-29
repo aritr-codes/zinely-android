@@ -207,8 +207,9 @@ there is no UI for it.
 - **`adb shell input tap` does not reach the editor canvas.** Element selection, tap-to-deselect and
   tap-away-to-commit all no-op; supply-tray and page-strip buttons work fine. Do **not** read a canvas tap
   doing nothing as an app defect without cross-checking a screenshot.
-- **The inline text editor commits only on IME Done** (or real focus loss). `KEYCODE_ENTER` inserts a
-  newline; `KEYCODE_BACK` only hides the keyboard. Tap the keyboard's Done key by pixel.
+- **The inline text editor commits via the Done chip in the style row** (or Back, or real focus loss).
+  `KEYCODE_ENTER` inserts a newline and never commits; `KEYCODE_BACK` commits as Done does (A41.1). Tap the
+  Done chip by pixel.
 - **Scrollable rows hide controls.** The `EditorContextBar` transform row scrolls; "Text style" and
   "Delete" sit off-screen until it is swiped. A node clipped to e.g. `12×48dp` at a screen edge is scroll
   clipping, **not** a touch-target defect. *(Retired by the F-2 wrap, and the bar itself is gone since

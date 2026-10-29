@@ -329,6 +329,32 @@ class RoomProjectRepositoryTest {
     }
 
     @Test
+    fun `given rename, then the zine keeps its recency and its place on the shelf (A28 4)`() = runTest {
+        // Given — A older than B by the metadata clock; document mtimes pinned below both rows so the
+        // row's updatedAt (not the real wall-clock mtime) decides recency
+        val repo = repo()
+        val a = repo.createProject("A", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER).getOrNull()!!.id
+        now += 10
+        val b = repo.createProject("B", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER).getOrNull()!!.id
+        Files.setLastModifiedTime(documentFile(a), FileTime.fromMillis(1))
+        Files.setLastModifiedTime(documentFile(b), FileTime.fromMillis(1))
+        val before = repo.observeProjects().first().first { it.id == a }.updatedAtEpochMs
+        now += 5_000
+
+        // When
+        assertTrue(repo.renameProject(a, "A renamed").isSuccess)
+
+        // Then — a rename is not an edit: A neither moves up nor gains a new timestamp
+        val after = repo.observeProjects().first()
+        assertEquals(listOf(b, a), after.map { it.id })
+        assertEquals(before, after.first { it.id == a }.updatedAtEpochMs)
+        // and the Shelf (what the app actually reads) agrees
+        val shelf = repo.observeShelfProjects().first()
+        assertEquals(listOf(b, a), shelf.map { it.id })
+        assertEquals(before, shelf.first { it.id == a }.updatedAtEpochMs)
+    }
+
+    @Test
     fun `given rename of a missing project, then NotFound`() = runTest {
         assertEquals(DataError.NotFound("nope"), repo().renameProject("nope", "X").errorOrNull())
     }

@@ -124,6 +124,7 @@ class EditorPagePersistenceTest {
             // An empty share inbox — this suite is about persistence of place, not share-in.
             shareInbox = ShareInbox(),
             inkLibraryStore = FakeInkLibraryStore(),
+            artShortcutsStore = FakeArtShortcutsStore(),
             assetsDir = File(context.cacheDir, "assets").apply { mkdirs() },
             mainDispatcher = dispatcher,
             ioDispatcher = dispatcher,

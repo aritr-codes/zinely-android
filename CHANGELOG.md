@@ -107,6 +107,16 @@ Website, docs and test-only changes that are not part of the beta.8 app, moved h
 
 ### Fixed
 
+- Saved PDF is named after the zine (it was always "zine.pdf"). Empty or unusual titles still save as "zine".
+- New zines are numbered: "My zine", then "My zine 2", "My zine 3" and so on, using the lowest number not taken.
+- Renaming a zine: the sheet opens with the old name selected, so typing replaces it, and a typed name stops at
+  60 characters ([#157](https://github.com/aritr-codes/zinely-android/issues/157)). A name that is already longer, such as a duplicate's "copy", is never cut.
+- Renaming a zine no longer moves it to the front of My Shelf; only editing does.
+- Duplicate scrolls My Shelf (or the open folder) to the new copy and focuses it.
+- The Art sheet keeps your Recent and Favourite pieces after the app is closed. They stay on this phone only and are not in a
+  Zinely backup file.
+- Typing text on the page: the keyboard's Enter key now starts a new line instead of finishing the edit. Tap
+  Done in the style row, or press Back, to finish.
 - The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
   privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
   the files.

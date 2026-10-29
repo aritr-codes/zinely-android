@@ -280,6 +280,7 @@ class ShareInDrainTest {
             onboardingStore = SeenOnboardingStore(),
             shareInbox = inbox,
             inkLibraryStore = FakeInkLibraryStore(),
+            artShortcutsStore = FakeArtShortcutsStore(),
             assetsDir = File(context.cacheDir, "assets").apply { mkdirs() },
             mainDispatcher = dispatcher,
             ioDispatcher = dispatcher,

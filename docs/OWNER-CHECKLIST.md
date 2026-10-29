@@ -377,6 +377,20 @@ zine was deleted meanwhile.
 | ☐ | Pixel parity against A47 at 390dp | [ADR-142](DECISIONS.md#adr-142) *Owed before Accepted* |
 | ☐ | Confirm the Samsung Pass 1 and Pass 2 records are in the repository before ADR-142 can be Accepted | [ADR-142](DECISIONS.md#adr-142) · [CLAUDE.md](../CLAUDE.md#device-verification-mandatory) |
 
+### 2.8 W2a small things — built, unreleased; device checks owed
+**Reason:** Physical · **Blocks:** shipping W2a · Authority is the [W2a note in ADR-136](DECISIONS.md#adr-136-w2a); this
+table only points at it. Built on `feat/w2a-small-things` (unmerged). Not automatable, so an implementer cannot close them.
+
+| ☐ | Item | Where it is owned |
+|---|---|---|
+| ☐ | Enter inserts a newline on a real Gboard and a Samsung keyboard; the Done chip and Back still finish the edit | [DEVICE-VERIFICATION](DEVICE-VERIFICATION.md) |
+| ☐ | Rename sheet on a device: IME composition at the 60 cap, and an emoji or combined mark cut whole | [ADR-136 W2a note](DECISIONS.md#adr-136-w2a) |
+| ☐ | Duplicate scrolls to the copy in touch mode (not only with a keyboard or TalkBack) | [ADR-136 W2a note](DECISIONS.md#adr-136-w2a) |
+| ☐ | Save a PDF, then read its name in Downloads (the zine title, not "zine.pdf") | [ADR-054](DECISIONS.md#adr-054) |
+| ☐ | Art recents and favourites survive a force-stop and relaunch | [SUPPLIES-SPEC](design/SUPPLIES-SPEC.md) |
+| ☐ | TalkBack listens for the rename sheet, Duplicate and the text edit (deferred by the owner; do not chase) | [DEVICE-VERIFICATION §3.1](DEVICE-VERIFICATION.md) |
+| ☐ | A real Android 7 to 9 phone | [ADR-136 W2a note](DECISIONS.md#adr-136-w2a) |
+
 ---
 
 ## 3. Release & credentials

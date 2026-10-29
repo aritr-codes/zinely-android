@@ -2,10 +2,11 @@ package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextReplacement
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Effect
@@ -73,8 +74,16 @@ class EditTextSessionCoverageTest {
         return s
     }
 
+    // The style row's Done chip commits by clearing focus (EditorScreen `onDone`), so this is that exact path.
+    private var focusManager: FocusManager? = null
+
+    private fun pressDone() {
+        composeRule.runOnIdle { focusManager!!.clearFocus() }
+    }
+
     private fun setSession(store: EditorStore, onCoverage: (TextCoverage) -> Unit) {
         composeRule.setContent {
+            focusManager = LocalFocusManager.current
             ZinelyTheme {
                 val state by store.uiState.collectAsState()
                 val session = state.interaction
@@ -178,7 +187,7 @@ class EditTextSessionCoverageTest {
         setSession(store) { }
 
         composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("cafe $bengaliA")
-        composeRule.onNodeWithTag(EditTextSessionTestTag).performImeAction()
+        pressDone()
         composeRule.waitForIdle()
 
         val el = store.uiState.value.document.pages[0].elements.single { it.id == id } as TextElement
@@ -194,7 +203,7 @@ class EditTextSessionCoverageTest {
         composeRule.waitForIdle()
         assertTrue("precondition: seed flagged", !latest.isFullyCovered)
 
-        composeRule.onNodeWithTag(EditTextSessionTestTag).performImeAction()
+        pressDone()
         composeRule.waitForIdle()
 
         assertTrue("dispose should reset coverage to Covered", latest.isFullyCovered)

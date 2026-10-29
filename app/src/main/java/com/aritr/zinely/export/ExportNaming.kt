@@ -15,7 +15,7 @@ internal object ExportNaming {
     /** Used when a title sanitises to nothing (empty, blank, or all-invalid). */
     const val FALLBACK_BASE = "zine"
 
-    /** Cap the base so `base + " (99)" + ".pdf"` stays well under the 255-byte FAT/ext4 name limit. */
+    /** Cap the base (in UTF-8 bytes) so `base + " (99)" + ".pdf"` stays well under the 255-byte FAT/ext4 name limit. */
     private const val MAX_BASE = 200
 
     /** FAT-invalid chars (Android `FileUtils.isValidFatFilenameChar`) plus control chars (< 0x20) → `_`. */
@@ -30,8 +30,21 @@ internal object ExportNaming {
             for (c in title) append(if (isValidFatChar(c)) c else '_')
         }
         // FAT forbids trailing '.'/' ' and a leading '.'; trim to match FileUtils and keep a clean name.
-        val cleaned = mapped.trim().trim('.', ' ').take(MAX_BASE).trim().trim('.', ' ')
+        val cleaned = capUtf8(mapped.trim().trim('.', ' ')).trim().trim('.', ' ')
         return cleaned.ifEmpty { FALLBACK_BASE }
+    }
+
+    /** [s] cut to at most [MAX_BASE] UTF-8 bytes (the filesystem limit is bytes), never inside a code point. */
+    private fun capUtf8(s: String): String {
+        var bytes = 0
+        var i = 0
+        while (i < s.length) {
+            val cp = s.codePointAt(i)
+            bytes += when { cp < 0x80 -> 1; cp < 0x800 -> 2; cp < 0x10000 -> 3; else -> 4 }
+            if (bytes > MAX_BASE) break
+            i += Character.charCount(cp)
+        }
+        return s.substring(0, i)
     }
 
     /** The requested display name: sanitised base + `.` + [ext] (e.g. `"My Zine.pdf"`). */

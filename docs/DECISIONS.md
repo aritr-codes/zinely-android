@@ -1407,7 +1407,7 @@ Repository reality (authoritative): `SheetComposer.writePdf/writePng(sheetPt, pa
 
 ### Decision
 
-1. **One public export API — `export(destination)`.** `ZineExporter.export(document, pageSizePt, imageBytes, format, destination: ExportDestination): ExportOutcome`. The impose → render → compose ceremony (identical for every destination) runs once; a `when(destination)` wraps **only** the write step. This preserves the existing single-funnel pipeline and keeps single-flight in one place. A second public method (`saveToDownloads()`) is rejected — it would duplicate the compose ceremony and fork single-flight.
+1. **One public export API — `export(destination)`.** `ZineExporter.export(document, pageSizePt, imageBytes, format, destination: ExportDestination, title: String): ExportOutcome` (2026-10-29: `title` added so the saved file is named after the zine; `ExportViewModel` reads it from `ProjectRepository`, and [Decision 5](#adr-054)'s `ExportNaming` sanitises it, caps it at 200 UTF-8 bytes on a code-point boundary, and falls back to "zine"). The impose → render → compose ceremony (identical for every destination) runs once; a `when(destination)` wraps **only** the write step. This preserves the existing single-funnel pipeline and keeps single-flight in one place. A second public method (`saveToDownloads()`) is rejected — it would duplicate the compose ceremony and fork single-flight.
 
 2. **Result model — `ExportOutcome`, extend not replace.** A new `sealed interface ExportOutcome` **retains `ExportReady(uri, mime)` verbatim** as the Intent-transport case and adds **`ExportSaved(displayName, location)`** as the durable-save case. `ExportViewModel.ready` widens to `Flow<ExportOutcome>`; the single host collector branches on the subtype. `ExportReady`'s meaning ("a `content://` URI for Intent delivery") is unchanged.
 
@@ -16593,6 +16593,40 @@ paper the maker loads, shown on screen. A printed fill stays out.
 chrome, as O-B read it for torn paper. It does not reach a voice the maker chooses for their words. The
 2026-09-26 "Hand = deferred" ([gate Q2](planning/ZINELY-1X-DECISION-GATE.md#q2-typefaces-o12--o8)) is lifted
 as sequencing: Hand is W9.
+
+#### As built: W2a (2026-10-29) {#adr-136-w2a}
+
+Items 1 to 6 and 8 of decision 1's W2a row are built on `feat/w2a-small-things` (unmerged, in no download; the
+branch's commit list is the code link, and the PDF naming is recorded in [ADR-054](#adr-054) decision 1). Each
+was checked against the frozen HTML first; none changes a frozen design. Items 7 and 9 moved to **W2b**: 7
+(consecutive nudges are one undo step) contradicts A33 ("Every tap is one undo step"), A22 and A26's
+"Move (drag, or Nudge)" row, and 9 (the hint mentions the two-finger turn) changes strings frozen verbatim in A33
+*THE HINT*, where a longer hint would also worsen #148. Choices the row left open:
+
+- **Item 2, numbering.** `nextNewTitle` (`HomeViewModel.kt`) gives plain "My zine" while no zine holds it, else
+  the smallest number from 2 up that is not held. Held names are every title the store lists, trimmed and
+  compared case-insensitively, including a zine waiting to be deleted. A gap left by a rename or delete is
+  filled, so a name can come back; two zines never start with the same name. `RoomProjectRepository`'s own
+  default title is the fallback and is untouched.
+- **Item 3, the cap ([#157](https://github.com/aritr-codes/zinely-android/issues/157)).** The sheet opens with the whole title selected. The 60-code-point cap
+  (`capTitle`, `ShelfSheets.kt`) applies to **typing only**, and cuts on a grapheme boundary so an emoji or a
+  combined mark is kept or dropped whole. A duplicate's " copy" suffix may take a title past 60, because
+  cutting there would eat the name the person chose. Editing a title that is already over-long never truncates it
+  (`titleEdit` allows the larger of 60 and its current length; only growth past that is cut).
+- **Item 4, rename is not an edit.** `RoomProjectRepository.rename` keeps the row's recency (falling back to
+  the document file's time, then the clock, as reconcile does) instead of stamping "now", consistent with A28.4.
+- **Item 5, Duplicate.** The ViewModel sends `HomeShelfEvent.Reveal(id, folder)` on success; the Shelf turns it
+  into a `FocusWish.Zine(..., scroll = true)`, so it scrolls to the copy and focuses it in **both** input modes,
+  inside a folder as well, and not while a sheet is open. A new event was used instead of the frozen-wording
+  folder snack. [#160](https://github.com/aritr-codes/zinely-android/issues/160) (the snack event loop) is adjacent and not fixed here.
+- **Item 6, Art recents and favourites.** `ArtShortcuts` (pure, `core:editor`) and `DataStoreArtShortcutsStore`
+  keep **piece ids only**: Recent 6, Favourites 48 (the oldest dropped first). Unknown ids are dropped on display,
+  never matched to anything else (the add-only id rule). The value is excluded from backups the way My inks are
+  ([ADR-138](#adr-138)) and is not in Zinely's own backup file, a Known Limitation. No document or format change.
+- **Item 8, Enter.** The soft keyboard's Enter inserts a newline. The text edit commits through the style
+  row's visible **Done** chip, Back (A41.1), focus loss and pause, as `EditTextSession`'s KDoc lists.
+
+Owed before any of it ships is on [OWNER-CHECKLIST §2.8](OWNER-CHECKLIST.md#28-w2a-small-things--built-unreleased-device-checks-owed).
 
 #### Alternatives considered
 

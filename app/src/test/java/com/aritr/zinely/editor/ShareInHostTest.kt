@@ -370,6 +370,7 @@ class ShareInHostTest {
                 imageBytes: AssetBytesSource,
                 format: ExportFormat,
                 destination: ExportDestination,
+                title: String,
             ): ExportOutcome = ExportReady(Uri.parse("content://zinely.test/export.pdf"), "application/pdf")
         }
     }

@@ -395,6 +395,7 @@ internal class RecordingExporter : SheetExporter {
         imageBytes: AssetBytesSource,
         format: ExportFormat,
         destination: ExportDestination,
+        title: String,
     ): ExportOutcome {
         destinations += destination
         val uri = Uri.parse("content://zinely.test/export.pdf")

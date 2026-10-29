@@ -59,6 +59,7 @@ class ExportViewModelTest {
         private val failFirst: Int = 0,
     ) : SheetExporter {
         val destinations = mutableListOf<ExportDestination>()
+        val titles = mutableListOf<String>()
         var gate: CompletableDeferred<Unit>? = null
         private var calls = 0
         override suspend fun export(
@@ -67,8 +68,10 @@ class ExportViewModelTest {
             imageBytes: AssetBytesSource,
             format: ExportFormat,
             destination: ExportDestination,
+            title: String,
         ): ExportOutcome {
             destinations += destination
+            titles += title
             gate?.await()
             if (calls++ < failFirst) throw java.io.IOException("render failed")
             return outcome
@@ -98,6 +101,16 @@ class ExportViewModelTest {
 
         assertEquals(saved, vm.outcomes.first())
         assertEquals(listOf(ExportDestination.DOWNLOADS), fake.destinations)
+    }
+
+    @Test
+    fun exportHandsTheProjectTitleToTheExporter() = runTest {
+        val fake = FakeExporter(saved())
+        val vm = ExportViewModel(fake, freeBytes = { Long.MAX_VALUE }, titleOf = { "My Zine" })
+
+        vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.DOWNLOADS)
+
+        assertEquals(listOf("My Zine"), fake.titles)
     }
 
     @Test
@@ -204,6 +217,7 @@ class ExportViewModelTest {
             imageBytes: AssetBytesSource,
             format: ExportFormat,
             destination: ExportDestination,
+            title: String,
         ): ExportOutcome = throw failure
     }
 
