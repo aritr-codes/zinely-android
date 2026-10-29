@@ -2007,3 +2007,29 @@ no confirm (R36.7). **Departs from M3:** the actions sit in the Shelf's dock as 
 because the Shelf has no app bar and its actions already live in the dock within thumb reach (ADR-142 ruling R2).
 For a partial failure, where no convention was found (R36.7), ADR-142 uses skip-and-list: the rest stay done and one
 message names those that came back.
+
+### R36.9 Selected emphasis: the badge leads, plus one light device — ✅ VERIFIED (Material, WCAG), 🟨 ASSUMPTION (the rest)
+
+Added 2026-10-29 for the lighter chosen ring (owner request; [ADR-142](DECISIONS.md#adr-142) ruling R9, A47.2 amendment).
+
+- ✅ **VERIFIED.** MDC-Android Card ([checkable](https://github.com/material-components/material-components-android/blob/master/docs/components/Card.md)):
+  a checked card shows a 24dp check-circle icon top-end and changes the stroke colour; the default stroke is 1dp.
+  The reference pattern is a thin stroke plus an icon, not a heavy ring.
+- ✅ **VERIFIED.** [WCAG 2.2 1.4.11 Non-text Contrast](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html):
+  the visual information needed to tell a component's state (the example is "selected") needs 3:1 against adjacent
+  colours. The requirement is on the information that carries the state, not on every decoration, so the tick can
+  carry it and the ring can be lighter.
+- ✅ **VERIFIED (secondary sources).** Google Photos: a check circle at the top-left, which turns blue when chosen,
+  and on the web the thumbnail shrinks inside a blue box
+  ([Digital Camera World](https://digitalcameraworld.com/tutorials/how-to-select-all-photos-in-google-photos-download-everything-at-once),
+  [Alphr](https://alphr.com/google-photos-how-to-select-all)).
+- 🟨 **ASSUMPTION.** Apple Photos shows a blue check in the corner and no ring: the guides
+  ([Trusted Reviews](https://www.trustedreviews.com/how-to/how-to-select-multiple-photos-on-iphone-4426041)) only
+  confirm the check; the rest is recollection.
+- 🟨 **ASSUMPTION.** Samsung Gallery (check circle plus a dim), Pinterest, Notion and Google Keep (a thin outline
+  plus a check badge): searches returned nothing usable; do not cite them in an ADR.
+- **Pattern across what is verified:** the check badge is the primary signal, and any extra emphasis is one light
+  device (a thin stroke, a scale-down or a tint), never a heavy stroke on top of a badge. Zinely stacked four
+  (ring, badge fill, halo, hard shadow); A47.2 now keeps one light ring beside the unchanged tick.
+
+**Sources:** as linked above.
