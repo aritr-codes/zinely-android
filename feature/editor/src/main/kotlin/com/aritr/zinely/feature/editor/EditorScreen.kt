@@ -75,6 +75,7 @@ import com.aritr.zinely.core.editor.FramingMath
 import com.aritr.zinely.core.editor.FlipAxis
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.ink.InkHex
+import com.aritr.zinely.core.editor.ArtShortcuts
 import com.aritr.zinely.core.editor.ink.InkLibrary
 import com.aritr.zinely.core.editor.ink.InkLibraryEdit
 import com.aritr.zinely.core.editor.ink.MixIntoPalette
@@ -237,6 +238,8 @@ public fun EditorScreen(
     inkLibrary: InkLibrary? = InkLibrary.EMPTY,
     onEditInkLibrary: suspend ((InkLibrary) -> InkLibrary) -> InkLibraryEdit =
         { InkLibraryEdit(InkLibrary.EMPTY, InkLibrary.EMPTY) },
+    artShortcuts: ArtShortcuts? = null,
+    onEditArtShortcuts: ((ArtShortcuts) -> ArtShortcuts) -> Unit = {},
 ) {
     val uiState by store.uiState.collectAsStateWithLifecycle()
     val dispatch: (Intent) -> Unit = store::dispatch
@@ -2600,6 +2603,8 @@ public fun EditorScreen(
                 artSheetFor = BenchArtPurpose.Place
             },
             onPick = placeSupply,
+            persisted = artShortcuts,
+            onEditPersisted = onEditArtShortcuts,
         )
 
         // ADR-109 / frozen Bench A19. The one-page editor must explain the physical two-page result

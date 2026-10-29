@@ -1067,6 +1067,7 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
             // My inks and My palettes (ADR-138): `null` until loaded, so the tray never draws a library it has
             // not read. Writes are transforms run in the ViewModel's scope.
             val inkLibrary by viewModel.inkLibrary.collectAsStateWithLifecycle()
+            val artShortcuts by viewModel.artShortcuts.collectAsStateWithLifecycle()
             // The unresolved-save-failure kind (ADR-035/ADR-036): the honest correction to "Saved ✨",
             // derived from the app-scoped SaveFailureSink (ADR-026 §5) and mapped to a feature-local
             // SaveErrorKind (null = none). Lifecycle-aware; the host renders the warm banner (copy keyed by
@@ -1107,6 +1108,8 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
                 onBack = onBack,
                 inkLibrary = inkLibrary,
                 onEditInkLibrary = viewModel::editInkLibrary,
+                artShortcuts = artShortcuts,
+                onEditArtShortcuts = viewModel::editArtShortcuts,
             )
         }
     }
