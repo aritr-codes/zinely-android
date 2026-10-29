@@ -151,6 +151,7 @@
 | [ADR-140](#adr-140) | **When a zine's pages go back to their earlier copy, My Shelf says so once (extends ADR-134).** A `document.json` put back from its `.bak` is told by the A37 note in Library A46's words ("A page file was damaged, so Zinely used the copy from just before your last few seconds of changes"); one note covers a zine's details and pages. The store's `Restored` result is recorded in one lock-free repair-note store shared by both repositories; `BackupOnly` is silent. No Bench notice (named follow-up); no edit journal. Decides D-120 item 4, #146 | Proposed (A46 frozen 2026-10-22 under the owner's delegation; Accepted only once built and reviewed) |
 | [ADR-141](#adr-141) | **Selecting several things: the Bench stays single-select; My Shelf multi-select is Planned after W1 to W3.** Settles ADR-129's open question: no group selection on the Bench (page-level actions instead); a Shelf long-press selection with Move to a folder, Delete and one Undo for the batch is Planned, not in beta.8, design first. Proposed under delegation. |
 | [ADR-142](#adr-142) | **My Shelf: choose several zines, then move or delete them with one Undo.** Long press or "Select several" starts choosing; Move to a folder and Delete act on the set; one Undo covers the batch; folders cannot be chosen; a zine that cannot be acted on comes back and is named (skip-and-list). Builds ADR-141 decision 2 for beta.8; design Library A47. | Proposed |
+| [ADR-143](#adr-143) | **A turn handle, snapping, Straighten and one undo rule for repeated taps.** A turn knob below the selection ring (54dp out, flips above when it would not fit); quarter-turn snap within 5° for the knob and two fingers; an angle readout while dragging; Straighten in Arrange > Turn; a turn-only step is "turned"; a run of taps in one tray group is one undo step. No schema change. Amends ADR-129/A33, ADR-123/A26, ADR-102 §12.8; closes ADR-136 W2a items 7 and 9. Design Bench A48. | Proposed (awaiting owner freeze of A48) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -16628,6 +16629,8 @@ was checked against the frozen HTML first; none changes a frozen design. Items 7
 
 Owed before any of it ships is on [OWNER-CHECKLIST §2.8](OWNER-CHECKLIST.md#28-w2a-small-things--built-unreleased-device-checks-owed).
 
+*2026-10-29: items 7 and 9 are decided in [ADR-143](#adr-143) (W2b, Bench A48, Proposed): 7 by one undo step per run of Move, Size or Turn taps; 9 closed by the visible turn knob, with the hint unchanged.*
+
 #### Alternatives considered
 
 | Option | Why not |
@@ -17547,3 +17550,145 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 
 - A tester asks for Select all, or to rename/share several zines.
 - Pass 2 finds the dimmed folder or the long-press change confusing.
+
+## ADR-143 {#adr-143}
+
+### A turn handle, snapping, Straighten and one undo rule for repeated taps
+
+**Status:** Proposed, 2026-10-29, **awaiting owner freeze of A48**. Written under the owner's delegation of 2026-10-12
+("decide, do not ask"); the owner has not seen it and may overrule any part. **Design:**
+[`v21-bench.html`](design/mockups/v21-bench.html) A48 (rules A48.1–A48.10), reviewed as a local HTML file. **Amends:**
+[ADR-129](#adr-129) / A33 (the Turn group, "Every tap is one undo step", and A33's mention of a turn handle),
+[ADR-123](#adr-123) / A26 (D4's words, and the "Move (drag, or Nudge)" row), and the
+[ADR-102 §12.8](#adr-102-p1-handles) handle figure (eight handles become eight plus one turn handle). **Closes:**
+[ADR-136](#adr-136) W2a items 7 and 9, moved to W2b in its [W2a note](#adr-136-w2a). **Evidence:**
+[RESEARCH R37](RESEARCH.md#r37). Not built; accepted only after both device passes
+([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
+
+#### Context
+
+- ✅ The owner asked on 2026-10-29: "in the bench we need to add dynamic rotate features as well to rotate the art,
+  photos and text". Turning already exists two ways: two fingers on the selected piece (`EditorGestures.kt`), and
+  Arrange > Turn, 15° a tap for every kind (`ArrangeTray.kt`, A33). TalkBack has the same two turns as element
+  actions (`EditorA11y.kt`). Neither follows one finger. 🟨 The owner may not have found Arrange > Turn yet: it
+  shipped in beta.8 the same day.
+- ✅ No turn handle was ever drawn in the V2.1 Bench. A33's *WHAT DOES NOT CHANGE* named one, but the ring markup
+  draws eight `.hnd` and the 2026-08-12 banner says "EIGHT". The V2 IA specified a visible rotate handle
+  (`V2-BENCH-IA-INTERACTION.md`), and the V1 mockups drew one (`editor-mockups/editor.html`, `transform.html`). The
+  V2.1 freeze dropped it without recording why ([R37.1](RESEARCH.md#r37)).
+- ✅ There is no angle snapping in either path (`LiveTransform.kt`, `TransformMath.bakeCentreAnchored`). Edge
+  snapping is skipped for a rotated piece (`LiveSnap.kt` rule F1, `|rotationDegrees| > 1e-6`), so a piece left at
+  0.4° never edge-snaps again, and one at 360° is treated as rotated.
+- ✅ A26 D4 = 4c names a Transform "resized" past 2% of size, else "turned" past 2°, else "moved"
+  (`EditLabel.transformVerb`). A turn of 1.5° to 0° with nothing else changed is therefore called "moved", and so
+  is 360° to 0°.
+- ✅ Each Arrange tap is one `TransformCommand` (`EditorReducer.bakeSelection`), pushed by `committing`. Ten Move
+  taps need ten Undos; one drag doing the same is one. W2a item 7 ("consecutive nudges are one undo step") was moved
+  to W2b because it contradicts A33's "Every tap is one undo step" and A26's "Move (drag, or Nudge)" row. Item 9 ("the
+  hint mentions the two-finger turn") was moved because A33 *THE HINT* freezes the strings verbatim and #148 says the
+  hint is already too large at 2× text.
+- ✅ A41.2 (D-141): a snack's Undo is live only while the newest history entry is the act that raised it. The
+  reducer moves `historyRevision` on every new `History` by one identity check (`EditorReducer.reduce`).
+
+#### Decision
+
+1. **A turn knob (A48.1–A48.3, A48.7).** With exactly one piece selected, a round paper knob with an ink border and
+   a turn glyph sits on a short stem 54dp beyond the box's bottom edge, on the rotated down-normal through the
+   bottom-centre edge handle; 48dp hit box. 54 − 5.5 (the edge handle's mark centre) = 48.5, so its hit box clears
+   all eight resize handles' boxes on any piece. On the canvas the knob wins over anything under it; chrome over the
+   canvas (verb bar, trays, snack, hint) wins over the knob. If the knob would leave the canvas or touch the verb bar,
+   a tray or the snack, it goes above the top edge instead; the side never changes during a drag. Dragging turns
+   about the box centre with no jump on touch (the angle at touch-down plus the swept angle, unwrapped so a full
+   circle reads 360). One drag is one undo step. Hidden while typing, in Reframe, and unless exactly one piece is
+   selected. It is not in the platform accessibility tree, as the resize handles are not.
+2. **Snapping (A48.4).** Within ±5° (inclusive) of the nearest multiple of 90 counted in the angle's own turns
+   (358 → 360, −92 → −90), the piece shows and commits that multiple **exactly**. The two-finger turn snaps by the
+   same pure function through its existing preview-equals-commit path, so knob and gesture agree. One haptic tick on
+   entering a snap. `LiveSnap` F1 is changed to test the angle normalised to (−180, 180], so a piece at 360° or 720°
+   edge-snaps like one at 0°.
+3. **A readout while dragging (A48.5).** A pill shows the angle to be committed, normalised to (−180, 180], whole
+   degrees ("15°", "−30°", "180°"), on the side of the piece opposite the knob, only while a knob drag is live. Leaf
+   tint when snapped. Not spoken.
+4. **Straighten (A48.6).** A third button in Arrange > Turn, after Rotate clockwise, glyph a level line with a tick
+   under a tilted dashed line, spoken "Straighten", plus a matching element custom action. It is
+   `Intent.RotateBy(−n)` where n is the angle normalised to (−180, 180] (375 → 360, −30 → 0, 180 → 0): **no new
+   reducer intent**. Disabled, and never a step, on an upright piece (n = 0 within 1e-6; 360 is upright).
+5. **The turn-only word (A48.8, amends A26 D4).** A step in which every piece keeps its position and size exactly
+   and only its rotation differs is "turned", whatever the size of the turn. Otherwise D4 is unchanged, the 2° slip
+   included: a two-finger move with a 1° stray turn is still "moved". Cases: 360 → 0 turned; 1.5 → 0 turned;
+   moved with 1° stray turn, moved.
+6. **One undo rule for repeated taps (A48.9, amends A33 and A26's Move row; W2a item 7).**
+   - A **run** is consecutive taps in one of the tray's stepping groups (Move, Size, Turn's two arrows) on the same
+     single selected piece, with no other history entry between them. A run is **one** undo step, holding the piece
+     as the run's first tap found it and as its last tap left it.
+   - A run **ends** at any other history step (another group, Straighten, Layer, a drag, a handle, the knob, two
+     fingers, ink, flip, Undo, Redo), at a change of the selected piece, when the tray closes (Done, Back, empty-page
+     tap, page change), and with the session. **No timer.** The run marker lives in the editor model and is never
+     saved.
+   - A run that returns the piece exactly to where it began leaves no step (its entry is removed).
+   - Words follow decision 5: a Move run "moved", a Size run "resized", a Turn run "turned"; one undo snack for the
+     run ("Photo moved back").
+   - Flip (A22) toggles and Layer taps stay one step each; the element's own screen-reader actions outside the tray
+     stay one step each.
+   - **A41.2 holds.** Extending a run replaces the newest entry, which builds a new `History`, so the revision moves
+     and any Undo snack still up retires at once, exactly as every tap does today. No Arrange tap raises an Undo
+     snack, so no snack can point into a run; a run only extends the entry it created, so its Undo undoes nothing
+     else.
+7. **W2a item 9 closes (A48.10)**, replaced by the visible knob. A33 *THE HINT* is unchanged, both strings verbatim
+   (#148).
+8. **No saved-format change.** `Transform.rotationDegrees: Double = 0.0` is already stored and drawn for all three
+   kinds: `core/model/.../Document.kt:75` (`CURRENT_SCHEMA_VERSION = 3` at `:28`); validation checks only
+   `rotationDegrees.isFinite()` (`core/data/.../validation/DefaultDocumentValidator.kt:132`); the serializer writes
+   defaults (`JsonDocumentSerializer.kt:41`, `encodeDefaults = true`); the one replayer rotates every element about
+   its centre (`core/render/.../SceneRenderer.kt:193`). Snapping and Straighten write ordinary values. Stored angles
+   are never normalised: that would rewrite saved zines for no visible change. Normalise only to display and compare.
+9. **A known divergence, recorded and not reopened.** The V2 IA says "two fingers act on the **page**"; the build
+   lets two fingers turn and scale the selected piece, and V2.1 has no page zoom. This ADR keeps the build's
+   behaviour and only adds snapping to it.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Tray only: Straighten, no knob | Not dynamic, which is what the owner asked for; leaves turning hidden behind a tap and two fingers |
+| Knob only, no Straighten | "Make it upright again" stays a fiddly drag; snapping helps only near a quarter turn the finger finds |
+| Snapping in the knob but not two fingers | The gesture and the handle would disagree about the same piece |
+| A slider or dial in the tray | Holds a value the tray already steps through, crowds the 360dp tray, and needs a number field against "no coordinates" in the copy |
+| A numeric angle field | Precision chrome where none is needed; 🔭 later if makers ask |
+| Corner-drag rotation (Figma desktop) | Collides with the corner resize handles on touch |
+| Knob 24dp beyond the ring (the research sketch) | Its 48dp box would overlap the bottom edge handle's by about 24dp; 54dp clears it |
+| Every tap one undo step (A33 as written) | Ten taps, ten Undos, where one drag is one; Move and drag follow two rules |
+| Merge taps within a time window | An invisible boundary: undo depends on tapping speed, and a slower TalkBack user gets more, smaller steps than a sighted user |
+| Merge only the same button | Move right then Move down is two steps for what one drag does in one |
+| The whole tray session as one step | Mixes move, turn and size into one step whose D4 word names one of them; Layer is another command |
+| Coalesce Turn taps but not Move taps (or the reverse) | Two rules for one tray, the reason W2a item 7 was moved |
+| Write snapped angles normalised (358 → 0) | Same picture, but the stored value would jump a turn; F1 normalising its test covers the only functional reason |
+
+#### Consequences
+
+- `core:editor`: a pure rotation helper (normalise to (−180, 180]; quarter-turn snap within 5°; upright test within
+  1e-6), with jqwik properties (idempotent, |snap(r) − r| ≤ 5, snapped values exact, 360 ≡ 0 for upright); run the
+  properties several times before pushing. `EditLabel.transformVerb` gains the turn-only rule and its three cases.
+  `LiveSnap` F1 uses the normalised test. The reducer gains the run marker and the merge-or-push rule of decision 6,
+  tested for: a run of three is one step; a run back to start is no step; another group, a selection change, the tray
+  closing and Undo each end a run; the revision moves on every merge (A41.2).
+- `feature:editor`: a `TurnHandle` beside `ResizeHandles` (same session pattern: Begin, override preview, one Commit,
+  consumes its pointers), the flip rule, the readout, the gesture snap in the existing preview path; `ArrangeTray`'s
+  third Turn button and the tray-open signal that ends a run; `EditorA11y` "Straighten"; `Copy.A11y.STRAIGHTEN`.
+- Goldens: selection chrome (light, dark, rotated, small piece, flipped knob) and the Arrange tray (360dp, 2×),
+  recorded on the pinned CI image after reading the `*_compare.png` diffs. The 2% threshold can hide a missing knob;
+  open the PNGs.
+- **Owed before Accepted:** the owner's freeze of A48; both device passes, including the platform tree (the knob
+  must not appear as an unlabelled clickable), a tiny piece, a piece at the page bottom, a 90° piece, text turned 45°
+  then edited (how a rotated text box looks while typed into is unverified), Straighten from 360°, 1.5° and 0° with its snack words, the snap haptic, and
+  a TalkBack check of Straighten.
+- The owner's 2026-08-12 handle ruling is amended, not replaced: a ninth mark is added, and the eight keep their
+  placement. Stated so the owner can overrule it.
+- A first-time Pass 2 must answer whether the knob reads as "turn", whether it fights drag-to-move, and whether a
+  deliberate 3° tilt near 0 is still reachable with the 5° snap.
+
+#### Revisit trigger
+
+- Pass 2 shows makers cannot keep a small deliberate tilt: shrink the gesture's snap threshold first.
+- A tester asks for an exact angle, or for undo of single taps inside a run.
+- Bench multi-select is ever reachable (the run rule then needs its own ruling).
