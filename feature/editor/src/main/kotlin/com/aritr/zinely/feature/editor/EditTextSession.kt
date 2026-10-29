@@ -2,8 +2,6 @@ package com.aritr.zinely.feature.editor
 
 import android.graphics.Paint
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -28,7 +26,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -51,7 +48,8 @@ public const val EditTextSessionTestTag: String = "edit-text-session"
  * keystrokes never reach the store.
  *
  * **Commit triggers** (whichever first, each fires exactly once via the [committed] latch):
- *  - keyboard **Done** action,
+ *  - the style row's visible **Done** chip (clears focus, so it is the focus-loss path below; the keyboard's
+ *    Enter key inserts a newline and never commits),
  *  - **focus loss** (the user tapped away),
  *  - **`ON_PAUSE`** — the durability force-commit (ADR-009): backgrounding the editor flushes the pending
  *    draft into the document **synchronously** so the autosave that the `CommitText` reduction emits runs
@@ -93,7 +91,7 @@ public const val EditTextSessionTestTag: String = "edit-text-session"
  *   two escape here rather than the caret moving inside this file, which owns the *session*, not the skin.
  * @param onCoverageChanged reports the draft's current [TextCoverage] (ADR-070): on the seed, on every
  *   keystroke, and [TextCoverage.Covered] on dispose. The host raises the [EditorCoverageNotice] from it.
- * @param onCommitted observes an explicit [Intent.CommitText] boundary (focus loss, IME Done or lifecycle
+ * @param onCommitted observes an explicit [Intent.CommitText] boundary (focus loss, the Done chip or lifecycle
  *   pause). Hosts use this only for ephemeral follow-up work that must happen after the draft is dispatched,
  *   such as a queued page transition; it is never invoked by the disposal fallback after cancellation.
  * @param commitText dispatches a text commit and reports whether the reducer accepted it. A stale commit
@@ -151,7 +149,7 @@ public fun EditTextSession(
         val accepted = commitText(Intent.CommitText(session.id, element.copy(text = latestDraft.text), session.token))
         // A disposal commit is deliberately silent: after CancelText its token is stale and the reducer
         // correctly ignores it, so treating it as a successful commit could advance a queued page change.
-        // Focus loss, IME Done and lifecycle pause are the explicit commit boundaries that may notify a host.
+        // Focus loss (the Done chip included) and lifecycle pause are the explicit commit boundaries that may notify a host.
         if (notifyHost && accepted) onCommitted()
     }
 
@@ -198,7 +196,5 @@ public fun EditTextSession(
         // pre-C3 appearance (bundled Inter at bodyLarge, V1's `coral-strong` caret) for every other caller.
         textStyle = textStyle,
         cursorBrush = SolidColor(cursorColor),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { commit() }),
     )
 }
