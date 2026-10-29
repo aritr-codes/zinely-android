@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.aritr.zinely.data.android.prefs.ArtShortcutsStore
+import com.aritr.zinely.data.android.prefs.DataStoreArtShortcutsStore
 import com.aritr.zinely.data.android.prefs.BackupRecordStore
 import com.aritr.zinely.data.android.prefs.DataStoreBackupRecordStore
 import com.aritr.zinely.data.android.prefs.DataStoreEditorOnboardingStore
@@ -76,4 +78,10 @@ internal object PreferencesModule {
     fun provideInkLibraryStore(
         dataStore: DataStore<Preferences>,
     ): InkLibraryStore = DataStoreInkLibraryStore(dataStore)
+
+    @Provides
+    @Singleton
+    fun provideArtShortcutsStore(
+        dataStore: DataStore<Preferences>,
+    ): ArtShortcutsStore = DataStoreArtShortcutsStore(dataStore)
 }

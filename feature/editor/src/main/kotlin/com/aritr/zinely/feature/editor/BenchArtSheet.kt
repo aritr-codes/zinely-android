@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.editor.ArtShortcuts
 import com.aritr.zinely.core.render.SupplyCatalog
 import com.aritr.zinely.core.render.SupplyOutline
 import com.aritr.zinely.render.android.SupplyPainter
@@ -123,7 +124,7 @@ internal fun benchArtFamilyIndex(supplyId: String): Int =
  * Search is local and deterministic. A family filter narrows the same stable catalogue order and toggles
  * off when tapped again. The favourite star is a sibling of the placement target, never an interactive
  * child, so both actions remain valid 48dp controls. Recents and favourites are session conveniences at
- * this seam; durable preference storage can be hoisted without changing the cabinet or renderer contract.
+ * this seam; the production host ([BenchAddArtSheet]) hoists durable storage.
  */
 @Composable
 internal fun BenchArtSheet(
@@ -182,9 +183,16 @@ internal fun BenchAddArtSheet(
     onAddArt: () -> Unit,
     onPick: (supplyId: String) -> Unit,
     recent: List<String> = emptyList(),
+    persisted: ArtShortcuts? = null,
+    onEditPersisted: ((ArtShortcuts) -> ArtShortcuts) -> Unit = {},
 ) {
     var sessionRecent by rememberSaveable { mutableStateOf(recent.distinct().take(6)) }
-    var favourites by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    var sessionFavourites by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    // Once the app's store has loaded it is the truth (ids the catalogue lacks are dropped here, add-only id
+    // rule); until then, and in hosts with no store, the saveable session lists above still work.
+    val stored = persisted?.sanitized(Copy.Supplies.NAMES.keys)
+    val shownRecent = stored?.recent ?: sessionRecent
+    val favourites = stored?.favourites ?: sessionFavourites
     val supplyPainter = remember { SupplyPainter() }
 
     LaunchedEffect(supplyPainter) {
@@ -209,12 +217,15 @@ internal fun BenchAddArtSheet(
             BenchArtSheetBody(
                 onPick = { id ->
                     sessionRecent = (listOf(id) + sessionRecent.filterNot { it == id }).take(6)
+                    onEditPersisted { it.picked(id) }
                     onPick(id)
                 },
-                recent = sessionRecent,
+                recent = shownRecent,
                 favourites = favourites.toSet(),
                 onFavouriteChange = { id, favourite ->
-                    favourites = if (favourite) (favourites + id).distinct() else favourites.filterNot { it == id }
+                    sessionFavourites =
+                        if (favourite) (sessionFavourites + id).distinct() else sessionFavourites.filterNot { it == id }
+                    onEditPersisted { it.favourite(id, favourite) }
                 },
                 supplyPainter = supplyPainter,
                 modifier = Modifier.weight(1f),

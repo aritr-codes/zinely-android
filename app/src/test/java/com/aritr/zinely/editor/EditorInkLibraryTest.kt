@@ -122,6 +122,7 @@ class EditorInkLibraryTest {
             onboardingStore = SeenOnboardingStore(),
             shareInbox = ShareInbox(),
             inkLibraryStore = inkStore,
+            artShortcutsStore = FakeArtShortcutsStore(),
             assetsDir = File(context.cacheDir, "assets").apply { mkdirs() },
             mainDispatcher = dispatcher,
             ioDispatcher = dispatcher,

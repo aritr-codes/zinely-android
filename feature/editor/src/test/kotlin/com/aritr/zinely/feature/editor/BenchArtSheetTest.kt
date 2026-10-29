@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.editor.ArtShortcuts
 import com.aritr.zinely.core.render.SupplyCatalog
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
@@ -137,6 +138,39 @@ class BenchArtSheetTest {
         reveal(benchArtTileTestTag("shape.circle"))
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).assertExists().performScrollTo().performClick()
         assertEquals(listOf("shape.circle"), picked)
+    }
+
+    @Test
+    fun persisted_shortcuts_show_known_ids_drop_unknown_and_picks_and_stars_are_written_back() {
+        val edits = mutableListOf<(ArtShortcuts) -> ArtShortcuts>()
+        composeRule.setContent {
+            ZinelyTheme {
+                BenchAddArtSheet(
+                    visible = true,
+                    artPurpose = BenchArtPurpose.Place,
+                    onDismiss = {},
+                    onAddText = {},
+                    onAddPhoto = {},
+                    onAddArt = {},
+                    onPick = { picked += it },
+                    persisted = ArtShortcuts(recent = listOf("shape.circle", "removed.piece"), favourites = listOf("removed.piece")),
+                    onEditPersisted = { edits += it },
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(benchArtRecentTileTestTag("shape.circle")).assertExists()
+        composeRule.onNodeWithTag(benchArtRecentTileTestTag("removed.piece")).assertDoesNotExist()
+
+        reveal(benchArtTileTestTag("shape.circle"))
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
+        composeRule.onNodeWithTag(benchArtFavouriteTestTag("shape.circle")).performScrollTo().performClick()
+
+        assertEquals(listOf("shape.circle"), picked)
+        assertEquals(2, edits.size)
+        assertEquals(listOf("shape.circle"), edits[0](ArtShortcuts()).recent)
+        assertEquals(listOf("shape.circle"), edits[1](ArtShortcuts()).favourites)
     }
 
     @Test

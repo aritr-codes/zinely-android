@@ -13,6 +13,7 @@ import com.aritr.zinely.core.data.storage.DocumentSnapshotProvider
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Intent as EditorIntent
 import com.aritr.zinely.core.editor.cascadedPlacement
+import com.aritr.zinely.core.editor.ArtShortcuts
 import com.aritr.zinely.core.editor.ink.InkLibrary
 import com.aritr.zinely.core.editor.ink.InkLibraryEdit
 import com.aritr.zinely.core.imposition.Imposer
@@ -22,6 +23,7 @@ import com.aritr.zinely.data.android.EditorAutosaveBinder
 import com.aritr.zinely.data.android.SaveFailureSink
 import com.aritr.zinely.data.android.di.EditorAutosaveBinderFactory
 import com.aritr.zinely.data.android.prefs.EditorOnboardingStore
+import com.aritr.zinely.data.android.prefs.ArtShortcutsStore
 import com.aritr.zinely.data.android.prefs.InkLibraryStore
 import com.aritr.zinely.home.BUSY_MESSAGE
 import com.aritr.zinely.feature.editor.AutosaveSink
@@ -122,6 +124,7 @@ internal class EditorViewModel @Inject constructor(
     private val onboardingStore: EditorOnboardingStore,
     private val shareInbox: ShareInbox,
     private val inkLibraryStore: InkLibraryStore,
+    private val artShortcutsStore: ArtShortcutsStore,
     @param:AssetsDir private val assetsDir: File,
     // @param: pins the qualifier to the constructor value parameter (what Dagger reads) and opts out of
     // the KT-73255 default-target migration warning — same convention as EditorAutosaveBinderFactory.
@@ -293,6 +296,15 @@ internal class EditorViewModel @Inject constructor(
      */
     suspend fun editInkLibrary(transform: (InkLibrary) -> InkLibrary): InkLibraryEdit =
         viewModelScope.async { inkLibraryStore.update(transform) }.await()
+
+    /** The Art sheet's Recent and Favourites; `null` until the store's first value. */
+    val artShortcuts: StateFlow<ArtShortcuts?> =
+        artShortcutsStore.shortcuts.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
+
+    /** Applies [transform] to the stored shortcuts in [viewModelScope], so closing the sheet cannot cancel it. */
+    fun editArtShortcuts(transform: (ArtShortcuts) -> ArtShortcuts) {
+        viewModelScope.launch { artShortcutsStore.update(transform) }
+    }
 
     init {
         viewModelScope.launch(mainDispatcher) {
