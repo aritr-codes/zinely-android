@@ -619,6 +619,81 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `a new zine takes the smallest free number once My zine is on the shelf`() = runTest {
+        // Given — "My zine" and "My zine 3" exist (case and padding are not a different name); 2 is the gap
+        val shelf = folderShelf("my zine " to null, "My zine 3" to null)
+        repository.createResult = { DataResult.Success(summary("new", "x", 0L)) }
+
+        // When
+        shelf.viewModel.startZine(PaperSize.LETTER)
+
+        // Then
+        assertEquals(listOf("My zine 2"), repository.created.map { it.first })
+        shelf.close()
+    }
+
+    @Test
+    fun `a zine in another folder, or waiting to be deleted, still holds its name`() = runTest {
+        val shelf = folderShelf("My zine" to "Trips", "My zine 2" to null)
+        repository.createResult = { DataResult.Success(summary("new", "x", 0L)) }
+
+        shelf.viewModel.delete("My zine 2") // hidden at once, but its delete is not final
+        shelf.viewModel.startZine(PaperSize.LETTER)
+
+        assertEquals(listOf("My zine 3"), repository.created.map { it.first })
+        shelf.close()
+    }
+
+    @Test
+    fun `nextNewTitle fills the first gap and ignores case and padding`() {
+        assertEquals("My zine", nextNewTitle(emptyList()))
+        assertEquals("My zine", nextNewTitle(listOf("Notes", "my zine 2")))
+        assertEquals("My zine 2", nextNewTitle(listOf("  MY ZINE  ")))
+        assertEquals("My zine 2", nextNewTitle(listOf("My zine", "My zine 3")))
+        assertEquals("My zine 4", nextNewTitle(listOf("My zine", "My zine 2", "my zine 3")))
+        assertEquals("My zine 2", nextNewTitle(listOf("My zine", "My zine copy", "My zine 2x")))
+    }
+
+    @Test
+    fun `a new zine is plain My zine again when no zine holds that name`() = runTest {
+        // Given — the first one was renamed away; only "My zine 2" is left
+        val shelf = folderShelf("My zine 2" to null)
+        repository.createResult = { DataResult.Success(summary("new", "x", 0L)) }
+
+        // When
+        shelf.viewModel.startZine(PaperSize.LETTER)
+
+        // Then
+        assertEquals(listOf("My zine"), repository.created.map { it.first })
+        shelf.close()
+    }
+
+    @Test
+    fun `Duplicate asks the Shelf to reveal the copy where it landed - inside the folder too`() = runTest {
+        // Given — a zine in a folder
+        val shelf = folderShelf("a" to "Trips")
+        repository.duplicateResult = { DataResult.Success(summary("copy", "a copy", 0L)) }
+
+        // When
+        shelf.viewModel.duplicate("a")
+
+        // Then
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Reveal("copy", "Trips")), shelf.events)
+        shelf.close()
+    }
+
+    @Test
+    fun `Duplicate on My Shelf reveals the copy on My Shelf`() = runTest {
+        val shelf = folderShelf("a" to null)
+        repository.duplicateResult = { DataResult.Success(summary("copy", "a copy", 0L)) }
+
+        shelf.viewModel.duplicate("a")
+
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Reveal("copy", null)), shelf.events)
+        shelf.close()
+    }
+
+    @Test
     fun `a failed create surfaces the warm generic message`() = runTest {
         // Given
         val viewModel = viewModel()

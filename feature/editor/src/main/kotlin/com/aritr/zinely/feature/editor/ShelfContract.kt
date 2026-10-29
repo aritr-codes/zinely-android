@@ -96,6 +96,13 @@ public sealed interface HomeShelfEvent {
         val zineId: String? = null,
         val folder: String? = null,
     ) : HomeShelfEvent
+
+    /**
+     * A zine the Shelf should show and move focus to, with nothing to say: a duplicate's copy. [folder] is where it
+     * landed (`null` is My Shelf); the screen waits for the Shelf to list it there before scrolling and focusing.
+     * Not a [FolderSnack]: that carries frozen words, and a copy has none to add.
+     */
+    public data class Reveal(val zineId: String, val folder: String?) : HomeShelfEvent
 }
 
 /** The one thing a folder snack can offer. */
