@@ -214,8 +214,11 @@ private sealed interface FocusWish {
     /** Out of a folder: that folder's pile. */
     data class Pile(val folder: String) : FocusWish
 
-    /** After an action: the tile that now holds this zine, once the zine is in [folder]. */
-    data class Zine(val id: String, val folder: String?) : FocusWish
+    /**
+     * After an action: the tile that now holds this zine, once the zine is in [folder]. [scroll] brings the tile on
+     * screen first (a duplicate's copy; a move's zine is already where the maker is looking).
+     */
+    data class Zine(val id: String, val folder: String?, val scroll: Boolean = false) : FocusWish
 
     /** The heading: after several zines are deleted, or when choosing stops with no zine to return to (A47.12). */
     data object Heading : FocusWish
@@ -506,7 +509,9 @@ public fun ZineLibraryScreen(
                 }
 
                 // A duplicate's copy: the same wish a folder snack makes, without the snack.
-                is HomeShelfEvent.Reveal -> focusWish = FocusWish.Zine(event.zineId, event.folder)
+                // Not while a sheet is up: focus would be requested behind a modal. (A Reveal that arrives after the
+                // screen has been left is dropped with the collector, like any event — adjacent to #160, not fixed here.)
+                is HomeShelfEvent.Reveal -> if (openSheet == null) focusWish = FocusWish.Zine(event.zineId, event.folder, scroll = true)
             }
         }
     }
@@ -589,6 +594,13 @@ public fun ZineLibraryScreen(
                     }
                 }
             }
+        }
+        // A copy is new and sorts to the top, so the maker may be looking at the bottom: bring its tile on screen
+        // first, in either input mode (a tile that is not composed has no requester, and touch mode takes no focus).
+        // Grid items before the tiles: the heading, and the restored note when it is up.
+        if (wish is FocusWish.Zine && wish.scroll && index >= 0) {
+            val before = 1 + if (noteUp && !choosing) 1 else 0
+            (if (openFolder == null) shelfGrid else folderGrid).scrollToItem(index + before)
         }
         focusTile = index
         withFrameNanos { }

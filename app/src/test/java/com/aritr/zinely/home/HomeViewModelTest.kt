@@ -633,6 +633,28 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `a zine in another folder, or waiting to be deleted, still holds its name`() = runTest {
+        val shelf = folderShelf("My zine" to "Trips", "My zine 2" to null)
+        repository.createResult = { DataResult.Success(summary("new", "x", 0L)) }
+
+        shelf.viewModel.delete("My zine 2") // hidden at once, but its delete is not final
+        shelf.viewModel.startZine(PaperSize.LETTER)
+
+        assertEquals(listOf("My zine 3"), repository.created.map { it.first })
+        shelf.close()
+    }
+
+    @Test
+    fun `nextNewTitle fills the first gap and ignores case and padding`() {
+        assertEquals("My zine", nextNewTitle(emptyList()))
+        assertEquals("My zine", nextNewTitle(listOf("Notes", "my zine 2")))
+        assertEquals("My zine 2", nextNewTitle(listOf("  MY ZINE  ")))
+        assertEquals("My zine 2", nextNewTitle(listOf("My zine", "My zine 3")))
+        assertEquals("My zine 4", nextNewTitle(listOf("My zine", "My zine 2", "my zine 3")))
+        assertEquals("My zine 2", nextNewTitle(listOf("My zine", "My zine copy", "My zine 2x")))
+    }
+
+    @Test
     fun `a new zine is plain My zine again when no zine holds that name`() = runTest {
         // Given — the first one was renamed away; only "My zine 2" is left
         val shelf = folderShelf("My zine 2" to null)

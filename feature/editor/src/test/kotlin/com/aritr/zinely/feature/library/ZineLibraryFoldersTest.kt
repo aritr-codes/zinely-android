@@ -14,7 +14,9 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
@@ -654,6 +656,24 @@ class ZineLibraryFoldersTest {
         zines = SEEDED + SEEDED.first { it.id == "Riso tests" }.copy(id = "Riso copy", title = "Riso copy")
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("Riso copy").assertIsFocused()
+    }
+
+    @Test
+    fun `in touch mode a copy made far down a long Shelf is scrolled into view`() {
+        // The copy sorts to the top; the maker is looking at the bottom. Focus cannot help (no requester exists for a
+        // tile that is not composed, and touch mode takes none), so the Shelf itself must scroll to it.
+        val many = (0 until 40).map { zine("Zine $it", null) }
+        zines = many
+        shelf()
+        composeRule.onNodeWithTag(ZineLibraryShelfTestTag).performScrollToIndex(many.size)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Zine 0").assertDoesNotExist()
+
+        events.trySend(HomeShelfEvent.Reveal("Zine copy", null))
+        zines = listOf(zine("Zine copy", null)) + many
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("Zine copy").assertIsDisplayed()
     }
 
     @Test
