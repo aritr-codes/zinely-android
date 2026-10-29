@@ -1551,8 +1551,7 @@ public object Copy {
 
         /**
          * Undo was pressed after [titles] (Shelf order, at least one) had already been deleted for good (Home was
-         * left while the snack stood, [ADR-142](docs/DECISIONS.md#adr-142), #166). Provisional, owner ruling owed:
-         * not in the frozen A47 words.
+         * left while the snack stood, [ADR-142](docs/DECISIONS.md#adr-142), #166). Words ruled 2026-10-29: ADR-142 R8, A47.9.
          */
         public fun alreadyDeleted(titles: List<String>): String =
             if (titles.size == 1) {

@@ -1019,6 +1019,30 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `undo after a failed commit does not say the zine was already deleted - it is back on the shelf`() = runTest {
+        // Given a delete whose commit fails, so the card is back on the shelf
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        repository.deleteResult = { DataResult.Failure(DataError.Io("unindex failed")) }
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+        viewModel.delete("z1")
+        viewModel.openZine("z2") // flushes the pending delete; it fails
+        val before = events.size
+
+        // When Undo is tapped on the stale prompt
+        viewModel.undoDelete("z1")
+        viewModel.undoDeletes(listOf("z1"))
+
+        // Then no "already deleted" message: the zine is listed, not gone
+        assertEquals(before, events.size)
+        stateJob.cancel()
+        eventsJob.cancel()
+    }
+
+    @Test
     fun `an open buffered while nobody collected never fires on shelf return`() = runTest {
         // Given an open that landed while the shelf was not collecting (e.g. a slow create finishing
         // after the user already tapped into another editor) — Codex implementation-review RF: a

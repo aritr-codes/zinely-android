@@ -830,11 +830,14 @@ internal class HomeViewModel @Inject constructor(
     fun isDeleteWaiting(id: String): Boolean =
         id in pendingDeletes.value && id !in settling && id !in finishedDeletes
 
+    /** Gone for good: the delete finished, or the store no longer lists it. A failed commit or a restore leaves it listed, so it is not "already deleted". */
+    private fun isGone(id: String): Boolean = id in finishedDeletes || id !in listedTitles
+
     /** Undo within the window: clear the durable intent, then unhide; the project store was never called. */
     fun undoDelete(id: String) {
         // Too late: the delete finished while the prompt stood (Home was left). Nothing to bring back, so say so.
         if (!isDeleteWaiting(id)) {
-            deletedTitles[id]?.let { eventQueue.trySend(HomeShelfEvent.Message(Copy.Select.alreadyDeleted(listOf(it)))) }
+            if (isGone(id)) deletedTitles[id]?.let { eventQueue.trySend(HomeShelfEvent.Message(Copy.Select.alreadyDeleted(listOf(it)))) }
             return
         }
         if (!pendingDeleteStore.remove(id)) {
@@ -857,7 +860,7 @@ internal class HomeViewModel @Inject constructor(
             finishedDeletes = finishedDeletes - waiting.toSet()
             pendingDeletes.update { it - waiting.toSet() }
         }
-        val titles = late.mapNotNull { deletedTitles[it] }
+        val titles = late.filter { isGone(it) }.mapNotNull { deletedTitles[it] }
         if (titles.isNotEmpty()) eventQueue.trySend(HomeShelfEvent.Message(Copy.Select.alreadyDeleted(titles)))
     }
 
