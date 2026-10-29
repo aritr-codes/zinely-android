@@ -1,8 +1,13 @@
 package com.aritr.zinely.export
 
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import com.aritr.zinely.editor.ProofRoute
+import com.aritr.zinely.core.data.repository.DataResult
+import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.render.android.AssetBytesSource
@@ -79,11 +84,18 @@ internal data class ExportSaved(
 internal class ExportViewModel(
     private val exporter: SheetExporter,
     /** Usable bytes where the export lands. A seam so the out-of-space call is testable. */
-    private val freeBytes: () -> Long,
+    private val freeBytes: () -> Long = ::sharedStorageFreeBytes,
+    /** The zine's title, read at export time so a rename made after the Proof opened still lands in the filename. */
+    private val titleOf: suspend () -> String = { "" },
 ) : ViewModel() {
 
+    // The Proof route's own argument is in this entry's SavedStateHandle, so no host or EditorViewModel plumbing.
     @Inject
-    constructor(exporter: SheetExporter) : this(exporter, ::sharedStorageFreeBytes)
+    constructor(exporter: SheetExporter, projects: ProjectRepository, handle: SavedStateHandle) : this(
+        exporter,
+        ::sharedStorageFreeBytes,
+        projectTitleOf(handle, projects),
+    )
 
     private val _state = MutableStateFlow<ExportUiState>(ExportUiState.Idle)
     val state: StateFlow<ExportUiState> = _state.asStateFlow()
@@ -102,7 +114,7 @@ internal class ExportViewModel(
         viewModelScope.launch {
             _state.value = ExportUiState.Working(format, destination)
             _state.value = try {
-                _outcomes.send(exporter.export(document, pageSizePt, imageBytes, format, destination))
+                _outcomes.send(exporter.export(document, pageSizePt, imageBytes, format, destination, titleOf()))
                 ExportUiState.Idle
             } catch (ce: CancellationException) {
                 throw ce
@@ -186,4 +198,19 @@ internal class ExportViewModel(
  * the app's cache that Share writes to). The storage root always exists, so no walk-up is needed.
  */
 @Suppress("DEPRECATION") // getExternalStorageDirectory: statfs only, no file access.
+/**
+ * The title of the zine the Proof route is open on, read at call time. A missing route argument, a missing
+ * zine or a failing read all yield "" — [ExportNaming] turns that into "zine", so a save never fails over a name.
+ */
+internal fun projectTitleOf(handle: SavedStateHandle, projects: ProjectRepository): suspend () -> String = {
+    try {
+        val id = handle.toRoute<ProofRoute>().projectId
+        (projects.getProject(id) as? DataResult.Success)?.value?.title ?: ""
+    } catch (ce: CancellationException) {
+        throw ce
+    } catch (e: Exception) {
+        ""
+    }
+}
+
 private fun sharedStorageFreeBytes(): Long = Environment.getExternalStorageDirectory().usableSpace
