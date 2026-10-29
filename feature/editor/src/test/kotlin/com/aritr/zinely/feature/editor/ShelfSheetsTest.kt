@@ -16,6 +16,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.height
@@ -227,6 +228,32 @@ class ShelfSheetsTest {
         val smile = "😀"
         assertEquals("a".repeat(59) + smile, capTitle("a".repeat(59) + smile + smile))
         assertEquals("a".repeat(60), capTitle("a".repeat(61)))
+    }
+
+    /** Device defect: delete one letter, type one back, and the last letter was cut. */
+    @Test
+    fun `an over-long title survives delete-then-retype as two separate edits`() {
+        val title = "b".repeat(59) + " copy"
+        assertEquals(64, cps(title))
+        var renamed: String? = null
+        setContent { ShelfRenameSheet(visible = true, title = title, onDismiss = {}, onRename = { renamed = it }) }
+
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).performTextReplacement(title.dropLast(1))
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).performTextInput("y")
+        composeRule.onNodeWithTag(HomeRenameConfirmTestTag).performClick()
+        assertEquals(title, renamed)
+    }
+
+    @Test
+    fun `an over-long title still cannot grow past its opening length`() {
+        val title = "b".repeat(59) + " copy"
+        var renamed: String? = null
+        setContent { ShelfRenameSheet(visible = true, title = title, onDismiss = {}, onRename = { renamed = it }) }
+
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).performTextReplacement(title)
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).performTextInput("zz")
+        composeRule.onNodeWithTag(HomeRenameConfirmTestTag).performClick()
+        assertEquals(64, cps(renamed!!))
     }
 
     private fun cps(s: String) = s.codePointCount(0, s.length)

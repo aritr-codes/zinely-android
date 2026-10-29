@@ -358,7 +358,7 @@ internal fun ShelfActionSheet(
         if (renaming) {
             RenameField(
                 draft = draft,
-                onDraftChange = { draft = it.capped(draft.text) },
+                onDraftChange = { draft = it.capped(card.title) },
                 onSave = { trimmed -> onRename(card.id, trimmed) },
                 onDone = onDismiss,
             )
@@ -563,7 +563,7 @@ internal fun ShelfRenameSheet(
     ) {
         RenameField(
             draft = draft,
-            onDraftChange = { draft = it.capped(draft.text) },
+            onDraftChange = { draft = it.capped(title) },
             onSave = onRename,
             onDone = onDismiss,
         )
@@ -701,16 +701,18 @@ internal fun capTitle(s: String, limit: Int = MaxTitleCodePoints): String {
 /** The rename field's state: the old name, all of it selected, so typing replaces it (#157). */
 private fun titleDraft(title: String) = TextFieldValue(title, TextRange(0, title.length))
 
-private fun TextFieldValue.capped(previous: String): TextFieldValue = titleEdit(previous, this)
+private fun TextFieldValue.capped(opening: String): TextFieldValue = titleEdit(opening, this)
 
 /**
- * Applies an edit to the title draft. The limit is the larger of [MaxTitleCodePoints] and the previous
- * length, because a title can already be over 60 (a duplicate's " copy"): editing a letter of it must
- * not eat its tail, only growth past where it already was is cut. When a cut happens the selection is
- * clamped to the new length rather than thrown to the end.
+ * Applies an edit to the title draft. [opening] is the title the sheet **opened with** (from its
+ * `title` param, never the draft, so it is constant for the session and survives rotation). The limit
+ * is the larger of [MaxTitleCodePoints] and its length, because a title can already be over 60 (a
+ * duplicate's " copy"): editing it must not eat its tail, and delete-then-retype must not either — a
+ * limit based on the previous draft shrank after the delete and cut the retyped letter. Only growth
+ * past the opening length is cut. When a cut happens the selection is clamped to the new length.
  */
-internal fun titleEdit(previous: String, next: TextFieldValue): TextFieldValue {
-    val limit = maxOf(MaxTitleCodePoints, previous.codePointCount(0, previous.length))
+internal fun titleEdit(opening: String, next: TextFieldValue): TextFieldValue {
+    val limit = maxOf(MaxTitleCodePoints, opening.codePointCount(0, opening.length))
     val c = capTitle(next.text, limit)
     if (c == next.text) return next
     return TextFieldValue(
