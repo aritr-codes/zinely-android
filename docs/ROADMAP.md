@@ -25,6 +25,16 @@ beta.4-r3 APK; measurements and evidence remain in the
 GitHub pre-release, APK only; [tester package](releases/0.9.0-beta.7.md)). It follows beta.6 (2026-10-06). Both
 features shipped **not accepted**. No next tester build is scheduled by date yet.
 
+**In preparation, 2026-10-29:** beta.8 (`versionCode 13`) is being prepared on the owner's go-ahead ("Let's wait
+for the PR and then go with beta.8"), not yet built, tagged or published; beta.7 stays the public download
+until it is. It will carry everything merged to `main` since beta.7, listed in
+[the changelog](../CHANGELOG.md#090-beta8--2026-10-29--choose-several-zines-mix-your-own-ink-124-art-pieces-and-work-that-stays-safe)
+and the [tester package](releases/0.9.0-beta.8.md): W1 never-lose-work, the 124 Art pieces and two frames, Ink's
+mixer and palettes, the Arrange tray, the restored-details note, and choosing several zines on My Shelf. All of it
+ships **built and merged, not accepted**; the TalkBack listens are deferred by the owner and are Known
+Limitations. Below, "in no download" for an item in that list means: not in the public download today, and in the
+beta.8 package once it is published.
+
 **Owner rulings, 2026-09-26** ([1.x decision gate](planning/ZINELY-1X-DECISION-GATE.md)): the next tester build
 is planned as a *wave-1* release on the current document format, before any schema change, carrying the 1.x
 plan's backup-honesty, accessibility and tap-through steps ([plan §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#5-sequencing)).
@@ -37,7 +47,7 @@ Decided in [ADR-136](DECISIONS.md#adr-136) under the owner's delegation, after t
 2026-10-15. The items in each wave, their sizes and the cut list are in the ADR; this is the order only. Each
 wave still needs its own HTML amendment or ADR where the rules ask for one, and none has a date.
 
-1. **W1 — Never lose work, never get stuck.** Fixes, each with a failing test first. **Built 2026-10-23, in no download** (integrated on `feat/w1-never-lose-work`; Bench A41/A42, Proof A43/A44, Backup A45 and Library A46 frozen under delegation; [ADR-140](DECISIONS.md#adr-140) Proposed, refs #146). **Device checks:** phone Pass 1 done on Samsung SM-A176B, Android 16 (build `09ae4668`); emulator Pass 1 on API 36 and a temporary API 24 AVD (`fda3f095`), with the Proof done-row fix looked at on the emulator at `909c71b9` (2x and a 384dp phone after the fix owed); Pass 2 done 2026-10-24. Owed before it ships: the TalkBack listens, a real out-of-space failure, a real Android 7-9 phone, a device look at the D-146 title, the Bench-open-then-return repair path, the owner's reading, and the CI golden re-record, listed in [OWNER-CHECKLIST §2.5](OWNER-CHECKLIST.md#25-w1-never-lose-work--built-unreleased-device-pass-1-and-a-pass-2-done-talkback-listen-owed). **Partial or untraced against ADR-136's W1 list:** the reduced-motion Proof scroll is not built (the page strip's is); of "stale copy (Replace, share wording)", Replace is done and the only share wording traced is [D-146](design/V2-SPEC-DEFECTS.md#d-146)'s ruling that a failed Share rightly keeps "Couldn't make the PDF"; no other share-wording change was made. The ADR-054 decision 8 "Don't ask again" limitation is closed in code, passed on the API 24 emulator, pending a real phone. Beta.8 waits on the owner's word.
+1. **W1 — Never lose work, never get stuck.** Fixes, each with a failing test first. **Built 2026-10-23, in no download** (integrated on `feat/w1-never-lose-work`; Bench A41/A42, Proof A43/A44, Backup A45 and Library A46 frozen under delegation; [ADR-140](DECISIONS.md#adr-140) Proposed, refs #146). **Device checks:** phone Pass 1 done on Samsung SM-A176B, Android 16 (build `09ae4668`); emulator Pass 1 on API 36 and a temporary API 24 AVD (`fda3f095`), with the Proof done-row fix looked at on the emulator at `909c71b9` (2x and a 384dp phone after the fix owed); Pass 2 done 2026-10-24. Owed before it ships: the TalkBack listens, a real out-of-space failure, a real Android 7-9 phone, a device look at the D-146 title, the Bench-open-then-return repair path, the owner's reading, and the CI golden re-record, listed in [OWNER-CHECKLIST §2.5](OWNER-CHECKLIST.md#25-w1-never-lose-work--built-unreleased-device-pass-1-and-a-pass-2-done-talkback-listen-owed). **Partial or untraced against ADR-136's W1 list:** the reduced-motion Proof scroll is not built (the page strip's is); of "stale copy (Replace, share wording)", Replace is done and the only share wording traced is [D-146](design/V2-SPEC-DEFECTS.md#d-146)'s ruling that a failed Share rightly keeps "Couldn't make the PDF"; no other share-wording change was made. The ADR-054 decision 8 "Don't ask again" limitation is closed in code, passed on the API 24 emulator, pending a real phone. *2026-10-29: the owner gave the word; it is in the beta.8 package (in preparation).*
 2. **W2a — Small things, no design change; W2b — small things that need an HTML amendment first.**
 3. **W3 — Art: better before more.** The A34 polish as A39, then the Compose redraw ([ADR-132](DECISIONS.md#adr-132)). **Built 2026-10-24, in no download** (on `feat/art-picks`: the 124 A39 pieces in the app, 17 shipped ids redrawn inside their old ink box, 56 names shortened to fit the tile ([D-132](design/V2-SPEC-DEFECTS.md#d-132)); [ADR-139](DECISIONS.md#adr-139) Proposed; the CI golden re-record, a printed page and both device passes are owed)
 4. **W4 — Photo descriptions**, saved format v4, alone.
@@ -65,13 +75,13 @@ built. "Built" below means merged to `main`; "accepted" means the ADR says Accep
 | Tap-through ([ADR-124](DECISIONS.md#adr-124)) | yes | beta.6 | **no** | Owner's TalkBack listen; freeze of bench A27. |
 | Shelf folders ([ADR-125](DECISIONS.md#adr-125)) | yes | beta.7 | **no** (design accepted) | TalkBack listen; six small owner rulings. |
 | Document voices, Book and Plain ([ADR-126](DECISIONS.md#adr-126)) | yes | beta.7 | **no** | A printed Book page at 12 pt; TalkBack listen; owner's own try and rulings. |
-| Two frames (plan step 9) | yes | **no** | **no** | Owner's first-time pass with a finger; TalkBack listen; one printed page. |
+| Two frames (plan step 9) | yes | **no** (beta.8, in preparation) | **no** | Owner's first-time pass with a finger; TalkBack listen; one printed page. |
 | Print guidance (plan step 5) | no | no | no | Blocked on the print study, which has not been run. |
 | Photo descriptions (plan steps 6 and 7) | no | no | no | What Read says aloud is designed (`v21-proof.html` A38, frozen; [ADR-135](DECISIONS.md#adr-135) Proposed; PR #141). Owed: the v4 format step, the build, both device passes and the owner's TalkBack listen. |
 | Page backgrounds | no | no | no | Answered by paper colour shown on screen and never printed, in W6 ([ADR-136](DECISIONS.md#adr-136) decision 5, which keeps ZINE-DIRECTION's "do not build" line for a printed fill). No design yet. |
 | More paper sizes | no | no | no | [ADR-133](DECISIONS.md#adr-133): US Legal and A5 chosen; the engine takes any sheet (merged, PR #129). The A35 picker is designed (`v21-library.html` A35, frozen; PR #142). The sizes wait on their own schema bump after v4. |
-| A page that keeps its size, the Arrange tray (added 2026-10-14, from *Exploring*) | yes (PR #133) | **no** | yes, under the owner's delegation ([ADR-129](DECISIONS.md#adr-129)); the owner can overrule | TalkBack listen of the tray; a real small phone at large text. The first-run hint no longer clips its words at the largest text, a problem beta.7 also has ([D-119](design/V2-SPEC-DEFECTS.md#d-119), PR #143; checked on an emulator, the real small phone owed). |
-| A note when a zine's details go back to their earlier copy (added 2026-10-18, from [#128](https://github.com/aritr-codes/zinely-android/issues/128)) | yes (PR #139) | **no** | yes, under the owner's delegation ([ADR-134](DECISIONS.md#adr-134)); the owner can overrule | A TalkBack listen; a real phone at 360dp and font scale 2; the owner's first-time reading of the words. Follow-ups [#145](https://github.com/aritr-codes/zinely-android/issues/145)–[#147](https://github.com/aritr-codes/zinely-android/issues/147). |
+| A page that keeps its size, the Arrange tray (added 2026-10-14, from *Exploring*) | yes (PR #133) | **no** (beta.8, in preparation) | yes, under the owner's delegation ([ADR-129](DECISIONS.md#adr-129)); the owner can overrule | TalkBack listen of the tray; a real small phone at large text. The first-run hint no longer clips its words at the largest text, a problem beta.7 also has ([D-119](design/V2-SPEC-DEFECTS.md#d-119), PR #143; checked on an emulator, the real small phone owed). |
+| A note when a zine's details go back to their earlier copy (added 2026-10-18, from [#128](https://github.com/aritr-codes/zinely-android/issues/128)) | yes (PR #139) | **no** (beta.8, in preparation) | yes, under the owner's delegation ([ADR-134](DECISIONS.md#adr-134)); the owner can overrule | A TalkBack listen; a real phone at 360dp and font scale 2; the owner's first-time reading of the words. Follow-ups [#145](https://github.com/aritr-codes/zinely-android/issues/145)–[#147](https://github.com/aritr-codes/zinely-android/issues/147). |
 | Google Play | no | no | no | Owner's account verification is still blocked. |
 | Fold clarity study | no | no | no | Needs first-time makers with paper. Not run. |
 
@@ -120,15 +130,17 @@ a test, not seen on a device; [#149](https://github.com/aritr-codes/zinely-andro
 
 - **Inks you mix yourself:** a colour mixer, My inks and My palettes in the Ink tray. Designed as
   `v21-bench.html` A40 rev. 2 and built 2026-10-26 on `feat/ink-mixer` ([ADR-138](DECISIONS.md#adr-138), Proposed).
-  In no APK and not yet tried on a device; what is owed is listed in
-  [OWNER-CHECKLIST §2.6](OWNER-CHECKLIST.md#26-ink-mixer--built-unreleased-no-device-pass-yet).
+  In no published APK; in the beta.8 package (in preparation). Tried on an emulator and a Samsung phone
+  (maintainer's record, not in this repository); what is owed is listed in
+  [OWNER-CHECKLIST §2.6](OWNER-CHECKLIST.md#26-ink-mixer--built-merged-in-the-beta8-package-listens-and-parity-owed).
 
 - **My Shelf multi-select:** press and hold a zine to choose several, then Move to a folder or Delete them, with one
   Undo for the whole batch. Moved from Planned on 2026-10-26, when the owner asked for it in `0.9.0-beta.8`:
-  designed as `v21-library.html` A47 (frozen under delegation) and being built for beta.8
-  ([ADR-142](DECISIONS.md#adr-142), Proposed; it replaces [ADR-141](DECISIONS.md#adr-141) decision 3). Beta.8 is not
-  cut, so it is in no APK. What is owed before it is accepted is in
-  [OWNER-CHECKLIST §2.7](OWNER-CHECKLIST.md#27-shelf-multi-select--being-built-no-device-pass-yet). The Bench stays
+  designed as `v21-library.html` A47 (frozen under delegation) and built and merged for beta.8
+  (PR #167, then PR #168 for the review follow-ups of #166; [ADR-142](DECISIONS.md#adr-142), Proposed; it replaces
+  [ADR-141](DECISIONS.md#adr-141) decision 3). Beta.8 is in preparation, so it is in no published APK. What is owed
+  before it is accepted is in
+  [OWNER-CHECKLIST §2.7](OWNER-CHECKLIST.md#27-shelf-multi-select--built-merged-in-the-beta8-package-listen-owed). The Bench stays
   single-select.
 
 Shelf folders and document voices (Book and Plain) shipped in `0.9.0-beta.7` on 2026-10-11
@@ -504,6 +516,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-10-29 | **beta.8 package prepared (docs only), not built or published.** Version 0.9.0-beta.8, `versionCode 13`, changelog section, tester package and public-site entry written with the APK size, checksum, source commit and tag left as `TBD-AT-BUILD`. Choosing several zines (PR #167) and its follow-ups (PR #168; the "already deleted" words ruled as ADR-142 R8) are merged. ADRs 138, 139, 140 and 142 stay Proposed, and ADR-136 (Accepted) still has its device checks owed; the TalkBack listens are deferred by the owner and listed as Known Limitations. Roadmap items move to Available on the public site only when the build is published: the website PR merges only after the GitHub release exists (Pages deploys on merge). The release date (2026-10-29 in the changelog heading, tester package and site) is to be fixed on tag day | [tester package](releases/0.9.0-beta.8.md) · [ADR-142](DECISIONS.md#adr-142) |
 | 2026-10-26 | **My Shelf multi-select moved to In development for `0.9.0-beta.8`.** The owner asked for it in beta.8; ADR-142 replaces ADR-141 decision 3 ("not in beta.8"). Designed as `v21-library.html` A47 (frozen under delegation), evidence in RESEARCH R36. Being built; beta.8 is not cut, so it is in no APK. Owed: both device passes, a TalkBack listen, 390dp parity. Public roadmap updated to match | [ADR-142](DECISIONS.md#adr-142) · [R36](RESEARCH.md#r36) |
 | 2026-10-26 | **Inks you mix yourself built, not released.** On `feat/ink-mixer`: Mix opens a colour mixer on the piece's ink; My inks keeps the last 9 mixed and used; My palettes keeps up to 9 named sets of 2 to 6 inks, with Undo; the built-in inks are one list with `Ink` shown once (D-060). A store failure is said, and the dim Save says why (A40 rev. 2 amendment, D-123). Not in any APK; not yet tried on a phone or an emulator. My inks and palettes are not in backups (Known Limitation). Owed: both device passes, a TalkBack listen, pixel parity, the CI golden record and the new tray goldens | [ADR-138](DECISIONS.md#adr-138) · [D-123](design/V2-SPEC-DEFECTS.md#d-123) · [D-060](design/V2-SPEC-DEFECTS.md#d-060) |
 | 2026-10-26 | **Selecting several things ruled (docs only).** The Bench stays single-select (page-level actions if groups are needed). My Shelf multi-select is Planned after W1 to W3, not in beta.8; nothing designed or built. Public roadmap lists it as Planned | [ADR-141](DECISIONS.md#adr-141) |

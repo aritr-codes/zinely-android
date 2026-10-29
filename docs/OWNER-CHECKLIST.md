@@ -344,35 +344,58 @@ API 36 emulator at `909c71b9`; Pass 2 on 2026-10-24 from those walks.
 | ☐ | ADR-140: open the damaged zine on the Bench first, come back: the note is there. A human TalkBack listen of the pages note (arrival announced once, re-entry silent). Your first-time reading of the words, and whether the Shelf is too late (option B) | [ADR-140](DECISIONS.md#adr-140) *Owed before accepted*, [As built](DECISIONS.md#adr-140-as-built) |
 | ☐ | Follow-up: a `.bak` can hold a blank text box autosaved while it was being placed, so after a repair the zine has an invisible, tappable "Empty text" box. Drop blank text on repair, or skip blank placements in autosave | [ADR-140](DECISIONS.md#adr-140) *Known limitations* |
 | ☐ | Optional: overrule any of A41-A46, frozen under delegation 2026-10-22 and viewable as local HTML in `docs/design/mockups/` | [D-140..D-144](design/V2-SPEC-DEFECTS.md#d-140) |
-| ☐ | **CI goldens:** run `record-goldens.yml` and read every `*_compare.png` first. Moved above threshold in local `gold` runs: `proof_saved_light` and `proof_saved_dark`, `proof_scaffold_light` and `proof_scaffold_dark`, `voice_read` (`VoiceSurfacesGoldenTest`), the ZineLibrary error light and dark goldens, and `LibraryBackupRestoreGoldenTest`. Likely to fail only `golden-exact` (moved by under 2%, not seen locally): the idle-Bench shots in `EditorScreenGoldenTest`, `BenchC5GoldenTest`, `BenchStyleRowGoldenTest` and `VoiceSurfacesGoldenTest`, and any Proof Print and Fold goldens; trust the CI diff, not this list | [CLAUDE.md](../CLAUDE.md) (re-recording is a reviewed act) |
+| ☑ | **CI goldens:** satisfied: the goldens were current and green on `main` at `466e526b` (the release coordinator's word; not re-read here). Original note: run `record-goldens.yml` and read every `*_compare.png` first. Moved above threshold in local `gold` runs: `proof_saved_light` and `proof_saved_dark`, `proof_scaffold_light` and `proof_scaffold_dark`, `voice_read` (`VoiceSurfacesGoldenTest`), the ZineLibrary error light and dark goldens, and `LibraryBackupRestoreGoldenTest`. Likely to fail only `golden-exact` (moved by under 2%, not seen locally): the idle-Bench shots in `EditorScreenGoldenTest`, `BenchC5GoldenTest`, `BenchStyleRowGoldenTest` and `VoiceSurfacesGoldenTest`, and any Proof Print and Fold goldens; trust the CI diff, not this list | [CLAUDE.md](../CLAUDE.md) (re-recording is a reviewed act) |
 
-### 2.6 Ink mixer — built, unreleased; no device pass yet
+### 2.6 Ink mixer — built, merged in the beta.8 package; listens and parity owed
 **Reason:** Physical / Judgement · **Blocks:** accepting ADR-138 · Authority for each item is the linked record; this
-table only points at it. Built on `feat/ink-mixer` (2026-10-26); no emulator or phone has run it.
+table only points at it. Built and merged (PR #164, 2026-10-26); ships in the beta.8 package, not accepted. The
+maintainer's readiness report of 2026-10-26 records emulator and Samsung passes as PASS (the pass log is not in
+this repository); the rows below are what is still owed.
 
 | ☐ | Item | Where it is owned |
 |---|---|---|
-| ☐ | Device Pass 1 of the Ink tray and the mixer, including a dump of the platform tree for the sliders, toggles, radios and the remove action | [ADR-138](DECISIONS.md#adr-138) *Owed before Accepted* |
+| ☐ | Device Pass 1 of the Ink tray and the mixer on a real phone, including palette edit and delete (the readiness report says emulator and Samsung passes passed; confirm the platform-tree dump for the sliders, toggles, radios and the remove action is recorded) | [ADR-138](DECISIONS.md#adr-138) *Owed before Accepted* |
 | ☐ | Device Pass 2: does the tray answer "which ink?" and does the mixer read as a place to make one? | [ADR-138](DECISIONS.md#adr-138) |
 | ☐ | TalkBack listen: the sliders, the strips, the edit toggles, the remove action, the failure line, and whether TalkBack follows the focus moves after Delete and Undo (the tests prove keyboard focus only) | [ADR-138](DECISIONS.md#adr-138), [D-123](design/V2-SPEC-DEFECTS.md#d-123) |
 | ☐ | Pixel parity against `v21-ink-mixer.html`, including the no-Undo-on-a-no-op tap (ADR-138 decision 5) | [ADR-138](DECISIONS.md#adr-138) |
-| ☐ | **CI goldens:** record the five changed `bench_ink_popover_*` goldens with `record-goldens.yml` and read every `*_compare.png` first. The new tray and mixer goldens (plan Task 10) are not written yet | [ADR-138](DECISIONS.md#adr-138) |
+| ☑ | **CI goldens:** the tray and mixer goldens were recorded on the pinned CI image and "Goldens are current" was green on `main` (PR #164 / handoff notes; not re-read for this change) | [ADR-138](DECISIONS.md#adr-138) |
+| ☐ | At twice the text size the "+ New palette" pill wraps onto two lines (cosmetic; a known limitation of beta.8) | [ADR-138](DECISIONS.md#adr-138) |
 | ☐ | A keyboard user cannot see which hidden slider has focus (1dp, no ring); judge on a device | [D-123](design/V2-SPEC-DEFECTS.md#d-123) |
 
-### 2.7 Shelf multi-select — being built; no device pass yet
+### 2.7 Shelf multi-select — built, merged in the beta.8 package; listen owed
 **Reason:** Judgement / Physical · **Blocks:** accepting ADR-142 · Authority for each item is the linked record; this
-table only points at it. Being built for `0.9.0-beta.8` (2026-10-26); no emulator or phone has run it.
+table only points at it. Built and merged (PR #167, then PR #168 for the #166 follow-ups); ships in the beta.8
+package, not accepted. Samsung Pass 1 and Pass 2 (2026-10-28) and emulator checks at 2x text on 360dp and at 390dp
+(2026-10-29) are the maintainer's record (the log is not in this repository). Left open from #166: an Undo racing an
+in-flight delete can leave a card restored then deleted with no message, and a batch-move Undo is silent when every
+zine was deleted meanwhile.
 
 | ☐ | Item | Where it is owned |
 |---|---|---|
-| ☐ | **Yours:** the A47 design was frozen under delegation on 2026-10-26; you may overrule it, or any of ADR-142's rulings R1–R5 | [ADR-142](DECISIONS.md#adr-142) · [`v21-library.html` A47](design/mockups/v21-library.html) |
-| ☐ | **Yours:** TalkBack listen of selection mode (switch TalkBack on for this pass only; it stays off otherwise) | [ADR-142](DECISIONS.md#adr-142) *Owed before Accepted* |
+| ☐ | **Yours:** the A47 design was frozen under delegation on 2026-10-26; you may overrule it, or any of ADR-142's rulings R1–R8 (R8, the "already deleted" words, was ruled 2026-10-29) | [ADR-142](DECISIONS.md#adr-142) · [`v21-library.html` A47](design/mockups/v21-library.html) |
+| ☐ | **Yours (deferred 2026-10-29, a beta.8 Known Limitation):** TalkBack listen of selection mode (switch TalkBack on for this pass only; it stays off otherwise) | [ADR-142](DECISIONS.md#adr-142) *Owed before Accepted* |
 | ☐ | Pixel parity against A47 at 390dp | [ADR-142](DECISIONS.md#adr-142) *Owed before Accepted* |
-| ☐ | Device Pass 1 and Pass 2, both before ADR-142 can be Accepted | [ADR-142](DECISIONS.md#adr-142) · [CLAUDE.md](../CLAUDE.md#device-verification-mandatory) |
+| ☐ | Confirm the Samsung Pass 1 and Pass 2 records are in the repository before ADR-142 can be Accepted | [ADR-142](DECISIONS.md#adr-142) · [CLAUDE.md](../CLAUDE.md#device-verification-mandatory) |
 
 ---
 
 ## 3. Release & credentials
+
+### ◐ `0.9.0-beta.8` — choose several zines, mix your own ink, 124 Art pieces, work that stays safe (APK only) *(in preparation, 2026-10-29)*
+
+Scope, per your 2026-10-29 word ("Let's wait for the PR and then go with beta.8"): everything merged to `main`
+since beta.7. W1 (ADR-136, ADR-140), Art (ADR-139), Ink (ADR-138) and Shelf multi-select (ADR-142) ship **merged,
+not accepted**. TalkBack listens are deferred by you and are Known Limitations. No AAB, no Play.
+Evidence: [tester package](releases/0.9.0-beta.8.md).
+
+| ☐ | Gate | Note |
+|---|---|---|
+| ☑ | Version, changelog, tester package, roadmap, site copy written | Docs prepared 2026-10-29; every build-time field is `TBD-AT-BUILD` |
+| ☐ | Goldens current, suite, signed APK; **fix the release date on tag day** (changelog heading and its anchors, tester package, website changelog and download page all say 2026-10-29) | Build session: record on CI if needed, read each changed picture first |
+| ☐ | Release Agent review, merge, tag, publish, checksum re-check | Per [RELEASING §2-3](RELEASING.md) |
+| ☐ | Website moved to beta.8 and live-verified | After publishing |
+| ☐ | Install over beta.7 on your phone | Needs your word; not given for this release |
+| ☐ | TalkBack listens: Ink, Art (and a printed page), W1, choosing several zines, folders, frames | Deferred by you; each ships as "not verified" |
 
 ### ☑ `0.9.0-beta.7` — folders and a second font (APK only) *(released 2026-10-11)*
 
