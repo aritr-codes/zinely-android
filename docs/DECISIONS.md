@@ -151,6 +151,7 @@
 | [ADR-140](#adr-140) | **When a zine's pages go back to their earlier copy, My Shelf says so once (extends ADR-134).** A `document.json` put back from its `.bak` is told by the A37 note in Library A46's words ("A page file was damaged, so Zinely used the copy from just before your last few seconds of changes"); one note covers a zine's details and pages. The store's `Restored` result is recorded in one lock-free repair-note store shared by both repositories; `BackupOnly` is silent. No Bench notice (named follow-up); no edit journal. Decides D-120 item 4, #146 | Proposed (A46 frozen 2026-10-22 under the owner's delegation; Accepted only once built and reviewed) |
 | [ADR-141](#adr-141) | **Selecting several things: the Bench stays single-select; My Shelf multi-select is Planned after W1 to W3.** Settles ADR-129's open question: no group selection on the Bench (page-level actions instead); a Shelf long-press selection with Move to a folder, Delete and one Undo for the batch is Planned, not in beta.8, design first. Proposed under delegation. |
 | [ADR-142](#adr-142) | **My Shelf: choose several zines, then move or delete them with one Undo.** Long press or "Select several" starts choosing; Move to a folder and Delete act on the set; one Undo covers the batch; folders cannot be chosen; a zine that cannot be acted on comes back and is named (skip-and-list). Builds ADR-141 decision 2 for beta.8; design Library A47. | Proposed |
+| [ADR-144](#adr-144) | **Sheet action pairs share one geometry.** A dismiss beside a committing button on a sheet is a bordered sibling of it (same radius, border, shadow, press, 48px; paper fill and ink words against the commit's leaf fill and on-leaf words; only the commit may be disabled). The folder name sheet's Cancel, bare text beside a dimmed pill, is the one outlier in the frozen corpus and becomes `.go.ghost`. Look only: A28.14 behaviour unchanged. Library A49 | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -17513,3 +17514,71 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 
 - A tester asks for Select all, or to rename/share several zines.
 - Pass 2 finds the dimmed folder or the long-press change confusing.
+
+## ADR-144 {#adr-144}
+
+### Sheet action pairs share one geometry
+
+**Status:** Proposed, 2026-10-29, for the owner's freeze of Library A49. The owner's words: "when making a folder, look at
+the UI - the 'make folder' has a button but cancel doesn't. Makes the UI looks broken/unpolished". **Design:** the
+[`v21-library.html`](design/mockups/v21-library.html) A49 amendment (`.go.ghost`, the A49 demo card). **Amends:** the *look*
+of the name sheet in [ADR-099](#adr-099)'s V2.1 language and Library A28 ([ADR-125](#adr-125)); A28.14 (what Cancel does) is
+unchanged. **Applies to:** the New folder, Rename folder and Move-to-new-folder sheet ([ADR-142](#adr-142) reuses it for a
+set). **Evidence:** [RESEARCH R38](RESEARCH.md#r38). Accepted only after both device passes
+([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
+
+#### Context
+
+- ✅ The inconsistency is in the frozen HTML, not only in Compose. `#nmCancel` was drawn with `.quiet-action`, the class
+  written for the dock's *Backups* and *About* links (borderless, transparent, underlined, `--ink-soft`); the name sheet
+  re-used it beside `.go`. No ADR argues for it: A28.14 describes what Cancel does, not how it looks.
+- ✅ The sheet's state makes it worse. With an empty field the commit is disabled (opacity .45, A28.10) while Cancel is
+  full-contrast text, so the only live-looking control has no button body and the only button-looking control looks dead.
+- ✅ Every other Cancel in the frozen corpus already wears its partner's geometry (table below).
+
+| Surface (frozen HTML) | Dismiss drawn as | Reading |
+|---|---|---|
+| Bench spread confirm, `v21-bench.html` `.spread-cancel` | pill, 1.5px ink border, 48px, same as `.spread-do`; fill transparent | bordered sibling |
+| Ink mixer and palette bar, `v21-ink-mixer.html` `.ghost` | `surface` fill, ink words, pill, ink border, shadow | bordered sibling |
+| Reframe, `v21-reframe.html` `.text-btn` | pill, ink border, `surface` fill, 2px shadow | bordered sibling |
+| Backup / Restore, `backup-restore.html` `.btn.secondary` | `surface` fill, ink words, ink border, 3px shadow | bordered sibling |
+| **Folder name sheet, `v21-library.html` `#nmCancel`** | **bare underlined text** | **the outlier** |
+
+#### Decision
+
+1. **The rule.** When a sheet offers a dismiss beside a committing button, both are bordered controls of one geometry
+   (radius, 1.5px ink border, shadow, press tier, 48px minimum height, padding). The commit is leaf-filled with on-leaf words;
+   the dismiss is paper-filled with ink words. Only the commit may be disabled; the dismiss is never dimmed. Borderless text
+   is for navigation links (the dock's Backups and About), not for dismissing a sheet.
+2. **The name sheet.** `#nmCancel` becomes `class="go ghost"`: `.go.ghost{background:var(--surface);color:var(--ink)}`
+   inherits `.go`'s border, radius, shadow, min-height, press and focus. Make folder keeps its disabled look alone.
+3. **Where it is written.** [V21-SPEC §4.3](design/V21-SPEC.md#43-depth-geometry-motion) (one sub-rule; `.go` / `.go.ghost`
+   listed in the Raised tier) and one line in [DESIGN-RULES](design/DESIGN-RULES.md) rule 3 saying *quieter* is lower
+   emphasis, still bordered.
+
+#### Alternatives rejected
+
+- **B, a borderless tonal fill.** A `surface` fill at reduced strength with no border and no shadow: quieter than A and still
+  button-shaped. Rejected: the corpus has no borderless filled control, so it adds a line style, which the anti-drift clause in
+  BETA-DIRECTION forbids; it would be the second outlier rather than the end of the first.
+- **C, keep the text and make it honest.** Restore the underline in Compose, match height and padding. Rejected as the fix: it
+  leaves the HTML outlier and the disabled-pill-beside-live-text reading the owner reacted to. The underline gap is real and is
+  a separate bug (below).
+
+#### Consequences
+
+- `FolderSheets.kt` generalises its private `GoButton` with a primary flag and draws Cancel with it; the four
+  `v21_folders_name_*` goldens change (re-recorded on the pinned CI image only, after reading the `*_compare.png` diffs).
+  `QuietAction`, `ZPrimaryButton`, `ZStampButton` and the dock stay as they are. No Kotlin changes in this ADR's design phase.
+- **Latent, out of scope:** rename-zine's *Save* (`RenameSaveButton`, pill, Hero tier) and *Make folder* (`radiusLg`, Raised
+  tier) are two near-copies with different shape and press tier. Mixing them is a design call that needs its own HTML
+  amendment; this ADR does not do it.
+- **Separate follow-up bug:** Compose's `QuietAction` drops the frozen underline (`text-decoration:underline`, `--hair`,
+  offset 4px, Library `.quiet-action`), so the dock links are less link-like on device than in the prototype. Fix as
+  a parity bug if the pixel-parity pass confirms it; not part of this decision.
+- Owed before Accepted: both device passes (empty field: do both controls look pressable, and is it clear one waits for a
+  name; 2x font wrapping; TalkBack order and the "Cancel, button" reading), the golden diffs read.
+
+#### Revisit trigger
+
+- Pass 2 finds two bordered pills too heavy; then fall back to a Flat tier for the dismiss, updating the HTML first.
