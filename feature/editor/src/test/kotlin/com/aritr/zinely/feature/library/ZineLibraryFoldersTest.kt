@@ -643,6 +643,33 @@ class ZineLibraryFoldersTest {
     }
 
     @Test
+    fun `with a keyboard, a duplicate's copy takes focus once the Shelf lists it - and no snack is raised`() {
+        // The copy is told before the Shelf lists it (the same race as a move), so focus waits, then lands on it.
+        shelf()
+        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
+        events.trySend(HomeShelfEvent.Reveal("Riso copy", null))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSnackTestTag).assertDoesNotExist()
+
+        zines = SEEDED + SEEDED.first { it.id == "Riso tests" }.copy(id = "Riso copy", title = "Riso copy")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Riso copy").assertIsFocused()
+    }
+
+    @Test
+    fun `with a keyboard, a copy made inside a folder is revealed inside that folder`() {
+        shelf()
+        composeRule.onNodeWithContentDescription("Family, folder, 2 zines").performClick()
+        composeRule.waitForIdle()
+        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
+        events.trySend(HomeShelfEvent.Reveal("Letters copy", "Family"))
+
+        zines = SEEDED + SEEDED.first { it.id == "Letters home" }.copy(id = "Letters copy", title = "Letters copy")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Letters copy").assertIsFocused()
+    }
+
+    @Test
     fun `a toast waits for the folder snack to leave, so the snack keeps its Undo`() {
         // Both stand eight dp above the dock, so they cannot be up together. The snack was lowered for
         // the toast at first, and a failure notice arriving inside its four seconds took Undo with it.

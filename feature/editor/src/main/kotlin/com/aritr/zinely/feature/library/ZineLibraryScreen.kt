@@ -504,6 +504,9 @@ public fun ZineLibraryScreen(
                     snackUp = true
                     event.zineId?.let { focusWish = FocusWish.Zine(it, event.folder) }
                 }
+
+                // A duplicate's copy: the same wish a folder snack makes, without the snack.
+                is HomeShelfEvent.Reveal -> focusWish = FocusWish.Zine(event.zineId, event.folder)
             }
         }
     }

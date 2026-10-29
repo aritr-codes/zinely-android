@@ -520,7 +520,7 @@ internal class HomeViewModel @Inject constructor(
         createJob = viewModelScope.launch {
             commitPendingDeletesNow()
             when (val result =
-                projectRepository.createProject(DEFAULT_NEW_TITLE, ZineFormat.SINGLE_SHEET_8, paperSize, folder)
+                projectRepository.createProject(nextNewTitle(listedTitles.values), ZineFormat.SINGLE_SHEET_8, paperSize, folder)
             ) {
                 is DataResult.Success -> openQueue.send(result.value.id)
                 is DataResult.Failure -> eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
@@ -552,8 +552,18 @@ internal class HomeViewModel @Inject constructor(
         }
     }
 
+    /**
+     * The copy lands beside its original, newest, so the Shelf is asked to scroll to it and focus it ([HomeShelfEvent.Reveal]).
+     * The folder is the original's as the Shelf shows it (the copy's own file says the same; the summary does not carry it).
+     */
     fun duplicate(id: String) {
-        viewModelScope.launch { projectRepository.duplicateProject(id).sendMessageOnFailure() }
+        val folder = (state.value as? HomeUiState.Content)?.zines?.firstOrNull { it.id == id }?.folder
+        viewModelScope.launch {
+            when (val result = projectRepository.duplicateProject(id)) {
+                is DataResult.Success -> eventQueue.send(HomeShelfEvent.Reveal(result.value.id, folder))
+                is DataResult.Failure -> eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
+            }
+        }
     }
 
     // ---- Shelf folders (ADR-125; the words and the snack are `v21-library.html` A28's) ----------------
@@ -1172,6 +1182,19 @@ private fun DataError.warmMessage(): String = when (this) {
 
 /** Default title for a shelf-created zine — aligned with the store's adoption fallback (ADR-044 §4). */
 internal const val DEFAULT_NEW_TITLE: String = "My zine"
+
+/**
+ * The title for the next zine started: plain "My zine" while no zine holds it, else "My zine 2", "My zine 3"…, the
+ * smallest number >= 2 not held. Compared trimmed and case-insensitively, over every title the store lists (a zine
+ * waiting to be deleted still holds its name until the delete is final). A gap left by a rename or delete is filled,
+ * so a name can come back; two zines never start with the same name.
+ */
+internal fun nextNewTitle(existing: Collection<String>): String =
+    existing.mapTo(HashSet()) { it.trim().lowercase() }.let { held ->
+        generateSequence(1) { it + 1 }
+            .map { if (it == 1) DEFAULT_NEW_TITLE else "$DEFAULT_NEW_TITLE $it" }
+            .first { it.lowercase() !in held }
+    }
 
 /** The ADR-044 §1 gate refused: an editor session is still live/releasing. Retry-shaped, warm. */
 internal const val BUSY_MESSAGE: String = "That zine is still saving — try again in a moment."
