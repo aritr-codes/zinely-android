@@ -16,6 +16,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import com.aritr.zinely.core.model.PaperSize
@@ -178,6 +179,58 @@ class ShelfSheetsTest {
 
         assertEquals(null, renamed)
     }
+
+    /** #157: the cursor used to land at the start, so typing prepended to the old name. */
+    @Test
+    fun `the action sheet's rename opens with the whole title selected`() {
+        setContent { actionSheet() }
+        composeRule.onNodeWithText("Rename").performClick()
+        assertEquals(TextRange(0, card.title.length), selectionOfRenameField())
+    }
+
+    @Test
+    fun `the rename sheet opens with the whole title selected, so typing replaces it`() {
+        var renamed: String? = null
+        setContent { ShelfRenameSheet(visible = true, title = card.title, onDismiss = {}, onRename = { renamed = it }) }
+        assertEquals(TextRange(0, card.title.length), selectionOfRenameField())
+
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).performTextInput("Tuesday")
+        composeRule.onNodeWithTag(HomeRenameConfirmTestTag).performClick()
+        assertEquals("Tuesday", renamed)
+    }
+
+    @Test
+    fun `a title is capped at 60 characters`() {
+        var renamed: String? = null
+        setContent { ShelfRenameSheet(visible = true, title = card.title, onDismiss = {}, onRename = { renamed = it }) }
+
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).performTextInput("a".repeat(75))
+        composeRule.onNodeWithTag(HomeRenameConfirmTestTag).performClick()
+        assertEquals("a".repeat(60), renamed)
+    }
+
+    @Test
+    fun `the cap falls on a code point, never inside a surrogate pair`() {
+        var renamed: String? = null
+        setContent { ShelfRenameSheet(visible = true, title = card.title, onDismiss = {}, onRename = { renamed = it }) }
+
+        val smile = "😀"
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).performTextInput("a".repeat(58) + smile.repeat(3))
+        composeRule.onNodeWithTag(HomeRenameConfirmTestTag).performClick()
+        assertEquals("a".repeat(58) + smile.repeat(2), renamed)
+    }
+
+    @Test
+    fun `capTitle leaves a short title alone and never splits a pair`() {
+        assertEquals("Tuesday", capTitle("Tuesday"))
+        val smile = "😀"
+        assertEquals("a".repeat(59) + smile, capTitle("a".repeat(59) + smile + smile))
+        assertEquals("a".repeat(60), capTitle("a".repeat(61)))
+    }
+
+    private fun selectionOfRenameField(): TextRange =
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag)
+            .fetchSemanticsNode().config[SemanticsProperties.TextSelectionRange]
 
     @Test
     fun `a name is committed trimmed`() {
