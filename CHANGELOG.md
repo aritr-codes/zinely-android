@@ -14,94 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Website, docs and test-only changes that are not part of the beta.8 app, moved here from the beta.8 section.
+
 ### Added
 
-- **Never lose work, never get stuck (W1, [ADR-136](docs/DECISIONS.md#adr-136)).** Built; in no download yet.
-  Tried on a phone (Samsung SM-A176B, Android 16) and on emulators (Android 16, and Android 7 for the
-  storage permission). The screen-reader listen is still owed.
-  - Back while typing keeps your words. Backing out of a box you emptied removes it, with Undo.
-  - Back from Reframe returns to the page instead of leaving the Bench.
-  - A back button at the top of the Bench returns to My Shelf. Your work is already saved. It, and the Proof's
-    back and How to fold buttons, now carry their names for a screen reader on the button itself.
-  - A message's Undo disappears once you make another change, so it can no longer undo the wrong thing.
-  - Messages stay on screen longer when your phone asks for more time (Accessibility > Time to take action).
-    On My Shelf, two quick deletes or notices with the same words each get their own Undo window.
-  - A photo that can't be added now says so in the message bar, once. An unreadable photo says "This photo
-    can't be reframed. Try Replace."
-  - The Art sheet keeps its search and the Across-fold sheet stays open when the phone rotates; on My Shelf a
-    half-typed rename survives rotation.
-  - A Shelf that cannot be read still offers Backups and About ([D-145](docs/design/V2-SPEC-DEFECTS.md#d-145)).
-  - Proof: a failed save says why (out of memory, out of space, or Storage permission) and still says your zine
-    is safe. On Android 7-9, after "Don't ask again", the button opens Zinely's settings page. Share stays next
-    to Open PDF after a save (A43, [D-142](docs/design/V2-SPEC-DEFECTS.md#d-142)).
-  - Proof: when Save PDF fails for want of space or Storage permission, the title says "Couldn't save the PDF"
-    instead of "Couldn't make the PDF" ([D-146](docs/design/V2-SPEC-DEFECTS.md#d-146)).
-  - Proof: nothing is smaller than 12sp, and it grows with your phone's text size, including the fold
-    diagram's page numbers (A44, [D-140](docs/design/V2-SPEC-DEFECTS.md#d-140)).
-  - Bench: the page strip no longer slides when Android's Remove animations is on; the Add pill (and Reframe's
-    Done) grows instead of clipping at the largest text size.
-  - The Back up option on the shelf's Keep your zines sheet now says what happens next: "Next, your phone asks
-    where to save it." The option now gives a screen reader that line with its name (not yet heard with TalkBack)
-    ([D-144](docs/design/V2-SPEC-DEFECTS.md#d-144)).
-  - My Shelf now tells you, once, when a zine's pages went back to the copy from just before your last few
-    seconds of changes after its page file was damaged, in the same note as a repaired name, cover or folder
-    ([ADR-140](docs/DECISIONS.md#adr-140) Proposed, Library A46; refs #146). A repair found when a zine opens
-    on the Bench shows on My Shelf when you come back, without restarting.
-- **Art: the owner's 124 picks (W3 and W7, [ADR-139](docs/DECISIONS.md#adr-139) Proposed).** Built; in no download
-  yet. Art now offers 124 pieces in the same four families, each subject followed by its variants: 17 of the
-  shipped pieces take a cleaner drawing that fits inside their old size, so zines you already made keep their
-  layout, and 90 pieces are new. Forty are open-source drawings, credited in Licences & credits.
-  - Names shortened so variants are told apart: 56 names changed so the whole name shows on its tile (for
-    example "Torn hole, ragged" is now "Ragged hole", "Registration cross" is now "Crosshair"). A screen reader
-    says the same name the tile shows, and search still finds a piece by its old words
-    ([D-132](docs/design/V2-SPEC-DEFECTS.md#d-132)).
-  - Known limitations: the name fit is proven at 360dp and font scale 1.0 only; on a narrower phone or with a
-    larger font size a name can still be cut off. A zine that uses a new piece needs this version or later to
-    show and print it; an older version opens the zine and draws nothing for that piece. Not yet tried on a
-    phone or with a screen reader, and no page has been printed or photocopied yet.
-- **Mix your own ink, and keep inks together ([ADR-138](docs/DECISIONS.md#adr-138) Proposed).** Built; in no download
-  yet. Not yet tried on a phone or an emulator, and not listened to with a screen reader.
-  - In the Ink tray, Mix opens a colour mixer on the piece's ink: a square, three sliders and a hex code. Use inks
-    the piece and keeps the ink in My inks.
-  - My inks keeps the last 9 inks you mixed and used. When it is full, the mixer names the ink that will leave
-    before you tap Use.
-  - My palettes keeps up to 9 named sets of 2 to 6 inks. You can edit, duplicate and delete them, with Undo, and
-    save one of the three starter palettes as a copy.
-  - The built-in inks are one list, and the near-black Ink is shown once
-    ([D-060](docs/design/V2-SPEC-DEFECTS.md#d-060)).
-  - If the phone can't store a change to My inks or My palettes, Zinely says "Couldn't save that change."
-    ([D-123](docs/design/V2-SPEC-DEFECTS.md#d-123)).
-  - Known limitation: My inks and My palettes are not in a Zinely backup, so they don't move to a new phone. The
-    colours already on your pages are in your zines.
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),
   [D-143](docs/design/V2-SPEC-DEFECTS.md#d-143)), Proof A43 and A44, Backup A45 and Library A46. The Library
   mockup's paper-chooser and restored-note prototypes run again (merge damage repaired).
 - Website note, not the app: the roadmap's "Page backgrounds" line now says paper colour is shown on screen only and
   is never printed, as [ADR-136](docs/DECISIONS.md#adr-136) decision 5 gives
   ([#151](https://github.com/aritr-codes/zinely-android/pull/151)). Nothing in the app changes.
-- **My Shelf now tells you when a zine's details went back to an earlier copy.** If the small file that holds a
-  zine's name, cover and folder is damaged, Zinely uses the copy from before the last change, as it did
-  before; now a note under the heading names the zine (for example, "Letters to Gran" is called "Letters home"
-  again), says what went back, and stays until **Got it**, across restarts. Before, this happened without a
-  word. The note covers those details only; pages are covered by the W1 entry above
-  ([#146](https://github.com/aritr-codes/zinely-android/issues/146)). Checked on an emulator, including the
-  largest text on a 360dp screen; not yet on a real phone or with a screen reader by ear
-  ([`v21-library.html` A37](docs/design/mockups/v21-library.html), [ADR-134](docs/DECISIONS.md#adr-134), [#128](https://github.com/aritr-codes/zinely-android/issues/128)).
 - Designed, not built: the Type bar's stacked Align row drawn as the app already shows it (A36), a paper
   picker for four sizes (A35, waiting on the format change after v4), and what Read says aloud for each page
   ([ADR-135](docs/DECISIONS.md#adr-135) Proposed). Nothing in the app changes for these.
-- Art house style and redraw designed: all 34 Art pieces redrawn to one hand in the bench spec (A34, ADR-132
-  Proposed). Not in the app yet; the app still draws the current Art.
-- Two new pieces in Art, at the end of Cut paper: **Snipped border**, a thin border cut with scissors, and
-  **Round window**, a square of paper with a round hole. Each is one ink, and each can be flipped, stretched,
-  duplicated and replaced like any other piece. A tap in the hole reaches the photo or words underneath; a tap
-  on the paper selects the frame. A frame is laid over a photo; it does not hold, crop or follow it. Art now
-  has 34 pieces. Known limitations: zines that use the new frames need this version or later to show and print
-  them (an older version opens the zine, keeps the frame, and draws nothing for it, though the unseen piece
-  can still be selected where it sits and takes a tap meant for what is under it); Snipped border's band is
-  thin, so over a photo it can be hard to pick back up; and a frame stretched out of square has a band that
-  is thicker on two sides than on the other two
-  ([`v21-bench.html` A32](docs/design/mockups/v21-bench.html), [ADR-124](docs/DECISIONS.md#adr-124)).
 - The public roadmap page is rebuilt phone first as ledger sheets: one torn-off, taped sheet of ruled paper per
   area, each item a row with its status as a rubber stamp (in a ruled margin on tablets and wider), in place of
   three tilted columns of unequal length. Each sheet folds: closed, it shows its title and a count of each
@@ -144,19 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **The page keeps its size when something is selected.** The move, size, turn and layer buttons are now
-  behind one **Arrange** button in the bar under the page, instead of in a bar of their own that shrank the
-  page each time a piece was selected (on a small phone, by about a third of its height). Arrange opens a
-  tray with the same buttons; it stays open while you pick other pieces, and Done or Back closes it. The
-  first-run hint now names Arrange, is readable in dark mode, and steps aside while the Type bar is open
-  ([`v21-bench.html` A33](docs/design/mockups/v21-bench.html), [ADR-129](docs/DECISIONS.md#adr-129), decided
-  under the owner's delegation; it reverses the owner's OD-11 ruling, which the owner can overrule). At the
-  largest text size the first-run hint clipped its first and last words (also in beta.7); fixed, see *Fixed*.
-- Internal: two tests that failed now and then on CI now wait for the work they check
-  ([#132](https://github.com/aritr-codes/zinely-android/issues/132), [#136](https://github.com/aritr-codes/zinely-android/issues/136)). No app change.
-- Internal: the imposition engine now lays out any sheet size, property-tested from 4 to 18 in a side; US Legal
-  and A5 are chosen as the next paper sizes ([ADR-133](docs/DECISIONS.md#adr-133)). No paper size a person can choose has
-  changed.
 - Docs: ZINE-DIRECTION notes the two-voice ruling (Book and Plain, ADR-126 Proposed) beside its four "three
   voices" lines; 21 drifted line citations into the frozen type bar, Reframe and Library pages re-pointed to
   named blocks or pinned commits (#97, #98).
@@ -193,25 +105,195 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in the home-page About section. Accessibility remains a site-wide implementation requirement rather than a
   primary navigation destination.
 
+### Fixed
+
+- The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
+  privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
+  the files.
+- The website's Bench demo and screenshot no longer show a "Your shelf · 4 things kept" tray that the app does not
+  have. The screenshot was re-rendered from the frozen prototype with only that tray hidden.
+- The website's not-found page now finds its styles and links at any URL depth.
+
+- Restored the Reframe accessibility regression that proves a measurable but undisplayable photo keeps every
+  adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
+  than stream-consumer ordering, eliminating the CI race tracked by issue #57.
+
+## [0.9.0-beta.8] — 2026-10-29 — Choose several zines, mix your own ink, 124 Art pieces, and work that stays safe
+
+This release carries `versionCode 13`. It installs over earlier release-signed beta builds without
+uninstalling. The saved-document format and the backup format version are unchanged. It is published as an
+APK only. Make a fresh backup from **Backups** before updating.
+
+Everything below ships **built and merged, not yet fully accepted**: [ADR-138](docs/DECISIONS.md#adr-138),
+[ADR-139](docs/DECISIONS.md#adr-139), [ADR-140](docs/DECISIONS.md#adr-140) and
+[ADR-142](docs/DECISIONS.md#adr-142) are Proposed, and [ADR-136](docs/DECISIONS.md#adr-136) (Accepted, under the
+owner's delegation) still has its device checks owed. The screen-reader (TalkBack) listens for each are
+deferred by the owner and are listed under Known limitations, not hidden. The
+[tester package](docs/releases/0.9.0-beta.8.md) says what was checked.
+
+### Added
+
+- **Choose several zines on My Shelf, then move or delete them with one Undo
+  ([ADR-142](docs/DECISIONS.md#adr-142), PR #167).** Long press a zine, or use **Select several** in a zine's
+  menu, tick the zines you want, then **Move to a folder** or **Delete**. One Undo puts back every zine that
+  moved or was deleted. A zine that cannot be moved or deleted is named in one closing message. A choice of
+  one speaks and behaves as the single-zine move or delete. The Bench still selects one thing at a time.
+  - After the batch, if the deletes had already finished by the time you tap Undo, a message names the zines
+    that were already deleted and so cannot come back. Undoing a batch move leaves alone any zine you deleted
+    in the meantime. A move chooser that shrinks to one zine speaks as the single zine's, and a batch that a
+    folder action finished early reports its failures once (PR #168, [#166](https://github.com/aritr-codes/zinely-android/issues/166)).
+    The words for the "already deleted" message were ruled in ADR-142 (R8).
+
+- **Never lose work, never get stuck (W1, [ADR-136](docs/DECISIONS.md#adr-136) Accepted; the page-repair note is [ADR-140](docs/DECISIONS.md#adr-140), Proposed).**
+  Tried on a phone (Samsung SM-A176B, Android 16) and on emulators (Android 16, and Android 7 for the
+  storage permission). The screen-reader listen is deferred (see Known limitations).
+  - Back while typing keeps your words. Backing out of a box you emptied removes it, with Undo.
+  - Back from Reframe returns to the page instead of leaving the Bench.
+  - A back button at the top of the Bench returns to My Shelf. Your work is already saved. It, and the Proof's
+    back and How to fold buttons, now carry their names for a screen reader on the button itself.
+  - A message's Undo disappears once you make another change, so it can no longer undo the wrong thing.
+  - Messages stay on screen longer when your phone asks for more time (Accessibility > Time to take action).
+    On My Shelf, two quick deletes or notices with the same words each get their own Undo window.
+  - A photo that can't be added now says so in the message bar, once. An unreadable photo says "This photo
+    can't be reframed. Try Replace."
+  - The Art sheet keeps its search and the Across-fold sheet stays open when the phone rotates; on My Shelf a
+    half-typed rename survives rotation.
+  - A Shelf that cannot be read still offers Backups and About ([D-145](docs/design/V2-SPEC-DEFECTS.md#d-145)).
+  - Proof: a failed save says why (out of memory, out of space, or Storage permission) and still says your zine
+    is safe. On Android 7-9, after "Don't ask again", the button opens Zinely's settings page. Share stays next
+    to Open PDF after a save (A43, [D-142](docs/design/V2-SPEC-DEFECTS.md#d-142)).
+  - Proof: when Save PDF fails for want of space or Storage permission, the title says "Couldn't save the PDF"
+    instead of "Couldn't make the PDF" ([D-146](docs/design/V2-SPEC-DEFECTS.md#d-146)).
+  - Proof: nothing is smaller than 12sp, and it grows with your phone's text size, including the fold
+    diagram's page numbers (A44, [D-140](docs/design/V2-SPEC-DEFECTS.md#d-140)).
+  - Bench: the page strip no longer slides when Android's Remove animations is on; the Add pill (and Reframe's
+    Done) grows instead of clipping at the largest text size.
+  - The Back up option on the shelf's Keep your zines sheet now says what happens next: "Next, your phone asks
+    where to save it." The option now gives a screen reader that line with its name (not yet heard with TalkBack)
+    ([D-144](docs/design/V2-SPEC-DEFECTS.md#d-144)).
+  - My Shelf now tells you, once, when a zine's pages went back to the copy from just before your last few
+    seconds of changes after its page file was damaged, in the same note as a repaired name, cover or folder
+    ([ADR-140](docs/DECISIONS.md#adr-140) Proposed, Library A46; refs #146). A repair found when a zine opens
+    on the Bench shows on My Shelf when you come back, without restarting.
+- **Art: the owner's 124 picks (W3 and W7, [ADR-139](docs/DECISIONS.md#adr-139) Proposed).** Art now offers 124 pieces in the same four families, each subject followed by its variants: 17 of the
+  shipped pieces take a cleaner drawing that fits inside their old size, so zines you already made keep their
+  layout, and 90 pieces are new. Forty are open-source drawings, credited in Licences & credits.
+  - Names shortened so variants are told apart: 56 names changed so the whole name shows on its tile (for
+    example "Torn hole, ragged" is now "Ragged hole", "Registration cross" is now "Crosshair"). A screen reader
+    says the same name the tile shows, and search still finds a piece by its old words
+    ([D-132](docs/design/V2-SPEC-DEFECTS.md#d-132)).
+  - Known limitations: the name fit is proven at 360dp and font scale 1.0 only; on a narrower phone or with a
+    larger font size a name can still be cut off. A zine that uses a new piece needs this version or later to
+    show and print it; an older version opens the zine and draws nothing for that piece. Tried on a Samsung phone
+    (Android 16) but not with a screen reader, and no page has been printed or photocopied yet.
+- **Mix your own ink, and keep inks together ([ADR-138](docs/DECISIONS.md#adr-138) Proposed).** Tried on an emulator and
+  on a Samsung phone (Android 16); not listened to with a screen reader, and not yet compared with the design at 390dp.
+  - In the Ink tray, Mix opens a colour mixer on the piece's ink: a square, three sliders and a hex code. Use inks
+    the piece and keeps the ink in My inks.
+  - My inks keeps the last 9 inks you mixed and used. When it is full, the mixer names the ink that will leave
+    before you tap Use.
+  - My palettes keeps up to 9 named sets of 2 to 6 inks. You can edit, duplicate and delete them, with Undo, and
+    save one of the three starter palettes as a copy.
+  - The built-in inks are one list, and the near-black Ink is shown once
+    ([D-060](docs/design/V2-SPEC-DEFECTS.md#d-060)).
+  - If the phone can't store a change to My inks or My palettes, Zinely says "Couldn't save that change."
+    ([D-123](docs/design/V2-SPEC-DEFECTS.md#d-123)).
+  - Known limitation: My inks and My palettes are not in a Zinely backup, so they don't move to a new phone. The
+    colours already on your pages are in your zines.
+- **My Shelf now tells you when a zine's details went back to an earlier copy.** If the small file that holds a
+  zine's name, cover and folder is damaged, Zinely uses the copy from before the last change, as it did
+  before; now a note under the heading names the zine (for example, "Letters to Gran" is called "Letters home"
+  again), says what went back, and stays until **Got it**, across restarts. Before, this happened without a
+  word. The note covers those details only; pages are covered by the W1 entry above
+  ([#146](https://github.com/aritr-codes/zinely-android/issues/146)). Checked on an emulator, including the
+  largest text on a 360dp screen; not yet on a real phone or with a screen reader by ear
+  ([`v21-library.html` A37](docs/design/mockups/v21-library.html), [ADR-134](docs/DECISIONS.md#adr-134), [#128](https://github.com/aritr-codes/zinely-android/issues/128)).
+- **Two hand-cut frames, new in this release** (part of the 124 Art pieces above, not in beta.7), at the end of Cut paper: **Snipped border**, a thin border cut with scissors, and
+  **Round window**, a square of paper with a round hole. Each is one ink, and each can be flipped, stretched,
+  duplicated and replaced like any other piece. A tap in the hole reaches the photo or words underneath; a tap
+  on the paper selects the frame. A frame is laid over a photo; it does not hold, crop or follow it. Known
+  limitations: zines that use the new frames need this version or later to show and print
+  them (an older version opens the zine, keeps the frame, and draws nothing for it, though the unseen piece
+  can still be selected where it sits and takes a tap meant for what is under it); Snipped border's band is
+  thin, so over a photo it can be hard to pick back up; and a frame stretched out of square has a band that
+  is thicker on two sides than on the other two
+  ([`v21-bench.html` A32](docs/design/mockups/v21-bench.html), [ADR-124](docs/DECISIONS.md#adr-124)).
+
+### Changed
+
+- **The page keeps its size when something is selected.** The move, size, turn and layer buttons are now
+  behind one **Arrange** button in the bar under the page, instead of in a bar of their own that shrank the
+  page each time a piece was selected (on a small phone, by about a third of its height). Arrange opens a
+  tray with the same buttons; it stays open while you pick other pieces, and Done or Back closes it. The
+  first-run hint now names Arrange, is readable in dark mode, and steps aside while the Type bar is open
+  ([`v21-bench.html` A33](docs/design/mockups/v21-bench.html), [ADR-129](docs/DECISIONS.md#adr-129), decided
+  under the owner's delegation; it reverses the owner's OD-11 ruling, which the owner can overrule). At the
+  largest text size the first-run hint clipped its first and last words (also in beta.7); fixed, see *Fixed*.
+- Internal: two tests that failed now and then on CI now wait for the work they check
+  ([#132](https://github.com/aritr-codes/zinely-android/issues/132), [#136](https://github.com/aritr-codes/zinely-android/issues/136)). No app change.
+- Internal: the imposition engine now lays out any sheet size, property-tested from 4 to 18 in a side; US Legal
+  and A5 are chosen as the next paper sizes ([ADR-133](docs/DECISIONS.md#adr-133)). No paper size a person can choose has
+  changed.
+
 ### Known limitations
 
-- **W1 limits.** The Proof's done row wraps at normal text size on narrow phones: at 360dp Fold it up takes its
-  own line and the green button stretches across it (a 384dp phone wrapped it too, on an earlier build). A failed Share after a save says
-  "Couldn't make the PDF", which is right: Share makes the PDF, so making it is what failed
-  ([D-146](docs/design/V2-SPEC-DEFECTS.md#d-146)). The Proof's scroll after a save is still animated when the
-  phone is set to reduce motion. A zine repaired from a copy saved while a text box was being placed can keep
-  that box, empty and invisible but tappable ("Empty text").
-- **With larger text on a small phone, the fold guide and the screen after Save PDF scroll.** In the fold
-  guide a step opens at its top and its instruction is below; after a save, the top bar scrolls away with the
-  page. That scroll after a save is animated even when the phone is set to reduce motion.
-- **At the largest text size on a small phone, the low-storage notice shown when a change can't be saved can
-  run taller than the screen**: its two buttons squeeze the words into a narrow column. Found by a test, not seen on a device; the fix needs a
-  design change first ([#149](https://github.com/aritr-codes/zinely-android/issues/149), [D-119](docs/design/V2-SPEC-DEFECTS.md#d-119)).
-- **None of the changes below was listened to with a screen reader.** They were checked by reading the
-  screen's accessibility information, not by ear.
+None of these blocks the release; each is accepted and stated here. The ones marked *deferred* are checks the
+owner chose to postpone, so the feature ships without them.
+
+- **Not listened to with a screen reader (TalkBack), deferred:** Ink and its mixer
+  ([ADR-138](docs/DECISIONS.md#adr-138)), the 124 Art pieces including the new names
+  ([ADR-139](docs/DECISIONS.md#adr-139)), the never-lose-work changes
+  ([ADR-136](docs/DECISIONS.md#adr-136) W1 and [ADR-140](docs/DECISIONS.md#adr-140)), choosing several zines
+  ([ADR-142](docs/DECISIONS.md#adr-142)), folders, and the two frames. They were checked by reading the
+  screen's accessibility information, not by ear. ADR-138, 139, 140 and 142 stay Proposed until then.
+- **Not yet checked on paper or at 390dp:** no Art page has been printed or photocopied; Ink's tray and mixer
+  have not been compared with the design at 390dp.
+- **Android 7 to 9 on a real phone** has not been tried (emulators only). Real out-of-space failures on Save PDF
+  are covered by tests, not seen on a device.
+- **Ink:** at twice the normal text size the "+ New palette" pill wraps onto two lines (cosmetic). My inks and
+  My palettes are not in a Zinely backup, so they don't move to a new phone.
+- **Art:** the name fit is proven at 360dp and normal text size only. A zine that uses a new piece needs this
+  version or later to show and print it; an older version draws nothing for that piece.
+- **At the largest text size on a small phone:** the first-run hint covers the piece it asks you to drag
+  ([#148](https://github.com/aritr-codes/zinely-android/issues/148)); the low-storage notice shown when a
+  change can't be saved can run taller than the screen, its two buttons squeezing the words into a narrow
+  column (found by a test, not seen on a device; the fix needs a design change first,
+  [#149](https://github.com/aritr-codes/zinely-android/issues/149), [D-119](docs/design/V2-SPEC-DEFECTS.md#d-119));
+  the Reframe hint is cut off ([#158](https://github.com/aritr-codes/zinely-android/issues/158)); and the fold
+  guide and the screen after Save PDF scroll (the scroll after a save is animated even when the phone is set to
+  reduce motion).
+- **Proof:** at 360dp Fold it up takes its own line and the green button stretches across it. A failed Share
+  after a save says "Couldn't make the PDF", which is right: Share makes the PDF
+  ([D-146](docs/design/V2-SPEC-DEFECTS.md#d-146)). The save buttons are not announced as buttons by a screen
+  reader ([#156](https://github.com/aritr-codes/zinely-android/issues/156)).
+- **Repairs:** a note about a zine restored from its `.bak` page file is not shown, and that restore loses the
+  last autosave ([#146](https://github.com/aritr-codes/zinely-android/issues/146)); past four zines the note does
+  not name first the ones whose name went back
+  ([#145](https://github.com/aritr-codes/zinely-android/issues/145)); review follow-ups remain open
+  ([#147](https://github.com/aritr-codes/zinely-android/issues/147)). A zine repaired from a copy saved while a text
+  box was being placed can keep that box, empty and invisible but tappable ("Empty text")
+  ([#155](https://github.com/aritr-codes/zinely-android/issues/155)).
+- **Choosing several zines:** an Undo tapped while a delete is still being written can leave a card restored
+  and then deleted, with no message; a batch-move Undo says nothing when every zine in it was deleted meanwhile
+  ([#166](https://github.com/aritr-codes/zinely-android/issues/166), the part left open after PR #168). A shelf
+  message can be lost when the phone rotates at the wrong moment
+  ([#160](https://github.com/aritr-codes/zinely-android/issues/160)). Pixel parity at 390dp is owed.
+- **Smaller known issues:** Rename opens with the cursor before the old name
+  ([#157](https://github.com/aritr-codes/zinely-android/issues/157)); a stale photo id can hide the spread bars
+  after the photo is removed ([#159](https://github.com/aritr-codes/zinely-android/issues/159)).
+- **Carried over from beta.7**, still true unless fixed above: Book text that just fits its box can lose its last
+  line; Book's 12 pt minimum is unconfirmed on paper; older versions draw Book text in Plain and restore folders
+  as My Shelf; a second folder action tapped while the first is being written is dropped without a message; a
+  selected text shows **Text** on one bar and **Text style** on the other, both opening the same card; tapping
+  through a holed piece has not been checked by ear; a repeated identical undo or redo line may be spoken only
+  once by TalkBack. See [0.9.0-beta.7](#090-beta7--2026-10-11--folders-and-a-second-font).
 
 ### Fixed
 
+- Internal hardening of the note that tells you a zine went back to an earlier copy: two repairs found at the
+  same moment, and the read of the note itself, now take turns, so a restart can no longer show a wrong or
+  missing note. It could not touch a zine's pages ([#161](https://github.com/aritr-codes/zinely-android/issues/161),
+  PR #165; a test races both repairs on 200 zines).
 - At the largest text size on a small phone, the first-run hint no longer cuts off its first and last words.
   A tall hint now has rounded corners instead of round ends. Checked on an emulator set to a small phone, not
   yet on a real one ([D-119](docs/design/V2-SPEC-DEFECTS.md#d-119), [#134](https://github.com/aritr-codes/zinely-android/issues/134)).
@@ -261,16 +343,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Ink panel keeps its title and **Done** in place while the colours scroll. On phones where the panel
   did not quite fit, scrolling to the Starting palettes left both cut in half at the top
   ([D-112](docs/design/V2-SPEC-DEFECTS.md#d-112)).
-- The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
-  privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
-  the files.
-- The website's Bench demo and screenshot no longer show a "Your shelf · 4 things kept" tray that the app does not
-  have. The screenshot was re-rendered from the frozen prototype with only that tray hidden.
-- The website's not-found page now finds its styles and links at any URL depth.
-
-- Restored the Reframe accessibility regression that proves a measurable but undisplayable photo keeps every
-  adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
-  than stream-consumer ordering, eliminating the CI race tracked by issue #57.
 
 ## [0.9.0-beta.7] — 2026-10-11 — Folders, and a second font
 

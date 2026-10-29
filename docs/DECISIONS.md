@@ -16783,7 +16783,7 @@ resolves once PR #141 merges.
 **Status:** Proposed, 2026-10-22. Design frozen by the owner the same day as bench
 [A40](design/mockups/v21-bench.html#a40) and [A40 rev. 2](design/mockups/v21-bench.html#a40r2) (with the freeze-review
 fixes of `777374f`). The working prototype [`v21-ink-mixer.html`](design/mockups/v21-ink-mixer.html) is the behavioural
-spec, and its `<script>` is the reference for every pure helper below. *2026-10-26: built on `feat/ink-mixer`, in no download (INK Tasks 1–9;
+spec, and its `<script>` is the reference for every pure helper below. *2026-10-26: built on `feat/ink-mixer` and merged (PR #164). 2026-10-29: in the beta.8 package, in preparation, Proposed (INK Tasks 1–9;
 the A40 rev. 2 accessibility amendment of the same day, [D-123](design/V2-SPEC-DEFECTS.md#d-123)). Stays Proposed until
 everything under* Owed before Accepted *is done.*
 **Amends:** frozen bench **A16**'s Ink tray (its band order, "Starting palettes" and the `Apply …` action), superseded
@@ -16936,7 +16936,7 @@ document; [ADR-032](#adr-032)'s single Preferences DataStore; D-028's ruling tha
   TalkBack follows the focus moves after Delete and Undo, which the tests prove for keyboard focus only); pixel
   parity against `v21-ink-mixer.html`; the CI record of the five changed `bench_ink_popover_*` goldens; and the new
   tray and mixer goldens of the plan's Task 10, which are not written yet. Listed in
-  [OWNER-CHECKLIST §2.6](OWNER-CHECKLIST.md#26-ink-mixer--built-unreleased-no-device-pass-yet).
+  [OWNER-CHECKLIST §2.6](OWNER-CHECKLIST.md#26-ink-mixer--built-merged-in-the-beta8-package-listens-and-parity-owed).
 
 #### Review {#adr-138-review}
 
@@ -16982,7 +16982,7 @@ orders them, while a tap goes to an empty name first.
 ### The A39 Art picks: 124 outlines from 125 picks, add-only ids, a named holed list of 31
 
 **Status:** Proposed, 2026-10-22. *2026-10-24: built on `feat/art-picks` (Tasks 1–6: all 124 pieces wired, 56 names
-shortened to fit the A16 tile, [D-132](design/V2-SPEC-DEFECTS.md#d-132)); in no download. Stays Proposed until the CI
+shortened to fit the A16 tile, [D-132](design/V2-SPEC-DEFECTS.md#d-132)); merged (PR #162). 2026-10-29: in the beta.8 package, in preparation. Stays Proposed until the CI
 golden re-record, a printed and photocopied page and both device passes are done.* The owner picked 125 drawings from the
 A39 candidate sheet on 2026-10-22 (verbatim in the A39 amendment of
 [`v21-bench.html`](design/mockups/v21-bench.html)). The owner's pick is the G8 (recognition) and G9 (world match)
@@ -17174,7 +17174,8 @@ the frozen typeface licence page's own design, unchanged here.
 
 ### When a zine's pages go back to their earlier copy, My Shelf says so once (extends ADR-134)
 
-**Status:** Proposed, 2026-10-22, under the owner's delegation of 2026-10-12 ("decide, do not ask"). It
+**Status:** Proposed, 2026-10-22, under the owner's delegation of 2026-10-12 ("decide, do not ask"). *2026-10-29:
+built and merged (PR #154); in the beta.8 package, in preparation; still Proposed.* It
 becomes Accepted under that delegation only once it is built (W1 Task 11) and that build is reviewed; the owner
 has not ruled on it personally and may overrule it.
 **Builds:** library amendment A46 (frozen 2026-10-22, appended after A37 in `docs/design/mockups/v21-library.html`),
@@ -17434,7 +17435,8 @@ not MVP"). **Why the Shelf:** [ADR-125](#adr-125) (folders). **Order:** this ADR
 ### My Shelf: choose several zines, then move or delete them with one Undo
 
 **Status:** Proposed, 2026-10-26, under the owner's delegation of 2026-10-12 ("decide, do not ask"). The owner
-asked on 2026-10-26 for Shelf multi-select in `0.9.0-beta.8`. **Builds:** [ADR-141](#adr-141) decision 2, whose
+asked on 2026-10-26 for Shelf multi-select in `0.9.0-beta.8`. *2026-10-29: built and merged (PRs #167 and #168); in the
+beta.8 package, in preparation; still Proposed, TalkBack listen deferred by the owner.* **Builds:** [ADR-141](#adr-141) decision 2, whose
 decision 3 ("Not in `0.9.0-beta.8`") this ADR replaces. **Design:** the frozen
 [`v21-library.html`](design/mockups/v21-library.html) A47 amendment (rules A47.1–A47.13; frozen 2026-10-26 under the
 same delegation). **Extends:** [ADR-125](#adr-125) (folders; A28) and the one-zine undoable delete

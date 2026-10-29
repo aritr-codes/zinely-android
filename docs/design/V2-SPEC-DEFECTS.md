@@ -8193,7 +8193,7 @@ second reviewer, could not sign in.
 | **Artifacts** | `docs/design/mockups/v21-ink-mixer.html` ([amendment of 2026-10-26](mockups/v21-ink-mixer.html#a40r2-t9)) · `BenchInkPopover.kt` (`benchInkSaveReason`, `BenchInkTrayActions`) · `InkMixerSheet.kt` (`InkMixerSlider`) · `EditorScreen.kt` (`applyInk`, `raiseInkFailure`) · `Copy.BenchInk.SAVE_FAILED`, `notKept` |
 | **Found** | INK Tasks 7, 8b and 9 (2026-10-24 to 2026-10-26), by the implementer and the task reviewers; [ADR-138](../DECISIONS.md#adr-138) |
 | **Severity** | Accessibility and trust. A screen-reader user hears a dim Save palette as an ordinary button and is not told why it does nothing. A store failure dropped the change with no word. A keyboard user cannot move the hidden sliders |
-| **Status** | **Resolved in the frozen file, then built on `feat/ink-mixer` (2026-10-26), unreleased.** Accessibility fixes are allowed after a freeze, so the amendment is dated in the HTML first. Not yet tried on a device or with TalkBack ([OWNER-CHECKLIST §2.6](../OWNER-CHECKLIST.md#26-ink-mixer--built-unreleased-no-device-pass-yet)) |
+| **Status** | **Resolved in the frozen file, then built on `feat/ink-mixer` (2026-10-26), unreleased.** Accessibility fixes are allowed after a freeze, so the amendment is dated in the HTML first. Tried on an emulator and a Samsung phone on 2026-10-26 (maintainer's pass log, not in this repository); not yet with TalkBack ([OWNER-CHECKLIST §2.6](../OWNER-CHECKLIST.md#26-ink-mixer--built-merged-in-the-beta8-package-listens-and-parity-owed)) |
 
 | # | Finding | Outcome |
 |---|---|---|
