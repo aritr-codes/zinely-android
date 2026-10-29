@@ -38,9 +38,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -344,7 +346,7 @@ internal fun ShelfActionSheet(
     if (card == null) return
     val haptics = ZinelyTheme.haptics
     var renaming by remember(card.id, visible) { mutableStateOf(false) }
-    var draft by remember(card.id, visible) { mutableStateOf(card.title) }
+    var draft by remember(card.id, visible) { mutableStateOf(titleDraft(card.title)) }
 
     ZSheet(
         visible = visible,
@@ -356,7 +358,7 @@ internal fun ShelfActionSheet(
         if (renaming) {
             RenameField(
                 draft = draft,
-                onDraftChange = { draft = it },
+                onDraftChange = { draft = it.capped(draft.text) },
                 onSave = { trimmed -> onRename(card.id, trimmed) },
                 onDone = onDismiss,
             )
@@ -370,7 +372,7 @@ internal fun ShelfActionSheet(
             )
             ZMenuItem(
                 label = Copy.Shelf.RENAME,
-                onClick = { draft = card.title; renaming = true },
+                onClick = { draft = titleDraft(card.title); renaming = true },
                 icon = { RenameGlyph(it) },
             )
             ZMenuItem(
@@ -403,8 +405,8 @@ internal fun ShelfActionSheet(
  */
 @Composable
 private fun RenameField(
-    draft: String,
-    onDraftChange: (String) -> Unit,
+    draft: TextFieldValue,
+    onDraftChange: (TextFieldValue) -> Unit,
     onSave: (String) -> Unit,
     onDone: () -> Unit,
 ) {
@@ -413,7 +415,7 @@ private fun RenameField(
     // `inp.focus(); inp.select();` — the field is the reason the row appeared.
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
     val save = {
-        val trimmed = draft.trim()
+        val trimmed = draft.text.trim()
         if (trimmed.isNotEmpty()) {
             haptics.perform(ZinelyHaptic.Snap)
             onSave(trimmed)
@@ -469,8 +471,8 @@ private fun RenameField(
  */
 @Composable
 private fun RenameInput(
-    draft: String,
-    onDraftChange: (String) -> Unit,
+    draft: TextFieldValue,
+    onDraftChange: (TextFieldValue) -> Unit,
     onImeDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -547,7 +549,9 @@ internal fun ShelfRenameSheet(
 ) {
     // Keyed on `title` as well as `visible` so reopening the sheet for a different zine — or for the same
     // one after a rename — starts from the name that zine actually has, never a stale draft.
-    var draft by rememberSaveable(visible, title) { mutableStateOf(title) }
+    var draft by rememberSaveable(visible, title, stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(titleDraft(title))
+    }
     ZSheet(
         visible = visible,
         onDismiss = onDismiss,
@@ -559,7 +563,7 @@ internal fun ShelfRenameSheet(
     ) {
         RenameField(
             draft = draft,
-            onDraftChange = { draft = it },
+            onDraftChange = { draft = it.capped(draft.text) },
             onSave = onRename,
             onDone = onDismiss,
         )
@@ -671,4 +675,46 @@ internal fun ShelfSortSheet(
             )
         }
     }
+}
+
+/** The longest zine title a person can type, in code points (#157). */
+internal const val MaxTitleCodePoints = 60
+
+/**
+ * [s] cut to [MaxTitleCodePoints] **code points**, so a surrogate pair (an emoji) is kept or dropped
+ * whole, never split into a lone surrogate.
+ *
+ * The cap governs **user typing only**. `RoomProjectRepository.duplicate` appends its " copy" suffix to
+ * an already-capped title and is allowed to exceed 60: truncating there would eat the name the person
+ * chose, and nothing downstream assumes a bound (titles are free text, the shelf ellipsises).
+ */
+internal fun capTitle(s: String, limit: Int = MaxTitleCodePoints): String {
+    if (s.codePointCount(0, s.length) <= limit) return s
+    // Cut on a grapheme-cluster boundary at or below [limit] code points, so a ZWJ emoji, a flag or a
+    // base + combining mark is kept or dropped whole.
+    val raw = s.offsetByCodePoints(0, limit)
+    val bi = java.text.BreakIterator.getCharacterInstance().apply { setText(s) }
+    val end = if (bi.isBoundary(raw)) raw else bi.preceding(raw)
+    return s.substring(0, end)
+}
+
+/** The rename field's state: the old name, all of it selected, so typing replaces it (#157). */
+private fun titleDraft(title: String) = TextFieldValue(title, TextRange(0, title.length))
+
+private fun TextFieldValue.capped(previous: String): TextFieldValue = titleEdit(previous, this)
+
+/**
+ * Applies an edit to the title draft. The limit is the larger of [MaxTitleCodePoints] and the previous
+ * length, because a title can already be over 60 (a duplicate's " copy"): editing a letter of it must
+ * not eat its tail, only growth past where it already was is cut. When a cut happens the selection is
+ * clamped to the new length rather than thrown to the end.
+ */
+internal fun titleEdit(previous: String, next: TextFieldValue): TextFieldValue {
+    val limit = maxOf(MaxTitleCodePoints, previous.codePointCount(0, previous.length))
+    val c = capTitle(next.text, limit)
+    if (c == next.text) return next
+    return TextFieldValue(
+        c,
+        TextRange(next.selection.start.coerceAtMost(c.length), next.selection.end.coerceAtMost(c.length)),
+    )
 }
