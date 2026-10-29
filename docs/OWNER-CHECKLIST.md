@@ -390,8 +390,8 @@ Evidence: [tester package](releases/0.9.0-beta.8.md).
 
 | ☐ | Gate | Note |
 |---|---|---|
-| ☑ | Version, changelog, tester package, roadmap, site copy written | Docs prepared 2026-10-29; every build-time field is `TBD-AT-BUILD` |
-| ☐ | Goldens current, suite, signed APK; **fix the release date on tag day** (changelog heading and its anchors, tester package, website changelog and download page all say 2026-10-29) | Build session: record on CI if needed, read each changed picture first |
+| ☑ | Version, changelog, tester package, roadmap, site copy written | Docs prepared 2026-10-29; build-time fields filled 2026-10-29 after the build |
+| ☑ | Goldens current (green CI), signed APK built and smoke-tested; release date 2026-10-29 is the tag day, so nothing to fix | Build session: record on CI if needed, read each changed picture first |
 | ☐ | Release Agent review, merge, tag, publish, checksum re-check | Per [RELEASING §2-3](RELEASING.md) |
 | ☐ | Website moved to beta.8 and live-verified | After publishing |
 | ☐ | Install over beta.7 on your phone | Needs your word; not given for this release |
