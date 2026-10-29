@@ -18,7 +18,7 @@ const privacyFallback = read('website/privacy/index.html');
 const notFound = read('website/404.html');
 const download = read('website/download/index.html');
 const sitemap = read('website/sitemap.xml');
-const releaseNotes = read('docs/releases/0.9.0-beta.7.md');
+const releaseNotes = read('docs/releases/0.9.0-beta.8.md');
 const proposal = read('docs/design/experiments/v21-about-story.html');
 const appAbout = read('docs/design/mockups/v21-colophon.html');
 const copy = read('core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt');
@@ -157,10 +157,11 @@ assert.ok(!deskDemoCopy.includes('\u2014'), 'No em dashes in interactive desk co
 assert.doesNotMatch(home, /WCAG/);
 assert.match(home, /id="accessibility"/);
 assert.match(home, /reduced-motion setting/);
-for (const html of [home, download]) assert.match(html, /releases\/download\/v0\.9\.0-beta\.7\/zinely-0\.9\.0-beta\.7-release\.apk/);
-for (const html of [home, download, notes]) assert.doesNotMatch(html, /releases\/download\/v0\.9\.0-beta\.[1-6](?!\d)/, 'No superseded APK is offered as the download');
-assert.match(releaseNotes, /\| `versionCode` \| 12 \|/);
-assert.match(download, /Android version code 12/, 'Download page states the released versionCode');
+for (const html of [home, download]) assert.match(html, /releases\/download\/v0\.9\.0-beta\.8\/zinely-0\.9\.0-beta\.8-release\.apk/);
+for (const html of [home, download, notes]) assert.doesNotMatch(html, /releases\/download\/v0\.9\.0-beta\.[1-7](?!\d)/, 'No superseded APK is offered as the download');
+assert.match(releaseNotes, /\| `versionCode` \| 13 \|/);
+assert.match(download, /Android version code 13/, 'Download page states the released versionCode');
+assert.doesNotMatch(releaseNotes + download + home, /TBD-AT-BUILD/, 'Fill every TBD-AT-BUILD placeholder (size, checksum, commit, tag) before publishing');
 const sha = releaseNotes.match(/SHA-256 \| `([0-9a-f]{64})`/)[1];
 assert.ok(download.includes(`<code>${sha}</code>`), 'Download checksum matches the release record');
 assert.match(download, /id="install"/);
@@ -172,13 +173,12 @@ assert.match(download, /not yet checked it by ear with TalkBack/, 'Tap-through T
 assert.doesNotMatch(notes, /TalkBack focus (?:is )?fixed|fixed TalkBack focus/i, 'Never claim the TalkBack focus limitation is fixed');
 assert.match(sitemap, /zinely-android\/download\//);
 for (const [name, html] of [['home', home], ['changelog', notes], ['download', download], ['roadmap', roadmap]]) {
-  assert.doesNotMatch(html, /beta\.(?:[89]|\d{2,})|App Store|available on (?:Google )?Play/i, `${name}: no unreleased build, iOS or Play claim`);
+  assert.doesNotMatch(html, /beta\.(?:9|\d{2,})|App Store|available on (?:Google )?Play/i, `${name}: no unreleased build, iOS or Play claim`);
 }
 // In development items must say they cannot be tried yet.
 assert.match(roadmap, /designing, building or testing\. Not in the download yet\./);
 const inDevelopment = [...roadmap.matchAll(/<li><span class="status-chip development">In development<\/span>([\s\S]*?)<\/li>/g)];
-// The two frames are In development (merged, in no release), so at least one item must be listed.
-assert.ok(inDevelopment.length >= 1, 'Roadmap lists at least one In development item');
+// (At beta.8 everything built shipped, so zero In development items is legitimate.)
 assert.match(download, /not yet printed a page/, 'Book at 12 pt on paper is still owed');
 for (const [, item] of inDevelopment) assert.match(item, /nothing to try yet/, 'In development item says there is nothing to try yet');
 for (const [, item] of home.matchAll(/<span class="status-line"><span class="status-chip development">In development<\/span>([\s\S]*?)<\/span>/g)) assert.match(item, /Nothing to try yet/, 'Homepage In development item says there is nothing to try yet');
@@ -187,7 +187,7 @@ for (const [status, label] of [['available', 'Available'], ['development', 'In d
   assert.ok(roadmap.includes(`class="status-chip ${status}">${label}</span>`), `Keep commitment levels distinct: ${label}`);
 }
 assert.doesNotMatch(roadmap, /restore its regression test|Measure cold/);
-for (const id of ['website-september-10', 'website-september-9', 'beta-7', 'beta-6', 'beta-5', 'beta-4-r3', 'beta-4-r2', 'beta-4', 'beta-3', 'beta-2', 'beta-1', 'early-builds']) {
+for (const id of ['website-september-10', 'website-september-9', 'beta-8', 'beta-7', 'beta-6', 'beta-5', 'beta-4-r3', 'beta-4-r2', 'beta-4', 'beta-3', 'beta-2', 'beta-1', 'early-builds']) {
   assert.ok(notes.includes(`id="${id}"`), `Preserve release bookmark ${id}`);
 }
 for (const [name, html] of [['index.html', home], ['roadmap/index.html', roadmap], ['changelog/index.html', notes], ['download/index.html', download]]) {
