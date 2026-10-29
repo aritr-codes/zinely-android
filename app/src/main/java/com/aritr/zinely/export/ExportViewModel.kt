@@ -1,8 +1,11 @@
 package com.aritr.zinely.export
 
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aritr.zinely.core.data.repository.DataResult
+import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.render.android.AssetBytesSource
@@ -79,11 +82,22 @@ internal data class ExportSaved(
 internal class ExportViewModel(
     private val exporter: SheetExporter,
     /** Usable bytes where the export lands. A seam so the out-of-space call is testable. */
-    private val freeBytes: () -> Long,
+    private val freeBytes: () -> Long = ::sharedStorageFreeBytes,
+    /** The zine's title, read at export time so a rename made after the Proof opened still lands in the filename. */
+    private val titleOf: suspend () -> String = { "" },
 ) : ViewModel() {
 
+    // The Proof route's own argument (type-safe nav puts `projectId` in this entry's SavedStateHandle), so no
+    // host or EditorViewModel plumbing. A missing zine or a failed read is "" → ExportNaming's "zine".
     @Inject
-    constructor(exporter: SheetExporter) : this(exporter, ::sharedStorageFreeBytes)
+    constructor(exporter: SheetExporter, projects: ProjectRepository, handle: SavedStateHandle) : this(
+        exporter,
+        ::sharedStorageFreeBytes,
+        {
+            val id = handle.get<String>("projectId")
+            (id?.let { (projects.getProject(it) as? DataResult.Success)?.value?.title }) ?: ""
+        },
+    )
 
     private val _state = MutableStateFlow<ExportUiState>(ExportUiState.Idle)
     val state: StateFlow<ExportUiState> = _state.asStateFlow()
@@ -102,7 +116,7 @@ internal class ExportViewModel(
         viewModelScope.launch {
             _state.value = ExportUiState.Working(format, destination)
             _state.value = try {
-                _outcomes.send(exporter.export(document, pageSizePt, imageBytes, format, destination))
+                _outcomes.send(exporter.export(document, pageSizePt, imageBytes, format, destination, titleOf()))
                 ExportUiState.Idle
             } catch (ce: CancellationException) {
                 throw ce

@@ -52,6 +52,8 @@ internal interface SheetExporter {
         imageBytes: AssetBytesSource,
         format: ExportFormat,
         destination: ExportDestination,
+        /** The zine's title: the base of the saved file's name. Blank/odd is fine; [ExportNaming] falls back. */
+        title: String,
     ): ExportOutcome
 }
 
@@ -83,10 +85,11 @@ internal class ZineExporter @Inject constructor(
         imageBytes: AssetBytesSource,
         format: ExportFormat,
         destination: ExportDestination,
+        title: String,
     ): ExportOutcome = withContext(io) {
         when (destination) {
             ExportDestination.TRANSPORT -> writeTransport(document, pageSizePt, imageBytes, format)
-            ExportDestination.DOWNLOADS -> writeToDownloads(document, pageSizePt, imageBytes, format)
+            ExportDestination.DOWNLOADS -> writeToDownloads(document, pageSizePt, imageBytes, format, title)
         }
     }
 
@@ -123,17 +126,16 @@ internal class ZineExporter @Inject constructor(
      * DOWNLOADS (ADR-054 Decision 4/6): a durable copy the user keeps, in the shared Downloads collection.
      * [DownloadsWriter] owns the destination stream + the API split; [writeSheet] supplies the bytes. Returns
      * the exact durable item and final display name (a legacy collision may have added a `" (N)"` suffix).
-     *
-     * ponytail: the display base is a neutral default until the real project title (Room metadata, ADR-042)
-     * threads through — the same deferral the Proof topbar carries (`zineName = "Your zine"`).
+     * The display base is the zine's [title]; [ExportNaming] sanitises it and falls back to "zine".
      */
     private fun writeToDownloads(
         document: ZineDocument,
         pageSizePt: PtSize,
         imageBytes: AssetBytesSource,
         format: ExportFormat,
+        title: String,
     ): ExportSaved {
-        val downloaded = downloadsWriter.write(DEFAULT_SAVE_TITLE, format.ext, format.mime) { out ->
+        val downloaded = downloadsWriter.write(title, format.ext, format.mime) { out ->
             writeSheet(out, document, pageSizePt, imageBytes, format)
         }
         return ExportSaved(
@@ -193,8 +195,6 @@ internal class ZineExporter @Inject constructor(
     private companion object {
         const val EXPORTS_DIR = "exports"
         const val KEEP_RECENT = 6
-        // Neutral durable-save base until the real project title threads through (see writeToDownloads).
-        const val DEFAULT_SAVE_TITLE = "zine"
         const val DOWNLOADS_LOCATION = "Downloads"
     }
 }
