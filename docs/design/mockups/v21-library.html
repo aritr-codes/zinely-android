@@ -1872,8 +1872,19 @@ $('rs8').onclick = () => {
 .a47-on .zine:not(.pile) .a47-tick{display:grid}
 .zine.a47-picked .a47-tick{background:#27270F;color:#FFF6E8;box-shadow:0 0 0 2px #FFF6E8,2px 2px 0 2px #27270F}
 .zine.a47-picked .a47-tick svg{opacity:1}
-/* the chosen cover is ringed in ink, outside its own edge, so the cover itself is never repainted */
-.zine.a47-picked .cover{outline:3px solid var(--ink);outline-offset:5px}
+/* the chosen cover is ringed in ink, outside its own edge, so the cover itself is never repainted.
+   A47.2 amendment 2026-10-29: the ring is REINFORCEMENT only (the tick is the state carrier), so it is a
+   pencil line: 2px, offset 4px, ink at 60%.  Measured (WCAG): light = #757247 on the desk #E9E29B 3.72:1;
+   dark = cream #FFF9DB at 60% over #242312 = #A7A38B 6.23:1.  Was 3px / 5px / full ink (11.43 / 14.97) */
+.zine.a47-picked .cover{outline:2px solid color-mix(in srgb,var(--ink) 60%,transparent);outline-offset:4px}
+/* PROTOTYPE-ONLY compare switches (A47.2 amendment) - REMOVE AT FREEZE, with the two buttons in the A47 script */
+:root[data-a47ring="old"] .zine.a47-picked .cover{outline:3px solid var(--ink);outline-offset:5px}
+/* lighter badge, comparison only; PINNED like the tick.  Matcha #8E9546 fill, ink #27270F check and 1.5px outline
+   (the tick border), paper halo kept.  Measured: check/outline on fill 4.73:1; fill vs paper halo 2.998:1 (just
+   under 3:1, so the fill change alone does NOT carry the state - the check glyph and ink outline do);
+   fill vs desk 2.42:1 light / 4.94:1 dark; fill vs a jam cover 2.06:1 (the halo isolates it).  Ink badge stays
+   the recommendation. */
+:root[data-a47badge="light"] .zine.a47-picked .a47-tick{background:#8E9546;color:#27270F;box-shadow:0 0 0 2px #FFF6E8}
 .a47-on .more{display:none}
 .a47-on .cap{padding-right:0}
 /* a folder cannot be chosen (A47.6): it stays where it is, quieter */
@@ -1923,6 +1934,10 @@ $('rs8').onclick = () => {
                 a choice of several).  A chosen zine has an inked disc with a check on its
                 cover's corner and an ink ring around the cover; a zine not chosen has an
                 empty paper disc, so every tile shows that it can be chosen.
+                A47.2 amendment 2026-10-29 (owner: "can we make them lighter") [PROPOSED, pending
+                owner freeze]: the ring is reinforcement only; the tick is the state carrier
+                (shape + fill, not colour alone).  Ring now 2px, offset 4px, ink at 60%
+                (was 3px / 5px / full ink).  Tick unchanged; cover never repainted.
   A47.3  [shown]  THE BAR.  The heading gives way to one bar that stays put while the zines
                 scroll: a drawn ✕ on the left, then the count, "1 selected" / "3 selected".  Never
                 "0 selected": letting go of the last zine stops choosing (A47.4).
@@ -2216,6 +2231,12 @@ $('a47c5').onclick = () => {
   R.setAttribute('data-a47narrow', on ? 'on' : 'off'); R.setAttribute('data-large', on ? 'on' : 'off');
   $('a47c5').classList.toggle('on', on); $('lg').classList.toggle('on', on);
 };
+/* PROTOTYPE-ONLY compare switches, A47.2 amendment 2026-10-29 - REMOVE AT FREEZE */
+const a47Cmp = (id, attr, val, label) => { const b = el('button', 'ctl', label); b.id = id;
+  b.onclick = () => { const on = R.getAttribute(attr) !== val; on ? R.setAttribute(attr, val) : R.removeAttribute(attr);
+    b.classList.toggle('on', on); }; return b; };
+$('a47c5').after(a47Cmp('a47r', 'data-a47ring', 'old', 'Ring: new 2px 60% / old (3px full ink) — remove at freeze'),
+  a47Cmp('a47b', 'data-a47badge', 'light', 'Badge: ink (current) / lighter — remove at freeze'));
 a47Sync();
 /* ===================== end of A47 script ===================== */
 </script>
