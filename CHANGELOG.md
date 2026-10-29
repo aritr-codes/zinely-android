@@ -107,6 +107,8 @@ Website, docs and test-only changes that are not part of the beta.8 app, moved h
 
 ### Fixed
 
+- Typing text on the page: the keyboard's Enter key now starts a new line instead of finishing the edit. Tap
+  Done in the style row, or press Back, to finish.
 - The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
   privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
   the files.
