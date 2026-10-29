@@ -348,6 +348,10 @@ class RoomProjectRepositoryTest {
         val after = repo.observeProjects().first()
         assertEquals(listOf(b, a), after.map { it.id })
         assertEquals(before, after.first { it.id == a }.updatedAtEpochMs)
+        // and the Shelf (what the app actually reads) agrees
+        val shelf = repo.observeShelfProjects().first()
+        assertEquals(listOf(b, a), shelf.map { it.id })
+        assertEquals(before, shelf.first { it.id == a }.updatedAtEpochMs)
     }
 
     @Test
