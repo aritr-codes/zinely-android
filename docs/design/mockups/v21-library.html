@@ -66,7 +66,7 @@ if (new URLSearchParams(location.search).has('gallery')) {
      │  script at the end of this file; the frozen functions are wrapped, not      │
      │  edited.  The Bench stays single-select.                                    │
      │                                                                             │
-     │  A49 SHEET ACTION PAIR · PROPOSED 2026-10-29 (ADR-144), awaiting the owner's freeze.│
+     │  A49 SHEET ACTION PAIR · FROZEN by the owner 2026-10-30 (ADR-144).│
      │  The name sheet's Cancel was the one dismiss in the corpus drawn as bare text; it is│
      │  now a surface-filled sibling of Make folder (.go.ghost). Look only: A28.14 behaviour│
      │  is unchanged.  Rules A49.1–A49.4 sit above the A49 demo card in the body.  │
@@ -605,7 +605,7 @@ Shelf now says so: one paper note under the heading, until <b>Got it</b>. It spe
 <b>Cancel beside Make folder (ADR-144).</b> The name sheet's Cancel had no button body; it now wears Make folder's
 shape, surface-filled. Both rows below use the real classes; flip <b>day / night</b> to judge both themes.</p>
 <!--
-  A49 · SHEET ACTION PAIR — PROPOSED 2026-10-29, awaiting the owner's freeze (ADR-144).
+  A49 · SHEET ACTION PAIR — FROZEN by the owner 2026-10-30 (ADR-144).
   Amends A28's LOOK only (the name sheet's Cancel); A28.14 (what Cancel does) is unchanged.
   A49.1  [shown]  When a sheet offers a dismiss beside a committing button, both are bordered controls
                   of one geometry: same radius, 1.5px ink border, shadow, press, min-height 48px, padding.
@@ -1912,14 +1912,7 @@ $('rs8').onclick = () => {
    pencil line: 2px, offset 4px, ink at 60%.  Measured (WCAG): light = #757247 on the desk #E9E29B 3.72:1;
    dark = cream #FFF9DB at 60% over #242312 = #A7A38B 6.23:1.  Was 3px / 5px / full ink (11.43 / 14.97) */
 .zine.a47-picked .cover{outline:2px solid color-mix(in srgb,var(--ink) 60%,transparent);outline-offset:4px}
-/* PROTOTYPE-ONLY compare switches (A47.2 amendment) - REMOVE AT FREEZE, with the two buttons in the A47 script */
-:root[data-a47ring="old"] .zine.a47-picked .cover{outline:3px solid var(--ink);outline-offset:5px}
-/* lighter badge, comparison only; PINNED like the tick.  Matcha #8E9546 fill, ink #27270F check and 1.5px outline
-   (the tick border), paper halo kept.  Measured: check/outline on fill 4.73:1; fill vs paper halo 2.998:1 (just
-   under 3:1, so the fill change alone does NOT carry the state - the check glyph and ink outline do);
-   fill vs desk 2.42:1 light / 4.94:1 dark; fill vs a jam cover 2.06:1 (the halo isolates it).  Ink badge stays
-   the recommendation. */
-:root[data-a47badge="light"] .zine.a47-picked .a47-tick{background:#8E9546;color:#27270F;box-shadow:0 0 0 2px #FFF6E8}
+/* (the A47.2 compare switches were removed at the owner's freeze, 2026-10-30) */
 .a47-on .more{display:none}
 .a47-on .cap{padding-right:0}
 /* a folder cannot be chosen (A47.6): it stays where it is, quieter */
@@ -1969,8 +1962,8 @@ $('rs8').onclick = () => {
                 a choice of several).  A chosen zine has an inked disc with a check on its
                 cover's corner and an ink ring around the cover; a zine not chosen has an
                 empty paper disc, so every tile shows that it can be chosen.
-                A47.2 amendment 2026-10-29 (owner: "can we make them lighter") [PROPOSED, pending
-                owner freeze]: the ring is reinforcement only; the tick is the state carrier
+                A47.2 amendment 2026-10-29 (owner: "can we make them lighter") [FROZEN by the
+                owner 2026-10-30]: the ring is reinforcement only; the tick is the state carrier
                 (shape + fill, not colour alone).  Ring now 2px, offset 4px, ink at 60%
                 (was 3px / 5px / full ink).  Tick unchanged; cover never repainted.
   A47.3  [shown]  THE BAR.  The heading gives way to one bar that stays put while the zines
@@ -2266,12 +2259,6 @@ $('a47c5').onclick = () => {
   R.setAttribute('data-a47narrow', on ? 'on' : 'off'); R.setAttribute('data-large', on ? 'on' : 'off');
   $('a47c5').classList.toggle('on', on); $('lg').classList.toggle('on', on);
 };
-/* PROTOTYPE-ONLY compare switches, A47.2 amendment 2026-10-29 - REMOVE AT FREEZE */
-const a47Cmp = (id, attr, val, label) => { const b = el('button', 'ctl', label); b.id = id;
-  b.onclick = () => { const on = R.getAttribute(attr) !== val; on ? R.setAttribute(attr, val) : R.removeAttribute(attr);
-    b.classList.toggle('on', on); }; return b; };
-$('a47c5').after(a47Cmp('a47r', 'data-a47ring', 'old', 'Ring: new 2px 60% / old (3px full ink) — remove at freeze'),
-  a47Cmp('a47b', 'data-a47badge', 'light', 'Badge: ink (current) / lighter — remove at freeze'));
 a47Sync();
 /* ===================== end of A47 script ===================== */
 </script>

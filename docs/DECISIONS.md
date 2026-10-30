@@ -17542,7 +17542,7 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 | R6 | Undo of a batch moved *into* a folder puts back only some | "Some zines didn’t go back. They’re still in “Family”, nothing is lost" (A47.9, 2026-10-28) | A28's line says "They’re on My Shelf", which is false here; the words say where they are now, in the same manner |
 | R7 | The chooser's pane title for a set | "Move 3 zines" (A47.11, 2026-10-28) | A28's "Move zine" with the count, so TalkBack names what is being moved |
 | R8 | Undo after a zine's delete already finished | “{title}” was already deleted, so it can’t come back / “{n} zines were already deleted, so they can’t come back: {names}” (A47.9, 2026-10-29) | Says what happened and that nothing is broken; only zines actually gone are named, never one that is back on the Shelf (#166) |
-| R9 | Lighter chosen ring (owner request 2026-10-29: "can we make them lighter") | 2dp, offset 4dp, ink at 60% (was 3dp / 5dp / full ink); the tick is the state carrier, the ring is reinforcement only; **Proposed pending the A47.2 freeze** | The ring is not what WCAG 1.4.11 needs (the tick's shape and fill carry the state), so it can be a pencil line; 3.72:1 on the light desk, 6.23:1 on the dark ([R36.9](RESEARCH.md#r36)) |
+| R9 | Lighter chosen ring (owner request 2026-10-29: "can we make them lighter") | 2dp, offset 4dp, ink at 60% (was 3dp / 5dp / full ink); the tick is the state carrier, the ring is reinforcement only; **A47.2 frozen by the owner 2026-10-30** ("looks great"); ink badge kept | The ring is not what WCAG 1.4.11 needs (the tick's shape and fill carry the state), so it can be a pencil line; 3.72:1 on the light desk, 6.23:1 on the dark ([R36.9](RESEARCH.md#r36)) |
 
 #### Consequences
 
@@ -17553,7 +17553,7 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
   fails nothing is hidden and the maker is told at once. Undo clears them in one write too (`removeAll`).
 - A28's "[stated] the folder tile's long-press label is 'Actions', as a zine's is" is amended by A47.1.
 - New goldens for the selection states; the zine sheet goldens change (one row).
-- **Amendment 2026-10-29 (A47.2, ruling R9; Proposed pending owner freeze):** the chosen ring is lightened to 2dp,
+- **Amendment 2026-10-29 (A47.2, ruling R9; design frozen by the owner 2026-10-30):** the chosen ring is lightened to 2dp,
   offset 4dp, ink at 60% (`ZineV21Cover` `ChosenRingWidth`/`ChosenRingOffset`/ring colour in phase 2); the tick and the
   never-repainted cover are unchanged. Eight selection goldens change (`ZineSelectGoldenTest`).
 - **Owed before Accepted:** both device passes, a TalkBack listen (owner), 390dp parity.
@@ -17787,7 +17787,7 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 
 ### Sheet action pairs share one geometry
 
-**Status:** Proposed, 2026-10-29, for the owner's freeze of Library A49. The owner's words: "when making a folder, look at
+**Status:** Proposed, 2026-10-29. Library A49 design **frozen by the owner 2026-10-30** ("looks great"); the ADR stays Proposed until built and both device passes. The owner's words: "when making a folder, look at
 the UI - the 'make folder' has a button but cancel doesn't. Makes the UI looks broken/unpolished". **Design:** the
 [`v21-library.html`](design/mockups/v21-library.html) A49 amendment (`.go.ghost`, the A49 demo card). **Amends:** the *look*
 of the name sheet in [ADR-099](#adr-099)'s V2.1 language and Library A28 ([ADR-125](#adr-125)); A28.14 (what Cancel does) is
