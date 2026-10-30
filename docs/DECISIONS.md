@@ -13234,6 +13234,31 @@ current features separated from direction.
   [ROADMAP.md](ROADMAP.md#current-priorities) follow-up). The Download page lists the published build's known
   limits, including Save PDF failing on Android 7 to 9 in beta.4-r3 (Share still works).
 
+#### Plain-words rule (amended 2026-10-30, owner-directed)
+
+Public copy follows [ASD-STE100 Simplified Technical English](RESEARCH.md#r39), adapted. Evidence and sources:
+[R39](RESEARCH.md#r39).
+
+**Keep (the sentence rules):** one idea per sentence, and one instruction per step; about 20 words or fewer
+(25 at most); active voice; keep the articles and verbs (no telegraph style); the same word for the same thing
+(Shelf, Bench, Proof, Art, Undo, Backups, Save PDF are the app's names, used as the app spells them); no idioms or
+jokes inside facts, caveats or steps; paragraphs short.
+
+**Do not enforce:** the approved-word dictionary, and a ban on every -ing word. Brand voice stays where no fact or
+step depends on it (the hero, About, the fold guide's tone). The strings `tools/check-public-copy.cjs` locks stay
+as they are.
+
+A joke may stay only if the plain fact sits next to it. A first-time visitor must get the fact without getting the joke; if unsure, keep a straight face ([R39.3](RESEARCH.md#r39)).
+
+Changelog lines, headlines and status notes may be fragments; body sentences keep their articles and verbs.
+
+**Changelog entries** name the change in one short line under *Added*, *Changed* or *Fixed*, for example
+"Select several zines at once." The how-to goes in the app, not in the changelog. A limitation stays whole: say what
+is untested or not fixed, and never shorten it into a claim.
+
+**Never changed by a rewrite:** a fact, a privacy promise, the beta status, the Android 7 to 9 Save PDF caveat and
+its emulator-only test coverage, or the list of what is untested.
+
 ## ADR-119 {#adr-119}
 
 ### Read the page in spatial order, and silence the action sheet's scrim
@@ -17858,8 +17883,21 @@ One finger, by `adb` touch events, with the document file read after each step.
   edited" item, now answered: readable, unpolished. Fix through the HTML first if a tester trips on it.
 - **Two fingers, by the owner on the Samsung, 2026-10-30:** the turn works, but only when the piece is big enough for both
   fingers. Cause and fix: A48.3a in [as built](#adr-143-as-built). The owner's retry on the phone is owed.
-- **Still owed:** the two-finger retry on a small piece, over a handle and over the knob, a second finger held down late, after a long press has deselected, and a second finger during a
-  knob or handle drag (the `input` command sends one finger, so these need a hand); the haptic tick felt by hand; the first-run hint on a piece near the top and bottom; the Arrange
+- **Two fingers, real multi-touch on the emulator, 2026-10-30, build `3ac616b6`** ([recipe](DEVICE-VERIFICATION.md#real-two-finger-gestures-on-the-emulator)),
+  on a text piece about 28dp wide and 86dp long, with the document file read after each step:
+  - Two fingers on its handles, and one on the knob with one on the paper, turned it by the amount swept and kept its size
+  to 0.03%, on five of five clean runs. Two fingers on blank paper turned it too, and moved it with the fingers' centre.
+  - Two fingers resting and lifted changed nothing and left Undo off. Undo returned each turn in one step.
+  - A second finger on the paper during a handle drag left the resize alone; during a knob drag the angle matched the
+  same drag without it, to the digit.
+  - One earlier run resized instead of turning. It was the first run after a batch of rejected console sends, so
+  probably left-over input state, but that is an inference. It did not come back.
+  - One finger, same build: knob drag, handle drag, a body drag on the piece once enlarged, and a tap on blank paper to deselect all still work.
+- **Finding, not caused by this work:** on this piece, one finger on its middle catches a side handle, not the body, because
+  the 48dp hit boxes overlap across it. Dragging from there grew it about 1 to 3pt and did not move it. So a small piece
+  can be turned from anywhere, but not dragged by its middle. Open as a follow-up, through the HTML first.
+- **Still owed:** the owner's two-finger retry by hand on the Samsung, for feel and for the 4° and 8% starts; a second
+  finger held down late, after a long press has deselected; the haptic tick felt by hand; the first-run hint on a piece near the top and bottom; the Arrange
   tray on a real small phone; the knob over the dark desk; Straighten from 360° and 1.5° on a device (unit-tested only);
   a first-time Pass 2; TalkBack.
 

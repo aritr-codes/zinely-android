@@ -2124,3 +2124,45 @@ Google Keep, Drive and Files dialogs were not retrieved and nothing here rests o
   ([Android accessibility](https://developer.android.com/guide/topics/ui/accessibility/apps)). Both options keep 48dp.
 - 🟦 RECOMMENDATION: the surface-filled bordered sibling (ADR-144 decision 1), because every other frozen Cancel already
   is one.
+<a id="r39"></a>
+
+## R39. Plain words for public copy: ASD-STE100, adapted (2026-10-30)
+
+Collected by the Research Agent for the website plain-words pass. [ADR-118](DECISIONS.md#adr-118) owns the rule that
+comes out of it.
+
+### R39.1 What ASD-STE100 asks for — ✅ VERIFIED
+
+- ASD, [What are the basics of Simplified Technical English](https://www.asd-europe.org/standards-specifications/simplified-technical-english/what-are-the-basics-of-simplified-technical-english)
+  (the owner of the standard; the page is a summary, not the rulebook): prefer active voice; one instruction per
+  sentence; avoid superfluous alternate terms; keep wording uniform; and a limited, controlled vocabulary. The page
+  states **no sentence-length figure**. The full text is the free ASD-STE100 specification (Issue 9, January 2025)
+  from [asd-ste100.org](https://www.asd-ste100.org/); we did not read it.
+- Wikipedia, [Simplified Technical English](https://en.wikipedia.org/wiki/Simplified_Technical_English) (secondary):
+  at most **20 words** in a procedural sentence and **25** in a descriptive one; one topic and at most six
+  sentences per paragraph; do not drop articles, verbs or subjects to save words; noun clusters of at most three
+  words; **-ing** verbs only as technical nouns or inside one; 53 writing rules; a dictionary of about 900 approved
+  words, each with one approved meaning.
+- dsebastien, [ASD-STE100 Simplified Technical English](https://www.dsebastien.net/asd-ste100-simplified-technical-english/)
+  (secondary): the same four principles (short sentences, active voice, one instruction per sentence, no synonyms).
+- 🟨 **ASSUMPTION:** the 20/25 and six-sentence figures are from a secondary source, not read in the specification.
+
+### R39.2 Application to a consumer site — 🟦 RECOMMENDATION
+
+The standard is written for maintenance manuals, with a closed dictionary. A product site has a brand voice and
+names (zine, Bench, Shelf, Proof) that are not in that dictionary. Keep the **sentence rules**; do not enforce the
+**word list**. The adapted rule is in [ADR-118, *Plain-words rule*](DECISIONS.md#adr-118).
+
+### R39.3 Warmth without costing clarity — ✅ VERIFIED (first-party guides), 🟦 RECOMMENDATION for the pattern
+
+- Mailchimp, [Voice and Tone](https://styleguide.mailchimp.com/voice-and-tone/): "it's always more important to be
+  clear than entertaining"; humour is "straight-faced, subtle, and a touch eccentric"; "winking" over "shouting";
+  do not force a joke ("forced humor can be worse than none at all"); "if you're unsure, keep a straight face".
+- GOV.UK, [Tone of voice](https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/tone-of-voice):
+  specific, informative, clear and concise; plain English for everyone who needs the content; avoid sounding
+  condescending. No humour guidance was found there.
+- Digital.gov (Plain Language), [Writing for understanding](https://digital.gov/guides/plain-language/writing):
+  write for the specific audience; shorter words, short sections, active voice, present tense, no hidden verbs.
+- 🟦 **Patterns used on the homepage:** (1) lead with what it is, who it is for, and its three facts (free, offline,
+  private); (2) keep the personality in the facts (paper, one cut, a fold), not in wordplay; (3) a joke stays only
+  with the plain fact next to it; (4) headings say what the section holds; (5) when unsure, cut the joke.

@@ -1,34 +1,36 @@
 # Zinely — Privacy Policy
 
-**Last updated: 9 September 2026**
+**Last updated: 30 October 2026**
 
 Zinely is an offline app for making printable zines. This policy covers the Android app, this website,
-and feedback you choose to send to Aastra, the independent two-person team behind Zinely.
+and feedback you choose to send to Aastra. Aastra is the independent two-person team behind Zinely.
 
 ---
 
 ## The short version
 
-**The Zinely Android app collects no information from you, uploads nothing, and has no servers.**
+**The Zinely Android app collects no information from you. It uploads nothing and has no servers.**
 
-There is no account, no sign-in, no analytics, no advertising, no tracking, and no crash reporting.
-Zinely does not request internet access, so it cannot transmit your information even accidentally.
+Your zines stay on your phone unless you save, share or back them up.
 
-Feedback is separate: if you submit a Google Form or send an email, the team receives the
-information you choose to share. You do not need to send feedback to use the app.
+The app has no account, no sign-in, no analytics, no advertising, no tracking, and no crash reporting.
+Because Zinely does not request internet access, it cannot send your information over the internet, even by accident.
+
+Feedback is separate. If you send a Google Form or an email, the team receives what you choose to
+share. You do not need to send feedback to use the app.
 
 ---
 
 ## What Zinely stores, and where
 
-Zinely keeps its working data in its own private storage on your device:
+Zinely keeps its data in its own private storage on your phone:
 
-- **Your zines** — pages, text, layout and settings.
-- **Photos you add to a zine** — a copy of each image you choose is kept inside the app's private
-  storage so your zine still opens if the original photo is later moved or deleted.
+- **Your zines**: pages, text, layout and settings.
+- **Photos you add to a zine**: Zinely keeps a copy of each photo you choose inside its private
+  storage. Your zine still opens if you later move or delete the original photo.
 
-No other app can read this private storage. Files leave it only when you explicitly save, share, or
-back up your work using Android's system file interfaces.
+No other app can read this private storage. Files leave it only when you save, share, or back up your
+work. You do this through Android's system file tools.
 
 ---
 
@@ -38,112 +40,115 @@ back up your work using Android's system file interfaces.
 
 | Permission | When | Why |
 |---|---|---|
-| **Photo picker** (no permission required) | When you add a photo | Zinely uses the Android system photo picker. You choose individual photos; Zinely never receives access to your photo library as a whole. |
-| **`WRITE_EXTERNAL_STORAGE`** — *Android 9 and older only* | The first time you save a PDF | Needed to write your exported PDF into your **Downloads** folder. On Android 10 and newer, Zinely uses the system's scoped Downloads mechanism and asks for no permission at all. Zinely writes only the export file you asked for. |
-| **System file picker** (no permission required) | When you make or restore a backup | You choose the backup file and its location. Zinely receives access only to the file selected through Android's picker. |
-| **Vibration** (no prompt) | When you use certain controls | Provides brief touch feedback. It gives Zinely no access to personal information. |
+| **Photo picker** (no permission required) | When you add a photo | Zinely uses the Android photo picker. You choose single photos. Zinely never gets access to your whole photo library. |
+| **`WRITE_EXTERNAL_STORAGE`** — *Android 9 and older only* | The first time you save a PDF | Zinely needs it to write your PDF to your **Downloads** folder. On Android 10 and newer, Zinely uses the system's scoped Downloads feature and asks for no permission. Zinely writes only the export file you asked for. On these Android versions, Android also gives read access to shared storage (`READ_EXTERNAL_STORAGE`) with this permission. Zinely uses it only to check free space and which file names are already taken in Downloads. It does not open your photos or other files. |
+| **System file picker** (no permission required) | When you make or restore a backup | You choose the backup file and where it goes. Zinely gets access only to the file you pick in Android's picker. |
+| **Vibration** (no prompt) | When you use certain controls | Gives a short buzz when you touch a control. It gives Zinely no access to personal information. |
 
 </div>
 
-**Zinely does not request the `INTERNET` permission.** Its legacy storage permission is limited to
-Android 9 and older, and its vibration permission does not provide access to personal information.
+**Zinely does not request the `INTERNET` permission.** Its older storage permission is only for
+Android 9 and older. Its vibration permission gives no access to personal information.
 
 ---
 
 ## What leaves your device, and only when you ask
 
-Nothing leaves Zinely's private storage unless you explicitly request it:
+Nothing leaves Zinely's private storage unless you ask:
 
-- **Save PDF** writes a PDF of your zine into your **Downloads** folder, where it becomes an ordinary
-  file on your phone that you control.
-- **Share** hands a PDF to Android's share sheet so you can send it somewhere yourself. What happens
-  to it after that is governed by whichever app you chose — Zinely is not involved.
-- **Back up** writes a `.zine` library backup to the file location you choose through Android's system
-  picker. The backup stays under your control and can be used to restore your library later.
-- **Restore** reads only the `.zine` backup you select and adds its valid contents to Zinely's private
-  storage on the device.
+- **Save PDF** writes a PDF of your zine to your **Downloads** folder. There it is an ordinary file on
+  your phone, and you control it.
+- **Share** gives a PDF to Android's share sheet so you can send it yourself. The app you choose then
+  decides what happens to it. Zinely is not involved.
+- **Back up** writes a `.zine` backup to the place you choose in Android's file picker. The backup
+  stays under your control. You can use it to restore your library later.
+- **Restore** reads only the `.zine` backup you select. It adds the valid contents to Zinely's private
+  storage on your phone.
 
-Zinely never uploads or automatically syncs your work. Saving, sharing, backing up, and restoring happen
-only when you ask, using destinations or files that you choose.
+Zinely never uploads your work or syncs it automatically. Saving, sharing, backing up, and restoring
+happen only when you ask, with files and places you choose.
 
 ---
 
 ## Children
 
-The Zinely Android app does not collect personal information from anyone, including children. There
-is no account, no profile, and no communication feature inside the app.
+The Zinely Android app does not collect personal information from anyone, including children. It has
+no account, no profile, and no way inside the app to message or talk to other people.
 
 ---
 
 ## Deleting your data
 
-Deleting a zine inside the app removes its private working copy. Uninstalling Zinely removes the app's
-private library. PDFs and `.zine` backups that you previously saved outside the app remain where you put
-them and must be deleted separately if you no longer want them.
+Delete a zine in the app to remove its private working copy. Uninstall Zinely to remove the app's
+private library. PDFs and `.zine` backups that you saved outside the app stay where you put them.
+Delete them yourself if you no longer want them.
 
-> **Please note:** Zinely has no cloud backup. Before uninstalling or changing phones, create a fresh
-> library backup from **Backups** and keep it somewhere you control. Without a valid backup, uninstalling
-> deletes the private library and Zinely cannot recover it.
+> **Please note:** Zinely has no cloud backup. Before you uninstall or change phones, make a new
+> backup from **Backups**. Keep it somewhere you control. Without a valid backup, uninstalling
+> deletes the private library, and Zinely cannot get it back.
 
 ---
 
 ## Changes to this policy
 
-The "Last updated" date identifies the latest revision. This revision adds the voluntary feedback
-arrangements below; it does not change how the Android app handles your information.
+The "Last updated" date shows the latest revision. This revision rewrites the policy in plainer words.
+It does not change how the app, this website or feedback handle your information. It also explains a
+storage permission that Android adds on Android 9 and older.
 
 ---
 
 ## This website
 
-The Zinely website has no analytics, advertising, or third-party fonts. It is hosted by
-GitHub Pages, so GitHub may process standard technical data needed to serve the site under the
-[GitHub General Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
-This hosting does not change how the Zinely Android app handles your information.
+The Zinely website has no analytics, advertising, or third-party fonts. GitHub Pages hosts it, so
+GitHub may process standard technical data to serve the site. The
+[GitHub General Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement)
+applies. This hosting does not change how the Zinely Android app handles your information.
 
 ---
 
 ## Feedback and email
 
-Sending feedback is optional. If you use the Google Forms feedback form, the team receives your
-message and submission time, plus the feedback category and reply email if you provide them. Only the
-message is required. The form does not ask for your name, file uploads, or automatic app diagnostics.
+Feedback is optional. If you use the Google Forms feedback form, the team receives your message and the
+time you sent it. If you give them, the team also receives the feedback category and your reply email.
+Only the message is required. The form does not ask for your name, file uploads, or automatic app
+diagnostics.
 
 If you email **[aritr.g06@gmail.com](mailto:aritr.g06@gmail.com)**, the team receives your message,
-sender email address, any sender name supplied by your email service, and any attachments you choose
-to send. Screenshots or short screen recordings can help explain a problem, but are never required.
-Please hide private photos, notifications, names, and other personal information before sending them.
+your email address, any sender name your email service supplies, and any attachments you choose to
+send. Screenshots or short screen recordings can help explain a problem, but you never have to send
+them. Please hide private photos, notifications, names, and other personal information first.
 
-The team uses feedback to understand problems, improve Zinely, and reply if you provide an email
-address. It is not used for marketing or sold. Identifiable feedback is kept private, not published in
-public response summaries or development issues. Development notes may describe the problem or idea
-without identifying you.
+The team uses feedback to understand problems, improve Zinely, and reply if you give an email address.
+It is not used for marketing and is not sold. Identifiable feedback is kept private. It is not
+published in public response summaries or development issues. Development notes may describe the
+problem or idea without identifying you.
 
 ### Google services
 
-The feedback form is hosted by Google Forms, and the contact inbox uses Gmail. Google processes the
-submitted content and may also process technical information such as your IP address, browser or
-device information, and cookies under the [Google Privacy Policy](https://policies.google.com/privacy).
-Leaving the optional email field blank does not mean Google processes no information about your visit.
-These services are separate from the offline Android app; no zines or diagnostics are sent automatically.
+Google Forms hosts the feedback form, and the contact inbox uses Gmail. Google processes what you
+submit. It may also process technical information such as your IP address, browser or device
+information, and cookies, under the [Google Privacy Policy](https://policies.google.com/privacy).
+If you leave the optional email field blank, Google may still process information about your visit.
+These services are separate from the offline Android app. The app sends no zines or diagnostics
+automatically.
 
 ### Retention and deletion
 
-The team deletes identifiable feedback within **90 days of receiving it**, including form
-responses, feedback emails, attachments, and any copies kept in spreadsheets or downloaded files.
-Only development notes that do not identify you may be kept longer. This is a team-managed
-cleanup commitment, not an automatic Google Forms deletion setting. Google's own retention and
-deletion processes are governed by its privacy policy.
+The team deletes identifiable feedback within **90 days of receiving it**. This covers form responses,
+feedback emails, attachments, and copies in spreadsheets or downloaded files. Only development notes
+that do not identify you may be kept longer. This is a cleanup commitment that the team manages. It is
+not an automatic Google Forms deletion setting. Google's privacy policy governs Google's own retention
+and deletion.
 
-To request earlier deletion of feedback you sent, email
-**[aritr.g06@gmail.com](mailto:aritr.g06@gmail.com)**. Include enough information to locate it, such as
-the approximate submission date and topic. If you did not provide an email, it may not be possible to
-identify your response reliably; please do not send identity documents or other sensitive information.
+To ask for earlier deletion of feedback you sent, email
+**[aritr.g06@gmail.com](mailto:aritr.g06@gmail.com)**. Give enough detail to find it, such as the
+approximate date and topic. If you did not give an email address, we may not be able to identify your
+response reliably. Please do not send identity documents or other sensitive information.
 
 ---
 
 ## Contact
 
-Questions about this policy or about Zinely's handling of your information:
+Questions about this policy or about how Zinely handles your information:
 
 **[aritr.g06@gmail.com](mailto:aritr.g06@gmail.com)**
