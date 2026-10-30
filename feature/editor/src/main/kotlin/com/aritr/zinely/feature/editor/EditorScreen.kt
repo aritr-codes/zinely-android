@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -58,6 +59,9 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInWindow
@@ -302,6 +306,17 @@ public fun EditorScreen(
     // pointers, so at most one of the two is non-null at a time; the preview prioritises resizeOverride.
     var live by remember { mutableStateOf<LiveTransform?>(null) }
     var resizeOverride by remember { mutableStateOf<Map<String, Transform>?>(null) }
+    // A48: the turn knob's live frame. Kept apart from [resizeOverride] so the knob can hide during a
+    // resize and the resize handles can turn with the piece during a knob drag; the preview reads either.
+    var turnOverride by remember { mutableStateOf<Map<String, Transform>?>(null) }
+    // A48.2: what the knob must clear, in window px: the visible canvas, and the chrome over it.
+    var canvasBoundsInWindow by remember { mutableStateOf<Rect?>(null) }
+    val chromeBoundsInWindow = remember { mutableStateMapOf<String, Rect>() }
+    // Written only on a change: a state write on every layout pass would recompose the screen for nothing.
+    val noteChrome = { key: String, coordinates: LayoutCoordinates ->
+        val bounds = coordinates.boundsInWindow()
+        if (chromeBoundsInWindow[key] != bounds) chromeBoundsInWindow[key] = bounds
+    }
 
     // The same feature-ephemeral idiom for a settling Type-bar size burst (ADR-055): the in-flight style
     // the canvas paints while the 400ms settle coalesces the undo entry. Like the two above it never
@@ -1312,8 +1327,8 @@ public fun EditorScreen(
     // the gate is loaded-unseen and the latch is clear. A live drag/resize counts as discovery (discovery
     // *is* dismissal) and dismisses + persists it too.
     var moveResizeHintDismissed by remember { mutableStateOf(false) }
-    LaunchedEffect(live != null || resizeOverride != null) {
-        if ((live != null || resizeOverride != null) && !moveResizeHintDismissed) {
+    LaunchedEffect(live != null || resizeOverride != null || turnOverride != null) {
+        if ((live != null || resizeOverride != null || turnOverride != null) && !moveResizeHintDismissed) {
             moveResizeHintDismissed = true
             // Persist unless the flag is *positively* already-seen. `null` (still loading) persists too, so
             // a first gesture before the value loads is recorded (Codex RF1) — the write is idempotent, so
@@ -1541,7 +1556,10 @@ public fun EditorScreen(
                 // and clamping alone leaves the paper on the top bar whenever clearance genuinely needs
                 // the full 96dp. Either one shipped by itself makes the other worse.
                 .clipToBounds()
-                .onGloballyPositioned { canvasTopPx = it.positionInWindow().y }
+                .onGloballyPositioned {
+                    canvasTopPx = it.positionInWindow().y
+                    canvasBoundsInWindow = it.boundsInWindow()
+                }
                 .testTag(EditorCanvasTestTag),
         ) {
             // Fit the whole page into the measured canvas (contain), top-left anchored (pan stays zero for
@@ -1782,7 +1800,7 @@ public fun EditorScreen(
                         pageSizePt = pageSizePt,
                         live = live,
                         modifier = Modifier.fillMaxSize(),
-                        resizeOverride = resizeOverride,
+                        resizeOverride = resizeOverride ?: turnOverride,
                         styleOverride = styleOverride,
                         imageBytes = imageBytes,
                         // ADR-093 row 3.11: the in-place field below is the only drawing of this element
@@ -1839,7 +1857,7 @@ public fun EditorScreen(
                                 page = uiState.document.pages[uiState.currentPageIndex],
                                 interaction = uiState.interaction,
                                 live = live,
-                                resizeOverride = resizeOverride,
+                                resizeOverride = resizeOverride ?: turnOverride,
                                 screenPxPerPt = uiState.view.screenPxPerPt,
                                 pageSizePt = pageSizePt,
                                 // OD-49: with no gesture in flight this is what the warning answers for —
@@ -1905,16 +1923,20 @@ public fun EditorScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .editorTransformGestures(
-                                    screenPxPerPt = uiState.view.screenPxPerPt,
-                                    pageOffset = uiState.view.pageOffset,
-                                    pageSizePt = pageSizePt,
-                                    currentState = currentState,
-                                    dispatch = dispatch,
-                                    onPreview = { live = it },
-                                    // The single double-tap seam (ADR-053 §4): the reducer retargets by the
-                                    // topmost element type — text → inline edit, image → Reframe.
-                                    onDoubleTap = { pagePoint -> dispatch(Intent.DoubleTapAt(pagePoint)) },
+                                // A48.3: while the knob turns the piece, a second finger on the page does
+                                // nothing; its BeginTransform would otherwise replace the knob's session.
+                                .then(
+                                    if (turnOverride != null) Modifier else Modifier.editorTransformGestures(
+                                        screenPxPerPt = uiState.view.screenPxPerPt,
+                                        pageOffset = uiState.view.pageOffset,
+                                        pageSizePt = pageSizePt,
+                                        currentState = currentState,
+                                        dispatch = dispatch,
+                                        onPreview = { live = it },
+                                        // The single double-tap seam (ADR-053 §4): the reducer retargets by the
+                                        // topmost element type — text → inline edit, image → Reframe.
+                                        onDoubleTap = { pagePoint -> dispatch(Intent.DoubleTapAt(pagePoint)) },
+                                    ),
                                 ),
                         )
                         if (live == null) {
@@ -1924,7 +1946,31 @@ public fun EditorScreen(
                                 dispatch = dispatch,
                                 onResize = { resizeOverride = it },
                                 modifier = Modifier.fillMaxSize(),
+                                turning = turnOverride,
                             )
+                            // A48 / ADR-143: the turn knob, after the handles so it wins the overlap with their
+                            // hit boxes on a turned piece. Hidden during a resize drag; the chrome it must
+                            // clear is the verb bar, the trays, the snack and the first-run hint (A48.2).
+                            if (resizeOverride == null) {
+                                TurnHandle(
+                                    uiState = uiState,
+                                    currentState = currentState,
+                                    dispatch = dispatch,
+                                    onTurn = { turnOverride = it },
+                                    modifier = Modifier.fillMaxSize(),
+                                    visibleInWindow = canvasBoundsInWindow,
+                                    obstaclesInWindow = buildList {
+                                        if (ctxVisible) chromeBoundsInWindow["ctx"]?.let(::add)
+                                        if (arrangeTrayVisible) chromeBoundsInWindow["arrange"]?.let(::add)
+                                        if (flipTrayVisible) chromeBoundsInWindow["flip"]?.let(::add)
+                                        if (inkPopoverVisible) chromeBoundsInWindow["ink"]?.let(::add)
+                                        if (snackVisible) chromeBoundsInWindow["snack"]?.let(::add)
+                                        // Present only while the hint is composed (its DisposableEffect removes it).
+                                        chromeBoundsInWindow["hint"]?.let(::add)
+                                    },
+                                    readoutColors = roomColors21,
+                                )
+                            }
                         }
                     }
 
@@ -2053,7 +2099,7 @@ public fun EditorScreen(
                 // A known save failure (ADR-035) outranks the teaching hint at the top region: an
                 // honest "couldn't save" must win over a one-time tip, so the hint yields while it shows
                 // (it returns on the next eligible selection once the failure is dismissed/cleared).
-                val gesturing = live != null || resizeOverride != null
+                val gesturing = live != null || resizeOverride != null || turnOverride != null
                 val showMoveResizeHint =
                     !editing && !gesturing && uiState.selection.size == 1 &&
                         !moveResizeHintDismissed && moveResizeHintSeen == false && !saveErrorVisible &&
@@ -2066,6 +2112,7 @@ public fun EditorScreen(
                     LocalZinelyV2Colors provides roomColors,
                     LocalZinelyV21Colors provides roomColors21,
                 ) {
+                    DisposableEffect(Unit) { onDispose { chromeBoundsInWindow.remove("hint") } }
                     EditorMoveResizeHint(
                         photo = uiState.selection.singleOrNull()?.let { id ->
                             currentPage.elements.firstOrNull { it.id == id }
@@ -2083,7 +2130,8 @@ public fun EditorScreen(
                             // reach its handler and the selection is cleared instead, while the same button's
                             // semantics action works and the same tap works at 800dp.
                             .zIndex(1f)
-                            .padding(top = 8.dp),
+                            .padding(top = 8.dp)
+                            .onGloballyPositioned { noteChrome("hint", it) },
                     )
                 }
 
@@ -2237,7 +2285,7 @@ public fun EditorScreen(
                             else -> null
                         }
                     },
-                    modifier = ctxModifier,
+                    modifier = ctxModifier.onGloballyPositioned { noteChrome("ctx", it) },
                 )
 
                 FlipTray(
@@ -2272,7 +2320,8 @@ public fun EditorScreen(
                     },
                     onDone = closeFlipTray,
                     firstFocusRequester = flipFirstFocus,
-                    modifier = ctxModifier.zIndex(1f).onSizeChanged { flipTrayHeightPx = it.height },
+                    modifier = ctxModifier.zIndex(1f).onSizeChanged { flipTrayHeightPx = it.height }
+                        .onGloballyPositioned { noteChrome("flip", it) },
                 )
 
                 // Bench A33 / ADR-129: the tap-only move, size, turn and layer controls, one tap away
@@ -2287,7 +2336,11 @@ public fun EditorScreen(
                         .zIndex(1f)
                         .heightIn(max = panelMaxHeight)
                         .onSizeChanged { arrangeTrayHeightPx = it.height }
-                        .onGloballyPositioned { arrangeTrayDockedTopPx = it.positionInWindow().y },
+                        .onGloballyPositioned {
+                            arrangeTrayDockedTopPx = it.positionInWindow().y
+                            noteChrome("arrange", it)
+                        },
+                    rotationDegrees = ctxElement?.transform?.rotationDegrees,
                 )
 
                 // C6 rows 6.1-6.14: the frozen `.inkpop` (`v2-bench.html:377-390`, markup `:506`).
@@ -2327,7 +2380,8 @@ public fun EditorScreen(
                     onDockedTopChanged = { inkPopoverDockedTopPx = it },
                     // Above the verb bar's slot (`.inkpop` 42 > `.ctx` 30). The snack it raises is drawn
                     // above it in turn while it is open (A40 `.toast2`, see the snack below).
-                    modifier = ctxModifier.zIndex(1f).heightIn(max = panelMaxHeight),
+                    modifier = ctxModifier.zIndex(1f).heightIn(max = panelMaxHeight)
+                        .onGloballyPositioned { noteChrome("ink", it) },
                     inkLibrary = inkLibrary,
                     onEditInkLibrary = onEditInkLibrary,
                     draft = inkDraft,
@@ -2445,7 +2499,8 @@ public fun EditorScreen(
                     // (`zIndex` over the tray's 1f), or its Undo would sit under the card.
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .then(if (inkPopoverVisible) Modifier.zIndex(2f) else Modifier),
+                        .then(if (inkPopoverVisible) Modifier.zIndex(2f) else Modifier)
+                        .onGloballyPositioned { noteChrome("snack", it) },
                     // D-089 / frozen Bench A8: placement raises both surfaces. Keep Undo and the newly
                     // selected element's verbs reachable by stacking the snack one complete bar footprint
                     // above the shared floor; its own 12dp inset becomes the required clear gap.

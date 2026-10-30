@@ -129,12 +129,15 @@ public fun ResizeHandles(
     onResize: (Map<String, Transform>?) -> Unit,
     modifier: Modifier = Modifier,
     color: Color = ZinelyTheme.v21Colors.ink,
+    /** A48: a live turn-knob preview; the handles turn with the piece, as the prototype's do. */
+    turning: Map<String, Transform>? = null,
 ) {
     // The frozen `.handle{transition:opacity .12s}` with `.el.selected .handle{opacity:1}` (v2-bench.html
     // `:156-157`). Like the outline, fading out needs the geometry to outlive the selection, so the last
     // selected box is retained until the fade completes.
     val live = uiState.selection.singleOrNull()?.let { id ->
-        uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id }?.let { id to it.transform }
+        uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id }
+            ?.let { id to (turning?.get(id) ?: it.transform) }
     }
     var last by remember { mutableStateOf(live) }
     if (live != null) last = live
@@ -147,7 +150,8 @@ public fun ResizeHandles(
     val (selectedId, transform) = live ?: last ?: return
     // A handle on its way out is a picture, not a control: it must not accept a drag for a selection that
     // no longer exists. `live == null` is exactly that window.
-    val interactive = live != null
+    // A48.3: nor while the knob is turning the piece: the other handles do nothing to it then.
+    val interactive = live != null && turning == null
     val screenPxPerPt = uiState.view.screenPxPerPt.toDouble()
     val pageOffset = uiState.view.pageOffset
     val density = LocalDensity.current
