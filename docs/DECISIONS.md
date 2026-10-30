@@ -17882,7 +17882,7 @@ One finger, by `adb` touch events, with the document file read after each step.
   a two-finger or tray turn; the knob makes turning more common. It stays on the owed list as the "text turned 45° then
   edited" item, now answered: readable, unpolished. Fix through the HTML first if a tester trips on it.
 - **Two fingers, by the owner on the Samsung, 2026-10-30:** the turn works, but only when the piece is big enough for both
-  fingers. Cause and fix: A48.3a in [as built](#adr-143-as-built). The owner's retry on the phone is owed.
+  fingers. Cause and fix: A48.3a in [as built](#adr-143-as-built). The owner tried the fix on the Samsung the same day: "its much smoother and better". The 4° and 8% starts stay as built.
 - **Two fingers, real multi-touch on the emulator, 2026-10-30, build `3ac616b6`** ([recipe](DEVICE-VERIFICATION.md#real-two-finger-gestures-on-the-emulator)),
   on a text piece about 28dp wide and 86dp long, with the document file read after each step:
   - Two fingers on its handles, and one on the knob with one on the paper, turned it by the amount swept and kept its size
@@ -17896,7 +17896,7 @@ One finger, by `adb` touch events, with the document file read after each step.
 - **Finding, not caused by this work:** on this piece, one finger on its middle catches a side handle, not the body, because
   the 48dp hit boxes overlap across it. Dragging from there grew it about 1 to 3pt and did not move it. So a small piece
   can be turned from anywhere, but not dragged by its middle. Open as a follow-up, through the HTML first.
-- **Still owed:** the owner's two-finger retry by hand on the Samsung, for feel and for the 4° and 8% starts; a second
+- **Still owed:** a second
   finger held down late, after a long press has deselected; the haptic tick felt by hand; the first-run hint on a piece near the top and bottom; the Arrange
   tray on a real small phone; the knob over the dark desk; Straighten from 360° and 1.5° on a device (unit-tested only);
   a first-time Pass 2; TalkBack.
