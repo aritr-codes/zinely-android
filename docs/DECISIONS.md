@@ -13243,6 +13243,8 @@ jokes inside facts, caveats or steps; paragraphs short.
 step depends on it (the hero, About, the fold guide's tone). The strings `tools/check-public-copy.cjs` locks stay
 as they are.
 
+Changelog lines, headlines and status notes may be fragments; body sentences keep their articles and verbs.
+
 **Changelog entries** name the change in one short line under *Added*, *Changed* or *Fixed*, for example
 "Select several zines at once." The how-to goes in the app, not in the changelog. A limitation stays whole: say what
 is untested or not fixed, and never shorten it into a claim.
