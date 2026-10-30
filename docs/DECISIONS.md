@@ -17614,12 +17614,14 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
    rotating the box (`ResizeHandles.kt:233-243`), so the knob's and the bottom handles' boxes are 54·cos t − 48 apart
    per axis (t = the turn off the nearest quarter): clear to about 27°, overlapping at their corners beyond it, by at
    most 9.8dp at 45° (A48 measured 2.1 clear at 22°, 3.8 overlapping at −35°). Each handle's mark stays outside the
-   knob's box at every angle (48.5·cos 45° = 34.3 > 24), so the handle can still be taken by its mark; in the overlap
-   the knob wins. **Open for the owner's freeze:** whether the handle should win the overlap instead. On the canvas the
+   knob's box at every angle (48.5·cos 45° = 34.3 > 24). **Decided:** in the overlap (up to 9.8dp at 45°) the knob
+   wins, because a touch on a handle's drawn mark still resizes; Pass 1 checks that on a piece turned 45° a tap on a
+   bottom corner handle's mark resizes and does not turn. On the canvas the
    knob wins over anything under it; chrome over the canvas (verb bar, trays, snack, the first-run hint) wins over the
    knob. If the knob would leave the canvas or touch the verb bar, a tray, the snack or the first-run hint, it goes
-   above the top edge instead; the side never changes during a drag. If neither side clears the hint, the hint wins:
-   the knob is not drawn until the hint goes ("Got it", or the first live drag or resize, which already counts as
+   above the top edge instead; the side never changes during a drag. While the hint is up, if neither side clears both
+   the hint and the chrome (verb bar, tray, snack), the hint wins: the knob is never drawn under chrome, and is not
+   drawn until the hint goes ("Got it", or the first live drag or resize, which already counts as
    discovery, `EditorScreen.kt:1314-1324`). Dragging turns about the box centre with no jump on touch (the angle at
    touch-down plus the swept angle, unwrapped so a full circle reads 360). The commit writes
    `before.copy(rotationDegrees = r)`: only the angle, never re-baked through `bakeCentreAnchored`, whose
@@ -17744,7 +17746,7 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
   must not appear as an unlabelled clickable), a tiny piece, a piece at the page bottom, a 90° piece, text turned 45°
   then edited (how a rotated text box looks while typed into is unverified), Straighten from 360°, 1.5° and 0° with its snack words, the snap haptic, the
   first-run hint up on a piece near the top and bottom of the page (the knob gives way, then appears once the hint
-  goes), a Pass 1 read of Straighten's `enabled=false` in the platform tree on an upright piece, and a TalkBack check
+  goes), on a piece turned 45° a tap on a bottom corner handle's mark resizes and does not turn, a Pass 1 read of Straighten's `enabled=false` in the platform tree on an upright piece, and a TalkBack check
   of Straighten.
 - The owner's 2026-08-12 handle ruling is amended, not replaced: a ninth mark is added, and the eight keep their
   placement. Stated so the owner can overrule it.

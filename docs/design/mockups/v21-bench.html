@@ -3957,9 +3957,11 @@ ink stem.  Numbers, all dp:
             degrees, overlapping at their corners beyond it, by at most 9.8 at 45.
             Measured here: 2.1 clear at 22, 3.8 overlapping at -35.  The handle's MARK
             stays outside the knob's box at every angle (48.5 cos 45 = 34.3 > 24), so
-            each handle can still be taken by its mark; in the overlap the knob wins
-            (priority, next).  Whether the handle should win the overlap instead is
-            OPEN, for the owner's freeze (ADR-143).
+            each handle can still be taken by its mark.  DECIDED 2026-10-29: in the
+            overlap (up to 9.8 at 45) the knob wins (priority, next), because a touch
+            on a handle's drawn mark still resizes.  Pass 1 checks it: on a piece
+            turned 45, a tap on a bottom corner handle's mark resizes and does not
+            turn.
   priority  on the canvas, the knob wins over anything under its hit box: another
             piece, the selected piece's body, the page's own gestures.  Chrome drawn
             over the canvas (the verb bar, a tray, the snack, the first-run hint) stays
@@ -3974,13 +3976,15 @@ the visible canvas or touch the verb bar, a tray, the snack or the first-run hin
 THE HINT).  Then it goes to the opposite side: on the up-normal through the top-centre
 edge, the same 54 out.  While the hint is up, the knob takes whichever side clears it.
 If both sides fail:
-  - and the knob below would touch the hint: THE HINT WINS.  The knob is not drawn until
-    the hint goes, then it appears (and re-chooses its side).  The hint goes on its own
+  - while the hint is up (neither side clears both the hint and the chrome: verb bar,
+    tray, snack): THE HINT WINS.  The knob is not drawn until the hint goes, then it
+    appears and re-chooses its side.  It is never drawn under chrome while the hint is
+    up.  [Ruled 2026-10-29 by the main session.]  The hint goes on its own
     "Got it", or, in the build, at the first live drag or resize, which already counts
     as discovery (EditorScreen.kt:1314-1324); in this prototype, on "Got it" or when the
     selection clears.
-  - otherwise (a piece taller than the free canvas): it stays below and whatever covers
-    it wins; Arrange > Turn and two fingers are still there.
+  - otherwise, with no hint up (a piece taller than the free canvas): it stays below
+    and whatever covers it wins; Arrange > Turn and two fingers are still there.
 The side is chosen when the piece is selected, when a tray opens or closes, when the hint
 goes, and when an act ends.  It never changes during a drag, so the knob does not jump
 out from under the finger.
@@ -4050,7 +4054,7 @@ its heading, unchanged from A33.  The glyph has no visible label, so it never gr
 
 A48.7  WHEN THE KNOB IS HIDDEN.  While words are being typed, in Reframe, when nothing is
 selected, and when more than one piece is selected (not reachable in the Bench today).
-Also while the first-run hint is up and neither side clears it (A48.2).  It shows with the
+Also while the first-run hint is up and no side clears it and the chrome (A48.2).  It shows with the
 Arrange tray open, so the tray and the knob can be used together.
 
 A48.8  UNDO WORDS FOR A TURN (amends A26 D4 = 4c).  Every piece's position and size are
@@ -4344,8 +4348,8 @@ const a48=(()=>{
     if(onHint(k)) return false;
     return ![$('ctx'),arrPanel,$('inkpop'),flipPanel,$('snack')].some(n=>n.classList.contains('show')&&meets(h,n.getBoundingClientRect()));
   }
-  // A48.2: below unless it does not fit; then above.  If neither fits: when the knob below would touch the
-  // first-run hint, the hint wins and the knob is not drawn until the hint goes; otherwise below.
+  // A48.2: below unless it does not fit; then above.  If neither fits while the first-run hint is up, the hint
+  // wins and the knob is not drawn until the hint goes (never drawn under chrome); with no hint, below.
   function place(){
     if(!sel||drag) return;
     const k=knobOf(sel); if(!k) return;
@@ -4354,7 +4358,7 @@ const a48=(()=>{
     k.classList.add('a48-top');
     if(fits(k)) return;
     k.classList.remove('a48-top');
-    if(onHint(k)) k.classList.add('a48-off');
+    if(hintUp()) k.classList.add('a48-off');
   }
   const placeSoon=()=>{ requestAnimationFrame(place); setTimeout(place,220); };
   let drag=null;
