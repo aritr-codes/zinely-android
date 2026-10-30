@@ -257,32 +257,39 @@ private fun HandleTarget(
                 var token: Long? = null
                 var cur = Offset(centerPx.x.toFloat(), centerPx.y.toFloat())
                 var last: Transform? = null
-                detectDragGestures(
-                    onDragStart = {
-                        cur = Offset(centerPx.x.toFloat(), centerPx.y.toFloat())
-                        last = null
-                        token = beginSession()
-                    },
-                    onDrag = { change, amount ->
-                        change.consume()
-                        val t = token
-                        if (t != null) {
-                            cur += amount
-                            last = onDrag(cur, t)
-                        }
-                    },
-                    onDragEnd = {
-                        val t = token
-                        val after = last
-                        if (t != null && after != null) commitSession(after, t) else if (t != null) cancelSession(t)
-                        token = null
-                    },
-                    onDragCancel = {
-                        val t = token
-                        if (t != null) cancelSession(t)
-                        token = null
-                    },
-                )
+                try {
+                    detectDragGestures(
+                        onDragStart = {
+                            cur = Offset(centerPx.x.toFloat(), centerPx.y.toFloat())
+                            last = null
+                            token = beginSession()
+                        },
+                        onDrag = { change, amount ->
+                            change.consume()
+                            val t = token
+                            if (t != null) {
+                                cur += amount
+                                last = onDrag(cur, t)
+                            }
+                        },
+                        onDragEnd = {
+                            val t = token
+                            val after = last
+                            if (t != null && after != null) commitSession(after, t) else if (t != null) cancelSession(t)
+                            token = null
+                        },
+                        onDragCancel = {
+                            val t = token
+                            if (t != null) cancelSession(t)
+                            token = null
+                        },
+                    )
+                } finally {
+                    // `detectDragGestures` does not call onDragCancel when this block restarts because a key
+                    // changed: a tray tap from a second finger moves the piece, so `centerPx` changes mid-drag.
+                    // Cancel is token-gated, so a session already replaced is left alone, and it clears the preview.
+                    token?.let(cancelSession)
+                }
             },),
         contentAlignment = Alignment.Center,
     ) {

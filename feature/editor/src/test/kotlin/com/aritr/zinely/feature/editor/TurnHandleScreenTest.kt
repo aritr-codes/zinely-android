@@ -21,6 +21,7 @@ import com.aritr.zinely.core.editor.ResizeHandle
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
@@ -201,6 +202,25 @@ class TurnHandleScreenTest {
         composeRule.waitForIdle()
         assertEquals(selection, store.uiState.value.selection)
         assertEquals(40.0, store.uiState.value.document.pages[0].elements.single().transform.rotationDegrees, 1.0)
+    }
+
+    @Test
+    fun a_handle_whose_gesture_restarts_mid_drag_leaves_no_session_and_the_knob_comes_back() {
+        val store = storeWith(midPage)
+        show(store)
+        composeRule.onNodeWithTag("$ResizeHandleTagPrefix${ResizeHandle.BOTTOM_RIGHT.name}").performTouchInput {
+            down(center)
+            moveBy(Offset(30f, 30f))
+        }
+        composeRule.waitForIdle()
+        assertEquals(Interaction.Transforming::class, store.uiState.value.interaction::class)
+        // A second finger's tray tap does this: the moved piece changes the handle's pointerInput key.
+        store.dispatch(Intent.Nudge(PtPoint(5.0, 0.0)))
+        composeRule.waitForIdle()
+        composeRule.onRoot().performTouchInput { up() }
+        composeRule.waitForIdle()
+        assertEquals(Interaction.Idle, store.uiState.value.interaction)
+        composeRule.onNodeWithTag(TurnHandleTestTag).assertExists()
     }
 
     @Test

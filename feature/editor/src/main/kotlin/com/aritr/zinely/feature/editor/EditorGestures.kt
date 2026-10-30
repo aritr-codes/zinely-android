@@ -101,8 +101,8 @@ internal val TapInkTolerance = 8.dp
  *   `null` when a gesture ends so the preview resets.
  * @param onDoubleTap the page-space point of a double-tap (text-edit seam).
  * @param inert true while another surface owns the session (the knob, A48.3): taps do nothing and no transform
- *   begins. A flag rather than removing this modifier, because cancelling it mid-gesture skips the commit,
- *   the cancel and `onPreview(null)` below and would strand the session and the preview.
+ *   begins. A flag rather than removing this modifier, so a gesture in progress always reaches its own end
+ *   below: the commit or cancel, and `onPreview(null)`.
  */
 public fun Modifier.editorTransformGestures(
     screenPxPerPt: Float,

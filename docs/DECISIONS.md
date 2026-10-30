@@ -17799,9 +17799,11 @@ letter. Each one keeps the frozen behaviour; say so if one is wrong.
   during a drag: the hit box is frozen at touch-down and only the drawn knob turns.
 - **The handles turn with the piece during a knob drag and take no touches.** A second finger on the page is also
   ignored, because its `BeginTransform` would replace the knob's session (A48.3). The page's gestures stay attached
-  and read an `inert` flag: removing them mid-gesture skips their cleanup. Any surface also declines to open a session
-  over one already open, so two fingers crossing the slop in one event cannot strand either. Review found this hazard
-  by reading; the test written for it (`a_knob_finger_and_a_page_finger_crossing_slop…`) was green before the fix too,
+  and read an `inert` flag. The knob and the handles also decline to open a session over one already open. The page does
+  not decline: it is the way out of any session that does get stranded. A handle whose gesture restarts mid-drag (a
+  second finger's tray tap moves the piece, which changes its `pointerInput` key) now cancels its session; before this
+  the session stayed open and hid the knob, proven by `a_handle_whose_gesture_restarts_mid_drag…`. Removing a modifier
+  mid-gesture did not strand a session in the same test harness. Review found the two-finger hazard by reading; the test written for it (`a_knob_finger_and_a_page_finger_crossing_slop…`) was green before the fix too,
   so the same-event timing is not proven on a phone.
 - **The knob is hidden during a body drag, pinch or resize.** A48.7's list does not name these and the prototype keeps
   it up. The drag's own preview moves the piece, and the knob would sit on the old place.
