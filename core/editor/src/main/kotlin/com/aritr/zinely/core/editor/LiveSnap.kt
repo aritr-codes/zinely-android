@@ -22,7 +22,7 @@ public data class LiveSnapResult(
  * baked into the commit, never just shown ([§5.4](../../../../../../../docs/spikes/s4-editor-mvi.md)).
  *
  * **F1 — skip rotated.** Snapping a rotated element would align its *pre-rotation* AABB edges, which no
- * longer touch the visible box; so when the baked transform is rotated (`rotationDegrees != 0`) the box is
+ * longer touch the visible box; so when the baked transform is rotated (normalised angle != 0) the box is
  * baked but never snapped and no guide fires. **Multi-select** (§5.5, post-MVP) likewise bakes without
  * snapping — group-bbox snapping is the additive extension. Both degrade to plain bake, not to nothing.
  */
@@ -58,14 +58,15 @@ public object LiveSnap {
         // MVP selects one (§5.5); F1 skips rotated. Either way: bake, don't snap.
         val id = selection.singleOrNull() ?: return LiveSnapResult(baked, emptyList())
         val t = baked[id] ?: return LiveSnapResult(baked, emptyList())
-        if (abs(t.rotationDegrees) > ROTATION_EPSILON_DEG) return LiveSnapResult(baked, emptyList())
+        // A48.4: both rotation tests read the angle normalised to (-180, 180], so 360° and 720° are upright.
+        if (abs(TurnMath.normalise(t.rotationDegrees)) > ROTATION_EPSILON_DEG) return LiveSnapResult(baked, emptyList())
 
         val moving = PtRect(t.xPt, t.yPt, t.widthPt, t.heightPt)
         // Candidate lines come from un-rotated neighbours only: a rotated element's stored x/y/w/h is its
         // pre-rotation box, whose edges no longer touch the rendered shape — snapping to them aligns to an
         // invisible line (Codex rec #3). Exclude both the selection and any rotated neighbour.
         val others = page.elements
-            .filter { it.id !in selection && abs(it.transform.rotationDegrees) <= ROTATION_EPSILON_DEG }
+            .filter { it.id !in selection && abs(TurnMath.normalise(it.transform.rotationDegrees)) <= ROTATION_EPSILON_DEG }
             .map { it.transform.let { o -> PtRect(o.xPt, o.yPt, o.widthPt, o.heightPt) } }
         val snap = Snap.snap(moving, others, pageSize, thresholdPt)
         val snapped = t.copy(xPt = snap.adjusted.x, yPt = snap.adjusted.y)
