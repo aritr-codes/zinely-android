@@ -17612,18 +17612,23 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
    54 − 24 − 24 = **6dp**, so the knob's box clears all eight resize handles' boxes on any upright piece, and at
    every quarter turn. **On a turned piece it does not:** the build places each 48dp box at the rotated point without
    rotating the box (`ResizeHandles.kt:233-243`), so the knob's and the bottom handles' boxes are 54·cos t − 48 apart
-   per axis (t = the turn off the nearest quarter): clear to about 27°, overlapping at their corners beyond it, by at
-   most 9.8dp at 45° (A48 measured 2.1 clear at 22°, 3.8 overlapping at −35°). Each handle's mark stays outside the
-   knob's box at every angle (48.5·cos 45° = 34.3 > 24). **Decided:** in the overlap (up to 9.8dp at 45°) the knob
-   wins, because a touch on a handle's drawn mark still resizes; Pass 1 checks that on a piece turned 45° a tap on a
-   bottom corner handle's mark resizes and does not turn. On the canvas the
-   knob wins over anything under it; chrome over the canvas (verb bar, trays, snack, the first-run hint) wins over the
-   knob. If the knob would leave the canvas or touch the verb bar, a tray, the snack or the first-run hint, it goes
-   above the top edge instead; the side never changes during a drag. While the hint is up, if neither side clears both
-   the hint and the chrome (verb bar, tray, snack), the hint wins: the knob is never drawn under chrome, and is not
-   drawn until the hint goes ("Got it", or the first live drag or resize, which already counts as
-   discovery, `EditorScreen.kt:1314-1324`). Dragging turns about the box centre with no jump on touch (the angle at
-   touch-down plus the swept angle, unwrapped so a full circle reads 360). The commit writes
+   per axis (t = the turn off the nearest quarter): for the **bottom-centre** handle, clear to about 27°, overlapping at
+   their corners beyond it, by at most 9.8dp at 45° (A48 measured 2.1 clear at 22°, 3.8 overlapping at −35°). The
+   bottom **corner** handles overlap sooner on a narrow piece of width W: W = 20dp at about 19°, 40 at 13.5°, 60 at
+   10°, 80 at 8°. Every handle's mark stays outside the knob's box at every angle and every W (48.5·cos 45° = 34.3 >
+   24). **Decided:** in the overlap (up to 9.8dp at 45°) the knob wins, and that holds because a touch on a handle's
+   drawn mark still resizes. Pass 1 checks that on a piece turned 45° a tap on a bottom corner handle's mark resizes
+   and does not turn, and that on a piece about 40dp wide turned about 15° a tap on a bottom corner mark resizes. On
+   the canvas the knob wins over anything under it; chrome over the canvas (verb bar, trays, snack, the first-run
+   hint) wins over the knob. If the knob would leave the visible canvas (cut off by the screen's edge and the shelf)
+   or touch the verb bar, a tray, the snack or the first-run hint, it goes above the top edge instead; the side never
+   changes during a drag. **One fallback rule:** if neither side fits (canvas edge, hint, or chrome), the knob is not
+   drawn, never off-canvas and never under chrome; it appears once a side fits (the hint goes on "Got it" or the
+   first live drag or resize, which already counts as discovery, `EditorScreen.kt:1314-1324`; a tray closes; the
+   piece moves). Dragging turns about the box centre with **no jump on touch**: nothing turns until the finger passes
+   the platform touch slop (Compose's drag detection), so a touch records nothing; then the angle is the angle at
+   touch-down plus the swept angle, unwrapped so a full circle reads 360. A touch never straightens a tilt (decision
+   2's hysteresis). The commit writes
    `before.copy(rotationDegrees = r)`: only the angle, never re-baked through `bakeCentreAnchored`, whose
    `cx − w / 2` round trip (`TransformMath.kt:36-45`) can move x and y by floating-point error and would break the
    turn-only word (decision 5). One drag is one undo step. A drag that ends where it began records no step and keeps
@@ -17633,16 +17638,20 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
    exactly one piece is selected. It is not in the platform accessibility tree, as the resize handles are not.
 2. **Snapping (A48.4): the knob only.** During a knob drag, within ±5° (inclusive) of the nearest multiple of 90
    counted in the angle's own turns (358 → 360, −92 → −90), the piece shows and commits that multiple **exactly**.
-   One haptic tick on entering a snap. **The two-finger turn does not snap**; it stays as built today, so a deliberate
+   One haptic tick on entering a snap. **Hysteresis:** a knob drag that starts within 5° of a quarter turn, but not on
+   one, does not snap to that quarter until the angle has once left its ±5° zone, so touching or nudging the knob of
+   a saved 3° piece never straightens it (from 3°, a 0.5° drag stays near 3°, unsnapped; past 8° and back to 2° snaps to 0).
+   **The two-finger turn does not snap**; it stays as built today, so a deliberate
    small tilt (1–5°) stays reachable with two fingers. One-finger drags and pinches never change the angle. Stated
-   plainly: the knob cannot leave a piece within 5° of a quarter turn (other than on it); two fingers can; the 15°
+   plainly: a knob drag cannot leave a piece within 5° of a quarter turn (other than on it), except a tilt it started
+   from and never left; two fingers can; the 15°
    tray steps cannot put one there from a multiple of 15 (they carry no snap, and keep whatever offset two fingers
    left). `LiveSnap` changes both of its rotation tests to the angle normalised to (−180, 180]: the selected piece
    (`LiveSnap.kt:61`) and the neighbour filter (`LiveSnap.kt:68`), so a piece at 360° or 720° edge-snaps, and is
    snapped to, like one at 0°.
 3. **A readout while dragging (A48.5).** A pill shows the angle to be committed, normalised to (−180, 180], whole
    degrees ("15°", "−30°", "180°"), on the side of the piece opposite the knob, only while a knob drag is live. Leaf
-   tint when snapped. Not spoken.
+   tint only when the angle is exactly on a quarter turn. Not spoken.
 4. **Straighten (A48.6).** A third button in Arrange > Turn, after Rotate clockwise, glyph a level line with a tick
    under a tilted dashed line, spoken "Straighten", plus a matching element custom action. It is
    `Intent.RotateBy(−n)` where n is the angle normalised to (−180, 180] (375 → 360, −30 → 0, 180 → 0): **no new
@@ -17671,8 +17680,15 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
      `EditorReducer.kt:447-454`, which clears Redo). A later tap extends the run only while the newest undo entry is
      the run's own command; it then replaces that entry with one `TransformCommand` from the run's `before` to the new
      `after`.
+   - **The guard.** The reducer clears the marker on every intent except an extending same-group tray tap on the
+     same piece. On each merge the marker is re-pointed at the replacement command, and "the run's own command" is an
+     identity test (`===`), not equality: `TransformCommand` is a data class, and Undo then Redo puts the same
+     instance back.
+   - **Autosave.** Extending a run, and removing a run that is back at its start, each emit `Autosave(doc)` of the
+     resulting document, as `committing` does (`EditorReducer.kt:446-454`).
    - A run **ends** at any other history step (another group, Straighten, Layer, a drag, a handle, the knob, two
-     fingers, ink, flip, Undo, Redo), at a change of the selected piece, when the tray closes (Done, Back, empty-page
+     fingers, ink, flip, Undo, Redo), at **any `BeginTransform`** (a drag, a handle, the knob, two fingers) whether or
+     not it records a step, at a change of the selected piece, when the tray closes (Done, Back, empty-page
      tap, page change), and with the session. **No timer.** A TalkBack element action used while the tray is open is
      its own step and ends any run.
    - **Back at its start.** A run counts as back at its start when every Transform field of every piece is within
@@ -17733,7 +17749,11 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
   tray closing, a TalkBack element action with the tray open, and Undo each end a run; the revision moves on every
   merge (A41.2). `CommitTransform` gains the same tolerant "ends where it began" test, tested with a **0 → 360 knob
   drag** (no step, Redo kept). The knob commit leaves x, y, width and height bit-identical; the turn-only word holds
-  for a two-finger turn whose x drifted by 1e-12.
+  for a two-finger turn whose x drifted by 1e-12. **Knob hysteresis:** start at 3°, drag 0.5° → stays near 3°, no
+  snap; start at 3°, drag past 8° and back to 2° → snaps to 0. A knob touch inside the touch slop records nothing.
+  **Autosave:** a Move run back to start emits `Autosave` of the restored document. The identity guard: Undo then
+  Redo of a run's step, then a same-group tray tap, is a new step; a `BeginTransform` that records nothing still ends
+  the run.
 - `feature:editor`: a `TurnHandle` beside `ResizeHandles` (same session pattern: Begin, override preview, one Commit
   of `before.copy(rotationDegrees = r)`, consumes its pointers), the knob snap, the flip rule (with the first-run hint
   in its avoid list), the readout; `ArrangeTray`'s third Turn button, the tray source on its taps, and the tray-close

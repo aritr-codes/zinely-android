@@ -3953,15 +3953,18 @@ ink stem.  Numbers, all dp:
   turned    the build places each 48 box at the rotated point but does not rotate the
             box (ResizeHandles.kt:233-243), so on a turned piece the knob's box and the
             bottom handles' boxes, 54 apart along the turned normal, are 54 cos(t) - 48
-            apart per axis (t = the turn off the nearest quarter): clear up to about 27
-            degrees, overlapping at their corners beyond it, by at most 9.8 at 45.
-            Measured here: 2.1 clear at 22, 3.8 overlapping at -35.  The handle's MARK
-            stays outside the knob's box at every angle (48.5 cos 45 = 34.3 > 24), so
-            each handle can still be taken by its mark.  DECIDED 2026-10-29: in the
-            overlap (up to 9.8 at 45) the knob wins (priority, next), because a touch
-            on a handle's drawn mark still resizes.  Pass 1 checks it: on a piece
-            turned 45, a tap on a bottom corner handle's mark resizes and does not
-            turn.
+            apart per axis (t = the turn off the nearest quarter): for the BOTTOM-CENTRE
+            handle, clear up to about 27 degrees, overlapping at their corners beyond
+            it, by at most 9.8 at 45.  The bottom CORNER handles start to overlap
+            sooner on a narrow piece of width W: W = 20 at about 19 degrees, 40 at
+            13.5, 60 at 10, 80 at 8.  Measured here: 2.1 clear at 22, 3.8 overlapping
+            at -35.  The handles' MARKS stay outside the knob's box at every angle and
+            every W (48.5 cos 45 = 34.3 > 24), so each handle can still be taken by
+            its mark.  DECIDED 2026-10-29: in the overlap (up to 9.8 at 45) the knob
+            wins (priority, next), and that holds because a touch on a handle's drawn
+            mark still resizes.  Pass 1 checks it: on a piece turned 45, a tap on a
+            bottom corner handle's mark resizes and does not turn; and on a piece about
+            40 wide turned about 15, a tap on a bottom corner mark resizes.
   priority  on the canvas, the knob wins over anything under its hit box: another
             piece, the selected piece's body, the page's own gestures.  Chrome drawn
             over the canvas (the verb bar, a tray, the snack, the first-run hint) stays
@@ -3975,24 +3978,25 @@ A48.2  FLIP TO THE TOP.  The knob goes below the piece unless its hit box would 
 the visible canvas or touch the verb bar, a tray, the snack or the first-run hint (A33
 THE HINT).  Then it goes to the opposite side: on the up-normal through the top-centre
 edge, the same 54 out.  While the hint is up, the knob takes whichever side clears it.
-If both sides fail:
-  - while the hint is up (neither side clears both the hint and the chrome: verb bar,
-    tray, snack): THE HINT WINS.  The knob is not drawn until the hint goes, then it
-    appears and re-chooses its side.  It is never drawn under chrome while the hint is
-    up.  [Ruled 2026-10-29 by the main session.]  The hint goes on its own
-    "Got it", or, in the build, at the first live drag or resize, which already counts
-    as discovery (EditorScreen.kt:1314-1324); in this prototype, on "Got it" or when the
-    selection clears.
-  - otherwise, with no hint up (a piece taller than the free canvas): it stays below
-    and whatever covers it wins; Arrange > Turn and two fingers are still there.
+ONE FALLBACK RULE: if neither side fits (the canvas edge, the hint, or chrome: verb bar,
+tray, snack), THE KNOB IS NOT DRAWN.  It is never drawn off the visible canvas or under
+chrome, in any case.  It appears, re-choosing its side, once something changes and a
+side fits: the hint goes, a tray closes, the piece moves.  Arrange > Turn and two fingers
+are still there meanwhile.  [Ruled 2026-10-29 by the main session; this replaces an
+earlier "stays below and whatever covers it wins".]  The hint goes on its own "Got it",
+or, in the build, at the first live drag or resize, which already counts as discovery
+(EditorScreen.kt:1314-1324); in this prototype, on "Got it" or when the selection clears.
+The visible canvas is the canvas cut off by the screen's edge and by the shelf.
 The side is chosen when the piece is selected, when a tray opens or closes, when the hint
 goes, and when an act ends.  It never changes during a drag, so the knob does not jump
 out from under the finger.
 
 A48.3  TURNING.  A drag on the knob turns the piece about its box centre.  No jump on
-touch: the angle is the piece's angle at touch-down plus the signed angle the finger has
-swept round the centre since touch-down, accumulated frame by frame so a full circle
-reads 360, not 0.  Position and size never change: the commit writes
+touch: nothing turns until the finger has moved past the platform touch slop (Compose's
+own drag detection; 8 in this prototype), so a touch, or a touch that wobbles, changes
+nothing and records no step.  Then the angle is the piece's angle at touch-down plus the
+signed angle the finger has swept round the centre since touch-down, accumulated frame by
+frame so a full circle reads 360, not 0.  A touch never straightens a tilt (A48.4).  Position and size never change: the commit writes
 before.copy(rotationDegrees = r), the angle alone, and is never re-baked through
 bakeCentreAnchored, whose cx - w/2 round trip (TransformMath.kt:36-45) can move x and y by
 floating-point error.  One drag is one undo step, committed on release.  A drag that ends
@@ -4006,10 +4010,16 @@ A48.4  SNAPPING TO QUARTER TURNS: THE KNOB ONLY.  Let r be the angle a knob drag
 q the multiple of 90 nearest r, counted in r's own turns (358 -> q = 360, not 0; -92 ->
 q = -90).  If |r - q| <= 5, the piece shows and commits q EXACTLY; otherwise r.  The 5 is
 inclusive.  On entering a snap the phone gives one light tick (a haptic, never a sound).
+HYSTERESIS.  A knob drag that STARTS within 5 of a quarter turn, but not on it (a saved 3
+degree tilt), does not snap to that quarter until the angle has once left its +-5 zone.
+So touching or nudging the knob never straightens a tilt: from 3, a drag of 0.5 stays at
+3 or 3.5, never 0; from 3, a drag past 8 and back to 2 snaps to 0.  A drag that starts ON a
+quarter turn, or outside every zone, snaps at once.
 THE TWO-FINGER TURN DOES NOT SNAP.  It stays as built today, so a deliberate small tilt
 (1 to 5 degrees) stays reachable with two fingers.  One-finger drags and pinches never
-change the angle.  Plainly: the knob cannot leave a piece within 5 degrees of a quarter
-turn (other than on it); two fingers can; the 15 degree tray steps cannot put one there
+change the angle.  Plainly: a knob drag that goes anywhere cannot leave a piece within 5
+degrees of a quarter turn (other than on it), except a tilt it started from and never left
+(hysteresis); two fingers can; the 15 degree tray steps cannot put one there
 from a multiple of 15 (they carry no snap, and keep whatever offset two fingers left).
 REJECTED: both paths snap.  It would straighten pieces makers had tilted on purpose,
 including tilts already saved (a saved 3 degree piece touched by two fingers would jump
@@ -4026,7 +4036,8 @@ the angle the piece will be committed at: normalised to the range (-180, 180], r
 to whole degrees, written with a degree sign and a true minus ("15°", "−30°", "180°").
 It sits on the side of the piece opposite the knob (above it when the knob is below),
 8 clear of the piece's on-screen bounds, kept inside the canvas.  When the angle is
-snapped the pill takes --leaf-tint behind the same number, so the state is told by the
+exactly on a quarter turn (snapped, or started there) the pill takes --leaf-tint; a
+tilt near one, unsnapped, keeps the plain pill.  The tint sits behind the same number, so the state is told by the
 number first and the colour second.  It goes on release, with no exit motion.  It is not
 spoken (TalkBack users turn by the tray and the element's actions; the undo snack names
 the result).  Reduced motion: it appears and goes without a transition, as here.
@@ -4054,7 +4065,7 @@ its heading, unchanged from A33.  The glyph has no visible label, so it never gr
 
 A48.7  WHEN THE KNOB IS HIDDEN.  While words are being typed, in Reframe, when nothing is
 selected, and when more than one piece is selected (not reachable in the Bench today).
-Also while the first-run hint is up and no side clears it and the chrome (A48.2).  It shows with the
+Also whenever neither side fits: the canvas edge, the hint or chrome (A48.2).  It shows with the
 Arrange tray open, so the tray and the knob can be used together.
 
 A48.8  UNDO WORDS FOR A TURN (amends A26 D4 = 4c).  Every piece's position and size are
@@ -4092,8 +4103,17 @@ A48.9  ONE UNDO RULE FOR REPEATED TAPS (amends A33's "Every tap is one undo step
   commits like any tap (EditorReducer.kt committing(), :447-454, which clears Redo); a
   later tap extends the run only while the newest undo entry is still the run's own
   command, by replacing it with one Transform step from the run's start to now.
+  THE GUARD.  The reducer clears the marker on EVERY intent except an extending
+  same-group tray tap on the same piece.  On each merge the marker is re-pointed at the
+  replacement command, and "still the run's own command" is an IDENTITY test (===), not
+  equality: TransformCommand is a data class, and Undo then Redo puts the same instance
+  back, which an equality test could mistake for the run.
+  AUTOSAVE.  Extending a run, and removing a run that is back at its start, each emit
+  Autosave(doc) of the resulting document, as committing() does (EditorReducer.kt:446-454).
   A run ENDS at: any other history step (a tap in another group, Straighten, a Layer
-  tap, a drag, a handle, the knob, two fingers, an ink, a flip, Undo or Redo); a change
+  tap, a drag, a handle, the knob, two fingers, an ink, a flip, Undo or Redo); ANY
+  BeginTransform (a drag, a handle, the knob, two fingers), whether or not it goes on to
+  record a step; a change
   of the selected piece, including a tap on another piece while the tray stays open; the
   tray closing (Done, Back, a tap on empty page, a page change); and the end of the
   session (leaving the Bench; the run marker is never saved).  NOTHING ELSE ends it: no
@@ -4169,6 +4189,13 @@ BUILD TEST CASES this block adds (ADR-143 lists them too):
   - a TalkBack element action with the tray open ends the run and is its own step
   - the knob commit leaves x, y, width and height bit-identical (copy, not bake)
   - the turn-only word with a two-finger turn whose x drifted by 1e-12: "turned"
+  - KNOB HYSTERESIS: start at 3, drag 0.5 -> stays near 3, no snap; start at 3,
+    drag past 8 and back to 2 -> snaps to 0
+  - a knob touch that moves less than the touch slop changes nothing, records no step
+  - a Move run back to start emits Autosave of the restored document; each extending
+    tap emits Autosave
+  - Undo then Redo of a run's step, then a same-group tray tap: a new step, not a merge
+    (identity guard); a BeginTransform that records nothing still ends the run
 =========================================================================== -->
 <style>
 /* A48.1: the turn knob, a ninth mark beside the eight .hnd.  It lives inside .el so it turns with
@@ -4238,7 +4265,7 @@ BUILD TEST CASES this block adds (ADR-143 lists them too):
 </section>
 <script>
 const a48=(()=>{
-  const SNAP=5, QUARTER=90, EPS=1e-6;
+  const SNAP=5, QUARTER=90, EPS=1e-6, TOUCH_SLOP=8;
   // (-180, 180]: the readout's range, and Straighten's test for upright.
   const norm=d=>{ let n=((d%360)+360)%360; if(n>180) n-=360; return Object.is(n,-0)?0:n; };
   // A48.4: the nearest quarter turn in r's own turns; within 5 (inclusive) it is written exactly.
@@ -4342,14 +4369,18 @@ const a48=(()=>{
   // The A33/A17 first-run hint, when it is actually on screen (review stages hide it with display:none).
   const hintUp=()=>coach.classList.contains('show')&&coach.getClientRects().length>0;
   const onHint=k=>hintUp()&&meets(hit(k),coach.getBoundingClientRect());
+  // The canvas the maker can actually see: the canvas area, cut off by the phone's edge and by the shelf.
+  const visible=()=>{ const a=area.getBoundingClientRect(), p=$('phone').getBoundingClientRect(), s=$('tray').getBoundingClientRect();
+    return {left:Math.max(a.left,p.left),right:Math.min(a.right,p.right),top:Math.max(a.top,p.top),
+            bottom:Math.min(a.bottom,p.bottom,s.top>a.top?s.top:Infinity)}; };
   function fits(k){
     const h=hit(k);
-    if(!inside(h,area.getBoundingClientRect())) return false;
+    if(!inside(h,visible())) return false;
     if(onHint(k)) return false;
     return ![$('ctx'),arrPanel,$('inkpop'),flipPanel,$('snack')].some(n=>n.classList.contains('show')&&meets(h,n.getBoundingClientRect()));
   }
-  // A48.2: below unless it does not fit; then above.  If neither fits while the first-run hint is up, the hint
-  // wins and the knob is not drawn until the hint goes (never drawn under chrome); with no hint, below.
+  // A48.2: below unless it does not fit; then above.  If neither fits (canvas edge, hint or chrome), the knob is
+  // not drawn: never off-canvas, never under chrome.  It is re-placed when any of those changes.
   function place(){
     if(!sel||drag) return;
     const k=knobOf(sel); if(!k) return;
@@ -4357,8 +4388,7 @@ const a48=(()=>{
     if(fits(k)) return;
     k.classList.add('a48-top');
     if(fits(k)) return;
-    k.classList.remove('a48-top');
-    if(hintUp()) k.classList.add('a48-off');
+    k.classList.remove('a48-top'); k.classList.add('a48-off');
   }
   const placeSoon=()=>{ requestAnimationFrame(place); setTimeout(place,220); };
   let drag=null;
@@ -4382,17 +4412,25 @@ const a48=(()=>{
       try{ k.setPointerCapture(e.pointerId); }catch(_){}
       endRun();
       const c=centre(el), t=read(el);
-      drag={el,c,last:angle({x:e.clientX,y:e.clientY},c),swept:0,before:t};
-      showPill(el,t.r,snap(t.r)!==t.r||t.r%QUARTER===0);
+      // A48.4 hysteresis: a drag that starts within 5 of a quarter turn, but not on it, is not armed to snap
+      // until the angle has once left that quarter's zone, so touching the knob never straightens a tilt.
+      const q0=QUARTER*Math.round(t.r/QUARTER);
+      drag={el,c,x0:e.clientX,y0:e.clientY,live:false,last:angle({x:e.clientX,y:e.clientY},c),swept:0,before:t,
+            q0,armed:!(Math.abs(t.r-q0)<=SNAP&&t.r!==q0)};
+      showPill(el,t.r,t.r%QUARTER===0);   // leaf only when it is ON a quarter turn
     });
     k.addEventListener('pointermove',e=>{
       if(!drag||drag.el!==el) return;
+      // A48.3: nothing turns until the finger passes the platform touch slop (8; Compose's drag detection).
+      if(!drag.live){ if(Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)<=TOUCH_SLOP) return; drag.live=true; }
       const a=angle({x:e.clientX,y:e.clientY},drag.c);
       let d=a-drag.last; if(d>180) d-=360; if(d<-180) d+=360;   // unwrap, so a full circle reads 360
       drag.swept+=d; drag.last=a;
-      const raw=drag.before.r+drag.swept, r=snap(raw);
+      const raw=drag.before.r+drag.swept;
+      if(!drag.armed&&Math.abs(raw-drag.q0)>SNAP) drag.armed=true;
+      const r=drag.armed?snap(raw):raw;
       el.style.setProperty('--arr-r',r+'deg');
-      showPill(el,r,r!==raw||r%QUARTER===0);
+      showPill(el,r,r%QUARTER===0);
     });
     const release=()=>{
       if(!drag||drag.el!==el) return;

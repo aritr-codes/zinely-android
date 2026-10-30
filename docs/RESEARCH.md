@@ -2091,7 +2091,9 @@ rotation.
 [ADR-143](DECISIONS.md#adr-143) owns the decision and A48 the design. Followed: a detached knob on the ring's axis,
 turning about the centre (R37.2); a readout only while turning (Procreate, Keynote); snapping to straight (Adobe
 Express, Instagram), on the knob only: the two-finger turn does not snap, so a deliberate small tilt stays
-reachable and tilts already saved are never straightened by a touch (ADR-143 decision 2); Straighten as the one-tap way back to upright
+reachable and tilts already saved are never straightened by a touch; and the knob itself has hysteresis, so a drag
+that starts on a near-straight tilt does not snap until it has left that quarter's ±5° zone (ADR-143 decision 2);
+Straighten as the one-tap way back to upright
 beside the existing 15° arrows. **Departs:** no exact-angle field (🔭 later if asked), and the knob sits below the
 piece rather than above (Procreate), so a finger on it does not hide the piece; it flips above only when below
 does not fit.
