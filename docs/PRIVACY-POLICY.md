@@ -11,10 +11,10 @@ and feedback you choose to send to Aastra. Aastra is the independent two-person 
 
 **The Zinely Android app collects no information from you. It uploads nothing and has no servers.**
 
-Zinely does not ask for internet access. Your zines stay on your phone.
+Your zines stay on your phone unless you save, share or back them up.
 
 The app has no account, no sign-in, no analytics, no advertising, no tracking, and no crash reporting.
-Because Zinely does not request internet access, it cannot send your information anywhere, even by accident.
+Because Zinely does not request internet access, it cannot send your information over the internet, even by accident.
 
 Feedback is separate. If you send a Google Form or an email, the team receives what you choose to
 share. You do not need to send feedback to use the app.
@@ -41,7 +41,7 @@ work. You do this through Android's system file tools.
 | Permission | When | Why |
 |---|---|---|
 | **Photo picker** (no permission required) | When you add a photo | Zinely uses the Android photo picker. You choose single photos. Zinely never gets access to your whole photo library. |
-| **`WRITE_EXTERNAL_STORAGE`** — *Android 9 and older only* | The first time you save a PDF | Zinely needs it to write your PDF to your **Downloads** folder. On Android 10 and newer, Zinely uses the system's scoped Downloads feature and asks for no permission. Zinely writes only the export file you asked for. |
+| **`WRITE_EXTERNAL_STORAGE`** — *Android 9 and older only* | The first time you save a PDF | Zinely needs it to write your PDF to your **Downloads** folder. On Android 10 and newer, Zinely uses the system's scoped Downloads feature and asks for no permission. Zinely writes only the export file you asked for. On these Android versions, Android also gives read access to shared storage (`READ_EXTERNAL_STORAGE`) with this permission. Zinely uses it only to check free space and which file names are already taken in Downloads. It does not open your photos or other files. |
 | **System file picker** (no permission required) | When you make or restore a backup | You choose the backup file and where it goes. Zinely gets access only to the file you pick in Android's picker. |
 | **Vibration** (no prompt) | When you use certain controls | Gives a short buzz when you touch a control. It gives Zinely no access to personal information. |
 
@@ -73,7 +73,7 @@ happen only when you ask, with files and places you choose.
 ## Children
 
 The Zinely Android app does not collect personal information from anyone, including children. It has
-no account, no profile, and no way to message or talk to other people.
+no account, no profile, and no way inside the app to message or talk to other people.
 
 ---
 
@@ -92,7 +92,8 @@ Delete them yourself if you no longer want them.
 ## Changes to this policy
 
 The "Last updated" date shows the latest revision. This revision rewrites the policy in plainer words.
-It does not change how the Android app handles your information.
+It does not change how the app, this website or feedback handle your information. It also explains a
+storage permission that Android adds on Android 9 and older.
 
 ---
 
