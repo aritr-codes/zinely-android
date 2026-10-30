@@ -258,11 +258,12 @@ class ArrangeTrayTest {
     fun closing_the_tray_ends_a_run() {
         val store = storeWithTwoTexts()
         var visible by mutableStateOf(true)
+        val elementId = store.uiState.value.selection.singleOrNull()
         composeRule.setContent {
             ZinelyTheme {
                 ArrangeTray(
                     visible = visible,
-                    elementId = store.uiState.value.selection.singleOrNull(),
+                    elementId = elementId,
                     dispatch = store::dispatch,
                     onDone = { visible = false },
                     firstFocusRequester = remember { FocusRequester() },
