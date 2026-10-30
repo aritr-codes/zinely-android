@@ -19,6 +19,7 @@ Changes since the beta.8 app.
 ### Added
 
 - Turn a piece with its knob; it snaps to quarter turns.
+- Two fingers anywhere on the page now turn the selected piece, even a small one.
 - Straighten button in Arrange > Turn.
 - Repeated Move, Size or Turn taps in Arrange are now one Undo.
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),

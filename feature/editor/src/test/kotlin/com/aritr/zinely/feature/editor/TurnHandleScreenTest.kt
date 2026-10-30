@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
@@ -31,6 +32,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -221,6 +223,277 @@ class TurnHandleScreenTest {
         composeRule.waitForIdle()
         assertEquals(Interaction.Idle, store.uiState.value.interaction)
         composeRule.onNodeWithTag(TurnHandleTestTag).assertExists()
+    }
+
+    /** Twist two fingers by 40° round [c], starting at the root-space points [a] and [b]. */
+    private fun twist(c: Offset, a: Offset, b: Offset, step: Int = 4) {
+        fun turned(p: Offset, deg: Double): Offset {
+            val r = Math.toRadians(deg)
+            val v = p - c
+            return c + Offset((v.x * cos(r) - v.y * sin(r)).toFloat(), (v.x * sin(r) + v.y * cos(r)).toFloat())
+        }
+        composeRule.onRoot().performTouchInput {
+            down(0, a)
+            down(1, b)
+            for (d in step..40 step step) {
+                updatePointerTo(0, turned(a, d.toDouble()))
+                updatePointerTo(1, turned(b, d.toDouble()))
+                move()
+            }
+            up(1)
+            up(0)
+        }
+        composeRule.waitForIdle()
+    }
+
+    private fun EditorStore.piece() = uiState.value.document.pages[0].elements.single().transform
+
+    /** The piece's centre on screen, in root space. */
+    private fun pieceCentre(store: EditorStore, box: Transform): Offset {
+        val view = store.uiState.value.view
+        val canvas = composeRule.onNodeWithTag(EditorCanvasTestTag).fetchSemanticsNode().boundsInRoot
+        return Offset(
+            canvas.left + ((box.xPt + box.widthPt / 2 + view.pageOffset.x) * view.screenPxPerPt).toFloat(),
+            canvas.top + ((box.yPt + box.heightPt / 2 + view.pageOffset.y) * view.screenPxPerPt).toFloat(),
+        )
+    }
+
+    private val tinyPiece = Transform(45.0, 60.0, 8.0, 8.0)
+
+    @Test
+    fun two_fingers_on_blank_paper_turn_the_selected_piece() {
+        val store = storeWith(tinyPiece)
+        show(store)
+        val c = pieceCentre(store, tinyPiece)
+        val up = 150f * composeRule.density.density
+        twist(c, c + Offset(-100f, -up), c + Offset(100f, -up))
+        assertEquals(40.0, store.piece().rotationDegrees, 1.0)
+        assertEquals(tinyPiece.widthPt, store.piece().widthPt, 0.01)
+    }
+
+    @Test
+    fun two_fingers_on_a_small_piece_turn_it_though_they_land_on_its_handles() {
+        val store = storeWith(tinyPiece)
+        show(store)
+        val c = pieceCentre(store, tinyPiece)
+        val d = 12f * composeRule.density.density
+        twist(c, c + Offset(-d, -d), c + Offset(d, d))
+        assertEquals(40.0, store.piece().rotationDegrees, 1.0)
+        assertEquals("not a resize", tinyPiece.widthPt, store.piece().widthPt, 0.01)
+    }
+
+    @Test
+    fun one_finger_on_a_handle_and_one_on_the_paper_turn_the_piece_and_do_not_resize_it() {
+        val store = storeWith(midPage)
+        show(store)
+        val handle = composeRule.onNodeWithTag("$ResizeHandleTagPrefix${ResizeHandle.BOTTOM_RIGHT.name}").fetchSemanticsNode().boundsInRoot
+        val c = pieceCentre(store, midPage)
+        twist(c, handle.center, c - (handle.center - c) * 3f)
+        assertEquals(40.0, store.piece().rotationDegrees, 1.0)
+        assertEquals("not a resize", midPage.widthPt, store.piece().widthPt, 0.01)
+    }
+
+    @Test
+    fun one_finger_on_the_knob_and_one_on_the_paper_are_a_twist_and_one_undo() {
+        val store = storeWith(midPage)
+        show(store)
+        val knob = composeRule.onNodeWithTag(TurnHandleTestTag).fetchSemanticsNode().boundsInRoot
+        val c = pieceCentre(store, midPage)
+        twist(c, knob.center, c - (knob.center - c))
+        assertEquals(40.0, store.piece().rotationDegrees, 1.0)
+        store.dispatch(Intent.Undo)
+        assertEquals("one Undo", midPage, store.piece())
+    }
+
+    @Test
+    fun a_fast_twist_from_the_knob_is_not_lost_to_the_page_gesture() {
+        val store = storeWith(midPage)
+        show(store)
+        val knob = composeRule.onNodeWithTag(TurnHandleTestTag).fetchSemanticsNode().boundsInRoot
+        val c = pieceCentre(store, midPage)
+        twist(c, knob.center, c - (knob.center - c), step = 8)
+        assertEquals(40.0, store.piece().rotationDegrees, 1.0)
+    }
+
+    @Test
+    fun a_third_finger_on_the_paper_does_not_end_a_twist() {
+        val store = storeWith(tinyPiece)
+        show(store)
+        val c = pieceCentre(store, tinyPiece)
+        val r = 40f * composeRule.density.density
+        fun at(deg: Double, radius: Float = r) = c + Offset(
+            radius * cos(Math.toRadians(deg)).toFloat(),
+            radius * sin(Math.toRadians(deg)).toFloat(),
+        )
+        composeRule.onRoot().performTouchInput {
+            down(0, at(0.0))
+            down(1, at(180.0))
+            for (d in 4..20 step 4) {
+                updatePointerTo(0, at(d.toDouble()))
+                updatePointerTo(1, at(180.0 + d))
+                move()
+            }
+            down(2, c + Offset(0f, -150f * composeRule.density.density))
+            updatePointerTo(2, c + Offset(40f * composeRule.density.density, -150f * composeRule.density.density))
+            for (d in 24..40 step 4) {
+                updatePointerTo(0, at(d.toDouble()))
+                updatePointerTo(1, at(180.0 + d))
+                move()
+            }
+            up(2)
+            up(1)
+            up(0)
+        }
+        composeRule.waitForIdle()
+        assertTrue("still a turn, was ${store.piece().rotationDegrees}", store.piece().rotationDegrees > 15.0)
+    }
+
+    @Test
+    fun a_second_finger_on_the_paper_during_a_handle_drag_changes_nothing_but_the_resize() {
+        val store = storeWith(midPage)
+        show(store)
+        val handle = composeRule.onNodeWithTag("$ResizeHandleTagPrefix${ResizeHandle.BOTTOM_RIGHT.name}").fetchSemanticsNode().boundsInRoot
+        val c = pieceCentre(store, midPage)
+        val paper = c + Offset(0f, -150f * composeRule.density.density)
+        composeRule.onRoot().performTouchInput {
+            down(0, handle.center)
+            moveTo(0, handle.center + Offset(30f, 30f))
+            down(1, paper)
+            for (i in 1..5) {
+                updatePointerTo(0, handle.center + Offset(30f + 5f * i, 30f + 5f * i))
+                updatePointerTo(1, paper + Offset(20f * i, 0f))
+                move()
+            }
+            up(1)
+            up(0)
+        }
+        composeRule.waitForIdle()
+        assertEquals(0.0, store.piece().rotationDegrees, 0.0)
+        assertTrue("resized", store.piece().widthPt > midPage.widthPt)
+        store.dispatch(Intent.Undo)
+        assertEquals("one Undo", midPage, store.piece())
+    }
+
+    @Test
+    fun a_second_finger_joining_a_body_drag_turns_the_piece_too() {
+        val store = storeWith(midPage)
+        show(store)
+        val c = pieceCentre(store, midPage)
+        val r = 100f * composeRule.density.density
+        fun at(deg: Double) = c + Offset(r * cos(Math.toRadians(deg)).toFloat(), r * sin(Math.toRadians(deg)).toFloat())
+        composeRule.onRoot().performTouchInput {
+            down(0, c)
+            moveTo(0, c + Offset(40f, 0f))
+            down(1, at(180.0))
+            for (d in 4..40 step 4) {
+                updatePointerTo(1, at(180.0 + d))
+                move()
+            }
+            up(1)
+            up(0)
+        }
+        composeRule.waitForIdle()
+        assertTrue("turned, was ${store.piece().rotationDegrees}", store.piece().rotationDegrees > 5.0)
+        store.dispatch(Intent.Undo)
+        assertEquals("one Undo", midPage, store.piece())
+    }
+
+    @Test
+    fun a_tap_on_blank_paper_after_a_twist_still_deselects() {
+        val store = storeWith(tinyPiece)
+        show(store)
+        val c = pieceCentre(store, tinyPiece)
+        val d = 12f * composeRule.density.density
+        twist(c, c + Offset(-d, -d), c + Offset(d, d))
+        assertEquals(1, store.uiState.value.selection.size)
+        composeRule.onRoot().performTouchInput { click(c + Offset(0f, -150f * composeRule.density.density)) }
+        composeRule.mainClock.advanceTimeBy(1000)
+        composeRule.waitForIdle()
+        assertEquals(0, store.uiState.value.selection.size)
+    }
+
+    @Test
+    fun two_resting_fingers_that_wobble_a_little_change_nothing() {
+        val store = storeWith(tinyPiece)
+        show(store)
+        val c = pieceCentre(store, tinyPiece)
+        val dp = composeRule.density.density
+        val a = c + Offset(-30f * dp, 0f)
+        val b = c + Offset(30f * dp, 0f)
+        composeRule.onRoot().performTouchInput {
+            down(0, a)
+            down(1, b)
+            // 1.5dp each way: the fingers' spread changes by 5% and their line by under 3 degrees.
+            updatePointerTo(0, a + Offset(-1.5f * dp, 0f))
+            updatePointerTo(1, b + Offset(1.5f * dp, 0f))
+            move()
+            updatePointerTo(0, a + Offset(0f, 1.5f * dp))
+            updatePointerTo(1, b + Offset(0f, -1.5f * dp))
+            move()
+            up(1)
+            up(0)
+        }
+        composeRule.waitForIdle()
+        assertEquals(tinyPiece, store.piece())
+    }
+
+    @Test
+    fun a_two_finger_drag_does_not_keep_a_stray_little_turn() {
+        val store = storeWith(midPage)
+        show(store)
+        val c = pieceCentre(store, midPage)
+        val dp = composeRule.density.density
+        val a = c + Offset(-100f * dp, 0f)
+        val b = c + Offset(100f * dp, 0f)
+        composeRule.onRoot().performTouchInput {
+            down(0, a)
+            down(1, b)
+            // Under the slop, their line tips by about 2 degrees; then both fingers slide.
+            updatePointerTo(0, a + Offset(2f * dp, -3.5f * dp))
+            updatePointerTo(1, b + Offset(2f * dp, 3.5f * dp))
+            move()
+            for (i in 1..4) {
+                updatePointerTo(0, a + Offset(20f * dp * i, -3.5f * dp))
+                updatePointerTo(1, b + Offset(20f * dp * i, 3.5f * dp))
+                move()
+            }
+            up(1)
+            up(0)
+        }
+        composeRule.waitForIdle()
+        assertEquals(0.0, store.piece().rotationDegrees, 0.0)
+        assertTrue("moved", store.piece().xPt > midPage.xPt)
+    }
+
+    @Test
+    fun two_fingers_resting_on_a_small_piece_change_nothing_and_keep_the_selection() {
+        val store = storeWith(tinyPiece)
+        show(store)
+        val c = pieceCentre(store, tinyPiece)
+        val d = 12f * composeRule.density.density
+        composeRule.onRoot().performTouchInput {
+            down(0, c + Offset(-d, -d))
+            down(1, c + Offset(d, d))
+            up(1)
+            up(0)
+        }
+        composeRule.waitForIdle()
+        assertEquals(tinyPiece, store.piece())
+        assertEquals(1, store.uiState.value.selection.size)
+    }
+
+    @Test
+    fun one_finger_on_a_handle_still_resizes() {
+        val store = storeWith(midPage)
+        show(store)
+        composeRule.onNodeWithTag("$ResizeHandleTagPrefix${ResizeHandle.BOTTOM_RIGHT.name}").performTouchInput {
+            down(center)
+            moveBy(Offset(30f, 30f))
+            up()
+        }
+        composeRule.waitForIdle()
+        assertTrue(store.piece().widthPt > midPage.widthPt)
+        assertEquals(0.0, store.piece().rotationDegrees, 0.0)
     }
 
     @Test

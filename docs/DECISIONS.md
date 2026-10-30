@@ -17806,6 +17806,17 @@ letter. Each one keeps the frozen behaviour; say so if one is wrong.
   the session stayed open and hid the knob, proven by `a_handle_whose_gesture_restarts_mid_drag…`. Removing a modifier
   mid-gesture did not strand a session in the same test harness. Review found the two-finger hazard by reading; the test written for it (`a_knob_finger_and_a_page_finger_crossing_slop…`) was green before the fix too,
   so the same-event timing is not proven on a phone.
+- **Two fingers turn the piece from anywhere on the page (A48.3a, added after the owner's phone report).** The page
+  gesture sat under the handles and the knob, and Compose gives a touch to the topmost sibling only, so a finger on a 48dp
+  hit box never reached it. On a small piece those boxes cover everything. `twoFingerTransformAnywhere` now sits on the
+  parent of all three and reads the Initial pass; the second finger takes the gesture and consumes every change, which
+  cancels the handle or knob before it begins. It yields to any session already open. The old slop test measures arc,
+  so it asked for about 15° from fingers 60dp apart, then dropped that motion. The take-over starts at 4° or an 8% stretch
+  and keeps what moved before it; 1.5dp of wobble from each finger 60dp apart stays under both, by test. These two numbers
+  are a first choice, not yet judged by hand. A second finger on the page during a handle drag now does nothing, as during
+  a knob drag; before this it replaced the resize, proven by a test. Review predicted that a fast twist's first frame
+  could open a page session over the take-over; `a_fast_twist_from_the_knob…` stayed green before the `onOwning` guard, so
+  that timing is unproven and the guard is there by construction.
 - **The knob is hidden during a body drag, pinch or resize.** A48.7's list does not name these and the prototype keeps
   it up. The drag's own preview moves the piece, and the knob would sit on the old place.
 - **The side and hit box freeze when the finger lands,** not when the drag starts, so chrome arriving under a resting
@@ -17828,7 +17839,7 @@ letter. Each one keeps the frozen behaviour; say so if one is wrong.
 
 #### Device passes (2026-10-30, build `2714ddad`, QA package `com.aritr.zinely.w2bqa`) {#adr-143-device}
 
-Pixel 7-class emulator on API 36 (light, 1x; 2x and dark on the Shelf sheet) and Samsung SM-A176B on Android 16 (dark).
+Emulator AVD `Medium_Phone_API_36.1` on API 36 (light, 1x; 2x and dark on the Shelf sheet) and Samsung SM-A176B on Android 16 (dark).
 One finger, by `adb` touch events, with the document file read after each step.
 
 - **Passed, on both:** a knob drag writes the angle alone and is one Undo; the handles and readout turn with it; three
@@ -17845,8 +17856,10 @@ One finger, by `adb` touch events, with the document file read after each step.
   a small piece at 90° near the foot of the page, the words overflow that box and meet the bar. It already happened after
   a two-finger or tray turn; the knob makes turning more common. It stays on the owed list as the "text turned 45° then
   edited" item, now answered: readable, unpolished. Fix through the HTML first if a tester trips on it.
-- **Still owed:** every two-finger check (`adb` cannot inject one on these builds), including a second finger during a
-  knob or handle drag; the haptic tick felt by hand; the first-run hint on a piece near the top and bottom; the Arrange
+- **Two fingers, by the owner on the Samsung, 2026-10-30:** the turn works, but only when the piece is big enough for both
+  fingers. Cause and fix: A48.3a in [as built](#adr-143-as-built). The owner's retry on the phone is owed.
+- **Still owed:** the two-finger retry on a small piece, over a handle and over the knob, a second finger held down late, after a long press has deselected, and a second finger during a
+  knob or handle drag (the `input` command sends one finger, so these need a hand); the haptic tick felt by hand; the first-run hint on a piece near the top and bottom; the Arrange
   tray on a real small phone; the knob over the dark desk; Straighten from 360° and 1.5° on a device (unit-tested only);
   a first-time Pass 2; TalkBack.
 

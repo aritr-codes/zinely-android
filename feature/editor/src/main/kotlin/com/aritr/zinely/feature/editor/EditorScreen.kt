@@ -309,6 +309,7 @@ public fun EditorScreen(
     // A48: the turn knob's live frame. Kept apart from [resizeOverride] so the knob can hide during a
     // resize and the resize handles can turn with the piece during a knob drag; the preview reads either.
     var turnOverride by remember { mutableStateOf<Map<String, Transform>?>(null) }
+    var twoFingersOwn by remember { mutableStateOf(false) }
     // A48.2: what the knob must clear, in window px: the visible canvas, and the chrome over it.
     var canvasBoundsInWindow by remember { mutableStateOf<Rect?>(null) }
     val chromeBoundsInWindow = remember { mutableStateMapOf<String, Rect>() }
@@ -1920,57 +1921,73 @@ public fun EditorScreen(
                     // open: during reframe the ReframeOverlay owns pointer input (drag pans / pinch zooms the
                     // photo), and a stray page long-press/double-tap must not replace the session.
                     if (!editing && reframing == null) {
+                        // A48.3a: the parent of all three, so two fingers turn the piece even on a handle or the knob.
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .editorTransformGestures(
+                                .twoFingerTransformAnywhere(
                                     screenPxPerPt = uiState.view.screenPxPerPt,
                                     pageOffset = uiState.view.pageOffset,
                                     pageSizePt = pageSizePt,
                                     currentState = currentState,
                                     dispatch = dispatch,
                                     onPreview = { live = it },
-                                    // The single double-tap seam (ADR-053 §4): the reducer retargets by the
-                                    // topmost element type — text → inline edit, image → Reframe.
-                                    onDoubleTap = { pagePoint -> dispatch(Intent.DoubleTapAt(pagePoint)) },
-                                    // A48.3: while the knob turns the piece, a second finger on the page does
-                                    // nothing; its BeginTransform would otherwise replace the knob's session.
-                                    inert = { turnOverride != null },
+                                    onOwning = { twoFingersOwn = it },
                                 ),
-                        )
-                        if (live == null) {
-                            ResizeHandles(
-                                uiState = uiState,
-                                currentState = currentState,
-                                dispatch = dispatch,
-                                onResize = { resizeOverride = it },
-                                modifier = Modifier.fillMaxSize(),
-                                turning = turnOverride,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .editorTransformGestures(
+                                        screenPxPerPt = uiState.view.screenPxPerPt,
+                                        pageOffset = uiState.view.pageOffset,
+                                        pageSizePt = pageSizePt,
+                                        currentState = currentState,
+                                        dispatch = dispatch,
+                                        onPreview = { live = it },
+                                        // The single double-tap seam (ADR-053 §4): the reducer retargets by the
+                                        // topmost element type — text → inline edit, image → Reframe.
+                                        onDoubleTap = { pagePoint -> dispatch(Intent.DoubleTapAt(pagePoint)) },
+                                        // A48.3: while the knob or a handle has the piece, a second finger on the
+                                        // page does nothing; its BeginTransform would otherwise replace that session.
+                                        // A48.3a: nor while two fingers already hold it.
+                                        inert = { turnOverride != null || resizeOverride != null || twoFingersOwn },
+                                    ),
                             )
-                            // A48 / ADR-143: the turn knob, after the handles so it wins the overlap with their
-                            // hit boxes on a turned piece. Hidden during a resize drag; the chrome it must
-                            // clear is the verb bar, the trays, the snack and the first-run hint (A48.2).
-                            if (resizeOverride == null) {
-                                TurnHandle(
+                            if (live == null) {
+                                ResizeHandles(
                                     uiState = uiState,
                                     currentState = currentState,
                                     dispatch = dispatch,
-                                    onTurn = { turnOverride = it },
+                                    onResize = { resizeOverride = it },
                                     modifier = Modifier.fillMaxSize(),
-                                    visibleInWindow = canvasBoundsInWindow,
-                                    obstaclesInWindow = buildList {
-                                        if (ctxVisible) chromeBoundsInWindow["ctx"]?.let(::add)
-                                        if (arrangeTrayVisible) chromeBoundsInWindow["arrange"]?.let(::add)
-                                        if (flipTrayVisible) chromeBoundsInWindow["flip"]?.let(::add)
-                                        if (typeBarVisible) chromeBoundsInWindow["type"]?.let(::add)
-                                        if (saveErrorVisible) chromeBoundsInWindow["save"]?.let(::add)
-                                        if (inkPopoverVisible) chromeBoundsInWindow["ink"]?.let(::add)
-                                        if (snackVisible) chromeBoundsInWindow["snack"]?.let(::add)
-                                        // Present only while the hint is composed (its DisposableEffect removes it).
-                                        chromeBoundsInWindow["hint"]?.let(::add)
-                                    },
-                                    readoutColors = roomColors21,
+                                    turning = turnOverride,
                                 )
+                                // A48 / ADR-143: the turn knob, after the handles so it wins the overlap with their
+                                // hit boxes on a turned piece. Hidden during a resize drag; the chrome it must
+                                // clear is the verb bar, the trays, the snack and the first-run hint (A48.2).
+                                if (resizeOverride == null) {
+                                    TurnHandle(
+                                        uiState = uiState,
+                                        currentState = currentState,
+                                        dispatch = dispatch,
+                                        onTurn = { turnOverride = it },
+                                        modifier = Modifier.fillMaxSize(),
+                                        visibleInWindow = canvasBoundsInWindow,
+                                        obstaclesInWindow = buildList {
+                                            if (ctxVisible) chromeBoundsInWindow["ctx"]?.let(::add)
+                                            if (arrangeTrayVisible) chromeBoundsInWindow["arrange"]?.let(::add)
+                                            if (flipTrayVisible) chromeBoundsInWindow["flip"]?.let(::add)
+                                            if (typeBarVisible) chromeBoundsInWindow["type"]?.let(::add)
+                                            if (saveErrorVisible) chromeBoundsInWindow["save"]?.let(::add)
+                                            if (inkPopoverVisible) chromeBoundsInWindow["ink"]?.let(::add)
+                                            if (snackVisible) chromeBoundsInWindow["snack"]?.let(::add)
+                                            // Present only while the hint is composed (its DisposableEffect removes it).
+                                            chromeBoundsInWindow["hint"]?.let(::add)
+                                        },
+                                        readoutColors = roomColors21,
+                                    )
+                                }
                             }
                         }
                     }

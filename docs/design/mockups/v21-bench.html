@@ -4196,6 +4196,19 @@ BUILD TEST CASES this block adds (ADR-143 lists them too):
     tap emits Autosave
   - Undo then Redo of a run's step, then a same-group tray tap: a new step, not a merge
     (identity guard); a BeginTransform that records nothing still ends the run
+
+A48.3a  TWO FINGERS ANYWHERE (added 2026-10-30, from the owner on a phone: it "only works
+when the text field or art area is big enough for both fingers").  With a piece selected,
+two fingers anywhere on the page turn, pinch and drag it: on the piece, on blank paper, on
+a handle, on the knob.  The handles' and knob's 48 hit boxes never take a two-finger
+gesture from the page.  It starts at 4 degrees or an 8 percent stretch and keeps what moved
+before it, or at the touch slop if that comes first and keeps nothing, so a two-finger drag
+leaves no stray turn.  So 1 to 3 degrees (A48.4) is reached by going past 4 and coming back.
+It is one undo step, with no snap to quarter turns and no readout: A48.4 and A48.5 stay the
+knob's.  One finger is unchanged.  A session already open keeps its fingers: a second finger
+during a knob or handle drag does nothing, and one joining a body drag joins it.  One finger
+held still on blank paper past the long press deselects as before, so a second finger then
+has nothing to turn.  Touch only, so this prototype does not draw it.
 =========================================================================== -->
 <style>
 /* A48.1: the turn knob, a ninth mark beside the eight .hnd.  It lives inside .el so it turns with

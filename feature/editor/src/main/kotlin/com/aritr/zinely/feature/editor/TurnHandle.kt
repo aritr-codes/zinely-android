@@ -154,7 +154,7 @@ private class KnobDrag(val id: String, val before: Transform, val top: Boolean, 
  * ninth mark beside the eight [ResizeHandles], drawn in the same overlay and with the same session pattern —
  * `BeginTransform` once the finger passes the touch slop, a preview through [onTurn] each frame, and one
  * `CommitTransform` of `before.copy(rotationDegrees = r)` on release (never re-baked, so x, y, width and
- * height stay bit-identical). The knob alone snaps (A48.4, [KnobSnap]); two fingers are not changed.
+ * height stay bit-identical). The knob alone snaps (A48.4, [KnobSnap]); two fingers do not (A48.3a).
  *
  * **Invariants.**
  * - It exposes nothing to the accessibility tree, exactly as the resize handles do: no `clickable`, no
