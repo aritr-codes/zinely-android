@@ -17783,6 +17783,28 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 - A tester asks for an exact angle, or for undo of single taps inside a run.
 - Bench multi-select is ever reachable (the run rule then needs its own ruling).
 
+#### As built (2026-10-30, `w2b/impl-turn`) {#adr-143-as-built}
+
+Still Proposed: the passes above are owed. Calls the code made where A48 was silent or could not be followed to the
+letter. Each one keeps the frozen behaviour; say so if one is wrong.
+
+- **The readout appears once the drag is live, after touch slop.** The prototype draws it at pointer-down; A48's text
+  says "while live". Below slop nothing has happened, so nothing shows.
+- **No fade on the knob.** It is present or absent. A fade is polish, and needs its own parity check against A48.
+- **The knob's side is recomputed on any idle recomposition,** a superset of A48.2's listed triggers. It never moves
+  during a drag: the hit box is frozen at touch-down and only the drawn knob turns.
+- **The handles turn with the piece during a knob drag and take no touches.** A second finger on the page is also
+  ignored, because its `BeginTransform` would replace the knob's session (A48.3).
+- **A tray tap that changes nothing keeps the run marker** when it is in the same group. It records nothing, so it has
+  nothing to split.
+- **`SetViewport` ends a run,** as any other intent does. It fires only on a change or an idle toggle, not per frame.
+- **`Intent.TrayClosed` also goes out on first composition,** where it does nothing.
+- **Chrome bounds for the side rule are each surface's laid-out bounds,** which can be bigger than what is drawn. The
+  knob may flip when a tighter box would have let it stay, never the reverse.
+- **The UI tests were written beside the code, not before it.** Core tests were red first. For the knob, the snap and
+  the slop rule were mutation-checked instead: each mutation failed its test.
+- **Goldens are not re-recorded here.** They need reading and recording on the pinned CI image.
+
 ## ADR-144 {#adr-144}
 
 ### Sheet action pairs share one geometry
