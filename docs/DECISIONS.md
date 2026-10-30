@@ -13229,6 +13229,27 @@ current features separated from direction.
   [ROADMAP.md](ROADMAP.md#current-priorities) follow-up). The Download page lists the published build's known
   limits, including Save PDF failing on Android 7 to 9 in beta.4-r3 (Share still works).
 
+#### Plain-words rule (amended 2026-10-30, owner-directed)
+
+Public copy follows [ASD-STE100 Simplified Technical English](RESEARCH.md#r39), adapted. Evidence and sources:
+[R39](RESEARCH.md#r39).
+
+**Keep (the sentence rules):** one idea per sentence, and one instruction per step; about 20 words or fewer
+(25 at most); active voice; keep the articles and verbs (no telegraph style); the same word for the same thing
+(Shelf, Bench, Proof, Art, Undo, Backups, Save PDF are the app's names, used as the app spells them); no idioms or
+jokes inside facts, caveats or steps; paragraphs short.
+
+**Do not enforce:** the approved-word dictionary, and a ban on every -ing word. Brand voice stays where no fact or
+step depends on it (the hero, About, the fold guide's tone). The strings `tools/check-public-copy.cjs` locks stay
+as they are.
+
+**Changelog entries** name the change in one short line under *Added*, *Changed* or *Fixed*, for example
+"Select several zines at once." The how-to goes in the app, not in the changelog. A limitation stays whole: say what
+is untested or not fixed, and never shorten it into a claim.
+
+**Never changed by a rewrite:** a fact, a privacy promise, the beta status, the Android 7 to 9 Save PDF caveat and
+its emulator-only test coverage, or the list of what is untested.
+
 ## ADR-119 {#adr-119}
 
 ### Read the page in spatial order, and silence the action sheet's scrim
