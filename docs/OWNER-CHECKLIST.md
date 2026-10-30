@@ -383,7 +383,7 @@ zine was deleted meanwhile.
 
 ### 2.8 W2a small things — built, unreleased; device checks owed
 **Reason:** Physical · **Blocks:** shipping W2a · Authority is the [W2a note in ADR-136](DECISIONS.md#adr-136-w2a); this
-table only points at it. Built on `feat/w2a-small-things` (unmerged). Not automatable, so an implementer cannot close them.
+table only points at it. Merged in PR #171, not released. Not automatable, so an implementer cannot close them.
 
 | ☐ | Item | Where it is owned |
 |---|---|---|
@@ -395,7 +395,7 @@ table only points at it. Built on `feat/w2a-small-things` (unmerged). Not automa
 | ☐ | TalkBack listens for the rename sheet, Duplicate and the text edit (deferred by the owner; do not chase) | [DEVICE-VERIFICATION §3.1](DEVICE-VERIFICATION.md) |
 | ☐ | A real Android 7 to 9 phone | [ADR-136 W2a note](DECISIONS.md#adr-136-w2a) |
 
-### 2.9 W2b turning by hand — built, not released; one-finger passes done, the rest owed
+### 2.9 W2b turning by hand — merged, not released; one-finger and emulator two-finger passes done, the rest owed
 **Reason:** Physical / Judgement · **Blocks:** accepting ADR-143 · Authority is [ADR-143](DECISIONS.md#adr-143) *Owed before Accepted* and its [as-built note](DECISIONS.md#adr-143-as-built); this table only points at it. One-finger passes on the emulator and the Samsung QA package are recorded [there](DECISIONS.md#adr-143-device).
 
 | ☐ | Item | Where it is owned |
