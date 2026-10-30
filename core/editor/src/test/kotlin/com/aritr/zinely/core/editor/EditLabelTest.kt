@@ -207,10 +207,12 @@ class EditLabelTest {
         assertEquals(EditVerb.RESIZE, verb(base, base.copy(heightPt = 51.01)))
     }
 
+    // A48.8 (2026-10-29) made a turn-only step "turned" whatever its size, so the 2° slip boundary is
+    // now tested on a step that also moved, which is where D4's slip still applies.
     @Test
     fun `turn at exactly two degrees is a move and just over is a turn`() {
-        assertEquals(EditVerb.MOVE, verb(base, base.copy(rotationDegrees = 2.0)))
-        assertEquals(EditVerb.TURN, verb(base, base.copy(rotationDegrees = 2.01)))
+        assertEquals(EditVerb.MOVE, verb(base, base.copy(xPt = 1.0, rotationDegrees = 2.0)))
+        assertEquals(EditVerb.TURN, verb(base, base.copy(xPt = 1.0, rotationDegrees = 2.01)))
     }
 
     @Test
@@ -218,8 +220,35 @@ class EditLabelTest {
         assertEquals(EditVerb.RESIZE, verb(base, base.copy(widthPt = 50.0)))
         assertEquals(EditVerb.TURN, verb(base, base.copy(rotationDegrees = -10.0)))
         // Shortest way round: 359° to 1° is a 2° slip, not 358°.
-        assertEquals(EditVerb.MOVE, verb(base.copy(rotationDegrees = 359.0), base.copy(rotationDegrees = 1.0)))
-        assertEquals(EditVerb.TURN, verb(base.copy(rotationDegrees = 350.0), base.copy(rotationDegrees = 5.0)))
+        assertEquals(EditVerb.MOVE, verb(base.copy(rotationDegrees = 359.0), base.copy(xPt = 1.0, rotationDegrees = 1.0)))
+        assertEquals(EditVerb.TURN, verb(base.copy(rotationDegrees = 350.0), base.copy(xPt = 1.0, rotationDegrees = 5.0)))
+    }
+
+    // --- A48.8 (ADR-143 decision 5): turn-only is "turned"; a48.CASES -----------------------------------
+
+    @Test
+    fun `A48_8 - a step that changes only the angle is turned, whatever its size`() {
+        assertEquals(EditVerb.TURN, verb(base.copy(rotationDegrees = 360.0), base)) // 360 -> 0
+        assertEquals(EditVerb.TURN, verb(base.copy(rotationDegrees = 1.5), base)) // 1.5 -> 0
+        assertEquals(EditVerb.TURN, verb(base, base.copy(rotationDegrees = 30.0))) // 0 -> 30
+    }
+
+    @Test
+    fun `A48_8 - otherwise D4 is unchanged, the slip included`() {
+        assertEquals(EditVerb.MOVE, verb(base, base.copy(xPt = 5.0, rotationDegrees = 1.0)))
+        assertEquals(EditVerb.MOVE, verb(base, base.copy(xPt = 5.0, widthPt = 101.0, rotationDegrees = 1.0)))
+        assertEquals(EditVerb.RESIZE, verb(base, base.copy(widthPt = 105.0, rotationDegrees = 10.0)))
+    }
+
+    @Test
+    fun `A48_8 - a two-finger turn whose x drifted by 1e-12 is still turned`() {
+        assertEquals(EditVerb.TURN, verb(base, base.copy(xPt = 1e-12, rotationDegrees = 1.0)))
+    }
+
+    @Test
+    fun `A48_8 - a Straighten from 1_5 is one step, labelled turned`() {
+        val tilted = model(photo.copy(transform = box.copy(rotationDegrees = 1.5))).copy(selection = setOf("photo"))
+        assertEquals(EditVerb.TURN, labelAfter(tilted, Intent.RotateBy(TurnMath.uprightDelta(1.5)))!!.verb)
     }
 
     @Test

@@ -18,6 +18,9 @@ Website, docs and test-only changes that are not part of the beta.8 app, moved h
 
 ### Added
 
+- Turn a piece with the knob below it; it snaps straight.
+- Straighten button in Arrange > Turn.
+- Repeated Move, Size or Turn taps in Arrange are now one Undo.
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),
   [D-143](docs/design/V2-SPEC-DEFECTS.md#d-143)), Proof A43 and A44, Backup A45 and Library A46. The Library
   mockup's paper-chooser and restored-note prototypes run again (merge damage repaired).

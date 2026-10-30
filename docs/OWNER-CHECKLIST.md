@@ -394,6 +394,19 @@ table only points at it. Built on `feat/w2a-small-things` (unmerged). Not automa
 | ☐ | TalkBack listens for the rename sheet, Duplicate and the text edit (deferred by the owner; do not chase) | [DEVICE-VERIFICATION §3.1](DEVICE-VERIFICATION.md) |
 | ☐ | A real Android 7 to 9 phone | [ADR-136 W2a note](DECISIONS.md#adr-136-w2a) |
 
+### 2.9 W2b turning by hand — built, unmerged; both device passes owed
+**Reason:** Physical / Judgement · **Blocks:** accepting ADR-143 · Authority is [ADR-143](DECISIONS.md#adr-143) *Owed before Accepted* and its [as-built note](DECISIONS.md#adr-143-as-built); this table only points at it. Built on `w2b/impl-turn`.
+
+| ☐ | Item | Where it is owned |
+|---|---|---|
+| ☐ | Pass 1, platform tree: the knob is not an unlabelled clickable; Straighten reads `enabled=false` on an upright piece | [ADR-143](DECISIONS.md#adr-143) *Owed* |
+| ☐ | Pass 1, places: a tiny piece, a piece at the page bottom, a 90° piece; the first-run hint up on a piece near the top and bottom of the page (the knob gives way, then appears once the hint goes) | [ADR-143](DECISIONS.md#adr-143) *Owed* |
+| ☐ | Pass 1, handles: on a piece turned 45°, and on one about 40dp wide turned about 15°, a tap on a bottom corner handle's mark resizes and does not turn | [ADR-143](DECISIONS.md#adr-143) decision 1 |
+| ☐ | Pass 1, words: text turned 45° then edited; Straighten from 360°, 1.5° and 0° with its snack words; the snap haptic is one tick | [ADR-143](DECISIONS.md#adr-143) *Owed* |
+| ☐ | Pass 1: pixel parity of the knob, the readout and the tray's third Turn button against A48, and the goldens re-recorded on the pinned image after reading the diffs | [ADR-143](DECISIONS.md#adr-143) *Consequences* |
+| ☐ | Pass 2, first-time reading: does the knob read as "turn", does it fight drag-to-move, does a maker who wants a small tilt find two fingers | [ADR-143](DECISIONS.md#adr-143) *Owed*, *Small tilts* |
+| ☐ | TalkBack check of Straighten (deferred with the other listens; do not chase) | [ADR-143](DECISIONS.md#adr-143) *Owed* |
+
 ---
 
 ## 3. Release & credentials
