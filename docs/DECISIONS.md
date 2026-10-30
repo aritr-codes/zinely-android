@@ -17803,8 +17803,10 @@ letter. Each one keeps the frozen behaviour; say so if one is wrong.
 - **`Intent.TrayClosed` also goes out on first composition,** where it does nothing.
 - **Chrome bounds for the side rule are each surface's laid-out bounds,** which can be bigger than what is drawn. The
   knob may flip when a tighter box would have let it stay, never the reverse.
-- **The UI tests were written beside the code, not before it.** Core tests were red first. For the knob, the snap and
-  the slop rule were mutation-checked instead: each mutation failed its test.
+- **A48.2 beats A48.7 in a very small window.** At 320x470 the open tray (217 tall against a 297-tall canvas) leaves no
+  room, so the knob hides although A48.7 says it shows with the tray open. A real small phone is on the owed list.
+- **The UI tests were written beside the code, not before it.** Core tests were red first. For the knob, the snap, the
+  slop rule and the second-finger gate were mutation-checked instead: each mutation failed its test.
 - **Goldens are not re-recorded here.** They need reading and recording on the pinned CI image.
 
 ## ADR-144 {#adr-144}
