@@ -5,7 +5,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -48,7 +55,7 @@ class ArrangeTrayTest {
     private val allControls = listOf(
         Copy.A11y.MOVE_LEFT, Copy.A11y.MOVE_UP, Copy.A11y.MOVE_DOWN, Copy.A11y.MOVE_RIGHT,
         Copy.A11y.MAKE_SMALLER, Copy.A11y.MAKE_LARGER,
-        Copy.A11y.ROTATE_COUNTERCLOCKWISE, Copy.A11y.ROTATE_CLOCKWISE,
+        Copy.A11y.ROTATE_COUNTERCLOCKWISE, Copy.A11y.ROTATE_CLOCKWISE, Copy.A11y.STRAIGHTEN,
         Copy.A11y.SEND_BACKWARD, Copy.A11y.BRING_FORWARD,
     )
 
@@ -81,6 +88,9 @@ class ArrangeTrayTest {
                     dispatch = store::dispatch,
                     onDone = onDone,
                     firstFocusRequester = remember { FocusRequester() },
+                    rotationDegrees = state.selection.singleOrNull()?.let { id ->
+                        state.document.pages[0].elements.firstOrNull { it.id == id }?.transform?.rotationDegrees
+                    },
                 )
             }
         }
@@ -192,5 +202,81 @@ class ArrangeTrayTest {
         assertEquals(top(Copy.A11y.MOVE_LEFT), top(Copy.A11y.MAKE_LARGER), 1f)
         assertEquals(top(Copy.A11y.ROTATE_CLOCKWISE), top(Copy.A11y.BRING_FORWARD), 1f)
         assertTrue(top(Copy.A11y.ROTATE_CLOCKWISE) > top(Copy.A11y.MOVE_LEFT))
+        // A48.6: Turn's third button still shares the second line with Layer at 360dp.
+        assertEquals(top(Copy.A11y.STRAIGHTEN), top(Copy.A11y.BRING_FORWARD), 1f)
+    }
+
+    // --- A48.6 Straighten and A48.9 runs (ADR-143) ------------------------------------------------------
+
+    private fun turnSelected(store: EditorStore, degrees: Double) {
+        store.dispatch(Intent.RotateBy(degrees))
+    }
+
+    @Test
+    fun straighten_is_disabled_on_an_upright_piece_including_360() {
+        val store = storeWithTwoTexts()
+        setTray(store)
+        composeRule.onNodeWithContentDescription(Copy.A11y.STRAIGHTEN).assertIsNotEnabled()
+        turnSelected(store, 360.0)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription(Copy.A11y.STRAIGHTEN).assertIsNotEnabled()
+        val revision = store.uiState.value.historyRevision
+        // A disabled button carries no click action in the tree: nothing for TalkBack to fire.
+        composeRule.onNodeWithContentDescription(Copy.A11y.STRAIGHTEN)
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnClick))
+        assertEquals("a disabled Straighten is never a step", revision, store.uiState.value.historyRevision)
+    }
+
+    @Test
+    fun straighten_turns_a_tilted_piece_upright_the_shortest_way_in_one_step() {
+        val store = storeWithTwoTexts()
+        turnSelected(store, 375.0)
+        setTray(store)
+        composeRule.onNodeWithContentDescription(Copy.A11y.STRAIGHTEN).assertIsEnabled().performClick()
+        composeRule.waitForIdle()
+        assertEquals(360.0, selected(store).transform.rotationDegrees, 1e-9) // 375 -> 360, not 0
+        composeRule.onNodeWithContentDescription(Copy.A11y.STRAIGHTEN).assertIsNotEnabled()
+        store.dispatch(Intent.Undo)
+        assertEquals("one Undo takes the one step back", 375.0, selected(store).transform.rotationDegrees, 1e-9)
+    }
+
+    @Test
+    fun three_move_taps_are_one_undo_step_and_a_turn_tap_starts_another() {
+        val store = storeWithTwoTexts()
+        setTray(store)
+        repeat(3) { composeRule.onNodeWithContentDescription(Copy.A11y.MOVE_RIGHT).performClick() }
+        composeRule.onNodeWithContentDescription(Copy.A11y.ROTATE_CLOCKWISE).performClick()
+        composeRule.waitForIdle()
+        store.dispatch(Intent.Undo)
+        assertEquals(0.0, selected(store).transform.rotationDegrees, 1e-9)
+        assertEquals(40.0 + 3 * EditorA11y.NUDGE_STEP_PT, selected(store).transform.xPt, 1e-9)
+        store.dispatch(Intent.Undo)
+        assertEquals("one Undo takes all three Move taps back", 40.0, selected(store).transform.xPt, 1e-9)
+    }
+
+    @Test
+    fun closing_the_tray_ends_a_run() {
+        val store = storeWithTwoTexts()
+        var visible by mutableStateOf(true)
+        composeRule.setContent {
+            ZinelyTheme {
+                ArrangeTray(
+                    visible = visible,
+                    elementId = store.uiState.value.selection.singleOrNull(),
+                    dispatch = store::dispatch,
+                    onDone = { visible = false },
+                    firstFocusRequester = remember { FocusRequester() },
+                )
+            }
+        }
+        composeRule.onNodeWithContentDescription(Copy.A11y.MOVE_RIGHT).performClick()
+        composeRule.onNodeWithTag(ArrangeDoneTestTag).performClick()
+        composeRule.waitForIdle()
+        visible = true
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription(Copy.A11y.MOVE_RIGHT).performClick()
+        composeRule.waitForIdle()
+        store.dispatch(Intent.Undo)
+        assertEquals("the second tap is its own step", 40.0 + EditorA11y.NUDGE_STEP_PT, selected(store).transform.xPt, 1e-9)
     }
 }

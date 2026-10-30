@@ -6,6 +6,7 @@ import com.aritr.zinely.core.editor.FramingMath
 import com.aritr.zinely.core.editor.FlipAxis
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.ReorderOp
+import com.aritr.zinely.core.editor.TurnMath
 import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.Element
 import com.aritr.zinely.core.model.ImageElement
@@ -175,6 +176,11 @@ public object EditorA11y {
             add(CustomAccessibilityAction(Copy.A11y.MAKE_SMALLER) { selectThen { dispatch(Intent.ScaleBy(1.0 / SCALE_STEP_FACTOR)) } })
             add(CustomAccessibilityAction(Copy.A11y.ROTATE_CLOCKWISE) { selectThen { dispatch(Intent.RotateBy(ROTATE_STEP_DEGREES)) } })
             add(CustomAccessibilityAction(Copy.A11y.ROTATE_COUNTERCLOCKWISE) { selectThen { dispatch(Intent.RotateBy(-ROTATE_STEP_DEGREES)) } })
+            // A48.6: absent while upright (360 is upright). Non-tray source: always its own step (A48.9).
+            val r = element.transform.rotationDegrees
+            if (!TurnMath.isUpright(r)) {
+                add(CustomAccessibilityAction(Copy.A11y.STRAIGHTEN) { selectThen { dispatch(Intent.RotateBy(TurnMath.uprightDelta(r))) } })
+            }
             add(CustomAccessibilityAction(Copy.A11y.BRING_FORWARD) { dispatch(Intent.Reorder(id, ReorderOp.BRING_FORWARD)); true })
             add(CustomAccessibilityAction(Copy.A11y.SEND_BACKWARD) { dispatch(Intent.Reorder(id, ReorderOp.SEND_BACKWARD)); true })
             // Routed through the host's [onDelete] rather than dispatching `Intent.Delete` directly, so
