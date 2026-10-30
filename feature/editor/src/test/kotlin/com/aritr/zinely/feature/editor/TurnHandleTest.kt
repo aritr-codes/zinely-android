@@ -4,6 +4,8 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -189,6 +191,70 @@ class TurnHandleTest {
         composeRule.waitForIdle()
         assertEquals(3.0, photo(h).rotationDegrees, 0.0)
         assertEquals(revision, h.store.uiState.value.historyRevision)
+    }
+
+    @Test
+    fun a_mostly_radial_drag_past_slop_on_a_3_degree_piece_does_not_straighten_it() {
+        val h = Harness(newStore(rotation = 3.0))
+        show(h)
+        composeRule.onNodeWithTag(TurnHandleTestTag).performTouchInput {
+            down(center)
+            moveBy(Offset(0f, 20f)) // Well past the slop, and straight away from the piece: almost no sweep.
+            up()
+        }
+        composeRule.waitForIdle()
+        assertTrue("snapped straight: ${photo(h).rotationDegrees}", photo(h).rotationDegrees > 1.0)
+    }
+
+    @Test
+    fun the_knob_stands_aside_for_a_session_already_open() {
+        val h = Harness(newStore())
+        show(h)
+        h.store.dispatch(Intent.BeginTransform(setOf("p")))
+        val session = h.store.uiState.value.interaction
+        composeRule.onNodeWithTag(TurnHandleTestTag).performTouchInput { turnBy(40.0); up() }
+        composeRule.waitForIdle()
+        assertTrue(h.intents.none { it is Intent.BeginTransform })
+        assertEquals(session, h.store.uiState.value.interaction)
+    }
+
+    @Test
+    fun chrome_arriving_under_a_resting_finger_does_not_move_the_knob_before_the_drag() {
+        val h = Harness(newStore())
+        var obstacles by mutableStateOf(emptyList<Rect>())
+        composeRule.setContent {
+            ZinelyTheme {
+                val state by h.store.uiState.collectAsState()
+                TurnHandle(
+                    uiState = state,
+                    currentState = { h.store.uiState.value },
+                    dispatch = h::dispatch,
+                    onTurn = { h.lastTurn = it },
+                    modifier = Modifier.size(200.dp, 200.dp),
+                    obstaclesInWindow = obstacles,
+                )
+            }
+        }
+        composeRule.waitForIdle()
+        val before = composeRule.onNodeWithTag(TurnHandleTestTag).fetchSemanticsNode().boundsInRoot
+        composeRule.onNodeWithTag(TurnHandleTestTag).performTouchInput { down(center) }
+        composeRule.waitForIdle()
+        obstacles = listOf(Rect(0f, 100f, 200f, 200f)) // Covers the knob's place below the piece.
+        composeRule.waitForIdle()
+        assertEquals(before, composeRule.onNodeWithTag(TurnHandleTestTag).fetchSemanticsNode().boundsInRoot)
+        composeRule.onNodeWithTag(TurnHandleTestTag).performTouchInput { up() }
+    }
+
+    @Test
+    fun the_readout_stays_clear_of_chrome_above_the_piece() {
+        val h = Harness(newStore())
+        val bar = Rect(0f, 0f, 200f, 30f)
+        show(h, obstacles = listOf(bar))
+        composeRule.onNodeWithTag(TurnHandleTestTag).performTouchInput { turnBy(30.0) }
+        composeRule.waitForIdle()
+        val pill = composeRule.onNodeWithTag(TurnReadoutTestTag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        assertTrue("pill at ${pill.top}", pill.top >= bar.bottom)
+        composeRule.onNodeWithTag(TurnHandleTestTag).performTouchInput { up() }
     }
 
     @Test

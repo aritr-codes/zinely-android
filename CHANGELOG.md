@@ -14,11 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Website, docs and test-only changes that are not part of the beta.8 app, moved here from the beta.8 section.
+Changes since the beta.8 app.
 
 ### Added
 
-- Turn a piece with the knob below it; it snaps straight.
+- Turn a piece with its knob; it snaps to quarter turns.
 - Straighten button in Arrange > Turn.
 - Repeated Move, Size or Turn taps in Arrange are now one Undo.
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),

@@ -100,6 +100,9 @@ internal val TapInkTolerance = 8.dp
  * @param onPreview receives the live accumulator each frame (drives the chrome `graphicsLayer{}`), and
  *   `null` when a gesture ends so the preview resets.
  * @param onDoubleTap the page-space point of a double-tap (text-edit seam).
+ * @param inert true while another surface owns the session (the knob, A48.3): taps do nothing and no transform
+ *   begins. A flag rather than removing this modifier, because cancelling it mid-gesture skips the commit,
+ *   the cancel and `onPreview(null)` below and would strand the session and the preview.
  */
 public fun Modifier.editorTransformGestures(
     screenPxPerPt: Float,
@@ -109,6 +112,7 @@ public fun Modifier.editorTransformGestures(
     dispatch: (Intent) -> Unit,
     onPreview: (LiveTransform?) -> Unit,
     onDoubleTap: (PtPoint) -> Unit = {},
+    inert: () -> Boolean = { false },
 ): Modifier {
     fun toPage(pos: Offset): PtPoint = ExportScale.previewDeviceToPage(
         screenPxPerPt = screenPxPerPt.toDouble(),
@@ -142,9 +146,9 @@ public fun Modifier.editorTransformGestures(
                 // duplicated selection logic the comment above refuses. It asks one further question the
                 // reducer cannot answer for it: *was this already selected before the tap*, which is state
                 // the reduction destroys by selecting.
-                onTap = { pos -> dispatch(benchTapIntent(currentState(), toPage(pos), tolerancePt)) },
-                onLongPress = { pos -> dispatch(Intent.SelectAt(toPage(pos), tolerancePt)) },
-                onDoubleTap = { pos -> onDoubleTap(toPage(pos)) },
+                onTap = { pos -> if (!inert()) dispatch(benchTapIntent(currentState(), toPage(pos), tolerancePt)) },
+                onLongPress = { pos -> if (!inert()) dispatch(Intent.SelectAt(toPage(pos), tolerancePt)) },
+                onDoubleTap = { pos -> if (!inert()) onDoubleTap(toPage(pos)) },
             )
         }
         .pointerInput(screenPxPerPt, pageOffset) {
@@ -200,6 +204,7 @@ public fun Modifier.editorTransformGestures(
 
                     if (pastSlop) {
                         if (token == null) {
+                            if (inert()) break
                             // Open the session and read the token synchronously (the §5.1 mailbox contract).
                             dispatch(Intent.BeginTransform(selectionAtDown))
                             val itx = currentState().interaction

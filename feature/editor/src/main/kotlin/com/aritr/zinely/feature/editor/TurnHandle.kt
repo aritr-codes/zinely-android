@@ -60,6 +60,7 @@ import com.aritr.zinely.ui.theme.ZinelyV21Colors
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import com.aritr.zinely.ui.theme.zinelyV21LightColors
+import kotlinx.coroutines.CancellationException
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -143,6 +144,9 @@ private class KnobStart(
     val pageOffset: PtPoint,
 )
 
+/** Where the knob stood when the finger landed: held until the gesture ends, so nothing moves the box under it. */
+private class KnobPress(val top: Boolean, val hitCentre: Offset)
+
 private class KnobDrag(val id: String, val before: Transform, val top: Boolean, val hitCentre: Offset, val angle: Double)
 
 /**
@@ -155,8 +159,10 @@ private class KnobDrag(val id: String, val before: Transform, val top: Boolean, 
  * **Invariants.**
  * - It exposes nothing to the accessibility tree, exactly as the resize handles do: no `clickable`, no
  *   semantics, only `pointerInput`. Its non-pointer twins are Arrange > Turn and the element's actions.
- * - The side is chosen only while no knob drag is live, so it never jumps out from under the finger. The hit
- *   box stays where the drag began; the pointer stays captured by it, and only the drawn knob turns.
+ * - The side is chosen only while no finger is on the knob, so it never jumps out from under the finger. The
+ *   hit box stays where the finger landed; the pointer stays captured by it, and only the drawn knob turns.
+ * - It never opens a session over one already open: a page finger or handle can cross its slop in the same
+ *   event, before recomposition takes this away.
  * - No jump on touch: nothing happens until the touch slop is passed, and the angle is the angle at
  *   touch-down plus the angle swept round the box centre since touch-down, unwrapped frame by frame.
  *
@@ -182,6 +188,7 @@ internal fun TurnHandle(
     var origin by remember { mutableStateOf<Offset?>(null) }
     var size by remember { mutableStateOf(Size.Zero) }
     var knobDrag by remember { mutableStateOf<KnobDrag?>(null) }
+    var press by remember { mutableStateOf<KnobPress?>(null) }
 
     Box(
         modifier = modifier.onGloballyPositioned {
@@ -201,18 +208,19 @@ internal fun TurnHandle(
         val distancePx = with(density) { TurnKnobDistanceDp.toPx() }
         val half = with(density) { TurnKnobHitDp.toPx() } / 2f
         val visible = visibleInWindow?.translate(-at) ?: Rect(Offset.Zero, size)
+        val obstacles = obstaclesInWindow.map { it.translate(-at) }
 
         val live = knobDrag?.takeIf { it.id == element.id }
         val shown = live?.before?.copy(rotationDegrees = live.angle) ?: element.transform
-        val top = live?.top ?: run {
+        val top = live?.top ?: press?.top ?: run {
             fun hit(top: Boolean) = Rect(turnKnobCentrePx(element.transform, screenPxPerPt, pageOffset, distancePx, top), half)
-            turnKnobTop(hit(false), hit(true), visible, obstaclesInWindow.map { it.translate(-at) })
+            turnKnobTop(hit(false), hit(true), visible, obstacles)
         } ?: return@Box // A48.2: neither side fits, so the knob is not drawn.
 
         val knob = turnKnobCentrePx(shown, screenPxPerPt, pageOffset, distancePx, top)
         KnobMark(shown, knob, top, screenPxPerPt, pageOffset)
 
-        val hitCentre = live?.hitCentre ?: knob
+        val hitCentre = live?.hitCentre ?: press?.hitCentre ?: knob
         val latest by rememberUpdatedState(KnobStart(element.transform, element.id, top, hitCentre, screenPxPerPt, pageOffset))
         Box(
             Modifier
@@ -224,18 +232,28 @@ internal fun TurnHandle(
                         val down = awaitFirstDown(requireUnconsumed = false)
                         down.consume()
                         val start = latest
+                        press = KnobPress(start.top, start.hitCentre)
                         val boxTopLeft = start.hitCentre - Offset(half, half)
                         val centrePt = SelectionChromeGeometry.handleDevicePx(start.transform, PtPoint(0.0, 0.0), start.screenPxPerPt, start.pageOffset)
                         val centre = Offset(centrePt.x.toFloat(), centrePt.y.toFloat())
                         var last = down.position + boxTopLeft
                         // A48.3: nothing turns until the finger has passed the platform touch slop.
-                        val past = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
-                            ?: return@awaitEachGesture
+                        val past = try {
+                            awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                        } catch (e: CancellationException) {
+                            press = null
+                            throw e
+                        }
+                        if (past == null || currentState().interaction is Interaction.Transforming) {
+                            press = null
+                            return@awaitEachGesture
+                        }
                         dispatch(Intent.BeginTransform(setOf(start.id)))
                         val session = currentState().interaction as? Interaction.Transforming
                         val before = session?.before?.get(start.id)
                         if (session == null || before == null) {
                             session?.let { dispatch(Intent.CancelTransform(it.token)) }
+                            press = null
                             return@awaitEachGesture
                         }
                         var knobSnap = KnobSnap.startingAt(before.rotationDegrees)
@@ -273,6 +291,7 @@ internal fun TurnHandle(
                         } finally {
                             if (!committed) dispatch(Intent.CancelTransform(session.token))
                             knobDrag = null
+                            press = null
                             onTurn(null)
                         }
                     }
@@ -280,7 +299,7 @@ internal fun TurnHandle(
         )
 
         if (live != null) {
-            TurnReadout(shown, live.angle, knobBelow = !top, visible, screenPxPerPt, pageOffset, readoutColors)
+            TurnReadout(shown, live.angle, knobBelow = !top, visible, obstacles, screenPxPerPt, pageOffset, readoutColors)
         }
     }
 }
@@ -311,7 +330,7 @@ private fun KnobMark(t: Transform, knob: Offset, top: Boolean, screenPxPerPt: Do
 
 /**
  * A48.5: the pill, on the side of the piece opposite the knob, 8dp clear of the piece's on-screen bounds and
- * kept inside the canvas. Leaf tint only when the angle is exactly on a quarter turn. Not spoken.
+ * kept inside the canvas and clear of [obstacles], which it cannot draw over from this overlay. Leaf tint only when the angle is exactly on a quarter turn. Not spoken.
  */
 @Composable
 private fun TurnReadout(
@@ -319,6 +338,7 @@ private fun TurnReadout(
     angle: Double,
     knobBelow: Boolean,
     visible: Rect,
+    obstacles: List<Rect>,
     screenPxPerPt: Double,
     pageOffset: PtPoint,
     colors: ZinelyV21Colors,
@@ -330,6 +350,9 @@ private fun TurnReadout(
     val right = corners.maxOf { it.x }.toFloat()
     val topY = corners.minOf { it.y }.toFloat()
     val bottomY = corners.maxOf { it.y }.toFloat()
+    val middleY = (topY + bottomY) / 2f
+    val roof = obstacles.filter { it.bottom <= middleY }.maxOfOrNull { it.bottom } ?: visible.top
+    val floor = obstacles.filter { it.top >= middleY }.minOfOrNull { it.top } ?: visible.bottom
     val snapped = TurnMath.isOnQuarter(angle)
     Text(
         text = turnReadout(angle),
@@ -348,7 +371,8 @@ private fun TurnReadout(
                     val wantY = if (knobBelow) topY - gap - p.height else bottomY + gap
                     val wantX = (left + right) / 2f - p.width / 2f
                     val x = wantX.coerceAtMost(visible.right - inset - p.width).coerceAtLeast(visible.left + inset)
-                    val y = wantY.coerceAtMost(visible.bottom - inset - p.height).coerceAtLeast(visible.top + inset)
+                    val y = wantY.coerceAtMost(minOf(visible.bottom, floor) - inset - p.height)
+                        .coerceAtLeast(maxOf(visible.top, roof) + inset)
                     p.place(x.roundToInt(), y.roundToInt())
                 }
             }

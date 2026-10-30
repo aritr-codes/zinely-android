@@ -187,8 +187,14 @@ public fun ResizeHandles(
                     }
                 },
                 beginSession = {
-                    dispatch(Intent.BeginTransform(setOf(selectedId)))
-                    (currentState().interaction as? Interaction.Transforming)?.token
+                    // A finger on the knob or the page can cross its slop in the same event, before this
+                    // handle is recomposed away; a second Begin would replace that session (A48.3).
+                    if (currentState().interaction is Interaction.Transforming) {
+                        null
+                    } else {
+                        dispatch(Intent.BeginTransform(setOf(selectedId)))
+                        (currentState().interaction as? Interaction.Transforming)?.token
+                    }
                 },
                 commitSession = { after, token ->
                     dispatch(Intent.CommitTransform(mapOf(selectedId to after), token))

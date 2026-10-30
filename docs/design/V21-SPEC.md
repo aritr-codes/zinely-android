@@ -491,7 +491,7 @@ running text.** Voice is for short strings; Work is for anything the user operat
   ink, and its ring separates it from the chip's `paper` ground, so `ink` is correct there. This spec said
   "the single exception" until a review found all three — the blanket repaint had made border == background,
   and only the snackbar was caught by the first scan, which matched one rule per selector.)
-- **A sheet's action pair shares one geometry** *(Library A49, [ADR-144](../DECISIONS.md#adr-144), proposed).* When a
+- **A sheet's action pair shares one geometry** *(Library A49, frozen, [ADR-144](../DECISIONS.md#adr-144)).* When a
   sheet puts a dismiss beside a committing button, both are bordered controls with the same radius, 1.5px ink border,
   shadow, press tier, 48px minimum height and padding. The commit is leaf-filled with on-leaf words; the dismiss is
   surface-filled (`--surface`, which is not `--paper`) with ink words. Only the commit may be disabled; the dismiss is never dimmed. Borderless

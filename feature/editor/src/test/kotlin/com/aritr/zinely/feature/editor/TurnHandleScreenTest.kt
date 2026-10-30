@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
@@ -15,6 +17,7 @@ import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.Intent
+import com.aritr.zinely.core.editor.ResizeHandle
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
@@ -26,6 +29,7 @@ import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -139,6 +143,75 @@ class TurnHandleScreenTest {
         assertEquals(midPage, t.copy(rotationDegrees = 0.0))
         store.dispatch(Intent.Undo)
         assertEquals("one Undo", midPage, store.uiState.value.document.pages[0].elements.single().transform)
+    }
+
+    @Test
+    fun a_knob_finger_and_a_page_finger_crossing_slop_in_one_event_leave_nothing_stuck() {
+        val store = storeWith(midPage)
+        show(store)
+        val hit = composeRule.onNodeWithTag(TurnHandleTestTag).fetchSemanticsNode().boundsInRoot
+        val scale = store.uiState.value.view.screenPxPerPt.toDouble()
+        val knobToCentre = (10.0 * scale + 54.0 * composeRule.density.density).toFloat()
+        composeRule.onNodeWithTag(TurnHandleTestTag).performTouchInput {
+            val c = Offset(hit.width / 2f, hit.height / 2f - knobToCentre)
+            fun at(deg: Double) = Offset(
+                c.x + knobToCentre * cos(Math.toRadians(deg)).toFloat(),
+                c.y + knobToCentre * sin(Math.toRadians(deg)).toFloat(),
+            )
+            down(0, at(90.0))
+            down(1, c)
+            // Both cross the slop in the one event, before any recomposition can take a surface away.
+            updatePointerTo(0, at(120.0))
+            updatePointerTo(1, c + Offset(40f, 40f))
+            move()
+        }
+        composeRule.waitForIdle() // The recomposition that used to strand a surface's session.
+        composeRule.onRoot().performTouchInput {
+            up(1)
+            up(0)
+        }
+        composeRule.waitForIdle()
+        assertEquals(Interaction.Idle, store.uiState.value.interaction)
+        composeRule.onNodeWithTag(TurnHandleTestTag).assertExists()
+        composeRule.onNodeWithTag("$ResizeHandleTagPrefix${ResizeHandle.BOTTOM_RIGHT.name}").assertExists()
+    }
+
+    @Test
+    fun a_second_finger_tapping_blank_paper_during_a_knob_drag_does_not_deselect() {
+        val store = storeWith(midPage)
+        show(store)
+        val selection = store.uiState.value.selection
+        val hit = composeRule.onNodeWithTag(TurnHandleTestTag).fetchSemanticsNode().boundsInRoot
+        val scale = store.uiState.value.view.screenPxPerPt.toDouble()
+        val knobToCentre = (10.0 * scale + 54.0 * composeRule.density.density).toFloat()
+        composeRule.onNodeWithTag(TurnHandleTestTag).performTouchInput {
+            val c = Offset(hit.width / 2f, hit.height / 2f - knobToCentre)
+            fun at(deg: Double) = Offset(
+                c.x + knobToCentre * cos(Math.toRadians(deg)).toFloat(),
+                c.y + knobToCentre * sin(Math.toRadians(deg)).toFloat(),
+            )
+            down(0, at(90.0))
+            for (d in 92..110 step 2) moveTo(0, at(d.toDouble()))
+            down(1, c + Offset(0f, -70f * composeRule.density.density))
+            up(1)
+            advanceEventTime(1000)
+            for (d in 112..130 step 2) moveTo(0, at(d.toDouble()))
+            up(0)
+        }
+        composeRule.waitForIdle()
+        assertEquals(selection, store.uiState.value.selection)
+        assertEquals(40.0, store.uiState.value.document.pages[0].elements.single().transform.rotationDegrees, 1.0)
+    }
+
+    @Test
+    fun the_knob_stays_out_from_under_the_type_bar() {
+        val store = storeWith(Transform(30.0, 60.0, 40.0, 12.0))
+        show(store)
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.TEXT}").performClick()
+        composeRule.waitForIdle()
+        val bar = composeRule.onNodeWithTag("type-bar").fetchSemanticsNode().boundsInRoot
+        val knobs = composeRule.onAllNodesWithTag(TurnHandleTestTag).fetchSemanticsNodes()
+        knobs.forEach { assertFalse("the knob's hit box is under the bar", it.boundsInRoot.overlaps(bar)) }
     }
 
     @Test

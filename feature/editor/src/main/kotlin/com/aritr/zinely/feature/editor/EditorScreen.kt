@@ -1923,20 +1923,19 @@ public fun EditorScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                // A48.3: while the knob turns the piece, a second finger on the page does
-                                // nothing; its BeginTransform would otherwise replace the knob's session.
-                                .then(
-                                    if (turnOverride != null) Modifier else Modifier.editorTransformGestures(
-                                        screenPxPerPt = uiState.view.screenPxPerPt,
-                                        pageOffset = uiState.view.pageOffset,
-                                        pageSizePt = pageSizePt,
-                                        currentState = currentState,
-                                        dispatch = dispatch,
-                                        onPreview = { live = it },
-                                        // The single double-tap seam (ADR-053 §4): the reducer retargets by the
-                                        // topmost element type — text → inline edit, image → Reframe.
-                                        onDoubleTap = { pagePoint -> dispatch(Intent.DoubleTapAt(pagePoint)) },
-                                    ),
+                                .editorTransformGestures(
+                                    screenPxPerPt = uiState.view.screenPxPerPt,
+                                    pageOffset = uiState.view.pageOffset,
+                                    pageSizePt = pageSizePt,
+                                    currentState = currentState,
+                                    dispatch = dispatch,
+                                    onPreview = { live = it },
+                                    // The single double-tap seam (ADR-053 §4): the reducer retargets by the
+                                    // topmost element type — text → inline edit, image → Reframe.
+                                    onDoubleTap = { pagePoint -> dispatch(Intent.DoubleTapAt(pagePoint)) },
+                                    // A48.3: while the knob turns the piece, a second finger on the page does
+                                    // nothing; its BeginTransform would otherwise replace the knob's session.
+                                    inert = { turnOverride != null },
                                 ),
                         )
                         if (live == null) {
@@ -1963,6 +1962,8 @@ public fun EditorScreen(
                                         if (ctxVisible) chromeBoundsInWindow["ctx"]?.let(::add)
                                         if (arrangeTrayVisible) chromeBoundsInWindow["arrange"]?.let(::add)
                                         if (flipTrayVisible) chromeBoundsInWindow["flip"]?.let(::add)
+                                        if (typeBarVisible) chromeBoundsInWindow["type"]?.let(::add)
+                                        if (saveErrorVisible) chromeBoundsInWindow["save"]?.let(::add)
                                         if (inkPopoverVisible) chromeBoundsInWindow["ink"]?.let(::add)
                                         if (snackVisible) chromeBoundsInWindow["snack"]?.let(::add)
                                         // Present only while the hint is composed (its DisposableEffect removes it).
@@ -2157,7 +2158,8 @@ public fun EditorScreen(
                     onDismiss = onDismissSaveError,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .padding(top = 8.dp),
+                        .padding(top = 8.dp)
+                        .onGloballyPositioned { noteChrome("save", it) },
                     onRetry = onRetrySaveError,
                     kind = lastSaveErrorKind,
                 )
@@ -2460,7 +2462,10 @@ public fun EditorScreen(
                                 // `width(IntrinsicSize.Max)` clamps against. Without it the bar has no floor
                                 // under it on a narrow screen or a large font scale.
                                 .padding(start = 12.dp, end = 12.dp, bottom = 8.dp)
-                                .onGloballyPositioned { typeBarDockedTopPx = it.positionInWindow().y },
+                                .onGloballyPositioned {
+                                    typeBarDockedTopPx = it.positionInWindow().y
+                                    noteChrome("type", it)
+                                },
                         )
                     }
                 }

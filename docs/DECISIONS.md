@@ -17557,7 +17557,9 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
   offset 4dp, ink at 60% (`ZineV21Cover` `ChosenRingWidth`/`ChosenRingOffset`/ring colour in phase 2); the tick and the
   never-repainted cover are unchanged. Eight selection goldens change (`ZineSelectGoldenTest`).
 - **As built 2026-10-30 (R9):** `ZineV21Cover` now draws the ring at 2dp, offset 4dp, `ink.copy(alpha = 0.6f)` on the ring
-  only; the tick and the cover are untouched. Goldens not re-recorded here (CI image only); device pass owed.
+  only; the tick and the cover are untouched. The ring uses the cover's own corner radii; a CSS outline's radii grow
+  with the offset, so the corners differ by about 2dp from the prototype (`ponytail:` comment in the file). Goldens
+  recorded on the CI image only. The device pass also checks the ring is legible on every paper and the dark desk.
 - **Owed before Accepted:** both device passes, a TalkBack listen (owner), 390dp parity.
 
 #### Revisit trigger
@@ -17576,7 +17578,7 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 [ADR-123](#adr-123) / A26 (D4's words, and the "Move (drag, or Nudge)" row), and the
 [ADR-102 §12.8](#adr-102-p1-handles) handle figure (eight handles become eight plus one turn handle). **Closes:**
 [ADR-136](#adr-136) W2a items 7 and 9, moved to W2b in its [W2a note](#adr-136-w2a). **Evidence:**
-[RESEARCH R37](RESEARCH.md#r37). Not built; accepted only after both device passes
+[RESEARCH R37](RESEARCH.md#r37). Built 2026-10-30, in no release ([as built](#adr-143-as-built)); accepted only after both device passes
 ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 
 #### Context
@@ -17764,12 +17766,12 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 - Goldens: selection chrome (light, dark, rotated, small piece, flipped knob) and the Arrange tray (360dp, 2×),
   recorded on the pinned CI image after reading the `*_compare.png` diffs. The 2% threshold can hide a missing knob;
   open the PNGs.
-- **Owed before Accepted:** the owner's freeze of A48; both device passes, including the platform tree (the knob
+- **Owed before Accepted:** both device passes, including the platform tree (the knob
   must not appear as an unlabelled clickable), a tiny piece, a piece at the page bottom, a 90° piece, text turned 45°
   then edited (how a rotated text box looks while typed into is unverified), Straighten from 360°, 1.5° and 0° with its snack words, the snap haptic, the
   first-run hint up on a piece near the top and bottom of the page (the knob gives way, then appears once the hint
-  goes), on a piece turned 45° a tap on a bottom corner handle's mark resizes and does not turn, a Pass 1 read of Straighten's `enabled=false` in the platform tree on an upright piece, and a TalkBack check
-  of Straighten.
+  goes), on a piece turned 45° a tap on a bottom corner handle's mark resizes and does not turn, a Pass 1 read of Straighten's `enabled=false` in the platform tree on an upright piece, the Arrange tray open on a real small phone (the knob may have no room), the knob overhanging the page onto the dark desk, where its stem is dark on dark, and a TalkBack check
+  of Straighten, including where focus lands when Straighten disables itself.
 - The owner's 2026-08-12 handle ruling is amended, not replaced: a ninth mark is added, and the eight keep their
   placement. Stated so the owner can overrule it.
 - A first-time Pass 2 must answer whether the knob reads as "turn" and whether it fights drag-to-move.
@@ -17796,7 +17798,17 @@ letter. Each one keeps the frozen behaviour; say so if one is wrong.
 - **The knob's side is recomputed on any idle recomposition,** a superset of A48.2's listed triggers. It never moves
   during a drag: the hit box is frozen at touch-down and only the drawn knob turns.
 - **The handles turn with the piece during a knob drag and take no touches.** A second finger on the page is also
-  ignored, because its `BeginTransform` would replace the knob's session (A48.3).
+  ignored, because its `BeginTransform` would replace the knob's session (A48.3). The page's gestures stay attached
+  and read an `inert` flag: removing them mid-gesture skips their cleanup. Any surface also declines to open a session
+  over one already open, so two fingers crossing the slop in one event cannot strand either. Review found this hazard
+  by reading; the test written for it (`a_knob_finger_and_a_page_finger_crossing_slop…`) was green before the fix too,
+  so the same-event timing is not proven on a phone.
+- **The knob is hidden during a body drag, pinch or resize.** A48.7's list does not name these and the prototype keeps
+  it up. The drag's own preview moves the piece, and the knob would sit on the old place.
+- **The side and hit box freeze when the finger lands,** not when the drag starts, so chrome arriving under a resting
+  finger cannot move the box. The Type bar and the save-failure banner are in the avoid list too.
+- **The readout is kept clear of chrome.** The prototype draws it over the verb bar (z-index 31 over 30). Compose draws
+  it in the canvas overlay, under the bar, so it is pushed to the bar's edge instead, even if that overlaps the piece.
 - **A tray tap that changes nothing keeps the run marker** when it is in the same group. It records nothing, so it has
   nothing to split.
 - **`SetViewport` ends a run,** as any other intent does. It fires only on a change or an idle toggle, not per frame.
@@ -17807,7 +17819,9 @@ letter. Each one keeps the frozen behaviour; say so if one is wrong.
   room, so the knob hides although A48.7 says it shows with the tray open. A real small phone is on the owed list.
 - **The UI tests were written beside the code, not before it.** Core tests were red first. For the knob, the snap, the
   slop rule and the second-finger gate were mutation-checked instead: each mutation failed its test.
-- **Goldens are not re-recorded here.** They need reading and recording on the pinned CI image.
+- **Goldens are recorded on the pinned CI image,** after reading the diffs: `TurnKnobGoldenTest` holds the knob's five
+  (light, dark, turned, small piece, flipped) and `ArrangeTrayGoldenTest` gains 2× text. Both goldens compose the overlays
+  without the page.
 
 ## ADR-144 {#adr-144}
 
@@ -17881,5 +17895,10 @@ set). **Evidence:** [RESEARCH R38](RESEARCH.md#r38). Accepted only after both de
 
 `GoButton` in `FolderSheets.kt` takes `primary` (default true) and a `tag`; Cancel is `GoButton(primary = false)` with
 `FolderNameCancelTestTag`: surface fill, ink label, never dimmed, same shape, border, Raised press and 48dp minimum.
-`QuietAction`, `ZPrimaryButton`, `ZStampButton` and the dock are untouched. Goldens not re-recorded (CI image only);
+`QuietAction`, `ZPrimaryButton`, `ZStampButton` and the dock are untouched. Goldens recorded on the CI image only;
 both device passes still owed.
+
+**Known exceptions to decision 1, not changed here.** The Bench spread confirm is frozen with a transparent fill
+(`.spread-cancel`), and `ImageSpreadSheet` draws its dismiss with `ZStampButton` (`inkSoft` words, Hero press). It is
+bordered and has the partner's height, so it does not read as broken. Bringing it into line needs its own HTML amendment.
+`InkMixerSheet`, `BenchInkPopover` and Reframe were not compared to the rule. The next change to any of them checks it.
