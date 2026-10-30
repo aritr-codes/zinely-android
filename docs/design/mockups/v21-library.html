@@ -68,7 +68,7 @@ if (new URLSearchParams(location.search).has('gallery')) {
      │                                                                             │
      │  A49 SHEET ACTION PAIR · PROPOSED 2026-10-29 (ADR-144), awaiting the owner's freeze.│
      │  The name sheet's Cancel was the one dismiss in the corpus drawn as bare text; it is│
-     │  now a paper-filled sibling of Make folder (.go.ghost).  Look only: A28.14 behaviour│
+     │  now a surface-filled sibling of Make folder (.go.ghost). Look only: A28.14 behaviour│
      │  is unchanged.  Rules A49.1–A49.4 sit above the A49 demo card in the body.  │
      └─────────────────────────────────────────────────────────────────────────────┘ -->
 
@@ -505,7 +505,7 @@ body{
 .go:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
 .go:disabled{opacity:.45;cursor:default;transform:none;box-shadow:3px 3px 0 var(--ink-line)}
 .go:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
-/* A49: the dismiss beside a .go is a .go with a paper fill and ink words; border, radius, shadow,
+/* A49: the dismiss beside a .go is a .go with a surface fill (--surface, not --paper) and ink words; border, radius, shadow,
    min-height, press and focus are inherited, and it is never dimmed (only the commit may be disabled) */
 .go.ghost{background:var(--surface);color:var(--ink)}
 .a49-demo{max-width:640px;width:100%;background:var(--surface);border:1.5px solid var(--ink);border-radius:var(--br-lg);
@@ -603,19 +603,19 @@ Shelf now says so: one paper note under the heading, until <b>Got it</b>. It spe
 <!-- A49 -->
 <p class="cap"><span class="badge">A49 sheet action pair · proposed 2026-10-29 · not built</span><br>
 <b>Cancel beside Make folder (ADR-144).</b> The name sheet's Cancel had no button body; it now wears Make folder's
-shape in paper. Both rows below use the real classes; flip <b>day / night</b> to judge both themes.</p>
+shape, surface-filled. Both rows below use the real classes; flip <b>day / night</b> to judge both themes.</p>
 <!--
   A49 · SHEET ACTION PAIR — PROPOSED 2026-10-29, awaiting the owner's freeze (ADR-144).
   Amends A28's LOOK only (the name sheet's Cancel); A28.14 (what Cancel does) is unchanged.
   A49.1  [shown]  When a sheet offers a dismiss beside a committing button, both are bordered controls
                   of one geometry: same radius, 1.5px ink border, shadow, press, min-height 48px, padding.
-  A49.2  [shown]  The commit is leaf-filled with on-leaf words; the dismiss is paper-filled (--surface)
+  A49.2  [shown]  The commit is leaf-filled with on-leaf words; the dismiss is surface-filled (--surface, not --paper)
                   with ink words.  They differ by fill and word colour only.
   A49.3  [shown]  Only the commit may be disabled (opacity .45, A28.10).  The dismiss is never dimmed.
   A49.4  [stated] Borderless underlined text (.quiet-action) is for navigation links (Backups, About),
                   not for dismissing a sheet.
   BEFORE: Cancel = bare underlined ink-soft text beside a dimmed filled pill ("the dead one is the button").
-  AFTER:  Cancel = paper pill, ink words, full strength; Make folder dims alone until a name is typed.
+  AFTER:  Cancel = surface-filled pill, ink words, full strength; Make folder dims alone until a name is typed.
 -->
 <div class="a49-demo" aria-label="A49 demo: the name sheet's buttons">
   <p class="row-l">Empty: Make folder waits for a name</p>
