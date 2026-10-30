@@ -17559,7 +17559,8 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 - **As built 2026-10-30 (R9):** `ZineV21Cover` now draws the ring at 2dp, offset 4dp, `ink.copy(alpha = 0.6f)` on the ring
   only; the tick and the cover are untouched. The ring uses the cover's own corner radii; a CSS outline's radii grow
   with the offset, so the corners differ by about 2dp from the prototype (`ponytail:` comment in the file). Goldens
-  recorded on the CI image only. The device pass also checks the ring is legible on every paper and the dark desk.
+  recorded on the CI image only. Seen on the emulator (light and dark) and the Samsung QA package (dark) with one chosen
+  cover, 2026-10-30; the ring on every paper is still owed.
 - **Owed before Accepted:** both device passes, a TalkBack listen (owner), 390dp parity.
 
 #### Revisit trigger
@@ -17825,6 +17826,30 @@ letter. Each one keeps the frozen behaviour; say so if one is wrong.
   (light, dark, turned, small piece, flipped) and `ArrangeTrayGoldenTest` gains 2× text. Both goldens compose the overlays
   without the page.
 
+#### Device passes (2026-10-30, build `2714ddad`, QA package `com.aritr.zinely.w2bqa`) {#adr-143-device}
+
+Pixel 7-class emulator on API 36 (light, 1x; 2x and dark on the Shelf sheet) and Samsung SM-A176B on Android 16 (dark).
+One finger, by `adb` touch events, with the document file read after each step.
+
+- **Passed, on both:** a knob drag writes the angle alone and is one Undo; the handles and readout turn with it; three
+  Move taps are one Undo; three Turn taps then Straighten then Undo; a corner mark dragged on a piece at 45° resizes and
+  does not turn. The platform tree shows no node for the knob, and Straighten reads `enabled=false clickable=false` when
+  upright and `true` once turned.
+- **Passed, emulator only:** the snap to −90° exactly, Redo after a run, a run ended by a change of group, a Size run
+  down to a small piece, a 90° piece, the knob flipping above at the foot of the page, the knob clear of the Type bar,
+  and the Undo words "Text turned back".
+- **Pass 2, read by the implementer, so a weak reading:** the stem and turn glyph read as "turn this" without words, and
+  dragging the body never caught the knob. Nothing on screen says two fingers turn freely, so small tilts stay a thing
+  a maker has to know. A first-time reader is still owed.
+- **Finding, not caused by this work:** typing into turned text draws the words upright in the box's on-screen bounds. On
+  a small piece at 90° near the foot of the page, the words overflow that box and meet the bar. It already happened after
+  a two-finger or tray turn; the knob makes turning more common. It stays on the owed list as the "text turned 45° then
+  edited" item, now answered: readable, unpolished. Fix through the HTML first if a tester trips on it.
+- **Still owed:** every two-finger check (`adb` cannot inject one on these builds), including a second finger during a
+  knob or handle drag; the haptic tick felt by hand; the first-run hint on a piece near the top and bottom; the Arrange
+  tray on a real small phone; the knob over the dark desk; Straighten from 360° and 1.5° on a device (unit-tested only);
+  a first-time Pass 2; TalkBack.
+
 ## ADR-144 {#adr-144}
 
 ### Sheet action pairs share one geometry
@@ -17898,7 +17923,9 @@ set). **Evidence:** [RESEARCH R38](RESEARCH.md#r38). Accepted only after both de
 `GoButton` in `FolderSheets.kt` takes `primary` (default true) and a `tag`; Cancel is `GoButton(primary = false)` with
 `FolderNameCancelTestTag`: surface fill, ink label, never dimmed, same shape, border, Raised press and 48dp minimum.
 `QuietAction`, `ZPrimaryButton`, `ZStampButton` and the dock are untouched. Goldens recorded on the CI image only;
-both device passes still owed.
+device passes run 2026-10-30 on the emulator and the Samsung QA package at `2714ddad`: Cancel is an enabled Button while
+Make folder reads `enabled=false`; Cancel first in the tree; at 2x text the pair stays on one row in that sheet. A
+first-time Pass 2 and a TalkBack listen are still owed.
 
 **Known exceptions to decision 1, not changed here.** The Bench spread confirm is frozen with a transparent fill
 (`.spread-cancel`), and `ImageSpreadSheet` draws its dismiss with `ZStampButton` (`inkSoft` words, Hero press). It is
