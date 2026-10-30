@@ -69,6 +69,8 @@ Website, docs and test-only changes that are not part of the beta.8 app, moved h
 
 ### Changed
 
+- Choosing zines on My Shelf: the ring round a chosen zine is lighter.
+- The new-folder and rename sheet's Cancel is now a proper button beside Make folder.
 - Docs: ZINE-DIRECTION notes the two-voice ruling (Book and Plain, ADR-126 Proposed) beside its four "three
   voices" lines; 21 drifted line citations into the frozen type bar, Reframe and Library pages re-pointed to
   named blocks or pinned commits (#97, #98).

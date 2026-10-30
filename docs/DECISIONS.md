@@ -17556,6 +17556,8 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 - **Amendment 2026-10-29 (A47.2, ruling R9; design frozen by the owner 2026-10-30):** the chosen ring is lightened to 2dp,
   offset 4dp, ink at 60% (`ZineV21Cover` `ChosenRingWidth`/`ChosenRingOffset`/ring colour in phase 2); the tick and the
   never-repainted cover are unchanged. Eight selection goldens change (`ZineSelectGoldenTest`).
+- **As built 2026-10-30 (R9):** `ZineV21Cover` now draws the ring at 2dp, offset 4dp, `ink.copy(alpha = 0.6f)` on the ring
+  only; the tick and the cover are untouched. Goldens not re-recorded here (CI image only); device pass owed.
 - **Owed before Accepted:** both device passes, a TalkBack listen (owner), 390dp parity.
 
 #### Revisit trigger
@@ -17850,3 +17852,10 @@ set). **Evidence:** [RESEARCH R38](RESEARCH.md#r38). Accepted only after both de
 #### Revisit trigger
 
 - Pass 2 finds two bordered pills too heavy; then fall back to a Flat tier for the dismiss, updating the HTML first.
+
+#### As built (2026-10-30)
+
+`GoButton` in `FolderSheets.kt` takes `primary` (default true) and a `tag`; Cancel is `GoButton(primary = false)` with
+`FolderNameCancelTestTag`: surface fill, ink label, never dimmed, same shape, border, Raised press and 48dp minimum.
+`QuietAction`, `ZPrimaryButton`, `ZStampButton` and the dock are untouched. Goldens not re-recorded (CI image only);
+both device passes still owed.
