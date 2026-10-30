@@ -78,6 +78,7 @@ internal const val FolderMoveNewTestTag: String = "folder-move-new"
 internal const val FolderNameFieldTestTag: String = "folder-name-field"
 internal const val FolderNameHintTestTag: String = "folder-name-hint"
 internal const val FolderNameGoTestTag: String = "folder-name-go"
+internal const val FolderNameCancelTestTag: String = "folder-name-cancel"
 
 /** The folder sheet's three rows. */
 internal const val FolderOpenTestTag: String = "folder-open"
@@ -364,11 +365,12 @@ internal fun FolderNameSheetSurface(
             verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
             itemVerticalAlignment = Alignment.CenterVertically,
         ) {
-            QuietAction(
-                ZineDockSecondaryAction(
-                    label = Copy.Folders.CANCEL,
-                    onClick = { haptics.perform(ZinelyHaptic.Tick); onCancel() },
-                ),
+            GoButton(
+                label = Copy.Folders.CANCEL,
+                enabled = true,
+                primary = false,
+                tag = FolderNameCancelTestTag,
+                onClick = { haptics.perform(ZinelyHaptic.Tick); onCancel() },
             )
             GoButton(label = answer.button, enabled = answer.enabled, onClick = go)
         }
@@ -387,11 +389,18 @@ internal fun FolderNameSheetSurface(
  * .go:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
  * ```
  *
- * `3 / 2 / 1` is [ZinelyV21Press.Raised]. Its words change with what is typed (*Make folder*, *Move to
+ * A49: the sheet's Cancel is the same button with `primary = false` (`.go.ghost`: `--surface` fill, ink label,
+ * never dimmed), so the pair match in shape, border, shadow and press. `3 / 2 / 1` is [ZinelyV21Press.Raised]. Its words change with what is typed (*Make folder*, *Move to
  * "Family"*), and a folder's name can be forty characters, so the label wraps inside the button.
  */
 @Composable
-private fun GoButton(label: String, enabled: Boolean, onClick: () -> Unit) {
+private fun GoButton(
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    primary: Boolean = true,
+    tag: String = FolderNameGoTestTag,
+) {
     val colors = ZinelyTheme.v21Colors
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -399,14 +408,14 @@ private fun GoButton(label: String, enabled: Boolean, onClick: () -> Unit) {
     Box(
         Modifier
             // Not `Modifier.alpha`: that cut the right and bottom off the disabled button's shadow.
-            .zinelyV21Dimmed(if (enabled) 1f else GoDisabledOpacity)
+            .zinelyV21Dimmed(if (enabled || !primary) 1f else GoDisabledOpacity)
             // Nothing that clips may sit before the press or the ring: both paint outside the bounds.
             .zinelyV21Pressable(pressed && enabled, ZinelyV21Press.Raised, colors.inkLine, GoShape)
             .zinelyFocusRing(focused, ZinelyV21Dimens.radiusLg, GoFocusOffset)
             .clip(GoShape)
-            .background(colors.leaf)
+            .background(if (primary) colors.leaf else colors.surface)
             .border(FieldBorder, colors.ink, GoShape)
-            .testTag(FolderNameGoTestTag)
+            .testTag(tag)
             .zinelyV2Control(label = label, enabled = enabled, interactionSource = interaction, onClick = onClick)
             .defaultMinSize(minHeight = FieldMinHeight)
             .padding(horizontal = ZinelyV21Dimens.gapXl, vertical = ZinelyV21Dimens.gapMd),
@@ -420,7 +429,7 @@ private fun GoButton(label: String, enabled: Boolean, onClick: () -> Unit) {
                 fontWeight = FontWeight.Bold,
                 fontSize = GoTextSize,
                 lineHeight = GoTextSize * 1.2f,
-                color = colors.onLeaf,
+                color = if (primary) colors.onLeaf else colors.ink,
             ),
         )
     }

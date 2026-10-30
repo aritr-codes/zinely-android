@@ -275,10 +275,10 @@ internal fun ZineV21Cover(
             if (chosen != null) ChoosingTick(chosen, Modifier.align(Alignment.TopStart).offset(x = TickOffsetX, y = TickOffsetY))
         }
 
-        // `.zine.a47-picked .cover{outline:3px solid var(--ink);outline-offset:5px}`: outside the cover's own
-        // edge, so the cover itself is never repainted.
+        // `.zine.a47-picked .cover{outline:2px solid color-mix(in srgb,var(--ink) 60%,transparent);outline-offset:4px}`
+        // (A47.2): outside the cover's own edge, so the cover itself is never repainted.
         if (chosen == true) {
-            val ink = colors.ink
+            val ink = colors.ink.copy(alpha = ChosenRingAlpha)
             Box(
                 Modifier.fillMaxSize().drawBehind {
                     val w = ChosenRingWidth.toPx()
@@ -348,8 +348,9 @@ private const val TickCheckViewBox = 15f
 private const val TickCheckStroke = 2.2f
 private val TickPaper = Color(0xFFFFF6E8)
 private val TickInk = Color(0xFF27270F)
-private val ChosenRingWidth = 3.dp
-private val ChosenRingOffset = 5.dp
+private val ChosenRingWidth = 2.dp
+private val ChosenRingOffset = 4.dp
+private const val ChosenRingAlpha = 0.6f
 
 /**
  * `.tape` — a translucent strip holding paper to the desk, turned by [rotation] degrees. The cover's, and the
