@@ -13243,6 +13243,8 @@ jokes inside facts, caveats or steps; paragraphs short.
 step depends on it (the hero, About, the fold guide's tone). The strings `tools/check-public-copy.cjs` locks stay
 as they are.
 
+A joke may stay only if the plain fact sits next to it. A first-time visitor must get the fact without getting the joke; if unsure, keep a straight face ([R39.3](RESEARCH.md#r39)).
+
 Changelog lines, headlines and status notes may be fragments; body sentences keep their articles and verbs.
 
 **Changelog entries** name the change in one short line under *Added*, *Changed* or *Fixed*, for example

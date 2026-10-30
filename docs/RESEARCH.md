@@ -2036,3 +2036,17 @@ comes out of it.
 The standard is written for maintenance manuals, with a closed dictionary. A product site has a brand voice and
 names (zine, Bench, Shelf, Proof) that are not in that dictionary. Keep the **sentence rules**; do not enforce the
 **word list**. The adapted rule is in [ADR-118, *Plain-words rule*](DECISIONS.md#adr-118).
+
+### R39.3 Warmth without costing clarity — ✅ VERIFIED (first-party guides), 🟦 RECOMMENDATION for the pattern
+
+- Mailchimp, [Voice and Tone](https://styleguide.mailchimp.com/voice-and-tone/): "it's always more important to be
+  clear than entertaining"; humour is "straight-faced, subtle, and a touch eccentric"; "winking" over "shouting";
+  do not force a joke ("forced humor can be worse than none at all"); "if you're unsure, keep a straight face".
+- GOV.UK, [Tone of voice](https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/tone-of-voice):
+  specific, informative, clear and concise; plain English for everyone who needs the content; avoid sounding
+  condescending. No humour guidance was found there.
+- Digital.gov (Plain Language), [Writing for understanding](https://digital.gov/guides/plain-language/writing):
+  write for the specific audience; shorter words, short sections, active voice, present tense, no hidden verbs.
+- 🟦 **Patterns used on the homepage:** (1) lead with what it is, who it is for, and its three facts (free, offline,
+  private); (2) keep the personality in the facts (paper, one cut, a fold), not in wordplay; (3) a joke stays only
+  with the plain fact next to it; (4) headings say what the section holds; (5) when unsure, cut the joke.
