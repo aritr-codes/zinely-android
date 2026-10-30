@@ -494,7 +494,7 @@ running text.** Voice is for short strings; Work is for anything the user operat
 - **A sheet's action pair shares one geometry** *(Library A49, [ADR-144](../DECISIONS.md#adr-144), proposed).* When a
   sheet puts a dismiss beside a committing button, both are bordered controls with the same radius, 1.5px ink border,
   shadow, press tier, 48px minimum height and padding. The commit is leaf-filled with on-leaf words; the dismiss is
-  paper-filled (`surface`) with ink words. Only the commit may be disabled; the dismiss is never dimmed. Borderless
+  surface-filled (`--surface`, which is not `--paper`) with ink words. Only the commit may be disabled; the dismiss is never dimmed. Borderless
   underlined text (`.quiet-action`) is for navigation links such as the dock's Backups and About, not for dismissing a
   sheet. `.go` is Raised in code (`FolderSheets.kt`, `ZinelyV21Press.Raised`), which is why the pair is listed there.
 - **`--frame: 5px`** — a flat colour ring, `0 0 0 var(--frame)`, stacked outside a hard shadow. Reserved for

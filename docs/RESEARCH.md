@@ -2090,12 +2090,15 @@ rotation.
 
 [ADR-143](DECISIONS.md#adr-143) owns the decision and A48 the design. Followed: a detached knob on the ring's axis,
 turning about the centre (R37.2); a readout only while turning (Procreate, Keynote); snapping to straight (Adobe
-Express, Instagram), applied to the gesture as well so the two agree; Straighten as the one-tap way back to upright
+Express, Instagram), on the knob only: the two-finger turn does not snap, so a deliberate small tilt stays
+reachable and tilts already saved are never straightened by a touch (ADR-143 decision 2); Straighten as the one-tap way back to upright
 beside the existing 15° arrows. **Departs:** no exact-angle field (🔭 later if asked), and the knob sits below the
 piece rather than above (Procreate), so a finger on it does not hide the piece; it flips above only when below
 does not fit.
 
 **Sources:** as linked above.
+
+<a id="r38"></a>
 
 ## R38. Cancel beside a committing button on a sheet (2026-10-29)
 
@@ -2117,5 +2120,5 @@ Google Keep, Drive and Files dialogs were not retrieved and nothing here rests o
   (A28.10, with a hint line), so the mitigation is on the dismiss: give it a body.
 - ✅ VERIFIED: an Android touch target is at least 48dp, with at least 8dp between targets
   ([Android accessibility](https://developer.android.com/guide/topics/ui/accessibility/apps)). Both options keep 48dp.
-- 🟦 RECOMMENDATION: the paper-filled bordered sibling (ADR-144 decision 1), because every other frozen Cancel already
+- 🟦 RECOMMENDATION: the surface-filled bordered sibling (ADR-144 decision 1), because every other frozen Cancel already
   is one.

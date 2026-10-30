@@ -20,7 +20,7 @@ quick: a rule is met or it isn't.
 2. **Every screen answers "What can I do next?"** There is always one obvious, prominent next
    step. Look at any screen cold and the next move is unmistakable.
 3. **One primary action per screen.** No two controls compete for "most important." Secondary
-   actions are visibly quieter. *Quieter* means lower emphasis (paper fill, ink words), not unbuttoned: a sheet's
+   actions are visibly quieter. *Quieter* means lower emphasis (surface fill, ink words), not unbuttoned: a sheet's
    dismiss keeps its border ([V21-SPEC §4.3](V21-SPEC.md#43-depth-geometry-motion), [ADR-144](../DECISIONS.md#adr-144)).
 4. **Every blank state invites creation.** Emptiness is an invitation with a clear first action,
    never a void, never "No items" (see [VOICE empty states](VOICE.md#empty-states)).

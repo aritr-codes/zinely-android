@@ -151,8 +151,8 @@
 | [ADR-140](#adr-140) | **When a zine's pages go back to their earlier copy, My Shelf says so once (extends ADR-134).** A `document.json` put back from its `.bak` is told by the A37 note in Library A46's words ("A page file was damaged, so Zinely used the copy from just before your last few seconds of changes"); one note covers a zine's details and pages. The store's `Restored` result is recorded in one lock-free repair-note store shared by both repositories; `BackupOnly` is silent. No Bench notice (named follow-up); no edit journal. Decides D-120 item 4, #146 | Proposed (A46 frozen 2026-10-22 under the owner's delegation; Accepted only once built and reviewed) |
 | [ADR-141](#adr-141) | **Selecting several things: the Bench stays single-select; My Shelf multi-select is Planned after W1 to W3.** Settles ADR-129's open question: no group selection on the Bench (page-level actions instead); a Shelf long-press selection with Move to a folder, Delete and one Undo for the batch is Planned, not in beta.8, design first. Proposed under delegation. |
 | [ADR-142](#adr-142) | **My Shelf: choose several zines, then move or delete them with one Undo.** Long press or "Select several" starts choosing; Move to a folder and Delete act on the set; one Undo covers the batch; folders cannot be chosen; a zine that cannot be acted on comes back and is named (skip-and-list). Builds ADR-141 decision 2 for beta.8; design Library A47. | Proposed |
-| [ADR-143](#adr-143) | **A turn handle, snapping, Straighten and one undo rule for repeated taps.** A turn knob below the selection ring (54dp out, flips above when it would not fit); quarter-turn snap within 5° for the knob and two fingers; an angle readout while dragging; Straighten in Arrange > Turn; a turn-only step is "turned"; a run of taps in one tray group is one undo step. No schema change. Amends ADR-129/A33, ADR-123/A26, ADR-102 §12.8; closes ADR-136 W2a items 7 and 9. Design Bench A48. | Proposed (awaiting owner freeze of A48) |
-| [ADR-144](#adr-144) | **Sheet action pairs share one geometry.** A dismiss beside a committing button on a sheet is a bordered sibling of it (same radius, border, shadow, press, 48px; paper fill and ink words against the commit's leaf fill and on-leaf words; only the commit may be disabled). The folder name sheet's Cancel, bare text beside a dimmed pill, is the one outlier in the frozen corpus and becomes `.go.ghost`. Look only: A28.14 behaviour unchanged. Library A49 | Proposed |
+| [ADR-143](#adr-143) | **A turn handle, snapping, Straighten and one undo rule for repeated taps.** A turn knob below the selection ring (54dp out, flips above when it would not fit); quarter-turn snap within 5° for the knob only (two fingers do not snap); an angle readout while dragging; Straighten in Arrange > Turn; a turn-only step is "turned"; a run of tray taps in one group is one undo step (the tap intents gain a source). No schema change. Amends ADR-129/A33, ADR-123/A26, ADR-102 §12.8; closes ADR-136 W2a items 7 and 9. Design Bench A48. | Proposed (awaiting owner freeze of A48) |
+| [ADR-144](#adr-144) | **Sheet action pairs share one geometry.** A dismiss beside a committing button on a sheet is a bordered sibling of it (same radius, border, shadow, press, 48px; surface fill and ink words against the commit's leaf fill and on-leaf words; only the commit may be disabled). The folder name sheet's Cancel, bare text beside a dimmed pill, is the one outlier in the frozen corpus and becomes `.go.ghost`. Look only: A28.14 behaviour unchanged. Library A49 | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -10756,6 +10756,9 @@ here and was not sufficient.
 drag accumulator that `TransformMath.resizeByHandle` reads as the corner's new position**. Displacing it to
 chase the mark would silently bias every resize by 5.5dp. The mark is offset in the drawing layer only.
 
+*2026-10-29: [ADR-143](#adr-143) decision 1 (Proposed, Bench A48) adds a ninth mark, a turn knob 54dp beyond the
+bottom edge; the eight handles' placement and hit targets ruled here are unchanged.*
+
 ⚠ **"Threaded on the ring" is exact along the straight edges only.** The ring's corners curve inward at
 `--br-sm`, so a corner mark at `(−5.5, −5.5)` sits measurably *outside* the stroke there. The
 implementation is faithful to the CSS — the CSS is what curves — but prose describing the eight marks as
@@ -13885,6 +13888,8 @@ that moves the maker to another page says so in the same line.
 2. **Transform precedence (D4 = 4c)** is `transformVerb`: over every element in the step, size change past 2% resizes;
    otherwise a turn past 2° turns; otherwise it moved. Size is the larger relative change of width or height against
    the pre-action box, and turn is the shorter way round. Both are magnitudes, and both comparisons are strict `>`.
+   *2026-10-29: amended by [ADR-143](#adr-143) decision 5 (Proposed): a step whose position and size are within
+   1e-6 pt of before, with only rotation changed, is "turned" whatever its size.*
 3. **One effect.** `stepHistory` emits `Effect.HistoryStepped(label, isRedo, landedOnPage)` after the autosave.
    `landedOnPage` is the page index the model ends on when the step changed page, else `null`: post-step state,
    never where the command started. `Effect.Announce` had no other emitter and is removed. The announcement drain
@@ -15754,6 +15759,8 @@ flowchart LR
 3. **The tray holds the same ten buttons, in four labelled groups:** Move (left, up, down, right), Size
    (smaller, larger), Turn (counterclockwise, clockwise), Layer (backward, forward). Same intents, same steps,
    one undo step per tap, same spoken labels. Group names are visible text and headings.
+   *2026-10-29: "one undo step per tap" is amended by [ADR-143](#adr-143) decision 6 (Proposed): a run of tray taps
+   in one stepping group is one undo step, and Turn gains Straighten.*
 4. **The tray stays open when another piece is selected**, so arranging several pieces costs one Arrange tap,
    not one per piece. Done and Back close it and return focus to Arrange; a tap on empty page, a text
    session, Add, Reframe and a page change close it.
@@ -17599,48 +17606,84 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 
 1. **A turn knob (A48.1–A48.3, A48.7).** With exactly one piece selected, a round paper knob with an ink border and
    a turn glyph sits on a short stem 54dp beyond the box's bottom edge, on the rotated down-normal through the
-   bottom-centre edge handle; 48dp hit box. 54 − 5.5 (the edge handle's mark centre) = 48.5, so its hit box clears
-   all eight resize handles' boxes on any piece. On the canvas the knob wins over anything under it; chrome over the
-   canvas (verb bar, trays, snack, hint) wins over the knob. If the knob would leave the canvas or touch the verb bar,
-   a tray or the snack, it goes above the top edge instead; the side never changes during a drag. Dragging turns
-   about the box centre with no jump on touch (the angle at touch-down plus the swept angle, unwrapped so a full
-   circle reads 360). One drag is one undo step. Hidden while typing, in Reframe, and unless exactly one piece is
-   selected. It is not in the platform accessibility tree, as the resize handles are not.
-2. **Snapping (A48.4).** Within ±5° (inclusive) of the nearest multiple of 90 counted in the angle's own turns
-   (358 → 360, −92 → −90), the piece shows and commits that multiple **exactly**. The two-finger turn snaps by the
-   same pure function through its existing preview-equals-commit path, so knob and gesture agree. One haptic tick on
-   entering a snap. `LiveSnap` F1 is changed to test the angle normalised to (−180, 180], so a piece at 360° or 720°
-   edge-snaps like one at 0°.
+   bottom-centre edge handle; 48dp hit box. Clearance: in Compose each 48dp handle hit box is centred on the
+   element's **geometric** edge point, not on the mark drawn 5.5dp out (`ResizeHandles.kt:209-216`, `:236`), so the
+   bottom-centre box reaches 24dp beyond the edge and the knob's starts at 54 − 24 = 30dp: a gap of
+   54 − 24 − 24 = **6dp**, so the knob's box clears all eight resize handles' boxes on any piece. On the canvas the
+   knob wins over anything under it; chrome over the canvas (verb bar, trays, snack, the first-run hint) wins over the
+   knob. If the knob would leave the canvas or touch the verb bar, a tray, the snack or the first-run hint, it goes
+   above the top edge instead; the side never changes during a drag. If neither side clears the hint, the hint wins:
+   the knob is not drawn until the hint goes ("Got it", or the first live drag or resize, which already counts as
+   discovery, `EditorScreen.kt:1314-1324`). Dragging turns about the box centre with no jump on touch (the angle at
+   touch-down plus the swept angle, unwrapped so a full circle reads 360). The commit writes
+   `before.copy(rotationDegrees = r)`: only the angle, never re-baked through `bakeCentreAnchored`, whose
+   `cx − w / 2` round trip (`TransformMath.kt:36-45`) can move x and y by floating-point error and would break the
+   turn-only word (decision 5). One drag is one undo step. A drag that ends where it began records no step and keeps
+   Redo, as `CommitTransform` does today (`EditorReducer.kt:306-308`), but "where it began" is the tolerant test of
+   decision 6 (every position and size field within 1e-6 pt, the angle within 1e-6° after normalising mod 360), so a
+   full 360° drag records no step and `before` stays exactly as it was. Hidden while typing, in Reframe, and unless
+   exactly one piece is selected. It is not in the platform accessibility tree, as the resize handles are not.
+2. **Snapping (A48.4): the knob only.** During a knob drag, within ±5° (inclusive) of the nearest multiple of 90
+   counted in the angle's own turns (358 → 360, −92 → −90), the piece shows and commits that multiple **exactly**.
+   One haptic tick on entering a snap. **The two-finger turn does not snap**; it stays as built today, so a deliberate
+   small tilt (1–5°) stays reachable with two fingers. One-finger drags and pinches never change the angle. Stated
+   plainly: the knob cannot leave a piece within 5° of a quarter turn (other than on it); two fingers can; the 15°
+   tray steps cannot put one there from a multiple of 15 (they carry no snap, and keep whatever offset two fingers
+   left). `LiveSnap` changes both of its rotation tests to the angle normalised to (−180, 180]: the selected piece
+   (`LiveSnap.kt:61`) and the neighbour filter (`LiveSnap.kt:68`), so a piece at 360° or 720° edge-snaps, and is
+   snapped to, like one at 0°.
 3. **A readout while dragging (A48.5).** A pill shows the angle to be committed, normalised to (−180, 180], whole
    degrees ("15°", "−30°", "180°"), on the side of the piece opposite the knob, only while a knob drag is live. Leaf
    tint when snapped. Not spoken.
 4. **Straighten (A48.6).** A third button in Arrange > Turn, after Rotate clockwise, glyph a level line with a tick
    under a tilted dashed line, spoken "Straighten", plus a matching element custom action. It is
    `Intent.RotateBy(−n)` where n is the angle normalised to (−180, 180] (375 → 360, −30 → 0, 180 → 0): **no new
-   reducer intent**. Disabled, and never a step, on an upright piece (n = 0 within 1e-6; 360 is upright).
-5. **The turn-only word (A48.8, amends A26 D4).** A step in which every piece keeps its position and size exactly
-   and only its rotation differs is "turned", whatever the size of the turn. Otherwise D4 is unchanged, the 2° slip
-   included: a two-finger move with a 1° stray turn is still "moved". Cases: 360 → 0 turned; 1.5 → 0 turned;
-   moved with 1° stray turn, moved.
+   reducer intent for Straighten** (`RotateBy` already writes `copy(rotationDegrees = …)`, `EditorReducer.kt:327`).
+   It is sent with the non-tray source (decision 6), so it is always its own step and ends any run. On an upright
+   piece (n = 0 within 1e-6; 360 is upright) it is **disabled**, spoken by TalkBack as "disabled", drawn at opacity
+   .45 as `.go:disabled` is, and never a step. It is the tray's first disabled button: Make smaller at the minimum
+   size stays an enabled no-op (`EditorReducer.kt:611`). That difference is recorded here as known, not changed.
+5. **The turn-only word (A48.8, amends A26 D4).** A step in which every piece's position and size are within
+   1e-6 pt of before, and only rotation differs, is "turned", whatever the size of the turn. The tolerance is there
+   because the two-finger path bakes through `bakeCentreAnchored` (`TransformMath.kt:36-45`), whose centre round trip
+   can leave x and y off by floating-point error; the knob and Straighten write the angle alone (decisions 1 and 4).
+   Otherwise D4 is unchanged, the 2° slip included: a two-finger move with a 1° stray turn is still "moved". Cases:
+   360 → 0 turned; 1.5 → 0 turned; moved with 1° stray turn, moved.
 6. **One undo rule for repeated taps (A48.9, amends A33 and A26's Move row; W2a item 7).**
-   - A **run** is consecutive taps in one of the tray's stepping groups (Move, Size, Turn's two arrows) on the same
-     single selected piece, with no other history entry between them. A run is **one** undo step, holding the piece
-     as the run's first tap found it and as its last tap left it.
+   - **The source.** Tray buttons and the element's TalkBack custom actions dispatch the same intents today
+     (`ArrangeTray.kt:175-200`, `EditorA11y.kt:170-177`), and whether the tray is open is UI-local
+     (`EditorScreen.kt:751`), so the reducer cannot tell them apart. **This changes the intents:** `Nudge`, `ScaleBy`
+     and `RotateBy` carry a source (tray or other); only tray-sourced taps coalesce. The UI also tells the reducer
+     when the tray closes, so the run can end. "No new reducer intent" in decision 4 applies to Straighten only.
+   - A **run** is consecutive tray-sourced taps in one of the tray's stepping groups (Move, Size, Turn's two arrows)
+     on the same single selected piece, with no other history entry between them. A run is **one** undo step,
+     holding the piece as the run's first tap found it and as its last tap left it.
+   - **The marker** (in the editor model, never saved) holds the piece, the group, the run's command, and the redo
+     stack as it was before the run's first tap. The first tap commits as any tap does (`committing`,
+     `EditorReducer.kt:447-454`, which clears Redo). A later tap extends the run only while the newest undo entry is
+     the run's own command; it then replaces that entry with one `TransformCommand` from the run's `before` to the new
+     `after`.
    - A run **ends** at any other history step (another group, Straighten, Layer, a drag, a handle, the knob, two
      fingers, ink, flip, Undo, Redo), at a change of the selected piece, when the tray closes (Done, Back, empty-page
-     tap, page change), and with the session. **No timer.** The run marker lives in the editor model and is never
-     saved.
-   - A run that returns the piece exactly to where it began leaves no step (its entry is removed).
+     tap, page change), and with the session. **No timer.** A TalkBack element action used while the tray is open is
+     its own step and ends any run.
+   - **Back at its start.** A run counts as back at its start when every Transform field of every piece is within
+     1e-6 pt of the state before the run, and its angle within 1e-6° of it after normalising mod 360. Then the run's
+     entry is removed, `before` is restored exactly (not the drifted or +360° value), and the redo stack saved in the
+     marker comes back too, exactly as a drag that ends where it began keeps Redo (`EditorReducer.kt:306-308`).
+     Examples: Move left then Move right; Make larger then Make smaller (whose `bakeCentreAnchored` round trip is
+     within the tolerance, not exact); 24 Rotate clockwise taps (360°).
    - Words follow decision 5: a Move run "moved", a Size run "resized", a Turn run "turned"; one undo snack for the
      run ("Photo moved back").
-   - Flip (A22) toggles and Layer taps stay one step each; the element's own screen-reader actions outside the tray
-     stay one step each.
+   - Flip (A22) toggles and Layer taps stay one step each; the element's own screen-reader actions stay one step
+     each, whether or not the tray is open.
    - **A41.2 holds.** Extending a run replaces the newest entry, which builds a new `History`, so the revision moves
      and any Undo snack still up retires at once, exactly as every tap does today. No Arrange tap raises an Undo
      snack, so no snack can point into a run; a run only extends the entry it created, so its Undo undoes nothing
      else.
 7. **W2a item 9 closes (A48.10)**, replaced by the visible knob. A33 *THE HINT* is unchanged, both strings verbatim
-   (#148).
+   (#148). Honestly stated: on first run the hint can take precedence (decision 1), so a maker may meet the knob only
+   after "Got it" or their first drag.
 8. **No saved-format change.** `Transform.rotationDegrees: Double = 0.0` is already stored and drawn for all three
    kinds: `core/model/.../Document.kt:75` (`CURRENT_SCHEMA_VERSION = 3` at `:28`); validation checks only
    `rotationDegrees.isFinite()` (`core/data/.../validation/DefaultDocumentValidator.kt:132`); the serializer writes
@@ -17649,7 +17692,7 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
    are never normalised: that would rewrite saved zines for no visible change. Normalise only to display and compare.
 9. **A known divergence, recorded and not reopened.** The V2 IA says "two fingers act on the **page**"; the build
    lets two fingers turn and scale the selected piece, and V2.1 has no page zoom. This ADR keeps the build's
-   behaviour and only adds snapping to it.
+   behaviour unchanged; the two-finger turn gains no snap (decision 2).
 
 #### Alternatives considered
 
@@ -17657,7 +17700,7 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 |---|---|
 | Tray only: Straighten, no knob | Not dynamic, which is what the owner asked for; leaves turning hidden behind a tap and two fingers |
 | Knob only, no Straighten | "Make it upright again" stays a fiddly drag; snapping helps only near a quarter turn the finger finds |
-| Snapping in the knob but not two fingers | The gesture and the handle would disagree about the same piece |
+| Both paths snap (the knob and two fingers) | It would straighten pieces makers had tilted on purpose, including tilts already saved: a saved 3° piece touched by two fingers would jump to 0. The knob and the gesture disagreeing near a quarter turn is the smaller cost |
 | A slider or dial in the tray | Holds a value the tray already steps through, crowds the 360dp tray, and needs a number field against "no coordinates" in the copy |
 | A numeric angle field | Precision chrome where none is needed; 🔭 later if makers ask |
 | Corner-drag rotation (Figma desktop) | Collides with the corner resize handles on touch |
@@ -17673,28 +17716,41 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 
 - `core:editor`: a pure rotation helper (normalise to (−180, 180]; quarter-turn snap within 5°; upright test within
   1e-6), with jqwik properties (idempotent, |snap(r) − r| ≤ 5, snapped values exact, 360 ≡ 0 for upright); run the
-  properties several times before pushing. `EditLabel.transformVerb` gains the turn-only rule and its three cases.
-  `LiveSnap` F1 uses the normalised test. The reducer gains the run marker and the merge-or-push rule of decision 6,
-  tested for: a run of three is one step; a run back to start is no step; another group, a selection change, the tray
-  closing and Undo each end a run; the revision moves on every merge (A41.2).
-- `feature:editor`: a `TurnHandle` beside `ResizeHandles` (same session pattern: Begin, override preview, one Commit,
-  consumes its pointers), the flip rule, the readout, the gesture snap in the existing preview path; `ArrangeTray`'s
-  third Turn button and the tray-open signal that ends a run; `EditorA11y` "Straighten"; `Copy.A11y.STRAIGHTEN`.
+  properties several times before pushing. `EditLabel.transformVerb` gains the turn-only rule (1e-6 pt tolerance) and
+  its three cases. Both `LiveSnap` rotation tests (`:61` the selected piece, `:68` the neighbour filter) use the
+  normalised test. `Nudge`, `ScaleBy` and `RotateBy` gain a source (tray or other). The reducer gains the run marker
+  (with the saved redo stack) and the merge-or-push rule of decision 6, tested for: a run of three is one step; a
+  Move run back to start is no step; a **Size there-and-back** (Make larger, then Make smaller) is no step and Redo
+  comes back; a Turn run of 360° is no step and `before` is restored exactly; another group, a selection change, the
+  tray closing, a TalkBack element action with the tray open, and Undo each end a run; the revision moves on every
+  merge (A41.2). `CommitTransform` gains the same tolerant "ends where it began" test, tested with a **0 → 360 knob
+  drag** (no step, Redo kept).
+- `feature:editor`: a `TurnHandle` beside `ResizeHandles` (same session pattern: Begin, override preview, one Commit
+  of `before.copy(rotationDegrees = r)`, consumes its pointers), the knob snap, the flip rule (with the first-run hint
+  in its avoid list), the readout; `ArrangeTray`'s third Turn button, the tray source on its taps, and the tray-close
+  signal that ends a run; `EditorA11y` "Straighten" with the other source; `Copy.A11y.STRAIGHTEN`. The two-finger
+  path is not changed.
 - Goldens: selection chrome (light, dark, rotated, small piece, flipped knob) and the Arrange tray (360dp, 2×),
   recorded on the pinned CI image after reading the `*_compare.png` diffs. The 2% threshold can hide a missing knob;
   open the PNGs.
 - **Owed before Accepted:** the owner's freeze of A48; both device passes, including the platform tree (the knob
   must not appear as an unlabelled clickable), a tiny piece, a piece at the page bottom, a 90° piece, text turned 45°
-  then edited (how a rotated text box looks while typed into is unverified), Straighten from 360°, 1.5° and 0° with its snack words, the snap haptic, and
-  a TalkBack check of Straighten.
+  then edited (how a rotated text box looks while typed into is unverified), Straighten from 360°, 1.5° and 0° with its snack words, the snap haptic, the
+  first-run hint up on a piece near the top and bottom of the page (the knob gives way, then appears once the hint
+  goes), a Pass 1 read of Straighten's `enabled=false` in the platform tree on an upright piece, and a TalkBack check
+  of Straighten.
 - The owner's 2026-08-12 handle ruling is amended, not replaced: a ninth mark is added, and the eight keep their
   placement. Stated so the owner can overrule it.
-- A first-time Pass 2 must answer whether the knob reads as "turn", whether it fights drag-to-move, and whether a
-  deliberate 3° tilt near 0 is still reachable with the 5° snap.
+- A first-time Pass 2 must answer whether the knob reads as "turn" and whether it fights drag-to-move.
+- **Small tilts, decided (was a Pass 2 question).** A deliberate 1–5° tilt is reachable with two fingers, which do
+  not snap; the knob cannot leave one, by design. Pass 2 checks only that a maker who wants a small tilt finds two
+  fingers, not whether the snap blocks it.
 
 #### Revisit trigger
 
-- Pass 2 shows makers cannot keep a small deliberate tilt: shrink the gesture's snap threshold first.
+- Pass 2 or a tester shows makers fighting the knob's snap to keep a small tilt and not finding two fingers, or
+  two-finger turns leaving pieces a degree or two off straight by accident (which then never edge-snap): then
+  reconsider a smaller knob threshold or an opt-in gesture snap, HTML first.
 - A tester asks for an exact angle, or for undo of single taps inside a run.
 - Bench multi-select is ever reachable (the run rule then needs its own ruling).
 
@@ -17731,7 +17787,7 @@ set). **Evidence:** [RESEARCH R38](RESEARCH.md#r38). Accepted only after both de
 
 1. **The rule.** When a sheet offers a dismiss beside a committing button, both are bordered controls of one geometry
    (radius, 1.5px ink border, shadow, press tier, 48px minimum height, padding). The commit is leaf-filled with on-leaf words;
-   the dismiss is paper-filled with ink words. Only the commit may be disabled; the dismiss is never dimmed. Borderless text
+   the dismiss is surface-filled (`--surface`, which is not `--paper`) with ink words. Only the commit may be disabled; the dismiss is never dimmed. Borderless text
    is for navigation links (the dock's Backups and About), not for dismissing a sheet.
 2. **The name sheet.** `#nmCancel` becomes `class="go ghost"`: `.go.ghost{background:var(--surface);color:var(--ink)}`
    inherits `.go`'s border, radius, shadow, min-height, press and focus. Make folder keeps its disabled look alone.
