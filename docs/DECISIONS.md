@@ -17609,7 +17609,13 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
    bottom-centre edge handle; 48dp hit box. Clearance: in Compose each 48dp handle hit box is centred on the
    element's **geometric** edge point, not on the mark drawn 5.5dp out (`ResizeHandles.kt:209-216`, `:236`), so the
    bottom-centre box reaches 24dp beyond the edge and the knob's starts at 54 − 24 = 30dp: a gap of
-   54 − 24 − 24 = **6dp**, so the knob's box clears all eight resize handles' boxes on any piece. On the canvas the
+   54 − 24 − 24 = **6dp**, so the knob's box clears all eight resize handles' boxes on any upright piece, and at
+   every quarter turn. **On a turned piece it does not:** the build places each 48dp box at the rotated point without
+   rotating the box (`ResizeHandles.kt:233-243`), so the knob's and the bottom handles' boxes are 54·cos t − 48 apart
+   per axis (t = the turn off the nearest quarter): clear to about 27°, overlapping at their corners beyond it, by at
+   most 9.8dp at 45° (A48 measured 2.1 clear at 22°, 3.8 overlapping at −35°). Each handle's mark stays outside the
+   knob's box at every angle (48.5·cos 45° = 34.3 > 24), so the handle can still be taken by its mark; in the overlap
+   the knob wins. **Open for the owner's freeze:** whether the handle should win the overlap instead. On the canvas the
    knob wins over anything under it; chrome over the canvas (verb bar, trays, snack, the first-run hint) wins over the
    knob. If the knob would leave the canvas or touch the verb bar, a tray, the snack or the first-run hint, it goes
    above the top edge instead; the side never changes during a drag. If neither side clears the hint, the hint wins:
@@ -17724,7 +17730,8 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
   comes back; a Turn run of 360° is no step and `before` is restored exactly; another group, a selection change, the
   tray closing, a TalkBack element action with the tray open, and Undo each end a run; the revision moves on every
   merge (A41.2). `CommitTransform` gains the same tolerant "ends where it began" test, tested with a **0 → 360 knob
-  drag** (no step, Redo kept).
+  drag** (no step, Redo kept). The knob commit leaves x, y, width and height bit-identical; the turn-only word holds
+  for a two-finger turn whose x drifted by 1e-12.
 - `feature:editor`: a `TurnHandle` beside `ResizeHandles` (same session pattern: Begin, override preview, one Commit
   of `before.copy(rotationDegrees = r)`, consumes its pointers), the knob snap, the flip rule (with the first-run hint
   in its avoid list), the readout; `ArrangeTray`'s third Turn button, the tray source on its taps, and the tray-close

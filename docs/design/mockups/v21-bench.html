@@ -2372,7 +2372,7 @@ const a26=(()=>{
   const ROWS=[
     ['Delete (the verb, or a text box left empty)', 'DeleteCommand',         (k,n)=>thing(k,n)+' put back',     (k,n)=>thing(k,n)+' removed', [...KINDS,['photo',3]]],
     ['Add Text, Photo or Art, or Duplicate (D1 = 1a)','PlaceCommand',        (k,n)=>thing(k,n)+' taken off',    (k,n)=>thing(k,n)+' added',   [...KINDS,['photo',3]]],
-    ['Move (drag, or Nudge)',                       'Transform: position',   (k,n)=>thing(k,n)+' moved back',   (k,n)=>thing(k,n)+' moved',   [...KINDS,['photo',3]]],  // A48 (2026-10-29): a run of Nudge taps is one step
+    ['Move (drag, or Nudge)',                       'Transform: position',   (k,n)=>thing(k,n)+' moved back',   (k,n)=>thing(k,n)+' moved',   [...KINDS,['photo',3]]],  // A48 (2026-10-29): a run of tray Nudge taps is one step
     ['Resize (a handle, a pinch, or Scale)',        'Transform: size > 2%',  (k,n)=>thing(k,n)+' resized back', (k,n)=>thing(k,n)+' resized', [...KINDS,['photo',3]]],
     ['Turn (the arrows, or Rotate)',                'Transform: turn > 2°',  (k,n)=>thing(k,n)+' turned back',  (k,n)=>thing(k,n)+' turned',  [...KINDS,['photo',3]]],  // A48: also the turn knob and Straighten; turn-only = turned
     ['Bring forward / send back',                   'ReorderCommand',        ()=>'Stacking put back',           ()=>'Stacking changed',       [[]]],
@@ -2662,7 +2662,7 @@ glyph buttons A14 froze, each at least 48dp, each spoken as before:
 The group names are visible text, and headings to a screen reader.  The groups flow:
 on a 360dp phone Move and Size share the first line, Turn and Layer the second; at
 large text they wrap further and the tray scrolls under its heading.  Every tap is one
-undo step, as before [2026-10-29, A48: a run of taps in one group is one step].  No Delete and no Text-style control in the tray: Delete is on
+undo step, as before [2026-10-29, A48: a run of tray taps in one group is one step].  No Delete and no Text-style control in the tray: Delete is on
 the verb bar, and the Text verb already opens the text card.
 
 HOW IT CLOSES.  Done and Back close it and return focus to Arrange.  A tap on empty
@@ -3918,7 +3918,7 @@ ALTERNATIVES WEIGHED (D-143).
 </section>
 
 <!-- ===========================================================================
-A48 · 2026-10-29 · FROZEN pending owner review (status: Proposed).  ADR-143.  Written
+A48 · 2026-10-29 · PROPOSED, awaiting the owner's freeze.  ADR-143.  Written
 under the owner's delegation of 2026-10-12 ("decide, do not ask"); the owner has not
 seen it and may overrule any part.  SPECIFIED, NOT YET BUILT.  Evidence: RESEARCH R37.
 A turn handle, snapping, Straighten, and one undo rule for repeated taps.
@@ -3943,40 +3943,79 @@ ink stem.  Numbers, all dp:
             the bottom-centre edge handle along the piece's ROTATED "down" normal, so the
             knob turns with the piece, like the handles
   hit box   48 x 48, centred on the disc
-  clearance the bottom-centre edge handle's mark centre is 5.5 out (the banner at :139);
-            54 - 5.5 = 48.5 >= 48, so the knob's hit box clears that handle's hit box,
-            and with it all eight, on any piece however small
+  clearance in the build each handle's 48 hit box is centred on the element's GEOMETRIC
+            edge point, not on the mark drawn 5.5 out (ResizeHandles.kt:209-216, :236;
+            ADR-102 12.8).  So the bottom-centre box reaches 24 beyond the edge, the
+            knob's box starts at 54 - 24 = 30, and the gap is 54 - 24 - 24 = 6.  The
+            knob's hit box clears that handle's, and with it all eight, on any UPRIGHT
+            piece however small, and at every quarter turn.  [Corrected 2026-10-29: this
+            line first measured from the mark, 54 - 5.5 = 48.5.]
+  turned    the build places each 48 box at the rotated point but does not rotate the
+            box (ResizeHandles.kt:233-243), so on a turned piece the knob's box and the
+            bottom handles' boxes, 54 apart along the turned normal, are 54 cos(t) - 48
+            apart per axis (t = the turn off the nearest quarter): clear up to about 27
+            degrees, overlapping at their corners beyond it, by at most 9.8 at 45.
+            Measured here: 2.1 clear at 22, 3.8 overlapping at -35.  The handle's MARK
+            stays outside the knob's box at every angle (48.5 cos 45 = 34.3 > 24), so
+            each handle can still be taken by its mark; in the overlap the knob wins
+            (priority, next).  Whether the handle should win the overlap instead is
+            OPEN, for the owner's freeze (ADR-143).
   priority  on the canvas, the knob wins over anything under its hit box: another
             piece, the selected piece's body, the page's own gestures.  Chrome drawn
             over the canvas (the verb bar, a tray, the snack, the first-run hint) stays
-            above the knob and wins there
+            above the knob and wins there.  In the build the knob is drawn in the
+            selection overlay, beside the handles, and selecting a piece never changes
+            the pieces' stacking (see the PROTOTYPE ARTEFACT note in the style below)
 It exposes nothing to the platform accessibility tree, exactly as the resize handles do:
 it is a pointer-only twin of Arrange > Turn and of the element's own turn actions.
 
 A48.2  FLIP TO THE TOP.  The knob goes below the piece unless its hit box would then leave
-the visible canvas or touch the verb bar, a tray or the snack.  Then it goes to the
-opposite side: on the up-normal through the top-centre edge, the same 54 out.  If both
-sides fail (a piece taller than the free canvas), it stays below and whatever covers it
-wins; Arrange > Turn and two fingers are still there.  The side is chosen when the piece
-is selected, when a tray opens or closes, and when an act ends.  It never changes during
-a drag, so the knob does not jump out from under the finger.
+the visible canvas or touch the verb bar, a tray, the snack or the first-run hint (A33
+THE HINT).  Then it goes to the opposite side: on the up-normal through the top-centre
+edge, the same 54 out.  While the hint is up, the knob takes whichever side clears it.
+If both sides fail:
+  - and the knob below would touch the hint: THE HINT WINS.  The knob is not drawn until
+    the hint goes, then it appears (and re-chooses its side).  The hint goes on its own
+    "Got it", or, in the build, at the first live drag or resize, which already counts
+    as discovery (EditorScreen.kt:1314-1324); in this prototype, on "Got it" or when the
+    selection clears.
+  - otherwise (a piece taller than the free canvas): it stays below and whatever covers
+    it wins; Arrange > Turn and two fingers are still there.
+The side is chosen when the piece is selected, when a tray opens or closes, when the hint
+goes, and when an act ends.  It never changes during a drag, so the knob does not jump
+out from under the finger.
 
 A48.3  TURNING.  A drag on the knob turns the piece about its box centre.  No jump on
 touch: the angle is the piece's angle at touch-down plus the signed angle the finger has
 swept round the centre since touch-down, accumulated frame by frame so a full circle
-reads 360, not 0.  Position and size never change.  One drag is one undo step, committed
-on release; a drag that ends where it began records none.  While a drag is live the
-other handles and two fingers do nothing to the piece.
+reads 360, not 0.  Position and size never change: the commit writes
+before.copy(rotationDegrees = r), the angle alone, and is never re-baked through
+bakeCentreAnchored, whose cx - w/2 round trip (TransformMath.kt:36-45) can move x and y by
+floating-point error.  One drag is one undo step, committed on release.  A drag that ends
+where it began records none and keeps Redo, as CommitTransform does today
+(EditorReducer.kt:306-308); "where it began" is the tolerant test of A48.9 (every position
+and size field within 1e-6 pt, the angle within 1e-6 degrees after normalising mod 360),
+so a full 360 degree drag records no step and the stored angle stays exactly as before.
+While a drag is live the other handles and two fingers do nothing to the piece.
 
-A48.4  SNAPPING TO QUARTER TURNS.  Let r be the angle the drag gives and q the multiple
-of 90 nearest r, counted in r's own turns (358 -> q = 360, not 0; -92 -> q = -90).  If
-|r - q| <= 5, the piece shows and commits q EXACTLY; otherwise r.  The 5 is inclusive.
-The two-finger turn snaps by the same rule, through the same preview-equals-commit path,
-so the knob and the gesture always agree.  On entering a snap the phone gives one light
-tick (a haptic, never a sound).  Writing the value exactly matters: edge snapping is
-skipped for a rotated piece (LiveSnap rule F1, |r| > 1e-6), so a piece snapped to 0 snaps
-to edges again.  F1 today treats 360 as rotated; the build makes F1 test the angle
-normalised to (-180, 180], so an upright piece at 360 or 720 snaps like one at 0.
+A48.4  SNAPPING TO QUARTER TURNS: THE KNOB ONLY.  Let r be the angle a knob drag gives and
+q the multiple of 90 nearest r, counted in r's own turns (358 -> q = 360, not 0; -92 ->
+q = -90).  If |r - q| <= 5, the piece shows and commits q EXACTLY; otherwise r.  The 5 is
+inclusive.  On entering a snap the phone gives one light tick (a haptic, never a sound).
+THE TWO-FINGER TURN DOES NOT SNAP.  It stays as built today, so a deliberate small tilt
+(1 to 5 degrees) stays reachable with two fingers.  One-finger drags and pinches never
+change the angle.  Plainly: the knob cannot leave a piece within 5 degrees of a quarter
+turn (other than on it); two fingers can; the 15 degree tray steps cannot put one there
+from a multiple of 15 (they carry no snap, and keep whatever offset two fingers left).
+REJECTED: both paths snap.  It would straighten pieces makers had tilted on purpose,
+including tilts already saved (a saved 3 degree piece touched by two fingers would jump
+to 0).  The knob and the gesture disagreeing near a quarter turn is the smaller cost.
+Writing the value exactly matters: edge snapping is skipped for a rotated piece
+(LiveSnap rule F1, |r| > 1e-6, LiveSnap.kt:61), and rotated neighbours are dropped as
+snap targets by the same test (LiveSnap.kt:68), so a piece snapped to 0 snaps to edges
+again.  Both tests today treat 360 as rotated; the build makes both test the angle
+normalised to (-180, 180], so an upright piece at 360 or 720 snaps, and is snapped to,
+like one at 0.
 
 A48.5  THE ANGLE READOUT.  While, and only while, a knob drag is live, a small pill shows
 the angle the piece will be committed at: normalised to the range (-180, 180], rounded
@@ -3996,8 +4035,13 @@ counterclockwise and clockwise.  Spoken "Straighten".  It turns the piece by the
 shortest way to the nearest upright angle: by -n, where n is the angle normalised to
 (-180, 180], so 375 becomes 360, -30 becomes 0, and 180 becomes 0 (counterclockwise, the
 tie broken by the half-open range).  Upright means n = 0 within 1e-6, so 360 is upright.
-On an upright piece the button is disabled (spoken "Straighten, dimmed" by TalkBack's own
-wording), and no undo step is ever recorded for it.  One tap on a tilted piece is one
+It is Intent.RotateBy(-n), which already writes the angle alone (EditorReducer.kt:327),
+sent with the non-tray source (A48.9): always its own step, and it ends any run.
+On an upright piece the button is disabled (TalkBack says "disabled"; drawn at opacity
+.45, as .go:disabled is), and no undo step is ever recorded for it.  Pass 1 reads
+enabled=false for it in the platform tree.  It is the tray's first disabled button: Make
+smaller at the minimum size stays an enabled no-op (EditorReducer.kt:611).  That
+difference is known and recorded, not changed here.  One tap on a tilted piece is one
 undo step, labelled "turned" (A48.8).  The element gains a matching "Straighten" custom
 action beside Rotate clockwise / counterclockwise, absent while upright.
 At 360dp the tray's second line is Turn (three buttons) and Layer (two): about 258 of
@@ -4006,14 +4050,18 @@ its heading, unchanged from A33.  The glyph has no visible label, so it never gr
 
 A48.7  WHEN THE KNOB IS HIDDEN.  While words are being typed, in Reframe, when nothing is
 selected, and when more than one piece is selected (not reachable in the Bench today).
-It shows with the Arrange tray open, so the tray and the knob can be used together.
+Also while the first-run hint is up and neither side clears it (A48.2).  It shows with the
+Arrange tray open, so the tray and the knob can be used together.
 
-A48.8  UNDO WORDS FOR A TURN (amends A26 D4 = 4c).  A step in which every piece keeps its
-position and its size exactly, and only its rotation differs, is "turned", whatever the
-size of the turn.  Otherwise D4 applies unchanged, the 2 degree slip rule included: a
-two-finger move that picked up a 1 degree turn is still "moved".  The rule exists because
-a Straighten from 1.5 degrees, or a snap, changes nothing but the rotation, by less than
-the slip, and D4 alone would call it "moved".  Cases (a48.CASES below; D4's own eight
+A48.8  UNDO WORDS FOR A TURN (amends A26 D4 = 4c).  Every piece's position and size are
+within 1e-6 pt of before, and only rotation differs -> "turned", whatever the size of the
+turn.  The tolerance is there because the two-finger path bakes through
+bakeCentreAnchored, whose centre round trip (TransformMath.kt:36-45) can leave x and y off
+by floating-point error; the knob (A48.3) and Straighten (A48.6) write the angle alone.
+Otherwise D4 applies unchanged, the 2 degree slip rule included: a two-finger move that
+picked up a 1 degree turn is still "moved".  The rule exists because a Straighten from
+1.5 degrees, or a snap, changes nothing but the rotation, by less than the slip, and D4
+alone would call it "moved".  Cases (a48.CASES below; D4's own eight
 cases keep their words):
     rotation 360 -> 0, nothing else            turned
     rotation 1.5 -> 0, nothing else            turned
@@ -4024,19 +4072,38 @@ cases keep their words):
 
 A48.9  ONE UNDO RULE FOR REPEATED TAPS (amends A33's "Every tap is one undo step", A26's
 "Move (drag, or Nudge)" row; ADR-136 W2a item 7, moved to W2b).
-  A RUN is consecutive taps in ONE of the tray's three stepping groups (Move: the four
-  arrows; Size: smaller, larger; Turn: the two rotate arrows) on the same single
-  selected piece, with no other history entry landing between them.  A run is ONE undo
-  step, as one drag is: it holds the piece as the run's first tap found it and as its
-  last tap left it.
+  THE SOURCE.  The tray's buttons and the element's own TalkBack actions dispatch the same
+  intents today (ArrangeTray.kt:175-200, EditorA11y.kt:170-177), and whether the tray is
+  open is known only to the screen (EditorScreen.kt:751).  So the build changes the
+  intents: Nudge, ScaleBy and RotateBy carry a source, tray or other, and only
+  tray-sourced taps coalesce.  The screen also tells the reducer when the tray closes.
+  (ADR-143's "no new reducer intent" is about Straighten only.)
+  A RUN is consecutive TRAY-SOURCED taps in ONE of the tray's three stepping groups
+  (Move: the four arrows; Size: smaller, larger; Turn: the two rotate arrows) on the
+  same single selected piece, with no other history entry landing between them.  A run
+  is ONE undo step, as one drag is: it holds the piece as the run's first tap found it
+  and as its last tap left it.
+  THE MARKER (in the editor model, never saved) holds the piece, the group, the run's
+  command and the redo stack as it was before the run's first tap.  The first tap
+  commits like any tap (EditorReducer.kt committing(), :447-454, which clears Redo); a
+  later tap extends the run only while the newest undo entry is still the run's own
+  command, by replacing it with one Transform step from the run's start to now.
   A run ENDS at: any other history step (a tap in another group, Straighten, a Layer
   tap, a drag, a handle, the knob, two fingers, an ink, a flip, Undo or Redo); a change
   of the selected piece, including a tap on another piece while the tray stays open; the
   tray closing (Done, Back, a tap on empty page, a page change); and the end of the
   session (leaving the Bench; the run marker is never saved).  NOTHING ELSE ends it: no
-  timer.  A tap that ends a run starts a new run in its own group.
-  A run that leaves the piece exactly where it began (Move left, then Move right) leaves
-  no step: its entry is removed, as a drag that ends where it began records none.
+  timer.  A tap that ends a run starts a new run in its own group.  A TalkBack element
+  action (source: other) used while the tray is open is its own step and ends any run.
+  BACK AT ITS START.  A run is back at its start when every Transform field of every
+  piece is within 1e-6 pt of the state before the run, or, for the angle, within 1e-6
+  degrees of it after normalising mod 360.  Then the run's entry is removed, the state
+  before the run is restored EXACTLY (not the drifted or +360 value), and the redo stack
+  the marker kept comes back too: exactly as a drag that ends where it began records no
+  step and keeps Redo (EditorReducer.kt:306-308).  Examples: Move left, then Move right;
+  Make larger, then Make smaller (x1.1 then /1.1 is not exact in floating point, and
+  the size step bakes through bakeCentreAnchored, so only the tolerance catches it); 24
+  Rotate clockwise taps (360 degrees).
   Words: the run's step is labelled by A48.8 like any Transform: a Move run "moved", a
   Size run "resized", a Turn run "turned".  Undo of a run says it once, for example
   "Photo moved back"; redo says "Photo moved".  Arrange taps raise no snack of their own,
@@ -4048,9 +4115,9 @@ A48.9  ONE UNDO RULE FOR REPEATED TAPS (amends A33's "Every tap is one undo step
   only ever extends the entry it created, so an Undo of a run never undoes anything else.
   Flip (A22) is not changed: its two choices are toggles, not steps, and each tap stays
   one undo step.  Layer taps stay one step each: a restack is a discrete swap, not an
-  amount.  The element's own screen-reader actions (move, size, turn), used outside the
-  tray, stay one step each; the tray's buttons, reached with TalkBack, follow the run
-  rule like any tap.
+  amount.  The element's own screen-reader actions (move, size, turn) stay one step
+  each, whether or not the tray is open; the tray's buttons, reached with TalkBack,
+  follow the run rule like any tap, because the source is the button, not the reader.
   REJECTED, AND WHY (ADR-143 records them too):
     every tap one step (as A33)   ten Move taps need ten Undos, where one drag doing the
                                   same is one; Move and drag would follow two rules
@@ -4070,17 +4137,34 @@ A48.9  ONE UNDO RULE FOR REPEATED TAPS (amends A33's "Every tap is one undo step
 A48.10  W2a ITEM 9 CLOSES.  "The hint mentions the two-finger turn" is closed, replaced by
 the visible knob: the turn now shows on the piece itself.  THE HINT (A33, :2677-2679) is
 UNCHANGED, both strings verbatim: #148 says the hint is already too large at 2x text, and
-a longer one would make that worse.
+a longer one would make that worse.  Stated honestly: on first run the hint can take
+precedence over the knob (A48.2), so a maker may first meet the knob after "Got it" or
+after their first drag.  The closure rests on every later selection, not the first.
 
 WHAT DOES NOT CHANGE.  The eight resize handles, their marks and their placement.  The
 ring.  The 15 degree step, the 4pt nudge and the x1.1 size step.  The tray, its title, its
 Done, its other groups and how it closes (A33).  Flip (A22).  A33 THE HINT.  The saved
 format: rotation is already stored as a number of degrees, and nothing here normalises
-a stored angle (ADR-143).  Two fingers still turn the selected piece (the V2 IA's "two
+a stored angle (ADR-143).  Two fingers still turn the selected piece, and do not snap (A48.4) (the V2 IA's "two
 fingers act on the page" is a recorded divergence, not reopened here).
 
 HOW TO TEST THIS CARD.  The A48 card below lists the states and has buttons that stage
 them; `?a48=<stage>&w=360&text=2&theme=dark` holds one for review (prototype only).
+Stages: idle, drag, snap, flip, flipdrag, tray, tilted, run, sizeback, knob360, hint and
+hintgot.  `?a48=hint&w=360[&text=2]` keeps the first-run hint up on the text box, where
+the hint wins and no knob is drawn (`&kind=photo` shows a side chosen to clear it);
+`hintgot` then taps "Got it" and the knob appears.  Every other stage hides #coachA17 so
+the knob and the readout show.
+
+BUILD TEST CASES this block adds (ADR-143 lists them too):
+  - a run of three Move taps is one step; Move left then Move right is no step
+  - SIZE THERE-AND-BACK: Make larger, then Make smaller: no step, before restored
+    exactly, Redo as it was before the run
+  - a Turn run of 24 taps (360) is no step, before restored exactly
+  - a 0 -> 360 KNOB drag records no step and keeps Redo
+  - a TalkBack element action with the tray open ends the run and is its own step
+  - the knob commit leaves x, y, width and height bit-identical (copy, not bake)
+  - the turn-only word with a two-finger turn whose x drifted by 1e-12: "turned"
 =========================================================================== -->
 <style>
 /* A48.1: the turn knob, a ninth mark beside the eight .hnd.  It lives inside .el so it turns with
@@ -4093,7 +4177,7 @@ them; `?a48=<stage>&w=360&text=2&theme=dark` holds one for review (prototype onl
   touch-action:none;cursor:grab;opacity:0;pointer-events:none;transition:opacity .15s;z-index:3}
 .a48-knob.a48-top{top:0;translate:0 calc(-54px / var(--arr-s,1))}
 .el.selected>.a48-knob{opacity:1;pointer-events:auto}
-.el.editing>.a48-knob,.el.a48-hide>.a48-knob{opacity:0;pointer-events:none}
+.el.editing>.a48-knob,.el.a48-hide>.a48-knob,.el.selected>.a48-knob.a48-off{opacity:0;pointer-events:none}
 .a48-knob:active{cursor:grabbing}
 .a48-knob i{position:absolute;left:23.2px;top:-24px;width:1.6px;height:39px;background:var(--ink)}
 .a48-knob.a48-top i{top:33px}
@@ -4101,6 +4185,10 @@ them; `?a48=<stage>&w=360&text=2&theme=dark` holds one for review (prototype onl
   background:var(--paper);border:1.6px solid var(--ink);color:var(--ink);display:grid;place-items:center}
 .a48-knob svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.4;
   stroke-linecap:round;stroke-linejoin:round}
+/* PROTOTYPE ARTEFACT, NOT A RULE: THE BUILD MUST NOT COPY THIS.  The knob lives inside .el here so it turns
+   with the piece for free, and this lifts the selected piece above its siblings so its knob is not covered.
+   Side effect: selecting a piece re-stacks it on top while selected.  In the build the knob is drawn in the
+   selection overlay beside the handles (A48.1) and selection never changes stacking. */
 .el.selected{z-index:2}
 /* A48.5: the readout, only while a knob drag is live. */
 .a48-angle{position:absolute;z-index:31;display:none;pointer-events:none;
@@ -4109,7 +4197,7 @@ them; `?a48=<stage>&w=360&text=2&theme=dark` holds one for review (prototype onl
 .a48-angle.show{display:block}
 .a48-angle.snapped{background:var(--leaf-tint);color:var(--on-leaf)}
 /* A48.6: Straighten on an upright piece. */
-.arr-row button:disabled{opacity:.35;cursor:default;background:none}
+.arr-row button:disabled{opacity:.45;cursor:default;background:none}
 /* The A48 card. */
 #a48{margin:32px 16px;width:min(760px,calc(100% - 32px));box-sizing:border-box;font:14px/1.45 system-ui,sans-serif;color:var(--ink)}
 #a48 h2{font-size:18px;margin:0 0 4px}
@@ -4137,7 +4225,7 @@ them; `?a48=<stage>&w=360&text=2&theme=dark` holds one for review (prototype onl
     <li>Drag the knob round.  The photo turns about its centre with no jump on touch, and a pill shows the angle ("15°", "−30°").  Let go: the pill goes.</li>
     <li>Drag to within 5° of 0, 90, 180 or 270: the angle lands on it exactly and the pill turns leaf.  "Tilt the photo to 80°", then drag 8° more: it lands on 90°.</li>
     <li>Select the sticker: its knob would fall on the verb bar, so it hangs above the piece instead.  Its readout sits below.</li>
-    <li>Open Arrange: Turn has three buttons; Straighten is dimmed while the piece is upright, and brings a tilted one back to upright in one tap (375° to 360°, 180° to 0°).</li>
+    <li>Open Arrange: Turn has three buttons; Straighten is disabled while the piece is upright, and brings a tilted one back to upright in one tap (375° to 360°, 180° to 0°).</li>
     <li>"Move right × 3", then the bar's Undo: one undo puts all three back, and the snack says "Photo moved back".  A Move tap after a Turn tap starts a new step.</li>
     <li>Start typing (Edit on the text): the knob goes.  It comes back after Done.</li>
     <li>At 360dp and at 2× text (<code>?a48=tray&amp;w=360&amp;text=2</code>), the tray's Turn and Layer share a line at 1×, wrap at 2×, and nothing clips.</li>
@@ -4175,10 +4263,16 @@ const a48=(()=>{
                    s:parseFloat(el.style.getPropertyValue('--arr-s'))||1, r:parseFloat(el.style.getPropertyValue('--arr-r'))||0});
   const write=(el,t)=>{ el.style.setProperty('--arr-x',t.x+'px'); el.style.setProperty('--arr-y',t.y+'px');
                         el.style.setProperty('--arr-s',t.s); el.style.setProperty('--arr-r',t.r+'deg'); };
-  const same=(a,b)=>a.x===b.x&&a.y===b.y&&a.s===b.s&&a.r===b.r;
+  // A48.3 / A48.9: "back where it began" is tolerant: every field within 1e-6, the angle after normalising
+  // mod 360, so 0 -> 360 and x1.1 then /1.1 both count as back.  The caller then restores `before` exactly.
+  const near=(a,b)=>Math.abs(a-b)<=EPS;
+  const same=(a,b)=>near(a.x,b.x)&&near(a.y,b.y)&&near(a.s,b.s)&&near(norm(a.r-b.r),0);
+  console.assert(same({x:0,y:0,s:1,r:0},{x:0,y:0,s:1,r:360})&&same({x:0,y:0,s:1,r:0},{x:0,y:0,s:1.1/1.1*1.1/1.1,r:0})
+    &&same({x:0,y:0,s:1,r:0},{x:0,y:0,s:1*1.1/1.1,r:0})&&!same({x:0,y:0,s:1,r:0},{x:0,y:0,s:1,r:1}),'A48.9 back at start');
   const NOUN={text:'Text',photo:'Photo',decor:'Art piece'};
-  const wordOf=st=>verb({moved:st.before.x!==st.after.x||st.before.y!==st.after.y,
-    size:Math.abs(st.after.s-st.before.s)/st.before.s, from:st.before.r, to:st.after.r});
+  // A48.8: position and size within 1e-6 and only the angle differs -> "turned".
+  const wordOf=st=>verb({moved:!near(st.before.x,st.after.x)||!near(st.before.y,st.after.y),
+    size:near(st.after.s,st.before.s)?0:Math.abs(st.after.s-st.before.s)/st.before.s, from:st.before.r, to:st.after.r});
 
   /* ---- A48.9: history and the run (prototype: this block's own steps only) ---- */
   let hist=[], run=null, mine=false;
@@ -4193,7 +4287,7 @@ const a48=(()=>{
   function endRun(){ if(run){ run=null; log(); } }
   function push(el,before,after){
     endRun();
-    if(same(before,after)) return;
+    if(same(before,after)){ write(el,before); return; }   // no step; before restored exactly (a 360 drag too)
     hist.push({el,before,after}); landed();
   }
   function tap(el,group,act){
@@ -4202,7 +4296,9 @@ const a48=(()=>{
     const top=hist[hist.length-1];
     if(run&&run.el===el&&run.group===group&&top===run.step){
       run.step.after=after; run.taps++;
-      if(same(run.step.before,after)){ hist.pop(); run=null; }   // back where it began: no step
+      // back where it began: no step, before restored exactly.  (The build also puts back the redo stack the
+      // run marker kept; this prototype has no Redo to restore.)
+      if(same(run.step.before,after)){ write(el,run.step.before); hist.pop(); run=null; }
     } else {
       const st={el,before,after}; hist.push(st); run={el,group,step:st,taps:1};
     }
@@ -4239,19 +4335,26 @@ const a48=(()=>{
                  return {left:c.x-24,right:c.x+24,top:c.y-24,bottom:c.y+24}; };
   const meets=(a,b)=>a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom;
   const inside=(a,b)=>a.left>=b.left&&a.right<=b.right&&a.top>=b.top&&a.bottom<=b.bottom;
+  // The A33/A17 first-run hint, when it is actually on screen (review stages hide it with display:none).
+  const hintUp=()=>coach.classList.contains('show')&&coach.getClientRects().length>0;
+  const onHint=k=>hintUp()&&meets(hit(k),coach.getBoundingClientRect());
   function fits(k){
     const h=hit(k);
     if(!inside(h,area.getBoundingClientRect())) return false;
+    if(onHint(k)) return false;
     return ![$('ctx'),arrPanel,$('inkpop'),flipPanel,$('snack')].some(n=>n.classList.contains('show')&&meets(h,n.getBoundingClientRect()));
   }
-  // A48.2: below unless it does not fit; then above; if neither fits, below.
+  // A48.2: below unless it does not fit; then above.  If neither fits: when the knob below would touch the
+  // first-run hint, the hint wins and the knob is not drawn until the hint goes; otherwise below.
   function place(){
     if(!sel||drag) return;
     const k=knobOf(sel); if(!k) return;
-    k.classList.remove('a48-top');
+    k.classList.remove('a48-top','a48-off');
     if(fits(k)) return;
     k.classList.add('a48-top');
-    if(!fits(k)) k.classList.remove('a48-top');
+    if(fits(k)) return;
+    k.classList.remove('a48-top');
+    if(onHint(k)) k.classList.add('a48-off');
   }
   const placeSoon=()=>{ requestAnimationFrame(place); setTimeout(place,220); };
   let drag=null;
@@ -4310,7 +4413,7 @@ const a48=(()=>{
   goPage=function(n){ endRun(); goPageBeforeA48(n); };
   new MutationObserver(()=>{ if(!arrPanel.classList.contains('show')) endRun(); syncStraighten(); placeSoon(); })
     .observe(arrPanel,{attributes:true,attributeFilter:['class']});
-  [$('ctx'),$('inkpop'),flipPanel,$('kbstack')].forEach(n=>new MutationObserver(placeSoon).observe(n,{attributes:true,attributeFilter:['class']}));
+  [$('ctx'),$('inkpop'),flipPanel,$('kbstack'),coach].forEach(n=>new MutationObserver(placeSoon).observe(n,{attributes:true,attributeFilter:['class']}));
   // Any other undoable act starts the prototype's own one-level undo again (it cannot hold both).
   const toastBeforeA48=toast;
   toast=function(msg,undoable){ if(undoable){ endRun(); hist=[]; mine=false; log(); } return toastBeforeA48(msg,undoable); };
@@ -4346,10 +4449,13 @@ const a48=(()=>{
   R.dataset.theme=q.get('theme')==='dark'?'dark':'light';
   R.style.fontSize=(t*100)+'%';
   const st=document.createElement('style');
-  st.textContent=`:root[data-gallery="true"] body{width:${w}px;height:${h}px}.phone{width:${w}px;height:${h}px}#a48,#a41,#a42,.a40-doc,.a39-amend,.a34-compare,#coachA17{display:none}`;
+  // Every stage but `hint`/`hintgot` hides the first-run hint (#coachA17) so the knob and the readout show;
+  // those two keep it, to show A48.2's rule.  `&kind=photo|decor|text` picks their piece.
+  const keepHint=stage==='hint'||stage==='hintgot';
+  st.textContent=`:root[data-gallery="true"] body{width:${w}px;height:${h}px}.phone{width:${w}px;height:${h}px}#a48,#a41,#a42,.a40-doc,.a39-amend,.a34-compare${keepHint?'':',#coachA17'}{display:none}`;
   document.head.appendChild(st);
-  // A held drag: pointerdown on the knob, then moves, and no pointerup.
-  function holdDrag(kind,deg){
+  // A held drag: pointerdown on the knob, then moves, and no pointerup (unless `release`).
+  function holdDrag(kind,deg,release){
     selectByKind(kind); a48.place();
     const k=a48.knobOf(sel), b=k.getBoundingClientRect(), e=sel.getBoundingClientRect();
     const c={x:e.left+e.width/2,y:e.top+e.height/2}, p={x:b.left+b.width/2,y:b.top+b.height/2};
@@ -4357,8 +4463,11 @@ const a48=(()=>{
     const ev=(type,a)=>k.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:7,isPrimary:true,
       clientX:c.x+r*Math.cos(a),clientY:c.y+r*Math.sin(a)}));
     ev('pointerdown',a0);
-    for(let i=1;i<=8;i++) ev('pointermove',a0+deg*Math.PI/180*i/8);
+    const n=Math.max(8,Math.ceil(Math.abs(deg)/30));
+    for(let i=1;i<=n;i++) ev('pointermove',a0+deg*Math.PI/180*i/n);
+    if(release) ev('pointerup',a0+deg*Math.PI/180);
   }
+  const tapBtn=label=>arrPanel.querySelector('.arr-row button[aria-label="'+label+'"]').click();
   const tilt=(kind,deg)=>{ selectByKind(kind); sel.style.setProperty('--arr-r',deg+'deg'); };
   const later=f=>setTimeout(f,350);
   ({
@@ -4371,6 +4480,16 @@ const a48=(()=>{
     tilted(){ tilt('photo',15); openArrange(); },
     run(){ selectByKind('photo'); openArrange(); const b=arrPanel.querySelector('.arr-row button[aria-label="Move right"]');
            for(let i=0;i<3;i++) b.click(); $('undoBtn').click(); },
+    // A48.9 there-and-back: Make larger, then Make smaller leaves no step and the exact size.
+    sizeback(){ selectByKind('photo'); openArrange(); tapBtn('Make larger'); tapBtn('Make smaller'); },
+    // A48.3: a full 0 -> 360 knob drag, released, records no step and leaves the angle exactly as before.
+    knob360(){ later(()=>holdDrag('photo',360,true)); },
+    // A48.2: the first-run hint stays up; the knob takes the side that clears it, or is not drawn.
+    // Default `text`: at 360 the text box sits under the hint, above has no room, so the hint wins and no knob
+    // is drawn.  `&kind=photo` at 1x: below clears the hint, above would touch it.
+    hint(){ selectByKind(q.get('kind')||'text'); },
+    // The same, then "Got it": the hint goes and the knob appears.
+    hintgot(){ selectByKind(q.get('kind')||'text'); later(()=>coach.querySelector('button').click()); },
   }[stage]||(()=>{}))();
   // Measurements for review, readable with --dump-dom.
   setTimeout(()=>{
@@ -4383,6 +4502,37 @@ const a48=(()=>{
       out.buttons=[...arrPanel.querySelectorAll('.arr-row button')].map(b=>({l:b.getAttribute('aria-label'),box:box(b),off:b.disabled}));
       out.trayScrolls=arrPanel.scrollHeight>arrPanel.clientHeight; }
     out.snack=$('snack').classList.contains('show')?$('snackText').textContent:'';
+    out.log=$('a48Log').textContent;
+    if(sel){ const v=a48.read(sel); out.piece={s:v.s,r:v.r}; }
+    // Clearances, in screen px, for the knob's 48 hit box (centred on the disc).  Handles use the BUILD's
+    // geometry: a 48 box centred on the element's geometric corner/edge point (ResizeHandles.kt:209-216), found
+    // from the drawn marks, which sit 5.5 (x the piece's scale) outward per axis they touch.  `gap` between two
+    // axis-aligned boxes is positive when they are apart, negative when they overlap.
+    if(k){
+      const c=n=>{ const b=n.getBoundingClientRect(); return {x:b.left+b.width/2,y:b.top+b.height/2}; };
+      const K=c(k.querySelector('b')), kb={left:K.x-24,right:K.x+24,top:K.y-24,bottom:K.y+24};
+      const gap=(a,b)=>Math.round(Math.max(b.left-a.right,a.left-b.right,b.top-a.bottom,a.top-b.bottom)*10)/10;
+      const m={}; sel.querySelectorAll(':scope>.hnd').forEach(n=>{ const cls=[...n.classList].find(x=>x!=='hnd'); m[cls]=c(n); });
+      if(m.t&&m.b&&m.l&&m.r){
+        const unit=(a,b)=>{ const d=Math.hypot(b.x-a.x,b.y-a.y); return {x:(b.x-a.x)/d,y:(b.y-a.y)/d,d}; };
+        const dn=unit(m.t,m.b), rt=unit(m.l,m.r), S=dn.d/(sel.offsetHeight+11), o=5.5*S;
+        const geo={t:[0,-1],b:[0,1],l:[-1,0],r:[1,0],tl:[-1,-1],tr:[1,-1],bl:[-1,1],br:[1,1]};
+        const pts=Object.entries(geo).filter(([n])=>m[n]).map(([n,[sx,sy]])=>
+          [n,{x:m[n].x-o*(sx*rt.x+sy*dn.x),y:m[n].y-o*(sx*rt.y+sy*dn.y)}]);
+        const hg=pts.map(([n,p])=>[n,gap(kb,{left:p.x-24,right:p.x+24,top:p.y-24,bottom:p.y+24})]).sort((a,b)=>a[1]-b[1]);
+        out.knobToHandles={nearest:hg[0][0],gap:hg[0][1]};
+        const edge=pts.find(([n])=>n===(out.top?'t':'b'))[1];
+        out.knobOut=Math.round(Math.hypot(K.x-edge.x,K.y-edge.y)*10)/10;
+      }
+      out.knobShown=!k.classList.contains('a48-off')&&getComputedStyle(k).opacity!=='0';
+      const ctx=$('ctx'); if(ctx.classList.contains('show')) out.knobToVerbBar=gap(kb,ctx.getBoundingClientRect());
+      if(arrPanel.classList.contains('show')) out.knobToTray=gap(kb,arrPanel.getBoundingClientRect());
+      if(coach.classList.contains('show')&&coach.getClientRects().length){ out.hint=box(coach); out.knobToHint=gap(kb,coach.getBoundingClientRect());
+        // what each side would give: re-measure with the class toggled, then put it back
+        const was=[...k.classList]; const side=top=>{ k.classList.remove('a48-off'); k.classList.toggle('a48-top',top);
+          const P=c(k.querySelector('b')); return gap({left:P.x-24,right:P.x+24,top:P.y-24,bottom:P.y+24},coach.getBoundingClientRect()); };
+        out.hintGapBelow=side(false); out.hintGapAbove=side(true); k.className=was.join(' '); }
+    }
     document.body.dataset.a48=JSON.stringify(out);
   },900);
 })();
