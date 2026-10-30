@@ -10,6 +10,9 @@ import com.aritr.zinely.core.model.Transform
 /** One element-local reflection axis (ADR-113). */
 public enum class FlipAxis { HORIZONTAL, VERTICAL }
 
+/** Who sent a stepping twin (A48.9): the Arrange tray's buttons, or anything else. */
+public enum class StepSource { TRAY, OTHER }
+
 /**
  * Editor intents (ADR-029 §2.2). Each folds purely into a new [EditorModel] via [EditorReducer.reduce].
  * `UpdateTransform` is deliberately absent — live drag frames are preview-only via `graphicsLayer{}` and
@@ -209,9 +212,16 @@ public sealed interface Intent {
     /** Discard an open transform session's preview. [token]-gated (like [CommitTransform]) so a stale cancel
      *  from a superseded session can't idle a newer one (Codex review, host increment). */
     public data class CancelTransform(val token: Long) : Intent
-    public data class Nudge(val deltaPt: PtPoint) : Intent
-    public data class ScaleBy(val factor: Double) : Intent
-    public data class RotateBy(val degrees: Double) : Intent
+    /**
+     * The three stepping twins. [source] is A48.9's (ADR-143 decision 6): only [StepSource.TRAY] taps run
+     * together into one undo step. The element's TalkBack actions and Straighten send [StepSource.OTHER].
+     */
+    public data class Nudge(val deltaPt: PtPoint, val source: StepSource = StepSource.OTHER) : Intent
+    public data class ScaleBy(val factor: Double, val source: StepSource = StepSource.OTHER) : Intent
+    public data class RotateBy(val degrees: Double, val source: StepSource = StepSource.OTHER) : Intent
+
+    /** The Arrange tray closed (Done, Back, empty-page tap, page change): ends any run (A48.9). No other effect. */
+    public data object TrayClosed : Intent
 
     // — structure —
     /**

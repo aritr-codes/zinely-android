@@ -51,7 +51,11 @@ import com.aritr.zinely.core.model.Transform
 public object EditorReducer {
 
     public fun reduce(model: EditorModel, intent: Intent): Reduction {
-        val reduction = reduceIntent(model, intent)
+        // A48.9's guard: the run marker survives only a tray tap (which decides itself whether it extends);
+        // every other intent clears it, so a run ends at anything that is not its own next tap.
+        val step = stepOf(intent)
+        val reduction = if (step != null && step.source == StepSource.TRAY) trayTap(model, step)
+        else reduceIntent(if (model.trayRun == null) model else model.copy(trayRun = null), intent)
         // D-141: one guard for every history mutation (push, undo, redo, the fresh-blank drop, and any later
         // one): each builds a new History, so an identity check sees them all and nothing else.
         return if (reduction.model.history === model.history) reduction
@@ -304,8 +308,10 @@ public object EditorReducer {
                 val after = intent.after.filterKeys { it in tx.before }
                 val idle = model.copy(interaction = Interaction.Idle)
                 // A gesture that ends where it began (e.g. snapped back) changed nothing: close the
-                // session without an undo step, an autosave, or wiping Redo — as CommitReframe does.
-                if (after.all { (id, t) -> tx.before[id] == t }) Reduction(idle)
+                // session without an undo step, an autosave, or wiping Redo — as CommitReframe does. Tolerant
+                // (A48.3): a full 360° knob drag, or float noise, is back where it began too. The preview never
+                // wrote the document, so `before` stays exactly as it was.
+                if (after.all { (id, t) -> tx.before[id]?.let { TurnMath.sameTransform(it, t) } == true }) Reduction(idle)
                 else committing(idle, TransformCommand(tx.pageIndex, tx.before, after))
             }
         }
@@ -322,9 +328,8 @@ public object EditorReducer {
             val next = ViewState(intent.screenPxPerPt, intent.pageOffset)
             if (next == model.view) Reduction(model) else Reduction(model.copy(view = next))
         }
-        is Intent.Nudge -> bakeSelection(model) { it.copy(xPt = it.xPt + intent.deltaPt.x, yPt = it.yPt + intent.deltaPt.y) }
-        is Intent.ScaleBy -> bakeSelection(model) { TransformMath.bakeCentreAnchored(it, PtPoint(0.0, 0.0), intent.factor, 0.0) }
-        is Intent.RotateBy -> bakeSelection(model) { it.copy(rotationDegrees = it.rotationDegrees + intent.degrees) }
+        is Intent.Nudge, is Intent.ScaleBy, is Intent.RotateBy -> bakeSelection(model, stepOf(intent)!!.f)
+        Intent.TrayClosed -> Reduction(model) // its whole job (ending a run) is done by reduce's guard
 
         // — structure —
         is Intent.DuplicateElement -> duplicateElement(model, intent)
@@ -611,6 +616,60 @@ public object EditorReducer {
         // A twin that changes nothing (Make smaller at the minimum size) is no step, as in CommitTransform.
         if (after == before) return Reduction(model)
         return committing(model, TransformCommand(model.currentPageIndex, before, after))
+    }
+
+    /** One stepping twin: its tray group, its source, and what it does to a transform. */
+    private class Step(val group: TrayGroup, val source: StepSource, val f: (Transform) -> Transform)
+
+    private fun stepOf(intent: Intent): Step? = when (intent) {
+        is Intent.Nudge -> Step(TrayGroup.MOVE, intent.source) {
+            it.copy(xPt = it.xPt + intent.deltaPt.x, yPt = it.yPt + intent.deltaPt.y)
+        }
+        is Intent.ScaleBy -> Step(TrayGroup.SIZE, intent.source) {
+            TransformMath.bakeCentreAnchored(it, PtPoint(0.0, 0.0), intent.factor, 0.0)
+        }
+        is Intent.RotateBy -> Step(TrayGroup.TURN, intent.source) { it.copy(rotationDegrees = it.rotationDegrees + intent.degrees) }
+        else -> null
+    }
+
+    /**
+     * A48.9 (ADR-143 decision 6): a tray tap extends the run while the run is on this piece, in this group,
+     * and the newest undo entry is still the run's own command (`===`); it then replaces that entry with one
+     * [TransformCommand] from the run's start to now. A run back at its start (within [TurnMath.EPSILON],
+     * angle mod 360) is removed: `before` and the redo stack come back exactly. Any other tray tap commits
+     * like any tap and starts a new run. A tap with several pieces selected never runs (not reachable today).
+     */
+    private fun trayTap(model: EditorModel, step: Step): Reduction {
+        val run = model.trayRun
+        val id = model.selection.singleOrNull()
+        val extends = run != null && id != null && run.id == id && run.group == step.group &&
+            model.history.undo.lastOrNull() === run.command
+        if (!extends) {
+            val cleared = model.copy(trayRun = null)
+            val r = bakeSelection(cleared, step.f)
+            if (id == null || r.model.history === cleared.history) return r
+            val cmd = r.model.history.undo.last() as TransformCommand
+            return r.copy(model = r.model.copy(trayRun = TrayRun(id, step.group, cmd, model.history.redo)))
+        }
+        run!!
+        val now = transformsOf(model, setOf(id!!))
+        val after = now.mapValues { step.f(it.value) }
+        if (after == now) return Reduction(model) // a tap that changes nothing (Make smaller at the minimum)
+        val start = run.command.before
+        val undo = model.history.undo.dropLast(1)
+        if (after.all { (k, t) -> start[k]?.let { TurnMath.sameTransform(it, t) } == true }) {
+            val doc = run.command.invertOn(model.document) // writes `start` exactly, not the drifted value
+            return Reduction(
+                model.copy(document = doc, history = History(undo = undo, redo = run.redoBefore), trayRun = null),
+                listOf(Effect.Autosave(doc)),
+            )
+        }
+        val merged = TransformCommand(run.command.pageIndex, start, after)
+        val doc = merged.applyTo(model.document)
+        return Reduction(
+            model.copy(document = doc, history = History(undo = undo + merged, redo = emptyList()), trayRun = run.copy(command = merged)),
+            listOf(Effect.Autosave(doc)),
+        )
     }
 
     private fun stepHistory(model: EditorModel, redo: Boolean): Reduction {
