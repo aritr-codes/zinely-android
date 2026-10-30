@@ -23,6 +23,23 @@ public data class EditorModel(
     val nextToken: Long = firstFreeToken(document),
     /** See [EditorUiState.historyRevision]; moved only by [EditorReducer.reduce]. Never saved. */
     val historyRevision: Long = 0L,
+    /** A48.9's run marker: set only by a tray tap, cleared by every other intent. Never saved. */
+    val trayRun: TrayRun? = null,
+)
+
+/** The Arrange tray's three stepping groups (A48.9): the drag, the pinch and the twist. */
+public enum class TrayGroup { MOVE, SIZE, TURN }
+
+/**
+ * A run of tray taps (A48.9, ADR-143 decision 6). [command] is the run's own undo entry, checked by
+ * identity (`===`): Undo then Redo puts an *equal* instance back, which must not extend the run.
+ * [redoBefore] is the redo stack before the run's first tap, restored if the run ends back at its start.
+ */
+public data class TrayRun(
+    val id: String,
+    val group: TrayGroup,
+    val command: TransformCommand,
+    val redoBefore: List<Command>,
 )
 
 /**

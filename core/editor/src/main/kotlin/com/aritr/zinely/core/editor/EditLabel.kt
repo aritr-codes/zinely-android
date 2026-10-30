@@ -122,6 +122,14 @@ private fun kindOf(element: Element): EditKind = when (element) {
  */
 internal fun transformVerb(before: Map<String, Transform>, after: Map<String, Transform>): EditVerb {
     val pairs = after.mapNotNull { (id, a) -> before[id]?.let { it to a } }
+    // A48.8 (ADR-143 decision 5): position and size all within 1e-6 pt and only the angle differs -> turned,
+    // whatever the size of the turn (a Straighten from 1.5°, a snap, 360° -> 0°). The tolerance absorbs the
+    // two-finger bake's centre round trip.
+    val e = TurnMath.EPSILON
+    val turnOnly = pairs.isNotEmpty() && pairs.all { (b, a) ->
+        abs(a.xPt - b.xPt) <= e && abs(a.yPt - b.yPt) <= e && abs(a.widthPt - b.widthPt) <= e && abs(a.heightPt - b.heightPt) <= e
+    } && pairs.any { (b, a) -> a.rotationDegrees != b.rotationDegrees }
+    if (turnOnly) return EditVerb.TURN
     val size = pairs.maxOfOrNull { (b, a) -> maxOf(abs(a.widthPt - b.widthPt) / b.widthPt, abs(a.heightPt - b.heightPt) / b.heightPt) } ?: 0.0
     val turn = pairs.maxOfOrNull { (b, a) -> abs(a.rotationDegrees - b.rotationDegrees).mod(360.0).let { minOf(it, 360.0 - it) } } ?: 0.0
     return when {

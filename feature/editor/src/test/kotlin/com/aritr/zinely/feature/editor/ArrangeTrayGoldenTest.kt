@@ -6,13 +6,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.ui.golden.cropToBounds
 import com.aritr.zinely.ui.golden.pixelCountOf
@@ -30,7 +33,7 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Golden net for the [ArrangeTray] (Bench A33, ADR-129), light and dark, at the 360dp width A33 lays out
- * for: Move and Size on the first line, Turn and Layer on the second.
+ * for: Move and Size on the first line, Turn and Layer on the second. Also at 2× text (ADR-143).
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -51,23 +54,26 @@ class ArrangeTrayGoldenTest {
 
     private var deskArgb = 0
 
-    private fun capture(name: String, darkTheme: Boolean) {
+    private fun capture(name: String, darkTheme: Boolean, fontScale: Float = 1f) {
         composeRule.setContent {
-            ZinelyTheme(darkTheme = darkTheme) {
-                deskArgb = ZinelyTheme.colors.desk.toArgb()
-                Box(
-                    Modifier
-                        .testTag(HOST_TAG)
-                        .width(360.dp)
-                        .background(ZinelyTheme.colors.desk),
-                ) {
-                    ArrangeTray(
-                        visible = true,
-                        elementId = "t1",
-                        dispatch = {},
-                        onDone = {},
-                        firstFocusRequester = remember { FocusRequester() },
-                    )
+            val d = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(d.density, fontScale)) {
+                ZinelyTheme(darkTheme = darkTheme) {
+                    deskArgb = ZinelyTheme.colors.desk.toArgb()
+                    Box(
+                        Modifier
+                            .testTag(HOST_TAG)
+                            .width(360.dp)
+                            .background(ZinelyTheme.colors.desk),
+                    ) {
+                        ArrangeTray(
+                            visible = true,
+                            elementId = "t1",
+                            dispatch = {},
+                            onDone = {},
+                            firstFocusRequester = remember { FocusRequester() },
+                        )
+                    }
                 }
             }
         }
@@ -85,4 +91,7 @@ class ArrangeTrayGoldenTest {
 
     @Test
     fun arrange_tray_dark() = capture("arrange_tray_dark", darkTheme = true)
+
+    @Test
+    fun arrange_tray_2x_text() = capture("arrange_tray_2x", darkTheme = false, fontScale = 2f)
 }

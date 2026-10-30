@@ -257,3 +257,22 @@ acceptance, what each pass asks) · [ADR-058](DECISIONS.md#adr-058) (the merged-
 [ADR-059](DECISIONS.md#adr-059) (Role → `android.view.View`) · [ADR-078](DECISIONS.md#adr-078) (the A8
 accessibility foundation and the CI-26 harness's move into `:core:ui`) ·
 [V1-CONFORMANCE-INVENTORY.md](V1-CONFORMANCE-INVENTORY.md) (CI-26/29/30/31/93).
+
+## Real two-finger gestures on the emulator
+
+`adb shell input` sends one finger, and `sendevent` is denied on a production emulator image. The emulator console is not:
+
+```
+adb -s emulator-5554 emu event send EV_ABS:ABS_MT_SLOT:0 EV_ABS:ABS_MT_TRACKING_ID:101 EV_ABS:ABS_MT_POSITION_X:<x> EV_ABS:ABS_MT_POSITION_Y:<y> EV_ABS:ABS_MT_PRESSURE:100 EV_KEY:BTN_TOUCH:1 EV_SYN:0:0
+adb -s emulator-5554 emu event send EV_ABS:ABS_MT_SLOT:1 EV_ABS:ABS_MT_TRACKING_ID:102 EV_ABS:ABS_MT_POSITION_X:<x> EV_ABS:ABS_MT_POSITION_Y:<y> EV_ABS:ABS_MT_PRESSURE:100 EV_SYN:0:0
+# each frame: for each slot, EV_ABS:ABS_MT_SLOT:<n> and the new POSITION_X and POSITION_Y, then EV_SYN:0:0, in ONE send
+# lift: EV_ABS:ABS_MT_SLOT:<n> EV_ABS:ABS_MT_TRACKING_ID:-1, then BTN_TOUCH:0 with the last one
+```
+
+- Coordinates run 0..32767 across the screen: `x * 32767 / width`, `y * 32767 / height`.
+- The sync is `EV_SYN:0:0`. `EV_SYN:SYN_REPORT:0` is rejected with `KO`.
+- `adb shell dumpsys input` shows `Last Cooked Touch: pointerCount=2` while both are down, which proves the platform saw two.
+- After a run of rejected sends, the next gesture misbehaved once. Treat a first result after a `KO` as suspect and repeat it.
+- The saved document lags the screen: wait 3 seconds before reading `document.json`. One second read a stale file and looked
+  like a dropped gesture.
+- This proves the mechanics, not the feel. A hand on a phone still has to judge that.

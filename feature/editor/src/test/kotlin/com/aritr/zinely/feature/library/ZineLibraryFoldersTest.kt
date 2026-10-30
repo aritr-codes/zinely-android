@@ -16,6 +16,9 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -290,10 +293,31 @@ class ZineLibraryFoldersTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(FolderNameSheetTestTag).assertExists()
 
-        composeRule.onNodeWithContentDescription("Cancel").performClick()
+        composeRule.onNodeWithTag(FolderNameCancelTestTag).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(FolderNameSheetTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(FolderMoveSheetTestTag).assertExists()
+        assertTrue(moved.isEmpty())
+    }
+
+    @Test
+    fun `the name sheet's Cancel is a real button, enabled while Make folder is not`() {
+        // A49: a bordered sibling of Make folder, never dimmed. Empty name -> Go disabled, Cancel not.
+        zines = SEEDED.map { it.copy(folder = null) }
+        shelf()
+        composeRule.onNodeWithContentDescription("Actions for Riso tests").performClick()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Move)).performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(FolderNameGoTestTag).assertIsNotEnabled()
+        composeRule.onNodeWithTag(FolderNameCancelTestTag)
+            .assertIsEnabled()
+            .assertHeightIsAtLeast(48.dp)
+            .assert(hasContentDescription("Cancel"))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            .performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FolderNameSheetTestTag).assertDoesNotExist()
         assertTrue(moved.isEmpty())
     }
 

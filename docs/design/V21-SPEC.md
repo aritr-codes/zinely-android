@@ -461,7 +461,7 @@ running text.** Voice is for short strings; Work is for anything the user operat
   | Tier | Rest | Travel | Pressed | Where |
   |---|---|---|---|---|
   | **Hero** | `--hard` 4 | 2 | **1** | `.cover` (every Library cover) · `.start` · `.btn-save` · `.btn-share` · `.add` |
-  | **Raised** | 3 | 2 | 1 | `.retry` · `.foldit` · `.shelf` · `.opt` · `.paperseg button` |
+  | **Raised** | 3 | 2 | 1 | `.retry` · `.foldit` · `.shelf` · `.opt` · `.paperseg button` · `.go` / `.go.ghost` (the name sheet's pair, Library A28/A49) |
   | **Flat** | 2 | 2 | **0** | `.chip` · `.tile` · `.iconbtn` · `.icon-btn` · `.fnav` — presses flush |
   | **Inline** | 2 | 1 | 1 | `.ctl`, in all three prototypes — a control inside another surface |
 
@@ -491,6 +491,12 @@ running text.** Voice is for short strings; Work is for anything the user operat
   ink, and its ring separates it from the chip's `paper` ground, so `ink` is correct there. This spec said
   "the single exception" until a review found all three — the blanket repaint had made border == background,
   and only the snackbar was caught by the first scan, which matched one rule per selector.)
+- **A sheet's action pair shares one geometry** *(Library A49, frozen, [ADR-144](../DECISIONS.md#adr-144)).* When a
+  sheet puts a dismiss beside a committing button, both are bordered controls with the same radius, 1.5px ink border,
+  shadow, press tier, 48px minimum height and padding. The commit is leaf-filled with on-leaf words; the dismiss is
+  surface-filled (`--surface`, which is not `--paper`) with ink words. Only the commit may be disabled; the dismiss is never dimmed. Borderless
+  underlined text (`.quiet-action`) is for navigation links such as the dock's Backups and About, not for dismissing a
+  sheet. `.go` is Raised in code (`FolderSheets.kt`, `ZinelyV21Press.Raised`), which is why the pair is listed there.
 - **`--frame: 5px`** — a flat colour ring, `0 0 0 var(--frame)`, stacked outside a hard shadow. Reserved for
   **the one primary action on a screen** (Save PDF, Add). Riso misregistration, borrowed from Maeve.
 - **Radius / spacing** — the published scales in §3.3. Pills for controls, `--br-md`/`--br-lg` for cards and

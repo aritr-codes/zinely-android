@@ -134,6 +134,45 @@ class LiveSnapTest {
         assertTrue(r.guides.isEmpty())
     }
 
+    // A48.4 / ADR-143 decision 2: both rotation tests use the angle normalised to (-180, 180], so a piece
+    // at 360° or 720° is upright and snaps, and is snapped to, like one at 0°.
+
+    @Test
+    fun `A48 - a piece at 360 or 720 snaps to the page edge like one at 0`() {
+        for (r in listOf(360.0, 720.0, -360.0)) {
+            val before = Transform(xPt = 100.0, yPt = 300.0, widthPt = 50.0, heightPt = 20.0, rotationDegrees = r)
+            val res = LiveSnap.resolve(
+                page = page(img("e", before)),
+                selection = setOf("e"),
+                before = mapOf("e" to before),
+                live = LiveTransform(panXpx = -97.0),
+                screenPxPerPt = 1.0,
+                pageSize = pageSize,
+                thresholdPt = LiveSnap.thresholdPt(1.0),
+            )
+            assertEquals(0.0, res.transforms.getValue("e").xPt, tol, "rotation $r")
+            assertEquals(r, res.transforms.getValue("e").rotationDegrees, "the stored angle is never normalised")
+            assertTrue(res.guides.isNotEmpty(), "rotation $r")
+        }
+    }
+
+    @Test
+    fun `A48 - a neighbour at 360 is a snap candidate`() {
+        val moving = Transform(xPt = 122.0, yPt = 500.0, widthPt = 50.0, heightPt = 20.0) // centerX 147
+        val other = Transform(xPt = 100.0, yPt = 0.0, widthPt = 100.0, heightPt = 10.0, rotationDegrees = 360.0)
+        val r = LiveSnap.resolve(
+            page = page(img("m", moving), img("o", other)),
+            selection = setOf("m"),
+            before = mapOf("m" to moving),
+            live = LiveTransform(),
+            screenPxPerPt = 1.0,
+            pageSize = pageSize,
+            thresholdPt = LiveSnap.thresholdPt(1.0),
+        )
+        val snapped = r.transforms.getValue("m")
+        assertEquals(150.0, snapped.xPt + snapped.widthPt / 2.0, tol)
+    }
+
     @Test
     fun `candidate lines come from other elements, not the moving one`() {
         val moving = Transform(xPt = 122.0, yPt = 500.0, widthPt = 50.0, heightPt = 20.0) // centerX 147

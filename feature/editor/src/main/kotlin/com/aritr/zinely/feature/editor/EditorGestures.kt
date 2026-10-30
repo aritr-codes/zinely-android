@@ -9,6 +9,8 @@ import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.positionChanged
@@ -100,6 +102,9 @@ internal val TapInkTolerance = 8.dp
  * @param onPreview receives the live accumulator each frame (drives the chrome `graphicsLayer{}`), and
  *   `null` when a gesture ends so the preview resets.
  * @param onDoubleTap the page-space point of a double-tap (text-edit seam).
+ * @param inert true while another surface owns the session (the knob, A48.3): taps do nothing and no transform
+ *   begins. A flag rather than removing this modifier, so a gesture in progress always reaches its own end
+ *   below: the commit or cancel, and `onPreview(null)`.
  */
 public fun Modifier.editorTransformGestures(
     screenPxPerPt: Float,
@@ -109,6 +114,7 @@ public fun Modifier.editorTransformGestures(
     dispatch: (Intent) -> Unit,
     onPreview: (LiveTransform?) -> Unit,
     onDoubleTap: (PtPoint) -> Unit = {},
+    inert: () -> Boolean = { false },
 ): Modifier {
     fun toPage(pos: Offset): PtPoint = ExportScale.previewDeviceToPage(
         screenPxPerPt = screenPxPerPt.toDouble(),
@@ -142,9 +148,9 @@ public fun Modifier.editorTransformGestures(
                 // duplicated selection logic the comment above refuses. It asks one further question the
                 // reducer cannot answer for it: *was this already selected before the tap*, which is state
                 // the reduction destroys by selecting.
-                onTap = { pos -> dispatch(benchTapIntent(currentState(), toPage(pos), tolerancePt)) },
-                onLongPress = { pos -> dispatch(Intent.SelectAt(toPage(pos), tolerancePt)) },
-                onDoubleTap = { pos -> onDoubleTap(toPage(pos)) },
+                onTap = { pos -> if (!inert()) dispatch(benchTapIntent(currentState(), toPage(pos), tolerancePt)) },
+                onLongPress = { pos -> if (!inert()) dispatch(Intent.SelectAt(toPage(pos), tolerancePt)) },
+                onDoubleTap = { pos -> if (!inert()) onDoubleTap(toPage(pos)) },
             )
         }
         .pointerInput(screenPxPerPt, pageOffset) {
@@ -154,96 +160,168 @@ public fun Modifier.editorTransformGestures(
                 // is a drag that crosses slop BEFORE long-press fires, so this also equals the slop-cross
                 // selection — capturing it here just makes the "what am I moving" contract explicit (Codex Q3).
                 val selectionAtDown = currentState().selection
-                var live = LiveTransform()
-                var token: Long? = null
-                var canceled = false
-                var pastSlop = false
-                var firstEvent = true
-                val touchSlop = viewConfiguration.touchSlop
-                // Pre-slop motion is accumulated CUMULATIVELY across frames (matching detectTransformGestures):
-                // an interpolated swipe arrives as many sub-slop steps, so a per-frame test would never cross.
-                var slopZoom = 1f
-                var slopRotation = 0f
-                var slopPan = Offset.Zero
+                transformUntilUp(selectionAtDown, takeOver = false, screenPxPerPt, pageSizePt, currentState, dispatch, onPreview, inert)
+            }
+        }
+}
 
-                do {
-                    val event: PointerEvent = awaitPointerEvent()
-                    // Ownership coordination with the cooperating tap layer (Codex fix): the tap layer consumes
-                    // the *first down* while it waits out the long-press/double-tap window — that one is ignored.
-                    // Any LATER external consumption means the tap layer claimed the gesture (a long-press fired)
-                    // or some ancestor took over: abandon a not-yet-started transform, cancel a live one.
-                    if (!firstEvent && event.changes.any { it.isConsumed }) {
-                        if (token != null) canceled = true
-                        break
+/**
+ * Two fingers anywhere on the page twist, pinch and drag the selection, even when one lands on a resize handle or
+ * the knob, whose 48dp hit boxes cover a small piece completely (the owner, on a phone, 2026-10-30). Goes on a parent
+ * of the page surface, the handles and the knob, so it sees every finger in the Initial pass, before they do; the
+ * second finger takes the gesture and consumes everything, which cancels them before they begin.
+ *
+ * It gives way to any session already open: a second finger during a handle or knob drag changes nothing, and one
+ * during a body drag stays with [editorTransformGestures], which already reads it. [onOwning] is true while it holds
+ * the fingers, so the page gesture can stand aside from any finger it is told about in that time.
+ */
+internal fun Modifier.twoFingerTransformAnywhere(
+    screenPxPerPt: Float,
+    pageOffset: PtPoint,
+    pageSizePt: PtSize,
+    currentState: () -> EditorUiState,
+    dispatch: (Intent) -> Unit,
+    onPreview: (LiveTransform?) -> Unit,
+    onOwning: (Boolean) -> Unit,
+): Modifier = pointerInput(screenPxPerPt, pageOffset) {
+    awaitEachGesture {
+        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        do {
+            val event = awaitPointerEvent(PointerEventPass.Initial)
+            if (event.changes.count { it.pressed } >= 2) {
+                val state = currentState()
+                if (state.selection.isNotEmpty() && state.interaction !is Interaction.Transforming) {
+                    event.changes.forEach { it.consume() }
+                    onOwning(true)
+                    try {
+                        transformUntilUp(state.selection, takeOver = true, screenPxPerPt, pageSizePt, currentState, dispatch, onPreview)
+                    } finally {
+                        onOwning(false)
                     }
-                    firstEvent = false
+                }
+                break
+            }
+        } while (event.changes.any { it.pressed })
+    }
+}
 
-                    val zoom = event.calculateZoom()
-                    val rotation = event.calculateRotation()
-                    val pan = event.calculatePan()
+private const val TakeOverStartDegrees = 4f
+private const val TakeOverStartZoom = 0.08f
 
-                    // Touch-slop startup gate (the real detectTransformGestures threshold): a motionless
-                    // long-press never crosses it, so it stays a tap for the tap layer — and sub-slop jitter
-                    // never opens a spurious one-tap-is-one-undo-step session (R5.3).
-                    if (!pastSlop) {
-                        slopZoom *= zoom
-                        slopRotation += rotation
-                        slopPan += pan
-                        val centroidSize = event.calculateCentroidSize(useCurrent = false)
-                        val zoomMotion = abs(1f - slopZoom) * centroidSize
-                        val rotationMotion = abs(slopRotation * (PI / 180.0).toFloat() * centroidSize)
-                        val panMotion = slopPan.getDistance()
-                        if (zoomMotion > touchSlop || rotationMotion > touchSlop || panMotion > touchSlop) {
-                            pastSlop = true
-                        }
-                    }
+/**
+ * One transform gesture, from the current event until every finger is up: the slop gate, the session, the preview
+ * and the commit. With [takeOver] this gesture owns the fingers: it reads them in the Initial pass and consumes all of
+ * them. Without it, it cooperates with the tap layer and with whatever else consumes them.
+ */
+private suspend fun AwaitPointerEventScope.transformUntilUp(
+    selectionAtDown: Set<String>,
+    takeOver: Boolean,
+    screenPxPerPt: Float,
+    pageSizePt: PtSize,
+    currentState: () -> EditorUiState,
+    dispatch: (Intent) -> Unit,
+    onPreview: (LiveTransform?) -> Unit,
+    inert: () -> Boolean = { false },
+) {
+    var live = LiveTransform()
+    var token: Long? = null
+    var canceled = false
+    var pastSlop = false
+    var firstEvent = true
+    val touchSlop = viewConfiguration.touchSlop
+    // Pre-slop motion is accumulated CUMULATIVELY across frames (matching detectTransformGestures):
+    // an interpolated swipe arrives as many sub-slop steps, so a per-frame test would never cross.
+    var slopZoom = 1f
+    var slopRotation = 0f
+    var slopPan = Offset.Zero
 
-                    if (pastSlop) {
-                        if (token == null) {
-                            // Open the session and read the token synchronously (the §5.1 mailbox contract).
-                            dispatch(Intent.BeginTransform(selectionAtDown))
-                            val itx = currentState().interaction
-                            if (itx !is Interaction.Transforming) break // nothing selected/transformable
-                            token = itx.token
-                        }
-                        live = live.accumulate(
-                            panXpx = pan.x.toDouble(),
-                            panYpx = pan.y.toDouble(),
-                            zoomFactor = zoom.toDouble(),
-                            rotationDelta = rotation.toDouble(),
-                        )
-                        onPreview(live)
-                        event.changes.forEach { c: PointerInputChange -> if (c.positionChanged()) c.consume() }
-                    }
-                } while (event.changes.any { it.pressed })
+    do {
+        val event: PointerEvent = awaitPointerEvent(if (takeOver) PointerEventPass.Initial else PointerEventPass.Main)
+        // Ownership coordination with the cooperating tap layer (Codex fix): the tap layer consumes
+        // the *first down* while it waits out the long-press/double-tap window — that one is ignored.
+        // Any LATER external consumption means the tap layer claimed the gesture (a long-press fired)
+        // or some ancestor took over: abandon a not-yet-started transform, cancel a live one.
+        if (!takeOver && !firstEvent && event.changes.any { it.isConsumed }) {
+            if (token != null) canceled = true
+            break
+        }
+        firstEvent = false
 
-                if (token != null) {
-                    val state = currentState()
-                    val tx = state.interaction
-                    val mine = tx is Interaction.Transforming && tx.token == token
-                    when {
-                        mine && !canceled -> {
-                            tx as Interaction.Transforming
-                            // Commit through the SAME LiveSnap.resolve the preview used this frame, so the
-                            // committed transform equals the last previewed one (preview == commit) and the
-                            // snap is baked in, not just shown (§5.4).
-                            val snap = LiveSnap.resolve(
-                                page = state.document.pages[tx.pageIndex],
-                                selection = tx.ids,
-                                before = tx.before,
-                                live = live,
-                                screenPxPerPt = screenPxPerPt.toDouble(),
-                                pageSize = pageSizePt,
-                                thresholdPt = LiveSnap.thresholdPt(screenPxPerPt.toDouble()),
-                            )
-                            dispatch(Intent.CommitTransform(snap.transforms, token))
-                        }
-                        // Our session is still open but the pointer was canceled mid-gesture — discard it.
-                        mine -> dispatch(Intent.CancelTransform(token))
-                        // else: a newer gesture/selection replaced our session — leave it untouched.
-                    }
-                    onPreview(null)
+        var zoom = event.calculateZoom()
+        var rotation = event.calculateRotation()
+        var pan = event.calculatePan()
+
+        // Touch-slop startup gate (the real detectTransformGestures threshold): a motionless
+        // long-press never crosses it, so it stays a tap for the tap layer — and sub-slop jitter
+        // never opens a spurious one-tap-is-one-undo-step session (R5.3).
+        if (!pastSlop) {
+            slopZoom *= zoom
+            slopRotation += rotation
+            slopPan += pan
+            val centroidSize = event.calculateCentroidSize(useCurrent = false)
+            val zoomMotion = abs(1f - slopZoom) * centroidSize
+            val rotationMotion = abs(slopRotation * (PI / 180.0).toFloat() * centroidSize)
+            val panMotion = slopPan.getDistance()
+            // The arc test alone asks for 15° from fingers 60dp apart, and more from closer ones. Two fingers already
+            // say what they mean, so they start on a small angle or stretch, and keep what moved before that. A drag
+            // that starts on its slop keeps nothing: a stray degree left on the piece would be worse than a late start.
+            val decided = takeOver && (abs(slopRotation) >= TakeOverStartDegrees || abs(1f - slopZoom) >= TakeOverStartZoom)
+            if (zoomMotion > touchSlop || rotationMotion > touchSlop || panMotion > touchSlop || decided) {
+                pastSlop = true
+                if (decided) {
+                    zoom = slopZoom
+                    rotation = slopRotation
+                    pan = slopPan
                 }
             }
         }
+
+        if (pastSlop) {
+            if (token == null) {
+                if (inert()) break
+                // Open the session and read the token synchronously (the §5.1 mailbox contract).
+                dispatch(Intent.BeginTransform(selectionAtDown))
+                val itx = currentState().interaction
+                if (itx !is Interaction.Transforming) break // nothing selected/transformable
+                token = itx.token
+            }
+            live = live.accumulate(
+                panXpx = pan.x.toDouble(),
+                panYpx = pan.y.toDouble(),
+                zoomFactor = zoom.toDouble(),
+                rotationDelta = rotation.toDouble(),
+            )
+            onPreview(live)
+            if (!takeOver) event.changes.forEach { c: PointerInputChange -> if (c.positionChanged()) c.consume() }
+        }
+        if (takeOver) event.changes.forEach { it.consume() }
+    } while (event.changes.any { it.pressed })
+
+    if (token != null) {
+        val state = currentState()
+        val tx = state.interaction
+        val mine = tx is Interaction.Transforming && tx.token == token
+        when {
+            mine && !canceled -> {
+                tx as Interaction.Transforming
+                // Commit through the SAME LiveSnap.resolve the preview used this frame, so the
+                // committed transform equals the last previewed one (preview == commit) and the
+                // snap is baked in, not just shown (§5.4).
+                val snap = LiveSnap.resolve(
+                    page = state.document.pages[tx.pageIndex],
+                    selection = tx.ids,
+                    before = tx.before,
+                    live = live,
+                    screenPxPerPt = screenPxPerPt.toDouble(),
+                    pageSize = pageSizePt,
+                    thresholdPt = LiveSnap.thresholdPt(screenPxPerPt.toDouble()),
+                )
+                dispatch(Intent.CommitTransform(snap.transforms, token))
+            }
+            // Our session is still open but the pointer was canceled mid-gesture — discard it.
+            mine -> dispatch(Intent.CancelTransform(token))
+            // else: a newer gesture/selection replaced our session — leave it untouched.
+        }
+        onPreview(null)
+    }
 }

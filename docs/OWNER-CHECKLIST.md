@@ -187,6 +187,10 @@ Amending a frozen V2 surface is reserved to you (V2-CONSTITUTION §VI); an imple
 | ☐ | [ADR-139](DECISIONS.md#adr-139) | Your A39 Art picks, frozen as `v21-bench.html` A39 under delegation; you may overrule any call. **Most yours:** `shape.rect`, `fix.clip`, `mark.hand` and `mark.bar` keep their place with the A34 drawing (A39's would shrink saved pieces, or thin the bar below the house minimum); the A34 Circle is not offered (it is the A39 Circle's twin); six Fluent Emoji silhouettes admitted on your pick. **Also yours:** download Doodle Icons from the creator's Gumroad page (a $0 checkout that asks for an email) so the pieces can be diffed against the creator's own files before beta.8. *2026-10-24, built on `feat/art-picks`:* **also owed** a printed and photocopied page of the new pieces; both device passes (Pass 2 on the look-alike groups in [RESEARCH R34.4](RESEARCH.md#r34-the-a39-art-picks-gate-measurements-the-never-19-dry-run-and-the-licences-2026-10-22), whose names are the pre-rename ones: map them with the [D-132](design/V2-SPEC-DEFECTS.md#d-132) table, and a TalkBack listen of the names); and, if you want, overrule any of the 56 shortened names ([D-132](design/V2-SPEC-DEFECTS.md#d-132)) | Before the Art wiring is merged; the Doodle diff before beta.8 |
 | ☐ | [ADR-138](DECISIONS.md#adr-138) | Inks you mix and keep, and palettes (`v21-bench.html` A40 rev. 2, frozen by you 2026-10-22). Built 2026-10-26 on `feat/ink-mixer`, in no download; the device checks are in §2.6. **Yours:** whether Save palette's spoken reason should name the missing name first, since a tap goes there first ([D-123](design/V2-SPEC-DEFECTS.md#d-123)) | Accepting the build, after §2.6 |
 | ☐ | [ADR-142](DECISIONS.md#adr-142) | Shelf multi-select (`v21-library.html` A47), Proposed and frozen under delegation 2026-10-26; you may overrule it. The device checks are in §2.7 | Accepting the build, after §2.7 |
+| ☑ | [ADR-143](DECISIONS.md#adr-143) | Turning by hand (`v21-bench.html` A48), **FROZEN by you 2026-10-30** ("we should build it full dynamic"): a turn knob added to your 2026-08-12 eight-handle figure, quarter-turn snapping on the knob only (two fingers do not snap, so small tilts stay reachable), Straighten, and one undo step per run of tray taps. Open the file locally; the A48 card stages each state | Before any W2b rotate Kotlin |
+| ☑ | [ADR-142](DECISIONS.md#adr-142) R9 | The lighter chosen ring (`v21-library.html` A47.2 amendment, your "can we make them lighter"), **FROZEN by you 2026-10-30** ("looks great"): 2dp, offset 4dp, ink at 60%; the tick unchanged (ink badge kept). Compare switches removed | Before the ring change in Kotlin |
+| ☑ | [ADR-144](DECISIONS.md#adr-144) | The folder name sheet's Cancel as a bordered, surface-filled sibling of Make folder (`v21-library.html` A49), **FROZEN by you 2026-10-30** ("looks great"); look only, what Cancel does is unchanged | Before the `FolderSheets.kt` change |
+| ☐ | [ADR-142](DECISIONS.md#adr-142) R9 / [ADR-144](DECISIONS.md#adr-144) | Built 2026-10-30 (lighter ring, bordered Cancel); goldens not yet re-recorded on the CI image. Device passes, as listed in those ADRs | Accepting the build |
 | ☐ | [ADR-017](DECISIONS.md#adr-017) | Bleed, clip and safe-area semantics | V2 print-shop export |
 | ☐ | [ADR-018](DECISIONS.md#adr-018) | Versioning of imposition convention names and fold/cut ids | **Must be decided before any enters a persisted `.zine` schema** |
 | ☐ | — | The butter allow-list conflict, V2.1 §3.2 vs §4.1 — *"owner ruling owed"*, stated twice | The next butter-token question |
@@ -390,6 +394,19 @@ table only points at it. Built on `feat/w2a-small-things` (unmerged). Not automa
 | ☐ | Art recents and favourites survive a force-stop and relaunch | [SUPPLIES-SPEC](design/SUPPLIES-SPEC.md) |
 | ☐ | TalkBack listens for the rename sheet, Duplicate and the text edit (deferred by the owner; do not chase) | [DEVICE-VERIFICATION §3.1](DEVICE-VERIFICATION.md) |
 | ☐ | A real Android 7 to 9 phone | [ADR-136 W2a note](DECISIONS.md#adr-136-w2a) |
+
+### 2.9 W2b turning by hand — built, not released; one-finger passes done, the rest owed
+**Reason:** Physical / Judgement · **Blocks:** accepting ADR-143 · Authority is [ADR-143](DECISIONS.md#adr-143) *Owed before Accepted* and its [as-built note](DECISIONS.md#adr-143-as-built); this table only points at it. One-finger passes on the emulator and the Samsung QA package are recorded [there](DECISIONS.md#adr-143-device).
+
+| ☐ | Item | Where it is owned |
+|---|---|---|
+| ☑ | Pass 1, platform tree: the knob is not an unlabelled clickable; Straighten reads `enabled=false` on an upright piece | [ADR-143 device passes](DECISIONS.md#adr-143-device) |
+| ☐ | Pass 1, places (tiny, page bottom and 90° done): the Arrange tray open on a real small phone; the knob over the dark desk; the first-run hint up on a piece near the top and bottom of the page (the knob gives way, then appears once the hint goes) | [ADR-143](DECISIONS.md#adr-143) *Owed* |
+| ☐ | Pass 1, handles (45° done): on one about 40dp wide turned about 15°, a tap on a bottom corner handle's mark resizes and does not turn | [ADR-143](DECISIONS.md#adr-143) decision 1 |
+| ☐ | Pass 1, words (text edited while turned: answered there): Straighten from 360° and 1.5° with its snack words; the snap haptic is one tick; **by hand on the phone: a two-finger twist on a small piece, over a handle and over the knob, for feel (A48.3a; [the mechanics passed on the emulator](DECISIONS.md#adr-143-device))** | [ADR-143](DECISIONS.md#adr-143) *Owed* |
+| ☐ | Pass 1: pixel parity of the knob, the readout and the tray's third Turn button against A48 (goldens re-recorded on the pinned image, diffs read) | [ADR-143](DECISIONS.md#adr-143) *Consequences* |
+| ☐ | Pass 2, first-time reading: does the knob read as "turn", does it fight drag-to-move, does a maker who wants a small tilt find two fingers | [ADR-143](DECISIONS.md#adr-143) *Owed*, *Small tilts* |
+| ☐ | TalkBack check of Straighten (deferred with the other listens; do not chase) | [ADR-143](DECISIONS.md#adr-143) *Owed* |
 
 ---
 

@@ -129,12 +129,15 @@ public fun ResizeHandles(
     onResize: (Map<String, Transform>?) -> Unit,
     modifier: Modifier = Modifier,
     color: Color = ZinelyTheme.v21Colors.ink,
+    /** A48: a live turn-knob preview; the handles turn with the piece, as the prototype's do. */
+    turning: Map<String, Transform>? = null,
 ) {
     // The frozen `.handle{transition:opacity .12s}` with `.el.selected .handle{opacity:1}` (v2-bench.html
     // `:156-157`). Like the outline, fading out needs the geometry to outlive the selection, so the last
     // selected box is retained until the fade completes.
     val live = uiState.selection.singleOrNull()?.let { id ->
-        uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id }?.let { id to it.transform }
+        uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id }
+            ?.let { id to (turning?.get(id) ?: it.transform) }
     }
     var last by remember { mutableStateOf(live) }
     if (live != null) last = live
@@ -147,7 +150,8 @@ public fun ResizeHandles(
     val (selectedId, transform) = live ?: last ?: return
     // A handle on its way out is a picture, not a control: it must not accept a drag for a selection that
     // no longer exists. `live == null` is exactly that window.
-    val interactive = live != null
+    // A48.3: nor while the knob is turning the piece: the other handles do nothing to it then.
+    val interactive = live != null && turning == null
     val screenPxPerPt = uiState.view.screenPxPerPt.toDouble()
     val pageOffset = uiState.view.pageOffset
     val density = LocalDensity.current
@@ -183,8 +187,14 @@ public fun ResizeHandles(
                     }
                 },
                 beginSession = {
-                    dispatch(Intent.BeginTransform(setOf(selectedId)))
-                    (currentState().interaction as? Interaction.Transforming)?.token
+                    // A finger on the knob or the page can cross its slop in the same event, before this
+                    // handle is recomposed away; a second Begin would replace that session (A48.3).
+                    if (currentState().interaction is Interaction.Transforming) {
+                        null
+                    } else {
+                        dispatch(Intent.BeginTransform(setOf(selectedId)))
+                        (currentState().interaction as? Interaction.Transforming)?.token
+                    }
                 },
                 commitSession = { after, token ->
                     dispatch(Intent.CommitTransform(mapOf(selectedId to after), token))
@@ -247,32 +257,39 @@ private fun HandleTarget(
                 var token: Long? = null
                 var cur = Offset(centerPx.x.toFloat(), centerPx.y.toFloat())
                 var last: Transform? = null
-                detectDragGestures(
-                    onDragStart = {
-                        cur = Offset(centerPx.x.toFloat(), centerPx.y.toFloat())
-                        last = null
-                        token = beginSession()
-                    },
-                    onDrag = { change, amount ->
-                        change.consume()
-                        val t = token
-                        if (t != null) {
-                            cur += amount
-                            last = onDrag(cur, t)
-                        }
-                    },
-                    onDragEnd = {
-                        val t = token
-                        val after = last
-                        if (t != null && after != null) commitSession(after, t) else if (t != null) cancelSession(t)
-                        token = null
-                    },
-                    onDragCancel = {
-                        val t = token
-                        if (t != null) cancelSession(t)
-                        token = null
-                    },
-                )
+                try {
+                    detectDragGestures(
+                        onDragStart = {
+                            cur = Offset(centerPx.x.toFloat(), centerPx.y.toFloat())
+                            last = null
+                            token = beginSession()
+                        },
+                        onDrag = { change, amount ->
+                            change.consume()
+                            val t = token
+                            if (t != null) {
+                                cur += amount
+                                last = onDrag(cur, t)
+                            }
+                        },
+                        onDragEnd = {
+                            val t = token
+                            val after = last
+                            if (t != null && after != null) commitSession(after, t) else if (t != null) cancelSession(t)
+                            token = null
+                        },
+                        onDragCancel = {
+                            val t = token
+                            if (t != null) cancelSession(t)
+                            token = null
+                        },
+                    )
+                } finally {
+                    // `detectDragGestures` does not call onDragCancel when this block restarts because a key
+                    // changed: a tray tap from a second finger moves the piece, so `centerPx` changes mid-drag.
+                    // Cancel is token-gated, so a session already replaced is left alone, and it clears the preview.
+                    token?.let(cancelSession)
+                }
             },),
         contentAlignment = Alignment.Center,
     ) {

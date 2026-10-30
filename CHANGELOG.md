@@ -14,10 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Website, docs and test-only changes that are not part of the beta.8 app, moved here from the beta.8 section.
+Changes since the beta.8 app.
 
 ### Added
 
+- Turn a piece with its knob; it snaps to quarter turns.
+- Two fingers anywhere on the page now turn the selected piece, even a small one.
+- Straighten button in Arrange > Turn.
+- Repeated Move, Size or Turn taps in Arrange are now one Undo.
 - Website note, not the app: the public pages, including the homepage tone and the privacy policy (last updated 30 October 2026), are rewritten in plain words (ADR-118 plain-words rule, R39). Some changelog lines are corrected to match what shipped. The privacy policy now also explains the storage permission Android adds on Android 9 and older. No limits, download details or app behaviour changed.
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),
   [D-143](docs/design/V2-SPEC-DEFECTS.md#d-143)), Proof A43 and A44, Backup A45 and Library A46. The Library
@@ -70,6 +74,8 @@ Website, docs and test-only changes that are not part of the beta.8 app, moved h
 
 ### Changed
 
+- Choosing zines on My Shelf: the ring round a chosen zine is lighter.
+- The new-folder and rename sheet's Cancel is now a proper button beside Make folder.
 - Docs: ZINE-DIRECTION notes the two-voice ruling (Book and Plain, ADR-126 Proposed) beside its four "three
   voices" lines; 21 drifted line citations into the frozen type bar, Reframe and Library pages re-pointed to
   named blocks or pinned commits (#97, #98).

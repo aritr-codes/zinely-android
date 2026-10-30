@@ -65,6 +65,11 @@ if (new URLSearchParams(location.search).has('gallery')) {
      │  batch.  Folders cannot be chosen.  Rules A47.1–A47.13 are in the A47       │
      │  script at the end of this file; the frozen functions are wrapped, not      │
      │  edited.  The Bench stays single-select.                                    │
+     │                                                                             │
+     │  A49 SHEET ACTION PAIR · FROZEN by the owner 2026-10-30 (ADR-144).│
+     │  The name sheet's Cancel was the one dismiss in the corpus drawn as bare text; it is│
+     │  now a surface-filled sibling of Make folder (.go.ghost). Look only: A28.14 behaviour│
+     │  is unchanged.  Rules A49.1–A49.4 sit above the A49 demo card in the body.  │
      └─────────────────────────────────────────────────────────────────────────────┘ -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -500,6 +505,12 @@ body{
 .go:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
 .go:disabled{opacity:.45;cursor:default;transform:none;box-shadow:3px 3px 0 var(--ink-line)}
 .go:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+/* A49: the dismiss beside a .go is a .go with a surface fill (--surface, not --paper) and ink words; border, radius, shadow,
+   min-height, press and focus are inherited, and it is never dimmed (only the commit may be disabled) */
+.go.ghost{background:var(--surface);color:var(--ink)}
+.a49-demo{max-width:640px;width:100%;background:var(--surface);border:1.5px solid var(--ink);border-radius:var(--br-lg);
+  padding:var(--gap-md) 0;color:var(--ink)}
+.a49-demo .row-l{margin:0;padding:var(--gap-sm) var(--gap-xl) 0;font-size:.78rem;color:var(--ink-soft);font-weight:600}
 
 /* the Shelf's snack — the Bench's support-paper snack (v21-bench.html .snack), same
    paint.  It says what just happened and offers Undo.  The script seats it 8px above
@@ -588,6 +599,30 @@ buttons below jump to each state.</p>
 a small file. If that file is damaged, Zinely uses the copy it kept from before the last change to them, and the
 Shelf now says so: one paper note under the heading, until <b>Got it</b>. It speaks only of those details. The
 <b>restored details</b> buttons below raise each form of the note.</p>
+
+<!-- A49 -->
+<p class="cap"><span class="badge">A49 sheet action pair · frozen 2026-10-30 · built, in no release</span><br>
+<b>Cancel beside Make folder (ADR-144).</b> The name sheet's Cancel had no button body; it now wears Make folder's
+shape, surface-filled. Both rows below use the real classes; flip <b>day / night</b> to judge both themes.</p>
+<!--
+  A49 · SHEET ACTION PAIR — FROZEN by the owner 2026-10-30 (ADR-144).
+  Amends A28's LOOK only (the name sheet's Cancel); A28.14 (what Cancel does) is unchanged.
+  A49.1  [shown]  When a sheet offers a dismiss beside a committing button, both are bordered controls
+                  of one geometry: same radius, 1.5px ink border, shadow, press, min-height 48px, padding.
+  A49.2  [shown]  The commit is leaf-filled with on-leaf words; the dismiss is surface-filled (--surface, not --paper)
+                  with ink words.  They differ by fill and word colour only.
+  A49.3  [shown]  Only the commit may be disabled (opacity .45, A28.10).  The dismiss is never dimmed.
+  A49.4  [stated] Borderless underlined text (.quiet-action) is for navigation links (Backups, About),
+                  not for dismissing a sheet.
+  BEFORE: Cancel = bare underlined ink-soft text beside a dimmed filled pill ("the dead one is the button").
+  AFTER:  Cancel = surface-filled pill, ink words, full strength; Make folder dims alone until a name is typed.
+-->
+<div class="a49-demo" aria-label="A49 demo: the name sheet's buttons">
+  <p class="row-l">Empty: Make folder waits for a name</p>
+  <div class="sheet-btns"><button class="go ghost" type="button">Cancel</button><button class="go" type="button" disabled>Make folder</button></div>
+  <p class="row-l">Typed: both live</p>
+  <div class="sheet-btns"><button class="go ghost" type="button">Cancel</button><button class="go" type="button">Make folder</button></div>
+</div>
 
 <div class="phone grainy">
   <div class="shelf" id="shelf">
@@ -718,7 +753,7 @@ Shelf now says so: one paper note under the heading, until <b>Got it</b>. It spe
       <p class="hint" id="nmHint" aria-live="polite"></p>
     </div>
     <div class="sheet-btns">
-      <button class="quiet-action" id="nmCancel">Cancel</button>
+      <button class="go ghost" id="nmCancel">Cancel</button>
       <button class="go" id="nmGo" disabled>Make folder</button>
     </div>
   </div>
@@ -1872,8 +1907,12 @@ $('rs8').onclick = () => {
 .a47-on .zine:not(.pile) .a47-tick{display:grid}
 .zine.a47-picked .a47-tick{background:#27270F;color:#FFF6E8;box-shadow:0 0 0 2px #FFF6E8,2px 2px 0 2px #27270F}
 .zine.a47-picked .a47-tick svg{opacity:1}
-/* the chosen cover is ringed in ink, outside its own edge, so the cover itself is never repainted */
-.zine.a47-picked .cover{outline:3px solid var(--ink);outline-offset:5px}
+/* the chosen cover is ringed in ink, outside its own edge, so the cover itself is never repainted.
+   A47.2 amendment 2026-10-29: the ring is REINFORCEMENT only (the tick is the state carrier), so it is a
+   pencil line: 2px, offset 4px, ink at 60%.  Measured (WCAG): light = #757247 on the desk #E9E29B 3.72:1;
+   dark = cream #FFF9DB at 60% over #242312 = #A7A38B 6.23:1.  Was 3px / 5px / full ink (11.43 / 14.97) */
+.zine.a47-picked .cover{outline:2px solid color-mix(in srgb,var(--ink) 60%,transparent);outline-offset:4px}
+/* (the A47.2 compare switches were removed at the owner's freeze, 2026-10-30) */
 .a47-on .more{display:none}
 .a47-on .cap{padding-right:0}
 /* a folder cannot be chosen (A47.6): it stays where it is, quieter */
@@ -1923,6 +1962,10 @@ $('rs8').onclick = () => {
                 a choice of several).  A chosen zine has an inked disc with a check on its
                 cover's corner and an ink ring around the cover; a zine not chosen has an
                 empty paper disc, so every tile shows that it can be chosen.
+                A47.2 amendment 2026-10-29 (owner: "can we make them lighter") [FROZEN by the
+                owner 2026-10-30]: the ring is reinforcement only; the tick is the state carrier
+                (shape + fill, not colour alone).  Ring now 2px, offset 4px, ink at 60%
+                (was 3px / 5px / full ink).  Tick unchanged; cover never repainted.
   A47.3  [shown]  THE BAR.  The heading gives way to one bar that stays put while the zines
                 scroll: a drawn ✕ on the left, then the count, "1 selected" / "3 selected".  Never
                 "0 selected": letting go of the last zine stops choosing (A47.4).

@@ -2008,6 +2008,122 @@ because the Shelf has no app bar and its actions already live in the dock within
 For a partial failure, where no convention was found (R36.7), ADR-142 uses skip-and-list: the rest stay done and one
 message names those that came back.
 
+### R36.9 Selected emphasis: the badge leads, plus one light device — ✅ VERIFIED (Material, WCAG), 🟨 ASSUMPTION (the rest)
+
+Added 2026-10-29 for the lighter chosen ring (owner request; [ADR-142](DECISIONS.md#adr-142) ruling R9, A47.2 amendment).
+
+- ✅ **VERIFIED.** MDC-Android Card ([checkable](https://github.com/material-components/material-components-android/blob/master/docs/components/Card.md)):
+  a checked card shows a 24dp check-circle icon top-end and changes the stroke colour; the default stroke is 1dp.
+  The reference pattern is a thin stroke plus an icon, not a heavy ring.
+- ✅ **VERIFIED.** [WCAG 2.2 1.4.11 Non-text Contrast](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html):
+  the visual information needed to tell a component's state (the example is "selected") needs 3:1 against adjacent
+  colours. The requirement is on the information that carries the state, not on every decoration, so the tick can
+  carry it and the ring can be lighter.
+- ✅ **VERIFIED (secondary sources).** Google Photos: a check circle at the top-left, which turns blue when chosen,
+  and on the web the thumbnail shrinks inside a blue box
+  ([Digital Camera World](https://digitalcameraworld.com/tutorials/how-to-select-all-photos-in-google-photos-download-everything-at-once),
+  [Alphr](https://alphr.com/google-photos-how-to-select-all)).
+- 🟨 **ASSUMPTION.** Apple Photos shows a blue check in the corner and no ring: the guides
+  ([Trusted Reviews](https://www.trustedreviews.com/how-to/how-to-select-multiple-photos-on-iphone-4426041)) only
+  confirm the check; the rest is recollection.
+- 🟨 **ASSUMPTION.** Samsung Gallery (check circle plus a dim), Pinterest, Notion and Google Keep (a thin outline
+  plus a check badge): searches returned nothing usable; do not cite them in an ADR.
+- **Pattern across what is verified:** the check badge is the primary signal, and any extra emphasis is one light
+  device (a thin stroke, a scale-down or a tint), never a heavy stroke on top of a badge. Zinely stacked four
+  (ring, badge fill, halo, hard shadow); A47.2 now keeps one light ring beside the unchanged tick.
+
+**Sources:** as linked above.
+
+<a id="r37"></a>
+
+## R37. Turning a piece by hand on a phone (2026-10-29)
+
+Asked before deciding [ADR-143](DECISIONS.md#adr-143) and Bench A48
+([`v21-bench.html`](design/mockups/v21-bench.html)): how do touch editors expose rotation, and what does
+accessibility require of a dragged turn? Collected by the Research Agent on 2026-10-29 (a working report, not in the
+repo); the sources below were read then and were not re-fetched for this entry.
+
+### R37.1 The Bench once specified a turn handle — ✅ VERIFIED (repo)
+
+The V2 IA lists "Rotate-handle drag | Rotate | visible rotate handle"
+([`V2-BENCH-IA-INTERACTION.md`](design/V2-BENCH-IA-INTERACTION.md)), and the V1 mockups drew one
+([`editor-mockups/editor.html`](design/editor-mockups/editor.html), `transform.html`,
+`research-notes-editor.md`). The V2.1 freeze draws eight handles and no turn handle, while A33 still named one. The
+same IA says two fingers act on the **page**; the build lets them turn and scale the selected piece (recorded in
+ADR-143 decision 9, not reopened).
+
+### R37.2 How touch editors expose rotation — ✅ VERIFIED where cited
+
+| Product | What it does | Evidence |
+|---|---|---|
+| Canva | A rotate handle outside the selection border; an angle guide while tilting. Mobile snapping is not documented. ⚠️ Third-party guides disagree whether the handle sits above or below | [Canva Help: Flip and rotate elements](https://www.canva.com/en_gb/help/flip-and-rotate-variantb/) · [bloggingtips](https://bloggingtips.com/?p=115813) · [softwarehow](https://softwarehow.com/?p=24528) |
+| Procreate Pocket | A rotation node above the selection, turning about the midpoint, with a live angle readout; a Rotate button turns 45°; snapping covers move and scale, not angle | [Transform interface](https://help.procreate.com/pocket/handbook/transform/transform-interface-gestures) · [Snapping](https://help.procreate.com/pocket/handbook/transform/snapping) |
+| Procreate Pocket QuickShape | A second finger held while dragging rotates in 15° steps | [QuickShape](https://help.procreate.com/pocket/handbook/guides/quickshape) |
+| Keynote for iPad | Two fingers start the turn, one finger can continue it, a guide shows the angle | [Keynote for iPad: rotate](https://help.apple.com/keynote/ipad/2.5/en.lproj/tand090a1c14.html) |
+| Google Quickoffice / Slides (Android) | A round handle with a circular-arrow symbol, turning about the centre; exact angle in format options | [Google Quickoffice help](https://support.google.com/quickoffice/answer/2989693?hl=en) · secondary: [MobiSystems](https://support.mobisystems.com/hc/en-us/articles/21587578098205-Rotate-objects-in-Slides), [PhoneScoop](https://phonescoop.com/articles/article.php?a=20750) |
+| Figma (desktop and iPad) | Desktop: drag just outside a corner, Shift snaps to 45°. iPad: the rotation field or a rotate-90° button | [Figma forum: rotate on iPad](https://forum.figma.com/t/rotate-an-object-on-ipad/51712) · [uxcel](https://app.uxcel.com/courses/figma-intro/layer-alignment-097/rotate-layers-9201) |
+| Adobe Express | Snaps to 0/90/180/270 with no off switch; one iPad build had no rotate handle on graphics, reported by users as a bug (community sources, not official) | [snapping thread](https://community.adobe.com/t5/adobe-express-bugs/snapping/idi-p/14369447) · [missing handle](https://community.adobe.com/bug-reports-328/problems-rotating-objects-on-ipad-1634882) |
+| Instagram Stories | Two fingers rotate and scale; a guide shows when an item is straight again. 🟨 Dated (2017) | [Refinery29, 2017](https://www.refinery29.com/en-us/2017/10/174941/instagram-stories-color-picker-alignment-tool) |
+
+Common ground: every editor with a visible handle puts it detached from the box on the ring's axis and turns about
+the centre; three show the angle while turning; several offer a fixed-step button; snapping to straight appears in
+Adobe Express, Instagram and (with Shift) Figma desktop. 🟨 ASSUMPTION, no source found, so not used as evidence:
+the Figma phone app's handle, Canva's snapping on mobile, and how other popular sticker and camera apps expose
+rotation.
+
+### R37.3 What accessibility requires — ✅ VERIFIED
+
+- [WCAG 2.2 SC 2.5.1 Pointer Gestures](https://www.w3.org/WAI/WCAG22/Understanding/pointer-gestures.html) (A):
+  a two-finger turn needs a single-pointer way to the same result. Arrange > Turn already gives it.
+- [WCAG 2.2 SC 2.5.7 Dragging Movements](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements) (AA): a
+  dragged handle needs a non-drag alternative for the **result**, not the path
+  ([tabnav](https://tabnav.com/academy/wcag/success-criterion-2.5.7)). The 15° taps and Straighten reach every
+  multiple of 15°; a free angle such as 7° is a drag only. 🟦 Acceptable: a free angle is an aesthetic choice.
+- Touch targets at least 48 × 48dp with 8dp spacing
+  ([Android Accessibility Help](https://support.google.com/accessibility/android/answer/7101858?hl=en);
+  [M3 icon buttons](https://m3.material.io/components/icon-buttons/accessibility)).
+- Element actions through `semantics { customActions }`
+  ([Compose accessibility](https://developer.android.com/develop/ui/compose/quick-guides/content/video/accessibility-in-compose));
+  the Bench already has Rotate clockwise / counterclockwise there.
+
+### R37.4 Zinely application — 🟦 RECOMMENDATION
+
+[ADR-143](DECISIONS.md#adr-143) owns the decision and A48 the design. Followed: a detached knob on the ring's axis,
+turning about the centre (R37.2); a readout only while turning (Procreate, Keynote); snapping to straight (Adobe
+Express, Instagram), on the knob only: the two-finger turn does not snap, so a deliberate small tilt stays
+reachable and tilts already saved are never straightened by a touch; and the knob itself has hysteresis, so a drag
+that starts on a near-straight tilt does not snap until it has left that quarter's ±5° zone (ADR-143 decision 2);
+Straighten as the one-tap way back to upright
+beside the existing 15° arrows. **Departs:** no exact-angle field (🔭 later if asked), and the knob sits below the
+piece rather than above (Procreate), so a finger on it does not hide the piece; it flips above only when below
+does not fit.
+
+**Sources:** as linked above.
+
+<a id="r38"></a>
+
+## R38. Cancel beside a committing button on a sheet (2026-10-29)
+
+Asked before deciding [ADR-144](DECISIONS.md#adr-144) and freezing library A49: how do design systems draw a dismiss
+beside a committing button, especially when the commit is disabled until valid? **Numbering:** R38 was reserved for this lane. Collected by the Research Agent on 2026-10-29; the in-repo precedent (the frozen
+mockups' Cancels) is in the ADR, not here. Gaps: m3.material.io and NN/g did not render or return anything citable; the
+Google Keep, Drive and Files dialogs were not retrieved and nothing here rests on them.
+
+- ✅ VERIFIED: Material 3's `AlertDialog` takes a `confirmButton` and an optional `dismissButton`, and the reference sample
+  fills both with `TextButton` ([AlertDialog](https://developer.android.com/reference/kotlin/androidx/compose/material3/AlertDialog.composable);
+  [composables.com](https://composables.com/components/material-3-compose/alertdialog)). Both are text: the pair is symmetric.
+  Zinely's pair (filled + text) is not an M3 pair, so "M3 uses text for Cancel" does not carry over.
+- ✅ VERIFIED: `TextButton` is for lower-emphasis actions, outlined sits between text and filled
+  ([TextButton](https://developer.android.com/reference/kotlin/androidx/compose/material3/TextButton.composable);
+  [Material buttons](https://material.io/go/design-buttons)).
+- ✅ VERIFIED: a text cancel beside a filled submit is documented where the submit is live, and the same pages advise against
+  disabled buttons ([Cox Automotive Prism](https://prism.coxautoinc.com/docs/components/action-components/button/);
+  [Scottish Government](https://designsystem.gov.scot/components/button)). Zinely keeps its disabled-until-valid commit
+  (A28.10, with a hint line), so the mitigation is on the dismiss: give it a body.
+- ✅ VERIFIED: an Android touch target is at least 48dp, with at least 8dp between targets
+  ([Android accessibility](https://developer.android.com/guide/topics/ui/accessibility/apps)). Both options keep 48dp.
+- 🟦 RECOMMENDATION: the surface-filled bordered sibling (ADR-144 decision 1), because every other frozen Cancel already
+  is one.
 <a id="r39"></a>
 
 ## R39. Plain words for public copy: ASD-STE100, adapted (2026-10-30)

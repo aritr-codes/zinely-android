@@ -157,6 +157,9 @@ public object Copy {
         public const val MAKE_SMALLER: String = "Make smaller"
         public const val ROTATE_CLOCKWISE: String = "Rotate clockwise"
         public const val ROTATE_COUNTERCLOCKWISE: String = "Rotate counterclockwise"
+
+        /** Bench A48.6: Arrange > Turn's third button and the element's matching action (absent while upright). */
+        public const val STRAIGHTEN: String = "Straighten"
         public const val BRING_FORWARD: String = "Bring forward"
         public const val SEND_BACKWARD: String = "Send backward"
         public const val DELETE: String = "Delete"
