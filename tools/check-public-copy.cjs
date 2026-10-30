@@ -30,9 +30,10 @@ for (const [, name, expression] of makerConstants) {
   assert.ok(!value.includes('\u2014'), `${name}: no em dash`);
 }
 assert.match(home, /Aastra, a two-person team/);
-assert.match(home, /Sometimes you want to make something you can hand to someone/);
-assert.match(home, /An Android app with a paper habit/);
-assert.match(home, /eight-page booklet you can print, cut, fold, and hand to someone/);
+assert.match(home, /Sometimes you want to make a small booklet from a few photos, a short story, or a hobby you love/);
+assert.match(home, /Free Android app for making printable zines/);
+assert.match(home, /Zinely is an Android app for making an eight-page zine. Add photos, words and Art. Then print one sheet, cut it once, and fold it into a booklet/);
+assert.match(home, /We made an app to get you off your phone: you print your zine and fold it on paper/, 'The joke keeps its plain point beside it');
 assert.match(home, /data-desk-journey/);
 assert.equal((home.match(/class="workbench-step /g) || []).length, 3, 'Gather, Arrange, and Print workbench scenes');
 assert.match(home, /id="fold-step" type="range" min="0" max="9"/);
