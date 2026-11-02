@@ -516,6 +516,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-11-02 | **A small piece can be dragged by its middle.** Bench A50: a handle's hit box steps outward and leaves the middle free. Nothing drawn changes. Not released. | [ADR-145](DECISIONS.md#adr-145) |
 | 2026-10-30 | **W2b merged (PR #173), not released.** The owner froze A48, A47.2 and A49. One-finger device passes, the emulator two-finger pass and the CI goldens are done; the owner tried two fingers by hand and approved the feel; the rest of OWNER-CHECKLIST §2.9 is owed. | [ADR-143](DECISIONS.md#adr-143) · [ADR-144](DECISIONS.md#adr-144) |
 | 2026-10-29 | **Turning by hand designed (W2b, docs only).** Bench A48 proposes a turn knob with quarter-turn snapping and a readout, Straighten in Arrange > Turn, and one undo step per run of Move, Size or Turn taps; awaits the owner's freeze, nothing built. | [ADR-143](DECISIONS.md#adr-143) |
 | 2026-10-29 | **W2a built, not released.** On `feat/w2a-small-things`: the saved PDF is named after the zine, new zines are numbered, rename selects the old title with a 60-character cap, a rename keeps a zine's place on My Shelf, Duplicate scrolls to the copy, Art recents and favourites survive a restart, and the keyboard's Enter starts a new line. Consecutive nudges as one undo step and the hint's two-finger turn move to W2b (they contradict frozen A33/A22/A26 text). | [ADR-136](DECISIONS.md#adr-136) |

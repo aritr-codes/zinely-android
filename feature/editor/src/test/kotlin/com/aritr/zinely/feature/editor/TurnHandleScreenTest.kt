@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.click
+import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
@@ -494,6 +495,68 @@ class TurnHandleScreenTest {
         composeRule.waitForIdle()
         assertTrue(store.piece().widthPt > midPage.widthPt)
         assertEquals(0.0, store.piece().rotationDegrees, 0.0)
+    }
+
+    /** Narrower than a finger on this canvas: a piece the handles' boxes used to cover. */
+    private val narrowPiece = Transform(45.0, 60.0, 5.0, 16.0)
+
+    private fun markOf(store: EditorStore, box: Transform, sx: Float, sy: Float): Offset {
+        val scale = store.uiState.value.view.screenPxPerPt
+        val out = 5.5f * composeRule.density.density
+        return pieceCentre(store, box) + Offset(sx * (box.widthPt.toFloat() / 2 * scale + out), sy * (box.heightPt.toFloat() / 2 * scale + out))
+    }
+
+    @Test
+    fun a_drag_from_the_middle_of_a_small_piece_moves_it_and_does_not_resize_it() {
+        val store = storeWith(narrowPiece)
+        show(store)
+        val c = pieceCentre(store, narrowPiece)
+        composeRule.onRoot().performTouchInput {
+            down(c)
+            moveBy(Offset(30f, 0f))
+            moveBy(Offset(30f, 30f))
+            up()
+        }
+        composeRule.waitForIdle()
+        assertTrue("moved", store.piece().xPt > narrowPiece.xPt + 1.0)
+        assertEquals("not resized", narrowPiece.widthPt, store.piece().widthPt, 0.001)
+        assertEquals("not resized", narrowPiece.heightPt, store.piece().heightPt, 0.001)
+    }
+
+    @Test
+    fun a_double_tap_on_the_middle_of_a_small_piece_opens_it() {
+        val store = storeWith(narrowPiece)
+        show(store)
+        val c = pieceCentre(store, narrowPiece)
+        composeRule.onRoot().performTouchInput { doubleClick(c) }
+        composeRule.mainClock.advanceTimeBy(1000)
+        composeRule.waitForIdle()
+        assertTrue("was ${store.uiState.value.interaction}", store.uiState.value.interaction is Interaction.EditingText)
+    }
+
+    @Test
+    fun a_drag_from_each_mark_of_a_small_piece_still_resizes_it() {
+        val cases = listOf(1f to 0f, -1f to 0f, 0f to 1f, 0f to -1f, 1f to 1f, -1f to -1f, 1f to -1f, -1f to 1f)
+        val store = storeWith(narrowPiece)
+        show(store)
+        for ((sx, sy) in cases) {
+            val before = store.piece()
+            val mark = markOf(store, before, sx, sy)
+            composeRule.onRoot().performTouchInput {
+                down(mark)
+                moveBy(Offset(sx * 25f, sy * 25f))
+                moveBy(Offset(sx * 25f, sy * 25f))
+                up()
+            }
+            composeRule.waitForIdle()
+            val after = store.piece()
+            assertEquals("mark $sx,$sy changes the width", sx != 0f, after.widthPt > before.widthPt)
+            assertEquals("mark $sx,$sy changes the height", sy != 0f, after.heightPt > before.heightPt)
+            // The drag starts from the geometric point, not from the box that stepped outward: no more than the finger moved.
+            val moved = 50.0 / store.uiState.value.view.screenPxPerPt + 0.01
+            assertTrue("mark $sx,$sy added no more than the finger moved", after.widthPt - before.widthPt <= moved && after.heightPt - before.heightPt <= moved)
+            store.dispatch(Intent.Undo)
+        }
     }
 
     @Test

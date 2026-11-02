@@ -4592,3 +4592,117 @@ const a48=(()=>{
   },900);
 })();
 </script>
+
+<!-- ===========================================================================
+A50 · 2026-11-02 · FROZEN under the owner's delegation of 2026-10-12 ("decide, do not ask"), after the
+owner said "go ahead" on the finding.  The owner may overrule it.  ADR-145.  Evidence: RESEARCH R40.
+THE MIDDLE OF A PIECE MOVES IT.
+
+WHY.  Found on a device on 2026-10-30, in ADR-143's device notes.  Each of the eight handles has a 48
+hit box centred on the piece's corner or edge point, so it reaches 24 inward.  On a piece narrower than
+96 the boxes meet across the middle, and on one narrower than 48 they cover it.  One finger on the middle
+of a small piece then grabs a side handle: the piece grows a little and does not move, and a double-tap
+on it does not open it.  Nothing on screen says why.
+
+A50.1  THE RULE.  On each side of a piece, a hit box keeps out of the middle.  The middle is the central
+48 of the piece on each axis, or all of it if the piece is narrower than that.  A box that would enter
+the middle moves straight outward, along the piece's turned normal, until it clears, and keeps its full
+48 x 48.  So a small piece has no less to aim at: its handles' targets sit outside it instead of over it.
+
+A50.2  WHAT DOES NOT CHANGE.  Everything drawn: the marks, the ring, the knob, their sizes and places.  A
+hit box is invisible, so no golden and no line of the visible design above moves.  An upright piece 96 or
+more across has the boxes it has today.  A box always holds its whole 9 mark, and this outranks A50.1, so on
+a turned piece a box can touch the middle's rim, by under 3.  On a piece 4 or wider it never reaches the
+centre.  On a piece 12 or more across, a finger on a mark reaches that mark's handle.  Below that, on a
+turned piece, an edge's mark can catch the next corner, which still resizes.  Dragging a handle resizes by the same numbers, because the
+drag starts from the geometric point and not from the box.
+
+A50.3  OVERLAPS.  The knob stays over the handles (A48.1), and the corners now go over the edges.  An
+edge's box reaches across a narrow piece and used to catch a finger on a corner's mark, so that corner
+resized one way only.  A corner's box has stepped out of the middle, so it does not cover an edge's mark.
+On a small piece the bottom-centre box now reaches the knob's box, and the knob wins that
+overlap, which is the priority A48.1 already names.  This amends A48.1's clearance note for pieces
+narrower than 96 only.  The box keeps at least 30 of its depth, from the edge to the knob's box.
+
+A50.4  THE COSTS.  The boxes now reach further out.  On a narrow piece they go up to 48 beyond its edge,
+not 24, and a tap in that band neither deselects nor picks a neighbour, as was already true of the 24.  A
+small piece pressed against the screen's edge has that side's target off the glass; the opposite handle
+still resizes it, and the piece can be dragged in first.
+
+A50.5  NOT DONE.  No handle is hidden on a small piece, although other editors do hide some (R40), since
+this rule alone gives the middle back.  Revisit if a tester still mis-hits.
+
+TESTS.  Pure: at every size and every 15 degrees, the centre is clear of all eight boxes and the middle
+is clear but for that rim; each mark stays inside its box; an upright piece 96 across or more does not move a box.  Screen: a drag from the middle of
+a small piece moves it and does not resize it; a double-tap there opens it; a drag from each kind of mark
+still resizes it; two fingers still turn it.
+
+DEMO.  Below.  Tinted squares are the hit boxes.  Drag anywhere near the piece.
+=========================================================================== -->
+<section id="a50" style="margin:24px auto;max-width:360px;padding:12px;border:1.6px solid var(--ink);background:var(--paper);color:var(--ink);font:14px/1.4 system-ui,sans-serif">
+  <h2 style="margin:0 0 4px;font-size:16px">A50: the middle of a piece moves it</h2>
+  <p style="margin:0 0 8px">Drag on or near the small piece. The line below says what your finger caught.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+    <button type="button" id="a50Rule" aria-pressed="true" style="min-height:48px;padding:0 12px">A50 on</button>
+    <button type="button" id="a50Turn" style="min-height:48px;padding:0 12px">Turn 15°</button>
+    <button type="button" id="a50Size" style="min-height:48px;padding:0 12px">Size: narrow</button>
+    <button type="button" id="a50Reset" style="min-height:48px;padding:0 12px">Reset</button>
+  </div>
+  <p id="a50Said" aria-live="polite" style="margin:0 0 8px;font-weight:600">Nothing caught yet</p>
+  <div id="a50Page" style="position:relative;height:340px;overflow:hidden;background:#fff;border:1px solid var(--ink);touch-action:none;user-select:none">
+    <div id="a50Boxes"></div>
+    <div id="a50Piece" style="position:absolute;border:1.6px dashed var(--ink);box-sizing:border-box;display:flex;align-items:center;justify-content:center;pointer-events:none">hello</div>
+    <div id="a50Marks"></div>
+  </div>
+</section>
+<script>
+(()=>{
+  const $=id=>document.getElementById(id), HIT=48, HALF=24, MARK=5.5, SPARE=4.8;
+  const H=[['t',0,-1],['r',1,0],['b',0,1],['l',-1,0],['tl',-1,-1],['tr',1,-1],['br',1,1],['bl',-1,1]];
+  const SIZES=[[28,86,'narrow'],[60,60,'small'],[120,90,'large']];
+  let on=true,deg=0,size=0,cx=170,cy=170;
+  const rot=(x,y)=>{const r=deg*Math.PI/180;return [x*Math.cos(r)-y*Math.sin(r),x*Math.sin(r)+y*Math.cos(r)]};
+  // The same sum as handleHitOffsetPx in ResizeHandles.kt, and H is its HandleHitOrder: last on top.
+  function push(sx,sy,w,h){
+    const [mx,my]=rot(sx*MARK,sy*MARK);
+    if(!on) return [0,0];
+    const r=deg*Math.PI/180, reach=HALF*(Math.abs(Math.cos(r))+Math.abs(Math.sin(r)));
+    const one=(side,sign)=>sign*Math.max(0,reach-(side/2-Math.min(side/2,HALF)));
+    let [x,y]=rot(one(w,sx),one(h,sy));
+    const lim=HALF-SPARE; x=Math.min(mx+lim,Math.max(mx-lim,x)); y=Math.min(my+lim,Math.max(my-lim,y));
+    return [x,y];
+  }
+  function boxes(){
+    const [w,h]=SIZES[size];
+    return H.map(([n,sx,sy])=>{const [gx,gy]=rot(sx*w/2,sy*h/2),[px,py]=push(sx,sy,w,h),[mx,my]=rot(sx*MARK,sy*MARK);
+      return {n,x:cx+gx+px,y:cy+gy+py,mx:cx+gx+mx,my:cy+gy+my,sx,sy};});
+  }
+  function draw(){
+    const [w,h]=SIZES[size], p=$('a50Piece');
+    p.style.cssText+=`;left:${cx-w/2}px;top:${cy-h/2}px;width:${w}px;height:${h}px;transform:rotate(${deg}deg)`;
+    const b=boxes();
+    $('a50Boxes').innerHTML=b.map(k=>`<div style="position:absolute;left:${k.x-HALF}px;top:${k.y-HALF}px;width:${HIT}px;height:${HIT}px;background:rgba(214,94,120,.16);outline:1px solid rgba(214,94,120,.5)"></div>`).join('');
+    $('a50Marks').innerHTML=b.map(k=>`<div style="position:absolute;left:${k.mx-4.5}px;top:${k.my-4.5}px;width:9px;height:9px;box-sizing:border-box;background:var(--paper);border:1.6px solid var(--ink);border-radius:2px"></div>`).join('');
+    $('a50Size').textContent='Size: '+SIZES[size][2];
+    $('a50Rule').textContent=on?'A50 on':'A50 off (today)'; $('a50Rule').setAttribute('aria-pressed',on);
+  }
+  let grab=null;
+  const page=$('a50Page');
+  page.addEventListener('pointerdown',e=>{
+    const a=page.getBoundingClientRect(),x=e.clientX-a.left,y=e.clientY-a.top;
+    let hit=null; boxes().forEach(k=>{ if(Math.abs(x-k.x)<=HALF&&Math.abs(y-k.y)<=HALF) hit=k; });
+    grab={hit,x,y,w:SIZES[size][0],h:SIZES[size][1]}; page.setPointerCapture(e.pointerId);
+    $('a50Said').textContent=hit?`Caught the ${hit.n} handle: this resizes`:'Caught the piece: this moves it';
+  });
+  page.addEventListener('pointermove',e=>{
+    if(!grab) return; const a=page.getBoundingClientRect(),x=e.clientX-a.left,y=e.clientY-a.top;
+    if(!grab.hit){ cx+=x-grab.x; cy+=y-grab.y; grab.x=x; grab.y=y; draw(); }
+  });
+  ['pointerup','pointercancel'].forEach(t=>page.addEventListener(t,()=>{grab=null}));
+  $('a50Rule').onclick=()=>{on=!on;draw()};
+  $('a50Turn').onclick=()=>{deg=(deg+15)%360;draw()};
+  $('a50Size').onclick=()=>{size=(size+1)%SIZES.length;draw()};
+  $('a50Reset').onclick=()=>{on=true;deg=0;size=0;cx=170;cy=170;$('a50Said').textContent='Nothing caught yet';draw()};
+  draw();
+})();
+</script>
