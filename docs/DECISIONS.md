@@ -151,9 +151,9 @@
 | [ADR-140](#adr-140) | **When a zine's pages go back to their earlier copy, My Shelf says so once (extends ADR-134).** A `document.json` put back from its `.bak` is told by the A37 note in Library A46's words ("A page file was damaged, so Zinely used the copy from just before your last few seconds of changes"); one note covers a zine's details and pages. The store's `Restored` result is recorded in one lock-free repair-note store shared by both repositories; `BackupOnly` is silent. No Bench notice (named follow-up); no edit journal. Decides D-120 item 4, #146 | Proposed (A46 frozen 2026-10-22 under the owner's delegation; Accepted only once built and reviewed) |
 | [ADR-141](#adr-141) | **Selecting several things: the Bench stays single-select; My Shelf multi-select is Planned after W1 to W3.** Settles ADR-129's open question: no group selection on the Bench (page-level actions instead); a Shelf long-press selection with Move to a folder, Delete and one Undo for the batch is Planned, not in beta.8, design first. Proposed under delegation. |
 | [ADR-142](#adr-142) | **My Shelf: choose several zines, then move or delete them with one Undo.** Long press or "Select several" starts choosing; Move to a folder and Delete act on the set; one Undo covers the batch; folders cannot be chosen; a zine that cannot be acted on comes back and is named (skip-and-list). Builds ADR-141 decision 2 for beta.8; design Library A47. | Proposed |
-| [ADR-143](#adr-143) | **A turn handle, snapping, Straighten and one undo rule for repeated taps.** A turn knob below the selection ring (54dp out, flips above when it would not fit); quarter-turn snap within 5° for the knob only (two fingers do not snap); an angle readout while dragging; Straighten in Arrange > Turn; a turn-only step is "turned"; a run of tray taps in one group is one undo step (the tap intents gain a source). No schema change. Amends ADR-129/A33, ADR-123/A26, ADR-102 §12.8; closes ADR-136 W2a items 7 and 9. Design Bench A48. | Proposed (A48 frozen by the owner 2026-10-30) |
-| [ADR-144](#adr-144) | **Sheet action pairs share one geometry.** A dismiss beside a committing button on a sheet is a bordered sibling of it (same radius, border, shadow, press, 48px; surface fill and ink words against the commit's leaf fill and on-leaf words; only the commit may be disabled). The folder name sheet's Cancel, bare text beside a dimmed pill, is the one outlier in the frozen corpus and becomes `.go.ghost`. Look only: A28.14 behaviour unchanged. Library A49 | Proposed |
-| [ADR-145](#adr-145) | **The middle of a piece moves it.** A handle's 48dp hit box steps outward instead of covering a small piece's middle. Nothing drawn changes. | Proposed |
+| [ADR-143](#adr-143) | **A turn handle, snapping, Straighten and one undo rule for repeated taps.** A turn knob below the selection ring (54dp out, flips above when it would not fit); quarter-turn snap within 5° for the knob only (two fingers do not snap); an angle readout while dragging; Straighten in Arrange > Turn; a turn-only step is "turned"; a run of tray taps in one group is one undo step (the tap intents gain a source). No schema change. Amends ADR-129/A33, ADR-123/A26, ADR-102 §12.8; closes ADR-136 W2a items 7 and 9. Design Bench A48. | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
+| [ADR-144](#adr-144) | **Sheet action pairs share one geometry.** A dismiss beside a committing button on a sheet is a bordered sibling of it (same radius, border, shadow, press, 48px; surface fill and ink words against the commit's leaf fill and on-leaf words; only the commit may be disabled). The folder name sheet's Cancel, bare text beside a dimmed pill, is the one outlier in the frozen corpus and becomes `.go.ghost`. Look only: A28.14 behaviour unchanged. Library A49 | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
+| [ADR-145](#adr-145) | **The middle of a piece moves it.** A handle's 48dp hit box steps outward instead of covering a small piece's middle; a tap in a box away from its mark is a tap on the page (A50.6). Nothing drawn changes. | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -16665,6 +16665,14 @@ Owed before any of it ships is on [OWNER-CHECKLIST §2.8](OWNER-CHECKLIST.md#28-
 
 *2026-10-29: items 7 and 9 are decided in [ADR-143](#adr-143) (W2b, Bench A48, Proposed): 7 by one undo step per run of Move, Size or Turn taps; 9 closed by the visible turn knob, with the hint unchanged.*
 
+*2026-11-02, device checks on the Samsung SM-A176B, Android 16, QA package:* Enter makes a new line on Gboard and on the
+Samsung keyboard, and the Done chip finishes the edit; Back first hides the keyboard, then a second Back finishes it with the
+words kept. Rename at the 60 cap with Gboard composing: further letters are refused without garbling the field, and after a
+delete the next letter goes in; an emoji at 59 code points goes in whole, and at 60 a further one is refused whole.
+Duplicate, started from the foot of a scrolled shelf by touch, scrolls to the copy at the top. Save PDF names the file after
+the zine ("My zine copy.pdf", deleted after). An Art favourite and a recent survive a force-stop. Not done: the TalkBack
+listens (deferred by the owner) and a real Android 7 to 9 phone.
+
 #### Alternatives considered
 
 | Option | Why not |
@@ -17598,7 +17606,7 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
 
 ### A turn handle, snapping, Straighten and one undo rule for repeated taps
 
-**Status:** Proposed, 2026-10-29. **A48 frozen by the owner 2026-10-30** ("we should build it full dynamic", choosing the full knob over a smaller A48 of Straighten and the undo fixes only); the ADR stays Proposed until built and both device passes. Written under the owner's delegation of 2026-10-12
+**Status:** Accepted, 2026-11-02, under the owner's delegation of 2026-10-12, after the device pass of 2026-11-02 ([below](#adr-143-device-2)); the owner ruled the same day that the emulator and this pass stand in for the owner's own phone tries. The TalkBack listen stays deferred by the owner; the gaps are listed there. Proposed 2026-10-29. **A48 frozen by the owner 2026-10-30** ("we should build it full dynamic", choosing the full knob over a smaller A48 of Straighten and the undo fixes only); the ADR stays Proposed until built and both device passes. Written under the owner's delegation of 2026-10-12
 ("decide, do not ask"); the owner has not seen it and may overrule any part. **Design:**
 [`v21-bench.html`](design/mockups/v21-bench.html) A48 (rules A48.1–A48.10), reviewed as a local HTML file. **Amends:**
 [ADR-129](#adr-129) / A33 (the Turn group, "Every tap is one undo step", and A33's mention of a turn handle),
@@ -17882,6 +17890,8 @@ One finger, by `adb` touch events, with the document file read after each step.
   a small piece at 90° near the foot of the page, the words overflow that box and meet the bar. It already happened after
   a two-finger or tray turn; the knob makes turning more common. It stays on the owed list as the "text turned 45° then
   edited" item, now answered: readable, unpolished. Fix through the HTML first if a tester trips on it.
+  *Fixed 2026-11-02: the HTML always turned the piece while it was typed into (`.el{rotate:var(--arr-r)}`), so this was a
+  parity bug. `BenchEditingSurface` now turns the field with the piece, about its centre.*
 - **Two fingers, by the owner on the Samsung, 2026-10-30:** the turn works, but only when the piece is big enough for both
   fingers. Cause and fix: A48.3a in [as built](#adr-143-as-built). The owner tried the fix on the Samsung the same day: "its much smoother and better". The 4° and 8% starts stay as built.
 - **Two fingers, real multi-touch on the emulator, 2026-10-30, build `3ac616b6`** ([recipe](DEVICE-VERIFICATION.md#real-two-finger-gestures-on-the-emulator)),
@@ -17900,13 +17910,38 @@ One finger, by `adb` touch events, with the document file read after each step.
 - **Still owed:** a second
   finger held down late, after a long press has deselected; the haptic tick felt by hand; the first-run hint on a piece near the top and bottom; the Arrange
   tray on a real small phone; the knob over the dark desk; Straighten from 360° and 1.5° on a device (unit-tested only);
-  a first-time Pass 2; TalkBack.
+  a first-time Pass 2; TalkBack. *Answered 2026-11-02 below, except the late second finger and TalkBack.*
+
+#### Device pass (2026-11-02, Samsung SM-A176B, Android 16, QA package `com.aritr.zinely.w2bqa`) {#adr-143-device-2}
+
+Built from `main` at `e1b1d5ce`, then from the fix branch. One finger, by `adb` touch events, with the document file read
+after each step.
+
+- **The first-run hint, piece near the top:** while the hint is up the knob is not drawn (neither side fits, the fallback
+  rule); after Got it it appears below the piece. **Piece near the foot:** the knob flips above, clear of the verb bar.
+  The hint sits at the top, so it never meets that flipped knob; with the hint up and a piece at the foot was not seen.
+- **Handles:** on a piece about 40dp wide turned 15°, a drag from each bottom corner mark changes both sides and leaves
+  the angle at 15.
+- **Straighten:** a piece at 360° shows it disabled (360 is upright, decision 4). From 1.5° it writes 0; Undo says "Text
+  turned back", Redo "Text turned"; it is disabled again after.
+- **Snap haptic, read from `dumpsys vibrator_manager`, not felt:** a knob drag out to about 20° and back into the 360 zone
+  logged one 8ms TOUCH effect, and the drag ending where it began recorded no step.
+- **Over the dark desk:** on a piece hanging off the page's right edge the knob straddles page and desk. Its fill and halo
+  keep it visible; the stem is dark on dark where it crosses the desk, which is cosmetic and left as it is.
+- **A small phone:** the display forced to 360 × 640dp (`wm size 1080x1920`, `wm density 480`, reset after). The Arrange
+  tray shows all eleven buttons in two rows with Done in reach.
+- **Pass 2, by the implementer on the phone:** the knob reads as "turn" and a body drag never caught it. Two findings, both
+  fixed in the same change: a tap on a piece beside a chosen narrow piece did nothing ([ADR-145](#adr-145) decision 5, A50.6),
+  and words typed into a turned piece stood upright outside its outline (the finding above). One observation, not changed:
+  the first-run hint at the top covers a piece chosen there until Got it (A33, as frozen).
+- **Not done:** the TalkBack listen (deferred by the owner); a second finger held down late, after a long press has
+  deselected (it needs two fingers: the emulator recipe can do it); a real Android 7 to 9 phone.
 
 ## ADR-144 {#adr-144}
 
 ### Sheet action pairs share one geometry
 
-**Status:** Proposed, 2026-10-29. Library A49 design **frozen by the owner 2026-10-30** ("looks great"); the ADR stays Proposed until built and both device passes. The owner's words: "when making a folder, look at
+**Status:** Accepted, 2026-11-02, under the owner's delegation of 2026-10-12, after the device pass of 2026-11-02 (As built, below). Proposed 2026-10-29. Library A49 design **frozen by the owner 2026-10-30** ("looks great"); the ADR stays Proposed until built and both device passes. The owner's words: "when making a folder, look at
 the UI - the 'make folder' has a button but cancel doesn't. Makes the UI looks broken/unpolished". **Design:** the
 [`v21-library.html`](design/mockups/v21-library.html) A49 amendment (`.go.ghost`, the A49 demo card). **Amends:** the *look*
 of the name sheet in [ADR-099](#adr-099)'s V2.1 language and Library A28 ([ADR-125](#adr-125)); A28.14 (what Cancel does) is
@@ -17979,6 +18014,11 @@ device passes run 2026-10-30 on the emulator and the Samsung QA package at `2714
 Make folder reads `enabled=false`; Cancel first in the tree; at 2x text the pair stays on one row in that sheet. A
 first-time Pass 2 and a TalkBack listen are still owed.
 
+*2026-11-02, Samsung SM-A176B, Android 16:* with the field empty, Cancel is a surface-filled bordered pill and Make folder
+dimmed with `enabled=false`; both read as buttons, and it is plain that one waits for a name (Pass 2, by the implementer). At
+2x text on this phone the pair stacks, right-aligned, Cancel above Make folder, each whole. The TalkBack listen stays
+deferred by the owner.
+
 **Known exceptions to decision 1, not changed here.** The Bench spread confirm is frozen with a transparent fill
 (`.spread-cancel`), and `ImageSpreadSheet` draws its dismiss with `ZStampButton` (`inkSoft` words, Hero press). It is
 bordered and has the partner's height, so it does not read as broken. Bringing it into line needs its own HTML amendment.
@@ -17988,9 +18028,9 @@ bordered and has the partner's height, so it does not read as broken. Bringing i
 
 ### The middle of a piece moves it
 
-**Status:** Proposed, 2026-11-02. Bench A50 frozen under the owner's delegation of 2026-10-12, after the owner said "go
-ahead" on the finding; the owner may overrule it. Accepted only after both device passes
-([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)). **Design:** [`v21-bench.html`](design/mockups/v21-bench.html) A50,
+**Status:** Accepted, 2026-11-02, under the owner's delegation of 2026-10-12, after the device pass of 2026-11-02 ([below](#adr-145-device)); TalkBack listen deferred by the owner. Proposed
+2026-11-02. Bench A50 frozen under the owner's delegation of 2026-10-12, after the owner said "go
+ahead" on the finding; the owner may overrule it. **Design:** [`v21-bench.html`](design/mockups/v21-bench.html) A50,
 with a demo. **Amends:** [ADR-102 §12.8](#adr-102-p1-handles) "the 48dp target stays centred on the corner", and A48.1's
 clearance note, for small pieces only. **Evidence:** [RESEARCH R40](RESEARCH.md#r40).
 
@@ -18013,13 +18053,19 @@ clearance note, for small pieces only. **Evidence:** [RESEARCH R40](RESEARCH.md#
    Below that, on a turned piece, an edge's mark can catch the next corner, which still resizes.
 4. Only the box moves. `centerPx` still seeds the drag, so a resize gives the same numbers, and the mark is drawn where it
    was, so no golden changes. An upright piece 96dp or more across keeps the boxes it had.
+5. **A tap in a box (A50.6, 2026-11-02).** A tap, with no drag, more than 12dp from that handle's mark is a tap on the
+   page: `benchTapIntent` decides it as the page gesture does, so it picks the piece under the finger, deselects on bare
+   paper, or opens the chosen text. Within 12dp of a mark a tap still does nothing, so a resize that never got going does
+   not drop the piece. Found in Pass 2 on the phone: with a narrow piece chosen, a tap on its neighbour did nothing.
 
 ```mermaid
 flowchart LR
     F["One finger lands"] --> K{"On the knob's box?"}
     K -->|yes| T["Turn"]
     K -->|no| H{"On a handle's box?\nThe boxes now sit outside the middle"}
-    H -->|yes| R["Resize"]
+    H -->|yes| D{"A drag?"}
+    D -->|yes| R["Resize"]
+    D -->|"no: a tap more than 12dp from the mark"| M
     H -->|no| M["Page gesture: drag moves, double-tap opens"]
 ```
 
@@ -18034,7 +18080,22 @@ flowchart LR
 
 #### Known limits
 
-- **The boxes reach further out.** On a narrow piece they go up to 48dp beyond its edge, not 24dp. A tap in that band neither
-  deselects nor picks a neighbour, and a drag there resizes the small piece. Pass 2 has to judge this among close pieces.
+- **The boxes reach further out.** On a narrow piece they go up to 48dp beyond its edge, not 24dp, and a drag there
+  resizes the small piece. A tap there goes to the page (decision 5), except within 12dp of a mark.
+- The knob's own box still swallows a tap, as before: it is one box, below the piece.
 - A small piece pressed against the screen's edge has that side's target off the glass. The opposite handle still resizes it.
 - On a small piece the knob's box overlaps the bottom-centre handle's, and the knob wins, as A48.1 already orders it.
+
+#### Device pass (2026-11-02, Samsung SM-A176B, Android 16, QA package) {#adr-145-device}
+
+Three narrow pieces 14 × 40pt side by side, 6pt apart, and a wide one below:
+
+- On the build from `main` (`e1b1d5ce`): with B chosen, a tap on A did nothing. That is the Pass 2 finding behind decision 5.
+- On the fix: B, then a tap on A chose A, a tap on C chose C, and a tap on blank paper deselected. With B chosen, a tap on
+  its left mark kept B and its size; a drag from that mark resized it, its right edge staying put. A drag that then started
+  inside the widened B moved it. Each step was read back from the document and the Undo words.
+- Decisions 1 to 4, on the emulator (API 36) at PR #176, a text piece about 24 × 75dp: a drag from the middle moved it
+  with its size unchanged; each corner mark changed both sides and each edge mark one; two fingers turned it 30° with its
+  size kept; a double-tap on the middle opened it.
+- Pass 2, by the implementer: among close pieces nothing now answers a tap with silence, except within 12dp of a mark and
+  on the knob's box. TalkBack not listened to (deferred by the owner); nothing here is in the platform tree.

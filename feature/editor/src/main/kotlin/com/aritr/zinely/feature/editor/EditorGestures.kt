@@ -42,10 +42,10 @@ import com.aritr.zinely.render.android.ExportScale
  * for the UI layer; the only thing this adds is the one question the reduction destroys by answering it,
  * namely *was this already selected before the tap*.
  *
- * Pure, and extracted rather than inlined, because a tap on this surface cannot be driven end-to-end in
- * Robolectric — injected touches do not reach `detectTapGestures` through the editor's layer stack, which
- * is why the shipped editor has never had a tap-to-select unit test. The **decision** is fully testable
- * here; the **delivery** is a device-verification item, which is where gesture behaviour is verified anyway.
+ * Pure, and extracted rather than inlined, because when this was written a tap on this surface could not be driven
+ * end-to-end in Robolectric: injected touches did not reach `detectTapGestures` through the editor's layer stack.
+ * They do now; `TurnHandleScreenTest` drives taps on the page and in a handle's box (A50.6), which also calls this.
+ * The **decision** is fully testable here; the feel stays a device-verification item.
  */
 internal fun benchTapIntent(state: EditorUiState, pt: PtPoint, tolerancePt: Double = 0.0): Intent {
     val page = state.document.pages[state.currentPageIndex]

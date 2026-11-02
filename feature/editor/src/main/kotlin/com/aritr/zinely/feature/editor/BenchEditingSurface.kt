@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.PlatformTextStyle
@@ -314,6 +315,10 @@ internal fun BenchEditingSurface(
         modifier = modifier
             .offset { IntOffset(xPx.roundToInt(), yPx.roundToInt()) }
             .size(with(density) { wPx.toDp() }, with(density) { hPx.toDp() })
+            // The frozen `.el{rotate:var(--arr-r)}` (`v21-bench.html:2708`) turns the piece while it is typed into,
+            // about its centre as the page draws it. Without this a turned piece was typed upright, spilling out of
+            // its own outline (ADR-143 device notes). The layer turns touches too, so a tap places the caret.
+            .graphicsLayer { rotationZ = t.rotationDegrees.toFloat() }
             .drawWithContent {
                 drawContent()
                 val measured = layout ?: return@drawWithContent
