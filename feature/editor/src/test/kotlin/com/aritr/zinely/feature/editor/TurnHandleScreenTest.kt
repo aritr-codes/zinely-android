@@ -559,6 +559,67 @@ class TurnHandleScreenTest {
         }
     }
 
+    /** Holds the tap tests to what they claim: the point is inside the left handle's box, not on the page beside it. */
+    private fun assertInLeftBox(at: Offset) {
+        val box = composeRule.onNodeWithTag("$ResizeHandleTagPrefix${ResizeHandle.LEFT.name}").fetchSemanticsNode().boundsInRoot
+        assertTrue("$at in $box", box.contains(at))
+    }
+
+    /** A neighbour left of [narrowPiece], its middle inside the narrow piece's left box but well away from its mark. */
+    private val neighbour = Transform(33.0, 60.0, 5.0, 16.0)
+
+    @Test
+    fun a_tap_on_a_neighbour_inside_a_small_pieces_handle_box_picks_the_neighbour() {
+        val store = storeWith(neighbour)
+        store.dispatch(Intent.PlaceText(narrowPiece, "B")) // auto-selects the narrow piece
+        val neighbourId = store.uiState.value.document.pages[0].elements.first().id
+        show(store)
+        val at = pieceCentre(store, neighbour)
+        assertInLeftBox(at)
+        composeRule.onRoot().performTouchInput { click(at) }
+        composeRule.mainClock.advanceTimeBy(1000)
+        composeRule.waitForIdle()
+        assertEquals(setOf(neighbourId), store.uiState.value.selection)
+    }
+
+    @Test
+    fun a_tap_on_blank_paper_inside_a_small_pieces_handle_box_deselects() {
+        val store = storeWith(narrowPiece)
+        show(store)
+        val scale = store.uiState.value.view.screenPxPerPt
+        // 30dp left of the left edge: past the 24 the box used to reach, inside the 48 it reaches now.
+        val at = pieceCentre(store, narrowPiece) - Offset(narrowPiece.widthPt.toFloat() / 2 * scale + 30f * composeRule.density.density, 0f)
+        assertInLeftBox(at)
+        composeRule.onRoot().performTouchInput { click(at) }
+        composeRule.mainClock.advanceTimeBy(1000)
+        composeRule.waitForIdle()
+        assertEquals(emptySet<String>(), store.uiState.value.selection)
+    }
+
+    @Test
+    fun a_tap_on_a_handles_mark_keeps_the_selection_and_the_size() {
+        val store = storeWith(narrowPiece)
+        show(store)
+        for ((sx, sy) in listOf(-1f to 0f, 1f to 1f)) {
+            composeRule.onRoot().performTouchInput { click(markOf(store, narrowPiece, sx, sy)) }
+            composeRule.mainClock.advanceTimeBy(1000)
+            composeRule.waitForIdle()
+            assertEquals("mark $sx,$sy", 1, store.uiState.value.selection.size)
+            assertEquals("mark $sx,$sy", narrowPiece, store.piece())
+        }
+    }
+
+    @Test
+    fun a_turned_piece_is_typed_into_turned() {
+        val box = Transform(30.0, 60.0, 40.0, 12.0, 90.0)
+        val store = storeWith(box)
+        show(store)
+        store.dispatch(Intent.BeginEditText(store.uiState.value.selection.single()))
+        composeRule.waitForIdle()
+        val field = composeRule.onNodeWithTag(EditTextSessionTestTag).fetchSemanticsNode().boundsInRoot
+        assertTrue("a 40 x 12 box turned 90 stands upright: ${field.width} x ${field.height}", field.height > field.width * 2)
+    }
+
     @Test
     fun the_knob_stays_out_from_under_the_type_bar() {
         val store = storeWith(Transform(30.0, 60.0, 40.0, 12.0))

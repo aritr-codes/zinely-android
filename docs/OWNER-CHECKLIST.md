@@ -190,7 +190,8 @@ Amending a frozen V2 surface is reserved to you (V2-CONSTITUTION §VI); an imple
 | ☑ | [ADR-143](DECISIONS.md#adr-143) | Turning by hand (`v21-bench.html` A48), **FROZEN by you 2026-10-30** ("we should build it full dynamic"): a turn knob added to your 2026-08-12 eight-handle figure, quarter-turn snapping on the knob only (two fingers do not snap, so small tilts stay reachable), Straighten, and one undo step per run of tray taps. Open the file locally; the A48 card stages each state | Before any W2b rotate Kotlin |
 | ☑ | [ADR-142](DECISIONS.md#adr-142) R9 | The lighter chosen ring (`v21-library.html` A47.2 amendment, your "can we make them lighter"), **FROZEN by you 2026-10-30** ("looks great"): 2dp, offset 4dp, ink at 60%; the tick unchanged (ink badge kept). Compare switches removed | Before the ring change in Kotlin |
 | ☑ | [ADR-144](DECISIONS.md#adr-144) | The folder name sheet's Cancel as a bordered, surface-filled sibling of Make folder (`v21-library.html` A49), **FROZEN by you 2026-10-30** ("looks great"); look only, what Cancel does is unchanged | Before the `FolderSheets.kt` change |
-| ☐ | [ADR-142](DECISIONS.md#adr-142) R9 / [ADR-144](DECISIONS.md#adr-144) | Built 2026-10-30 (lighter ring, bordered Cancel); goldens not yet re-recorded on the CI image. Device passes, as listed in those ADRs | Accepting the build |
+| ◐ | [ADR-142](DECISIONS.md#adr-142) R9 / [ADR-144](DECISIONS.md#adr-144) | Built 2026-10-30 (lighter ring, bordered Cancel); goldens recorded on the CI image (PR #173). **ADR-144 Accepted 2026-11-02** under delegation after the device pass; the ring looked right on the phone the same day, and ADR-142 stays Proposed for its own listen (§2.7) | ADR-142's listen |
+| ☑ | [ADR-145](DECISIONS.md#adr-145) | The middle of a small piece moves it (`v21-bench.html` A50, A50.6), frozen under delegation 2026-11-02; **Accepted** the same day after the phone pass. You may overrule it | Nothing now |
 | ☐ | [ADR-017](DECISIONS.md#adr-017) | Bleed, clip and safe-area semantics | V2 print-shop export |
 | ☐ | [ADR-018](DECISIONS.md#adr-018) | Versioning of imposition convention names and fold/cut ids | **Must be decided before any enters a persisted `.zine` schema** |
 | ☐ | — | The butter allow-list conflict, V2.1 §3.2 vs §4.1 — *"owner ruling owed"*, stated twice | The next butter-token question |
@@ -387,25 +388,25 @@ table only points at it. Merged in PR #171, not released. Not automatable, so an
 
 | ☐ | Item | Where it is owned |
 |---|---|---|
-| ☐ | Enter inserts a newline on a real Gboard and a Samsung keyboard; the Done chip and Back still finish the edit | [DEVICE-VERIFICATION](DEVICE-VERIFICATION.md) |
-| ☐ | Rename sheet on a device: IME composition at the 60 cap, and an emoji or combined mark cut whole | [ADR-136 W2a note](DECISIONS.md#adr-136-w2a) |
-| ☐ | Duplicate scrolls to the copy in touch mode (not only with a keyboard or TalkBack) | [ADR-136 W2a note](DECISIONS.md#adr-136-w2a) |
-| ☐ | Save a PDF, then read its name in Downloads (the zine title, not "zine.pdf") | [ADR-054](DECISIONS.md#adr-054) |
-| ☐ | Art recents and favourites survive a force-stop and relaunch | [SUPPLIES-SPEC](design/SUPPLIES-SPEC.md) |
+| ☑ | Enter inserts a newline on a real Gboard and a Samsung keyboard; the Done chip and Back still finish the edit *(2026-11-02, Samsung: Back hides the keyboard first, a second Back finishes)* | [DEVICE-VERIFICATION](DEVICE-VERIFICATION.md) |
+| ☑ | Rename sheet on a device: IME composition at the 60 cap, and an emoji or combined mark cut whole *(2026-11-02, Gboard; emoji only)* | [ADR-136 W2a note](DECISIONS.md#adr-136-w2a) |
+| ☑ | Duplicate scrolls to the copy in touch mode (not only with a keyboard or TalkBack) *(2026-11-02)* | [ADR-136 W2a note](DECISIONS.md#adr-136-w2a) |
+| ☑ | Save a PDF, then read its name in Downloads (the zine title, not "zine.pdf") *(2026-11-02)* | [ADR-054](DECISIONS.md#adr-054) |
+| ☑ | Art recents and favourites survive a force-stop and relaunch *(2026-11-02)* | [SUPPLIES-SPEC](design/SUPPLIES-SPEC.md) |
 | ☐ | TalkBack listens for the rename sheet, Duplicate and the text edit (deferred by the owner; do not chase) | [DEVICE-VERIFICATION §3.1](DEVICE-VERIFICATION.md) |
 | ☐ | A real Android 7 to 9 phone | [ADR-136 W2a note](DECISIONS.md#adr-136-w2a) |
 
-### 2.9 W2b turning by hand — merged, not released; one-finger and emulator two-finger passes done, the rest owed
+### 2.9 W2b turning by hand — merged, not released; ADR-143 Accepted 2026-11-02 after the phone pass
 **Reason:** Physical / Judgement · **Blocks:** accepting ADR-143 · Authority is [ADR-143](DECISIONS.md#adr-143) *Owed before Accepted* and its [as-built note](DECISIONS.md#adr-143-as-built); this table only points at it. One-finger passes on the emulator and the Samsung QA package are recorded [there](DECISIONS.md#adr-143-device).
 
 | ☐ | Item | Where it is owned |
 |---|---|---|
 | ☑ | Pass 1, platform tree: the knob is not an unlabelled clickable; Straighten reads `enabled=false` on an upright piece | [ADR-143 device passes](DECISIONS.md#adr-143-device) |
-| ☐ | Pass 1, places (tiny, page bottom and 90° done): the Arrange tray open on a real small phone; the knob over the dark desk; the first-run hint up on a piece near the top and bottom of the page (the knob gives way, then appears once the hint goes) | [ADR-143](DECISIONS.md#adr-143) *Owed* |
-| ☐ | Pass 1, handles (45° done): on one about 40dp wide turned about 15°, a tap on a bottom corner handle's mark resizes and does not turn | [ADR-143](DECISIONS.md#adr-143) decision 1 |
-| ☐ | Pass 1, words (text edited while turned: answered there): Straighten from 360° and 1.5° with its snack words; the snap haptic is one tick | [ADR-143](DECISIONS.md#adr-143) *Owed* |
-| ☐ | Pass 1: pixel parity of the knob, the readout and the tray's third Turn button against A48 (goldens re-recorded on the pinned image, diffs read) | [ADR-143](DECISIONS.md#adr-143) *Consequences* |
-| ☐ | Pass 2, first-time reading: does the knob read as "turn", does it fight drag-to-move, does a maker who wants a small tilt find two fingers | [ADR-143](DECISIONS.md#adr-143) *Owed*, *Small tilts* |
+| ☑ | Pass 1, places (tiny, page bottom and 90° done): the Arrange tray open on a real small phone; the knob over the dark desk; the first-run hint up on a piece near the top and bottom of the page (the knob gives way, then appears once the hint goes) *(2026-11-02, [ADR-143 device pass](DECISIONS.md#adr-143-device-2); small phone simulated at 360 × 640dp)* | [ADR-143](DECISIONS.md#adr-143) *Owed* |
+| ☑ | Pass 1, handles (45° done): on one about 40dp wide turned about 15°, a tap on a bottom corner handle's mark resizes and does not turn *(2026-11-02)* | [ADR-143](DECISIONS.md#adr-143) decision 1 |
+| ☑ | Pass 1, words (text edited while turned: answered there, and fixed 2026-11-02): Straighten from 360° and 1.5° with its snack words; the snap haptic is one tick *(2026-11-02, haptic read from the vibrator log)* | [ADR-143](DECISIONS.md#adr-143) *Owed* |
+| ☑ | Pass 1: pixel parity of the knob, the readout and the tray's third Turn button against A48 (goldens re-recorded on the pinned image, diffs read) *(PR #173, `golden-exact` green)* | [ADR-143](DECISIONS.md#adr-143) *Consequences* |
+| ◐ | Pass 2, first-time reading: does the knob read as "turn", does it fight drag-to-move, does a maker who wants a small tilt find two fingers *(2026-11-02, by the implementer: yes, no; two fingers stay a thing to know. Yours if you want a fresh reading)* | [ADR-143](DECISIONS.md#adr-143) *Owed*, *Small tilts* |
 | ☐ | TalkBack check of Straighten (deferred with the other listens; do not chase) | [ADR-143](DECISIONS.md#adr-143) *Owed* |
 
 ---

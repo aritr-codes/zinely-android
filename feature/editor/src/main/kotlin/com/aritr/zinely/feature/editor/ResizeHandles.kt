@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -16,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -123,6 +125,12 @@ internal fun handleMarkOffsetPx(handle: ResizeHandle, ringOffsetPx: Float, rotat
 }
 
 /**
+ * Bench A50.6: a tap within this of a handle's mark does nothing, as before, so a resize that never got going does
+ * not drop the selection. Further out in the box, a tap is a tap on the page. The mark's own halo envelope.
+ */
+internal val HandleTapKeep = 12.dp
+
+/**
  * Bench A50: the order the handles are placed in, last on top. Corners go over edges because an edge's box reaches
  * across a narrow piece and would catch a finger on a corner's mark. A corner's box never covers an edge's mark: it
  * has stepped out of the middle, and the edge's mark is on the middle line.
@@ -199,6 +207,8 @@ public fun ResizeHandles(
     val density = LocalDensity.current
     val hitSizePx = with(density) { 48.dp.toPx() }
     val ringOffsetPx = with(density) { HandleRingOffsetDp.toPx() }
+    val tapKeepPx = with(density) { HandleTapKeep.toPx() }
+    val tapTolerancePt = with(density) { TapInkTolerance.toPx() } / screenPxPerPt
 
     Box(modifier = modifier) {
         for (handle in HandleHitOrder) {
@@ -247,6 +257,18 @@ public fun ResizeHandles(
                         (currentState().interaction as? Interaction.Transforming)?.token
                     }
                 },
+                onTap = { devicePx ->
+                    // A50.6: a tap in the box away from the mark is a tap on the page, so the neighbour under
+                    // the finger is picked, or the paper deselects, exactly as `editorTransformGestures` decides.
+                    val state = currentState()
+                    if (state.interaction !is Interaction.Transforming) {
+                        val pagePt = ExportScale.previewDeviceToPage(
+                            screenPxPerPt, pageOffset, PtPoint(devicePx.x.toDouble(), devicePx.y.toDouble()),
+                        )
+                        dispatch(benchTapIntent(state, pagePt, tapTolerancePt))
+                    }
+                },
+                tapKeepPx = tapKeepPx,
                 commitSession = { after, token ->
                     dispatch(Intent.CommitTransform(mapOf(selectedId to after), token))
                     onResize(null)
@@ -291,23 +313,33 @@ private fun HandleTarget(
     alpha: Float,
     interactive: Boolean,
     onDrag: (Offset, Long) -> Transform?,
+    onTap: (Offset) -> Unit,
+    tapKeepPx: Float,
     beginSession: () -> Long?,
     commitSession: (Transform, Long) -> Unit,
     cancelSession: (Long) -> Unit,
 ) {
     val half = hitSizePx / 2f
+    val boxLeft = (centerPx.x.toFloat() + hitOffsetPx.x - half).roundToInt()
+    val boxTop = (centerPx.y.toFloat() + hitOffsetPx.y - half).roundToInt()
+    // The tap maps through the live scale and offset, which can change while this box stays where it is.
+    val latestOnTap by rememberUpdatedState(onTap)
     Box(
         modifier = Modifier
             // Place the hit box so its centre lands on the handle point, plus A50's step (top-left = centre − half).
-            .offset {
-                IntOffset(
-                    x = (centerPx.x.toFloat() + hitOffsetPx.x - half).roundToInt(),
-                    y = (centerPx.y.toFloat() + hitOffsetPx.y - half).roundToInt(),
-                )
-            }
+            .offset { IntOffset(boxLeft, boxTop) }
             .size(48.dp)
             .testTag("$ResizeHandleTagPrefix${handle.name}")
             .alpha(alpha)
+            // A50.6. Outside the drag detector below, so the drag sees the down first; a drag past the slop
+            // consumes the moves and this tap never fires.
+            .then(if (!interactive) Modifier else Modifier.pointerInput(handle, boxLeft, boxTop, markOffsetPx) {
+                val mark = Offset(centerPx.x.toFloat(), centerPx.y.toFloat()) + markOffsetPx
+                detectTapGestures(onTap = { pos ->
+                    val at = Offset(boxLeft + pos.x, boxTop + pos.y)
+                    if ((at - mark).getDistance() > tapKeepPx) latestOnTap(at)
+                })
+            },)
             .then(if (!interactive) Modifier else Modifier.pointerInput(handle, centerPx) {
                 var token: Long? = null
                 var cur = Offset(centerPx.x.toFloat(), centerPx.y.toFloat())

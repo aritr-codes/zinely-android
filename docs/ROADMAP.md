@@ -516,6 +516,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-11-02 | **Turning by hand and the small-piece fix accepted after a phone pass.** Two fixes from it: a tap beside a chosen small piece reaches the page (A50.6), and turned text is typed turned. ADR-143, ADR-144 and ADR-145 Accepted under delegation; the W2a checks done. TalkBack listens stay deferred. Not released. | [ADR-143](DECISIONS.md#adr-143-device-2), [ADR-145](DECISIONS.md#adr-145-device) |
 | 2026-11-02 | **A small piece can be dragged by its middle.** Bench A50: a handle's hit box steps outward and leaves the middle free. Nothing drawn changes. Not released. | [ADR-145](DECISIONS.md#adr-145) |
 | 2026-10-30 | **W2b merged (PR #173), not released.** The owner froze A48, A47.2 and A49. One-finger device passes, the emulator two-finger pass and the CI goldens are done; the owner tried two fingers by hand and approved the feel; the rest of OWNER-CHECKLIST §2.9 is owed. | [ADR-143](DECISIONS.md#adr-143) · [ADR-144](DECISIONS.md#adr-144) |
 | 2026-10-29 | **Turning by hand designed (W2b, docs only).** Bench A48 proposes a turn knob with quarter-turn snapping and a readout, Straighten in Arrange > Turn, and one undo step per run of Move, Size or Turn taps; awaits the owner's freeze, nothing built. | [ADR-143](DECISIONS.md#adr-143) |

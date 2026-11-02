@@ -21,6 +21,8 @@ Changes since the beta.8 app.
 - Turn a piece with its knob; it snaps to quarter turns.
 - Two fingers anywhere on the page now turn the selected piece, even a small one.
 - One finger on the middle of a small piece now moves it, and a double-tap there opens it.
+- A tap just beside a chosen small piece now picks the piece you tapped, or clears the choice on blank paper.
+- Typing into a turned piece of text now shows the words turned, inside the piece.
 - Straighten button in Arrange > Turn.
 - Repeated Move, Size or Turn taps in Arrange are now one Undo.
 - Website note, not the app: the public pages, including the homepage tone and the privacy policy (last updated 30 October 2026), are rewritten in plain words (ADR-118 plain-words rule, R39). Some changelog lines are corrected to match what shipped. The privacy policy now also explains the storage permission Android adds on Android 9 and older. No limits, download details or app behaviour changed.

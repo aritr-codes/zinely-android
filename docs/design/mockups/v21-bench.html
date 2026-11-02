@@ -4625,17 +4625,27 @@ overlap, which is the priority A48.1 already names.  This amends A48.1's clearan
 narrower than 96 only.  The box keeps at least 30 of its depth, from the edge to the knob's box.
 
 A50.4  THE COSTS.  The boxes now reach further out.  On a narrow piece they go up to 48 beyond its edge,
-not 24, and a tap in that band neither deselects nor picks a neighbour, as was already true of the 24.  A
+not 24, and a tap in that band neither deselects nor picks a neighbour, as was already true of the 24
+[SUPERSEDED 2026-11-02 by A50.6: such a tap now goes to the page].  A
 small piece pressed against the screen's edge has that side's target off the glass; the opposite handle
 still resizes it, and the piece can be dragged in first.
 
 A50.5  NOT DONE.  No handle is hidden on a small piece, although other editors do hide some (R40), since
 this rule alone gives the middle back.  Revisit if a tester still mis-hits.
 
+A50.6  A TAP IN A BOX (2026-11-02, amends A50.4; frozen under the same delegation).  Found on the phone in
+Pass 2: with a narrow piece chosen, a tap on the piece beside it did nothing, and nothing said why.  The
+box only needs a drag.  So a tap in a handle's box, more than 12 from that handle's mark, is a tap on the
+page: it picks the piece under the finger, or deselects on bare paper, or opens the chosen text, exactly
+as a tap anywhere else does (D-037, C3).  Within 12 of a mark a tap still does nothing, so a resize that
+never got going does not drop the piece.  A drag from anywhere in the box still resizes.  12 is the mark's
+own halo envelope.  This removes A50.4's first cost; the knob's box is unchanged.
+
 TESTS.  Pure: at every size and every 15 degrees, the centre is clear of all eight boxes and the middle
 is clear but for that rim; each mark stays inside its box; an upright piece 96 across or more does not move a box.  Screen: a drag from the middle of
 a small piece moves it and does not resize it; a double-tap there opens it; a drag from each kind of mark
-still resizes it; two fingers still turn it.
+still resizes it; two fingers still turn it.  A50.6: a tap on a neighbour inside a box picks it; a tap on
+bare paper inside a box deselects; a tap on a mark keeps the piece and its size.
 
 DEMO.  Below.  Tinted squares are the hit boxes.  Drag anywhere near the piece.
 =========================================================================== -->
@@ -4697,6 +4707,12 @@ DEMO.  Below.  Tinted squares are the hit boxes.  Drag anywhere near the piece.
   page.addEventListener('pointermove',e=>{
     if(!grab) return; const a=page.getBoundingClientRect(),x=e.clientX-a.left,y=e.clientY-a.top;
     if(!grab.hit){ cx+=x-grab.x; cy+=y-grab.y; grab.x=x; grab.y=y; draw(); }
+  });
+  // A50.6: a tap (no movement) in a box, away from its mark, goes to the page.
+  page.addEventListener('pointerup',e=>{
+    if(!grab||!grab.hit||!on) return; const a=page.getBoundingClientRect(),x=e.clientX-a.left,y=e.clientY-a.top;
+    if(Math.hypot(x-grab.x,y-grab.y)<4&&Math.hypot(x-grab.hit.mx,y-grab.hit.my)>12)
+      $('a50Said').textContent=`A tap in the ${grab.hit.n} box, away from its mark: it goes to the page (picks what is under it, or deselects)`;
   });
   ['pointerup','pointercancel'].forEach(t=>page.addEventListener(t,()=>{grab=null}));
   $('a50Rule').onclick=()=>{on=!on;draw()};
