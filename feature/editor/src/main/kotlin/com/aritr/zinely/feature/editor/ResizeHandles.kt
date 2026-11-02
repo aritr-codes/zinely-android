@@ -1,5 +1,6 @@
 package com.aritr.zinely.feature.editor
 
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 import androidx.compose.animation.core.animateFloatAsState
@@ -121,6 +122,47 @@ internal fun handleMarkOffsetPx(handle: ResizeHandle, ringOffsetPx: Float, rotat
     return Offset(ox * c - oy * s, ox * s + oy * c)
 }
 
+/**
+ * Bench A50: the order the handles are placed in, last on top. Corners go over edges because an edge's box reaches
+ * across a narrow piece and would catch a finger on a corner's mark. A corner's box never covers an edge's mark: it
+ * has stepped out of the middle, and the edge's mark is on the middle line.
+ */
+internal val HandleHitOrder: List<ResizeHandle> = ResizeHandle.entries.sortedBy { it.local.x != 0.0 && it.local.y != 0.0 }
+
+/**
+ * Bench A50: how far a handle's hit box moves off its geometric point, so that the middle of the piece stays free
+ * for a drag or a double-tap. The middle is the piece's central [hitSizePx] on each axis, or all of it if narrower.
+ *
+ * The box is upright on screen while the piece may be turned, so its reach along the piece's axes is
+ * `half x (|cos| + |sin|)`. It moves out along each axis the handle touches until that reach clears the middle.
+ *
+ * **Invariant:** a finger on the mark still reaches the handle. The box always holds the whole 9dp mark: its centre
+ * stays a tenth of the box (4.8dp of 48) inside the rim. This outranks clearing the middle, so on a turned piece a box
+ * can touch the middle's rim, by under 3dp. On a piece 4dp or wider it never reaches the centre.
+ */
+internal fun handleHitOffsetPx(
+    handle: ResizeHandle,
+    widthPx: Float,
+    heightPx: Float,
+    markOffsetPx: Offset,
+    rotationDegrees: Double,
+    hitSizePx: Float,
+): Offset {
+    val half = hitSizePx / 2f
+    val r = Math.toRadians(rotationDegrees)
+    val c = cos(r).toFloat()
+    val s = sin(r).toFloat()
+    val reach = half * (abs(c) + abs(s))
+    fun out(side: Float, sign: Float) = sign * (reach - (side / 2f - minOf(side / 2f, half))).coerceAtLeast(0f)
+    val x = out(widthPx, handle.local.x.toFloat())
+    val y = out(heightPx, handle.local.y.toFloat())
+    val spare = half - hitSizePx / 10f
+    return Offset(
+        (x * c - y * s).coerceIn(markOffsetPx.x - spare, markOffsetPx.x + spare),
+        (x * s + y * c).coerceIn(markOffsetPx.y - spare, markOffsetPx.y + spare),
+    )
+}
+
 @Composable
 public fun ResizeHandles(
     uiState: EditorUiState,
@@ -159,12 +201,21 @@ public fun ResizeHandles(
     val ringOffsetPx = with(density) { HandleRingOffsetDp.toPx() }
 
     Box(modifier = modifier) {
-        for (handle in ResizeHandle.entries) {
+        for (handle in HandleHitOrder) {
             val center = SelectionChromeGeometry.handleDevicePx(transform, handle.local, screenPxPerPt, pageOffset)
+            val markOffset = handleMarkOffsetPx(handle, ringOffsetPx, transform.rotationDegrees)
             HandleTarget(
                 handle = handle,
                 centerPx = center,
-                markOffsetPx = handleMarkOffsetPx(handle, ringOffsetPx, transform.rotationDegrees),
+                markOffsetPx = markOffset,
+                hitOffsetPx = handleHitOffsetPx(
+                    handle,
+                    (transform.widthPt * screenPxPerPt).toFloat(),
+                    (transform.heightPt * screenPxPerPt).toFloat(),
+                    markOffset,
+                    transform.rotationDegrees,
+                    hitSizePx,
+                ),
                 hitSizePx = hitSizePx,
                 color = color,
                 alpha = alpha,
@@ -216,21 +267,25 @@ public fun ResizeHandles(
  *
  * ### [centerPx] and [markOffsetPx] are separated on purpose, and the separation is load-bearing
  *
- * [centerPx] is the element's **geometric** corner/edge point, and it does three jobs: it places this hit
- * box, it keys the [pointerInput], and — the dangerous one — it **seeds the drag accumulator** at
+ * [centerPx] is the element's **geometric** corner/edge point, and it does three jobs: with [hitOffsetPx] it places
+ * this hit box, it keys the [pointerInput], and — the dangerous one — it **seeds the drag accumulator** at
  * `onDragStart`, which `TransformMath.resizeByHandle` reads as *the corner's new position*. Displace
  * [centerPx] and every resize gains a 5.5dp bias on frame one, silently: the drag anchor assertions in
  * `ResizeHandlesTest` are `> 30.0`-style inequalities that such a bias sails through.
  *
  * So the mark moves and the point does not. The trade, stated rather than discovered later: **the 48dp
- * target stays centred on the corner, not on the mark it draws.** They differ by 5.5dp, well inside a
+ * target is centred on the corner, not on the mark it draws.** They differ by 5.5dp, well inside a
  * target 5.3× the mark's size, and the alternative is a wrong resize.
+ *
+ * [hitOffsetPx] moves only the box (Bench A50), for the same reason: on a small piece the box steps out of the
+ * piece's middle, while [centerPx] still seeds the drag and the mark is drawn where it was.
  */
 @Composable
 private fun HandleTarget(
     handle: ResizeHandle,
     centerPx: PtPoint,
     markOffsetPx: Offset,
+    hitOffsetPx: Offset,
     hitSizePx: Float,
     color: Color,
     alpha: Float,
@@ -243,11 +298,11 @@ private fun HandleTarget(
     val half = hitSizePx / 2f
     Box(
         modifier = Modifier
-            // Place the hit box so its centre lands on the handle point (top-left = centre − half).
+            // Place the hit box so its centre lands on the handle point, plus A50's step (top-left = centre − half).
             .offset {
                 IntOffset(
-                    x = (centerPx.x.toFloat() - half).roundToInt(),
-                    y = (centerPx.y.toFloat() - half).roundToInt(),
+                    x = (centerPx.x.toFloat() + hitOffsetPx.x - half).roundToInt(),
+                    y = (centerPx.y.toFloat() + hitOffsetPx.y - half).roundToInt(),
                 )
             }
             .size(48.dp)
@@ -295,7 +350,13 @@ private fun HandleTarget(
     ) {
         BenchHandleMark(
             color = color,
-            modifier = Modifier.offset { IntOffset(markOffsetPx.x.roundToInt(), markOffsetPx.y.roundToInt()) },
+            // Back out the box's step in whole px, so the mark lands on the pixel it did before A50: nothing drawn moves.
+            modifier = Modifier.offset {
+                IntOffset(
+                    (centerPx.x.toFloat() - half).roundToInt() + markOffsetPx.x.roundToInt() - (centerPx.x.toFloat() + hitOffsetPx.x - half).roundToInt(),
+                    (centerPx.y.toFloat() - half).roundToInt() + markOffsetPx.y.roundToInt() - (centerPx.y.toFloat() + hitOffsetPx.y - half).roundToInt(),
+                )
+            },
         )
     }
 }

@@ -186,7 +186,8 @@ class ResizeHandlesTest {
     @Test
     fun theHandleTargetStaysCentredOnTheGeometricCorner_notOnTheDrawnMark() {
         val store = newStore()
-        store.dispatch(Intent.PlaceText(Transform(40.0, 40.0, 20.0, 20.0), "t"))
+        // Wide enough that A50 leaves the boxes where they were.
+        store.dispatch(Intent.PlaceText(Transform(40.0, 40.0, 60.0, 60.0), "t"))
         val h = Harness(store)
 
         val snapshot = store.uiState.value
@@ -206,9 +207,9 @@ class ResizeHandlesTest {
         val root = composeRule.onRoot().fetchSemanticsNode().boundsInRoot
         for ((handle, corner) in mapOf(
             ResizeHandle.TOP_LEFT to (40.0 to 40.0),
-            ResizeHandle.BOTTOM_RIGHT to (60.0 to 60.0),
-            ResizeHandle.TOP_RIGHT to (60.0 to 40.0),
-            ResizeHandle.BOTTOM_LEFT to (40.0 to 60.0),
+            ResizeHandle.BOTTOM_RIGHT to (100.0 to 100.0),
+            ResizeHandle.TOP_RIGHT to (100.0 to 40.0),
+            ResizeHandle.BOTTOM_LEFT to (40.0 to 100.0),
         )) {
             val b = composeRule.onNodeWithTag("$ResizeHandleTagPrefix${handle.name}")
                 .fetchSemanticsNode().boundsInRoot
@@ -222,6 +223,104 @@ class ResizeHandlesTest {
                 "$handle's TARGET must stay on the box corner — the drawn mark moves, the point does not",
                 (corner.second * pxPerPt).toFloat(), cy, 1.5f,
             )
+        }
+    }
+
+    // --- A50: the middle of a piece moves it ---
+
+    private val hit = 48f
+    private val mark = 5.5f
+
+    private fun boxCentre(h: ResizeHandle, w: Float, ht: Float, deg: Double): Offset {
+        val r = Math.toRadians(deg)
+        val c = kotlin.math.cos(r).toFloat()
+        val s = kotlin.math.sin(r).toFloat()
+        val x = h.local.x.toFloat() * w / 2
+        val y = h.local.y.toFloat() * ht / 2
+        val markAt = handleMarkOffsetPx(h, mark, deg)
+        return Offset(x * c - y * s, x * s + y * c) + handleHitOffsetPx(h, w, ht, markAt, deg, hit)
+    }
+
+    /** The mark's spare room outranks the middle, so a box may touch the middle's rim by this much, never its centre. */
+    private val rim = 3f
+
+    private fun Offset.inBox(centre: Offset) =
+        kotlin.math.abs(x - centre.x) < hit / 2 - rim && kotlin.math.abs(y - centre.y) < hit / 2 - rim
+
+    @org.junit.Test
+    fun the_middle_of_a_piece_is_clear_of_every_hit_box_at_every_size_and_turn() {
+        for (w in listOf(4f, 8f, 28f, 48f, 60f, 90f, 96f, 200f)) for (ht in listOf(4f, 8f, 28f, 48f, 86f, 96f, 300f)) {
+            for (deg in 0 until 360 step 15) {
+                val r = Math.toRadians(deg.toDouble())
+                val c = kotlin.math.cos(r).toFloat()
+                val s = kotlin.math.sin(r).toFloat()
+                val zx = minOf(w, hit) / 2
+                val zy = minOf(ht, hit) / 2
+                for (fx in listOf(-1f, -0.5f, 0f, 0.5f, 1f)) for (fy in listOf(-1f, -0.5f, 0f, 0.5f, 1f)) {
+                    val lx = fx * zx
+                    val ly = fy * zy
+                    val p = Offset(lx * c - ly * s, lx * s + ly * c)
+                    for (h in ResizeHandle.entries) {
+                        org.junit.Assert.assertFalse(
+                            "$h covers ($fx,$fy) of the middle of $w x $ht at $deg",
+                            p.inBox(boxCentre(h, w, ht, deg.toDouble())),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @org.junit.Test
+    fun the_centre_of_a_piece_is_never_in_a_hit_box() {
+        for (w in listOf(4f, 8f, 28f, 48f, 60f, 90f, 96f, 200f)) for (ht in listOf(4f, 8f, 28f, 48f, 86f, 96f, 300f)) {
+            for (deg in 0 until 360 step 15) for (h in ResizeHandle.entries) {
+                val b = boxCentre(h, w, ht, deg.toDouble())
+                org.junit.Assert.assertTrue(
+                    "$h covers the centre of $w x $ht at $deg",
+                    kotlin.math.abs(b.x) >= hit / 2 || kotlin.math.abs(b.y) >= hit / 2,
+                )
+            }
+        }
+    }
+
+    @org.junit.Test
+    fun a_finger_on_a_mark_catches_that_marks_handle() {
+        // Below 12dp, on a turned piece, an edge's mark can catch the next corner: still a resize, and hard to aim at anyway.
+        for (w in listOf(12f, 28f, 48f, 60f, 90f, 96f, 200f)) for (ht in listOf(12f, 28f, 48f, 86f, 96f, 300f)) {
+            for (deg in 0 until 360 step 15) for (h in ResizeHandle.entries) {
+                val r = Math.toRadians(deg.toDouble())
+                val c = kotlin.math.cos(r).toFloat()
+                val s = kotlin.math.sin(r).toFloat()
+                val x = h.local.x.toFloat() * w / 2
+                val y = h.local.y.toFloat() * ht / 2
+                val at = Offset(x * c - y * s, x * s + y * c) + handleMarkOffsetPx(h, mark, deg.toDouble())
+                val caught = HandleHitOrder.last { kotlin.math.abs(at.x - boxCentre(it, w, ht, deg.toDouble()).x) < hit / 2 && kotlin.math.abs(at.y - boxCentre(it, w, ht, deg.toDouble()).y) < hit / 2 }
+                org.junit.Assert.assertEquals("mark of $h on $w x $ht at $deg", h, caught)
+            }
+        }
+    }
+
+    @org.junit.Test
+    fun every_mark_stays_inside_its_hit_box_with_room_to_spare() {
+        for (w in listOf(4f, 28f, 60f, 200f)) for (ht in listOf(4f, 86f, 300f)) for (deg in 0 until 360 step 15) {
+            for (h in ResizeHandle.entries) {
+                val at = handleMarkOffsetPx(h, mark, deg.toDouble())
+                val offset = handleHitOffsetPx(h, w, ht, at, deg.toDouble(), hit)
+                org.junit.Assert.assertTrue(
+                    "$h mark $at outside box at $offset, $w x $ht at $deg",
+                    kotlin.math.abs(at.x - offset.x) <= hit / 2 - 4.8f + 0.01f && kotlin.math.abs(at.y - offset.y) <= hit / 2 - 4.8f + 0.01f,
+                )
+            }
+        }
+    }
+
+    @org.junit.Test
+    fun an_upright_piece_96_across_keeps_the_boxes_it_had() {
+        for (h in ResizeHandle.entries) {
+            val offset = handleHitOffsetPx(h, 96f, 96f, handleMarkOffsetPx(h, mark, 0.0), 0.0, hit)
+            org.junit.Assert.assertEquals("$h", 0f, offset.x, 0f)
+            org.junit.Assert.assertEquals("$h", 0f, offset.y, 0f)
         }
     }
 }

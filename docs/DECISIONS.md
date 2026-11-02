@@ -153,6 +153,7 @@
 | [ADR-142](#adr-142) | **My Shelf: choose several zines, then move or delete them with one Undo.** Long press or "Select several" starts choosing; Move to a folder and Delete act on the set; one Undo covers the batch; folders cannot be chosen; a zine that cannot be acted on comes back and is named (skip-and-list). Builds ADR-141 decision 2 for beta.8; design Library A47. | Proposed |
 | [ADR-143](#adr-143) | **A turn handle, snapping, Straighten and one undo rule for repeated taps.** A turn knob below the selection ring (54dp out, flips above when it would not fit); quarter-turn snap within 5° for the knob only (two fingers do not snap); an angle readout while dragging; Straighten in Arrange > Turn; a turn-only step is "turned"; a run of tray taps in one group is one undo step (the tap intents gain a source). No schema change. Amends ADR-129/A33, ADR-123/A26, ADR-102 §12.8; closes ADR-136 W2a items 7 and 9. Design Bench A48. | Proposed (A48 frozen by the owner 2026-10-30) |
 | [ADR-144](#adr-144) | **Sheet action pairs share one geometry.** A dismiss beside a committing button on a sheet is a bordered sibling of it (same radius, border, shadow, press, 48px; surface fill and ink words against the commit's leaf fill and on-leaf words; only the commit may be disabled). The folder name sheet's Cancel, bare text beside a dimmed pill, is the one outlier in the frozen corpus and becomes `.go.ghost`. Look only: A28.14 behaviour unchanged. Library A49 | Proposed |
+| [ADR-145](#adr-145) | **The middle of a piece moves it.** A handle's 48dp hit box steps outward instead of covering a small piece's middle. Nothing drawn changes. | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -17884,7 +17885,7 @@ One finger, by `adb` touch events, with the document file read after each step.
 - **Two fingers, by the owner on the Samsung, 2026-10-30:** the turn works, but only when the piece is big enough for both
   fingers. Cause and fix: A48.3a in [as built](#adr-143-as-built). The owner tried the fix on the Samsung the same day: "its much smoother and better". The 4° and 8% starts stay as built.
 - **Two fingers, real multi-touch on the emulator, 2026-10-30, build `3ac616b6`** ([recipe](DEVICE-VERIFICATION.md#real-two-finger-gestures-on-the-emulator)),
-  on a text piece about 28dp wide and 86dp long, with the document file read after each step:
+  on a text piece about 24dp by 75dp, with the document file read after each step:
   - Two fingers on its handles, and one on the knob with one on the paper, turned it by the amount swept and kept its size
   to 0.03%, on five of five clean runs. Two fingers on blank paper turned it too, and moved it with the fingers' centre.
   - Two fingers resting and lifted changed nothing and left Undo off. Undo returned each turn in one step.
@@ -17893,9 +17894,9 @@ One finger, by `adb` touch events, with the document file read after each step.
   - One earlier run resized instead of turning. It was the first run after a batch of rejected console sends, so
   probably left-over input state, but that is an inference. It did not come back.
   - One finger, same build: knob drag, handle drag, a body drag on the piece once enlarged, and a tap on blank paper to deselect all still work.
-- **Finding, not caused by this work:** on this piece, one finger on its middle catches a side handle, not the body, because
+- **Finding, not caused by this work, closed by [ADR-145](#adr-145):** on this piece, one finger on its middle catches a side handle, not the body, because
   the 48dp hit boxes overlap across it. Dragging from there grew it about 1 to 3pt and did not move it. So a small piece
-  can be turned from anywhere, but not dragged by its middle. Open as a follow-up, through the HTML first.
+  can be turned from anywhere, but not dragged by its middle.
 - **Still owed:** a second
   finger held down late, after a long press has deselected; the haptic tick felt by hand; the first-run hint on a piece near the top and bottom; the Arrange
   tray on a real small phone; the knob over the dark desk; Straighten from 360° and 1.5° on a device (unit-tested only);
@@ -17982,3 +17983,58 @@ first-time Pass 2 and a TalkBack listen are still owed.
 (`.spread-cancel`), and `ImageSpreadSheet` draws its dismiss with `ZStampButton` (`inkSoft` words, Hero press). It is
 bordered and has the partner's height, so it does not read as broken. Bringing it into line needs its own HTML amendment.
 `InkMixerSheet`, `BenchInkPopover` and Reframe were not compared to the rule. The next change to any of them checks it.
+
+## ADR-145 {#adr-145}
+
+### The middle of a piece moves it
+
+**Status:** Proposed, 2026-11-02. Bench A50 frozen under the owner's delegation of 2026-10-12, after the owner said "go
+ahead" on the finding; the owner may overrule it. Accepted only after both device passes
+([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)). **Design:** [`v21-bench.html`](design/mockups/v21-bench.html) A50,
+with a demo. **Amends:** [ADR-102 §12.8](#adr-102-p1-handles) "the 48dp target stays centred on the corner", and A48.1's
+clearance note, for small pieces only. **Evidence:** [RESEARCH R40](RESEARCH.md#r40).
+
+#### Context
+
+- ✅ Each handle's hit box is centred on the piece's corner or edge point, so it reaches 24dp inward. Below 96dp the boxes
+  meet across the middle, and below 48dp they cover it. Compose gives a touch to the topmost sibling only, so a finger there
+  never reaches the page gesture. Found on a device: [ADR-143 device notes](#adr-143-device).
+- ✅ Tests on the code before the fix: a drag from the middle of a small piece did not move it, a double-tap there did
+  not open it, and a drag from a mark on a narrow piece could catch a different handle.
+
+#### Decision
+
+1. A hit box keeps out of the piece's middle: the central 48dp on each axis, or all of it if narrower. A box that would
+   enter moves outward along the turned normal, and keeps its full 48dp.
+2. The box always holds its whole 9dp mark, which outranks decision 1. So on a turned piece a box can touch the middle's
+   rim, by under 3dp. On a piece 4dp or wider it never reaches the centre.
+3. Corners go over edges, so a finger on a corner's mark resizes both ways. On the emulator before this rule, one
+   caught the top edge's box and changed one axis only. On a piece 12dp or more across, every mark reaches its own handle.
+   Below that, on a turned piece, an edge's mark can catch the next corner, which still resizes.
+4. Only the box moves. `centerPx` still seeds the drag, so a resize gives the same numbers, and the mark is drawn where it
+   was, so no golden changes. An upright piece 96dp or more across keeps the boxes it had.
+
+```mermaid
+flowchart LR
+    F["One finger lands"] --> K{"On the knob's box?"}
+    K -->|yes| T["Turn"]
+    K -->|no| H{"On a handle's box?\nThe boxes now sit outside the middle"}
+    H -->|yes| R["Resize"]
+    H -->|no| M["Page gesture: drag moves, double-tap opens"]
+```
+
+#### Alternatives
+
+- **Hide handles on a small piece.** Excalidraw and tldraw hide some. Rejected for now: it loses a capability, and A50
+  gives the middle back without it.
+- **A separate move handle.** Rejected: a new mark for a problem the existing page gesture already solves.
+- **Shrink the box.** Rejected: it trades the 48dp target for the middle, and moving it costs neither.
+- **Rotate the box with the piece.** Rejected: pointer deltas inside a rotated layer arrive in its local axes, which would
+  have to be turned back on every drag. Hence an upright box with a reach that allows for the turn.
+
+#### Known limits
+
+- **The boxes reach further out.** On a narrow piece they go up to 48dp beyond its edge, not 24dp. A tap in that band neither
+  deselects nor picks a neighbour, and a drag there resizes the small piece. Pass 2 has to judge this among close pieces.
+- A small piece pressed against the screen's edge has that side's target off the glass. The opposite handle still resizes it.
+- On a small piece the knob's box overlaps the bottom-centre handle's, and the knob wins, as A48.1 already orders it.

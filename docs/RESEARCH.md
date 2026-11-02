@@ -2166,3 +2166,22 @@ names (zine, Bench, Shelf, Proof) that are not in that dictionary. Keep the **se
 - 🟦 **Patterns used on the homepage:** (1) lead with what it is, who it is for, and its three facts (free, offline,
   private); (2) keep the personality in the facts (paper, one cut, a fold), not in wordplay; (3) a joke stays only
   with the plain fact next to it; (4) headings say what the section holds; (5) when unsure, cut the joke.
+
+## R40. Handles on a small object on touch (2026-11-02) {#r40}
+
+Asked: when an object is about as small as a finger, how do editors keep it movable? Backs [ADR-145](DECISIONS.md#adr-145).
+
+- ✅ **VERIFIED, source:** [Excalidraw](https://github.com/excalidraw/excalidraw/blob/master/packages/element/src/transformHandles.ts)
+  shows edge handles only above a minimum size (5 mouse handles, zoom-adjusted), and turns side resizing off on phones.
+- ✅ **VERIFIED, source:** [tldraw](https://github.com/tldraw/tldraw/blob/main/packages/tldraw/src/lib/overlays/SelectionForegroundOverlayUtil.ts)
+  halves the hit target on a small axis, drops some corners on a tiny one, and hides top and bottom edge targets on coarse pointers.
+- ✅ **VERIFIED, issue:** [tldraw #8840](https://github.com/tldraw/tldraw/issues/8840) reports overlapping hit areas on small
+  shapes and proposes limiting how far a corner's area reaches inward.
+- ✅ **VERIFIED, review thread:** [KDE D23322](https://phabricator.kde.org/D23322) makes touch handles free-floating outside
+  a too-small rectangle, which keeps an area to move it.
+- ✅ **VERIFIED, statement of the problem only:** [a patent application](https://patents.justia.com/patent/20170285913) says
+  handles and their buffers on a small object can cover the centre that the user touches to move it.
+- ⚠️ **NOT FOUND:** Canva's and Figma's mobile behaviour; nothing public was found.
+- 🟦 **RECOMMENDATION:** keep the target size and move it outward, the idea of KDE's free-floating handles, rather than shrink
+  or hide. A KDE reviewer noted very small rectangles lost resizing there; this design keeps every handle. It costs no
+  capability and draws nothing new, but the targets reach further from the piece. Hiding handles remains the next step if testers still mis-hit.
