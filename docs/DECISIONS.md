@@ -18099,3 +18099,48 @@ Three narrow pieces 14 × 40pt side by side, 6pt apart, and a wide one below:
   size kept; a double-tap on the middle opened it.
 - Pass 2, by the implementer: among close pieces nothing now answers a tap with silence, except within 12dp of a mark and
   on the knob's box. TalkBack not listened to (deferred by the owner); nothing here is in the platform tree.
+
+
+## ADR-TBD-W5 {#adr-tbd-w5}
+
+### Print guidance that says only what we know
+
+**Status:** Proposed, 2026-11-03. The orchestrator assigns the number. Design frozen under the owner's delegation
+(decision gate Q7: the guidance copy and the `v21-proof.html` amendment are delegated); **shipping waits** on the
+[print study](planning/STUDY-PRINT-AND-FOLD-PROTOCOL.md) and on the owner's approval of the Print-step amendment, which
+Q7 keeps with the owner. **Design:** [`v21-proof.html`](design/mockups/v21-proof.html) AW5. **Evidence:** [RESEARCH RW5](RESEARCH.md#rw5).
+**Amends, at ship time:** the Print details and done-row copy under [ADR-052](#adr-052). **Roadmap:** W5 of [ADR-136](#adr-136).
+
+#### Context
+
+- ✅ The shipped Print details says "so it prints at 100% — nothing shrinks to fit" and "Print it at 100%", while ADR-052
+  records that Android's print dialog shows no scale control. The app does not control the print app, so the sentence is a
+  promise it cannot keep (constitution Article 5; gate Q7 "never claim Android preserves exact size").
+- 🟨 Whether the default path shrinks a sheet whose guides reach the edge, and how far a printer reaches, are unmeasured
+  until the study runs.
+- ✅ The screen's question is "How do I print it correctly?"; makers meet it on the way to a printer.
+
+#### Decisions
+
+1. **Guide by result.** Print details gets, in order: paper, what we did, the settings, **Check your first sheet** (fold it; the
+   printed fold lines should land on the creases), **If it looks off** (five visible faults, one action each), the booklet
+   picture. Exact words are in AW5 and are the copy source for the Compose part.
+2. **"100% / Actual size" is conditional** on a Scale setting existing. No sentence says the print will not shrink. The 6 mm
+   margin is described as about 6 mm, with "a few printers leave a wider strip".
+3. **Flip edge is not taught.** The sheet is one-sided, so the setting never applies. It returns with a two-sided format.
+4. **A printed test sheet is a stage 2 and not decided here.** It is specified (50 mm ruler, numbered 3, 5 and 8 mm bands, the
+   eight numbered panels) and drawn to scale in AW5, but ships only if the owner approves a static test page after the study
+   (ADR-039, Q7) and the study shows that spending a real sheet is a problem. It stores no printer profile and changes nothing
+   in the zine. The [Brief 03](planning/BRIEF-03-PRINTER-TEST-PAGE.md) questions, profile and Part 2 are **not** adopted.
+5. **No pure-logic piece was built.** The test sheet's geometry depends on the inset and ruler the study may change; building
+   it now would be speculative. When stage 2 is approved, its producer is the first piece, tests first.
+6. **The study may only remove or strengthen a sentence.** It cannot make a conditional unconditional. An inset or render
+   change is a separate ADR (study outcome table).
+
+#### Consequences
+
+- No Compose, no schema, no network, no stored data. Skipping the guidance leaves today's behaviour; that is the status quo
+  this ADR calls a promise the app cannot keep, so shipping it is the point.
+- `Copy.kt` strings (Print details, done-row `.wu`) change at ship time, with goldens re-recorded on the CI image and both
+  device passes. The 12sp floor (A44) applies to all new words.
+- Owed: the study; owner approval of the Print-step amendment; the stage 2 ruling. Listed in OWNER-CHECKLIST.
