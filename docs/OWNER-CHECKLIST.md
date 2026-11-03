@@ -413,7 +413,22 @@ table only points at it. Merged in PR #171, not released. Not automatable, so an
 
 ## 3. Release & credentials
 
-### ◐ `0.9.0-beta.8` — choose several zines, mix your own ink, 124 Art pieces, work that stays safe (APK only) *(in preparation, 2026-10-29)*
+### ◐ `0.9.0-beta.9` — turning pieces by hand, and small things fixed (APK only) *(released 2026-11-03; website owed)*
+
+Scope, per your 2026-11-03 word ("W2a, W2b and the A50 fixes ... do these"): everything merged to `main` since
+beta.8. ADR-143, ADR-144 and ADR-145 Accepted under delegation with TalkBack deferred; ADR-142 R9 Proposed. No AAB,
+no Play. Evidence: [tester package](releases/0.9.0-beta.9.md).
+
+| ☐ | Gate | Note |
+|---|---|---|
+| ☑ | Version, changelog, tester package, roadmap, site copy written | 2026-11-03 |
+| ☑ | Goldens current (green CI), signed APK built and smoke-tested | 2026-11-03 |
+| ☑ | Release Agent review, merge, tag, publish, checksum re-check | Per [RELEASING §2-3](RELEASING.md) |
+| ☐ | Website moved to beta.9 and live-verified | After publishing |
+| ☐ | Install over beta.8 on your phone | Needs your word; not given for this release |
+| ☐ | TalkBack listens: turn knob, Straighten, two fingers, small pieces, ring, Cancel, W2a fixes | Deferred by you; each ships as "not verified" |
+
+### ☑ `0.9.0-beta.8` — choose several zines, mix your own ink, 124 Art pieces, work that stays safe (APK only) *(released 2026-10-29)*
 
 Scope, per your 2026-10-29 word ("Let's wait for the PR and then go with beta.8"): everything merged to `main`
 since beta.7. W1 (ADR-136, ADR-140), Art (ADR-139), Ink (ADR-138) and Shelf multi-select (ADR-142) ship **merged,
@@ -424,8 +439,8 @@ Evidence: [tester package](releases/0.9.0-beta.8.md).
 |---|---|---|
 | ☑ | Version, changelog, tester package, roadmap, site copy written | Docs prepared 2026-10-29; build-time fields filled 2026-10-29 after the build |
 | ☑ | Goldens current (green CI), signed APK built and smoke-tested; release date 2026-10-29 is the tag day, so nothing to fix | Build session: record on CI if needed, read each changed picture first |
-| ☐ | Release Agent review, merge, tag, publish, checksum re-check | Per [RELEASING §2-3](RELEASING.md) |
-| ☐ | Website moved to beta.8 and live-verified | After publishing |
+| ☑ | Release Agent review, merge, tag, publish, checksum re-check | Per [RELEASING §2-3](RELEASING.md) |
+| ☑ | Website moved to beta.8 and live-verified | After publishing |
 | ☐ | Install over beta.7 on your phone | Needs your word; not given for this release |
 | ☐ | TalkBack listens: Ink, Art (and a printed page), W1, choosing several zines, folders, frames | Deferred by you; each ships as "not verified" |
 
