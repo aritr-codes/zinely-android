@@ -23,11 +23,11 @@ beta.4-r3 APK; measurements and evidence remain in the
 **Released 2026-10-29:** beta.8 ([0.9.0-beta.8](../CHANGELOG.md#090-beta8--2026-10-29--choose-several-zines-mix-your-own-ink-124-art-pieces-and-work-that-stays-safe),
 tag `v0.9.0-beta.8`, GitHub pre-release, APK only; [tester package](releases/0.9.0-beta.8.md)).
 
-**In preparation, 2026-11-03:** beta.9, turning pieces by hand and the W2a small things, is being prepared as the next public download
+**Released 2026-11-03:** beta.9, turning pieces by hand and the W2a small things, is the public download
 ([0.9.0-beta.9](../CHANGELOG.md#090-beta9--2026-11-03--turn-pieces-by-hand-and-small-things-fixed), tag
 `v0.9.0-beta.9`, GitHub pre-release, APK only; [tester package](releases/0.9.0-beta.9.md)), on the owner's word of
 2026-11-03. It carries W2a, W2b and the A50 small-piece fixes. Formats unchanged. TalkBack listens stay deferred
-by the owner and are Known Limitations. Below, "in no download" for W2a, W2b or A50 means: in the beta.9 package once it is published.
+by the owner and are Known Limitations. Below, "in no download" for W2a, W2b or A50 means: in beta.9.
 
 **Owner rulings, 2026-09-26** ([1.x decision gate](planning/ZINELY-1X-DECISION-GATE.md)): the next tester build
 is planned as a *wave-1* release on the current document format, before any schema change, carrying the 1.x
@@ -510,7 +510,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
-| 2026-11-03 | **beta.9 prepared: turning pieces by hand and small things fixed.** W2a, W2b and the A50 small-piece fixes reach the public download (`versionCode 14`, APK only). ADR-143/144/145 Accepted with TalkBack deferred; ADR-142 R9 Proposed. Next: W4, W5 and W9 in a fresh session. | [ADR-136](DECISIONS.md#adr-136), [ADR-143](DECISIONS.md#adr-143) |
+| 2026-11-03 | **beta.9 released: turning pieces by hand and small things fixed** (tag `v0.9.0-beta.9`, website updated). W2a, W2b and the A50 small-piece fixes reach the public download (`versionCode 14`, APK only). ADR-143/144/145 Accepted with TalkBack deferred; ADR-142 R9 Proposed. Next: W4, W5 and W9 in a fresh session. | [ADR-136](DECISIONS.md#adr-136), [ADR-143](DECISIONS.md#adr-143) |
 | 2026-11-02 | **Turning by hand and the small-piece fix accepted after a phone pass.** Two fixes from it: a tap beside a chosen small piece reaches the page (A50.6), and turned text is typed turned. ADR-143, ADR-144 and ADR-145 Accepted under delegation; the W2a checks done. TalkBack listens stay deferred. Not released. | [ADR-143](DECISIONS.md#adr-143-device-2), [ADR-145](DECISIONS.md#adr-145-device) |
 | 2026-11-02 | **A small piece can be dragged by its middle.** Bench A50: a handle's hit box steps outward and leaves the middle free. Nothing drawn changes. Not released. | [ADR-145](DECISIONS.md#adr-145) |
 | 2026-10-30 | **W2b merged (PR #173), not released.** The owner froze A48, A47.2 and A49. One-finger device passes, the emulator two-finger pass and the CI goldens are done; the owner tried two fingers by hand and approved the feel; the rest of OWNER-CHECKLIST §2.9 is owed. | [ADR-143](DECISIONS.md#adr-143) · [ADR-144](DECISIONS.md#adr-144) |

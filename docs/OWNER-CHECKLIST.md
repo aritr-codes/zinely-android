@@ -413,7 +413,7 @@ table only points at it. Merged in PR #171, not released. Not automatable, so an
 
 ## 3. Release & credentials
 
-### ◐ `0.9.0-beta.9` — turning pieces by hand, and small things fixed (APK only) *(in preparation, 2026-11-03)*
+### ☑ `0.9.0-beta.9` — turning pieces by hand, and small things fixed (APK only) *(released 2026-11-03)*
 
 Scope, per your 2026-11-03 word ("W2a, W2b and the A50 fixes ... do these"): everything merged to `main` since
 beta.8. ADR-143, ADR-144 and ADR-145 Accepted under delegation with TalkBack deferred; ADR-142 R9 Proposed. No AAB,
@@ -423,8 +423,8 @@ no Play. Evidence: [tester package](releases/0.9.0-beta.9.md).
 |---|---|---|
 | ☑ | Version, changelog, tester package, roadmap written | 2026-11-03; site copy in the site PR |
 | ☑ | Goldens current (green CI), signed APK built and smoke-tested | PR #178 CI green; clean install on an API 36 emulator, 2026-11-03 |
-| ◐ | Release Agent review, merge, tag, publish, checksum re-check | Review GO WITH FIXES 2026-11-03, fixes taken; the rest per [RELEASING §2-3](RELEASING.md) |
-| ☐ | Website moved to beta.9 and live-verified | After publishing |
+| ☑ | Release Agent review, merge, tag, publish, checksum re-check | Review GO WITH FIXES 2026-11-03, fixes taken; merged PR #178 (`e8c5ff3`), tagged, published, downloaded checksum matches |
+| ☑ | Website moved to beta.9 and live-verified | Site PR, 2026-11-03 |
 | ☐ | Install over beta.8 on your phone | Needs your word; not given for this release |
 | ☐ | TalkBack listens: turn knob, Straighten, two fingers, small pieces, ring, Cancel, W2a fixes | Deferred by you; each ships as "not verified" |
 
