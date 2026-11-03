@@ -34,8 +34,11 @@ public object EditorA11y {
     /** A short spoken label for an element's semantic node (TalkBack reads this on focus). */
     public fun label(element: Element): String = when (element) {
         is TextElement -> if (element.text.isBlank()) Copy.A11y.EMPTY_TEXT else Copy.A11y.textLabel(element.text)
-        is ImageElement -> Copy.A11y.PHOTO
-        is DecorElement -> decorLabel(element.supplyId)
+        // A52.5 / ADR-135 decision 6: a described piece says what Read says. A blank description is none.
+        is ImageElement -> element.description?.takeIf { it.isNotBlank() }?.let(Copy.A11y::photoDescribed) ?: Copy.A11y.PHOTO
+        is DecorElement ->
+            element.description?.takeIf { it.isNotBlank() }?.let { Copy.A11y.artDescribed(decorLabel(element.supplyId), it) }
+                ?: decorLabel(element.supplyId)
     }
 
     /**
@@ -102,6 +105,12 @@ public object EditorA11y {
          * `null` (the default) withholds the action entirely.
          */
         onReplaceSupply: ((String) -> Unit)? = null,
+        /**
+         * Opens the Describe sheet on a photo or Art piece (Bench A52.1). Added, like the two above, only when the
+         * host passes a handler, so a host with no sheet advertises no dead action. Text never gets it: its words
+         * are already read.
+         */
+        onDescribe: ((String) -> Unit)? = null,
         /** False while the editor owns a multi-selection; group reflection is outside ADR-113. */
         flipActionsEnabled: Boolean = true,
     ): List<CustomAccessibilityAction> {
@@ -139,6 +148,9 @@ public object EditorA11y {
                 if (onReplaceSupply != null) {
                     add(CustomAccessibilityAction(Copy.A11y.REPLACE_SUPPLY) { selectThen { onReplaceSupply(id) } })
                 }
+            }
+            if (onDescribe != null && (element is ImageElement || element is DecorElement)) {
+                add(CustomAccessibilityAction(Copy.A11y.DESCRIBE) { selectThen { onDescribe(id) } })
             }
             if (flipActionsEnabled && element is ImageElement) {
                 add(

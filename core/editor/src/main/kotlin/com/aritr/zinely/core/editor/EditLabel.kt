@@ -36,6 +36,9 @@ public enum class EditVerb {
     COPIER_ON, COPIER_OFF,
     FLIP_LEFT_RIGHT_ON, FLIP_LEFT_RIGHT_OFF, FLIP_TOP_BOTTOM_ON, FLIP_TOP_BOTTOM_OFF,
     INK, SPREAD, FRAMING,
+
+    /** A description set on a photo or Art piece that had none / taken off / changed (A52.4). */
+    DESCRIPTION_ADDED, DESCRIPTION_REMOVED, DESCRIPTION_CHANGED,
 }
 
 /** [EMPTY_BOX] is Add Text's first step, a text box placed with no words (A26 "Empty box taken off"). */
@@ -89,6 +92,9 @@ public fun Command.editLabel(doc: ZineDocument): EditLabel? = when (this) {
         before.flippedVertically != after.flippedVertically -> EditLabel(
             if (after.flippedVertically) EditVerb.FLIP_TOP_BOTTOM_ON else EditVerb.FLIP_TOP_BOTTOM_OFF, null,
         )
+        // A52.4 / ADR-147 decision 8: after the photo, copier and flip checks, before FRAMING (Replace photo, which also
+        // clears a description, was named by the swap above).
+        before.description != after.description -> descriptionLabel(before.description, after.description)
         // Crop/fit: a Reframe or a Reset. D2 = 2a: never "reset" because it looks like one.
         else -> EditLabel(EditVerb.FRAMING, null)
     }
@@ -101,12 +107,22 @@ public fun Command.editLabel(doc: ZineDocument): EditLabel? = when (this) {
             if (after.flippedVertically) EditVerb.FLIP_TOP_BOTTOM_ON else EditVerb.FLIP_TOP_BOTTOM_OFF, null,
         )
         before.ink != after.ink -> EditLabel(EditVerb.INK, null)
+        before.description != after.description -> descriptionLabel(before.description, after.description)
         // Only Replace changes the box: picking the same supply again still refits it. The act was a swap.
         else -> EditLabel(EditVerb.SWAP, EditKind.ART)
     }
     is MakeImageSpreadCommand -> EditLabel(EditVerb.SPREAD, EditKind.PHOTO)
     is AddPageCommand, is DeletePageCommand -> null
 }
+
+private fun descriptionLabel(before: String?, after: String?): EditLabel = EditLabel(
+    when {
+        before.isNullOrBlank() -> EditVerb.DESCRIPTION_ADDED
+        after.isNullOrBlank() -> EditVerb.DESCRIPTION_REMOVED
+        else -> EditVerb.DESCRIPTION_CHANGED
+    },
+    null,
+)
 
 private fun kindOf(element: Element): EditKind = when (element) {
     is TextElement -> EditKind.TEXT

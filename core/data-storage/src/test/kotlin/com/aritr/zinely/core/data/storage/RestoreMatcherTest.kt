@@ -1,6 +1,7 @@
 package com.aritr.zinely.core.data.storage
 
 import com.aritr.zinely.core.data.asset.ZineBackupProjectEntry
+import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
@@ -124,6 +125,40 @@ class RestoreMatcherTest {
         RestoreMatcher.match(listOf(poems, poems.copyAs("b")), listOf(olderBytes))
         assertEquals(1, decodes)
     }
+
+    /** ADR-147: a description is part of the decoded content, so it decides added versus already here. */
+    @Test
+    fun `a described photo is added beside its undescribed twin and skipped beside its identical one`(): Unit = runBlocking {
+        val plain = backup("a", "Poems")
+        val described = plain.copy(document = withPhoto(plain.document, "Mum at the gate"))
+        val differently = plain.copy(document = withPhoto(plain.document, "Mum at the allotment"))
+        val undescribedPhoto = plain.copy(document = withPhoto(plain.document, null))
+        // A different byte hash forces the decoded comparison, as an edited-then-restored shelf zine would.
+        fun shelf(of: StagedZineProject) = shelf("Poems", of.document, sha = "9".repeat(64))
+
+        assertCounts(added = 1, here = 0, RestoreMatcher.match(listOf(described), listOf(shelf(undescribedPhoto))))
+        assertCounts(added = 1, here = 0, RestoreMatcher.match(listOf(described), listOf(shelf(differently))))
+        assertCounts(added = 0, here = 1, RestoreMatcher.match(listOf(described), listOf(shelf(described))))
+        assertCounts(added = 0, here = 1, RestoreMatcher.match(listOf(undescribedPhoto), listOf(shelf(undescribedPhoto))))
+    }
+
+    private fun withPhoto(document: ZineDocument, description: String?): ZineDocument =
+        document.copy(
+            pages = document.pages.map { page ->
+                if (page.index != 2) {
+                    page
+                } else {
+                    page.copy(
+                        elements = listOf(
+                            ImageElement(
+                                id = "p", transform = Transform(0.0, 0.0, 10.0, 10.0),
+                                assetId = "a".repeat(64), description = description,
+                            ),
+                        ),
+                    )
+                }
+            },
+        )
 
     private fun assertCounts(added: Int, here: Int, match: RestoreMatch) {
         assertEquals(added to here, match.added.size to match.alreadyHereCount)

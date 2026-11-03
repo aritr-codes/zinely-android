@@ -189,7 +189,7 @@ class RoomProjectRepositoryRestoreInstrumentedTest {
                     paperSize = project.document.paperSize,
                     createdAtEpochMs = 10L,
                     updatedAtEpochMs = 20L,
-                    documentSchemaVersion = project.document.schemaVersion,
+                    documentSchemaVersion = Regex("\"schemaVersion\":(\\d+)").find(bytes.decodeToString())!!.groupValues[1].toInt(),
                     documentPath = "projects/${project.id}/document.json",
                     documentSha256 = sha256(bytes),
                     documentByteCount = bytes.size.toLong(),

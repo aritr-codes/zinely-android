@@ -18115,7 +18115,7 @@ overrule it. The number is assigned at merge. It becomes Accepted only when buil
 Accepted* are done.
 **Design:** [`v21-bench.html`](design/mockups/v21-bench.html) A52 (Describe, frozen under the same delegation), with
 [`v21-proof.html`](design/mockups/v21-proof.html) A38 and [ADR-135](#adr-135) for what Read says.
-**Builds:** nothing yet. This is the plan's step 6 (F1b) and the schema half of step 7
+**Builds:** built 2026-11-03 on `w4/build` (see [As built](#adr-147-as-built)). This is the plan's step 6 (F1b) and the schema half of step 7
 ([plan §4 F1b, §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#4-foundations--only-what-the-repository-actually-needs)),
 lane W4 of [ADR-136](#adr-136).
 **Keeps:** [ADR-133](#adr-133) decision 4 and [ADR-136](#adr-136) decision 4 (v4 is descriptions alone; paper sizes,
@@ -18342,6 +18342,51 @@ found them sound; every file:line cited was accurate. Reconciled:
 
 A second Opus Review Agent re-read the reconciliation (`f9191068`): **GO WITH FIXES**. Its one Required Fix, finding 3's
 old wording left in the index row and two plan notes, is **accepted** and fixed; its observations needed no change.
+
+#### As built (2026-11-03) {#adr-147-as-built}
+
+Built on `w4/build` with ADR-135 parts 1 and 2 in the same lane; **still Proposed**, not merged, not released.
+
+- **Format.** `CURRENT_SCHEMA_VERSION` 4; the writer stamps 3, or 4 only when a photo or Art piece holds a description;
+  `explicitNulls = false`; `IdentityMigrator(from = 3)`; `document-v4.json` and `library-backup-v2-described.zine`
+  added, every earlier fixture untouched; `schema-shape-v4.txt`. Backup tests now read `documentSchemaVersion` from the
+  serialized bytes, because the stager checks the file's own stamp against the manifest.
+- **Text and intents.** `DescriptionText` (normalise; `edit` is grapheme-safe and growth-only, and a growing edit over the
+  limit is trimmed **in the inserted text**, never in the maker's words, Review B finding 1), `Intent.SetDescription`,
+  three undo verbs, Replace photo clears the description.
+- **UI.** Describe on the photo bar (after Replace photo) and Art bar (after Flip), the `Describe` custom action, the
+  A52 sheet (every close saves; the draft is held while the sheet slides out, Review B finding 2), Bench labels
+  `Photo: …` and `<Art name>: …`.
+- **Read (ADR-135 parts 1 and 2).** `ReadStops.kt`: a semantics-only layer over the leaf (no role, click or action);
+  the turn edges ignore a press that starts inside the leaf while touch exploration is on. The leaf carries
+  `zIndex(1f)` so its stops win a touch over the edges; Compose publishes children in z order, so the platform tree
+  lists the stops after both edges while `traversalIndex` (Previous 0, page 1, Next 2) is what a reader walks.
+  **`SurfaceTraversalOrderTest` changed**: its Proof list now reads Previous, Next, page stops, and its visual-order check
+  leaves out the page's own stops. It adds a geometric check of the edges against the page, and
+  `ReadStopsA11yTest` asserts the `traversalBefore` chain Previous, stops, Next. That is a different proof of §4.5 for this
+  one surface, recorded here, not a loosening of the rule.
+- **Not built / owed.** The Room commit of a described backup is not exercised by a test (the stager and `RestoreMatcher`
+  are). `Copy.Describe.HELPER` says "Zinely reads this aloud in Read", frozen A38 copy; a screen reader speaks, not
+  Zinely, so the wording may need an A38 amendment after the listen. The TalkBack listen (owner, deferred): does the
+  field say its typed words and not only "Description"; is the "N left" state spoken on every key below 50; does the
+  first swipe after a turn land as decision 4 describes.
+- **Device passes (emulator, API 36.1, `com.aritr.zinely.w4qa`).** Pass 1 on the platform tree: the described photo
+  and Art nodes are buttons reading `Photo: …` and `Torn tape: …`; the document stamped 4 with the description and
+  went back to 3 on Undo ("Description taken off"), 4 again on Redo ("Description added"); Done, Enter and Back all
+  saved; Read showed the stops as plain Views; the beta.9 release APK refused `library-backup-v2-described.zine` with
+  "This backup needs a newer Zinely" and restored nothing. At 200% text on 360dp the bar scrolls (Describe is off the
+  right edge until scrolled), and with the keyboard open the helper line's last line is clipped inside the scrolling
+  sheet while Done stays in view. At 411dp the Art bar's Describe and Duplicate labels sit 2-3 px apart. Pass 2 (first
+  time reader): Describe's purpose is clear only once the helper line is read; the Art bar's seven verbs are crowded.
+  Not done: a backup *written by this build* of an undescribed zine restored on beta.9 (covered by the byte-identity
+  tests instead); pixel diff of the sheet against A52 (values were ported from the CSS, inspected, not diffed);
+  TalkBack on device.
+- **Reviews (Opus, 2026-11-03), A: format and backup compatibility; B: accessibility, UX and Compose.** Both **GO WITH
+  FIXES**. Taken: the mid-text insert at the cap (B1), the exit-animation reset (B2), the two Art-bar goldens re-recorded
+  on CI (B3), the missing restore-matching tests (A R1), an ARCHITECTURE sentence that overclaimed (A R2), a geometric
+  assertion on the edges (B rec. 3), an Only-Art platform case (B rec. 4). Not taken: strengthening the `shown`-guard
+  test with a double tap (a Compose test cannot click twice before the dialog closes; the guard is a one-line
+  `rememberUpdatedState` read, covered by the single-save assertion), reopening A38's frozen helper wording now.
 
 ## ADR-146 {#adr-146}
 

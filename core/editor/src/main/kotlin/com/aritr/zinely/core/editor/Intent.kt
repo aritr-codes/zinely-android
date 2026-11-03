@@ -160,6 +160,14 @@ public sealed interface Intent {
     public data class ToggleCopier(val id: String) : Intent
 
     /**
+     * Set a photo's or Art piece's description ([ADR-147](../../../../../../../../docs/DECISIONS.md#adr-147), Bench
+     * A52): one whole-element command, so one undo step. [text] is normalised by [DescriptionText.normalise] (control
+     * characters to spaces, trimmed, blank = none); the cap is the field's edit filter, not a rule here. A missing
+     * id, a text element, or words that normalise to what is already stored are no-ops.
+     */
+    public data class SetDescription(val id: String, val text: String) : Intent
+
+    /**
      * Toggle one reflection axis on a Photo or Art element. Text, missing ids and off-page ids are
      * no-ops. Each accepted tap is one typed edit command, one autosave and one undo step (ADR-113).
      */

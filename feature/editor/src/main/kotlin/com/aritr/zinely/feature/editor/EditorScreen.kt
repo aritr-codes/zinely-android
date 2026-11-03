@@ -377,6 +377,10 @@ public fun EditorScreen(
     var artSheetFor by rememberSaveable(stateSaver = BenchArtPurposeSaver) { mutableStateOf<BenchArtPurpose?>(null) }
     val artSheetOpen = artSheetFor != null
 
+    // Bench A52 / ADR-147: the photo or Art piece whose Describe sheet is open. One id, like the cabinet's
+    // purpose: the draft text lives in the sheet, and every close saves it.
+    var describeFor by rememberSaveable { mutableStateOf<String?>(null) }
+
     // ----- C5 (ADR-095) -------------------------------------------------------------------
     // The page grid is *summoned*, never default (row 5.11a): this flag is the whole of its existence,
     // and while it is false the overlay composes nothing at all.
@@ -2059,6 +2063,9 @@ public fun EditorScreen(
                             // §8's `Replace supply`, taking the same path the visible verb takes: name the
                             // element the cabinet is being opened for.
                             onReplaceSupply = { id -> artSheetFor = BenchArtPurpose.Replace(id) },
+                            // A52.1's `Describe` action: the same sheet the visible verb opens, so a TalkBack maker
+                            // does not have to find the bar.
+                            onDescribe = { id -> describeFor = id },
                             // OD-49's non-visual half. The drawn warning needs a gesture or a selection;
                             // this needs neither, because a maker reading the page by touch should be able
                             // to discover that a box is off the edge without first selecting it.
@@ -2282,6 +2289,8 @@ public fun EditorScreen(
                                 dispatch(Intent.DuplicateElement(id, pageSizePt))
                                 raiseUndoSnack(before, Copy.Snack.DUPLICATED)
                             }
+                            Copy.BenchVerbs.DESCRIBE ->
+                                if (ctxElement is ImageElement || ctxElement is DecorElement) describeFor = ctxElement.id
                             Copy.BenchVerbs.DELETE -> softDelete(uiState.selection)
                             // The same frozen label has two deliberately disjoint flows: Photo reuses the
                             // Android image pipeline; Art reopens its cabinet. Neither may fall through.
@@ -2682,6 +2691,25 @@ public fun EditorScreen(
             onPick = placeSupply,
             persisted = artShortcuts,
             onEditPersisted = onEditArtShortcuts,
+        )
+
+        // Bench A52 / ADR-147: Describe. Every close saves; the reducer drops an unchanged one.
+        val describeTarget = describeFor?.let { id -> uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id } }
+        // The sheet slides out after `describeFor` clears; it keeps drawing the piece it was opened on (its title,
+        // its words) until it is gone, rather than flashing a photo title or an empty field.
+        val lastDescribed = remember { arrayOfNulls<com.aritr.zinely.core.model.Element>(1) }
+        if (describeTarget != null) lastDescribed[0] = describeTarget
+        val shownDescribed = describeTarget ?: lastDescribed[0]
+        DescribeSheet(
+            visible = describeTarget is ImageElement || describeTarget is DecorElement,
+            kind = if (shownDescribed is DecorElement) BenchVerbKind.DECOR else BenchVerbKind.PHOTO,
+            opening = when (shownDescribed) {
+                is ImageElement -> shownDescribed.description.orEmpty()
+                is DecorElement -> shownDescribed.description.orEmpty()
+                else -> ""
+            },
+            onSave = { text -> describeFor?.let { dispatch(Intent.SetDescription(it, text)) } },
+            onClose = { describeFor = null },
         )
 
         // ADR-109 / frozen Bench A19. The one-page editor must explain the physical two-page result

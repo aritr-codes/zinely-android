@@ -8,6 +8,12 @@ import kotlinx.serialization.Serializable
  * migration framework (`:core:data`) chains `vN → vN+1` migrators up to this value on open
  * (S2 spike §6, [docs/DECISIONS.md ADR-020]).
  *
+ * **v4 (2026-11-03) — `description` on photos and Art** ([ADR-147](../../../../../../../docs/DECISIONS.md#adr-147)).
+ * This is the newest version the build **reads**. The writer stamps 3, or 4 only when some element holds a
+ * description (never below 3), so a zine with none stays a v3 file byte for byte and older builds still open
+ * and restore it. Every later bump owes the writer one line raising the stamp when the document uses its
+ * addition (see `JsonDocumentSerializer.serialize`).
+ *
  * **v3 (2026-08-27) — Photo/Art flip state.** Photo gains independent horizontal/vertical flags;
  * Art keeps its historical [DecorElement.mirrored] horizontal wire field and gains a vertical flag.
  * The v2→v3 migration is structurally empty, but the bump is the anti-downgrade gate: a v2 build must
@@ -25,7 +31,7 @@ import kotlinx.serialization.Serializable
  * Zinely" and "this zine is broken". The v1→v2 step is therefore an **identity** migrator
  * (`DocumentMigrations` requires a contiguous chain; see `JsonDocumentSerializer.MIGRATORS`).
  */
-public const val CURRENT_SCHEMA_VERSION: Int = 3
+public const val CURRENT_SCHEMA_VERSION: Int = 4
 
 /**
  * The root of a zine document — a `@Serializable` tree persisted as JSON (S2 spike §3,
@@ -109,6 +115,12 @@ public data class ImageElement(
     val flippedHorizontally: Boolean = false,
     /** Reflect photo content across the element's own horizontal centre line, without moving its box. */
     val flippedVertically: Boolean = false,
+    /**
+     * What the photo shows, in the maker's words (ADR-135, ADR-147). Absent (`null`) means none; the document
+     * `Json` has `explicitNulls = false`, so a null is not written and an undescribed zine stays a v3 file.
+     * Never generated. Normalised once at the reducer; the reader tolerates any string.
+     */
+    val description: String? = null,
 ) : Element
 
 /** A run of text with a style. */
@@ -166,6 +178,8 @@ public data class DecorElement(
     val mirrored: Boolean = false,
     /** Reflects the authored outline across its own horizontal centre line. */
     val flippedVertically: Boolean = false,
+    /** What the mark means, in the maker's words (ADR-135, ADR-147); absent when none. See [ImageElement.description]. */
+    val description: String? = null,
 ) : Element
 
 /**
