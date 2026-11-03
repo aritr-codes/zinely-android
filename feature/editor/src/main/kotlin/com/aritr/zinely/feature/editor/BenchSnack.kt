@@ -417,6 +417,9 @@ internal fun undoSnackLine(step: Effect.HistoryStepped, currentPageIndex: Int): 
         EditVerb.FLIP_TOP_BOTTOM_OFF -> if (undo) u.flipPutBack(u.TOP_BOTTOM) else u.flipRemoved(u.TOP_BOTTOM)
         EditVerb.INK -> if (undo) u.INK_PUT_BACK else u.INK_CHANGED
         EditVerb.FRAMING -> if (undo) u.FRAMING_PUT_BACK else u.FRAMING_CHANGED
+        EditVerb.DESCRIPTION_ADDED -> if (undo) u.DESCRIPTION_TAKEN_OFF else u.DESCRIPTION_ADDED
+        EditVerb.DESCRIPTION_REMOVED -> if (undo) u.DESCRIPTION_PUT_BACK else u.DESCRIPTION_REMOVED
+        EditVerb.DESCRIPTION_CHANGED -> if (undo) u.DESCRIPTION_PUT_BACK else u.DESCRIPTION_CHANGED
         EditVerb.SPREAD -> if (undo) u.SPREAD_PUT_BACK else {
             // Names its own pages, so it never takes the page clause.
             val (left, right) = checkNotNull(imageSpreadPageNumbers(currentPageIndex))

@@ -172,6 +172,18 @@ public object Copy {
         public fun textLabel(text: String): String = "Text: $text"
 
         /**
+         * A described photo says what Read says ([ADR-135](../../../../../../../../docs/DECISIONS.md#adr-135)
+         * decision 6, Bench A52.5): `Photo: ` + the description. Still a button; an undescribed photo is [PHOTO].
+         */
+        public fun photoDescribed(description: String): String = "$PHOTO: $description"
+
+        /** A described Art piece: its name + `: ` + the description (A52.5). An undescribed one says [name] alone. */
+        public fun artDescribed(name: String, description: String): String = "$name: $description"
+
+        /** The custom action that opens the Describe sheet on a photo or Art node (A52.1). */
+        public const val DESCRIBE: String = "Describe"
+
+        /**
          * Spoken **state** for an element whose drawn extent leaves the printer's reach — the non-visual
          * twin of the keep-clear warning ([OD-49](../../../../../../../../docs/DECISIONS.md#adr-102-p2c)).
          *
@@ -237,6 +249,9 @@ public object Copy {
         public const val COPIER_OFF: String = "Off"
         public const val FLIP: String = "Flip"
         public const val REPLACE: String = "Replace"
+
+        /** Opens the Describe sheet on a photo or Art piece (`v21-bench.html` A52.1). */
+        public const val DESCRIBE: String = "Describe"
         public const val DUPLICATE: String = "Duplicate"
         public const val DELETE: String = "Delete"
 
@@ -1041,6 +1056,13 @@ public object Copy {
         public const val SPREAD_PUT_BACK: String = "Photo back on one page"
         public const val FRAMING_PUT_BACK: String = "Framing put back"
         public const val FRAMING_CHANGED: String = "Framing changed"
+
+        /** `v21-bench.html` A52.4: a description step, by what it did (none to words, words to none, words to words). */
+        public const val DESCRIPTION_TAKEN_OFF: String = "Description taken off"
+        public const val DESCRIPTION_ADDED: String = "Description added"
+        public const val DESCRIPTION_PUT_BACK: String = "Description put back"
+        public const val DESCRIPTION_REMOVED: String = "Description removed"
+        public const val DESCRIPTION_CHANGED: String = "Description changed"
 
         /** A26's page clause: only when the step moved the maker to another page, which replaces "Changed page N". */
         public fun onPage(line: String, pageNumber: Int): String = "$line, page $pageNumber"
@@ -2377,6 +2399,25 @@ public object Copy {
             }
     }
 
+    /**
+     * The Describe sheet ([ADR-147](../../../../../../../docs/DECISIONS.md#adr-147), `v21-bench.html` A52.2): one field,
+     * the helper line A38 owns, one Done. Words verbatim from A52; the apostrophe in [HELPER] is the typographic one.
+     */
+    public object Describe {
+        public const val TITLE_PHOTO: String = "Describe this photo"
+        public const val TITLE_ART: String = "Describe this piece"
+        public const val LABEL: String = "Description"
+        public const val EXAMPLE_PHOTO: String = "e.g. Mum at the allotment gate, holding a marrow"
+        public const val EXAMPLE_ART: String = "e.g. this way to the flower end"
+        public const val HELPER: String = "Zinely reads this aloud in Read. It isn’t printed or put in the PDF."
+        public const val DONE: String = "Done"
+
+        /** The count appears only when this many or fewer are left (A52.2). */
+        public const val COUNT_SHOWN_AT: Int = 50
+
+        public fun left(remaining: Int): String = "$remaining left"
+    }
+
     /** The Read act — the finished zine, one leaf at a time (`ProofRead.kt`). */
     public object ProofRead {
         // `CONTENT_DESCRIPTION` was **deleted** by ADR-101 P5, and not because it went out of date. It
@@ -2394,6 +2435,12 @@ public object Copy {
         /** The two `.tapz` edges. Invisible by design, so the label is the whole control. */
         public const val PREVIOUS_PAGE: String = "Previous page"
         public const val NEXT_PAGE: String = "Next page"
+
+        /** [ADR-135](../../../../../../../docs/DECISIONS.md#adr-135) decision 2: a page with no stops and no Art drawn on it. */
+        public const val BLANK_PAGE: String = "Blank page"
+
+        /** A page with no stops but Art drawn on it: not "blank" while a drawing sits there. */
+        public const val ONLY_ART: String = "Only Art on this page"
 
         /**
          * **The readout speaks the booklet, and still counts** (ADR-101 P5).
