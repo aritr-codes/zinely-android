@@ -152,7 +152,8 @@ class LibraryBackupFixtureTest {
      * build branch by the [ZineLibraryBackupWriter] from two zines of the first archive: `zine-v4`, the
      * `:core:data` `document-v4.json` (a described photo and a described Art piece), and `zine-v3`, the v3 corpus
      * file unchanged. Its manifest records 4 and 3. It is what a v4 build writes; a build before v4 refuses all of
-     * it (the whole backup), which the cross-version device pass checks. Frozen like its siblings.
+     * it (the whole backup). That was confirmed once on an emulator with the beta.9 APK (2026-11-03: "This backup
+     * needs a newer Zinely", nothing restored); no automated test runs an older build. Frozen like its siblings.
      */
     @Test
     fun `the frozen described archive stages with its descriptions and both versions`() = runBlocking {

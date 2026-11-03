@@ -2695,12 +2695,17 @@ public fun EditorScreen(
 
         // Bench A52 / ADR-147: Describe. Every close saves; the reducer drops an unchanged one.
         val describeTarget = describeFor?.let { id -> uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id } }
+        // The sheet slides out after `describeFor` clears; it keeps drawing the piece it was opened on (its title,
+        // its words) until it is gone, rather than flashing a photo title or an empty field.
+        val lastDescribed = remember { arrayOfNulls<com.aritr.zinely.core.model.Element>(1) }
+        if (describeTarget != null) lastDescribed[0] = describeTarget
+        val shownDescribed = describeTarget ?: lastDescribed[0]
         DescribeSheet(
             visible = describeTarget is ImageElement || describeTarget is DecorElement,
-            kind = if (describeTarget is DecorElement) BenchVerbKind.DECOR else BenchVerbKind.PHOTO,
-            opening = when (describeTarget) {
-                is ImageElement -> describeTarget.description.orEmpty()
-                is DecorElement -> describeTarget.description.orEmpty()
+            kind = if (shownDescribed is DecorElement) BenchVerbKind.DECOR else BenchVerbKind.PHOTO,
+            opening = when (shownDescribed) {
+                is ImageElement -> shownDescribed.description.orEmpty()
+                is DecorElement -> shownDescribed.description.orEmpty()
                 else -> ""
             },
             onSave = { text -> describeFor?.let { dispatch(Intent.SetDescription(it, text)) } },

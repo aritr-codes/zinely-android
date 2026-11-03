@@ -83,8 +83,20 @@ internal fun DescribeSheet(
     onSave: (String) -> Unit,
     onClose: () -> Unit,
 ) {
-    var draft by rememberSaveable(visible, opening, stateSaver = TextFieldValue.Saver) {
+    // Keyed on `opening` alone, not on `visible`: when the sheet closes the draft must stay what it was while the
+    // sheet slides out, or the maker watches their words reset (and the example text reappear) at the moment
+    // A52.4 promises they are kept. A reopening starts from `opening` again via `fresh`, which survives rotation.
+    var draft by rememberSaveable(opening, stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(opening, TextRange(opening.length)))
+    }
+    var fresh by rememberSaveable { mutableStateOf(true) }
+    LaunchedEffect(visible) {
+        if (!visible) {
+            fresh = true
+        } else if (fresh) {
+            draft = TextFieldValue(opening, TextRange(opening.length))
+            fresh = false
+        }
     }
     // The sheet slides out for a moment after it closes; a second Done or a late scrim tap must not save twice.
     val shown by rememberUpdatedState(visible)
@@ -116,7 +128,7 @@ internal fun DescribeSheet(
         DescribeBody(
             draft = draft,
             onDraft = { next ->
-                val text = DescriptionText.edit(opening, next.text)
+                val text = DescriptionText.edit(opening, draft.text, next.text)
                 draft = if (text == next.text) next else TextFieldValue(text, TextRange(minOf(next.selection.end, text.length)))
             },
             example = if (photo) Copy.Describe.EXAMPLE_PHOTO else Copy.Describe.EXAMPLE_ART,

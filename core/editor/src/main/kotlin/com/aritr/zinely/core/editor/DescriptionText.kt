@@ -29,9 +29,27 @@ public object DescriptionText {
      * only**: the limit is the larger of [MAX_CODE_POINTS] and the opening's own length, and the cut falls on a
      * grapheme boundary so an emoji or a combined mark goes in whole or not at all.
      */
-    public fun edit(opening: String, next: String): String {
+    public fun edit(opening: String, next: String): String = edit(opening, "", next)
+
+    /**
+     * As [edit], with the [previous] draft, so a growing edit that is over the limit is trimmed **in the text
+     * that was just inserted** and never in the maker's own words (A52.3: the app refuses what does not fit).
+     * The inserted span is what lies between the longest common prefix and suffix of [previous] and [next]; with
+     * an empty [previous] that is all of [next], i.e. the tail is cut.
+     */
+    public fun edit(opening: String, previous: String, next: String): String {
         val limit = maxOf(MAX_CODE_POINTS, opening.codePointCount(0, opening.length))
-        return cap(spaceControls(next), limit)
+        val spaced = spaceControls(next)
+        if (spaced.codePointCount(0, spaced.length) <= limit) return spaced
+        val before = spaceControls(previous)
+        var p = 0
+        while (p < before.length && p < spaced.length && before[p] == spaced[p]) p++
+        var s = 0
+        while (s < before.length - p && s < spaced.length - p && before[before.length - 1 - s] == spaced[spaced.length - 1 - s]) s++
+        val head = spaced.substring(0, p)
+        val tail = spaced.substring(spaced.length - s)
+        val room = limit - head.codePointCount(0, head.length) - tail.codePointCount(0, tail.length)
+        return if (room < 0) cap(spaced, limit) else head + cap(spaced.substring(p, spaced.length - s), room) + tail
     }
 
     private fun spaceControls(s: String): String {

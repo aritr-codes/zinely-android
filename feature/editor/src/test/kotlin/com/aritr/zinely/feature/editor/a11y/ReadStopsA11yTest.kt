@@ -64,6 +64,8 @@ class ReadStopsA11yTest {
                     ImageElement("p", Transform(20.0, 20.0, 160.0, 100.0), assetId = "a".repeat(64), description = "A moth on the porch wall"),
                     DecorElement("d", Transform(150.0, 240.0, 30.0, 30.0), supplyId = "tape.torn", ink = ColorRgba.BLACK),
                 )
+            } else if (i == 2) {
+                listOf(DecorElement("d2", Transform(20.0, 20.0, 60.0, 30.0), supplyId = "tape.torn", ink = ColorRgba.BLACK))
             } else {
                 emptyList()
             },
@@ -154,6 +156,18 @@ class ReadStopsA11yTest {
         composeRule.waitForIdle()
         val labels = platformTraversalStops(composeRule.activity).map { it.label }
         assertEquals(1, labels.count { it == Copy.ProofRead.BLANK_PAGE })
+    }
+
+    @Test
+    fun a_page_with_only_undescribed_Art_says_Only_Art_on_this_page() {
+        render()
+        repeat(2) {
+            composeRule.onNodeWithTag(ProofReadNextTestTag).performSemanticsAction(SemanticsActions.OnClick)
+            composeRule.waitForIdle()
+        }
+        val labels = platformTraversalStops(composeRule.activity).map { it.label }
+        assertEquals(1, labels.count { it == Copy.ProofRead.ONLY_ART })
+        assertEquals(0, labels.count { it == Copy.ProofRead.BLANK_PAGE })
     }
 
     private fun tapStageAt(rootX: Float, rootY: Float) {

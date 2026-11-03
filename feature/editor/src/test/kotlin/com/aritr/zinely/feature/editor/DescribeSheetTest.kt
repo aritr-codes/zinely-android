@@ -160,6 +160,19 @@ class DescribeSheetTest {
     }
 
     @Test
+    fun closing_keeps_the_typed_words_while_the_sheet_leaves_and_a_reopening_starts_from_the_saved_ones() {
+        host()
+        composeRule.onNodeWithTag(DescribeFieldTestTag).performTextInput("kept")
+        composeRule.onNodeWithTag(DescribeDoneTestTag).performClick()
+        composeRule.waitForIdle()
+        assertEquals(listOf("kept"), saved)
+        // The host does not store it, so a reopening shows `opening` ("") again, not the stale draft.
+        open = true
+        composeRule.waitForIdle()
+        assertEquals("", fieldText())
+    }
+
+    @Test
     fun the_sheet_saves_once_however_many_ways_out_are_tapped() {
         host()
         composeRule.onNodeWithTag(DescribeFieldTestTag).performTextInput("once")

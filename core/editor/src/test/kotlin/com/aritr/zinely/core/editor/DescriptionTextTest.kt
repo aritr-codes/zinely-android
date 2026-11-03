@@ -2,6 +2,8 @@ package com.aritr.zinely.core.editor
 
 import net.jqwik.api.ForAll
 import net.jqwik.api.Property
+import net.jqwik.api.constraints.AlphaChars
+import net.jqwik.api.constraints.NumericChars
 import net.jqwik.api.constraints.StringLength
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -85,6 +87,36 @@ class DescriptionTextTest {
     }
 
     @Test
+    fun `an insert in the middle of a full description is refused, never eaten from the tail`() {
+        val full = "a".repeat(100) + "TAIL" + "b".repeat(146) // 250 code points
+        assertEquals(250, cps(full))
+        val typed = full.substring(0, 100) + "X" + full.substring(100)
+        assertEquals(full, DescriptionText.edit("", full, typed))
+    }
+
+    @Test
+    fun `a paste in the middle is trimmed to the room left, keeping both sides whole`() {
+        val before = "a".repeat(100) + "TAIL" + "b".repeat(136) // 240
+        val pasted = before.substring(0, 100) + "0123456789ABCDEF" + before.substring(100)
+        val out = DescriptionText.edit("", before, pasted)
+        assertEquals(250, cps(out))
+        assertEquals(before.substring(0, 100) + "0123456789" + before.substring(100), out)
+    }
+
+    @Test
+    fun `an insert at the end keeps cutting the tail of the inserted text`() {
+        val before = "z".repeat(245)
+        assertEquals("z".repeat(245) + "12345", DescriptionText.edit("", before, before + "1234567890"))
+    }
+
+    @Test
+    fun `deleting and replacing are not growth`() {
+        val full = "q".repeat(250)
+        assertEquals("q".repeat(249), DescriptionText.edit("", full, "q".repeat(249)))
+        assertEquals("q".repeat(249) + "r", DescriptionText.edit("", full, "q".repeat(249) + "r"))
+    }
+
+    @Test
     fun `typed control characters become spaces as they are typed`() {
         assertEquals("a b", DescriptionText.edit("", "a\nb"))
     }
@@ -97,6 +129,23 @@ class DescriptionTextTest {
         val out = DescriptionText.edit(opening, next)
         assertTrue(cps(out) <= maxOf(DescriptionText.MAX_CODE_POINTS, cps(opening)))
         assertEquals(out, DescriptionText.edit(opening, out))
+    }
+
+    @Property
+    fun `an insert never exceeds the limit and never cuts the text either side of it`(
+        @ForAll @AlphaChars @StringLength(max = 300) previousRaw: String,
+        // Digits against letters, so where the insert starts is unambiguous.
+        @ForAll @NumericChars @StringLength(max = 40) insert: String,
+        @ForAll cut: Int,
+    ) {
+        val previous = previousRaw.take(DescriptionText.MAX_CODE_POINTS)
+        val at = Math.floorMod(cut, previous.length + 1)
+        val head = previous.substring(0, at)
+        val tail = previous.substring(at)
+        val out = DescriptionText.edit("", previous, head + insert + tail)
+        assertTrue(cps(out) <= DescriptionText.MAX_CODE_POINTS)
+        assertTrue(out.startsWith(head), "head cut")
+        assertTrue(out.endsWith(tail), "tail cut")
     }
 
     @Property

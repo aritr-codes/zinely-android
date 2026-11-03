@@ -163,7 +163,7 @@ class BenchDecorGoldenTest {
      * [assertVerbAtFullStrength] carries the measurement and explains it; this test's job is the set.
      */
     @Test
-    fun the_decor_verb_row_draws_its_six_frozen_verbs_and_none_of_them_is_dim() {
+    fun the_decor_verb_row_draws_its_seven_frozen_verbs_and_none_of_them_is_dim() {
         decorBar(darkTheme = false)
 
         // ⚠ **Asserted per verb, not over the card.** The first cut counted `inkSoft` across the whole
