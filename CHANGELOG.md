@@ -18,6 +18,14 @@ Changes since the beta.9 app.
 
 ### Added
 
+- Describe a photo or an Art piece, for readers who cannot see it ([ADR-147](docs/DECISIONS.md#adr-147), Bench A52).
+  Select a photo or an Art piece and tap **Describe** (also a TalkBack action) to type up to 250 characters. Read
+  now speaks the page: each text's words, `Photo` or `Photo: <your words>`, and a described Art piece by name, in the
+  same order the Bench uses; a page with nothing to say is `Blank page` or `Only Art on this page`. Descriptions are
+  never printed or put in the PDF, and Undo says what it undoes. Replacing a photo clears its description; Duplicate
+  and replacing an Art piece keep it.
+- Saved-file format v4 holds the description. A zine with no description is still saved exactly as before.
+
 - Website note, not the app: the public pages, including the homepage tone and the privacy policy (last updated 30 October 2026), are rewritten in plain words (ADR-118 plain-words rule, R39). Some changelog lines are corrected to match what shipped. The privacy policy now also explains the storage permission Android adds on Android 9 and older. No limits, download details or app behaviour changed.
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),
   [D-143](docs/design/V2-SPEC-DEFECTS.md#d-143)), Proof A43 and A44, Backup A45 and Library A46. The Library
@@ -105,6 +113,12 @@ Changes since the beta.9 app.
 - Replaced the standalone website Accessibility page with a short accessibility statement and contact route
   in the home-page About section. Accessibility remains a site-wide implementation requirement rather than a
   primary navigation destination.
+
+### Known limitations
+
+- A backup that holds a described photo or Art piece can be restored only by the first Zinely release that includes
+  Describe, or newer. An older Zinely says the backup needs a newer Zinely and restores nothing from it. A backup of zines with no
+  descriptions restores in older builds as before. The TalkBack listen for Read's new stops is still owed.
 
 ### Fixed
 

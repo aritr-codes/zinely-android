@@ -24,6 +24,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -33,10 +34,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.traversalIndex
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -44,6 +55,8 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import android.content.Context
+import android.view.accessibility.AccessibilityManager
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.DocumentDefaults
 import com.aritr.zinely.core.model.Page
@@ -223,9 +236,12 @@ public fun ProofReadAct(
         verticalArrangement = Arrangement.Center,
     ) {
         val thresholdPx = with(LocalDensity.current) { DRAG_TURN_THRESHOLD.toPx() }
+        // The leaf's bounds in the window, for the turn edges' touch-exploration guard (ADR-135 decision 1).
+        var leafBounds by remember { mutableStateOf(Rect.Zero) }
         Box(
             modifier = Modifier
                 .weight(1f)
+                .semantics { isTraversalGroup = true }
                 // **The turn edges have to belong to the book.** The frozen design is a 390px phone frame,
                 // where 30%-wide edges sit right beside the leaf. Unbounded, they follow the *window*: a
                 // device pass in landscape found both chevrons marooned ~800px out in empty desk, pointing
@@ -264,12 +280,19 @@ public fun ProofReadAct(
             // traversal follows declaration, and V2-CONSTITUTION §4.5 requires it to follow the *visual*
             // row: a "Previous page" reached after a control drawn to its right is the exact divergence
             // `SurfaceTraversalOrderTest` exists to catch.
+            //
+            // ADR-135: the leaf carries `zIndex(1f)` so its stops sit above both edges for touch exploration
+            // (touching the page finds its stops, not "Next page") while declaration order stays the visual row;
+            // `traversalIndex` restates it (Previous, the page's stops, Next). Nothing is drawn differently: the
+            // edges paint only a chevron, which lies outside the leaf.
             TapEdge(
                 label = Copy.ProofRead.PREVIOUS_PAGE,
                 tag = ProofReadPrevTestTag,
                 forward = false,
                 enabled = index > 0,
                 onTurn = { index -= 1 },
+                leafBounds = { leafBounds },
+                order = 0f,
                 modifier = Modifier.align(Alignment.CenterStart),
             )
             BookLeaf(
@@ -279,6 +302,7 @@ public fun ProofReadAct(
                 pageSizePt = pageSizePt,
                 defaults = defaults,
                 imageBytes = imageBytes,
+                onLeafBounds = { leafBounds = it },
             )
             TapEdge(
                 label = Copy.ProofRead.NEXT_PAGE,
@@ -286,6 +310,8 @@ public fun ProofReadAct(
                 forward = true,
                 enabled = index < leaves.lastIndex,
                 onTurn = { index += 1 },
+                leafBounds = { leafBounds },
+                order = 2f,
                 modifier = Modifier.align(Alignment.CenterEnd),
             )
         }
@@ -356,14 +382,36 @@ private fun TapEdge(
     forward: Boolean,
     enabled: Boolean,
     onTurn: () -> Unit,
+    leafBounds: () -> Rect,
+    order: Float,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    var coords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    // True from a press that began inside the leaf, with touch exploration on, until that gesture ends. With
+    // touch exploration on, TalkBack's double tap on a focused node with no click action taps the centre of its
+    // bounds (R31.2) -- inside the leaf, under an edge -- and that must not turn the page. The semantic click
+    // action (a double tap on "Previous page" / "Next page" themselves) is not a press, so it is unaffected.
+    var inLeaf by remember { mutableStateOf(false) }
     BoxWithConstraints(modifier = modifier.fillMaxHeight()) {
         Box(
             modifier = Modifier
                 .width(maxWidth * TAP_EDGE_FRACTION)
                 .fillMaxHeight()
                 .testTag(tag)
+                .onGloballyPositioned { coords = it }
+                .pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val down = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.changedToDown() }
+                            val c = coords
+                            if (down != null && c != null && c.isAttached) {
+                                inLeaf = touchExploring(context) && leafBounds().contains(c.localToRoot(down.position))
+                            }
+                            if (awaitPointerEvent(PointerEventPass.Final).changes.none { it.pressed }) inLeaf = false
+                        }
+                    }
+                }
                 // **No ripple**, and this is a fix rather than a preference. The zone is 30% of the stage
                 // wide and full height, and the right edge is declared *after* the leaf — so the stock
                 // ripple washed a grey circle across the user's artwork on every forward turn and, because
@@ -375,8 +423,15 @@ private fun TapEdge(
                     indication = null,
                     enabled = enabled,
                     role = Role.Button,
-                ) { onTurn() }
-                .semantics { contentDescription = label },
+                ) {
+                    val ignore = inLeaf
+                    inLeaf = false
+                    if (!ignore) onTurn()
+                }
+                .semantics {
+                    contentDescription = label
+                    traversalIndex = order
+                },
             contentAlignment = Alignment.Center,
         ) {
             // The hint that stops the first tap being a silent no-op — and, by *disappearing*, the
@@ -402,6 +457,9 @@ private fun TapEdge(
 }
 
 private const val TAP_EDGE_FRACTION = 0.30f
+
+private fun touchExploring(context: Context): Boolean =
+    (context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager)?.isTouchExplorationEnabled == true
 
 /** The frozen `.tapz` chevrons — the same 24-unit paths the fold guide's nav arrows use. */
 private const val ICON_CHEVRON_LEFT = "M15 5l-7 7 7 7"
@@ -477,6 +535,7 @@ private fun BookLeaf(
     pageSizePt: PtSize,
     defaults: DocumentDefaults,
     imageBytes: AssetBytesSource,
+    onLeafBounds: (Rect) -> Unit,
 ) {
     val colors = rememberLitSheetPalette()
     val leafGrain = rememberZinelyV21GrainBrush(LEAF_GRAIN_TILE)
@@ -485,7 +544,7 @@ private fun BookLeaf(
         // used to supply and the rewrite briefly dropped, which put the sheet edge-to-edge against the
         // screen. A booklet that touches both bezels is not an object resting on a desk; it is a
         // background, and the whole reason for this package is that the reader should read as an object.
-        modifier = Modifier.fillMaxSize().padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 12.dp),
+        modifier = Modifier.zIndex(1f).fillMaxSize().padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
         val wPx = constraints.maxWidth.toFloat()
@@ -539,6 +598,8 @@ private fun BookLeaf(
             Box(
                 modifier = Modifier
                     .testTag(proofReadPageTag(leaf.pageNumber))
+                    .onGloballyPositioned { onLeafBounds(it.boundsInRoot()) }
+                    .semantics { isTraversalGroup = true; traversalIndex = 1f }
                     .size(outW, outH)
                     // The printed shadow: an offset copy of the sheet, no blur. See [zinelyV21HardShadow]
                     // for why V2.1 draws depth this way rather than with elevation.
@@ -549,18 +610,24 @@ private fun BookLeaf(
                     // `.leaf::after` — the paper's own tooth, multiplied into the user's page. Placed here
                     // rather than as a sibling because it must fall ON the printing: paper takes ink.
                     .zinelyV21Grain(leafGrain, LEAF_GRAIN_ALPHA, ZinelyV21Grain.PaperBlend)
-                    // The card is decoration around the render; the act's own label and the live readout
-                    // carry the a11y meaning, so this adds no traversable stop per page.
-                    .clearAndSetSemantics { },
             ) {
-                PagePreview(
-                    tape = tape,
-                    sheet = pageSizePt,
-                    screenPxPerPt = scale,
+                // The card and its render are decoration: the stops layer below (ADR-135) is what a screen
+                // reader finds, so this subtree stays cleared and adds no traversable stop of its own.
+                Box(Modifier.fillMaxSize().clearAndSetSemantics { }) {
+                    PagePreview(
+                        tape = tape,
+                        sheet = pageSizePt,
+                        screenPxPerPt = scale,
+                        modifier = Modifier.fillMaxSize(),
+                        imageBytes = imageBytes,
+                    )
+                    if (!leaf.solo) Gutter(spineOnLeft = leaf.spineOnLeft)
+                }
+                ReadStopsLayer(
+                    stops = remember(page, pageSizePt) { readStops(page, pageSizePt) },
+                    scalePx = scale,
                     modifier = Modifier.fillMaxSize(),
-                    imageBytes = imageBytes,
                 )
-                if (!leaf.solo) Gutter(spineOnLeft = leaf.spineOnLeft)
             }
             if (!leaf.solo && !leaf.spineOnLeft) StackEdge(outH, behind, atStart = false)
         }
