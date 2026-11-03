@@ -133,10 +133,11 @@ says what was checked.
 
 ### Added
 
-- Turn a piece with its knob; it snaps to quarter turns.
+- Turn a piece with its knob; it snaps to a quarter turn when close to one.
 - Two fingers anywhere on the page now turn the selected piece, even a small one.
 - One finger on the middle of a small piece now moves it, and a double-tap there opens it.
-- A tap just beside a chosen small piece now picks the piece you tapped, or clears the choice on blank paper.
+- A tap just beside a chosen small piece now picks the piece you tapped, or clears the choice on blank paper,
+  unless the tap lands on one of its handle marks.
 - Typing into a turned piece of text now shows the words turned, inside the piece.
 - Straighten button in Arrange > Turn.
 - Repeated Move, Size or Turn taps in Arrange are now one Undo.
@@ -157,7 +158,7 @@ says what was checked.
 - The Art sheet keeps your Recent and Favourite pieces after the app is closed. They stay on this phone only and are not in a
   Zinely backup file.
 - Typing text on the page: the keyboard's Enter key now starts a new line instead of finishing the edit. Tap
-  Done in the style row, or press Back, to finish.
+  Done in the style row, or press Back, to finish (on some phones the first Back only hides the keyboard).
 
 ### Known limitations
 
@@ -171,6 +172,12 @@ None of these blocks the release; each is accepted and stated here.
 - **Turning:** over the dark area beside the page the knob's line is hard to see (the knob itself stays
   visible). The knob's own touch area still takes a tap meant for what is under it. While the first-run hint is
   showing, it covers a piece selected near the top of the page until you tap **Got it**.
+- **Small pieces:** on a narrow piece the handles' touch areas reach up to 48dp beyond its edge, so a drag
+  there resizes the small piece, and a tap within 12dp of a handle mark keeps the selection
+  ([ADR-145](docs/DECISIONS.md#adr-145)).
+- **The lighter ring** ([ADR-142](docs/DECISIONS.md#adr-142) R9, Proposed) has not been looked at on every paper
+  or compared with the design at 390dp.
+- **First-time reading:** the screens' first-time-user pass was done by the maintainer only, not by a new user.
 - **At twice the normal text size** the folder sheet's two buttons stack one above the other.
 - **Art:** Recent and Favourite pieces stay on this phone and are not in a Zinely backup.
 - **Carried over from beta.8**, still true unless fixed above. See

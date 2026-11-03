@@ -16661,7 +16661,7 @@ was checked against the frozen HTML first; none changes a frozen design. Items 7
 - **Item 8, Enter.** The soft keyboard's Enter inserts a newline. The text edit commits through the style
   row's visible **Done** chip, Back (A41.1), focus loss and pause, as `EditTextSession`'s KDoc lists.
 
-Owed before any of it ships is on [OWNER-CHECKLIST §2.8](OWNER-CHECKLIST.md#28-w2a-small-things--built-unreleased-device-checks-owed).
+Owed before any of it ships is on [OWNER-CHECKLIST §2.8](OWNER-CHECKLIST.md#28-w2a-small-things--in-beta9-device-checks-done).
 
 *2026-10-29: items 7 and 9 are decided in [ADR-143](#adr-143) (W2b, Bench A48, Proposed): 7 by one undo step per run of Move, Size or Turn taps; 9 closed by the visible turn knob, with the hint unchanged.*
 
