@@ -53,6 +53,9 @@ amendment (gates 3, 7, 8).
    ✅ **Designed 2026-10-15:** `v21-proof.html` A38 (frozen) and [ADR-135](../DECISIONS.md#adr-135) (Proposed until
    built). It settles B's two open questions below: `Photo: <description>`, and undescribed Art is decoration in Read.
 8. **B needs a Describe verb amendment** to `v21-bench.html` `toolsFor()` (`:694`). The owner approves the amended HTML.
+   ✅ **Drawn 2026-11-03:** `v21-bench.html` A52, frozen under the owner's delegation of 2026-10-12 (which replaces
+   the approval asked for here; the owner may overrule it). The format is [ADR-TBD-W4](../DECISIONS.md#adr-tbd-w4)
+   (Proposed), which also settles B's cap (250 code points) and drops F1b's layout marker from v4.
 
 ## Problem
 
@@ -293,7 +296,8 @@ row tops interleaves them. A2's relative phrases and the maker's own arrangement
   - Transform precedence: size past 2%, else turn past 2°, else move.
 
 **B — alt text.**
-- Plain text, trimmed, at most ~250 characters.
+- Plain text, trimmed, at most ~250 characters. → **Decided** in [ADR-TBD-W4](../DECISIONS.md#adr-tbd-w4) and A52.3:
+  250 code points, grapheme-safe, line breaks to spaces.
 - Saved on dismiss as one whole-element `EditImageCommand`/`EditDecorCommand`, so undo needs no new code.
 - An empty field is stored as absent, which needs `explicitNulls = false`.
 - Open, to be decided by a listen:
@@ -448,7 +452,8 @@ the §4.5 canvas clause.
 **B (after the wave-1 release, with F1)**
 
 15. Gates 5–8 are met, and v4 ships with the other F1 fields and `explicitNulls = false`.
-16. Descriptions persist, back up, restore and undo. Older builds refuse v4 with "needs a newer Zinely".
+16. Descriptions persist, back up, restore and undo. Older builds refuse v4 with "needs a newer Zinely". *(2026-11-03:
+    only a zine, or a backup, that holds a description is v4; [ADR-TBD-W4](../DECISIONS.md#adr-tbd-w4) decision 3.)*
 17. The Bench, and Read as designed, speak descriptions. An empty description never creates an empty or duplicated stop.
 18. No public claim ("readable by people who can't see") until B *and* a reader's edition are Available
     ([ADR-118](../DECISIONS.md#adr-118)).
@@ -491,6 +496,7 @@ Stop and ask if any of the following happens:
 
 | Date | Change |
 |---|---|
+| 2026-11-03 | Gate 8 drawn: `v21-bench.html` A52 (Describe), frozen under delegation; the format is [ADR-TBD-W4](../DECISIONS.md#adr-tbd-w4) (Proposed), which settles B's cap and replaces criterion 16's "Older builds refuse v4" with "older builds refuse only a zine, or a backup, that holds a description". Design only. Base `fe9424d1`. |
 | 2026-10-15 | Gate 7 designed: `v21-proof.html` A38 and [ADR-135](../DECISIONS.md#adr-135) (Proposed) settle what Read says, including B's two open questions; readiness line updated. B still waits for v4 and the Describe amendment. Design only. Base `3577e31`. |
 | 2026-09-30 | Owner rulings on PR #88 frozen into A26 (D1 1a, D2 2a, D3 3a, D4 4c at 2% / 2°, Across fold "Photo back on one page"); A3's open copy decisions marked ruled. Design only; Step 3 implementation not started. Base `a6eb16b`. |
 | 2026-09-30 | A3's gate-3 amendment drafted as `v21-bench.html` A26 (proposed, not frozen) with an owner review page; the frozen post-undo inventory corrected (three lines, not deletes only). Readiness unchanged. Base `a6eb16b`. |

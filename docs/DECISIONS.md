@@ -154,6 +154,7 @@
 | [ADR-143](#adr-143) | **A turn handle, snapping, Straighten and one undo rule for repeated taps.** A turn knob below the selection ring (54dp out, flips above when it would not fit); quarter-turn snap within 5° for the knob only (two fingers do not snap); an angle readout while dragging; Straighten in Arrange > Turn; a turn-only step is "turned"; a run of tray taps in one group is one undo step (the tap intents gain a source). No schema change. Amends ADR-129/A33, ADR-123/A26, ADR-102 §12.8; closes ADR-136 W2a items 7 and 9. Design Bench A48. | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
 | [ADR-144](#adr-144) | **Sheet action pairs share one geometry.** A dismiss beside a committing button on a sheet is a bordered sibling of it (same radius, border, shadow, press, 48px; surface fill and ink words against the commit's leaf fill and on-leaf words; only the commit may be disabled). The folder name sheet's Cancel, bare text beside a dimmed pill, is the one outlier in the frozen corpus and becomes `.go.ghost`. Look only: A28.14 behaviour unchanged. Library A49 | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
 | [ADR-145](#adr-145) | **The middle of a piece moves it.** A handle's 48dp hit box steps outward instead of covering a small piece's middle; a tap in a box away from its mark is a tap on the page (A50.6). Nothing drawn changes. | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
+| [ADR-TBD-W4](#adr-tbd-w4) | **Saved format v4: a description on photos and Art; a file says v4 only when it holds one.** `description: String?` on `ImageElement` and `DecorElement`, absent when none (`explicitNulls = false`), normalised at entry to 250 code points; identity v3→v4 migrator; the writer stamps the lowest version that holds the zine, so an undescribed zine stays a v3 file and only a backup holding a described piece is refused by older builds. No layout marker. Entry is Bench A52's Describe | Proposed (design frozen under delegation; not built; number assigned at merge) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -16503,6 +16504,9 @@ TalkBack's fallback taps the stop's centre, which can lie in a turn edge; decisi
 owed item 1 the test. Also taken: a blank description counts as none; off-page Art is left out before the
 empty-page test; Duplicate keeps the description. Reconciled in D-122.
 
+*2026-11-03: decision 6's Describe surface is drawn and frozen as [`v21-bench.html`](design/mockups/v21-bench.html)
+A52, and the `description` field's format is [ADR-TBD-W4](#adr-tbd-w4) (Proposed). Nothing here is re-decided.*
+
 ---
 
 ## ADR-136 {#adr-136}
@@ -18099,3 +18103,196 @@ Three narrow pieces 14 × 40pt side by side, 6pt apart, and a wide one below:
   size kept; a double-tap on the middle opened it.
 - Pass 2, by the implementer: among close pieces nothing now answers a tap with silence, except within 12dp of a mark and
   on the knob's box. TalkBack not listened to (deferred by the owner); nothing here is in the platform tree.
+
+---
+
+## ADR-TBD-W4 {#adr-tbd-w4}
+
+### Saved format v4: a description on photos and Art, and a file says v4 only when it holds one
+
+**Status:** Proposed, 2026-11-03, under the owner's delegation of 2026-10-12 ("decide, do not ask"); the owner may
+overrule it. The number is assigned at merge. It becomes Accepted only when built and the items under *Owed before
+Accepted* are done.
+**Design:** [`v21-bench.html`](design/mockups/v21-bench.html) A52 (Describe, frozen under the same delegation), with
+[`v21-proof.html`](design/mockups/v21-proof.html) A38 and [ADR-135](#adr-135) for what Read says.
+**Builds:** nothing yet. This is the plan's step 6 (F1b) and the schema half of step 7
+([plan §4 F1b, §5](planning/ZINELY-1X-IMPLEMENTATION-PLAN.md#4-foundations--only-what-the-repository-actually-needs)),
+lane W4 of [ADR-136](#adr-136).
+**Keeps:** [ADR-133](#adr-133) decision 4 and [ADR-136](#adr-136) decision 4 (v4 is descriptions alone; paper sizes,
+paper colour and any W8 field wait for v5). [ADR-003](#adr-003) (one JSON document per zine), [ADR-120](#adr-120) and
+[ADR-121](#adr-121) (backup and restore contracts; no package change).
+**Narrows:** the plan's F1b row in two places, said openly in decisions 1 and 3.
+
+#### Context
+
+- ✅ `CURRENT_SCHEMA_VERSION` is 3 (`Document.kt:28`). The document `Json` has `ignoreUnknownKeys` and
+  `encodeDefaults`, and no `explicitNulls` setting (`JsonDocumentSerializer.kt:38-43`). No field in `core:model` is
+  nullable today, so `explicitNulls = false` changes no stored byte.
+- ✅ The writer stamps `CURRENT_SCHEMA_VERSION` on every save, whatever the document holds
+  (`JsonDocumentSerializer.kt:45-48`). The migrator chain is two identity steps (`:119-122`) and must be contiguous
+  (`DocumentMigrations.kt:59-75`); a newer file is refused with `NewerSchemaVersionException` before any field is read
+  (`:80`).
+- ✅ A library backup carries each zine's document bytes as stored, and its manifest records the version read raw
+  from that file (`RoomProjectRepository.kt:736-764`). Restore refuses the **whole** backup if any zine's version is
+  newer than the build's (`ZineLibraryBackupStager.kt:411-420`), which the person sees as *"This backup needs a newer
+  Zinely. It was made with a version of Zinely that knows more than this one does."* (`Copy.kt:2226-2228`). That
+  check and those words are in every build with a library restore, from `v0.9.0-beta.4-r3` on (checked in the tag's
+  source). A zine file of a newer version on an older shelf is skipped, its bytes untouched
+  (`RoomProjectRepositoryTest`, "given a newer-schema document on disk…"), and is shown as *"This zine needs a newer
+  version of Zinely."* (`Copy.kt:1417`).
+- ✅ Zinely ships as an APK with no automatic update, so a maker with two phones on two versions is ordinary, and
+  "make a backup here, restore it there" is the cross-device route the product offers.
+- ✅ `editLabel` names an `EditImageCommand` that changes none of asset, copier or flips "framing"
+  (`EditLabel.kt:93`) and an `EditDecorCommand` that changes none of supply, flips or ink an Art swap (`:105`). A
+  description edit would be named falsely.
+- ✅ `DocumentFixtureCorpusTest` fails on purpose until a bump adds `document-v4.json`, pins it and moves
+  `WRITER_PINNED_VERSION`; `DocumentSchemaShapeTest` fails until `schema-shape-v4.txt` exists. The v1 to v3 fixtures
+  and the three backup archives are frozen.
+- ✅ The plan's F1b row put a layout-engine marker in v4 beside the description. Nothing reads it, and no second
+  platform or layout engine exists.
+
+#### Decision
+
+```mermaid
+flowchart LR
+    M["Maker types in Describe\n(bench A52)"] --> N["normalise: line breaks to spaces,\ntrim, blank to none, 250 code points"]
+    N --> C["one EditImage / EditDecor command\n(undo: Description put back)"]
+    C --> D["ZineDocument\ndescription: String? on Image and Decor"]
+    D --> W{"any description\nin the zine?"}
+    W -->|yes| V4["file says schemaVersion 4"]
+    W -->|no| V3["file says schemaVersion 3,\nbyte for byte what a v3 build writes"]
+    V4 --> O["older build: refuses the zine,\nand any backup holding it"]
+    V3 --> P["older build: opens and restores it as today"]
+```
+
+1. **The field, and nothing else.** `ImageElement` and `DecorElement` each gain a last field
+   `val description: String? = null`. `TextElement` gains nothing: its words are already read. v4 holds no other
+   change: **no layout-engine marker** (it has no reader; it rides the bump that brings a second layout engine, if
+   one ever comes), no `look`, no paper size. Art is in v4 because [ADR-135](#adr-135) decides Art descriptions with
+   photo ones; one field on two kinds is one feature, and splitting it would spend a second bump on the same words.
+2. **Absent means none.** The document `Json` gains `explicitNulls = false`, so a null description is not written.
+   What is stored is normalised once, at the reducer, by one pure helper in `core:editor`: line breaks become spaces,
+   both ends are trimmed, a blank result is `null`, and the result is at most 250 code points, cut on a grapheme
+   boundary (A52.3). The reader tolerates any string: `DefaultDocumentValidator` gains no rule, because refusing to
+   open a zine over its description is a worse harm than a long one, as with an off-palette ink. Bench and Read
+   treat a blank description as none (A38).
+3. **A file says v4 only when it holds a description.** `CURRENT_SCHEMA_VERSION` becomes 4: the newest version this
+   build reads. The writer stamps the **lowest version whose shape holds the document**: 4 if any element has a
+   non-null description, else 3. Since `explicitNulls = false` writes nothing for a null description, a zine with no
+   description is written byte for byte as a v3 build writes it, and an older build reads it as exactly what it is.
+   This replaces "stamp `CURRENT_SCHEMA_VERSION` on every save" (`JsonDocumentSerializer.kt:45-48`) with a rule each
+   later bump extends: the bump that adds a field adds the line that raises the stamp when the field is used. The
+   writer's fixture check enforces it, because `document-v<N>.json` carries every new field and must be written with
+   `"schemaVersion":N`. Clearing the last description in a zine and saving writes v3 again.
+4. **Migration: v3 to v4 is an identity step** (`IdentityMigrator(from = 3)`); a v3 file has no description and
+   decodes with `null`. Every reader of the version (the six named in the plan's F1b row) accepts 1 to 4 and refuses 5.
+5. **What older builds do** (the release-notes risk):
+
+   | What the older build meets | What happens |
+   |---|---|
+   | A zine with no description, saved by a v4 build | Opens and restores as today: the file is a v3 file |
+   | A zine with a description, on its shelf (only by a downgrade) | Not opened; shown as *"This zine needs a newer version of Zinely."*; its bytes are left alone |
+   | A library backup in which **any** zine has a description, on `0.9.0-beta.4-r3` to the last build before v4 | The whole backup is refused before anything is restored, with *"This backup needs a newer Zinely"*. The zines in it with no description are refused with it |
+   | A library backup in which no zine has a description | Restores as today |
+   | A build before `0.9.0-beta.4-r3` | Has no library restore |
+
+   **Known Limitation for the release that ships v4**, in the release notes in these words or plainer: *"A backup
+   that holds a described photo or Art piece can be restored only by Zinely <version> or newer. An older Zinely says
+   the backup needs a newer Zinely and restores nothing from it."* Shipped builds cannot be changed to skip only the
+   described zines.
+6. **Backups round-trip unchanged.** No package change: `packageVersion` stays 2 and the manifest gains no field.
+   The document travels as its stored bytes, with the version read from them. A v4 build restores 1 to 4. Under
+   [ADR-121](#adr-121), decoded equality includes the description, so a zine that differs from a shelf zine only in
+   its description is added, not skipped: the safe direction.
+7. **Size.** 250 code points at entry (Brief 04 asked about 250). Worst case about 1 KB of UTF-8 per described
+   piece, well inside the 16 MiB a backup allows a document (`ZineLibraryBackupManifest.kt:28`). No limit on read.
+8. **What it says, and to whom** (accessibility). Words in `core:copy`:
+   - Bench: a photo node says `Photo` or `Photo: ` + the description; an Art node says its piece's name, or the name
+     + `: ` + the description. Each keeps its Button role and its custom actions, and gains a `Describe` custom
+     action (A52.1, A52.5). Read: ADR-135's table, unchanged.
+   - The Describe sheet has a pane title (A52.2); the field's label is visible and is its name; the count is not a
+     live region.
+   - Undo and Redo get a new `EditVerb.DESCRIPTION`, checked before the framing and swap fallbacks, with *"Description
+     put back"* and *"Description changed"* (A52.4, [ADR-123](#adr-123)'s pattern), so no label is false.
+9. **What carries it** is [ADR-135](#adr-135) decision 6: Duplicate and Across fold copy it; Replace photo clears it;
+   replacing Art keeps it. **Paper and PDF carry nothing**: ADR-135 decision 7.
+10. **Release boundary.** The field ships with its first user, Describe, and with Read's stops (ADR-135 parts 1 and 2)
+    in one lane. Decision 3 makes the plan's hold ("no release from `main` between steps 6 and 7") a matter of
+    sequencing, not safety: a build with no Describe never writes 4.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Stamp `CURRENT_SCHEMA_VERSION` on every save (the plan's F1b as written) | Every backup made after the update, by every maker, would be refused by older builds, though only those who describe something gain anything from v4. That is the largest cost W4 could carry, and decision 3 removes it for everyone else |
+| `description: String = ""`, no `explicitNulls` change | `encodeDefaults` would write `"description":""` on every photo and Art piece, so no undescribed zine would match a v3 file byte for byte, and decision 3 would need a key filter |
+| A per-field `@EncodeDefault(NEVER)` | Experimental too, and needed on each nullable field one by one; one `Json` setting covers every later nullable field the same way |
+| Photo descriptions in v4, Art in v5 | ADR-135 decides both; two bumps for one feature, and the Art half would wait behind paper sizes |
+| The layout-engine marker in v4 (plan F1b) | No reader, no second engine; ADR-136 decision 4 keeps v4 to descriptions |
+| Refuse or trim long descriptions in the validator | Refusing to open a zine over its alt text is the worse harm; entry already caps it |
+| Restore the undescribed zines from a v4 backup on an older build | Needs a change to builds already shipped |
+| Descriptions in the PDF | ADR-135's alternatives: `PdfDocument` cannot tag, and the PDF is the imposed sheet |
+
+#### Consequences
+
+- An undescribed zine, and a backup of undescribed zines, stays fully usable by older builds. Only described ones
+  need the new version, and the release notes say so.
+- The version in a file now means "the oldest build that can read this", not "the build that wrote this". Room's
+  `documentSchemaVersion` column, filled from the decoded document (`RoomProjectRepository.kt:1056`), keeps meaning
+  the version this build read it as; nothing gates on it. The backup manifest keeps reading the file's own number.
+- Each later bump owes one line in the stamp rule and a fixture that uses its field. A bump that forgets it fails
+  the writer's fixture check (decision 3).
+- [ARCHITECTURE §4.1](ARCHITECTURE.md#41-compatibility-guards-and-the-zine-v2-format-note) changes when this is
+  built: the corpus gains `document-v4.json`, and the backup note's "at whatever schema version (1…current) it was
+  last saved" becomes "at the lowest version that holds it".
+- 🟨 `explicitNulls = false` is `@ExperimentalSerializationApi`. A library upgrade that changed its meaning would
+  show at once in the byte-for-byte v3 check (test plan below).
+
+#### Test plan (built in phase 2)
+
+- **Serializer round trip:** a document with a description on a photo and on an Art piece round-trips equal; one with
+  none round-trips equal; `null` is not written (no `"description"` key, no `null` literal).
+- **Stamp:** no description anywhere stamps 3; one described photo stamps 4; one described Art piece stamps 4; a
+  described piece wholly off its page still stamps 4; clearing the last description stamps 3.
+- **Byte identity:** decoding `document-v3.json` and writing it again gives its frozen bytes exactly (the proof that
+  a v4 build writes what a v3 build wrote). Property (jqwik): any generated document with no description serialises
+  to JSON whose key set is a subset of `document-v3.json`'s.
+- **Migration:** `document-v1/v2/v3.json` still decode to their expected documents, now with `description = null`
+  spelled out; a v3 file migrates through the identity step; a v5 file is refused by `DocumentMigrations`,
+  `DefaultDocumentValidator`, `ZineLibraryBackupValidator`, `ZinePackageManifestValidator`, the stager and the
+  shelf's reconcile; v4 is accepted by each.
+- **New fixtures (frozen once written):** `document-v4.json`, written by the v4 serializer from the v3 fixture's zine
+  plus a described photo and a described Art piece (fictional words), pinned by SHA-256, with its expected document;
+  `schema-shape-v4.txt`; `WRITER_PINNED_VERSION = 4`. A fourth backup archive `library-backup-v2-described.zine`,
+  writer-produced in a JVM test from one v4 and one v3 document, pinned, staged by `LibraryBackupFixtureTest`.
+  No old fixture is edited.
+- **Backup round trip:** write a library with one described and one undescribed zine, stage and commit it, compare
+  documents and descriptions; the manifest records 4 and 3; a manifest that says 5 is refused as `FUTURE_VERSION`.
+  Restore matching (ADR-121): the same zine with a different description is added; with the same one, skipped.
+- **Normalise helper (pure):** 250 code points, grapheme-safe (a family emoji at the cap goes whole or not at all);
+  CR, LF, CRLF, U+2028 and U+2029 to spaces; trim; blank and spaces-only to `null`.
+- **Reducer intents:** `SetDescription(id, text)` on a photo and on Art makes one command and one undo step; the same
+  text makes none; undo and redo restore it; Replace photo clears it and Undo brings both back; Replace supply keeps
+  it; Duplicate and Make-spread keep it on both halves; `editLabel` gives `DESCRIPTION`, never `FRAMING` or `SWAP`.
+- **Compose semantics:** both bars' verb order (A52.1) as set-equality plus order; the sheet's title, label, helper,
+  example and the count from 50 left; Done, Back and a scrim tap each save; Enter is Done; the Bench node's label for
+  the four cases in A52.5 with its Button role; the Describe custom action opens the sheet.
+- **Platform tree (`SurfaceTraversalOrderTest` harness, `AccessibilityNodeInfo`):** a described photo's node has
+  `contentDescription` "Photo: …", class `android.widget.Button`, clickable, and the Describe action; the sheet's
+  pane title is set; Read's stops are as ADR-135 owed item 1 lists, with the description rows.
+- **Goldens:** `bash tools/grun.sh gold` shows no Bench or Read golden changed except the new Describe bar and sheet
+  goldens, which are recorded on CI's pinned image after reading the compare images.
+
+#### Owed before Accepted
+
+1. Built with the tests above, with ADR-135 parts 1 and 2 in the same lane.
+2. Both device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)) on A52 at 360dp and 200% text, and the
+   platform tree read on the phone; the emulator suffices.
+3. A cross-version restore on the emulator: a v4 build's backup with no description restores on the beta.9 APK; one
+   with a description is refused there with the newer-Zinely words.
+4. The release notes' Known Limitation (decision 5).
+5. The owner's TalkBack listen, owed with ADR-135's.
+
+#### Review
+
+To be filled in by the review below this draft.
