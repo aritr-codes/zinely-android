@@ -97,13 +97,13 @@ public class DocumentFontRegistry(
         /** The wire name of Book's family ([DocumentVoice.BOOK], ADR-126). */
         public val FRAUNCES: String = DocumentVoice.BOOK.familyName
 
-        /** The wire name of Hand's family ([DocumentVoice.HAND], ADR-TBD-W9). */
+        /** The wire name of Hand's family ([DocumentVoice.HAND], ADR-148). */
         public val SHANTELL_SANS: String = DocumentVoice.HAND.familyName
 
         /**
          * The families this build actually carries in `assets/fonts/`: Inter (Plain), Fraunces (Book,
          * [ADR-126](../../../../../../../../docs/DECISIONS.md#adr-126)) and Shantell Sans (Hand,
-         * [ADR-TBD-W9](../../../../../../../../docs/DECISIONS.md#adr-tbd-w9)).
+         * [ADR-148](../../../../../../../../docs/DECISIONS.md#adr-148)).
          *
          * The Fraunces faces are upstream's own static 9 pt files, unmodified. The Shantell Sans faces are built
          * from the pinned release (instanced and subset, a Modified Version under the OFL). Both are pinned by

@@ -540,7 +540,7 @@ class SurfaceTraversalOrderTest {
     @Test
     fun `proof surface traversal order is the design's order and the visual order`() {
         setProof()
-        assertLogicalTraversalOrder(
+        val proofStops = assertTraversalOrder(
             "Proof · surface",
             listOf(
                 Copy.Proof.BACK_TO_BENCH_SAVED,
@@ -561,6 +561,14 @@ class SurfaceTraversalOrderTest {
                 // so that traversal and the visual row agree (§4.5).
                 Copy.ProofRead.PREVIOUS_PAGE,
                 Copy.ProofRead.NEXT_PAGE,
+                // ADR-135 part 1 (changed from "the leaf is not a stop"): the leaf's picture stays cleared, and
+                // a semantics-only layer over it carries the page's stops. This fixture's page holds one text,
+                // "page 1". The platform tree lists it AFTER the two edges because its layer is z-ordered above
+                // them -- that is what makes touching the page find its stops, not "Next page" (decision 1) --
+                // and Compose publishes children in z order. The order a screen reader walks is `traversalIndex`
+                // (Previous 0, the page 1, Next 2), not this list, and `ReadStopsA11yTest` asserts that, with
+                // the page's stops against SpatialOrder. Everything else keeps the full §4.5 check below.
+                "page 1",
                 // The band (ADR-101 P2). `.ready` is a single stop carrying its own two lines — the
                 // frozen `aria-label="Print details"` would have replaced them, so the destination is on
                 // the click action instead and does not appear here. Then the commit pair, left to right.
@@ -568,6 +576,21 @@ class SurfaceTraversalOrderTest {
                 Copy.Proof.SAVE_PDF,
                 Copy.Proof.SHARE,
             ),
+        )
+        // §4.5's visual-order half is kept in full for everything but the page's own stops, which sit under the
+        // edges in the tree by design (see above) and are checked in reading order in `ReadStopsA11yTest`.
+        // The edges against the page as a whole: Previous lies left of the page's stop, Next right of it.
+        val pageStop = proofStops.single { it.label == "page 1" }
+        val previousEdge = proofStops.single { it.label == Copy.ProofRead.PREVIOUS_PAGE }
+        val nextEdge = proofStops.single { it.label == Copy.ProofRead.NEXT_PAGE }
+        assertTrue("Previous page must start left of the page", previousEdge.boundsInScreen.left < pageStop.boundsInScreen.left)
+        assertTrue("Next page must end right of the page", nextEdge.boundsInScreen.right > pageStop.boundsInScreen.right)
+        val outsidePage = proofStops.filter { it.label != "page 1" }
+        assertReadingOrderIsVisualOrder("Proof · surface", outsidePage)
+        assertTrue(
+            "Proof · surface: no two consecutive stops outside the page share a row, so the horizontal branch " +
+                "of the reading-order check never ran.",
+            outsidePage.zipWithNext().any { (a, b) -> sharesRow(a.boundsInScreen, b.boundsInScreen) },
         )
     }
 

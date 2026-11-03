@@ -197,8 +197,13 @@ public object EditorReducer {
             val el = currentPage(model).elements.firstOrNull { it.id == intent.id } as? ImageElement
             // Preserve framing (crop/fit/transform/zIndex) — only the bytes change (ADR-053 §6).
             if (el == null || el.assetId == intent.assetId) Reduction(model)
-            else committing(model, EditImageCommand(model.currentPageIndex, el.id, el, el.copy(assetId = intent.assetId)))
+            // The description is about the old picture, so it goes with it (ADR-147 decision 9; Undo brings both back).
+            else committing(
+                model,
+                EditImageCommand(model.currentPageIndex, el.id, el, el.copy(assetId = intent.assetId, description = null)),
+            )
         }
+        is Intent.SetDescription -> setDescription(model, intent)
         is Intent.ResetFraming -> {
             val el = currentPage(model).elements.firstOrNull { it.id == intent.id } as? ImageElement
             val reset = el?.copy(crop = Crop.FULL, fit = Fit.FILL)
@@ -471,6 +476,24 @@ public object EditorReducer {
     }
 
     /**
+     * ADR-147: set the description of a photo or an Art piece on the current page. The new words are normalised
+     * once here; the comparison is against the stored words normalised the same way, so a close that changed
+     * nothing (or only whitespace) makes no undo step. Text and absent ids are no-ops.
+     */
+    private fun setDescription(model: EditorModel, intent: Intent.SetDescription): Reduction {
+        val after = DescriptionText.normalise(intent.text)
+        return when (val el = currentPage(model).elements.firstOrNull { it.id == intent.id }) {
+            is ImageElement ->
+                if (after == DescriptionText.normalise(el.description)) Reduction(model)
+                else committing(model, EditImageCommand(model.currentPageIndex, el.id, el, el.copy(description = after)))
+            is DecorElement ->
+                if (after == DescriptionText.normalise(el.description)) Reduction(model)
+                else committing(model, EditDecorCommand(model.currentPageIndex, el.id, el, el.copy(description = after)))
+            is TextElement, null -> Reduction(model)
+        }
+    }
+
+    /**
      * SUPPLIES-SPEC §8 *Change ink*. Total by construction: anything that is not a [DecorElement] on the
      * **current** page resolves to `null` and reduces to a no-op, which is the same shape every other
      * type-specific verb here already has.
@@ -531,7 +554,7 @@ public object EditorReducer {
     }
 
     /**
-     * ADR-126 decision 8 (and ADR-TBD-W9 for Hand), held here so no surface can get past it: a voice's
+     * ADR-126 decision 8 (and ADR-148 for Hand), held here so no surface can get past it: a voice's
      * minimum **blocks**. The Font row already refuses these (`fontRow`), but it reads a composition-old state
      * and coalesces sizes, so two taps in one frame could otherwise commit Book or Hand below its minimum.
      *

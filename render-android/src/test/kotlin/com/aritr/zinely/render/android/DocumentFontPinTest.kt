@@ -8,7 +8,7 @@ import org.junit.Test
 
 /**
  * **The Book faces are upstream's own files, byte for byte (ADR-126 decision 4); the Hand faces are the
- * ones `--hand` builds from the pinned release (ADR-TBD-W9 decision 4).**
+ * ones `--hand` builds from the pinned release (ADR-148 decision 4).**
  *
  * `tools/build-document-fonts.py` is the one record of the eight SHA-256 pins. This reads the pins out of
  * that script and holds the files in `assets/fonts/` to them, so a face that is re-instanced, subset,

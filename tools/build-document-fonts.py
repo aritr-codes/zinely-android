@@ -14,7 +14,7 @@ fraunces_regular.ttf.
 
 Fetching needs only the standard library; --measure needs fontTools.
 
-The Hand faces (ADR-TBD-W9, a third voice) are NOT upstream's own bytes: Shantell Sans ships static OpenType/CFF files
+The Hand faces (ADR-148, a third voice) are NOT upstream's own bytes: Shantell Sans ships static OpenType/CFF files
 and one variable TrueType, and the app needs four static TrueType faces (minSdk 24 has no variable-font weight axis,
 and PDF export embeds glyf outlines). So --hand instances the pinned release's variable font at wght 400/700,
 ital 0/1, INFM 100 (the "Informal" letterforms, the Shantell look), BNCE 0, SPAC 0, then drops Greek, Cyrillic and

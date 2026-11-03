@@ -62,6 +62,7 @@ public const val ElementNodeTagPrefix: String = "element-node-"
  *   The editor screen passes the same behaviour its visible `Ink` verb performs, so the two cannot diverge.
  * @param onReplaceSupply the host's replace verb, for a supply's §8 `Replace supply` action. `null`
  *   (the default) withholds it, on the same terms as [onChangeInk].
+ * @param onDescribe the host's Describe verb, for the photo or Art node's `Describe` action (A52.1). `null` withholds it.
  * @param pageSizePt the page's size in points. Supplied, an element whose drawn extent leaves the printer's
  *   reach carries [Copy.A11y.OUTSIDE_PRINT_REACH] as its spoken **state** — the non-visual twin of
  *   `BenchKeepClear`, added by [OD-49](../DECISIONS.md#adr-102-p2c) after a device pass found that the
@@ -76,6 +77,7 @@ public fun ElementSemanticsLayer(
     onDelete: (String) -> Unit = { dispatch(Intent.Delete(setOf(it))) },
     onChangeInk: ((String) -> Unit)? = null,
     onReplaceSupply: ((String) -> Unit)? = null,
+    onDescribe: ((String) -> Unit)? = null,
     pageSizePt: PtSize? = null,
 ) {
     val page = uiState.document.pages[uiState.currentPageIndex]
@@ -108,6 +110,7 @@ public fun ElementSemanticsLayer(
                 onDelete = onDelete,
                 onChangeInk = onChangeInk,
                 onReplaceSupply = onReplaceSupply,
+                onDescribe = onDescribe,
                 flipActionsEnabled = uiState.selection.size <= 1,
             )
             val description = EditorA11y.label(element)

@@ -24,7 +24,7 @@ import org.robolectric.annotation.GraphicsMode
 import kotlin.math.ceil
 
 /**
- * **Document voices on the page (ADR-126, ADR-TBD-W9): Plain, Book and Hand, each regular, bold, italic and bold italic.**
+ * **Document voices on the page (ADR-126, ADR-148): Plain, Book and Hand, each regular, bold, italic and bold italic.**
  *
  * [TextGoldenTest]'s harness: the bundled resolver feeding the one [CanvasReplayer], at the editor's
  * screen scale and at [ExportScale.EXPORT_PX_PER_PT], which is the raster the export writes (PDF vector

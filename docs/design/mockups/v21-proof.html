@@ -1600,6 +1600,136 @@ if (prototypeParams.get('gallery') === 'fold') {
   <div class="a4x-frames" id="a44frames"></div>
 </section>
 
+<!-- ===========================================================================
+     AW5 (ADR-146, RESEARCH RW5, ADR-136 W5) — 2026-11-03 — DESIGN FROZEN under
+     the owner's delegation (decision gate Q7: the guidance copy and this amendment
+     are delegated). THIS FREEZES THE DESIGN, NOT THE SHIPPING. Nothing here goes
+     into Compose until the print study (STUDY-PRINT-AND-FOLD-PROTOCOL) has run and
+     the owner has approved the Print-step amendment (Q7, "still the owner's").
+     The study may only REMOVE or STRENGTHEN a sentence below; it cannot make one
+     of them unconditional. Changes after the study start here, in this block.
+
+     Touches only the "Print details" drawer, the done-row line under Save PDF,
+     and adds one optional artboard. Everything else on the Proof is untouched.
+     Appended in its own block; another lane (W4) edits a different block.
+
+     The question this answers: "How do I print it correctly?" — at the moment the
+     maker is walking to a printer. So: the settings first, then how to CHECK the
+     first sheet, then what each way of going wrong means. Nothing about fonts,
+     backups, descriptions or the zine's content.
+=========================================================================== -->
+<style>
+.aw5{width:100%;max-width:760px;display:flex;flex-direction:column;gap:var(--gap-md);margin-top:var(--gap-2xl)}
+.aw5 h3{font-family:var(--voice);font-size:1.15rem;margin:var(--gap-md) 0 0;color:var(--ink)}
+.aw5 table{border-collapse:collapse;width:100%;font-size:.9rem}
+.aw5 th,.aw5 td{text-align:left;vertical-align:top;padding:var(--gap-sm);border-bottom:1px solid var(--hair)}
+.aw5 th{color:var(--ink-soft);font-weight:600}
+.aw5 .said{font-family:var(--sans);font-weight:600;color:var(--ink)}
+.aw5 .was{color:var(--ink-soft);text-decoration:line-through}
+.aw5 .note{border-left:3px solid var(--leaf-text);padding:var(--gap-xs) var(--gap-md);margin:0}
+.aw5 .sheetart{--ink:#27270F;background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--br-sm);padding:var(--gap-md)}
+.aw5 .sheetart svg{width:100%;height:auto;display:block}
+:root[data-gallery="true"] .aw5{display:none}
+</style>
+
+<section class="aw5" id="aw5" aria-labelledby="aw5h">
+  <p class="cap lead" id="aw5h"><span class="badge">frozen · AW5 · ADR-146</span><br>
+  AW5 — print guidance that says only what we know</p>
+  <p class="cap">The Print details drawer stops promising that a print “won’t shrink” (we do not control the print
+  app, and Android’s print dialog may not offer a scale setting) and starts <b>telling the maker how to check
+  the first sheet and what each fault means</b>. Order, top to bottom: paper, what we did, the settings, check
+  the first sheet, if it looks off, how it becomes a booklet. The last section is unchanged. <b>Ships after
+  the print study.</b></p>
+
+  <h3>Words that change</h3>
+  <table id="aw5copy">
+    <thead><tr><th scope="col">Where</th><th scope="col">Was</th><th scope="col">Now</th></tr></thead>
+    <tbody>
+      <tr><td>What we’ve already done, line 1</td>
+        <td class="was">We lay your zine out for this exact size, so it prints at 100% — nothing shrinks to fit.</td>
+        <td class="said">We lay your zine out for this exact paper size.</td></tr>
+      <tr><td>What we’ve already done, line 3</td>
+        <td class="was">We keep a margin at the edge of the sheet, because no printer can reach all the way to the paper’s edge.</td>
+        <td class="said">We start your pages about 6 mm in from the sheet’s edge, and warn you when something is closer. A few printers leave a wider blank strip than that.</td></tr>
+      <tr><td>Recipe, Scale row value</td>
+        <td class="was">100% · Actual size — not “Fit to page”</td>
+        <td class="said">100% · Actual size, if there’s a Scale setting — not “Fit to page”</td></tr>
+      <tr><td>Recipe, double-sided note</td>
+        <td class="was">A mini-zine prints on one side, then folds.</td>
+        <td class="said">Your zine prints on one side, then folds.</td></tr>
+      <tr><td>Section “Before you print a stack” becomes “Check your first sheet”</td>
+        <td class="was">New printer? Print one test sheet first and fold it — check the cover’s on top and the text is upright. Printers flip pages differently; one sheet saves a stack.</td>
+        <td class="said">Print one sheet and fold it before you print a stack. Fold it the way the steps show: the printed fold lines should land on the creases, give or take a millimetre.</td></tr>
+      <tr><td>Done row, under Save PDF (<code>.wu</code>)</td>
+        <td class="was">In Downloads — “zine.pdf”. Print it at 100%, landscape, one side — then fold it up.</td>
+        <td class="said">In Downloads — “zine.pdf”. Print it landscape and one-sided, at actual size if you can choose — then fold it up.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>New section: “If it looks off”</h3>
+  <p class="cap">Under “Check your first sheet”. A maker reads the row that matches what is in their hand. Each row
+  is a fault they can see, then one thing to do. No row blames the maker; none promises that the fix exists on
+  every phone.</p>
+  <table id="aw5faults">
+    <thead><tr><th scope="col">What you see</th><th scope="col">What to do</th></tr></thead>
+    <tbody>
+      <tr><td class="said">The fold lines miss the creases</td>
+        <td>If the outer fold lines sit closer to the middle than the creases, your printer probably shrank the sheet: print again, look for Scale, Fit to page or Actual size in your printer’s app, and choose 100% or Actual size. Not every app has one — if yours doesn’t, try your printer maker’s own app. Also check that the paper in Zinely is the paper in your printer.</td></tr>
+      <tr><td class="said">A strip along the edge is missing</td>
+        <td>That strip is beyond your printer’s reach. Anything Zinely marks “Too close to the edge — may be cut off when printed” can lose its edge, so move it in.</td></tr>
+      <tr><td class="said">It came out sideways, or small in the middle</td>
+        <td>Choose Landscape and print again. A portrait sheet breaks the fold.</td></tr>
+      <tr><td class="said">There’s print on the back too</td>
+        <td>Choose single-sided (or “off”) and print again.</td></tr>
+      <tr><td class="said">The pages are out of order after folding</td>
+        <td>Fold again with the steps. The top row prints upside down on purpose.</td></tr>
+    </tbody>
+  </table>
+  <p class="note"><b>Flip edge is not taught.</b> Zinely’s sheet is one-sided, so “flip on long or short edge”
+  never applies, and naming it would hand a maker a setting that can only make the sheet worse. It comes back
+  with a two-sided format (ROADMAP, Later). <b>Sizes:</b> every new word is at least 12sp (A44); the rows are
+  plain text with no role, read top to bottom. <b>Layout:</b> in the drawer each fault is one block, the
+  sighted symptom in bold on its own line, the action beneath it (a two-column table does not fit 360dp at 12sp);
+  in the Scale row only “100% · Actual size” is the emphasised span, the conditional clause after it is plain.
+  <b>Unmeasured, so conditional:</b> the 6 mm and the Scale
+  setting’s existence (decision gate Q7).</p>
+
+  <h3>Stage 2, only if the owner approves a static test page after the study</h3>
+  <p class="cap">One optional line in Print details, “First time with this printer? Save a test sheet.”, that
+  exports a fixed PDF at the zine’s paper size, with its own file name. It carries three things and nothing
+  else: a <b>50 mm ruler</b> (“Measure this: it should be 5 cm”); <b>edge bands</b> at 3, 5 and 8 mm,
+  numbered; and the <b>eight numbered panels</b> with the fold lines, so the fold check can be done on a sheet
+  that is not the maker’s own. It never changes the zine, never gates Save, asks no questions back and stores
+  nothing (no printer profile). The first sheet of the zine already is a test, so this line exists only if the
+  study shows that spending a real sheet is a problem. Drawn to scale below, A4 landscape.</p>
+  <div class="sheetart"><svg id="aw5sheet" viewBox="0 0 297 210" role="img"
+    aria-label="Test sheet, A4 landscape: ruler, numbered edge bands, eight numbered panels"></svg></div>
+</section>
+
+<script>
+/* AW5 — draws the stage-2 test sheet to scale (1 unit = 1 mm). */
+(function(){
+  const NS='http://www.w3.org/2000/svg', svg=document.getElementById('aw5sheet');
+  const add=(tag,a,txt)=>{const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e;};
+  const W=297,H=210,ink='#27270F';
+  add('rect',{x:0,y:0,width:W,height:H,fill:'none',stroke:ink,'stroke-width':.3});
+  [3,5,8].forEach(m=>{add('rect',{x:m,y:m,width:W-2*m,height:H-2*m,fill:'none',stroke:ink,'stroke-width':.25,'stroke-dasharray':'2 2'});
+    add('text',{x:m+1,y:m+3.2,'font-size':3.4,fill:ink},m+' mm');});
+  const pw=W/4,ph=H/2;
+  for(let i=1;i<4;i++)add('line',{x1:i*pw,y1:0,x2:i*pw,y2:H,stroke:ink,'stroke-width':.25});
+  add('line',{x1:0,y1:ph,x2:W,y2:ph,stroke:ink,'stroke-width':.25});
+  const order=[5,4,3,2,6,7,8,1];
+  // the top row prints upside down (the engine's Rotation.HALF), so the numerals are turned 180° about their centres
+  order.forEach((n,i)=>{const cx=(i%4)*pw+pw/2,cy=Math.floor(i/4)*ph+ph/2;
+    add('text',{x:cx,y:cy,'font-size':14,'text-anchor':'middle',fill:ink,transform:i<4?'rotate(180 '+cx+' '+cy+')':''},String(n));});
+  const rx=W/2-25,ry=H/2+14;
+  add('line',{x1:rx,y1:ry,x2:rx+50,y2:ry,stroke:ink,'stroke-width':.6});
+  add('line',{x1:rx,y1:ry-3,x2:rx,y2:ry+3,stroke:ink,'stroke-width':.6});
+  add('line',{x1:rx+50,y1:ry-3,x2:rx+50,y2:ry+3,stroke:ink,'stroke-width':.6});
+  add('text',{x:W/2,y:ry+8,'font-size':4,'text-anchor':'middle',fill:ink},'Measure this: it should be 5 cm');
+})();
+</script>
+
 <script>
 /* A43 / A44 — prototype wiring. Wraps the frozen functions above in the fooBeforeAnn style. */
 (function(){

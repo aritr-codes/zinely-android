@@ -1,6 +1,7 @@
 package com.aritr.zinely.core.data.serialization
 
-import com.aritr.zinely.core.model.CURRENT_SCHEMA_VERSION
+import com.aritr.zinely.core.model.DecorElement
+import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.ZineDocument
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -39,13 +40,18 @@ public class JsonDocumentSerializer internal constructor(
         classDiscriminator = "type"
         ignoreUnknownKeys = true
         encodeDefaults = true
+        // ADR-147: a null (absent) description writes no key, so an undescribed zine is byte for byte a v3 file.
+        // Every later field must be nullable and absent when unused, or its bump gives that property up.
+        explicitNulls = false
         prettyPrint = false
     }
 
     override fun serialize(document: ZineDocument): String {
-        val normalized =
-            if (document.schemaVersion == CURRENT_SCHEMA_VERSION) document
-            else document.copy(schemaVersion = CURRENT_SCHEMA_VERSION)
+        // ADR-147 decision 3: a file says the OLDEST version that can read it, not the newest this build knows.
+        // 3 for a plain zine (never lower), 4 when any photo or Art piece holds a description. Each later
+        // bump adds its own line here when the document uses what it added.
+        val stamp = if (holdsDescription(document)) DESCRIPTION_SCHEMA_VERSION else MIN_WRITTEN_SCHEMA_VERSION
+        val normalized = if (document.schemaVersion == stamp) document else document.copy(schemaVersion = stamp)
         val body = json.encodeToJsonElement(ZineDocument.serializer(), normalized).jsonObject
         val stamped = buildJsonObject {
             put(ENCODING_KEY, format.wire)
@@ -84,6 +90,11 @@ public class JsonDocumentSerializer internal constructor(
             ?: throw DocumentDecodeException("Document root is not a JSON object")
     }
 
+    private fun holdsDescription(document: ZineDocument): Boolean =
+        document.pages.any { page ->
+            page.elements.any { (it as? ImageElement)?.description != null || (it as? DecorElement)?.description != null }
+        }
+
     private fun decode(obj: JsonObject): ZineDocument =
         try {
             json.decodeFromJsonElement(ZineDocument.serializer(), obj)
@@ -96,6 +107,12 @@ public class JsonDocumentSerializer internal constructor(
     private companion object {
         /** Top-level key carrying the [PersistedFormat] marker on disk. */
         const val ENCODING_KEY = "_encoding"
+
+        /** The lowest version the writer ever stamps (ADR-147): a plain zine is not written as v1 or v2. */
+        const val MIN_WRITTEN_SCHEMA_VERSION = 3
+
+        /** The version a document holding a photo or Art description is stamped (ADR-147). */
+        const val DESCRIPTION_SCHEMA_VERSION = 4
 
         /**
          * The ordered JSON-tree migrator chain. If a non-JSON format is ever adopted, migration moves
@@ -119,6 +136,8 @@ public class JsonDocumentSerializer internal constructor(
         val MIGRATORS: List<DocumentMigrator> = listOf(
             IdentityMigrator(from = 1),
             IdentityMigrator(from = 2),
+            // v3 -> v4 (ADR-147): `description` is nullable and absent in a v3 file, so there is nothing to do.
+            IdentityMigrator(from = 3),
         )
 
         /** A structural no-op step, for a version bump that exists purely to gate old readers out. */

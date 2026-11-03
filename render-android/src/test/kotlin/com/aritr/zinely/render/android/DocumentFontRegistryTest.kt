@@ -103,7 +103,7 @@ class DocumentFontRegistryTest {
     fun `the bundled registry declares exactly what the render module carries`() {
         val bundled = DocumentFontRegistry.Bundled
 
-        // Three families: Inter (Plain), Fraunces (Book, ADR-126) and Shantell Sans (Hand, ADR-TBD-W9). This asserts what is BUNDLED, not what
+        // Three families: Inter (Plain), Fraunces (Book, ADR-126) and Shantell Sans (Hand, ADR-148). This asserts what is BUNDLED, not what
         // the registry supports, and is the tripwire that makes adding a family a deliberate act rather
         // than a silent one.
         assertEquals(

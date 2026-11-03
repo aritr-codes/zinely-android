@@ -127,7 +127,7 @@ class TextStyleIntentTest {
         assertNoStep(old, Intent.StyleText("a", sizePt = 9.0))
     }
 
-    // ADR-TBD-W9: Hand holds the same rule as Book, by its own minimum.
+    // ADR-148: Hand holds the same rule as Book, by its own minimum.
 
     @Test
     fun `Hand is refused for a text below its minimum, and for a text with Greek or Cyrillic letters`() {

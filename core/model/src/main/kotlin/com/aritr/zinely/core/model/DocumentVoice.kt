@@ -7,7 +7,7 @@ private const val HAND_MIN: Double = 12.0
 /**
  * The three document voices a text can be set in ([ADR-126](../../../../../../../../docs/DECISIONS.md#adr-126)).
  *
- * Hand is the third ([ADR-TBD-W9](../../../../../../../../docs/DECISIONS.md#adr-tbd-w9)). A voice is **not** a saved value: the document still carries only `TextStyle.fontFamily`, an existing
+ * Hand is the third ([ADR-148](../../../../../../../../docs/DECISIONS.md#adr-148)). A voice is **not** a saved value: the document still carries only `TextStyle.fontFamily`, an existing
  * string, so the saved format does not change. This is the reading of that string.
  *
  * @property familyName what choosing the voice **writes**. Plain writes `"sans-serif"`, the value every

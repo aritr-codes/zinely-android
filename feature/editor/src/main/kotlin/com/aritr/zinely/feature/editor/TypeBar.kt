@@ -811,7 +811,7 @@ private fun StepButton(
 }
 
 /**
- * The Font row — `.tyvoice` (frozen `v21-typebar.html` A29 and A29H, ADR-126, ADR-TBD-W9). Three word
+ * The Font row — `.tyvoice` (frozen `v21-typebar.html` A29 and A29H, ADR-126, ADR-148). Three word
  * buttons, Book, Plain and Hand: one choice of three, so a single-choice group **named by its label** (A29
  * rules 1 and 14: the row follows the frozen page on the two points returned to the owner for Align and
  * Colour, which name no group in the app today; if the owner rules the other way for them, this row follows

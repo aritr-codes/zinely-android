@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * The three document voices and what each can set (ADR-126, ADR-TBD-W9). Pure JVM. Given-When-Then.
+ * The three document voices and what each can set (ADR-126, ADR-148). Pure JVM. Given-When-Then.
  */
 class DocumentVoiceTest {
 

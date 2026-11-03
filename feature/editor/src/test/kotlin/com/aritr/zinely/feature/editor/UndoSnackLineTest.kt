@@ -47,6 +47,10 @@ class UndoSnackLineTest {
         Triple(EditVerb.FLIP_TOP_BOTTOM_OFF, null, 1) to ("Top-bottom flip put back" to "Top-bottom flip removed"),
         Triple(EditVerb.INK, null, 1) to ("Ink put back" to "Ink changed"),
         Triple(EditVerb.FRAMING, null, 1) to ("Framing put back" to "Framing changed"),
+        // A52.4: by what the step did, so a first description's Undo does not claim to put anything back.
+        Triple(EditVerb.DESCRIPTION_ADDED, null, 1) to ("Description taken off" to "Description added"),
+        Triple(EditVerb.DESCRIPTION_REMOVED, null, 1) to ("Description put back" to "Description removed"),
+        Triple(EditVerb.DESCRIPTION_CHANGED, null, 1) to ("Description put back" to "Description changed"),
         Triple(EditVerb.SPREAD, EditKind.PHOTO, 1) to ("Photo back on one page" to "Photo runs across pages 2 & 3"),
     )
 

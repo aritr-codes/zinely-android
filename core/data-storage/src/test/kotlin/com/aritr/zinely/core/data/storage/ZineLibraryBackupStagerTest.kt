@@ -619,7 +619,7 @@ class ZineLibraryBackupStagerTest {
                 paperSize = document.paperSize,
                 createdAtEpochMs = 1L,
                 updatedAtEpochMs = 2L,
-                documentSchemaVersion = document.schemaVersion,
+                documentSchemaVersion = Regex("\"schemaVersion\":(\\d+)").find(bytes.decodeToString())!!.groupValues[1].toInt(),
                 documentPath = "projects/$id/document.json",
                 documentSha256 = sha256(bytes),
                 documentByteCount = bytes.size.toLong(),

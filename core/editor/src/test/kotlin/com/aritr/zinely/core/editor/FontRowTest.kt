@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * The Font row's derived state (frozen `v21-typebar.html` A29 rules 7 to 10 and A29H; ADR-126, ADR-TBD-W9).
+ * The Font row's derived state (frozen `v21-typebar.html` A29 rules 7 to 10 and A29H; ADR-126, ADR-148).
  * Each case is one of the prototype's states, or an edge its script decides. Pure. Given-When-Then.
  */
 class FontRowTest {
