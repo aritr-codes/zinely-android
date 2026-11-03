@@ -2185,3 +2185,30 @@ Asked: when an object is about as small as a finger, how do editors keep it mova
 - 🟦 **RECOMMENDATION:** keep the target size and move it outward, the idea of KDE's free-floating handles, rather than shrink
   or hide. A KDE reviewer noted very small rectangles lost resizing there; this design keeps every handle. It costs no
   capability and draws nothing new, but the targets reach further from the piece. Hiding handles remains the next step if testers still mis-hit.
+
+## RW5. How home prints of folded zines fail, and how others guide (2026-11-03) {#rw5}
+
+Feeds [ADR-TBD-W5](DECISIONS.md) and the `v21-proof.html` AW5 block. The number is provisional; the orchestrator assigns the final R-number.
+Web search only; no printer was measured. The [print study](planning/STUDY-PRINT-AND-FOLD-PROTOCOL.md) is what measures.
+
+- ✅ **VERIFIED, forum and tool docs:** the commonest zine-print fault people report is the print app shrinking the page to fit;
+  the fix they give is Scale = Actual size or 100 % ([Zine Arranger troubleshooting](https://nashhigh.itch.io/zinearranger),
+  [itch.io thread](https://itch.io/post/5839917)). These are community posts, not printer documentation.
+- ✅ **VERIFIED, same source:** Zine Arranger also offers "Fit to page" or a manual percentage as a workaround when folds
+  stop lining up. That fits a mismatched page size, not the default.
+- ✅ **VERIFIED, printer manual and forums:** duplex flip edge is described relative to the sheet in the printer, not the
+  page in the layout; booklet modes in some drivers lock to long edge ([Dell manual](https://www.manualslib.com/manual/1274140/Dell-S3845cdn.html?page=222),
+  [Adobe community thread](https://community.adobe.com/t5/indesign-discussions/booklet-printing-pages-upside-down/m-p/2610446),
+  [explainer](https://www.techfinitive.com/explainers/flip-on-long-edge-vs-flip-on-short-edge/)). Sources disagree on which
+  edge a given booklet needs; they agree a test print settles it. Only two-sided formats are affected.
+- ✅ **VERIFIED, HP community answer:** laser printers usually leave about 4 mm unprintable per edge, and some drivers
+  have larger side margins ([HP community](https://h30434.www3.hp.com/t5/LaserJet-Printing/Borderless-printing/m-p/6151841)).
+  Canon's desktop manuals list a margin per paper but no single figure turned up in this search. 🟨 **ASSUMPTION:** a 6 mm
+  inset reaches most home printers; the study measures it (Canon PIXMA on Letter, 6.4 mm, is the documented exception in [gate Q7](planning/ZINELY-1X-DECISION-GATE.md#q7-print-o13--d3-stage-2)).
+- ⚠️ **NOT FOUND:** documentation showing what Android's default print service does to a PDF whose content reaches the
+  edge, or whether its dialog can show a scale control. [ADR-052](DECISIONS.md#adr-052) says it shows none; unmeasured.
+- 🟦 **RECOMMENDATION:** guide by result, not by promise. Tell the maker to print one sheet and check that the printed fold lines
+  land on the creases; map each visible fault (lines miss, edge strip missing, sideways, back printed, order) to one action;
+  keep "100 % / Actual size" conditional on a setting existing; do not teach flip edge while the sheet is one-sided.
+- 🟦 **RECOMMENDATION:** a separate printed test sheet is optional. The zine's own first sheet already works as the test,
+  so the test page waits for the owner after the study.
