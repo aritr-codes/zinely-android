@@ -18130,7 +18130,8 @@ Q7 keeps with the owner. **Design:** [`v21-proof.html`](design/mockups/v21-proof
 3. **Flip edge is not taught.** The sheet is one-sided, so the setting never applies. It returns with a two-sided format.
 4. **A printed test sheet is a stage 2 and not decided here.** It is specified (50 mm ruler, numbered 3, 5 and 8 mm bands, the
    eight numbered panels) and drawn to scale in AW5, but ships only if the owner approves a static test page after the study
-   (ADR-039, Q7) and the study shows that spending a real sheet is a problem. It stores no printer profile and changes nothing
+   (ADR-039, Q7, the owner's call). The case for it would be that spending a real sheet proves a problem. Its edge bands
+   mean something only once the ruler reads 5 cm. It stores no printer profile and changes nothing
    in the zine. The [Brief 03](planning/BRIEF-03-PRINTER-TEST-PAGE.md) questions, profile and Part 2 are **not** adopted.
 5. **No pure-logic piece was built.** The test sheet's geometry depends on the inset and ruler the study may change; building
    it now would be speculative. When stage 2 is approved, its producer is the first piece, tests first.
@@ -18144,3 +18145,12 @@ Q7 keeps with the owner. **Design:** [`v21-proof.html`](design/mockups/v21-proof
 - `Copy.kt` strings (Print details, done-row `.wu`) change at ship time, with goldens re-recorded on the CI image and both
   device passes. The 12sp floor (A44) applies to all new words.
 - Owed: the study; owner approval of the Print-step amendment; the stage 2 ruling. Listed in OWNER-CHECKLIST.
+- **W6 and later builds must use the AW5 wording.** [ADR-133](#adr-133) and Library A35.8 lean on "nothing shrinks to fit";
+  that stays out of any new copy. Other unconditional "100%" wording still stands until ship time and is swept then:
+  `Copy.kt` Print details and done row, `RELEASING.md` (release-notes template), `COMPOSE-IMPLEMENTATION-RULES.md`,
+  `V2-CONSTITUTION.md`, [ADR-012](#adr-012)'s decision text, `CHANGELOG.md`.
+- Review (Opus, 2026-11-03): GO WITH FIXES. Fixed before this push: app-visible words instead of "keep-clear line on the
+  Bench"; a directional, paper-aware shrink fault with a one-millimetre tolerance; the margin sentence says "start about 6 mm
+  in, and warn", not "keep everything 6 mm in"; "exactly 5 cm" dropped; test-sheet top row drawn upside down like the engine's.
+  Rejected: drawing the whole amended drawer (the words, span split and layout are stated; Compose parity compares against
+  the existing drawer plus AW5).

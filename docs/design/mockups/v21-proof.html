@@ -1650,7 +1650,7 @@ if (prototypeParams.get('gallery') === 'fold') {
         <td class="said">We lay your zine out for this exact paper size.</td></tr>
       <tr><td>What we’ve already done, line 3</td>
         <td class="was">We keep a margin at the edge of the sheet, because no printer can reach all the way to the paper’s edge.</td>
-        <td class="said">We keep your words and pictures about 6 mm in from the sheet’s edge. A few printers leave a wider blank strip than that.</td></tr>
+        <td class="said">We start your pages about 6 mm in from the sheet’s edge, and warn you when something is closer. A few printers leave a wider blank strip than that.</td></tr>
       <tr><td>Recipe, Scale row value</td>
         <td class="was">100% · Actual size — not “Fit to page”</td>
         <td class="said">100% · Actual size, if there’s a Scale setting — not “Fit to page”</td></tr>
@@ -1659,7 +1659,7 @@ if (prototypeParams.get('gallery') === 'fold') {
         <td class="said">Your zine prints on one side, then folds.</td></tr>
       <tr><td>Section “Before you print a stack” becomes “Check your first sheet”</td>
         <td class="was">New printer? Print one test sheet first and fold it — check the cover’s on top and the text is upright. Printers flip pages differently; one sheet saves a stack.</td>
-        <td class="said">Print one sheet and fold it before you print a stack. Fold it the way the steps show: the printed fold lines should land right on the creases, give or take a pencil line.</td></tr>
+        <td class="said">Print one sheet and fold it before you print a stack. Fold it the way the steps show: the printed fold lines should land on the creases, give or take a millimetre.</td></tr>
       <tr><td>Done row, under Save PDF (<code>.wu</code>)</td>
         <td class="was">In Downloads — “zine.pdf”. Print it at 100%, landscape, one side — then fold it up.</td>
         <td class="said">In Downloads — “zine.pdf”. Print it landscape and one-sided, at actual size if you can choose — then fold it up.</td></tr>
@@ -1674,9 +1674,9 @@ if (prototypeParams.get('gallery') === 'fold') {
     <thead><tr><th scope="col">What you see</th><th scope="col">What to do</th></tr></thead>
     <tbody>
       <tr><td class="said">The fold lines miss the creases</td>
-        <td>Your printer shrank the sheet. Print again and look for Scale, Fit to page or Actual size in your printer’s app, and choose 100% or Actual size. Not every app has one — if yours doesn’t, try your printer maker’s own app.</td></tr>
+        <td>If the outer fold lines sit closer to the middle than the creases, your printer probably shrank the sheet: print again, look for Scale, Fit to page or Actual size in your printer’s app, and choose 100% or Actual size. Not every app has one — if yours doesn’t, try your printer maker’s own app. Also check that the paper in Zinely is the paper in your printer.</td></tr>
       <tr><td class="said">A strip along the edge is missing</td>
-        <td>That strip is beyond your printer’s reach. Anything closer to the edge than the keep-clear line on the Bench can be cut off, so move it in.</td></tr>
+        <td>That strip is beyond your printer’s reach. Anything Zinely marks “Too close to the edge — may be cut off when printed” can lose its edge, so move it in.</td></tr>
       <tr><td class="said">It came out sideways, or small in the middle</td>
         <td>Choose Landscape and print again. A portrait sheet breaks the fold.</td></tr>
       <tr><td class="said">There’s print on the back too</td>
@@ -1688,13 +1688,16 @@ if (prototypeParams.get('gallery') === 'fold') {
   <p class="note"><b>Flip edge is not taught.</b> Zinely’s sheet is one-sided, so “flip on long or short edge”
   never applies, and naming it would hand a maker a setting that can only make the sheet worse. It comes back
   with a two-sided format (ROADMAP, Later). <b>Sizes:</b> every new word is at least 12sp (A44); the rows are
-  plain text with no role, read top to bottom. <b>Unmeasured, so conditional:</b> the 6 mm and the Scale
+  plain text with no role, read top to bottom. <b>Layout:</b> in the drawer each fault is one block, the
+  sighted symptom in bold on its own line, the action beneath it (a two-column table does not fit 360dp at 12sp);
+  in the Scale row only “100% · Actual size” is the emphasised span, the conditional clause after it is plain.
+  <b>Unmeasured, so conditional:</b> the 6 mm and the Scale
   setting’s existence (decision gate Q7).</p>
 
   <h3>Stage 2, only if the owner approves a static test page after the study</h3>
   <p class="cap">One optional line in Print details, “First time with this printer? Save a test sheet.”, that
   exports a fixed PDF at the zine’s paper size, with its own file name. It carries three things and nothing
-  else: a <b>50 mm ruler</b> (“Measure this: it should be exactly 5 cm”); <b>edge bands</b> at 3, 5 and 8 mm,
+  else: a <b>50 mm ruler</b> (“Measure this: it should be 5 cm”); <b>edge bands</b> at 3, 5 and 8 mm,
   numbered; and the <b>eight numbered panels</b> with the fold lines, so the fold check can be done on a sheet
   that is not the maker’s own. It never changes the zine, never gates Save, asks no questions back and stores
   nothing (no printer profile). The first sheet of the zine already is a test, so this line exists only if the
@@ -1716,12 +1719,14 @@ if (prototypeParams.get('gallery') === 'fold') {
   for(let i=1;i<4;i++)add('line',{x1:i*pw,y1:0,x2:i*pw,y2:H,stroke:ink,'stroke-width':.25});
   add('line',{x1:0,y1:ph,x2:W,y2:ph,stroke:ink,'stroke-width':.25});
   const order=[5,4,3,2,6,7,8,1];
-  order.forEach((n,i)=>add('text',{x:(i%4)*pw+pw/2,y:Math.floor(i/4)*ph+ph/2,'font-size':14,'text-anchor':'middle',fill:ink},String(n)));
+  // the top row prints upside down (the engine's Rotation.HALF), so the numerals are turned 180° about their centres
+  order.forEach((n,i)=>{const cx=(i%4)*pw+pw/2,cy=Math.floor(i/4)*ph+ph/2;
+    add('text',{x:cx,y:cy,'font-size':14,'text-anchor':'middle',fill:ink,transform:i<4?'rotate(180 '+cx+' '+cy+')':''},String(n));});
   const rx=W/2-25,ry=H/2+14;
   add('line',{x1:rx,y1:ry,x2:rx+50,y2:ry,stroke:ink,'stroke-width':.6});
   add('line',{x1:rx,y1:ry-3,x2:rx,y2:ry+3,stroke:ink,'stroke-width':.6});
   add('line',{x1:rx+50,y1:ry-3,x2:rx+50,y2:ry+3,stroke:ink,'stroke-width':.6});
-  add('text',{x:W/2,y:ry+8,'font-size':4,'text-anchor':'middle',fill:ink},'Measure this: it should be exactly 5 cm');
+  add('text',{x:W/2,y:ry+8,'font-size':4,'text-anchor':'middle',fill:ink},'Measure this: it should be 5 cm');
 })();
 </script>
 

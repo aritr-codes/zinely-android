@@ -2188,11 +2188,11 @@ Asked: when an object is about as small as a finger, how do editors keep it mova
 
 ## RW5. How home prints of folded zines fail, and how others guide (2026-11-03) {#rw5}
 
-Feeds [ADR-TBD-W5](DECISIONS.md) and the `v21-proof.html` AW5 block. The number is provisional; the orchestrator assigns the final R-number.
+Feeds [ADR-TBD-W5](DECISIONS.md#adr-tbd-w5) and the `v21-proof.html` AW5 block. The number is provisional; the orchestrator assigns the final R-number.
 Web search only; no printer was measured. The [print study](planning/STUDY-PRINT-AND-FOLD-PROTOCOL.md) is what measures.
 
-- ✅ **VERIFIED, forum and tool docs:** the commonest zine-print fault people report is the print app shrinking the page to fit;
-  the fix they give is Scale = Actual size or 100 % ([Zine Arranger troubleshooting](https://nashhigh.itch.io/zinearranger),
+- 🟨 **ASSUMPTION (two community posts, no frequency data):** a common zine-print fault people report is the print app
+  shrinking the page to fit; the fix they give is Scale = Actual size or 100 % ([Zine Arranger troubleshooting](https://nashhigh.itch.io/zinearranger),
   [itch.io thread](https://itch.io/post/5839917)). These are community posts, not printer documentation.
 - ✅ **VERIFIED, same source:** Zine Arranger also offers "Fit to page" or a manual percentage as a workaround when folds
   stop lining up. That fits a mismatched page size, not the default.
