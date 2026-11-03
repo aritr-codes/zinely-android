@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.model.DocumentVoice
 import com.aritr.zinely.core.model.Script
 import com.aritr.zinely.core.model.TextCoverage
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -56,7 +57,7 @@ public const val EditorCoverageNoticeTestTag: String = "editor-coverage-notice"
  *
  * **Copy names the script.** The line is built by [coverageNoticeLine] from the distinct human script
  * names in the coverage ([Copy.Coverage.unsupported], [Copy.Coverage.phoneFont] for what the phone's own
- * fonts draw (ADR-130), and [Copy.Coverage.bookLacks] for a Book text); it auto-narrows if the bundled set grows, because a supported script
+ * fonts draw (ADR-130), and [Copy.Coverage.voiceLacks] for a Book or Hand text); it auto-narrows if the bundled set grows, because a supported script
  * stops appearing in [TextCoverage.unsupportedScripts] and so stops being named — no copy change.
  *
  * **TalkBack: polite.** Unlike the save-failure banner (assertive — edits may already be lost), this is
@@ -79,14 +80,16 @@ public const val EditorCoverageNoticeTestTag: String = "editor-coverage-notice"
  *
  * @param coverage the current text's coverage; the notice is visible iff it is not fully covered.
  * @param modifier sizing/placement applied by the host (typically aligned to the top of the canvas).
+ * @param voice the voice the text being typed is in; only Book and Hand ever report Greek or Cyrillic.
  * @param reduceMotion whether to drop the fade (defaults to the system "remove animations" setting).
  */
 /**
  * The notice's words for [coverage].
  *
- * **Greek and Cyrillic are only ever reported for a Book text** (ADR-126: Plain sets both, so the per-voice
- * check never lists them for Plain or for an unknown family). For those the line is A29 rule 13's, which
- * names the font and the way out, because "can't print yet" would be false: they print, in Plain.
+ * **Greek and Cyrillic are only ever reported for a Book or Hand text** (ADR-126: Plain sets both, so the
+ * per-voice check never lists them for Plain or for an unknown family). For those the line is A29 rule 13's
+ * (A29H.10 for Hand), which names the [voice] and the way out, because "can't print yet" would be false: they
+ * print, in Plain.
  *
  * A script no voice sets keeps the ADR-070 line, unchanged. If a Book text holds both kinds, both
  * sentences show: dropping the second would let a character reach paper unflagged, which is the one thing
@@ -96,7 +99,7 @@ public const val EditorCoverageNoticeTestTag: String = "editor-coverage-notice"
  * issue #103). A script the phone's own fonts draw gets [Copy.Coverage.phoneFont] instead, which says it
  * prints and may look different on another phone. Book's Greek and Cyrillic keep their own line either way.
  */
-internal fun coverageNoticeLine(coverage: TextCoverage): String {
+internal fun coverageNoticeLine(coverage: TextCoverage, voice: DocumentVoice = DocumentVoice.BOOK): String {
     val scripts = coverage.unsupportedScripts
     val greek = Script.GREEK in scripts
     val cyrillic = Script.CYRILLIC in scripts
@@ -107,7 +110,7 @@ internal fun coverageNoticeLine(coverage: TextCoverage): String {
     val drawnNames = drawn.filter { it != Script.OTHER }.map { it.displayName }.distinct() - undrawnNames.toSet()
     val drawnOthers = Script.OTHER in drawn
     return listOfNotNull(
-        if (greek || cyrillic) Copy.Coverage.bookLacks(Copy.Type.bookScripts(greek, cyrillic)) else null,
+        if (greek || cyrillic) Copy.Coverage.voiceLacks(voice.word(), Copy.Type.scriptsNamed(greek, cyrillic)) else null,
         if (drawnNames.isNotEmpty() || drawnOthers) Copy.Coverage.phoneFont(drawnNames, drawnOthers) else null,
         undrawnNames.takeIf { it.isNotEmpty() }?.let(Copy.Coverage::unsupported),
     ).joinToString(" ")
@@ -117,12 +120,13 @@ internal fun coverageNoticeLine(coverage: TextCoverage): String {
 public fun EditorCoverageNotice(
     coverage: TextCoverage,
     modifier: Modifier = Modifier,
+    voice: DocumentVoice = DocumentVoice.BOOK,
     reduceMotion: Boolean = rememberReduceMotion(),
 ) {
     // Retain the last non-empty line across the exit fade, so the sentence doesn't blank out
     // mid-dismissal when `coverage` flips back to Covered (which carries no scripts to name).
     var lastLine by remember { mutableStateOf("") }
-    if (!coverage.isFullyCovered) lastLine = coverageNoticeLine(coverage)
+    if (!coverage.isFullyCovered) lastLine = coverageNoticeLine(coverage, voice)
 
     AnimatedVisibility(
         visible = !coverage.isFullyCovered,

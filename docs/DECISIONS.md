@@ -18144,8 +18144,9 @@ overrule it).
    is kept; the copyright line and the licence are kept whole and shown in Licences & credits and on the website's
    licence page. Not sold alone.
 5. **Scripts and coverage, measured 2026-11-03** (code points present in all four faces; Book's and Inter's are the
-   bundled files'): Basic Latin 95 of 95, Latin-1 96 of 96, Latin Extended-A 126 of 128 (Book 126, Inter 127), Greek 2,
-   Cyrillic 178 of 256; 653 in all (Book 637, Inter 2,815). Within Latin up to U+024F only Ǚ and ǚ are in the Book
+   bundled files'): Basic Latin 95 of 95, Latin-1 96 of 96, Latin Extended-A 126 of 128 (Book 126, Inter 127); 653 in all
+   (Book 637, Inter 2,815). Upstream also holds 2 Greek and 178 of 256 Cyrillic code points, which the build drops, so the
+   shipped faces hold none. Within Latin up to U+024F only Ǚ and ǚ are in the Book
    faces and not in Hand. Hand declares **Latin and emoji**, exactly Book's promise; Cyrillic is partial and is not
    claimed. Emoji and any character the face lacks are drawn from another font as in a Book text (the bundled emoji font, then the phone's, ADR-112,
    ADR-130); a fallback character's look may differ per phone, which the typing-time notice already says.

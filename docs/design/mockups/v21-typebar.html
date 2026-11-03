@@ -1680,13 +1680,13 @@ of letter widths, no kerning; <code>tools/build-document-fonts.py --measure</cod
 <tr><td>Basic Latin (95)</td><td>95</td><td>95</td><td>95</td></tr>
 <tr><td>Latin-1 Supplement (96)</td><td>96</td><td>96</td><td>95</td></tr>
 <tr><td>Latin Extended-A (128)</td><td>126</td><td>126</td><td>127</td></tr>
-<tr><td>Greek (144) / Cyrillic (256)</td><td>2 / 178</td><td>0 / 0</td><td>105 / 248</td></tr>
+<tr><td>Greek (144) / Cyrillic (256)</td><td>0 / 0 shipped (the release holds 2 / 178; the build drops both)</td><td>0 / 0</td><td>105 / 248</td></tr>
 <tr><td>Code points in the four shipped faces</td><td>653</td><td>637</td><td>2,815</td></tr>
 <tr><td>Drawn x-height at 10 pt, mm</td><td>1.70</td><td>1.66</td><td>1.93</td></tr>
 <tr><td>Running text, width against Plain</td><td>+9 % (regular), +15 % (bold)</td><td>2 to 5 %</td><td>0</td></tr>
 <tr><td>Line height as a share of the size</td><td>1.340</td><td>1.233</td><td>1.210</td></tr>
 </table>
-<p class="cap">Hand is Latin-only like Book (Greek has two letters, Cyrillic is partial and is not claimed). Within the Latin letters up to U+024F,
+<p class="cap">Hand is Latin-only like Book (upstream has two Greek letters and a partial Cyrillic; neither is claimed, and the build drops them). Within the Latin letters up to U+024F,
 only Ǚ and ǚ are in the four Book faces and not in Hand (72 of Book's 637 code points are absent from Hand, symbols
 among them); <b>an emoji or a letter outside the faces is
 drawn from another font exactly as it is in a Book text</b> (the bundled emoji font, then the phone's).</p>

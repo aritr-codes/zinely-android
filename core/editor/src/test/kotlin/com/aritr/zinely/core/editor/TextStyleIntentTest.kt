@@ -127,6 +127,40 @@ class TextStyleIntentTest {
         assertNoStep(old, Intent.StyleText("a", sizePt = 9.0))
     }
 
+    // ADR-TBD-W9: Hand holds the same rule as Book, by its own minimum.
+
+    @Test
+    fun `Hand is refused for a text below its minimum, and for a text with Greek or Cyrillic letters`() {
+        assertNoStep(model(txt("a", style = TextStyle(sizePt = 10.0))), Intent.StyleText("a", fontFamily = "Shantell Sans"))
+        assertNoStep(model(txt("a")), Intent.StyleText("a", sizePt = 10.0, fontFamily = "Shantell Sans"))
+        assertNoStep(model(txt("a", text = "καλημέρα")), Intent.StyleText("a", fontFamily = "Shantell Sans"))
+        assertNoStep(model(txt("a", text = "привет")), Intent.StyleText("a", fontFamily = "Shantell Sans"))
+    }
+
+    @Test
+    fun `a Hand text cannot be made smaller than its minimum, and can be chosen, left and chosen again`() {
+        val hand = model(txt("a", style = TextStyle(sizePt = 12.0, fontFamily = "Shantell Sans")))
+        assertNoStep(hand, Intent.StyleText("a", sizePt = 10.0))
+        assertEquals(14.0, el(styleOf(hand, Intent.StyleText("a", sizePt = 14.0)), "a").style.sizePt)
+
+        val start = model(txt("a"))
+        val chosen = EditorReducer.reduce(start, Intent.StyleText("a", fontFamily = "Shantell Sans")).model
+        assertEquals("Shantell Sans", el(chosen, "a").style.fontFamily)
+        assertEquals(1, chosen.history.undo.size)
+        val back = EditorReducer.reduce(chosen, Intent.StyleText("a", fontFamily = "sans-serif")).model
+        assertEquals(start.document, back.document)
+    }
+
+    @Test
+    fun `Hand to Book and Book to Hand are one step each and obey the same rule`() {
+        val book = model(txt("a", style = TextStyle(fontFamily = "Fraunces")))
+        val hand = EditorReducer.reduce(book, Intent.StyleText("a", fontFamily = "Shantell Sans")).model
+        assertEquals("Shantell Sans", el(hand, "a").style.fontFamily)
+        assertEquals(1, hand.history.undo.size)
+        // A Book text that holds Greek (an edited file) cannot be turned into Hand either.
+        assertNoStep(model(txt("a", text = "καλημέρα", style = TextStyle(fontFamily = "Fraunces"))), Intent.StyleText("a", fontFamily = "Shantell Sans"))
+    }
+
     private fun assertNoStep(start: EditorModel, intent: Intent.StyleText) {
         val r = EditorReducer.reduce(start, intent)
         assertEquals(start.document, r.model.document)

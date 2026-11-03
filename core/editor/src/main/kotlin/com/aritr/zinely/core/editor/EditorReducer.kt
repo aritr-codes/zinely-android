@@ -526,27 +526,27 @@ public object EditorReducer {
                 fontFamily = intent.fontFamily ?: el.style.fontFamily,
             ),
         )
-        if (after == el || breaksBookRule(el, after)) return Reduction(model)
+        if (after == el || breaksVoiceRule(el, after)) return Reduction(model)
         return committing(model, EditTextCommand(model.currentPageIndex, el.id, el, after))
     }
 
     /**
-     * ADR-126 decision 8, held here so no surface can get past it: Book's minimum **blocks**. The Font row
-     * already refuses these (`fontRow`), but it reads a composition-old state and coalesces sizes, so two
-     * taps in one frame could otherwise commit Book below its minimum.
+     * ADR-126 decision 8 (and ADR-TBD-W9 for Hand), held here so no surface can get past it: a voice's
+     * minimum **blocks**. The Font row already refuses these (`fontRow`), but it reads a composition-old state
+     * and coalesces sizes, so two taps in one frame could otherwise commit Book or Hand below its minimum.
      *
-     * Refused: a patch that turns a text into Book while [fontRow] says Book is blocked for the resulting
-     * size or the text's scripts, and a patch that makes a Book text smaller than the minimum. Not refused:
-     * anything else on a Book text that is already below it (a hand-edited or older document), so its
-     * colour, alignment and a step back up still work.
+     * Refused: a patch that turns a text into a voice with a minimum while [fontRow] says that voice is
+     * blocked for the resulting size or the text's scripts, and a patch that makes a text of such a voice
+     * smaller than its minimum. Not refused: anything else on a text that is already below it (a hand-edited
+     * or older document), so its colour, alignment and a step back up still work.
      */
-    private fun breaksBookRule(before: TextElement, after: TextElement): Boolean {
-        if (DocumentVoice.of(after.style.fontFamily) != DocumentVoice.BOOK) return false
-        val becomesBook = DocumentVoice.of(before.style.fontFamily) != DocumentVoice.BOOK
-        return if (becomesBook) {
-            fontRow(after.text, after.style.copy(fontFamily = before.style.fontFamily), rampMinPt = 0.0).bookBlock != null
+    private fun breaksVoiceRule(before: TextElement, after: TextElement): Boolean {
+        val voice = DocumentVoice.of(after.style.fontFamily) ?: return false
+        val min = voice.minSizePt ?: return false
+        return if (DocumentVoice.of(before.style.fontFamily) != voice) {
+            voice in fontRow(after.text, after.style.copy(fontFamily = before.style.fontFamily), rampMinPt = 0.0).blocks
         } else {
-            after.style.sizePt < DocumentVoice.BOOK_MIN_SIZE_PT && after.style.sizePt < before.style.sizePt
+            after.style.sizePt < min && after.style.sizePt < before.style.sizePt
         }
     }
 

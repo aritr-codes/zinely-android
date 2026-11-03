@@ -84,6 +84,8 @@ public enum class ColophonTypeface(
     ),
     FRAUNCES("Fraunces", "fonts/OFL-Fraunces.txt"),
     INTER("Inter", "fonts/OFL-Inter.txt"),
+    // ADR-TBD-W9: Hand. The faces are a Modified Version (instanced, subset); the licence is kept whole.
+    SHANTELL_SANS("Shantell Sans", "fonts/OFL-ShantellSans.txt"),
 }
 
 /** One row of Licences & credits that opens a licence page: a bundled typeface, or an Art set (ADR-139). */

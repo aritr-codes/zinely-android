@@ -1228,12 +1228,12 @@ public object Copy {
                 " characters print in a font from your phone, so they may look different on another phone."
 
         /**
-         * Typing a letter Book does not have into a Book text (frozen `v21-typebar.html` A29 rule 13).
-         * [script] is "Greek", "Cyrillic" or "Greek and Cyrillic" ([Type.bookScripts]). It names the font
-         * and the way out; the font is never switched for the maker.
+         * Typing a letter a voice does not have into a text in that voice (frozen `v21-typebar.html` A29 rule 13,
+         * A29H.10). [voiceName] is "Book" or "Hand"; [script] is "Greek", "Cyrillic" or "Greek and Cyrillic"
+         * ([Type.scriptsNamed]). It names the font and the way out; the font is never switched for the maker.
          */
-        public fun bookLacks(script: String): String =
-            "Book has no $script letters. Switch this text to Plain to print them in a matching face."
+        public fun voiceLacks(voiceName: String, script: String): String =
+            "$voiceName has no $script letters. Switch this text to Plain to print them in a matching face."
 
         /** English list grammar: `A` · `A and B` · `A, B and C`. */
         private fun joinScripts(scripts: List<String>): String = when (scripts.size) {
@@ -1282,27 +1282,38 @@ public object Copy {
         public fun sizePointAnnouncement(pt: Int): String = "Size $pt point"
         public fun colourAnnouncement(label: String): String = "Colour $label"
 
-        // The Font row (frozen `v21-typebar.html` A29, ADR-126). The two words are the choices' names; a
-        // screen reader hears the word, never a face name.
+        // The Font row (frozen `v21-typebar.html` A29 and A29H, ADR-126, ADR-TBD-W9). The three words are the
+        // choices' names; a screen reader hears the word, never a face name.
         public const val FONT_BOOK: String = "Book"
         public const val FONT_PLAIN: String = "Plain"
+        public const val FONT_HAND: String = "Hand"
         public fun fontAnnouncement(name: String): String = "Font $name"
 
-        /** The script named in a Book reason: "Greek", "Cyrillic", or "Greek and Cyrillic" when both. */
-        public fun bookScripts(greek: Boolean, cyrillic: Boolean): String = when {
+        /** The script named in a voice's reason: "Greek", "Cyrillic", or "Greek and Cyrillic" when both. */
+        public fun scriptsNamed(greek: Boolean, cyrillic: Boolean): String = when {
             greek && cyrillic -> "Greek and Cyrillic"
             cyrillic -> "Cyrillic"
             else -> "Greek"
         }
 
-        // The four reason lines, exactly as A29 rule 8 gives them. One slot, directly under the Font row.
-        // The minimum is a parameter because it is one named value the printed page may still change.
-        public fun bookHasNoScript(script: String): String = "Book has no $script letters, so this text stays Plain."
-        public fun bookNeedsSize(minPt: Int): String = "Book needs $minPt pt or larger. Make the text larger first."
-        public fun bookStopsAt(minPt: Int): String = "Book stops at $minPt pt. Switch to Plain to go smaller."
+        /** "Book" · "Book and Hand": the words one reason line speaks for (A29H.7). */
+        private fun wordsNamed(names: List<String>): String = when (names.size) {
+            0 -> ""
+            1 -> names[0]
+            else -> names.dropLast(1).joinToString(", ") + " and " + names.last()
+        }
+
+        // The reason lines, exactly as A29 rule 8 and A29H.7 to A29H.9 give them. One slot, directly under the
+        // Font row. A line names every word it speaks for, so it reads right for one word and for two. The
+        // minimum is a parameter because it is one named value per voice that the printed page may still change.
+        public fun hasNoScript(names: List<String>, script: String, stays: String): String =
+            "${wordsNamed(names)} ${if (names.size == 1) "has" else "have"} no $script letters, so this text stays $stays."
+        public fun needsSize(names: List<String>, minPt: Int): String =
+            "${wordsNamed(names)} ${if (names.size == 1) "needs" else "need"} $minPt pt or larger. Make the text larger first."
+        public fun stopsAt(name: String, minPt: Int): String = "$name stops at $minPt pt. Switch to Plain to go smaller."
         public const val FONT_UNKNOWN: String =
             "This text uses a font this version of Zinely does not have. It is drawn in Plain for now. " +
-                "Choosing Book or Plain replaces its font."
+                "Choosing Book, Plain or Hand replaces its font."
 
         /**
          * A choice that cannot be used, spoken (A29 rule 7): the word, "unavailable", then the reason. One

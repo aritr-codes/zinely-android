@@ -103,11 +103,11 @@ class DocumentFontRegistryTest {
     fun `the bundled registry declares exactly what the render module carries`() {
         val bundled = DocumentFontRegistry.Bundled
 
-        // Two families: Inter (Plain) and Fraunces (Book, ADR-126). This asserts what is BUNDLED, not what
+        // Three families: Inter (Plain), Fraunces (Book, ADR-126) and Shantell Sans (Hand, ADR-TBD-W9). This asserts what is BUNDLED, not what
         // the registry supports, and is the tripwire that makes adding a family a deliberate act rather
         // than a silent one.
         assertEquals(
-            listOf(DocumentFontRegistry.INTER, DocumentFontRegistry.FRAUNCES),
+            listOf(DocumentFontRegistry.INTER, DocumentFontRegistry.FRAUNCES, DocumentFontRegistry.SHANTELL_SANS),
             bundled.families.map { it.name },
         )
         assertEquals(DocumentFontRegistry.INTER, bundled.defaultFamily.name)
@@ -123,6 +123,12 @@ class DocumentFontRegistryTest {
         assertEquals("fonts/Fraunces9pt-Bold.ttf", book.boldAsset)
         assertEquals("fonts/Fraunces9pt-Italic.ttf", book.italicAsset)
         assertEquals("fonts/Fraunces9pt-BoldItalic.ttf", book.boldItalicAsset)
+
+        val hand = bundled.resolve("Shantell Sans")
+        assertEquals("fonts/ShantellSans-Regular.ttf", hand.regularAsset)
+        assertEquals("fonts/ShantellSans-Bold.ttf", hand.boldAsset)
+        assertEquals("fonts/ShantellSans-Italic.ttf", hand.italicAsset)
+        assertEquals("fonts/ShantellSans-BoldItalic.ttf", hand.boldItalicAsset)
     }
 
     @Test
@@ -136,6 +142,8 @@ class DocumentFontRegistryTest {
         assertEquals(DocumentFontRegistry.INTER, bundled.resolve("Inter").name)
         assertTrue(bundled.isRegistered(DocumentVoice.BOOK.familyName))
         assertEquals(DocumentFontRegistry.FRAUNCES, bundled.resolve(DocumentVoice.BOOK.familyName).name)
+        assertTrue(bundled.isRegistered(DocumentVoice.HAND.familyName))
+        assertEquals(DocumentFontRegistry.SHANTELL_SANS, bundled.resolve(DocumentVoice.HAND.familyName).name)
         // A family from a later build: drawn in Inter, and DocumentVoice agrees it is unknown.
         assertEquals(DocumentFontRegistry.INTER, bundled.resolve("Averia Sans Libre").name)
         assertEquals(null, DocumentVoice.of("Averia Sans Libre"))
