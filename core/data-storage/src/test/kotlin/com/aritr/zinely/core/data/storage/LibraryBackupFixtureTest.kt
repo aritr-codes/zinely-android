@@ -147,6 +147,42 @@ class LibraryBackupFixtureTest {
         }
     }
 
+    /**
+     * `fixtures/library-backup-v2-described.zine` ([ADR-147](docs/DECISIONS.md#adr-147)) was produced on the W4
+     * build branch by the [ZineLibraryBackupWriter] from two zines of the first archive: `zine-v4`, the
+     * `:core:data` `document-v4.json` (a described photo and a described Art piece), and `zine-v3`, the v3 corpus
+     * file unchanged. Its manifest records 4 and 3. It is what a v4 build writes; a build before v4 refuses all of
+     * it (the whole backup), which the cross-version device pass checks. Frozen like its siblings.
+     */
+    @Test
+    fun `the frozen described archive stages with its descriptions and both versions`() = runBlocking {
+        val archive = Path.of(checkNotNull(javaClass.getResource("/fixtures/library-backup-v2-described.zine")).toURI())
+        assertEquals(DESCRIBED_ARCHIVE_SHA256, sha256(Files.readAllBytes(archive))) {
+            "library-backup-v2-described.zine changed. Fixtures are frozen: add a new archive, never regenerate one."
+        }
+
+        ZineLibraryBackupStager().stage(archive, temp.resolve("staging")).use { staged ->
+            assertEquals(2, staged.manifest.packageVersion)
+            assertEquals(
+                listOf(Triple("zine-v4", 4, DOC_V4), Triple("zine-v3", 3, DOC_V3)),
+                staged.projects.map {
+                    Triple(it.manifestEntry.sourceProjectId, it.manifestEntry.documentSchemaVersion, it.manifestEntry.documentSha256)
+                },
+            )
+            val (described, plain) = staged.projects.map { p -> p.document.pages.flatMap { it.elements } }
+            assertEquals(
+                listOf("A moth on the porch wall, wings open"),
+                described.filterIsInstance<ImageElement>().mapNotNull { it.description },
+            )
+            assertEquals(
+                listOf("Torn pink tape holding the photo down"),
+                described.filterIsInstance<DecorElement>().mapNotNull { it.description },
+            )
+            assertTrue(plain.filterIsInstance<ImageElement>().all { it.description == null })
+            assertTrue(plain.filterIsInstance<DecorElement>().all { it.description == null })
+        }
+    }
+
     private fun sha256(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256")
         .digest(bytes)
         .joinToString("") { "%02x".format(it) }
@@ -155,12 +191,15 @@ class LibraryBackupFixtureTest {
         const val ARCHIVE_SHA256 = "fd14efcd1e146bf3dc6541ac8e9cb4d0ff43034bf811a7003edad25eb7542fe0"
         const val PARTIAL_ARCHIVE_SHA256 = "b9dfabb2d792a328a503f03fabd248c25c2c482539a6790f3de75a0fb527ee27"
 
+        const val DESCRIBED_ARCHIVE_SHA256 = "3925ee63678467ea5442063544fed815e6d7a2253fdbefb064fec6c2ad1f53b5"
+
         const val FOLDERS_ARCHIVE_SHA256 = "a5f68d9c172b53f2e5240c9fbb7940ef9eb3696834b65007372009d6f778d9d9"
 
         /** The `:core:data` corpus files, pinned there by `DocumentFixtureCorpusTest`. */
         const val DOC_V1 = "b0e82a1a512ae724930f7b32d81213dca927f0e9f1b3233791e20618253da91e"
         const val DOC_V2 = "3ba7370f44123cf9dde809ee83dc4e951d20e19e2cdc4502197ed3fe1346ed24"
         const val DOC_V3 = "bba2f22d633bf0e3da9d9b72559bcfa0a937f459309dcb79b92a4e68fab13ae9"
+        const val DOC_V4 = "fe66718f8840dbbdf44b6f5a87efaf0254c6477535644d5abde6ddbfd7ae5168"
 
         const val PHOTO_A = "380704824c8bf2b6f7f69cca9eae828fee7ff44b2328820e49eec362c674ed3a"
         const val PHOTO_B = "8f914e9d17abc02fbccbf33f384481a28e1ccb9dd642f3b4cf0e5b1ddd3f3219"

@@ -209,7 +209,13 @@ class JsonDocumentSerializerTest {
         // so a v1 request would come back current and this migrator would never run — the assertion would
         // still pass and
         // prove nothing.
-        val v1Json = serializer.serialize(sample())
+        // ADR-147: an undescribed sample is written as v3, so this needs a described one to be stamped current (4).
+        val described = sample().copy(
+            pages = sample().pages.map { page ->
+                page.copy(elements = page.elements.map { (it as ImageElement).copy(description = "A photo") })
+            },
+        )
+        val v1Json = serializer.serialize(described)
             .replace("\"schemaVersion\":$CURRENT_SCHEMA_VERSION", "\"schemaVersion\":1")
         val decoded = migrating.deserialize(v1Json)
         assertEquals(2, decoded.schemaVersion)
