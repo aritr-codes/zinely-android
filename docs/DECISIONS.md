@@ -154,7 +154,7 @@
 | [ADR-143](#adr-143) | **A turn handle, snapping, Straighten and one undo rule for repeated taps.** A turn knob below the selection ring (54dp out, flips above when it would not fit); quarter-turn snap within 5° for the knob only (two fingers do not snap); an angle readout while dragging; Straighten in Arrange > Turn; a turn-only step is "turned"; a run of tray taps in one group is one undo step (the tap intents gain a source). No schema change. Amends ADR-129/A33, ADR-123/A26, ADR-102 §12.8; closes ADR-136 W2a items 7 and 9. Design Bench A48. | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
 | [ADR-144](#adr-144) | **Sheet action pairs share one geometry.** A dismiss beside a committing button on a sheet is a bordered sibling of it (same radius, border, shadow, press, 48px; surface fill and ink words against the commit's leaf fill and on-leaf words; only the commit may be disabled). The folder name sheet's Cancel, bare text beside a dimmed pill, is the one outlier in the frozen corpus and becomes `.go.ghost`. Look only: A28.14 behaviour unchanged. Library A49 | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
 | [ADR-145](#adr-145) | **The middle of a piece moves it.** A handle's 48dp hit box steps outward instead of covering a small piece's middle; a tap in a box away from its mark is a tap on the page (A50.6). Nothing drawn changes. | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
-| [ADR-TBD-W4](#adr-tbd-w4) | **Saved format v4: a description on photos and Art; a file says v4 only when it holds one.** `description: String?` on `ImageElement` and `DecorElement`, absent when none (`explicitNulls = false`), capped at entry to 250 code points (growth only); identity v3→v4 migrator; the writer stamps 3, or 4 when the zine holds a description (never below 3), so an undescribed zine stays a v3 file and only a backup holding a described piece is refused by older builds. No layout marker. Entry is Bench A52's Describe | Proposed (design frozen under delegation; not built; number assigned at merge) |
+| [ADR-147](#adr-147) | **Saved format v4: a description on photos and Art; a file says v4 only when it holds one.** `description: String?` on `ImageElement` and `DecorElement`, absent when none (`explicitNulls = false`), capped at entry to 250 code points (growth only); identity v3→v4 migrator; the writer stamps 3, or 4 when the zine holds a description (never below 3), so an undescribed zine stays a v3 file and only a backup holding a described piece is refused by older builds. No layout marker. Entry is Bench A52's Describe | Proposed (design frozen under delegation; not built; number assigned at merge) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -16505,7 +16505,7 @@ owed item 1 the test. Also taken: a blank description counts as none; off-page A
 empty-page test; Duplicate keeps the description. Reconciled in D-122.
 
 *2026-11-03: decision 6's Describe surface is drawn and frozen as [`v21-bench.html`](design/mockups/v21-bench.html)
-A52, and the `description` field's format is [ADR-TBD-W4](#adr-tbd-w4) (Proposed). Nothing here is re-decided.*
+A52, and the `description` field's format is [ADR-147](#adr-147) (Proposed). Nothing here is re-decided.*
 
 ---
 
@@ -18106,7 +18106,7 @@ Three narrow pieces 14 × 40pt side by side, 6pt apart, and a wide one below:
 
 ---
 
-## ADR-TBD-W4 {#adr-tbd-w4}
+## ADR-147 {#adr-147}
 
 ### Saved format v4: a description on photos and Art, and a file says v4 only when it holds one
 
@@ -18342,3 +18342,57 @@ found them sound; every file:line cited was accurate. Reconciled:
 
 A second Opus Review Agent re-read the reconciliation (`f9191068`): **GO WITH FIXES**. Its one Required Fix, finding 3's
 old wording left in the index row and two plan notes, is **accepted** and fixed; its observations needed no change.
+
+## ADR-146 {#adr-146}
+
+### Print guidance that says only what we know
+
+**Status:** Proposed, 2026-11-03. The orchestrator assigns the number. Design frozen under the owner's delegation
+(decision gate Q7: the guidance copy and the `v21-proof.html` amendment are delegated); **shipping waits** on the
+[print study](planning/STUDY-PRINT-AND-FOLD-PROTOCOL.md) and on the owner's approval of the Print-step amendment, which
+Q7 keeps with the owner. **Design:** [`v21-proof.html`](design/mockups/v21-proof.html) AW5. **Evidence:** [RESEARCH RW5](RESEARCH.md#rw5).
+**Amends, at ship time:** the Print details and done-row copy under [ADR-052](#adr-052). **Roadmap:** W5 of [ADR-136](#adr-136).
+
+#### Context
+
+- ✅ The shipped Print details says "so it prints at 100% — nothing shrinks to fit" and "Print it at 100%", while ADR-052
+  records that Android's print dialog shows no scale control. The app does not control the print app, so the sentence is a
+  promise it cannot keep (constitution Article 5; gate Q7 "never claim Android preserves exact size").
+- 🟨 Whether the default path shrinks a sheet whose guides reach the edge, and how far a printer reaches, are unmeasured
+  until the study runs.
+- ✅ The screen's question is "How do I print it correctly?"; makers meet it on the way to a printer.
+
+#### Decisions
+
+1. **Guide by result.** Print details gets, in order: paper, what we did, the settings, **Check your first sheet** (fold it; the
+   printed fold lines should land on the creases), **If it looks off** (five visible faults, one action each), the booklet
+   picture. Exact words are in AW5 and are the copy source for the Compose part.
+2. **"100% / Actual size" is conditional** on a Scale setting existing. No sentence says the print will not shrink. The 6 mm
+   margin is described as about 6 mm, with "a few printers leave a wider strip".
+3. **Flip edge is not taught.** The sheet is one-sided, so the setting never applies. It returns with a two-sided format.
+4. **A printed test sheet is a stage 2 and not decided here.** It is specified (50 mm ruler, numbered 3, 5 and 8 mm bands, the
+   eight numbered panels) and drawn to scale in AW5, but ships only if the owner approves a static test page after the study
+   (ADR-039, Q7, the owner's call). The case for it would be that spending a real sheet proves a problem. Its edge bands
+   mean something only once the ruler reads 5 cm. It stores no printer profile and changes nothing
+   in the zine. The [Brief 03](planning/BRIEF-03-PRINTER-TEST-PAGE.md) questions, profile and Part 2 are **not** adopted.
+5. **No pure-logic piece was built.** The test sheet's geometry depends on the inset and ruler the study may change; building
+   it now would be speculative. When stage 2 is approved, its producer is the first piece, tests first.
+6. **The study may only remove or strengthen a sentence.** It cannot make a conditional unconditional. An inset or render
+   change is a separate ADR (study outcome table).
+
+#### Consequences
+
+- No Compose, no schema, no network, no stored data. Skipping the guidance leaves today's behaviour; that is the status quo
+  this ADR calls a promise the app cannot keep, so shipping it is the point.
+- `Copy.kt` strings (Print details, done-row `.wu`) change at ship time, with goldens re-recorded on the CI image and both
+  device passes. The 12sp floor (A44) applies to all new words.
+- Owed: the study; owner approval of the Print-step amendment; the stage 2 ruling. Listed in OWNER-CHECKLIST.
+- **W6 and later builds must use the AW5 wording.** [ADR-133](#adr-133) and Library A35.8 lean on "nothing shrinks to fit";
+  that stays out of any new copy. Other unconditional "100%" wording still stands until ship time and is swept then:
+  `Copy.kt` Print details and done row, `RELEASING.md` (release-notes template), `COMPOSE-IMPLEMENTATION-RULES.md`,
+  `V2-CONSTITUTION.md`, [ADR-012](#adr-012)'s decision text, `CHANGELOG.md`.
+- Review (Opus, 2026-11-03): GO WITH FIXES. Fixed before this push: app-visible words instead of "keep-clear line on the
+  Bench"; a directional, paper-aware shrink fault with a one-millimetre tolerance; the margin sentence says "start about 6 mm
+  in, and warn", not "keep everything 6 mm in"; "exactly 5 cm" dropped; test-sheet top row drawn upside down like the engine's.
+  Rejected: drawing the whole amended drawer (the words, span split and layout are stated; Compose parity compares against
+  the existing drawer plus AW5).
