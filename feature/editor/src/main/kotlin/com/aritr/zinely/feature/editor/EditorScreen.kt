@@ -92,6 +92,7 @@ import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveTransform
 import com.aritr.zinely.core.editor.cascadedPlacement
 import com.aritr.zinely.core.model.DecorElement
+import com.aritr.zinely.core.model.DocumentVoice
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.TextCoverage
@@ -2196,6 +2197,7 @@ public fun EditorScreen(
                 // Passing Covered when gated collapses the notice via its own AnimatedVisibility.
                 EditorCoverageNotice(
                     coverage = if (editing && !saveErrorVisible) editCoverage else TextCoverage.Covered,
+                    voice = DocumentVoice.drawnAs(editingElement?.style?.fontFamily.orEmpty()),
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .padding(top = 8.dp),

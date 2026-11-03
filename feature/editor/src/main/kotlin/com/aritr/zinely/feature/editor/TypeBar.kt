@@ -59,6 +59,7 @@ import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -109,19 +110,30 @@ internal const val TypeBarFontReasonTestTag: String = "type-bar-font-reason"
 /** The Font row's group node: the named single-choice group A29 rule 1 asks for. */
 internal const val TypeBarFontGroupTestTag: String = "type-bar-font-group"
 
+/** The word a voice goes by in the Font row, on a reason line and in an announcement (`Copy.Type`). */
+internal fun DocumentVoice.word(): String = when (this) {
+    DocumentVoice.PLAIN -> Copy.Type.FONT_PLAIN
+    DocumentVoice.BOOK -> Copy.Type.FONT_BOOK
+    DocumentVoice.HAND -> Copy.Type.FONT_HAND
+}
+
 /**
- * The words for a [FontReason] (frozen `v21-typebar.html` A29 rule 8). One string serves the visible line
- * and the spoken reason, so the two cannot drift.
+ * The words for a [FontReason] (frozen `v21-typebar.html` A29 rule 8 and A29H.7 to A29H.9). One string serves
+ * the visible line and the spoken reason, so the two cannot drift. A reason names every voice it speaks for.
+ * Where voices' minimums differ the line gives the largest, the one the text must reach before all of them work.
  */
-internal fun fontReasonLine(reason: FontReason): String {
-    val minPt = DocumentVoice.BOOK_MIN_SIZE_PT.toInt()
-    return when (reason) {
-        FontReason.UnknownFont -> Copy.Type.FONT_UNKNOWN
-        is FontReason.BookLacksScript ->
-            Copy.Type.bookHasNoScript(Copy.Type.bookScripts(reason.greek, reason.cyrillic))
-        FontReason.BookNeedsSize -> Copy.Type.bookNeedsSize(minPt)
-        FontReason.BookAtFloor -> Copy.Type.bookStopsAt(minPt)
-    }
+internal fun fontReasonLine(reason: FontReason): String = when (reason) {
+    FontReason.UnknownFont -> Copy.Type.FONT_UNKNOWN
+    is FontReason.LacksScript -> Copy.Type.hasNoScript(
+        reason.voices.map { it.word() },
+        Copy.Type.scriptsNamed(reason.greek, reason.cyrillic),
+        reason.stays.word(),
+    )
+    is FontReason.NeedsSize -> Copy.Type.needsSize(
+        reason.voices.map { it.word() },
+        reason.voices.maxOf { it.minSizePt ?: 0.0 }.toInt(),
+    )
+    is FontReason.AtFloor -> Copy.Type.stopsAt(reason.voice.word(), (reason.voice.minSizePt ?: 0.0).toInt())
 }
 
 /**
@@ -333,6 +345,8 @@ internal fun TypeBar(
     val shownStyle = pendingSizeIndex?.let { style.copy(sizePt = TypeSizesPt[it]) } ?: style
     val font = fontRow(element.text, shownStyle, rampMinPt = TypeSizesPt.first())
     val fontLine = font.line?.let(::fontReasonLine)
+    // A29 rule 9 / A29H.8: what Smaller says on a text at its voice's floor (only read while smallerBlocked).
+    val floorReason = FontReason.AtFloor(font.voice ?: DocumentVoice.BOOK)
     val scroll = rememberScrollState()
 
     // `v21-typebar.html` `.typebar` — **`.inkpop`'s card**, and deliberately not a card of its own. Same
@@ -441,33 +455,30 @@ internal fun TypeBar(
                     TypeRow(Copy.Type.ROW_FONT) {
                         FontSegment(
                             voice = font.voice,
-                            bookCant = font.bookBlock != null,
-                            bookSpoken = font.bookBlock?.let { Copy.Type.unavailable(Copy.Type.FONT_BOOK, fontReasonLine(it)) }
-                                ?: Copy.Type.FONT_BOOK,
+                            cant = font.blocks.keys,
+                            spoken = { v ->
+                                font.blocks[v]?.let { Copy.Type.unavailable(v.word(), fontReasonLine(it)) } ?: v.word()
+                            },
                             onVoice = { voice ->
-                                val blocked = font.bookBlock.takeIf { voice == DocumentVoice.BOOK }
+                                val blocked = font.blocks[voice]
                                 when {
                                     // A29 rule 6: the word already chosen does nothing and adds no step.
                                     voice == font.voice -> Unit
                                     // A29 rule 7: a tap changes nothing and says the reason once more.
                                     blocked != null ->
-                                        onAnnounce(Copy.Type.unavailable(Copy.Type.FONT_BOOK, fontReasonLine(blocked)))
+                                        onAnnounce(Copy.Type.unavailable(voice.word(), fontReasonLine(blocked)))
                                     else -> {
                                         // A size burst still settling is committed first, as its own step,
                                         // so the font step changes ONLY the font and Undo can say "Font put
-                                        // back" (A30). It also means Book is never applied to a size the
-                                        // document does not hold yet.
+                                        // back" (A30). It also means Book or Hand is never applied to a size
+                                        // the document does not hold yet.
                                         pendingSizeIndex?.let {
                                             dispatch(Intent.StyleText(id = id, sizePt = TypeSizesPt[it]))
                                             pendingSizeIndex = null
                                         }
                                         dispatch(Intent.StyleText(id = id, fontFamily = voice.familyName))
                                         buzz()
-                                        onAnnounce(
-                                            Copy.Type.fontAnnouncement(
-                                                if (voice == DocumentVoice.BOOK) Copy.Type.FONT_BOOK else Copy.Type.FONT_PLAIN,
-                                            ),
-                                        )
+                                        onAnnounce(Copy.Type.fontAnnouncement(voice.word()))
                                     }
                                 }
                             },
@@ -482,14 +493,14 @@ internal fun TypeBar(
                         // tappable; the reason is the line already showing under the Font row.
                         smallerCant = font.smallerBlocked,
                         smallerSpoken = if (font.smallerBlocked) {
-                            Copy.Type.unavailable(Copy.Type.SMALLER, fontReasonLine(FontReason.BookAtFloor))
+                            Copy.Type.unavailable(Copy.Type.SMALLER, fontReasonLine(floorReason))
                         } else {
                             Copy.Type.SMALLER
                         },
                         onStep = { dir ->
                             val next = (sizeIndex + dir).coerceIn(0, TypeSizesPt.lastIndex)
                             if (dir < 0 && font.smallerBlocked) {
-                                onAnnounce(Copy.Type.unavailable(Copy.Type.SMALLER, fontReasonLine(FontReason.BookAtFloor)))
+                                onAnnounce(Copy.Type.unavailable(Copy.Type.SMALLER, fontReasonLine(floorReason)))
                             } else if (next != sizeIndex) {
                                 pendingSizeIndex = next
                                 buzz()
@@ -800,24 +811,30 @@ private fun StepButton(
 }
 
 /**
- * The Font row — `.tyvoice` (frozen `v21-typebar.html` A29, ADR-126). Two word buttons, Book and Plain:
- * one choice of two, so a single-choice group **named by its label** (A29 rules 1 and 14: the row follows
- * the frozen page on the two points returned to the owner for Align and Colour, which name no group in the
- * app today; if the owner rules the other way for them, this row follows that ruling).
+ * The Font row — `.tyvoice` (frozen `v21-typebar.html` A29 and A29H, ADR-126, ADR-148). Three word
+ * buttons, Book, Plain and Hand: one choice of three, so a single-choice group **named by its label** (A29
+ * rules 1 and 14: the row follows the frozen page on the two points returned to the owner for Align and
+ * Colour, which name no group in the app today; if the owner rules the other way for them, this row follows
+ * that ruling).
  *
  * Built the way [AlignSegment] is built, not from Material 3's `SegmentedButton`, which is being
  * deprecated (RESEARCH R24.7).
  *
- * [voice] is `null` for a family this build does not know: then neither word is chosen, as [InkRow] shows
- * none chosen for an ink it does not offer (A29 rule 10).
+ * [voice] is `null` for a family this build does not know: then no word is chosen, as [InkRow] shows
+ * none chosen for an ink it does not offer (A29 rule 10). [cant] holds the voices that cannot be used for
+ * this text; [spoken] gives what a screen reader hears for each word.
  */
 @Composable
 private fun FontSegment(
     voice: DocumentVoice?,
-    bookCant: Boolean,
-    bookSpoken: String,
+    cant: Set<DocumentVoice>,
+    spoken: (DocumentVoice) -> String,
     onVoice: (DocumentVoice) -> Unit,
 ) {
+    // A29H.2: "Hand" is written in the face it chooses, from the same bundled Regular the editing field draws
+    // a Hand text with. The only interface word set in a document font; no new file is loaded.
+    val assets = LocalContext.current.assets
+    val handFamily = remember(assets) { editingFontFamily(assets, DocumentVoice.HAND.familyName) }
     Row(
         modifier = Modifier
             .testTag(TypeBarFontGroupTestTag)
@@ -825,26 +842,34 @@ private fun FontSegment(
             .semantics { contentDescription = Copy.Type.ROW_FONT },
         horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
     ) {
-        // A29 rule 2: each word in its own face, from the faces the INTERFACE already has. No document
-        // font file is loaded into the interface: Fraunces Medium is V2's `fraunces_medium`, Inter
-        // SemiBold is the card's own `--sans`.
+        // A29 rule 2: each word in its own face. Book and Plain are the interface's own faces: Fraunces
+        // Medium is V2's `fraunces_medium`, Inter SemiBold is the card's own `--sans`.
         FontOption(
-            label = Copy.Type.FONT_BOOK,
-            spoken = bookSpoken,
+            label = DocumentVoice.BOOK.word(),
+            spoken = spoken(DocumentVoice.BOOK),
             family = ZinelyV2Fonts.Voice,
             weight = FontWeight.Medium,
             chosen = voice == DocumentVoice.BOOK,
-            cant = bookCant,
+            cant = DocumentVoice.BOOK in cant,
             onClick = { onVoice(DocumentVoice.BOOK) },
         )
         FontOption(
-            label = Copy.Type.FONT_PLAIN,
-            spoken = Copy.Type.FONT_PLAIN,
+            label = DocumentVoice.PLAIN.word(),
+            spoken = spoken(DocumentVoice.PLAIN),
             family = ZinelyV21Fonts.Work,
             weight = FontWeight.SemiBold,
             chosen = voice == DocumentVoice.PLAIN,
-            cant = false,
+            cant = DocumentVoice.PLAIN in cant,
             onClick = { onVoice(DocumentVoice.PLAIN) },
+        )
+        FontOption(
+            label = DocumentVoice.HAND.word(),
+            spoken = spoken(DocumentVoice.HAND),
+            family = handFamily,
+            weight = FontWeight.Normal,
+            chosen = voice == DocumentVoice.HAND,
+            cant = DocumentVoice.HAND in cant,
+            onClick = { onVoice(DocumentVoice.HAND) },
         )
     }
 }

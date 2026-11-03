@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.model.DocumentVoice
 import com.aritr.zinely.core.model.Script
 import com.aritr.zinely.core.model.TextCoverage
 import com.aritr.zinely.ui.golden.cropToBounds
@@ -118,6 +119,7 @@ class EditorCoverageNoticeGoldenTest {
             sampleCharacters = listOf("অ", "அ"),
             unsupportedCount = 2,
         ),
+        voice = DocumentVoice.BOOK,
         reduceMotion = true,
     )
 

@@ -96,8 +96,11 @@ public object FontCoverage {
      *  - **Book, U+017F** (LATIN SMALL LETTER LONG S): absent from all four Fraunces 9pt statics. An
      *    archaic letter no present-day orthography needs. A Book text that holds one draws it from another
      *    font and nothing flags it (ADR-126, *Consequences*: "The script check does not cover every path").
+     *  - **Hand, U+017F**: absent from all four Shantell Sans faces, as from Book's, for the same reason. It is the
+     *    only code point of the required set the four faces lack (measured 2026-11-03).
      */
-    private val FAMILY_GAPS: Map<DocumentVoice, Set<Int>> = mapOf(DocumentVoice.BOOK to setOf(0x017F))
+    private val FAMILY_GAPS: Map<DocumentVoice, Set<Int>> =
+        mapOf(DocumentVoice.BOOK to setOf(0x017F), DocumentVoice.HAND to setOf(0x017F))
 
     /**
      * Code points inside the probed ranges that Unicode leaves unassigned or formally deprecates.

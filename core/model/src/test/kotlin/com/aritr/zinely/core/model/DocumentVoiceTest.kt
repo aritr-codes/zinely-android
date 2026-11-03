@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * The two document voices and what each can set (ADR-126). Pure JVM. Given-When-Then.
+ * The three document voices and what each can set (ADR-126, ADR-148). Pure JVM. Given-When-Then.
  */
 class DocumentVoiceTest {
 
@@ -27,6 +27,7 @@ class DocumentVoiceTest {
         assertNull(DocumentVoice.of(""))
         assertEquals(DocumentVoice.PLAIN, DocumentVoice.drawnAs("Averia Sans Libre"))
         assertEquals(DocumentVoice.BOOK, DocumentVoice.drawnAs("Fraunces"))
+        assertEquals(DocumentVoice.HAND, DocumentVoice.drawnAs("Shantell Sans"))
     }
 
     @Test
@@ -47,6 +48,35 @@ class DocumentVoiceTest {
     @Test
     fun `the minimum print size for Book is one named value`() {
         assertEquals(12.0, DocumentVoice.BOOK_MIN_SIZE_PT)
+        assertEquals(12.0, DocumentVoice.BOOK.minSizePt)
+    }
+
+    @Test
+    fun `Hand is Shantell Sans, sets Latin only, and has a minimum of its own`() {
+        assertEquals(DocumentVoice.HAND, DocumentVoice.of("Shantell Sans"))
+        assertEquals(DocumentVoice.HAND, DocumentVoice.of("  shantell sans "))
+        assertEquals("Shantell Sans", DocumentVoice.HAND.familyName)
+        assertEquals(setOf(Script.LATIN, Script.EMOJI), DocumentVoice.HAND.scripts)
+        assertEquals(12.0, DocumentVoice.HAND_MIN_SIZE_PT)
+        assertEquals(DocumentVoice.HAND_MIN_SIZE_PT, DocumentVoice.HAND.minSizePt)
+        assertNull(DocumentVoice.PLAIN.minSizePt)
+        assertTrue(DocumentVoice.PLAIN.scripts.containsAll(DocumentVoice.HAND.scripts))
+    }
+
+    @Test
+    fun `every voice's wire name is a family of its own, so no two voices read the same string`() {
+        val names = DocumentVoice.entries.map { it.familyName.lowercase() }
+        assertEquals(names.size, names.toSet().size)
+        for (voice in DocumentVoice.entries) assertEquals(voice, DocumentVoice.of(voice.familyName))
+    }
+
+    @Test
+    fun `Greek and Cyrillic in a Hand text are reported, by name, as in a Book text`() {
+        val coverage = analyzeTextCoverage("Saturday. $greek, $cyrillic", "Shantell Sans")
+
+        assertFalse(coverage.isFullyCovered)
+        assertEquals(listOf(Script.GREEK, Script.CYRILLIC), coverage.unsupportedScripts)
+        assertTrue(analyzeTextCoverage("Zażółć gęślą jaźń — Ångström café naïve 🙂", "Shantell Sans").isFullyCovered)
     }
 
     // ---- analyzeTextCoverage(text, family) ----

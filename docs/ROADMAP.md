@@ -52,7 +52,7 @@ wave still needs its own HTML amendment or ADR where the rules ask for one, and 
    one subject ([ADR-137](DECISIONS.md#adr-137), Proposed). *2026-10-24: the A39 picks add 90 new pieces, built with
    W3 under [ADR-139](DECISIONS.md#adr-139); in no download.*
 8. **W8 — Your own artwork.**
-9. **W9 — A third voice, Hand** (Shantell Sans).
+9. **W9 — A third voice, Hand** (Shantell Sans). *2026-11-03: built on `w9/hand-voice`, not released; [ADR-148](DECISIONS.md#adr-148) Proposed, no format change.*
 10. **Later:** Recently deleted first; then a hidden signature in the PDF's metadata, the pen tool, shaped photo
     cutouts, a 16-page booklet, device-to-device transfer, tablets and keyboard shortcuts, an RTL check and
     back-page credits.
@@ -513,6 +513,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-11-03 | **W9 built: Hand, a third font (Shantell Sans), not released, not Accepted.** The Font row gains a third word (A29H); saved format unchanged, so older builds draw Hand in the plain font and keep the choice. Printed-page 12 pt check and CI goldens owed. | [ADR-148](DECISIONS.md#adr-148) |
 | 2026-11-03 | **W4 built, not released, not Accepted.** Saved format v4 (stamped only when a photo or Art piece holds a description), the Describe verb, sheet and TalkBack action, and Read's stops (ADR-135 parts 1 and 2). A backup holding a described piece is refused by older builds (Known limitation in the changelog). The TalkBack listen is owed and deferred by the owner. | [ADR-147](DECISIONS.md#adr-147), [ADR-135](DECISIONS.md#adr-135) |
 | 2026-11-03 | **W4 designed: Describe and saved format v4.** Bench A52 frozen under delegation (Describe verb and sheet, 250-character cap); [ADR-147](DECISIONS.md#adr-147) Proposed: `description` on photos and Art, no layout marker, and the writer stamps v4 only on a zine that holds a description, so older builds still restore backups of undescribed zines. No code. | [ADR-147](DECISIONS.md#adr-147), [ADR-135](DECISIONS.md#adr-135) |
 | 2026-11-03 | **W5 print guidance designed, not built.** Proof amendment AW5 frozen under delegation: a fold check on the first sheet, five faults with one action each, no promise that a print will not shrink. Shipping waits for the print study and the owner. | [ADR-146](DECISIONS.md#adr-146) |

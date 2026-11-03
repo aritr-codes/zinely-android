@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.model.DocumentVoice
 import com.aritr.zinely.core.model.Script
 import com.aritr.zinely.core.model.TextCoverage
 import com.aritr.zinely.core.model.analyzeTextCoverage
@@ -38,7 +39,7 @@ class EditorCoverageNoticeTest {
     @Test
     fun renders_and_names_the_script_when_not_covered() {
         composeRule.setContent {
-            ZinelyTheme { EditorCoverageNotice(coverage = coverage(Script.BENGALI), reduceMotion = false) }
+            ZinelyTheme { EditorCoverageNotice(coverage = coverage(Script.BENGALI), voice = DocumentVoice.BOOK, reduceMotion = false) }
         }
         composeRule.onNodeWithTag(EditorCoverageNoticeTestTag).assertIsDisplayed()
         composeRule.onNodeWithText(Copy.Coverage.unsupported(listOf("Bengali")), substring = true)
@@ -49,7 +50,7 @@ class EditorCoverageNoticeTest {
     fun renders_with_reduced_motion() {
         // Reduced-motion degrades the transition, never the content: the static state is identical.
         composeRule.setContent {
-            ZinelyTheme { EditorCoverageNotice(coverage = coverage(Script.BENGALI), reduceMotion = true) }
+            ZinelyTheme { EditorCoverageNotice(coverage = coverage(Script.BENGALI), voice = DocumentVoice.BOOK, reduceMotion = true) }
         }
         composeRule.onNodeWithTag(EditorCoverageNoticeTestTag).assertIsDisplayed()
     }
@@ -57,7 +58,7 @@ class EditorCoverageNoticeTest {
     @Test
     fun is_absent_when_fully_covered() {
         composeRule.setContent {
-            ZinelyTheme { EditorCoverageNotice(coverage = TextCoverage.Covered, reduceMotion = true) }
+            ZinelyTheme { EditorCoverageNotice(coverage = TextCoverage.Covered, voice = DocumentVoice.BOOK, reduceMotion = true) }
         }
         composeRule.onNodeWithTag(EditorCoverageNoticeTestTag).assertDoesNotExist()
     }
@@ -68,7 +69,7 @@ class EditorCoverageNoticeTest {
         // "Japanese and Japanese".
         composeRule.setContent {
             ZinelyTheme {
-                EditorCoverageNotice(coverage = coverage(Script.HIRAGANA, Script.KATAKANA), reduceMotion = true)
+                EditorCoverageNotice(coverage = coverage(Script.HIRAGANA, Script.KATAKANA), voice = DocumentVoice.BOOK, reduceMotion = true)
             }
         }
         composeRule.onNodeWithText(Copy.Coverage.unsupported(listOf("Japanese")), substring = true)
@@ -90,10 +91,22 @@ class EditorCoverageNoticeTest {
     }
 
     @Test
+    fun a_Hand_text_holding_Greek_or_Cyrillic_is_told_by_name() {
+        assertEquals(
+            "Hand has no Greek letters. Switch this text to Plain to print them in a matching face.",
+            coverageNoticeLine(coverage(Script.GREEK), DocumentVoice.HAND),
+        )
+        assertEquals(
+            "Hand has no Cyrillic letters. Switch this text to Plain to print them in a matching face.",
+            coverageNoticeLine(coverage(Script.CYRILLIC), DocumentVoice.HAND),
+        )
+    }
+
+    @Test
     fun a_script_no_font_sets_keeps_its_own_line_and_both_show_when_a_Book_text_holds_both() {
         assertEquals(Copy.Coverage.unsupported(listOf("Bengali")), coverageNoticeLine(coverage(Script.BENGALI)))
         assertEquals(
-            Copy.Coverage.bookLacks("Cyrillic") + " " + Copy.Coverage.unsupported(listOf("Bengali")),
+            Copy.Coverage.voiceLacks("Book", "Cyrillic") + " " + Copy.Coverage.unsupported(listOf("Bengali")),
             coverageNoticeLine(coverage(Script.CYRILLIC, Script.BENGALI)),
         )
     }
@@ -123,6 +136,6 @@ class EditorCoverageNoticeTest {
     @Test
     fun a_Book_text_keeps_the_way_out_for_Greek_even_when_the_phone_draws_it() {
         val line = coverageNoticeLine(analyzeTextCoverage("α", "Fraunces") { true })
-        assertEquals(Copy.Coverage.bookLacks("Greek"), line)
+        assertEquals(Copy.Coverage.voiceLacks("Book", "Greek"), line)
     }
 }

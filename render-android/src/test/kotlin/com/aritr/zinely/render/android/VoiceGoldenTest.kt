@@ -24,7 +24,7 @@ import org.robolectric.annotation.GraphicsMode
 import kotlin.math.ceil
 
 /**
- * **Document voices on the page (ADR-126): Plain and Book, each regular, bold, italic and bold italic.**
+ * **Document voices on the page (ADR-126, ADR-148): Plain, Book and Hand, each regular, bold, italic and bold italic.**
  *
  * [TextGoldenTest]'s harness: the bundled resolver feeding the one [CanvasReplayer], at the editor's
  * screen scale and at [ExportScale.EXPORT_PX_PER_PT], which is the raster the export writes (PDF vector
@@ -98,6 +98,9 @@ class VoiceGoldenTest {
     @Test
     fun book_fourFaces_acrossScales() = capture("book", "Fraunces")
 
+    @Test
+    fun hand_fourFaces_acrossScales() = capture("hand", "Shantell Sans")
+
     private fun capture(label: String, family: String) {
         for ((scale, s) in listOf("screen" to SCREEN, "export" to EXPORT)) {
             val bmp = render(tape(family), s)
@@ -107,8 +110,8 @@ class VoiceGoldenTest {
     }
 
     @Test
-    fun each_voice_draws_four_different_faces_and_Book_is_not_Plain() {
-        for (family in listOf("sans-serif", "Fraunces")) {
+    fun each_voice_draws_four_different_faces_and_no_two_voices_draw_alike() {
+        for (family in listOf("sans-serif", "Fraunces", "Shantell Sans")) {
             val rasters = FACES.map { (bold, italic) -> face(family, bold, italic) }
             for (i in rasters.indices) for (j in i + 1 until rasters.size) {
                 assertFalse("$family: faces ${FACES[i]} and ${FACES[j]} drew the same pixels", rasters[i].sameAs(rasters[j]))
@@ -118,6 +121,14 @@ class VoiceGoldenTest {
             assertFalse(
                 "Book drew Plain's pixels (bold=$bold italic=$italic)",
                 face("Fraunces", bold, italic).sameAs(face("sans-serif", bold, italic)),
+            )
+            assertFalse(
+                "Hand drew Plain's pixels (bold=$bold italic=$italic)",
+                face("Shantell Sans", bold, italic).sameAs(face("sans-serif", bold, italic)),
+            )
+            assertFalse(
+                "Hand drew Book's pixels (bold=$bold italic=$italic)",
+                face("Shantell Sans", bold, italic).sameAs(face("Fraunces", bold, italic)),
             )
         }
     }

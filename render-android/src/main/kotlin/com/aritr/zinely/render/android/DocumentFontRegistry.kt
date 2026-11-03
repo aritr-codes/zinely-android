@@ -97,12 +97,17 @@ public class DocumentFontRegistry(
         /** The wire name of Book's family ([DocumentVoice.BOOK], ADR-126). */
         public val FRAUNCES: String = DocumentVoice.BOOK.familyName
 
+        /** The wire name of Hand's family ([DocumentVoice.HAND], ADR-148). */
+        public val SHANTELL_SANS: String = DocumentVoice.HAND.familyName
+
         /**
-         * The families this build actually carries in `assets/fonts/`: Inter (Plain) and Fraunces (Book,
-         * [ADR-126](../../../../../../../../docs/DECISIONS.md#adr-126)).
+         * The families this build actually carries in `assets/fonts/`: Inter (Plain), Fraunces (Book,
+         * [ADR-126](../../../../../../../../docs/DECISIONS.md#adr-126)) and Shantell Sans (Hand,
+         * [ADR-148](../../../../../../../../docs/DECISIONS.md#adr-148)).
          *
-         * The Fraunces faces are upstream's own static 9 pt files, unmodified and pinned by SHA-256 in
-         * `tools/build-document-fonts.py`; `DocumentFontPinTest` holds the files here to those pins.
+         * The Fraunces faces are upstream's own static 9 pt files, unmodified. The Shantell Sans faces are built
+         * from the pinned release (instanced and subset, a Modified Version under the OFL). Both are pinned by
+         * SHA-256 in `tools/build-document-fonts.py`; `DocumentFontPinTest` holds the files here to those pins.
          * `"sans-serif"`, which every Plain text carries, is deliberately **not** a row: it resolves to the
          * default like any unregistered name, which is the behaviour older builds already have.
          */
@@ -121,6 +126,13 @@ public class DocumentFontRegistry(
                     boldAsset = "fonts/Fraunces9pt-Bold.ttf",
                     italicAsset = "fonts/Fraunces9pt-Italic.ttf",
                     boldItalicAsset = "fonts/Fraunces9pt-BoldItalic.ttf",
+                ),
+                DocumentFontFamily(
+                    name = SHANTELL_SANS,
+                    regularAsset = "fonts/ShantellSans-Regular.ttf",
+                    boldAsset = "fonts/ShantellSans-Bold.ttf",
+                    italicAsset = "fonts/ShantellSans-Italic.ttf",
+                    boldItalicAsset = "fonts/ShantellSans-BoldItalic.ttf",
                 ),
             ),
             defaultFamilyName = INTER,

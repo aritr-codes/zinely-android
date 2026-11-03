@@ -18,6 +18,13 @@ Changes since the beta.9 app.
 
 ### Added
 
+- Hand, a third font for the words in your zine ([ADR-148](docs/DECISIONS.md#adr-148), Bench A29H). The Font row of the
+  type bar now reads Book, Plain, Hand; Hand is Shantell Sans (SIL Open Font Licence), shown in Licences & credits.
+  Like Book it needs a text at 12 pt or more and has no Greek or Cyrillic letters (a text with them stays in the font it
+  has, with the reason said). Hand is wider and taller than Plain, so words can move. The saved format does not change.
+  **Release note:** "A zine made with Hand shows in a plainer font on an older version of Zinely; your words and your
+  choice are kept, and Hand comes back on this version. Some words, a title in capitals for one, may not show on the
+  older version."
 - Describe a photo or an Art piece, for readers who cannot see it ([ADR-147](docs/DECISIONS.md#adr-147), Bench A52).
   Select a photo or an Art piece and tap **Describe** (also a TalkBack action) to type up to 250 characters. Read
   now speaks the page: each text's words, `Photo` or `Photo: <your words>`, and a described Art piece by name, in the

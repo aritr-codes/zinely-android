@@ -18104,6 +18104,104 @@ Three narrow pieces 14 × 40pt side by side, 6pt apart, and a wide one below:
 - Pass 2, by the implementer: among close pieces nothing now answers a tap with silence, except within 12dp of a mark and
   on the knob's box. TalkBack not listened to (deferred by the owner); nothing here is in the platform tree.
 
+
+## ADR-148 {#adr-148}
+
+### A third document voice, Hand (Shantell Sans), with no change to the saved format
+
+**Status:** Proposed, 2026-11-03. **Not accepted.** The number was assigned on merge with `main` (heading, anchor and every
+`ADR-148` in the branch change together). Built on `w9/hand-voice`, from `main` @ `fe9424d1`. It is W9 of
+[ADR-136](#adr-136): the owner's 2026-09-26 "Hand = deferred" was lifted as sequencing by ADR-136 reading 6
+(2026-10-15), under which [ZINE-DIRECTION](design/ZINE-DIRECTION.md) §IV's handwriting ban governs the app's own
+chrome and not a voice the maker chooses for their words. This ADR carries that out; it does not re-decide it.
+**Amends:** [ADR-126](#adr-126) (two voices become three; its decision 4, 5, 7 and 8 and its fallback rule apply to
+Hand unchanged except where stated here). **Extends:** [ADR-028](#adr-028) (one replayer), [ADR-057](#adr-057) (one
+registry), [ADR-070](#adr-070)/[ADR-130](#adr-130) (typing-time notice). The control is amendment **A29H** to the frozen
+[`v21-typebar.html`](design/mockups/v21-typebar.html), frozen under the owner's delegation of 2026-10-12 (the owner may
+overrule it).
+
+#### Decision
+
+1. **A text element may have a third voice, Hand.** `DocumentVoice.HAND` writes the family name `"Shantell Sans"`
+   into the existing `TextStyle.fontFamily` string. Choosing it is one undoable command, as for Book.
+2. **No schema bump, no migrator, no database migration, no fixture change.** `CURRENT_SCHEMA_VERSION` and the
+   backup package version are whatever `main` holds when this merges; this branch does not touch either. (A W4 lane
+   bumps the schema in parallel for a different reason; the two are independent because `fontFamily` is already a
+   free string.)
+3. **Older builds draw Hand in the fallback face and keep it.** An unknown `fontFamily` resolves to Inter
+   (`DocumentFontRegistry.resolve`) and is checked as Plain (`DocumentVoice.drawnAs`); no code path rewrites it. This
+   is the path ADR-126 measured on `0.9.0-beta.5` and `0.9.0-beta.6`, which did not know Book either, and Hand takes
+   it unchanged. **Hand is wider than Inter in running text (about 9 % in Regular, 14 to 15 % in Bold) and has the
+   tallest line** (1.340 of the size, against Inter's 1.210). That is *not* a safe direction: per letter Hand is
+   narrower than Inter for many capitals (B C D H K L O P S U V W X Y and c o p s u), so an all-capitals title that
+   just fitted one line in Hand measures 9 to 13 % wider in Inter (reviewed 2026-11-03: "BOOK CLUB" 9.5 %, "COOL"
+   13.4 %). Text boxes are fixed in size and the replayer clips what does not fit, so **an older build can wrap such
+   a title and not show its last line**, on screen and in the PDF: the same failure as Book's, not its opposite. The
+   words and the choice are kept, and the line comes back when the zine is opened on a current build. The older-build
+   restore of ADR-126 (every word kept, every voice back on a current build) is the evidence for the keeping, and it
+   was not repeated for Hand.
+4. **Face.** Shantell Sans 1.011 (arrowtype/shantell-sans, SIL OFL 1.1, copyright "The Shantell Sans Project
+   Authors"), the **Informal** letterforms, four static TrueType faces (regular, bold, italic, bold italic) built by
+   `tools/build-document-fonts.py --hand` from the release zip pinned by SHA-256, and committed under
+   `render-android/src/main/assets/fonts/`, each pinned by SHA-256 in that script and held by `DocumentFontPinTest`.
+   They are **not** upstream's bytes (upstream ships one variable TrueType and static OpenType/CFF; `minSdk` is 24, which has no
+   variable-weight axis, and the PDF path is proven on glyf outlines). They are a **Modified Version** under the OFL: instanced at
+   `wght` 400/700, `ital` 0/1, `INFM` 100, `BNCE` 0, `SPAC` 0, with Greek, Cyrillic and their extensions dropped (the
+   bundled file is 214 to 220 KB each, 869 KB for the four). The upstream OFL.txt names **no Reserved Font Name**, so the family name
+   is kept; the copyright line and the licence are kept whole and shown in Licences & credits in the app. The website has no
+   licence page and does not serve Shantell Sans, so it is unchanged. Not sold alone.
+5. **Scripts and coverage, measured 2026-11-03** (code points present in all four faces; Book's and Inter's are the
+   bundled files'): Basic Latin 95 of 95, Latin-1 96 of 96, Latin Extended-A 126 of 128 (Book 126, Inter 127); 653 in all
+   (Book 637, Inter 2,815). Upstream also holds 2 Greek and 178 of 256 Cyrillic code points, which the build drops, so the
+   shipped faces hold none. Within Latin up to U+024F only Ǚ and ǚ are in the Book
+   faces and not in Hand. Hand declares **Latin and emoji**, exactly Book's promise; Cyrillic is partial and is not
+   claimed. Emoji and any character the face lacks are drawn from another font as in a Book text (the bundled emoji font, then the phone's, ADR-112,
+   ADR-130); a fallback character's look may differ per phone, which the typing-time notice already says.
+6. **Minimum print size 12 pt, a value of its own** (`DocumentVoice.HAND_MIN_SIZE_PT`), equal to Book's today and
+   **to be confirmed on the printed page**. Basis, not proof: Hand's drawn x-height at 10 pt is 1.70 mm (regular), 1.76
+   (bold), against Fraunces 1.66/1.69 and Inter 1.93; the owner ruled Book at 12 pt. Below it Hand is unavailable with a
+   reason, as Book is; nothing changes a size or a voice on the maker's behalf. If the printed page moves one, the two
+   values move independently.
+7. **One reason line names every word it speaks for** (A29H.7): "Book and Hand have no Greek letters, so this text
+   stays Plain." and so on; the word after "stays" is the font the text is in. The reducer holds the same rule for Hand as for Book.
+   The typing-time line names the voice: "Hand has no Greek letters. Switch this text to Plain to print them in a
+   matching face."
+8. **The "Hand" word in the type bar is set in Shantell Sans** (A29H.2), loaded from the same bundled Regular file
+   the editing field draws with; no new file enters the interface. It is the only interface word in a document font, and the
+   exception is argued in A29H (H-2).
+
+#### Release notes (the wording the release must carry)
+
+"Hand is a third font for the words in your zine. A zine made with it shows in a plainer font on an older version of
+Zinely; your words and your choice are kept, and Hand comes back when you open it on this version. Some words, a
+title in capitals for one, may not show on the older version." (Not "nothing changes" and not "lines can break
+differently": a line that no longer fits is not shown.)
+
+#### Consequences
+
+- **APK size** grows by the four faces: 869,252 bytes before compression (214,352 + 214,328 + 220,324 + 220,248).
+  The release delta is measured at the release, not here.
+- **Wider and taller than Plain.** Switching a text Plain to Hand can push words out of its box (A29.12, which says
+  the maker sees no new sign); Hand to Plain can pull them in or, for capitals, push them out. The PDF and the screen agree because one replayer draws
+  both ([ADR-028](#adr-028)).
+- **Older builds** draw it in Inter (decision 3); a line that no longer fits there is not shown. A backup restored
+  there keeps the words and the voice.
+- **Still owed** ([OWNER-CHECKLIST](OWNER-CHECKLIST.md)): the printed page that confirms 12 pt for Book and Hand;
+  a TalkBack listen of the three-word row and its spoken reasons (deferred by the owner); a real Android 7 to 9 phone
+  (the emulator is the evidence); the goldens recorded on the pinned image.
+- **Not decided here:** a fourth voice; a per-zine default voice; Cyrillic for Hand; a sign for words that no longer fit.
+
+#### Alternatives considered
+
+- **Averia Sans Libre (the app's own display face) as Hand.** Covers 12 of 128 Latin Extended-A letters; ADR-126
+  deferred Hand for that reason.
+- **Normal letterforms (`INFM` 0).** Reads as a rounded sans, not a handwritten third voice.
+- **Ship the variable font.** Needs API 26+ for the weight axis; `minSdk` is 24.
+- **Ship upstream's static OpenType/CFF files unmodified.** Keeps the unmodified-bytes property Book has, but the
+  PDF embedding of CFF outlines through the platform's PDF writer was not established, and it would be the only
+  CFF face in a glyf pipeline. Open if the Modified Version status ever matters more than that risk.
+- **A schema bump so older builds refuse the zine.** The owner's 2026-09-26 ruling for ADR-126 stands: no bump.
+
 ---
 
 ## ADR-147 {#adr-147}

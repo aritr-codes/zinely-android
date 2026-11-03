@@ -71,11 +71,16 @@ class TypeBarFontRowTest {
     private val greek = "Saturday. Καλημέρα"
     private val min = DocumentVoice.BOOK_MIN_SIZE_PT.toInt()
 
+    // A word's own reason (a tap, a screen reader) and the one line, which names every word it speaks for (A29H.7).
     private val bookNoGreek = "Book has no Greek letters, so this text stays Plain."
+    private val handNoGreek = "Hand has no Greek letters, so this text stays Plain."
+    private val bothNoGreek = "Book and Hand have no Greek letters, so this text stays Plain."
     private val bookNeedsSize = "Book needs $min pt or larger. Make the text larger first."
+    private val bothNeedSize = "Book and Hand need $min pt or larger. Make the text larger first."
     private val bookStops = "Book stops at $min pt. Switch to Plain to go smaller."
+    private val handStops = "Hand stops at $min pt. Switch to Plain to go smaller."
     private val unknownFont = "This text uses a font this version of Zinely does not have. It is drawn in Plain for now. " +
-        "Choosing Book or Plain replaces its font."
+        "Choosing Book, Plain or Hand replaces its font."
 
     /** One selected text. A style that differs from the default is written before the screen exists. */
     private fun storeWith(text: String = latin, family: String? = null, sizePt: Double? = null): EditorStore {
@@ -123,13 +128,14 @@ class TypeBarFontRowTest {
 
     private fun book() = composeRule.onNodeWithTag("type-bar-font-Book")
     private fun plain() = composeRule.onNodeWithTag("type-bar-font-Plain")
+    private fun hand() = composeRule.onNodeWithTag("type-bar-font-Hand")
     private fun reason() = composeRule.onNodeWithTag(TypeBarFontReasonTestTag)
     private fun hasRole(role: Role) = SemanticsMatcher.expectValue(SemanticsProperties.Role, role)
 
     // ── A29 rules 1, 6: a named single-choice group that commits ──────────────────────────────────
 
     @Test
-    fun the_row_is_a_group_named_Font_holding_two_radio_words_and_a_new_text_is_Plain() {
+    fun the_row_is_a_group_named_Font_holding_three_radio_words_and_a_new_text_is_Plain() {
         open(storeWith())
 
         val group = composeRule.onNodeWithTag(TypeBarFontGroupTestTag).fetchSemanticsNode().config
@@ -138,8 +144,10 @@ class TypeBarFontRowTest {
 
         book().assert(hasRole(Role.RadioButton)).assertIsNotSelected()
         plain().assert(hasRole(Role.RadioButton)).assertIsSelected()
+        hand().assert(hasRole(Role.RadioButton)).assertIsNotSelected()
         assertEquals("Book", book().platformNode(composeRule.activity).contentDescription)
         assertEquals("Plain", plain().platformNode(composeRule.activity).contentDescription)
+        assertEquals("Hand", hand().platformNode(composeRule.activity).contentDescription)
         // The state reaches a service, not only the merged tree.
         assertEquals("Selected", plain().platformNode(composeRule.activity).stateDescription)
         assertEquals("Not selected", book().platformNode(composeRule.activity).stateDescription)
@@ -147,6 +155,33 @@ class TypeBarFontRowTest {
         // The chosen word carries the corner tick; the other does not (rule 4).
         composeRule.onNodeWithTag(selectionCueTag("type-bar-font-Plain"), useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag(selectionCueTag("type-bar-font-Book"), useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithTag(selectionCueTag("type-bar-font-Hand"), useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun choosing_Hand_writes_Shantell_Sans_as_one_undo_step_and_says_so() {
+        val s = storeWith()
+        val before = textOf(s)
+        open(s)
+
+        hand().performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(before.copy(style = before.style.copy(fontFamily = "Shantell Sans")), textOf(s))
+        assertEquals(listOf("Font Hand"), announced)
+        hand().assertIsSelected()
+        plain().assertIsNotSelected()
+        composeRule.onNodeWithTag(selectionCueTag("type-bar-font-Hand"), useUnmergedTree = true).assertExists()
+
+        // Hand to Book is one more step, and Undo walks back through both to the start.
+        book().performClick()
+        composeRule.waitForIdle()
+        assertEquals("Fraunces", textOf(s).style.fontFamily)
+        s.dispatch(Intent.Undo)
+        s.dispatch(Intent.Undo)
+        composeRule.waitForIdle()
+        assertEquals(before, textOf(s))
+        plain().assertIsSelected()
     }
 
     @Test
@@ -220,14 +255,22 @@ class TypeBarFontRowTest {
         assertFalse(node.isChecked)
         assertEquals("Book, unavailable. $bookNoGreek", node.contentDescription)
         book().assertIsEnabled()
-        // The reason is on screen without a tap, and it is the same sentence.
-        reason().assertIsDisplayed().assertTextEquals(bookNoGreek)
+        // Hand is quiet for the same cause, in the same way, and says its own sentence.
+        val handNode = hand().platformNode(composeRule.activity)
+        assertTrue("an unavailable Hand must stay enabled to the platform", handNode.isEnabled)
+        assertTrue("an unavailable Hand must stay clickable to the platform", handNode.isClickable)
+        assertFalse(handNode.isSelected)
+        assertFalse(handNode.isChecked)
+        assertEquals("Hand, unavailable. $handNoGreek", handNode.contentDescription)
+        // The one line is on screen without a tap, and it names both words.
+        reason().assertIsDisplayed().assertTextEquals(bothNoGreek)
 
         book().performClick()
+        hand().performClick()
         composeRule.waitForIdle()
 
-        assertEquals("a tap on an unavailable Book must change nothing", before, textOf(s))
-        assertEquals(listOf("Book, unavailable. $bookNoGreek"), announced)
+        assertEquals("a tap on an unavailable word must change nothing", before, textOf(s))
+        assertEquals(listOf("Book, unavailable. $bookNoGreek", "Hand, unavailable. $handNoGreek"), announced)
         plain().assertIsSelected()
     }
 
@@ -242,15 +285,16 @@ class TypeBarFontRowTest {
     @Test
     fun the_script_outranks_the_size_on_the_reason_line() {
         open(storeWith(greek, sizePt = 10.0))
-        reason().assertTextEquals(bookNoGreek)
+        reason().assertTextEquals(bothNoGreek)
     }
 
     @Test
     fun a_Plain_text_under_Books_minimum_is_told_to_grow_and_Book_opens_when_it_does() {
         val s = storeWith(sizePt = 10.0)
         open(s)
-        reason().assertTextEquals(bookNeedsSize)
+        reason().assertTextEquals(bothNeedSize)
         assertEquals("Book, unavailable. $bookNeedsSize", book().platformNode(composeRule.activity).contentDescription)
+        assertEquals("Hand, unavailable. Hand needs $min pt or larger. Make the text larger first.", hand().platformNode(composeRule.activity).contentDescription)
 
         // The row follows the size the READOUT shows, not the size still waiting to be committed.
         composeRule.onNodeWithContentDescription("Larger").performClick()
@@ -258,6 +302,7 @@ class TypeBarFontRowTest {
 
         reason().assertDoesNotExist()
         assertEquals("Book", book().platformNode(composeRule.activity).contentDescription)
+        assertEquals("Hand", hand().platformNode(composeRule.activity).contentDescription)
         book().performClick()
         composeRule.waitForIdle()
         assertEquals(TextStyle(sizePt = min.toDouble(), fontFamily = "Fraunces"), textOf(s).style)
@@ -289,6 +334,25 @@ class TypeBarFontRowTest {
         composeRule.waitForIdle()
         assertEquals("Averia Sans Libre", textOf(s).style.fontFamily)
         reason().assertTextEquals(unknownFont)
+    }
+
+    @Test
+    fun Smaller_on_a_Hand_text_at_Hands_minimum_stays_reachable_changes_nothing_and_names_Hand() {
+        val s = storeWith(family = "Shantell Sans")
+        assertEquals("the default size is Hand's minimum", DocumentVoice.HAND_MIN_SIZE_PT, textOf(s).style.sizePt, 0.0)
+        open(s)
+
+        val smaller = composeRule.onNodeWithTag("type-bar-Smaller")
+        val node = smaller.platformNode(composeRule.activity)
+        assertTrue(node.isEnabled)
+        assertTrue(node.isClickable)
+        assertEquals("Smaller, unavailable. $handStops", node.contentDescription)
+        reason().assertTextEquals(handStops)
+
+        smaller.performClick()
+        composeRule.waitForIdle()
+        assertEquals(DocumentVoice.HAND_MIN_SIZE_PT, textOf(s).style.sizePt, 0.0)
+        assertEquals(listOf("Smaller, unavailable. $handStops"), announced)
     }
 
     // ── A29 rule 9: Smaller at Book's smallest size ───────────────────────────────────────────────
@@ -323,8 +387,8 @@ class TypeBarFontRowTest {
     // ── R24: targets, width, and the card at the largest text ─────────────────────────────────────
 
     @Test
-    fun both_font_words_report_a_full_48dp_target_to_the_platform_in_every_state() {
-        fun assertTargets(state: String) = listOf("Book", "Plain").forEach { word ->
+    fun all_three_font_words_report_a_full_48dp_target_to_the_platform_in_every_state() {
+        fun assertTargets(state: String) = listOf("Book", "Plain", "Hand").forEach { word ->
             val b = composeRule.onNodeWithTag("type-bar-font-$word").platformNode(composeRule.activity).boundsInScreen
             with(composeRule.density) {
                 assertTrue(
@@ -342,7 +406,7 @@ class TypeBarFontRowTest {
     @Test
     fun the_unavailable_and_unknown_states_keep_the_48dp_targets() {
         open(storeWith(greek, family = "Averia Sans Libre"))
-        listOf("Book", "Plain").forEach { word ->
+        listOf("Book", "Plain", "Hand").forEach { word ->
             val b = composeRule.onNodeWithTag("type-bar-font-$word").platformNode(composeRule.activity).boundsInScreen
             with(composeRule.density) {
                 assertTrue(
@@ -386,7 +450,7 @@ class TypeBarFontRowTest {
         assertTrue("the card runs off the bottom of the screen", card.bottom <= root.bottom)
 
         // Nothing is cut off and unreachable: every control can be brought on screen, top row and bottom.
-        listOf("type-bar-font-Book", "type-bar-font-Plain", TypeBarFontReasonTestTag, "type-bar-Smaller", "type-bar-ink-Ochre")
+        listOf("type-bar-font-Book", "type-bar-font-Plain", "type-bar-font-Hand", TypeBarFontReasonTestTag, "type-bar-Smaller", "type-bar-ink-Ochre")
             .forEach { composeRule.onNodeWithTag(it).performScrollTo().assertIsDisplayed() }
         listOf("Right", "Italic").forEach { composeRule.onNodeWithContentDescription(it).performScrollTo().assertIsDisplayed() }
         // And still usable after the scroll.

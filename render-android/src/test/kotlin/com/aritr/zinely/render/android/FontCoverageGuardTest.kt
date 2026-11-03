@@ -85,6 +85,34 @@ class FontCoverageGuardTest {
     }
 
     @Test
+    fun handsRequiredSetIsTheLatinPartLessItsOneRecordedGap() {
+        val all = FontCoverage.requiredCodePoints()
+        val hand = FontCoverage.requiredCodePoints(DocumentFontRegistry.SHANTELL_SANS)
+        val latin = all.filter { SupportedScripts.scriptOf(it) == Script.LATIN }.toSet()
+
+        assertEquals(latin - 0x017F, hand)
+        assertTrue("no Greek", hand.none { SupportedScripts.scriptOf(it) == Script.GREEK })
+        assertTrue("no Cyrillic", hand.none { SupportedScripts.scriptOf(it) == Script.CYRILLIC })
+    }
+
+    @Test
+    fun theScriptTableAndTheHandFilesAgree() {
+        // Hand declares Latin only. Upstream holds two Greek letters and a partial Cyrillic (the build drops them), which is why the
+        // promise is not widened; this asserts the files really do hold every Latin letter the promise names,
+        // in all four faces, and that the two recorded absences are what they were measured to be.
+        val hand = DocumentFontRegistry.Bundled.resolve(DocumentFontRegistry.SHANTELL_SANS)
+        val latin = FontCoverage.requiredCodePoints(DocumentFontRegistry.SHANTELL_SANS)
+        for (asset in listOf(hand.regularAsset, hand.boldAsset, hand.italicAsset, hand.boldItalicAsset)) {
+            val covered = CmapCoverage.coveredCodePoints(assets.open(asset).use { it.readBytes() })
+            assertTrue("$asset lacks ${latin.filter { it !in covered }}", latin.all { it in covered })
+            assertFalse("$asset holds the long s it is recorded as lacking", 0x017F in covered)
+            // The Cyrillic block is dropped from the build (tools/build-document-fonts.py --hand), so the faces
+            // hold nothing the promise does not name.
+            assertTrue("$asset holds a Cyrillic letter the promise does not name", (0x0400..0x04FF).none { it in covered })
+        }
+    }
+
+    @Test
     fun theScriptTableAndTheBookFilesAgree() {
         // The other direction of the promise: Book declares no Greek and no Cyrillic BECAUSE its four
         // faces hold none. If a later Fraunces gained them, this is the prompt to widen the table.
