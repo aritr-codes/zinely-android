@@ -14,17 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Changes since the beta.8 app.
+Changes since the beta.9 app.
 
 ### Added
 
-- Turn a piece with its knob; it snaps to quarter turns.
-- Two fingers anywhere on the page now turn the selected piece, even a small one.
-- One finger on the middle of a small piece now moves it, and a double-tap there opens it.
-- A tap just beside a chosen small piece now picks the piece you tapped, or clears the choice on blank paper.
-- Typing into a turned piece of text now shows the words turned, inside the piece.
-- Straighten button in Arrange > Turn.
-- Repeated Move, Size or Turn taps in Arrange are now one Undo.
 - Website note, not the app: the public pages, including the homepage tone and the privacy policy (last updated 30 October 2026), are rewritten in plain words (ADR-118 plain-words rule, R39). Some changelog lines are corrected to match what shipped. The privacy policy now also explains the storage permission Android adds on Android 9 and older. No limits, download details or app behaviour changed.
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),
   [D-143](docs/design/V2-SPEC-DEFECTS.md#d-143)), Proof A43 and A44, Backup A45 and Library A46. The Library
@@ -77,8 +70,6 @@ Changes since the beta.8 app.
 
 ### Changed
 
-- Choosing zines on My Shelf: the ring round a chosen zine is lighter.
-- The new-folder and rename sheet's Cancel is now a proper button beside Make folder.
 - Docs: ZINE-DIRECTION notes the two-voice ruling (Book and Plain, ADR-126 Proposed) beside its four "three
   voices" lines; 21 drifted line citations into the frozen type bar, Reframe and Library pages re-pointed to
   named blocks or pinned commits (#97, #98).
@@ -117,16 +108,6 @@ Changes since the beta.8 app.
 
 ### Fixed
 
-- Saved PDF is named after the zine (it was always "zine.pdf"). Empty or unusual titles still save as "zine".
-- New zines are numbered: "My zine", then "My zine 2", "My zine 3" and so on, using the lowest number not taken.
-- Renaming a zine: the sheet opens with the old name selected, so typing replaces it, and a typed name stops at
-  60 characters ([#157](https://github.com/aritr-codes/zinely-android/issues/157)). A name that is already longer, such as a duplicate's "copy", is never cut.
-- Renaming a zine no longer moves it to the front of My Shelf; only editing does.
-- Duplicate scrolls My Shelf (or the open folder) to the new copy and focuses it.
-- The Art sheet keeps your Recent and Favourite pieces after the app is closed. They stay on this phone only and are not in a
-  Zinely backup file.
-- Typing text on the page: the keyboard's Enter key now starts a new line instead of finishing the edit. Tap
-  Done in the style row, or press Back, to finish.
 - The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
   privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
   the files.
@@ -137,6 +118,70 @@ Changes since the beta.8 app.
 - Restored the Reframe accessibility regression that proves a measurable but undisplayable photo keeps every
   adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
   than stream-consumer ordering, eliminating the CI race tracked by issue #57.
+
+## [0.9.0-beta.9] — 2026-11-03 — Turn pieces by hand, and small things fixed
+
+This release carries `versionCode 14`. It installs over earlier release-signed beta builds without
+uninstalling. The saved-document format, the backup format version and the database version are unchanged.
+It is published as an APK only. Make a fresh backup from **Backups** before updating.
+
+Turning ([ADR-143](docs/DECISIONS.md#adr-143)), the bordered Cancel ([ADR-144](docs/DECISIONS.md#adr-144)) and
+the small-piece taps ([ADR-145](docs/DECISIONS.md#adr-145)) are Accepted under the owner's delegation after a
+phone pass on 2026-11-02, with their screen-reader (TalkBack) listens deferred by the owner. The lighter ring
+([ADR-142](docs/DECISIONS.md#adr-142) R9) stays Proposed. The [tester package](docs/releases/0.9.0-beta.9.md)
+says what was checked.
+
+### Added
+
+- Turn a piece with its knob; it snaps to a quarter turn when close to one.
+- Two fingers anywhere on the page now turn the selected piece, even a small one.
+- One finger on the middle of a small piece now moves it, and a double-tap there opens it.
+- A tap just beside a chosen small piece now picks the piece you tapped, or clears the choice on blank paper,
+  unless the tap lands on one of its handle marks.
+- Typing into a turned piece of text now shows the words turned, inside the piece.
+- Straighten button in Arrange > Turn.
+- Repeated Move, Size or Turn taps in Arrange are now one Undo.
+
+### Changed
+
+- Choosing zines on My Shelf: the ring round a chosen zine is lighter.
+- The new-folder and rename sheet's Cancel is now a proper button beside Make folder.
+
+### Fixed
+
+- Saved PDF is named after the zine (it was always "zine.pdf"). Empty or unusual titles still save as "zine".
+- New zines are numbered: "My zine", then "My zine 2", "My zine 3" and so on, using the lowest number not taken.
+- Renaming a zine: the sheet opens with the old name selected, so typing replaces it, and a typed name stops at
+  60 characters ([#157](https://github.com/aritr-codes/zinely-android/issues/157)). A name that is already longer, such as a duplicate's "copy", is never cut.
+- Renaming a zine no longer moves it to the front of My Shelf; only editing does.
+- Duplicate scrolls My Shelf (or the open folder) to the new copy and focuses it.
+- The Art sheet keeps your Recent and Favourite pieces after the app is closed. They stay on this phone only and are not in a
+  Zinely backup file.
+- Typing text on the page: the keyboard's Enter key now starts a new line instead of finishing the edit. Tap
+  Done in the style row, or press Back, to finish (on some phones the first Back only hides the keyboard).
+
+### Known limitations
+
+None of these blocks the release; each is accepted and stated here.
+
+- **Not listened to with a screen reader (TalkBack), deferred by the owner:** the turn knob, Straighten, two-finger
+  turning, small-piece moving and taps, the lighter ring, the bordered Cancel and the small fixes above. They were
+  checked by reading the screen's accessibility information, not by ear.
+- **Not tried:** a second finger added late, after a long press has cleared the selection; Android 7 to 9 on a
+  real phone (emulators only).
+- **Turning:** over the dark area beside the page the knob's line is hard to see (the knob itself stays
+  visible). The knob's own touch area still takes a tap meant for what is under it. While the first-run hint is
+  showing, it covers a piece selected near the top of the page until you tap **Got it**.
+- **Small pieces:** on a narrow piece the handles' touch areas reach up to 48dp beyond its edge, so a drag
+  there resizes the small piece, and a tap within 12dp of a handle mark keeps the selection
+  ([ADR-145](docs/DECISIONS.md#adr-145)).
+- **The lighter ring** ([ADR-142](docs/DECISIONS.md#adr-142) R9, Proposed) has not been looked at on every paper
+  or compared with the design at 390dp.
+- **First-time reading:** the screens' first-time-user pass was done by the maintainer only, not by a new user.
+- **At twice the normal text size** the folder sheet's two buttons stack one above the other.
+- **Art:** Recent and Favourite pieces stay on this phone and are not in a Zinely backup.
+- **Carried over from beta.8**, still true unless fixed above. See
+  [0.9.0-beta.8](#090-beta8--2026-10-29--choose-several-zines-mix-your-own-ink-124-art-pieces-and-work-that-stays-safe).
 
 ## [0.9.0-beta.8] — 2026-10-29 — Choose several zines, mix your own ink, 124 Art pieces, and work that stays safe
 

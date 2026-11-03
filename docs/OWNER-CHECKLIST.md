@@ -382,7 +382,7 @@ zine was deleted meanwhile.
 | ☐ | Pixel parity against A47 at 390dp | [ADR-142](DECISIONS.md#adr-142) *Owed before Accepted* |
 | ☐ | Confirm the Samsung Pass 1 and Pass 2 records are in the repository before ADR-142 can be Accepted | [ADR-142](DECISIONS.md#adr-142) · [CLAUDE.md](../CLAUDE.md#device-verification-mandatory) |
 
-### 2.8 W2a small things — built, unreleased; device checks owed
+### 2.8 W2a small things — in beta.9; device checks done
 **Reason:** Physical · **Blocks:** shipping W2a · Authority is the [W2a note in ADR-136](DECISIONS.md#adr-136-w2a); this
 table only points at it. Merged in PR #171, not released. Not automatable, so an implementer cannot close them.
 
@@ -396,7 +396,7 @@ table only points at it. Merged in PR #171, not released. Not automatable, so an
 | ☐ | TalkBack listens for the rename sheet, Duplicate and the text edit (deferred by the owner; do not chase) | [DEVICE-VERIFICATION §3.1](DEVICE-VERIFICATION.md) |
 | ☐ | A real Android 7 to 9 phone | [ADR-136 W2a note](DECISIONS.md#adr-136-w2a) |
 
-### 2.9 W2b turning by hand — merged, not released; ADR-143 Accepted 2026-11-02 after the phone pass
+### 2.9 W2b turning by hand — in beta.9; ADR-143 Accepted 2026-11-02 after the phone pass
 **Reason:** Physical / Judgement · **Blocks:** accepting ADR-143 · Authority is [ADR-143](DECISIONS.md#adr-143) *Owed before Accepted* and its [as-built note](DECISIONS.md#adr-143-as-built); this table only points at it. One-finger passes on the emulator and the Samsung QA package are recorded [there](DECISIONS.md#adr-143-device).
 
 | ☐ | Item | Where it is owned |
@@ -413,7 +413,22 @@ table only points at it. Merged in PR #171, not released. Not automatable, so an
 
 ## 3. Release & credentials
 
-### ◐ `0.9.0-beta.8` — choose several zines, mix your own ink, 124 Art pieces, work that stays safe (APK only) *(in preparation, 2026-10-29)*
+### ◐ `0.9.0-beta.9` — turning pieces by hand, and small things fixed (APK only) *(in preparation, 2026-11-03)*
+
+Scope, per your 2026-11-03 word ("W2a, W2b and the A50 fixes ... do these"): everything merged to `main` since
+beta.8. ADR-143, ADR-144 and ADR-145 Accepted under delegation with TalkBack deferred; ADR-142 R9 Proposed. No AAB,
+no Play. Evidence: [tester package](releases/0.9.0-beta.9.md).
+
+| ☐ | Gate | Note |
+|---|---|---|
+| ☑ | Version, changelog, tester package, roadmap written | 2026-11-03; site copy in the site PR |
+| ☑ | Goldens current (green CI), signed APK built and smoke-tested | PR #178 CI green; clean install on an API 36 emulator, 2026-11-03 |
+| ◐ | Release Agent review, merge, tag, publish, checksum re-check | Review GO WITH FIXES 2026-11-03, fixes taken; the rest per [RELEASING §2-3](RELEASING.md) |
+| ☐ | Website moved to beta.9 and live-verified | After publishing |
+| ☐ | Install over beta.8 on your phone | Needs your word; not given for this release |
+| ☐ | TalkBack listens: turn knob, Straighten, two fingers, small pieces, ring, Cancel, W2a fixes | Deferred by you; each ships as "not verified" |
+
+### ☑ `0.9.0-beta.8` — choose several zines, mix your own ink, 124 Art pieces, work that stays safe (APK only) *(released 2026-10-29)*
 
 Scope, per your 2026-10-29 word ("Let's wait for the PR and then go with beta.8"): everything merged to `main`
 since beta.7. W1 (ADR-136, ADR-140), Art (ADR-139), Ink (ADR-138) and Shelf multi-select (ADR-142) ship **merged,
@@ -424,8 +439,8 @@ Evidence: [tester package](releases/0.9.0-beta.8.md).
 |---|---|---|
 | ☑ | Version, changelog, tester package, roadmap, site copy written | Docs prepared 2026-10-29; build-time fields filled 2026-10-29 after the build |
 | ☑ | Goldens current (green CI), signed APK built and smoke-tested; release date 2026-10-29 is the tag day, so nothing to fix | Build session: record on CI if needed, read each changed picture first |
-| ☐ | Release Agent review, merge, tag, publish, checksum re-check | Per [RELEASING §2-3](RELEASING.md) |
-| ☐ | Website moved to beta.8 and live-verified | After publishing |
+| ☑ | Release Agent review, merge, tag, publish, checksum re-check | Per [RELEASING §2-3](RELEASING.md) |
+| ☑ | Website moved to beta.8 and live-verified | After publishing |
 | ☐ | Install over beta.7 on your phone | Needs your word; not given for this release |
 | ☐ | TalkBack listens: Ink, Art (and a printed page), W1, choosing several zines, folders, frames | Deferred by you; each ships as "not verified" |
 

@@ -20,20 +20,14 @@ Reframe loading and the deterministic accessibility regression were completed th
 beta.4-r3 APK; measurements and evidence remain in the
 [release-gap review](reviews/2026-08-27-release-gap-roadmap.md#2026-09-10-reframe-loading-follow-up).
 
-**Released 2026-10-11:** beta.7, folders and a second font, is the public download
-([0.9.0-beta.7](../CHANGELOG.md#090-beta7--2026-10-11--folders-and-a-second-font), tag `v0.9.0-beta.7`,
-GitHub pre-release, APK only; [tester package](releases/0.9.0-beta.7.md)). It follows beta.6 (2026-10-06). Both
-features shipped **not accepted**. No next tester build is scheduled by date yet.
+**Released 2026-10-29:** beta.8 ([0.9.0-beta.8](../CHANGELOG.md#090-beta8--2026-10-29--choose-several-zines-mix-your-own-ink-124-art-pieces-and-work-that-stays-safe),
+tag `v0.9.0-beta.8`, GitHub pre-release, APK only; [tester package](releases/0.9.0-beta.8.md)).
 
-**In preparation, 2026-10-29:** beta.8 (`versionCode 13`) is being prepared on the owner's go-ahead ("Let's wait
-for the PR and then go with beta.8"), not yet built, tagged or published; beta.7 stays the public download
-until it is. It will carry everything merged to `main` since beta.7, listed in
-[the changelog](../CHANGELOG.md#090-beta8--2026-10-29--choose-several-zines-mix-your-own-ink-124-art-pieces-and-work-that-stays-safe)
-and the [tester package](releases/0.9.0-beta.8.md): W1 never-lose-work, the 124 Art pieces and two frames, Ink's
-mixer and palettes, the Arrange tray, the restored-details note, and choosing several zines on My Shelf. All of it
-ships **built and merged, not accepted**; the TalkBack listens are deferred by the owner and are Known
-Limitations. Below, "in no download" for an item in that list means: not in the public download today, and in the
-beta.8 package once it is published.
+**In preparation, 2026-11-03:** beta.9, turning pieces by hand and the W2a small things, is being prepared as the next public download
+([0.9.0-beta.9](../CHANGELOG.md#090-beta9--2026-11-03--turn-pieces-by-hand-and-small-things-fixed), tag
+`v0.9.0-beta.9`, GitHub pre-release, APK only; [tester package](releases/0.9.0-beta.9.md)), on the owner's word of
+2026-11-03. It carries W2a, W2b and the A50 small-piece fixes. Formats unchanged. TalkBack listens stay deferred
+by the owner and are Known Limitations. Below, "in no download" for W2a, W2b or A50 means: in the beta.9 package once it is published.
 
 **Owner rulings, 2026-09-26** ([1.x decision gate](planning/ZINELY-1X-DECISION-GATE.md)): the next tester build
 is planned as a *wave-1* release on the current document format, before any schema change, carrying the 1.x
@@ -48,7 +42,7 @@ Decided in [ADR-136](DECISIONS.md#adr-136) under the owner's delegation, after t
 wave still needs its own HTML amendment or ADR where the rules ask for one, and none has a date.
 
 1. **W1 — Never lose work, never get stuck.** Fixes, each with a failing test first. **Built 2026-10-23, in no download** (integrated on `feat/w1-never-lose-work`; Bench A41/A42, Proof A43/A44, Backup A45 and Library A46 frozen under delegation; [ADR-140](DECISIONS.md#adr-140) Proposed, refs #146). **Device checks:** phone Pass 1 done on Samsung SM-A176B, Android 16 (build `09ae4668`); emulator Pass 1 on API 36 and a temporary API 24 AVD (`fda3f095`), with the Proof done-row fix looked at on the emulator at `909c71b9` (2x and a 384dp phone after the fix owed); Pass 2 done 2026-10-24. Owed before it ships: the TalkBack listens, a real out-of-space failure, a real Android 7-9 phone, a device look at the D-146 title, the Bench-open-then-return repair path, the owner's reading, and the CI golden re-record, listed in [OWNER-CHECKLIST §2.5](OWNER-CHECKLIST.md#25-w1-never-lose-work--built-unreleased-device-pass-1-and-a-pass-2-done-talkback-listen-owed). **Partial or untraced against ADR-136's W1 list:** the reduced-motion Proof scroll is not built (the page strip's is); of "stale copy (Replace, share wording)", Replace is done and the only share wording traced is [D-146](design/V2-SPEC-DEFECTS.md#d-146)'s ruling that a failed Share rightly keeps "Couldn't make the PDF"; no other share-wording change was made. The ADR-054 decision 8 "Don't ask again" limitation is closed in code, passed on the API 24 emulator, pending a real phone. *2026-10-29: the owner gave the word; it is in the beta.8 package (in preparation).*
-2. **W2a — Small things, no design change; W2b — small things that need an HTML amendment first.** **W2a built 2026-10-29, in no download** (merged in PR #171 → `0d03d1c3`; items 1 to 6 and 8 of [ADR-136](DECISIONS.md#adr-136), as built in its [W2a note](DECISIONS.md#adr-136-w2a); the CI golden check and device checks are owed, listed in [OWNER-CHECKLIST §2.8](OWNER-CHECKLIST.md#28-w2a-small-things--built-unreleased-device-checks-owed)). **Moved to W2b** because each contradicts frozen text: consecutive nudges as one undo step (A33, A22, A26) and the hint's two-finger turn (A33 *THE HINT*). Not started. *2026-10-29: W2b lane A, turning by hand, designed only (Bench A48, [ADR-143](DECISIONS.md#adr-143) Proposed): a turn knob, quarter-turn snapping on the knob, Straighten, and one undo step per run of taps, which settles both moved items. *2026-10-30: W2b built, in no download* (on `w2b/design`: the knob and Straighten, [ADR-143](DECISIONS.md#adr-143); the lighter chosen ring, [ADR-142](DECISIONS.md#adr-142) R9; the bordered Cancel, [ADR-144](DECISIONS.md#adr-144); all Proposed, device checks in [OWNER-CHECKLIST §2.9](OWNER-CHECKLIST.md)).
+2. **W2a — Small things, no design change; W2b — small things that need an HTML amendment first.** **W2a built 2026-10-29, in no download** (merged in PR #171 → `0d03d1c3`; items 1 to 6 and 8 of [ADR-136](DECISIONS.md#adr-136), as built in its [W2a note](DECISIONS.md#adr-136-w2a); the CI golden check passed and the device checks were done 2026-11-02, listed in [OWNER-CHECKLIST §2.8](OWNER-CHECKLIST.md#28-w2a-small-things--in-beta9-device-checks-done)). **Moved to W2b** because each contradicts frozen text: consecutive nudges as one undo step (A33, A22, A26) and the hint's two-finger turn (A33 *THE HINT*). Not started. *2026-10-29: W2b lane A, turning by hand, designed only (Bench A48, [ADR-143](DECISIONS.md#adr-143) Proposed): a turn knob, quarter-turn snapping on the knob, Straighten, and one undo step per run of taps, which settles both moved items. *2026-10-30: W2b built, in no download* (on `w2b/design`: the knob and Straighten, [ADR-143](DECISIONS.md#adr-143); the lighter chosen ring, [ADR-142](DECISIONS.md#adr-142) R9; the bordered Cancel, [ADR-144](DECISIONS.md#adr-144); then Proposed; *2026-11-02:* ADR-143, ADR-144 and ADR-145 Accepted after a phone pass, ADR-142 R9 stays Proposed, device checks in [OWNER-CHECKLIST §2.9](OWNER-CHECKLIST.md)). *2026-11-03: W2a and W2b go into the beta.9 package.*
 3. **W3 — Art: better before more.** The A34 polish as A39, then the Compose redraw ([ADR-132](DECISIONS.md#adr-132)). **Built 2026-10-24, in no download** (on `feat/art-picks`: the 124 A39 pieces in the app, 17 shipped ids redrawn inside their old ink box, 56 names shortened to fit the tile ([D-132](design/V2-SPEC-DEFECTS.md#d-132)); [ADR-139](DECISIONS.md#adr-139) Proposed; the CI golden re-record, a printed page and both device passes are owed)
 4. **W4 — Photo descriptions**, saved format v4, alone.
 5. **W5 — Print guidance:** designed now, shipped after the print study.
@@ -516,6 +510,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-11-03 | **beta.9 prepared: turning pieces by hand and small things fixed.** W2a, W2b and the A50 small-piece fixes reach the public download (`versionCode 14`, APK only). ADR-143/144/145 Accepted with TalkBack deferred; ADR-142 R9 Proposed. Next: W4, W5 and W9 in a fresh session. | [ADR-136](DECISIONS.md#adr-136), [ADR-143](DECISIONS.md#adr-143) |
 | 2026-11-02 | **Turning by hand and the small-piece fix accepted after a phone pass.** Two fixes from it: a tap beside a chosen small piece reaches the page (A50.6), and turned text is typed turned. ADR-143, ADR-144 and ADR-145 Accepted under delegation; the W2a checks done. TalkBack listens stay deferred. Not released. | [ADR-143](DECISIONS.md#adr-143-device-2), [ADR-145](DECISIONS.md#adr-145-device) |
 | 2026-11-02 | **A small piece can be dragged by its middle.** Bench A50: a handle's hit box steps outward and leaves the middle free. Nothing drawn changes. Not released. | [ADR-145](DECISIONS.md#adr-145) |
 | 2026-10-30 | **W2b merged (PR #173), not released.** The owner froze A48, A47.2 and A49. One-finger device passes, the emulator two-finger pass and the CI goldens are done; the owner tried two fingers by hand and approved the feel; the rest of OWNER-CHECKLIST §2.9 is owed. | [ADR-143](DECISIONS.md#adr-143) · [ADR-144](DECISIONS.md#adr-144) |
