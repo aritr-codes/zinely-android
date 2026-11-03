@@ -422,7 +422,7 @@ no Play. Evidence: [tester package](releases/0.9.0-beta.9.md).
 | ☐ | Gate | Note |
 |---|---|---|
 | ☑ | Version, changelog, tester package, roadmap written | 2026-11-03; site copy in the site PR |
-| ☐ | Goldens current (green CI), signed APK built and smoke-tested | |
+| ☑ | Goldens current (green CI), signed APK built and smoke-tested | PR #178 CI green; clean install on an API 36 emulator, 2026-11-03 |
 | ◐ | Release Agent review, merge, tag, publish, checksum re-check | Review GO WITH FIXES 2026-11-03, fixes taken; the rest per [RELEASING §2-3](RELEASING.md) |
 | ☐ | Website moved to beta.9 and live-verified | After publishing |
 | ☐ | Install over beta.8 on your phone | Needs your word; not given for this release |
