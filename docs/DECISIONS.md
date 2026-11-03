@@ -154,7 +154,7 @@
 | [ADR-143](#adr-143) | **A turn handle, snapping, Straighten and one undo rule for repeated taps.** A turn knob below the selection ring (54dp out, flips above when it would not fit); quarter-turn snap within 5° for the knob only (two fingers do not snap); an angle readout while dragging; Straighten in Arrange > Turn; a turn-only step is "turned"; a run of tray taps in one group is one undo step (the tap intents gain a source). No schema change. Amends ADR-129/A33, ADR-123/A26, ADR-102 §12.8; closes ADR-136 W2a items 7 and 9. Design Bench A48. | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
 | [ADR-144](#adr-144) | **Sheet action pairs share one geometry.** A dismiss beside a committing button on a sheet is a bordered sibling of it (same radius, border, shadow, press, 48px; surface fill and ink words against the commit's leaf fill and on-leaf words; only the commit may be disabled). The folder name sheet's Cancel, bare text beside a dimmed pill, is the one outlier in the frozen corpus and becomes `.go.ghost`. Look only: A28.14 behaviour unchanged. Library A49 | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
 | [ADR-145](#adr-145) | **The middle of a piece moves it.** A handle's 48dp hit box steps outward instead of covering a small piece's middle; a tap in a box away from its mark is a tap on the page (A50.6). Nothing drawn changes. | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
-| [ADR-TBD-W4](#adr-tbd-w4) | **Saved format v4: a description on photos and Art; a file says v4 only when it holds one.** `description: String?` on `ImageElement` and `DecorElement`, absent when none (`explicitNulls = false`), normalised at entry to 250 code points; identity v3→v4 migrator; the writer stamps the lowest version that holds the zine, so an undescribed zine stays a v3 file and only a backup holding a described piece is refused by older builds. No layout marker. Entry is Bench A52's Describe | Proposed (design frozen under delegation; not built; number assigned at merge) |
+| [ADR-TBD-W4](#adr-tbd-w4) | **Saved format v4: a description on photos and Art; a file says v4 only when it holds one.** `description: String?` on `ImageElement` and `DecorElement`, absent when none (`explicitNulls = false`), capped at entry to 250 code points (growth only); identity v3→v4 migrator; the writer stamps the lowest version that holds the zine, so an undescribed zine stays a v3 file and only a backup holding a described piece is refused by older builds. No layout marker. Entry is Bench A52's Describe | Proposed (design frozen under delegation; not built; number assigned at merge) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -18155,8 +18155,8 @@ paper colour and any W8 field wait for v5). [ADR-003](#adr-003) (one JSON docume
 
 ```mermaid
 flowchart LR
-    M["Maker types in Describe\n(bench A52)"] --> N["normalise: line breaks to spaces,\ntrim, blank to none, 250 code points"]
-    N --> C["one EditImage / EditDecor command\n(undo: Description put back)"]
+    M["Maker types in Describe\n(bench A52; 250 code points, growth only)"] --> N["normalise: control characters to spaces,\ntrim, blank to none"]
+    N --> C["one EditImage / EditDecor command\n(undo names added, removed or changed)"]
     C --> D["ZineDocument\ndescription: String? on Image and Decor"]
     D --> W{"any description\nin the zine?"}
     W -->|yes| V4["file says schemaVersion 4"]
@@ -18171,19 +18171,27 @@ flowchart LR
    one ever comes), no `look`, no paper size. Art is in v4 because [ADR-135](#adr-135) decides Art descriptions with
    photo ones; one field on two kinds is one feature, and splitting it would spend a second bump on the same words.
 2. **Absent means none.** The document `Json` gains `explicitNulls = false`, so a null description is not written.
-   What is stored is normalised once, at the reducer, by one pure helper in `core:editor`: line breaks become spaces,
-   both ends are trimmed, a blank result is `null`, and the result is at most 250 code points, cut on a grapheme
-   boundary (A52.3). The reader tolerates any string: `DefaultDocumentValidator` gains no rule, because refusing to
+   What is stored is normalised once, at the reducer, by one pure helper in `core:editor`: control characters and
+   line or paragraph separators become spaces, both ends are trimmed, and a blank result is `null`. The 250-code-point
+   cap is the field's edit filter, with the rename rule (A52.3, [ADR-136](#adr-136-w2a) W2a item 3): grapheme-safe,
+   and it limits **growth only**, so a stored description longer than 250 (a future build's, or a hand-edited file's)
+   is never cut by opening and closing the sheet. The reader tolerates any string: `DefaultDocumentValidator` gains no rule, because refusing to
    open a zine over its description is a worse harm than a long one, as with an off-palette ink. Bench and Read
    treat a blank description as none (A38).
 3. **A file says v4 only when it holds a description.** `CURRENT_SCHEMA_VERSION` becomes 4: the newest version this
-   build reads. The writer stamps the **lowest version whose shape holds the document**: 4 if any element has a
-   non-null description, else 3. Since `explicitNulls = false` writes nothing for a null description, a zine with no
-   description is written byte for byte as a v3 build writes it, and an older build reads it as exactly what it is.
-   This replaces "stamp `CURRENT_SCHEMA_VERSION` on every save" (`JsonDocumentSerializer.kt:45-48`) with a rule each
-   later bump extends: the bump that adds a field adds the line that raises the stamp when the field is used. The
-   writer's fixture check enforces it, because `document-v<N>.json` carries every new field and must be written with
-   `"schemaVersion":N`. Clearing the last description in a zine and saving writes v3 again.
+   build reads. The writer stamps **3, or 4 when any element has a non-null description; never below 3** (a plain
+   zine is not written as v1 or v2, which would also pass through older readers' migrators for no gain). Since
+   `explicitNulls = false` writes nothing for a null description, a zine with no description is written byte for
+   byte as a v3 build writes it, and an older build reads it as exactly what it is. Clearing the last description in
+   a zine and saving writes v3 again. This replaces "stamp `CURRENT_SCHEMA_VERSION` on every save"
+   (`JsonDocumentSerializer.kt:45-48`) with a rule every later bump must extend:
+   - the bump that adds **any** new field, enum value or sealed subtype adds the line that raises the stamp to its
+     number when the document uses it (v5's US Legal and A5 are enum values, [ADR-133](#adr-133) decision 4);
+   - a new field must be nullable and absent when unused; a field with a non-null default is always written under
+     `encodeDefaults`, so that bump stamps every save and gives up the byte-for-byte property, which its ADR must say;
+   - the check is `DocumentFixtureCorpusTest`: the writer must reproduce `document-v<N>.json`, and that file must
+     contain `"schemaVersion":N,` (`assertDecodes`, line 127). It catches a forgotten line **only if
+     `document-v<N>.json` uses the version-N addition**, so each bump's fixture must.
 4. **Migration: v3 to v4 is an identity step** (`IdentityMigrator(from = 3)`); a v3 file has no description and
    decodes with `null`. Every reader of the version (the six named in the plan's F1b row) accepts 1 to 4 and refuses 5.
 5. **What older builds do** (the release-notes risk):
@@ -18210,10 +18218,15 @@ flowchart LR
    - Bench: a photo node says `Photo` or `Photo: ` + the description; an Art node says its piece's name, or the name
      + `: ` + the description. Each keeps its Button role and its custom actions, and gains a `Describe` custom
      action (A52.1, A52.5). Read: ADR-135's table, unchanged.
-   - The Describe sheet has a pane title (A52.2); the field's label is visible and is its name; the count is not a
-     live region.
-   - Undo and Redo get a new `EditVerb.DESCRIPTION`, checked before the framing and swap fallbacks, with *"Description
-     put back"* and *"Description changed"* (A52.4, [ADR-123](#adr-123)'s pattern), so no label is false.
+   - The Describe sheet has a pane title (A52.2); the field's label is visible and is its name; the count is the
+     field's supporting text, inside the field's node, and is not a live region. The custom action is added only when
+     the host passes a handler, as the existing ones are (`EditorA11y.kt:87-104`).
+   - Undo and Redo name the step by what it did, as Copier's words do (A52.4, [ADR-123](#adr-123)): three new verbs,
+     `DESCRIPTION_ADDED` (undo *"Description taken off"*, redo *"Description added"*), `DESCRIPTION_REMOVED` (*"Description
+     put back"* / *"Description removed"*) and `DESCRIPTION_CHANGED` (*"Description put back"* / *"Description
+     changed"*). In `editLabel` the description check sits **after** the photo, copier and flip checks and before
+     `FRAMING` (`EditLabel.kt:83-93`), and after the supply, flip and ink checks and before the Art-swap fallback
+     (`:97-105`), so Replace photo, which also clears a description, is still named as a photo swap.
 9. **What carries it** is [ADR-135](#adr-135) decision 6: Duplicate and Across fold copy it; Replace photo clears it;
    replacing Art keeps it. **Paper and PDF carry nothing**: ADR-135 decision 7.
 10. **Release boundary.** The field ships with its first user, Describe, and with Read's stops (ADR-135 parts 1 and 2)
@@ -18244,7 +18257,10 @@ flowchart LR
   the writer's fixture check (decision 3).
 - [ARCHITECTURE §4.1](ARCHITECTURE.md#41-compatibility-guards-and-the-zine-v2-format-note) changes when this is
   built: the corpus gains `document-v4.json`, and the backup note's "at whatever schema version (1…current) it was
-  last saved" becomes "at the lowest version that holds it".
+  last saved" becomes "at the version its last save stamped: 3, or 4 when it holds a description (older zines keep
+  1 or 2 until saved)".
+- `JsonDocumentSerializerTest.kt:212-213` rewrites `"schemaVersion":CURRENT` in a written sample to test migration;
+  with an undescribed sample the writer says 3, so that test must use a described sample. Expected, not a regression.
 - 🟨 `explicitNulls = false` is `@ExperimentalSerializationApi`. A library upgrade that changed its meaning would
   show at once in the byte-for-byte v3 check (test plan below).
 
@@ -18269,14 +18285,19 @@ flowchart LR
 - **Backup round trip:** write a library with one described and one undescribed zine, stage and commit it, compare
   documents and descriptions; the manifest records 4 and 3; a manifest that says 5 is refused as `FUTURE_VERSION`.
   Restore matching (ADR-121): the same zine with a different description is added; with the same one, skipped.
-- **Normalise helper (pure):** 250 code points, grapheme-safe (a family emoji at the cap goes whole or not at all);
-  CR, LF, CRLF, U+2028 and U+2029 to spaces; trim; blank and spaces-only to `null`.
+- **Pure helpers:** the field's edit filter: 250 code points, grapheme-safe (a family emoji at the cap goes whole or
+  not at all), growth only (a stored 300-code-point description survives an unchanged close; growth past it is
+  refused). The normaliser: CR, LF, CRLF, tab, other control characters, U+2028 and U+2029 to spaces; trim; blank and
+  spaces-only to `null`.
 - **Reducer intents:** `SetDescription(id, text)` on a photo and on Art makes one command and one undo step; the same
   text makes none; undo and redo restore it; Replace photo clears it and Undo brings both back; Replace supply keeps
-  it; Duplicate and Make-spread keep it on both halves; `editLabel` gives `DESCRIPTION`, never `FRAMING` or `SWAP`.
+  it; Duplicate and Make-spread keep it on both halves. `editLabel`: none to words is `DESCRIPTION_ADDED`, words to
+  none `DESCRIPTION_REMOVED`, words to other words `DESCRIPTION_CHANGED`, each with A52.4's words; Replace photo on a
+  described photo is still the photo swap; never `FRAMING` or the Art-swap fallback for a description change.
 - **Compose semantics:** both bars' verb order (A52.1) as set-equality plus order; the sheet's title, label, helper,
-  example and the count from 50 left; Done, Back and a scrim tap each save; Enter is Done; the Bench node's label for
-  the four cases in A52.5 with its Button role; the Describe custom action opens the sheet.
+  example and the count from 50 left, the count merged into the field's node; Done, Back and a scrim tap each save;
+  Enter is Done; the Bench node's label for the four cases in A52.5 with its Button role; the Describe custom action
+  opens the sheet.
 - **Platform tree (`SurfaceTraversalOrderTest` harness, `AccessibilityNodeInfo`):** a described photo's node has
   `contentDescription` "Photo: …", class `android.widget.Button`, clickable, and the Describe action; the sheet's
   pane title is set; Read's stops are as ADR-135 owed item 1 lists, with the description rows.
@@ -18295,4 +18316,26 @@ flowchart LR
 
 #### Review
 
-To be filled in by the review below this draft.
+One independent Review Agent (Opus, reading only), 2026-11-03, on `9121fc05` and `60796a4a`: **GO WITH FIXES**. It
+checked decision 3 against the serializer, the six version readers, the stager's file-against-manifest check, Room's
+column, `.bak` recovery and restore matching, and the older-build table against `v0.9.0-beta.4-r3`'s source, and
+found them sound; every file:line cited was accurate. Reconciled:
+
+| # | Finding | Class | Taken |
+|---|---|---|---|
+| 1 | One undo pair is false for a first description and for clearing one | Required Fix | **Accepted**: three verbs (decision 8, A52.4), amended in the HTML first |
+| 2 | The stamp rule spoke of fields only; v5 adds enum values; a non-null default always writes | Recommended | **Accepted**: decision 3's bullets |
+| 3 | "Lowest version that holds it" would mean v1 for a plain zine | Recommended | **Accepted**: "3, or 4; never below 3" |
+| 4 | The plan's change log claimed an F1b edit not made | Recommended | **Accepted**: F1b row edited |
+| 5 | Brief 04 criterion 15 still lists the dropped marker | Recommended | **Accepted**: dated note |
+| 6 | The cap would cut a longer stored description on a no-op close | Recommended | **Accepted**: growth only, as rename (decision 2, A52.3) |
+| 7 | Replace photo's label precedence was ambiguous | Recommended | **Accepted**: decision 8 orders the check; test added |
+| 8 | A separate count node is not read with the field | Recommended | **Accepted**: the field's supporting text (A52.2) |
+| 9 | Photo nodes have no Change ink or Replace action; actions follow a non-null handler | Observation | **Accepted**: A52.1 and decision 8 corrected |
+| 10 | The drawn icon was a card, `Notes` is not | Observation | **Accepted**: redrawn as `Notes`' lines |
+| 11 | The 200% claim is not shown by a linear demo | Observation | **Partially accepted**: A52.8 now promises Done in view, calls the demo the worst case and leaves the claim to the device pass |
+| 12 | Tabs and other control characters pass through | Observation | **Accepted**: all control characters become spaces |
+| 13 | The demo cuts the tail; Enter only blurred | Observation | **Accepted** for Enter (now Done); the tail cut is marked demo-only |
+| 14 | The script is valid and its rules behave | Observation | Noted; the stub-DOM check now also covers the undo words, growth-only cap and control characters |
+| 15 | `JsonDocumentSerializerTest.kt:212-213` will fail on purpose | Observation | **Accepted**: listed under Consequences |
+| 16 | Art in v4, the dropped marker, A38's helper line, bar orders, anchors | Observation | Noted: consistent |

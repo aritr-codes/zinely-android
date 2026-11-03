@@ -451,7 +451,8 @@ the §4.5 canvas clause.
 
 **B (after the wave-1 release, with F1)**
 
-15. Gates 5–8 are met, and v4 ships with the other F1 fields and `explicitNulls = false`.
+15. Gates 5–8 are met, and v4 ships with the other F1 fields and `explicitNulls = false`. *(2026-11-03: v4 has no
+    other field; the layout marker is dropped, [ADR-TBD-W4](../DECISIONS.md#adr-tbd-w4) decision 1.)*
 16. Descriptions persist, back up, restore and undo. Older builds refuse v4 with "needs a newer Zinely". *(2026-11-03:
     only a zine, or a backup, that holds a description is v4; [ADR-TBD-W4](../DECISIONS.md#adr-tbd-w4) decision 3.)*
 17. The Bench, and Read as designed, speak descriptions. An empty description never creates an empty or duplicated stop.

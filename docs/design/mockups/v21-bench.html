@@ -4739,9 +4739,10 @@ A52.1  WHERE.  A selected photo's bar gains Describe after Replace and before Du
          Replace · Arrange · Ink · Flip · Describe · Duplicate · Delete
        Text has no Describe: its words are already read.  The bar scrolls as it does today (at 360 the photo
        bar already runs past the edge); Describe is optional, so it does not take an earlier place.  Each
-       photo and Art node on the Bench also gains a "Describe" custom action, beside Change ink and Replace,
-       so a TalkBack maker reaches it without finding the bar.  Icon: a card with two lines of text
-       (Compose: Icons.AutoMirrored.Filled.Notes); the word below it is "Describe".
+       photo and Art node on the Bench also gains a "Describe" custom action, after its existing ones (a photo
+       has Reframe and Reset framing, Art has Change ink and Replace), added only when the host passes a
+       handler, as those are, so a TalkBack maker reaches it without finding the bar.  Icon: four lines of
+       text, the last two shorter (Compose: Icons.AutoMirrored.Filled.Notes); the word below it is "Describe".
 
 A52.2  THE SHEET.  Describe opens a sheet over a scrim, above the keyboard, with the field focused and the
        keyboard up.  Top to bottom:
@@ -4752,21 +4753,30 @@ A52.2  THE SHEET.  Describe opens a sheet over a scrim, above the keyboard, with
                           Art:   "e.g. this way to the flower end"
          helper ....... A38's line, verbatim: "Zinely reads this aloud in Read. It isn’t printed or put in
                         the PDF."
-         count ........ only when 50 or fewer are left: "12 left".  Not shown before that.  Not a live
-                        region: TalkBack reads it with the field, not on every key.
+         count ........ only when 50 or fewer are left: "12 left".  Not shown before that.  It is the
+                        field's own supporting text, so it is part of the field's node and TalkBack reads it
+                        with the field; it is not a separate node and not a live region (not on every key).
          Done ......... one leaf-filled button, full width, pinned to the sheet's foot so it stays above the
                         keyboard at any text size.  There is no Cancel (A52.4).
 
 A52.3  LIMITS.  250 characters, counted as code points.  Typing stops at 250; a paste is cut there, on a
        grapheme boundary, so an emoji or a combined mark goes in whole or not at all (the rename cap's rule,
-       ADR-136 W2a item 3).  A line break, typed or pasted, becomes a space: the keyboard's Enter is Done.
-       On saving, the words are trimmed at both ends; nothing in the middle is touched.  An empty field, or
-       one of only spaces, is no description (A38).
+       ADR-136 W2a item 3).  As with rename, the cap limits growth only: a stored description already longer
+       than 250 (from a future build, or a hand-edited file) is never cut by opening and closing the sheet;
+       only typing past the larger of 250 and its length is refused.  A line break or any other control
+       character, typed or pasted, becomes a space: the keyboard's Enter is Done.  On saving, the words are
+       trimmed at both ends; nothing in the middle is touched.  An empty field, or one of only spaces, is no
+       description (A38).
 
 A52.4  SAVING.  Done, Back, a tap on the scrim and a swipe down all keep the words: closing never throws
        typing away (W1, "Back while typing keeps the words").  Each close that changed the description is one
-       undo step; a close that changed nothing is no step.  Undo says "Description put back"; Redo says
-       "Description changed" (A26's pattern).  To abandon an edit, Undo.
+       undo step; a close that changed nothing is no step.  To abandon an edit, Undo.  The undo snack's words
+       follow A26 (as Copier's do), by what the step did:
+         none -> words ....... Undo: "Description taken off"   Redo: "Description added"
+         words -> none ....... Undo: "Description put back"    Redo: "Description removed"
+         words -> other words  Undo: "Description put back"    Redo: "Description changed"
+       Replace photo, which also clears a description, keeps its own words (it is named by the photo swap).
+       [Revised 2026-11-03 after review, before merge: the first draft had one pair for all three.]
 
 A52.5  WHAT THE BENCH SAYS.  The node keeps its Button role and its custom actions; only the label grows,
        to the words Read will say (A38, ADR-135 decision 6):
@@ -4785,13 +4795,16 @@ A52.7  NOT DONE.  No mark on a described piece; no prompt, badge or nag to descr
        (A38.6).  Revisit the first if Pass 2 finds makers lose track of which photos they described.
 
 A52.8  200% TEXT.  The title, label, helper and count wrap; the field keeps 3 lines at the larger size; the
-       sheet's body scrolls under the pinned Done.  At 360 x 640 with the keyboard up, the field and Done are
-       both in view; the helper may need a scroll.  The demo's second phone shows it.
+       sheet's body scrolls under the pinned Done.  At 360 x 640 with the keyboard up, Done is always in
+       view; the field is in view or one scroll away, and the helper may need a scroll.  The demo's second
+       phone scales text linearly, which Android does not (it scales large text less), so it shows the
+       worst case; the device pass at 200% is the check.
 
-TESTS.  Pure: the cap (250 code points, grapheme-safe, paste), line breaks to spaces, trim, blank to none.
-Reducer: one undo step per changed close, none for an unchanged one; Duplicate and Across fold keep the
-description; Replace photo clears it; Replace Art keeps it.  Screen: both bars' verb order; the sheet's
-words; Done, Back and scrim all save; the platform tree's labels in A52.5, the Button role kept.
+TESTS.  Pure: the cap (250 code points, grapheme-safe, paste, growth only), control characters to spaces,
+trim, blank to none.  Reducer: one undo step per changed close, none for an unchanged one; the three undo
+pairs of A52.4; Duplicate and Across fold keep the description; Replace photo clears it and is still named
+as a photo swap; Replace Art keeps it.  Screen: both bars' verb order; the sheet's words; the count inside
+the field's node; Done, Back and scrim all save; the platform tree's labels in A52.5, the Button role kept.
 
 DEMO.  Below.  Type in either sheet; the line under it is what TalkBack says for the piece on the Bench.
 =========================================================================== -->
@@ -4846,7 +4859,7 @@ DEMO.  Below.  Type in either sheet; the line under it is what TalkBack says for
     copier:'<circle cx="8" cy="8" r="1"/><circle cx="16" cy="8" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="8" cy="16" r="1"/><circle cx="16" cy="16" r="1"/>',
     replace:'<path d="M4 8h13l-3-3M20 16H7l3 3"/>',
     ink:'<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z"/>',
-    describe:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 10h10M7 14h6"/>',
+    describe:'<path d="M4 6h16M4 10h16M4 14h10M4 18h10"/>',
     dup:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V4h12"/>',
     del:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'};
   const BARS={photo:[['Reframe','reframe'],['Arrange','arrange'],['Flip','flip'],['Across fold','fold'],['Copier','copier'],['Replace','replace'],['Describe','describe',1],['Duplicate','dup'],['Delete','del',0,1]],
@@ -4854,17 +4867,29 @@ DEMO.  Below.  Type in either sheet; the line under it is what TalkBack says for
   const WORDS={photo:{title:'Describe this photo',hint:'e.g. Mum at the allotment gate, holding a marrow',name:'Photo'},
                art:{title:'Describe this piece',hint:'e.g. this way to the flower end',name:'Pointing hand'}};
   let kind='photo';
-  // A52.3: at most CAP code points, cut on a grapheme boundary; line breaks become spaces.
+  // A52.3: control characters and line/paragraph separators become spaces; growth past the larger of CAP and
+  // the previous length is cut on a grapheme boundary, so a stored longer description is never shortened.
+  // (Demo only: it cuts the tail, so a mid-text insertion at the cap drops the end; the app refuses the insert.)
   const seg=typeof Intl!=='undefined'&&Intl.Segmenter?new Intl.Segmenter(undefined,{granularity:'grapheme'}):null;
   const graphemes=s=>seg?[...seg.segment(s)].map(g=>g.segment):[...s];
-  function capText(s){
-    s=s.replace(/\r\n|[\r\n]|\p{Zl}|\p{Zp}/gu,' ');
+  const len=s=>[...s].length;
+  function capText(s,prev=''){
+    s=s.replace(/\r\n|\p{Cc}|\p{Zl}|\p{Zp}/gu,' ');
+    const limit=Math.max(CAP,len(prev));
     let out='',n=0;
-    for(const g of graphemes(s)){const c=[...g].length; if(n+c>CAP) break; out+=g; n+=c;}
+    for(const g of graphemes(s)){const c=len(g); if(n+c>limit) break; out+=g; n+=c;}
     return out;
   }
   const saved=s=>s.trim();                      // A52.3: trimmed on saving; blank is none.
   const spoken=(k,d)=>{const t=saved(d); return t?WORDS[k].name+': '+t:WORDS[k].name;};  // A52.5
+  // A52.4: the snack's words for one Describe step, from the stored value before and after.
+  function undoWords(before,after){
+    const b=saved(before),a=saved(after);
+    if(b===a) return null;                                   // no step
+    if(!b) return {undo:'Description taken off',redo:'Description added'};
+    if(!a) return {undo:'Description put back',redo:'Description removed'};
+    return {undo:'Description put back',redo:'Description changed'};
+  }
   function phone(big){
     const w=WORDS[kind], p=document.createElement('div');
     p.className='ph'+(big?' big':'');
@@ -4879,14 +4904,16 @@ DEMO.  Below.  Type in either sheet; the line under it is what TalkBack says for
         <div class="foot"><button type="button" class="done">Done</button></div></div>
       <p class="said"><span>TalkBack on the Bench:</span> <q></q></p>`;
     const f=p.querySelector('textarea'), left=p.querySelector('.left'), q=p.querySelector('q');
+    let prev='';
     const update=()=>{
-      const v=capText(f.value); if(v!==f.value) f.value=v;
-      const r=CAP-[...v].length; left.textContent=r<=SHOW_LEFT?r+' left':'';
+      const v=capText(f.value,prev); if(v!==f.value) f.value=v; prev=v;
+      const r=CAP-len(v); left.textContent=r<=SHOW_LEFT?Math.max(0,r)+' left':'';
       q.textContent=spoken(kind,v);
     };
+    const done=p.querySelector('.done');
     f.addEventListener('input',update);
-    f.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); f.blur(); } });  // Enter is Done
-    p.querySelector('.done').addEventListener('click',()=>{ f.value=saved(f.value); update(); });
+    f.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); done.click(); } });  // Enter is Done
+    done.addEventListener('click',()=>{ f.value=saved(f.value); update(); f.blur(); });
     update();
     return p;
   }
@@ -4901,6 +4928,6 @@ DEMO.  Below.  Type in either sheet; the line under it is what TalkBack says for
   $('a52Art').onclick=()=>{kind='art';draw()};
   draw();
   // For checks without a browser: the pure rules, exposed read-only.
-  window.a52={capText,saved,spoken,CAP,SHOW_LEFT,BARS};
+  window.a52={capText,saved,spoken,undoWords,CAP,SHOW_LEFT,BARS};
 })();
 </script>
