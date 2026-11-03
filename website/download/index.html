@@ -33,14 +33,14 @@
       <section class="release-card" aria-labelledby="current-title">
         <h2 id="current-title">Current version</h2>
         <dl class="release-facts">
-          <div><dt>Version</dt><dd>0.9.0-beta.8</dd></div>
-          <div><dt>Released</dt><dd><time datetime="2026-10-29">29 October 2026</time></dd></div>
+          <div><dt>Version</dt><dd>0.9.0-beta.9</dd></div>
+          <div><dt>Released</dt><dd><time datetime="2026-11-03">3 November 2026</time></dd></div>
           <div><dt>Needs</dt><dd>Android 7.0 or newer</dd></div>
-          <div><dt>Size</dt><dd>About 15.8 MB (16,561,003 bytes)</dd></div>
+          <div><dt>Size</dt><dd>About 15.8 MB (16,593,767 bytes)</dd></div>
           <div><dt>Price</dt><dd>Free. No account.</dd></div>
         </dl>
-        <p><a class="button primary" href="https://github.com/aritr-codes/zinely-android/releases/download/v0.9.0-beta.8/zinely-0.9.0-beta.8-release.apk">Download the APK</a></p>
-        <p class="release-card-note">The file is <code>zinely-0.9.0-beta.8-release.apk</code>. For the changes in this version, read <a href="../changelog/#beta-8">what’s new</a> or the <a href="https://github.com/aritr-codes/zinely-android/releases/tag/v0.9.0-beta.8">release page on GitHub</a>.</p>
+        <p><a class="button primary" href="https://github.com/aritr-codes/zinely-android/releases/download/v0.9.0-beta.9/zinely-0.9.0-beta.9-release.apk">Download the APK</a></p>
+        <p class="release-card-note">The file is <code>zinely-0.9.0-beta.9-release.apk</code>. For the changes in this version, read <a href="../changelog/#beta-9">what’s new</a> or the <a href="https://github.com/aritr-codes/zinely-android/releases/tag/v0.9.0-beta.9">release page on GitHub</a>.</p>
       </section>
 
       <h2 id="install">Install it</h2>
@@ -66,9 +66,10 @@
 
       <h2 id="known-limits">Known limits in this version</h2>
       <ul>
-        <li><strong>We have not tested the new features with a screen reader.</strong> These are: select several zines, mixed inks, the new Art and frames, and the changes to Back and Save PDF. We tried them on a phone and on emulators. We read what the phone reports. We did not listen to it.</li>
+        <li><strong>We have not tested the new features with a screen reader.</strong> Nothing new in this version has been tested that way. This covers the turn knob, Straighten, turning with two fingers, small pieces, the lighter ring and the new Cancel button. It also covers the older features from the last version: select several zines, mixed inks, the new Art and frames, and the changes to Back and Save PDF. We tried them on a phone and on emulators. We read what the phone reports. We did not listen to it.</li>
+        <li><strong>The turn knob.</strong> Over the dark area beside the page, the line from the knob to the piece is hard to see. The knob itself stays easy to see. Its touch area can take a tap meant for what is under it. We have not tried adding a second finger late, after a long press has cleared your choice.</li>
         <li><strong>We have not yet printed a page with the new Art pieces.</strong> We have not checked mixed inks on a larger phone. At twice the normal text size, “+ New palette” wraps onto two lines.</li>
-        <li><strong>At the largest text size on a small phone</strong>, the first-time tip can cover the piece you drag. The notice for a change that cannot be saved can be taller than the screen.</li>
+        <li><strong>The first-time tip</strong> covers a piece you chose near the top of the page until you tap <strong>Got it</strong>. At the largest text size on a small phone, the notice for a change that cannot be saved can be taller than the screen. At twice the normal text size, the two buttons on the folder sheet stack one above the other.</li>
         <li><strong>If Zinely restores a zine’s main file from its backup copy</strong>, it does not tell you. The last few seconds of changes are lost. A zine repaired this way can also have an empty, invisible text box that you can still tap.</li>
         <li><strong>Select several zines:</strong> if you tap Undo while a delete is still saving, a zine can come back and then be deleted with no message. Undo of a move says nothing when you deleted all of its zines.</li>
         <li><strong>The two new frames, Snipped border and Round window.</strong> Snipped border is thin. Over a photo, it can be hard to pick up again. A frame that is not square has a band that is thicker on two sides. We have not checked tapping through a frame with a screen reader.</li>
@@ -87,18 +88,19 @@
         <li>Pictures with see-through backgrounds, such as logos, lose their transparency. The clear parts come in as white. They print correctly on white paper. On the cream page in the app, a logo shows as a faint white rectangle. Over a photo, it shows as a white box.</li>
         <li>With TalkBack, <strong>About</strong> and its credits pages open on the Back button. Going back lands at the top of the previous screen. You can still reach everything by swiping.</li>
         <li><strong>Tapping through a frame is new.</strong> A tap in the empty part of a window frame, ring, eyelet, torn hole, photo corner or registration cross reaches what is under it. We have not yet checked it by ear with TalkBack. A thin frame over a photo can need a careful tap. Dragging a selected frame by its edge resizes it. Drag from the middle to move it.</li>
-        <li>A second tap on small selected words can hit a resize handle. Double-tap the words or use <strong>Edit</strong>.</li>
+        <li>On a narrow piece, the resize handles reach a little beyond its edge. A drag there resizes the piece. A tap very close to a handle keeps your choice.</li>
+        <li>Your recent and favourite Art pieces stay on the phone. A backup does not include them.</li>
         <li>With TalkBack, if undo says the same line twice in a row, you may hear it only once.</li>
         <li>If a backup left a zine out, this version says so when you restore it. Earlier versions do not say it.</li>
         <li>Photos you replace or delete still use space in the app. Zinely does not free that space yet.</li>
         <li>Zinely cannot print some scripts yet, such as Bengali and Tamil. It keeps and flags the text, but the text does not print.</li>
         <li>Zinely makes the PDF. Your phone’s PDF or print app does the printing.</li>
       </ul>
-      <p><a href="../changelog/#beta-8">What’s new</a> lists what this version added and fixed.</p>
+      <p><a href="../changelog/#beta-9">What’s new</a> lists what this version added and fixed.</p>
 
       <h2 id="checksum">Check the download (optional)</h2>
-      <p>You do not need this to use Zinely. To check that the file is the one we published, compare its SHA-256 checksum with ours. This checksum is for <code>zinely-0.9.0-beta.8-release.apk</code>, version 0.9.0-beta.8 (Android version code 13):</p>
-      <p class="checksum"><code>c2042915214a245365a5d73aa952091fb5e87bbf9db3d31a88fe1a4bb3dfb58c</code></p>
+      <p>You do not need this to use Zinely. To check that the file is the one we published, compare its SHA-256 checksum with ours. This checksum is for <code>zinely-0.9.0-beta.9-release.apk</code>, version 0.9.0-beta.9 (Android version code 14):</p>
+      <p class="checksum"><code>e29422eea98b872bbb3456fd674a37ac5e44fb670a9cb7b2f4ea4acb204ace7d</code></p>
 
       <h2 id="other-ways">Other ways to get Zinely</h2>
       <dl class="other-ways">
