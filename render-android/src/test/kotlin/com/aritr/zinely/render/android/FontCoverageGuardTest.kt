@@ -97,7 +97,7 @@ class FontCoverageGuardTest {
 
     @Test
     fun theScriptTableAndTheHandFilesAgree() {
-        // Hand declares Latin only. Its faces hold two Greek letters and a partial Cyrillic, which is why the
+        // Hand declares Latin only. Upstream holds two Greek letters and a partial Cyrillic (the build drops them), which is why the
         // promise is not widened; this asserts the files really do hold every Latin letter the promise names,
         // in all four faces, and that the two recorded absences are what they were measured to be.
         val hand = DocumentFontRegistry.Bundled.resolve(DocumentFontRegistry.SHANTELL_SANS)

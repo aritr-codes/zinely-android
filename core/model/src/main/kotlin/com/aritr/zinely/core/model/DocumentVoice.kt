@@ -30,8 +30,8 @@ public enum class DocumentVoice(
     BOOK("Fraunces", setOf(Script.LATIN, Script.EMOJI), BOOK_MIN),
 
     /**
-     * Shantell Sans (the "Informal" letterforms). Latin only, as Book: the four faces hold two Greek letters
-     * and a partial Cyrillic, neither of which is claimed. Emoji have their own font.
+     * Shantell Sans (the "Informal" letterforms). Latin only, as Book: the shipped faces hold no Greek and no
+     * Cyrillic (the build drops them; upstream's partial Cyrillic is not claimed). Emoji have their own font.
      */
     HAND("Shantell Sans", setOf(Script.LATIN, Script.EMOJI), HAND_MIN),
     ;

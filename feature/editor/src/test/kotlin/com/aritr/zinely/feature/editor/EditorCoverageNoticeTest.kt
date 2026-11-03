@@ -39,7 +39,7 @@ class EditorCoverageNoticeTest {
     @Test
     fun renders_and_names_the_script_when_not_covered() {
         composeRule.setContent {
-            ZinelyTheme { EditorCoverageNotice(coverage = coverage(Script.BENGALI), reduceMotion = false) }
+            ZinelyTheme { EditorCoverageNotice(coverage = coverage(Script.BENGALI), voice = DocumentVoice.BOOK, reduceMotion = false) }
         }
         composeRule.onNodeWithTag(EditorCoverageNoticeTestTag).assertIsDisplayed()
         composeRule.onNodeWithText(Copy.Coverage.unsupported(listOf("Bengali")), substring = true)
@@ -50,7 +50,7 @@ class EditorCoverageNoticeTest {
     fun renders_with_reduced_motion() {
         // Reduced-motion degrades the transition, never the content: the static state is identical.
         composeRule.setContent {
-            ZinelyTheme { EditorCoverageNotice(coverage = coverage(Script.BENGALI), reduceMotion = true) }
+            ZinelyTheme { EditorCoverageNotice(coverage = coverage(Script.BENGALI), voice = DocumentVoice.BOOK, reduceMotion = true) }
         }
         composeRule.onNodeWithTag(EditorCoverageNoticeTestTag).assertIsDisplayed()
     }
@@ -58,7 +58,7 @@ class EditorCoverageNoticeTest {
     @Test
     fun is_absent_when_fully_covered() {
         composeRule.setContent {
-            ZinelyTheme { EditorCoverageNotice(coverage = TextCoverage.Covered, reduceMotion = true) }
+            ZinelyTheme { EditorCoverageNotice(coverage = TextCoverage.Covered, voice = DocumentVoice.BOOK, reduceMotion = true) }
         }
         composeRule.onNodeWithTag(EditorCoverageNoticeTestTag).assertDoesNotExist()
     }
@@ -69,7 +69,7 @@ class EditorCoverageNoticeTest {
         // "Japanese and Japanese".
         composeRule.setContent {
             ZinelyTheme {
-                EditorCoverageNotice(coverage = coverage(Script.HIRAGANA, Script.KATAKANA), reduceMotion = true)
+                EditorCoverageNotice(coverage = coverage(Script.HIRAGANA, Script.KATAKANA), voice = DocumentVoice.BOOK, reduceMotion = true)
             }
         }
         composeRule.onNodeWithText(Copy.Coverage.unsupported(listOf("Japanese")), substring = true)

@@ -120,7 +120,7 @@ internal fun coverageNoticeLine(coverage: TextCoverage, voice: DocumentVoice = D
 public fun EditorCoverageNotice(
     coverage: TextCoverage,
     modifier: Modifier = Modifier,
-    voice: DocumentVoice = DocumentVoice.BOOK,
+    voice: DocumentVoice,
     reduceMotion: Boolean = rememberReduceMotion(),
 ) {
     // Retain the last non-empty line across the exit fade, so the sentence doesn't blank out

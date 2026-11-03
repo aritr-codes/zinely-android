@@ -18131,12 +18131,15 @@ overrule it).
 3. **Older builds draw Hand in the fallback face and keep it.** An unknown `fontFamily` resolves to Inter
    (`DocumentFontRegistry.resolve`) and is checked as Plain (`DocumentVoice.drawnAs`); no code path rewrites it. This
    is the path ADR-126 measured on `0.9.0-beta.5` and `0.9.0-beta.6`, which did not know Book either, and Hand takes
-   it unchanged. **Hand is the widest of the three voices** (about 9 % wider than Inter in running text) **and has the
-   tallest line** (1.340 of the size, against Inter's 1.210), so Inter is narrower and shorter than the text was
-   laid out in. A line that fitted still fits; the page can show fewer lines than the maker saw, never more, and
-   nothing is cut off. That is the opposite of the Book case, where an older build could lose a last line. It is a
-   code-reading and measurement claim; the older-build restore of ADR-126 (every word kept, every voice back on a current build) is the evidence for the
-   path, and it was not repeated for Hand.
+   it unchanged. **Hand is wider than Inter in running text (about 9 % in Regular, 14 to 15 % in Bold) and has the
+   tallest line** (1.340 of the size, against Inter's 1.210). That is *not* a safe direction: per letter Hand is
+   narrower than Inter for many capitals (B C D H K L O P S U V W X Y and c o p s u), so an all-capitals title that
+   just fitted one line in Hand measures 9 to 13 % wider in Inter (reviewed 2026-11-03: "BOOK CLUB" 9.5 %, "COOL"
+   13.4 %). Text boxes are fixed in size and the replayer clips what does not fit, so **an older build can wrap such
+   a title and not show its last line**, on screen and in the PDF: the same failure as Book's, not its opposite. The
+   words and the choice are kept, and the line comes back when the zine is opened on a current build. The older-build
+   restore of ADR-126 (every word kept, every voice back on a current build) is the evidence for the keeping, and it
+   was not repeated for Hand.
 4. **Face.** Shantell Sans 1.011 (arrowtype/shantell-sans, SIL OFL 1.1, copyright "The Shantell Sans Project
    Authors"), the **Informal** letterforms, four static TrueType faces (regular, bold, italic, bold italic) built by
    `tools/build-document-fonts.py --hand` from the release zip pinned by SHA-256, and committed under
@@ -18170,17 +18173,19 @@ overrule it).
 #### Release notes (the wording the release must carry)
 
 "Hand is a third font for the words in your zine. A zine made with it shows in a plainer font on an older version of
-Zinely; your words and your choice are kept, and Hand comes back when you open it on this version. Lines can break
-differently there." (Not "nothing changes": the page can show fewer lines on the older build.)
+Zinely; your words and your choice are kept, and Hand comes back when you open it on this version. Some words, a
+title in capitals for one, may not show on the older version." (Not "nothing changes" and not "lines can break
+differently": a line that no longer fits is not shown.)
 
 #### Consequences
 
 - **APK size** grows by the four faces: 869,252 bytes before compression (214,352 + 214,328 + 220,324 + 220,248).
   The release delta is measured at the release, not here.
 - **Wider and taller than Plain.** Switching a text Plain to Hand can push words out of its box (A29.12, which says
-  the maker sees no new sign); Hand to Plain pulls them in. The PDF and the screen agree because one replayer draws
+  the maker sees no new sign); Hand to Plain can pull them in or, for capitals, push them out. The PDF and the screen agree because one replayer draws
   both ([ADR-028](#adr-028)).
-- **Older builds** draw it in Inter (decision 3). A backup restored there keeps the words and the voice.
+- **Older builds** draw it in Inter (decision 3); a line that no longer fits there is not shown. A backup restored
+  there keeps the words and the voice.
 - **Still owed** ([OWNER-CHECKLIST](OWNER-CHECKLIST.md)): the printed page that confirms 12 pt for Book and Hand;
   a TalkBack listen of the three-word row and its spoken reasons (deferred by the owner); a real Android 7 to 9 phone
   (the emulator is the evidence); the goldens recorded on the pinned image.
