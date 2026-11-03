@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Delete
@@ -138,6 +139,12 @@ internal data class BenchVerb(
 private val ARRANGE_VERB = BenchVerb(Copy.BenchVerbs.ARRANGE, Icons.Filled.OpenWith)
 
 /**
+ * `Describe` (`v21-bench.html` A52.1, [ADR-147](../../../../../../../../docs/DECISIONS.md#adr-147)): a photo's bar
+ * after Replace, an Art piece's after Flip. Four lines of text, the last two shorter: `Notes`.
+ */
+private val DESCRIBE_VERB = BenchVerb(Copy.BenchVerbs.DESCRIBE, Icons.AutoMirrored.Filled.Notes)
+
+/**
  * The frozen verb sets, one per kind (`v21-bench.html:656-660`). Pure, so the *sets* are asserted
  * directly rather than through a composition — and asserted as **set-equality plus order**, because a
  * permutation would satisfy "each verb exists" and still be the wrong bar.
@@ -192,6 +199,8 @@ internal fun benchContextVerbs(
             Icons.Filled.SwapHoriz,
             spokenLabel = Copy.A11y.REPLACE_PHOTO,
         ),
+        // Bench A52.1 (ADR-147): optional, so it takes the place after Replace rather than an earlier one.
+        DESCRIBE_VERB,
         BenchVerb(Copy.BenchVerbs.DUPLICATE, Icons.Filled.ContentCopy),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )
@@ -221,6 +230,7 @@ internal fun benchContextVerbs(
         ARRANGE_VERB,
         BenchVerb(Copy.BenchVerbs.INK, Icons.Filled.Palette),
         BenchVerb(Copy.BenchVerbs.FLIP, Icons.Filled.Flip),
+        DESCRIBE_VERB,
         BenchVerb(Copy.BenchVerbs.DUPLICATE, Icons.Filled.ContentCopy),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )

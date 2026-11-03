@@ -175,14 +175,15 @@ class BenchDecorGoldenTest {
         // to `disabledAlpha` and the other's pixels cover for it.
         val bar = full()
         assertEquals(
-            "the frozen decor set is Replace · Arrange · Ink · Flip · Duplicate · Delete",
-            6,
+            "the frozen decor set is Replace · Arrange · Ink · Flip · Duplicate · Delete (+ Describe, A52)",
+            7,
             benchContextVerbs(BenchVerbKind.DECOR).size,
         )
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.REPLACE, inkSoftArgb)
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.ARRANGE, inkSoftArgb)
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.INK, inkSoftArgb)
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.FLIP, inkSoftArgb)
+        assertVerbAtFullStrength(bar, Copy.BenchVerbs.DESCRIBE, inkSoftArgb)
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.DUPLICATE, inkSoftArgb)
         // `.ctx button.danger{color:var(--jam-text)}` — jam is the one urgent colour in V2.1 and Delete
         // is the one verb entitled to it, so it is measured on its own channel.
