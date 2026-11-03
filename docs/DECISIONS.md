@@ -18109,7 +18109,7 @@ Three narrow pieces 14 × 40pt side by side, 6pt apart, and a wide one below:
 
 ### A third document voice, Hand (Shantell Sans), with no change to the saved format
 
-**Status:** Proposed, 2026-11-03. **Not accepted.** The number is the orchestrator's to assign (heading, anchor and every
+**Status:** Proposed, 2026-11-03. **Not accepted.** The number was assigned on merge with `main` (heading, anchor and every
 `ADR-148` in the branch change together). Built on `w9/hand-voice`, from `main` @ `fe9424d1`. It is W9 of
 [ADR-136](#adr-136): the owner's 2026-09-26 "Hand = deferred" was lifted as sequencing by ADR-136 reading 6
 (2026-10-15), under which [ZINE-DIRECTION](design/ZINE-DIRECTION.md) §IV's handwriting ban governs the app's own
@@ -18145,8 +18145,8 @@ overrule it).
    variable-weight axis, and the PDF path is proven on glyf outlines). They are a **Modified Version** under the OFL: instanced at
    `wght` 400/700, `ital` 0/1, `INFM` 100, `BNCE` 0, `SPAC` 0, with Greek, Cyrillic and their extensions dropped (the
    bundled file is 214 to 220 KB each, 869 KB for the four). The upstream OFL.txt names **no Reserved Font Name**, so the family name
-   is kept; the copyright line and the licence are kept whole and shown in Licences & credits and on the website's
-   licence page. Not sold alone.
+   is kept; the copyright line and the licence are kept whole and shown in Licences & credits in the app. The website has no
+   licence page and does not serve Shantell Sans, so it is unchanged. Not sold alone.
 5. **Scripts and coverage, measured 2026-11-03** (code points present in all four faces; Book's and Inter's are the
    bundled files'): Basic Latin 95 of 95, Latin-1 96 of 96, Latin Extended-A 126 of 128 (Book 126, Inter 127); 653 in all
    (Book 637, Inter 2,815). Upstream also holds 2 Greek and 178 of 256 Cyrillic code points, which the build drops, so the
