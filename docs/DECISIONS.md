@@ -585,7 +585,8 @@
 - **Note (2026-11-04, [#155](https://github.com/aritr-codes/zinely-android/issues/155)):** the text session's "no empty
   `TextElement` leaks" held in the reducer but not on disk. `Add > Text` places the box with `text = ""`; the
   placement is a document mutation, so it emits `Autosave` mid-session, and a `.bak` repair ([ADR-140](#adr-140)) or a
-  kill while typing reopened an invisible "Empty text" element. `JsonDocumentSerializer` now drops a `TextElement`
+  kill while typing reopened an invisible "Empty text" element. (Undoing a new box's first words autosaves the
+  same `""` box, so the guard sits at the seam, not at either producer.) `JsonDocumentSerializer` now drops a `TextElement`
   whose text is exactly `""` on write **and** on read, so already-written files heal on next open. Whitespace-only
   text is kept: no build commits it, but it is not the placeholder. A clean zine writes the same bytes as before.
   No new ADR: this restores a decided invariant at the one serialisation seam; it decides nothing new.
