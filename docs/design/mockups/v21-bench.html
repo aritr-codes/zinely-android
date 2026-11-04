@@ -4931,3 +4931,173 @@ DEMO.  Below.  Type in either sheet; the line under it is what TalkBack says for
   window.a52={capText,saved,spoken,undoWords,CAP,SHOW_LEFT,BARS};
 })();
 </script>
+
+<!-- ===========================================================================
+A54 · 2026-11-04 · FROZEN under the owner's delegation of 2026-10-12 ("decide, do not ask").  The owner
+may overrule it.  ADR-TBD-LT (number assigned at merge).  Issues #148, #149, #158; follow-ups of D-119.
+[Numbered A54, leaving A53 to the parallel #156 lane's v21-proof.html amendment; renumber at merge if not.]
+LARGE TEXT ON A SMALL PHONE: THE FIRST-RUN HINT WAITS FOR ROOM, AND THE SAVE NOTICE STACKS.
+
+WHY.  Neither surface is drawn above this line: the move/resize hint and the save-failure notice are the
+app's analogies to .snack, and the freeze never shows either wrapped (D-119).  At the largest text on a
+360 x 640 phone both broke.  Measured in Compose at 360 x 640, text size 2.0: the hint is 187dp tall (the
+photo line 226dp) in a canvas of 450dp, and it covered the piece it asks you to drag, handles and all, so
+it had to be dismissed before its advice could be followed (#148).  Its photo line was seen cut off after
+"...Arrange uses buttons;" (#158): a hint taller than its room is cut by the canvas edge, and in a Reframe
+session the canvas is shorter still.  The save notice put "Try now" and "Got it" beside its line, which
+left the line a narrow column, 16 lines tall and taller than the screen (#149).  Appended after A52 so no
+line above moves.  Nothing at text size 1 on this page changes.
+
+A54.1  THE HINT NEVER COVERS THE PIECE.  The hint keeps its place (top centre of the canvas, 8dp down,
+       the -0.6deg lean), its words, its look and its one action.  It is shown only when the whole of it
+       fits between that place and the selected piece: its bottom must stay 12dp above the top of the
+       piece's box as drawn on screen (12dp holds the handle marks: their 5.5dp offset, half their 9dp
+       mark, their halo).  For a turned piece the box is its turned box, and it moves with the page when
+       a tray lifts the page (Arrange, Ink).
+
+A54.2  WHEN IT DOES NOT FIT, IT WAITS.  It is not drawn, not read and not counted as seen.  It shows the
+       next time a single piece is selected with room above it, including the moment the selected piece is
+       moved down or made smaller with Arrange's buttons.  A drag, resize or turn still retires it for good,
+       as before (finding the gesture is the lesson).  There is no second place and no shorter line: the
+       canvas bottom is where the placement snack and the Arrange, Flip and Ink trays stand at that very
+       moment, and a second wording would be a second thing to keep true.
+
+A54.3  NOT IN A REFRAME SESSION.  The hint is not shown while Reframe is open: its words are about moving
+       and resizing the frame, and inside Reframe a drag moves the photo inside the frame.  Reframe's pad
+       has its own line ("Zoom in to move the photo").  The hint comes back after the session if it is
+       still unseen and fits.
+
+A54.4  THE SAVE NOTICE STACKS WHEN IT IS NARROW.  When the notice is narrower than 20 times its own text
+       size, the line takes the notice's full width and "Try now" and "Got it" stand under it, at the end,
+       in that order, 12dp below the line.  On a 360dp phone that is text sizes of 150% and up; at 130% and
+       at 100% the buttons stay beside the line as before.  Same colours, same shape (rounded ends capped at
+       40dp, D-119), same live region on the line only, same buttons.  At 360 x 640 and 200% the
+       out-of-space line is then 5 lines and the notice about 250dp, inside the 450dp canvas.
+
+A54.5  NOT CHANGED.  The verb bar at large text cuts its last labels ("Duplica...", "Across fol...").  That
+       is the frozen A21 bar: it scrolls, and its label size and width are bar-wide (ADR-147's note of
+       2026-11-04).  It is left to a bar-wide amendment and recorded under D-119.  The coverage notice
+       has no buttons and is not changed.  The hint does not stack its "Got it": that makes it taller,
+       not shorter.
+
+A54.6  200% TEXT.  From Android 14 large text is scaled less than small text; these notices are 12.5 to
+       12.6sp, which scale almost in full, so the demo's linear 200% is close to the phone.  A54.4 is
+       written against the text size as drawn, so it holds either way.
+
+TESTS.  Pure: the fit rule (fits; misses by 1px; a turned piece by its turned box; the page lift).  Screen,
+360 x 640dp at text size 2.0: a default piece leaves no room, so no hint is drawn; a small piece low on the
+page has the hint drawn, its bottom at least 12dp above the piece's top.  At text size 1 the existing hint
+tests hold with their piece below the hint.  A Reframe session has no hint.  Save notice at 360 x 640 and
+2.0: stacked, every line inside the notice and the notice inside the screen; at text size 1 the buttons
+are beside the line (the goldens).
+
+DEMO.  Below.  Left: 360dp at 100% text.  Right: 360dp at 200%.  The canvas heights and page sizes are the
+Compose measurements at 360 x 640.  Move the piece and watch the hint wait or show; turn on the save
+failure to see the notice beside and stacked.
+=========================================================================== -->
+<style>
+.a54{margin:24px auto;max-width:780px;padding:12px;border:1.6px solid var(--ink);background:var(--paper);color:var(--ink);font:14px/1.4 var(--sans)}
+.a54 h2{margin:0 0 4px;font-size:16px}
+.a54 .row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.a54 .ctl{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.a54 .ctl button{min-height:48px;padding:0 12px}
+.a54 .ph{--k:1;width:360px;max-width:100%;border:1.5px solid var(--ink);border-radius:18px;background:var(--bench);overflow:hidden}
+.a54 .ph.big{--k:2}
+.a54 .st{box-sizing:border-box;background:var(--surface);border-bottom:1.5px solid var(--ink);font:600 calc(13px * var(--k)) var(--sans);display:flex;align-items:center;padding:0 12px}
+.a54 .cv{position:relative;overflow:hidden}
+.a54 .pg{position:absolute;background:var(--paper);border:1px solid var(--paper-edge);box-sizing:border-box}
+.a54 .pc{position:absolute;border:1.6px dashed var(--ink);box-sizing:border-box;display:flex;align-items:center;justify-content:center;font:600 calc(12px * var(--k)) var(--sans);color:var(--ink-soft)}
+.a54 .pc i{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--paper);border:1.6px solid var(--ink);box-sizing:border-box}
+.a54 .band{position:absolute;left:0;right:0;bottom:0;height:86px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink-soft)}
+.a54 .band span{background:var(--surface);border:1.5px solid var(--ink);border-radius:999px;padding:14px 18px}
+/* The two notices: the app's .snack analogy (EditorSaveFailure.kt: NoticeShape, NoticePadding*, NoticeGap). */
+.a54 .nt{position:absolute;top:8px;left:50%;transform:translateX(-50%) rotate(-.6deg);box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:12px 8px 12px 16px;border:1.5px solid var(--ink);font:calc(12.64px * var(--k))/1.3 var(--sans)}
+.a54 .nt[hidden]{display:none}
+.a54 .nt button{flex:none;min-height:48px;background:none;border:0;padding:0 12px;font:700 calc(12.48px * var(--k)) var(--sans);text-decoration:underline;color:inherit}
+.a54 .nt .acts{display:flex;flex:none}
+.a54 .hint{width:min(320px,100%);background:var(--surface-soft);color:var(--ink)}
+.a54 .hint span{flex:1}
+.a54 .fail{width:100%;background:var(--jam);color:var(--on-jam);border-color:var(--ink-line)}
+.a54 .fail span{flex:0 1 auto}
+.a54 .fail.stack{flex-direction:column;align-items:stretch}
+.a54 .fail.stack .acts{align-self:flex-end}
+.a54 .said{margin:6px 8px 8px;font-size:12px;color:var(--ink)}
+:root[data-gallery="true"] .a54{display:none}
+</style>
+<section class="a54" id="a54" aria-labelledby="a54h">
+  <h2 id="a54h">A54 · Large text: the hint waits for room, the save notice stacks (frozen 2026-11-04 under delegation · ADR-TBD-LT)</h2>
+  <p style="margin:0 0 8px">Left: 360dp at 100% text. Right: 360dp at 200%. The line under each phone says what the
+  rule decided and why.</p>
+  <div class="ctl">
+    <button type="button" id="a54Kind" aria-pressed="false">Piece: words</button>
+    <button type="button" id="a54Pos">Piece: in the middle</button>
+    <button type="button" id="a54Fail" aria-pressed="false">Save failure: off</button>
+  </div>
+  <div class="row" id="a54Phones"></div>
+</section>
+<script>
+(()=>{
+  const $=id=>document.getElementById(id);
+  // Compose, 360 x 640dp: the status strip, the canvas and the fitted page at each text size (measured 2026-11-04).
+  const ROOM={1:{status:46,canvas:466,pageW:306,pageH:396},2:{status:62,canvas:450,pageW:293,pageH:380}};
+  const HINT={words:'Drag to move. Pull a handle to resize. Or tap Arrange to use buttons.',
+              photo:'Drag to move. Pull a handle to resize. Arrange uses buttons; Reframe crops inside.'};
+  const FAIL='Your phone is low on storage. Free up a little space, then tap Try now — or keep editing to retry.';
+  const TOP=8, KEEP=12, STACK_EMS=20, RADIUS_CAP=40;
+  // Default boxes as the app places them: words 70% x 16%, a photo 60% x 60%, centred on the page.
+  const BOX={words:[.7,.16],photo:[.6,.6],small:[.4,.1]};
+  const POS=[['in the middle',.5,null],['small, low on the page',.8,'small'],['near the top',.12,null]];
+  let kind='words', pos=0, fail=false;
+  // A54.1: the hint fits when its bottom stays KEEP above the piece's drawn top.
+  const fits=(hintH,pieceTop)=>hintH<=pieceTop-TOP-KEEP;
+  // A54.4: stacked when the notice is narrower than STACK_EMS times its text size.
+  const stacks=(width,textPx)=>width<STACK_EMS*textPx;
+  function phone(k){
+    const r=ROOM[k], p=document.createElement('div'), [fw,fh]=BOX[POS[pos][2]||kind];
+    p.className='ph'+(k===2?' big':'');
+    const left=(360-r.pageW)/2, pw=r.pageW*fw, phh=r.pageH*fh, px=left+(r.pageW-pw)/2;
+    const py=Math.max(0,Math.min(r.pageH-phh,r.pageH*POS[pos][1]-phh/2));
+    p.innerHTML=`<div class="st" style="height:${r.status}px">‹ My zine</div>
+      <div class="cv" style="height:${r.canvas}px">
+        <div class="pg" style="left:${left}px;top:0;width:${r.pageW}px;height:${r.pageH}px"></div>
+        <div class="pc" style="left:${px}px;top:${py}px;width:${pw}px;height:${phh}px">${kind}
+          <i style="left:-10px;top:-10px"></i><i style="right:-10px;top:-10px"></i><i style="left:-10px;bottom:-10px"></i><i style="right:-10px;bottom:-10px"></i></div>
+        <div class="band"><span>Verbs · Arrange · …</span></div>
+        <div class="nt hint" role="note"><span>${HINT[kind==='photo'?'photo':'words']}</span><button type="button">Got it</button></div>
+        <div class="nt fail"><span aria-live="assertive">${FAIL}</span><div class="acts"><button type="button">Try now</button><button type="button">Got it</button></div></div>
+      </div><p class="said"></p>`;
+    return {p,pieceTop:py};
+  }
+  function settle({p,pieceTop},k){
+    const hint=p.querySelector('.hint'), f=p.querySelector('.fail'), said=p.querySelector('.said');
+    const round=el=>{el.style.borderRadius=Math.min(el.offsetHeight/2,RADIUS_CAP)+'px'};
+    let line;
+    f.classList.toggle('stack',stacks(360,12.64*k));
+    if(fail){
+      // A save failure outranks the hint (ADR-035): the hint yields while it shows.
+      hint.hidden=true; round(f);
+      line=`save notice ${f.classList.contains('stack')?'stacked':'beside'}, ${f.offsetHeight}px of the ${ROOM[k].canvas}px canvas.`;
+    } else {
+      f.hidden=true; round(hint);
+      const h=hint.offsetHeight, room=Math.max(0,Math.round(pieceTop-TOP-KEEP));
+      if(fits(h,pieceTop)) line=`hint shown: ${h}px tall, ${room}px of room above the piece.`;
+      else { hint.hidden=true; hint.inert=true; line=`hint waits: ${h}px tall, only ${room}px of room above the piece.`; }
+    }
+    said.textContent=`${k===2?'200%':'100%'}: ${line}`;
+  }
+  function draw(){
+    const host=$('a54Phones'); host.innerHTML='';
+    [1,2].forEach(k=>{const ph=phone(k); host.appendChild(ph.p); settle(ph,k);});
+    $('a54Kind').textContent=`Piece: ${kind==='photo'?'a photo':'words'}`;
+    $('a54Kind').setAttribute('aria-pressed',String(kind==='photo'));
+    $('a54Pos').textContent=`Piece: ${POS[pos][0]}`;
+    $('a54Fail').textContent=`Save failure: ${fail?'on':'off'}`; $('a54Fail').setAttribute('aria-pressed',String(fail));
+  }
+  $('a54Kind').onclick=()=>{kind=kind==='words'?'photo':'words';draw()};
+  $('a54Pos').onclick=()=>{pos=(pos+1)%POS.length;draw()};
+  $('a54Fail').onclick=()=>{fail=!fail;draw()};
+  draw();
+  // For checks without a browser: the pure rules, exposed read-only.
+  window.a54={fits,stacks,TOP,KEEP,STACK_EMS};
+})();
+</script>
