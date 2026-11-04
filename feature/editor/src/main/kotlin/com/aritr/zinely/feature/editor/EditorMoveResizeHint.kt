@@ -17,8 +17,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 
 /** Test tag on the move/resize hint container. */
 public const val EditorMoveResizeHintTestTag: String = "editor-move-resize-hint"
@@ -37,6 +41,34 @@ public const val MoveResizeHintDismissLabel: String = Copy.Common.GOT_IT
 
 /** The V2 sticky's own `max-width:320px`, kept: the line is one sentence and reads badly wider. */
 private val HintMaxWidth = 320.dp
+
+/** Bench A54.1: the hint's place, top centre of the canvas, this far down. */
+internal val HintTopGap = 8.dp
+
+/**
+ * Bench A54.1: how far above a piece's box the hint must end, so it covers none of the handle marks drawn
+ * outside the box ([HandleRingOffsetDp] 5.5 + half of [HandleDiameterDp] 4.5 = 10dp) even with its own
+ * [NoticeRotation] lean, which drops a corner of a 320dp hint by 1.6dp. Rounded up to 12dp.
+ */
+internal val HintPieceKeep = 12.dp
+
+/**
+ * Bench A54.1/A54.2, pure: the hint is drawn only when the whole of it, [hintHeightPx] tall and placed
+ * [topGapPx] below the canvas top, ends at least [keepPx] above [pieceTopPx], the selected piece's drawn
+ * top in the same canvas pixels. Otherwise it waits: not drawn, not read, not counted as seen.
+ */
+internal fun moveResizeHintFits(hintHeightPx: Int, pieceTopPx: Float, topGapPx: Float, keepPx: Float): Boolean =
+    hintHeightPx <= pieceTopPx - topGapPx - keepPx
+
+/**
+ * The top of the box [t] covers on the page, in points, its turn included (rotation is about the box centre,
+ * as in `BenchStudioSurface.rotatedBoundsPt`).
+ */
+internal fun turnedTopPt(t: Transform): Double {
+    val r = Math.toRadians(t.rotationDegrees)
+    val halfHeight = (abs(t.widthPt * sin(r)) + abs(t.heightPt * cos(r))) / 2.0
+    return t.yPt + t.heightPt / 2.0 - halfHeight
+}
 
 /**
  * The one-time **move/resize hint** (docs/design/VOICE.md §3 "Hints"). When a beginner first selects a
@@ -73,6 +105,10 @@ private val HintMaxWidth = 320.dp
  *
  * Stateless: the host owns the screen-local "already dismissed" flag and the visibility gate; this
  * composable only renders and reports the dismiss tap via [onDismiss].
+ *
+ * Where it may stand is the host's too (Bench A54, `v21-bench.html`): top centre, and only when it fits whole
+ * above the selected piece ([moveResizeHintFits]). At the largest text on a small phone it is taller than the
+ * room above a centred piece, and it waits rather than cover the piece it asks you to drag (#148, #158).
  *
  * @param photo whether the selected element is a photo, enabling the contextual Reframe sentence.
  * @param onDismiss invoked when the user taps "Got it" (the host marks the hint dismissed for the session).

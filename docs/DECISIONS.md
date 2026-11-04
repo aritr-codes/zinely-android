@@ -155,6 +155,7 @@
 | [ADR-144](#adr-144) | **Sheet action pairs share one geometry.** A dismiss beside a committing button on a sheet is a bordered sibling of it (same radius, border, shadow, press, 48px; surface fill and ink words against the commit's leaf fill and on-leaf words; only the commit may be disabled). The folder name sheet's Cancel, bare text beside a dimmed pill, is the one outlier in the frozen corpus and becomes `.go.ghost`. Look only: A28.14 behaviour unchanged. Library A49 | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
 | [ADR-145](#adr-145) | **The middle of a piece moves it.** A handle's 48dp hit box steps outward instead of covering a small piece's middle; a tap in a box away from its mark is a tap on the page (A50.6). Nothing drawn changes. | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
 | [ADR-147](#adr-147) | **Saved format v4: a description on photos and Art; a file says v4 only when it holds one.** `description: String?` on `ImageElement` and `DecorElement`, absent when none (`explicitNulls = false`), capped at entry to 250 code points (growth only); identity v3→v4 migrator; the writer stamps 3, or 4 when the zine holds a description (never below 3), so an undescribed zine stays a v3 file and only a backup holding a described piece is refused by older builds. No layout marker. Entry is Bench A52's Describe | Proposed (design frozen under delegation; not built; number assigned at merge) |
+| [ADR-149](#adr-149) | **Large text on a small phone: the first-run hint waits for room above the piece; the save notice stacks.** The move/resize hint is drawn only when it fits whole above the selected piece (12dp clear of the handle marks) and is never shown in Reframe; otherwise it waits, unseen. The save-failure notice puts Try now / Got it under its line when it is narrower than 20 text sizes. Verb-bar label cuts left to a bar-wide amendment. Bench A54; #148, #149, #158 | Proposed (A54 frozen 2026-11-04 under delegation; built; device passes owed; number assigned at merge) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -18165,6 +18166,89 @@ Three narrow pieces 14 × 40pt side by side, 6pt apart, and a wide one below:
 - Pass 2, by the implementer: among close pieces nothing now answers a tap with silence, except within 12dp of a mark and
   on the knob's box. TalkBack not listened to (deferred by the owner); nothing here is in the platform tree.
 
+
+## ADR-149 {#adr-149}
+
+### Large text on a small phone: the first-run hint waits for room, the save notice stacks
+
+**Status:** Proposed, 2026-11-04. **Not accepted.** Numbered ADR-149 at merge (drafted as ADR-TBD-LT). Built on `fix/bench-large-text-148-149-158`. The design is
+amendment **A54** to the frozen [`v21-bench.html`](design/mockups/v21-bench.html), frozen under the owner's delegation
+of 2026-10-12 (the owner may overrule it). Closes issues #148, #149 and #158, the follow-ups of
+[D-119](design/V2-SPEC-DEFECTS.md#d-119). **Amends** nothing frozen above A54: neither surface was ever drawn; both
+are the app's analogies to `.snack`.
+
+#### Context (measured in Compose at 360 x 640dp, text size 2.0, 2026-11-04)
+
+The canvas is 450dp tall and the page 380dp. The move/resize hint is 187dp tall (the photo line 226dp). A centred
+text piece (the app's 70% x 16% box) has 160dp above it; a new photo (60% x 60%) has 76dp. So at the top of the
+canvas the hint lay over the piece and its handles (#148), and in a shorter canvas (a Reframe session) the canvas edge
+cut its last line (#158). The save notice's two buttons beside its line left the line a 16-line column taller than
+the screen (#149). At text size 1 on the same phone the hint is 51dp (photo 59dp).
+
+#### Decision
+
+1. **The hint never covers the piece (A54.1).** It keeps its place, words and look, and is drawn only when the whole
+   of it ends 12dp above the selected piece's drawn top (turned box; with the page lift of the Arrange or Ink tray).
+   12dp = the handle marks (5.5dp offset + half a 9dp mark) + the hint's 1.6dp lean. Pure rule:
+   `moveResizeHintFits` (`EditorMoveResizeHint.kt`); the host measures the hint and does not place it when it does
+   not fit (`EditorScreen.kt`).
+2. **When it does not fit it waits (A54.2):** not drawn, not in the platform tree, not counted as seen; it shows on a
+   later single selection with room. A drag, resize or turn still retires it (unchanged).
+3. **No hint in a Reframe session (A54.3):** its words are about the frame; in Reframe a drag moves the photo.
+4. **The save notice stacks when narrow (A54.4):** narrower than 20 times its text size as drawn
+   (`NoticeStackEms`), the line takes the full width and Try now / Got it stand under it at the end. On a 360dp
+   phone that is 150% text and up. Nothing changes at 100% or 130%, so no golden at text size 1 changes.
+5. **The verb bar's cut labels at 2.0 ("Duplica…", "Across fol…") are not changed here (A54.5).** The frozen A21 bar
+   scrolls; a label's width and size are bar-wide, as ADR-147's 2026-11-04 note says of Describe. Recorded under
+   D-119 for a bar-wide amendment.
+
+#### Consequences
+
+- **At text size 2 on a 360 x 640 phone the hint now rarely shows**: a centred piece of the default size leaves no
+  room, so a maker there meets it only on a smaller or lower piece, or not at all if their first drag comes first
+  (which is the lesson anyway). On larger phones and at smaller text it shows as before.
+- **At text size 1 a new photo is borderline on a 360 x 640 phone:** 59dp of hint against 59dp of room in the
+  Robolectric fonts. On a phone whose fonts run taller, the first photo's hint waits until a later selection. Text
+  pieces have room to spare. This is the rule doing its job (it would otherwise touch the top handles), recorded
+  so a device pass that sees no hint on a first photo knows why.
+- Existing screen tests that placed their piece at the top of a small page moved the piece lower; the knob test that
+  relied on a hint over a top piece now says the hint waits and the knob stays.
+- **Still owed:** both device passes at 360 x 640dp, text size 2.0 and 1.0 (the emulator suffices), including a save
+  failure forced at 2.0 and a Reframe session with the hint unseen; the owner's TalkBack listen is not needed for
+  this change beyond confirming a waiting hint is silent.
+
+#### Alternatives considered
+
+- **Put the hint at the canvas bottom, or whichever edge is farther from the piece.** The placement snack and the
+  Arrange, Flip and Ink trays stand at the bottom at that very moment, and for a centred piece the two bands are
+  about equal, so it would not have fitted there either.
+- **A shorter hint at large text** ("Drag to move. Pull a handle to resize."): three lines, about 120dp, fits above
+  a centred text piece but not a photo, and is a second wording to keep true. Rejected for now; revisit if Pass 2
+  finds large-text makers never meet the hint.
+- **Pan the page down while the hint shows**, as the trays lift it: moves the page under the finger that just
+  placed the piece.
+- **Stack the hint's Got it under its line too:** makes it taller, not shorter.
+- **Cap the notices' text scaling:** fails WCAG 1.4.4 (resize text to 200%).
+- **Stack the save notice by a font-scale threshold:** the width-in-text-sizes rule says the same thing on a 360dp
+  phone and also holds on a tablet at 200% (no stacking needed there) and under Android 14's non-linear scaling.
+
+#### Review
+
+One independent Review Agent (Opus, reading only), 2026-11-04, on `90df8d0b`: **GO**, no Required Fixes. It
+confirmed A54-to-Compose parity (8dp, 12dp, turned box, page lift, Reframe gate, 20 text sizes, button order),
+the coordinate space of the piece's top, that an unplaced hint is neither drawn, hit nor in the platform tree, and
+that no golden at text size 1 can change.
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| The platform-tree `null` for a waiting hint had no positive control | Recommended | **Accepted.** The drawn-hint test asserts a non-null platform node |
+| The Reframe test's "it was up" comment overclaims (a waiting hint is composed too) | Recommended | **Accepted.** Reworded |
+| `panDp` read in composition recomposes the hint scope every frame of a tray lift | Recommended | **Accepted.** Read in the measure block |
+| The 130% / 150% boundary of A54.4 was unasserted | Recommended | **Accepted.** `saveNoticeStacks` is pure and tested at 100/130/150/200% |
+| The first photo's hint is borderline at text size 1 on 360 × 640 | Observation | **Kept**, recorded under Consequences and in the owed device pass |
+| A Row/Column flip while the notice is up (rotation) may re-announce it | Observation | **Kept**; rare, and the words are the same |
+
+---
 
 ## ADR-148 {#adr-148}
 

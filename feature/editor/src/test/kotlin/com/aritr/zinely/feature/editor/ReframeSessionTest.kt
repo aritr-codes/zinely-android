@@ -138,6 +138,21 @@ class ReframeSessionTest {
         assertTrue("photo top $photoTop is inside the canvas ${canvas.top}", photoTop >= canvas.top - 1f)
     }
 
+    /**
+     * Bench A54.3 (#158): the first-run hint is about moving the frame, and inside Reframe a drag moves the
+     * photo, so the hint is not there during a session. It was, and at large text its last line was cut.
+     */
+    @Test
+    fun the_move_resize_hint_is_not_shown_in_a_reframe_session() {
+        val s = store()
+        render(s) // EditorScreen's default: the hint is unseen
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertExists() // not vacuous: it was composed (shown or waiting)
+        s.dispatch(Intent.BeginReframe(imageId(s)))
+        composeRule.awaitReframeControls()
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
+    }
+
     @Test
     fun double_tap_on_a_photo_enters_reframe_mode() {
         val s = store()

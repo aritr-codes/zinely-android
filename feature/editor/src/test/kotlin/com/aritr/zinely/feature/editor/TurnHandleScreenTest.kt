@@ -9,6 +9,8 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.doubleClick
@@ -646,14 +648,25 @@ class TurnHandleScreenTest {
     }
 
     @Test
-    fun the_first_run_hint_on_a_piece_at_the_top_means_no_knob_until_got_it() {
-        // A piece at the very top of the page: its knob below lands on the hint, and above is off the canvas.
+    fun the_first_run_hint_waits_over_a_piece_at_the_top_and_the_knob_stays() {
+        // A piece at the very top of the page. Until Bench A54 the hint lay over it and took the knob below it;
+        // now the hint waits for room above a piece, so it is not drawn and leaves no stale bounds to hide the knob.
         val store = storeWith(Transform(40.0, 0.0, 20.0, 4.0))
         show(store, hintSeen = false)
-        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertExists()
-        composeRule.onNodeWithTag(TurnHandleTestTag).assertDoesNotExist()
-        composeRule.onNodeWithTag(MoveResizeHintDismissTag).performClick()
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsNotDisplayed()
+        composeRule.onNodeWithTag(TurnHandleTestTag).assertExists()
+    }
+
+    @Test
+    fun a_hint_that_stops_fitting_gives_the_knob_back() {
+        // Low enough for the hint, then moved to the top without a gesture (as Arrange's buttons move it): the
+        // hint now waits, and the bounds it had when drawn must not keep hiding the knob.
+        val store = storeWith(Transform(40.0, 100.0, 20.0, 4.0))
+        show(store, hintSeen = false)
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
+        store.dispatch(Intent.Nudge(PtPoint(0.0, -100.0)))
         composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsNotDisplayed()
         composeRule.onNodeWithTag(TurnHandleTestTag).assertExists()
     }
 
