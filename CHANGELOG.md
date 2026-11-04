@@ -139,6 +139,12 @@ Changes since the beta.9 app.
 - Restored the Reframe accessibility regression that proves a measurable but undisplayable photo keeps every
   adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
   than stream-consumer ordering, eliminating the CI race tracked by issue #57.
+- A Shelf message is no longer lost when the phone rotates at the wrong moment. A message that was waiting behind
+  the folder snack now shows after the rotation, and a message that had already shown is not shown again
+  ([#160](https://github.com/aritr-codes/zinely-android/issues/160)).
+- On Android 7 to 9 with TalkBack, an Undo bar on the Shelf or the Bench no longer stays up forever and holds
+  back every message after it. It stays up for two minutes, the longest "Time to take action" newer Android
+  offers ([#160](https://github.com/aritr-codes/zinely-android/issues/160)).
 
 ## [0.9.0-beta.9] — 2026-11-03 — Turn pieces by hand, and small things fixed
 
