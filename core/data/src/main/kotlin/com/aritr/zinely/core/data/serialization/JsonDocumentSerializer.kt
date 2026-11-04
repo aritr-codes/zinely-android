@@ -1,7 +1,9 @@
 package com.aritr.zinely.core.data.serialization
 
 import com.aritr.zinely.core.model.DecorElement
+import com.aritr.zinely.core.model.Element
 import com.aritr.zinely.core.model.ImageElement
+import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.ZineDocument
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -51,7 +53,8 @@ public class JsonDocumentSerializer internal constructor(
         // 3 for a plain zine (never lower), 4 when any photo or Art piece holds a description. Each later
         // bump adds its own line here when the document uses what it added.
         val stamp = if (holdsDescription(document)) DESCRIPTION_SCHEMA_VERSION else MIN_WRITTEN_SCHEMA_VERSION
-        val normalized = if (document.schemaVersion == stamp) document else document.copy(schemaVersion = stamp)
+        val written = withoutEmptyText(document)
+        val normalized = if (written.schemaVersion == stamp) written else written.copy(schemaVersion = stamp)
         val body = json.encodeToJsonElement(ZineDocument.serializer(), normalized).jsonObject
         val stamped = buildJsonObject {
             put(ENCODING_KEY, format.wire)
@@ -95,9 +98,27 @@ public class JsonDocumentSerializer internal constructor(
             page.elements.any { (it as? ImageElement)?.description != null || (it as? DecorElement)?.description != null }
         }
 
+    /**
+     * Drops every [TextElement] whose text is exactly `""`, on write and on read (#155).
+     *
+     * **Invariant: an empty text box is never on disk.** `Add > Text` places a box with `text = ""` and opens its
+     * edit session; the words arrive only on commit, and a session ending empty removes the box
+     * (`EditorReducer.endTextSession`). The placement is an undo step, so it autosaves mid-session, and a `.bak`
+     * repair or a kill then reopened an invisible "Empty text" element. Filtering on write keeps it off disk;
+     * filtering on read heals files already written. Exactly `""`, not blank: no build commits whitespace either
+     * (Done on it deletes the box), but whitespace on disk did not come from the placeholder, so it is kept.
+     * Returns [document] itself when there is nothing to drop, so a clean zine writes the same bytes as before.
+     */
+    private fun withoutEmptyText(document: ZineDocument): ZineDocument {
+        if (document.pages.none { page -> page.elements.any(::isEmptyText) }) return document
+        return document.copy(pages = document.pages.map { page -> page.copy(elements = page.elements.filterNot(::isEmptyText)) })
+    }
+
+    private fun isEmptyText(element: Element): Boolean = element is TextElement && element.text.isEmpty()
+
     private fun decode(obj: JsonObject): ZineDocument =
         try {
-            json.decodeFromJsonElement(ZineDocument.serializer(), obj)
+            withoutEmptyText(json.decodeFromJsonElement(ZineDocument.serializer(), obj))
         } catch (e: SerializationException) {
             throw DocumentDecodeException("Document JSON does not match the current schema", e)
         } catch (e: IllegalArgumentException) {

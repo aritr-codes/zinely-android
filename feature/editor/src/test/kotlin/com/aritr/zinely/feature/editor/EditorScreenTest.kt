@@ -1194,6 +1194,59 @@ class EditorScreenTest {
         assertTrue(store.uiState.value.document.pages[7].elements.isEmpty())
     }
 
+    /**
+     * #159: the spread confirmation is keyed by an ephemeral photo id. When the photo leaves the page by a
+     * path that is not the sheet's own (here an Undo of the add), the sheet closed but the id stayed, and
+     * the bars gated on that raw id stayed hidden. Bringing the photo back must not reopen the sheet either.
+     */
+    @Test
+    fun removing_the_photo_under_an_open_across_fold_sheet_brings_the_bars_back() {
+        // Given the across-fold confirmation open on a selected photo
+        val store = selectedPhotoInEightPageZine()
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ACROSS_FOLD}").performClick()
+        composeRule.onNodeWithTag(ImageSpreadSheetTestTag).assertExists()
+        composeRule.onNodeWithTag(BenchShelfBackTestTag).assertDoesNotExist()
+
+        // When the photo is removed by undoing its add
+        store.dispatch(Intent.Undo)
+        composeRule.waitForIdle()
+
+        // Then the sheet is gone and the Bench's own controls are back
+        assertTrue(store.uiState.value.document.pages[0].elements.isEmpty())
+        composeRule.onNodeWithTag(ImageSpreadSheetTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchShelfBackTestTag).assertExists()
+
+        // And when the photo returns, the sheet the user never reopened stays closed
+        store.dispatch(Intent.Redo)
+        composeRule.waitForIdle()
+        assertEquals(1, store.uiState.value.document.pages[0].elements.size)
+        composeRule.onNodeWithTag(ImageSpreadSheetTestTag).assertDoesNotExist()
+    }
+
+    /** #159: a page turn under the open question drops it, so turning back does not ask it again unbidden. */
+    @Test
+    fun turning_away_from_an_open_across_fold_sheet_and_back_does_not_reopen_it() {
+        // Given the across-fold confirmation open on the first page's photo
+        val store = selectedPhotoInEightPageZine()
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ACROSS_FOLD}").performClick()
+        composeRule.onNodeWithTag(ImageSpreadSheetTestTag).assertExists()
+
+        // When the page turns away and back
+        store.dispatch(Intent.GoToPage(3))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchShelfBackTestTag).assertExists()
+        store.dispatch(Intent.GoToPage(0))
+        composeRule.waitForIdle()
+
+        // Then the question stays closed and the photo is untouched
+        composeRule.onNodeWithTag(ImageSpreadSheetTestTag).assertDoesNotExist()
+        assertEquals(1, store.uiState.value.document.pages[0].elements.size)
+    }
+
     @Test
     fun duplicate_copies_the_selected_object_selects_the_copy_and_offers_one_undo() {
         val store = selectedPhoto()

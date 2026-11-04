@@ -582,6 +582,14 @@
 - **Status (2026-06-26):** **Full `:feature:editor` interaction surface MERGED to `main`** (PR #21, rebase — 10 increments linear, tip `dd956f4`). Landed in gated, individually Codex-reviewed increments: store spine + effect runner, gesture pipeline, selection chrome + live **document-order** preview (approach B → preview == commit), opposite-anchor resize handles, live snap guides (single `LiveSnap.resolve` feeds preview **and** commit), a11y contextbar + element semantics (WCAG 2.5.7 twins), race-safe text-edit session, and the host **`EditorScreen`** assembling every layer over one `EditorStore`. The host added a display-only `Intent.SetViewport` (no autosave, no history) so all layers share one measured `ViewState`; Codex's 3 host-boundary concurrency fixes were reconciled (gestures/handles gated off while editing; tokenised `CancelTransform`; viewport deferred until `Idle`). **Selection-chrome Roborazzi goldens** pin the screen-space chrome (outline/guides) that `PagePreviewParityTest` structurally cannot reach — 3 goldens recorded on the pinned CI image, gated by `:feature:editor:verifyRoborazziDebug`; main CI green. **Remaining S4 (wiring):** mount `EditorScreen` in `:app` navigation + supply `pageSizePt` from imposition + a real image pipeline + the autosave binder at the app/DI layer — the *how* of that wiring (store ownership/lifecycle, projectId bootstrap, autosave binding, seam adapters) is decided in [ADR-030](#adr-030). See [spike §10.10–§10.11](spikes/s4-editor-mvi.md).
 - **Amendment (2026-10-23, W1 [ADR-136](#adr-136), Task 5):** the `Announcer` seam is removed. A failed photo pick is shown
   and spoken once by the Bench snack (`v21-bench.html` A41.3). The text above is the record of what was decided then.
+- **Note (2026-11-04, [#155](https://github.com/aritr-codes/zinely-android/issues/155)):** the text session's "no empty
+  `TextElement` leaks" held in the reducer but not on disk. `Add > Text` places the box with `text = ""`; the
+  placement is a document mutation, so it emits `Autosave` mid-session, and a `.bak` repair ([ADR-140](#adr-140)) or a
+  kill while typing reopened an invisible "Empty text" element. (Undoing a new box's first words autosaves the
+  same `""` box, so the guard sits at the seam, not at either producer.) `JsonDocumentSerializer` now drops a `TextElement`
+  whose text is exactly `""` on write **and** on read, so already-written files heal on next open. Whitespace-only
+  text is kept: no build commits it, but it is not the placeholder. A clean zine writes the same bytes as before.
+  No new ADR: this restores a decided invariant at the one serialisation seam; it decides nothing new.
 
 
 ## ADR-030 {#adr-030}
@@ -12753,6 +12761,18 @@ Three challenges, honestly:
   re-derivation in every cell, and the `safeAreaInsetPt` claim survived an attempt to falsify it.
 - 🟨 **Not re-reviewed after these edits.** The corrections above are the implementer's, not the
   reviewer's, and the strengthened skeptical pass (§challenge 3) is new material rather than a fix.
+
+#### 2026-11-04 note — the confirmation's photo id is resolved in one place (#159)
+
+The confirmation is keyed by an ephemeral photo id (`spreadPhotoId`, `rememberSaveable` in
+`EditorScreen`). The sheet showed on the *resolved* photo while the context bar and the way back to My Shelf hid on
+the *raw* id, so a photo that left the page by any other path (Undo of its add, a delete, a page turn) closed the
+sheet and left the bars hidden. Invariant now: nothing gates on the raw id. `imageSpreadTarget`
+(`ImageSpreadSheet.kt`) is the one resolver; the sheet and both bar gates read it, and when a resolved target is
+lost the id is dropped, so a photo that comes back (Redo) does not reopen a question the maker did not ask again.
+The id is also saved with the page it was asked on and dropped on any other page (a page turn, or a restore after
+process death that comes back on a different page). Tested by `ImageSpreadSheetTest` and the two #159 tests in `EditorScreenTest`.
+No document, schema or UI design change.
 
 ---
 

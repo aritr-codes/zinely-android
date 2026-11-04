@@ -296,6 +296,48 @@ class JsonDocumentSerializerTest {
         assertThrows<UnsupportedFormatException> { serializer.deserialize(bad) }
     }
 
+    // #155: Add > Text places a box with text "" and autosaves it while the maker is still typing, so a repair
+    // to that `.bak` (or a kill mid-session) used to reopen an invisible "Empty text" element.
+    private fun withTexts(vararg texts: String): ZineDocument = sample().copy(
+        pages = listOf(
+            Page(
+                index = 0,
+                role = PageRole.INTERIOR,
+                elements = texts.mapIndexed { i, body ->
+                    TextElement(id = "t-$i", transform = Transform(0.0, 0.0, 10.0, 10.0), zIndex = i, text = body)
+                },
+            ),
+        ),
+    )
+
+    @Test
+    fun `an empty text box is never written`() {
+        val written = serializer.serialize(withTexts("kept", "", "also kept"))
+
+        assertTrue("\"t-1\"" !in written, written)
+        val kept = withTexts("kept", "", "also kept").pages[0].elements.filter { it.id != "t-1" }
+        assertEquals(kept, serializer.deserialize(written).pages.single().elements)
+    }
+
+    @Test
+    fun `an empty text box already on disk is dropped on load`() {
+        // A file an older build wrote: emptied by hand, since this writer no longer can.
+        val onDisk = serializer.serialize(withTexts("@EMPTY@", "hi")).replace("\"@EMPTY@\"", "\"\"")
+        assertTrue("\"text\":\"\"" in onDisk, onDisk)
+
+        val ids = serializer.deserialize(onDisk).pages.single().elements.map { it.id }
+
+        assertEquals(listOf("t-1"), ids)
+    }
+
+    @Test
+    fun `whitespace-only text is not empty and survives both ways`() {
+        // Only "" is the in-session placeholder. No current build commits whitespace (Done on it deletes the box),
+        // so a whitespace-only text on disk came from somewhere that meant it; it is not ours to delete.
+        val doc = withTexts(" ", "\n")
+        assertEquals(doc, serializer.deserialize(serializer.serialize(doc)))
+    }
+
     @Test
     fun `a legacy payload without an encoding marker is accepted as implicit json`() {
         val legacy = "{\"schemaVersion\":1,\"format\":\"single_sheet_8\",\"paperSize\":\"a4\",\"pages\":[]}"
