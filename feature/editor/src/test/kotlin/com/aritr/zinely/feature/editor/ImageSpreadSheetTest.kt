@@ -111,6 +111,40 @@ class ImageSpreadSheetTest {
         assertNull(imageSpreadInnerEdge(pages, 2, right, size))
     }
 
+    /**
+     * #159: the spread id is ephemeral UI state, and the bars used to hide on the raw id while the sheet
+     * showed on the resolved photo. Once the photo left the page the sheet closed and the bars stayed hidden.
+     * Every removal path must resolve to "no spread" so both read the same answer.
+     */
+    @Test
+    fun a_spread_id_whose_photo_is_gone_resolves_to_no_target_on_every_removal_path() {
+        // Given a photo on page 1 with its spread confirmation open
+        val photo = ImageElement("photo", Transform(10.0, 10.0, 40.0, 50.0), assetId = "asset")
+        val document = ZineDocument(
+            format = ZineFormat.SINGLE_SHEET_8,
+            paperSize = PaperSize.LETTER,
+            pages = List(8) { index ->
+                Page(index = index, role = PageRole.INTERIOR, elements = if (index == 1) listOf(photo) else emptyList())
+            },
+        )
+        val open = EditorModel(document = document, currentPageIndex = 1, selection = setOf(photo.id))
+        fun EditorModel.target() = imageSpreadTarget(this.document.pages, currentPageIndex, photo.id)
+        fun EditorModel.after(intent: Intent) = EditorReducer.reduce(this, intent).model
+        assertEquals(photo, open.target())
+
+        // When the photo is deleted, Then nothing resolves
+        val deleted = open.after(Intent.Delete(setOf(photo.id)))
+        assertNull(deleted.target())
+        // When the delete is undone, Then the same photo resolves again (the id itself is still valid)
+        assertEquals(photo, deleted.after(Intent.Undo).target())
+        // When the user turns to another page, Then nothing resolves
+        assertNull(open.after(Intent.GoToPage(3)).target())
+        // On a page with no fold partner, nothing resolves
+        assertNull(imageSpreadTarget(document.pages, 8, photo.id))
+        // And no id resolves to nothing
+        assertNull(imageSpreadTarget(document.pages, 1, null))
+    }
+
     private fun pages(page1: ImageElement, page2: ImageElement): List<Page> =
         List(8) { index ->
             val elements = when (index) {
