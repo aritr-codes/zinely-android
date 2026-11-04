@@ -642,6 +642,41 @@ class ZineLibraryFoldersTest {
     }
 
     @Test
+    fun `a toast still waiting behind the folder snack is shown after the screen is rebuilt`() {
+        // #160: the collector had already taken the notice off the queue to wait with it, so a rotation in the
+        // snack's four seconds lost it for good.
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent { Screen() }
+        events.trySend(HomeShelfEvent.FolderSnack("Moved to “Family”", FolderSnackAction.Undo))
+        events.trySend(HomeShelfEvent.Message("Couldn’t copy that zine"))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Couldn’t copy that zine").assertDoesNotExist()
+
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Couldn’t copy that zine").assertExists()
+    }
+
+    @Test
+    fun `a toast that was already showing is not shown again after the screen is rebuilt`() {
+        // Delivered once: a notice the maker has been shown is spent, rotation or not.
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent { Screen() }
+        // The clock runs on its own here: StateRestorationTester takes the screen down and puts it back across
+        // frames, and with a paused clock the old screen (and its toast) would never leave. Idling does not run
+        // the toast's own timer out, so it is still up when the screen is rebuilt.
+        events.trySend(HomeShelfEvent.Message("Couldn’t copy that zine"))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Couldn’t copy that zine").assertExists()
+
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Couldn’t copy that zine").assertDoesNotExist()
+    }
+
+    @Test
     fun `the snack stays four seconds, then goes on its own`() {
         // A28.13.
         shelf()

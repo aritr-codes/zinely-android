@@ -48,10 +48,12 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -707,6 +709,32 @@ class HomeViewModelTest {
         // Then
         assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE)), events)
         eventsJob.cancel()
+    }
+
+    @Test
+    fun `an event handed to a collector that is torn down before it runs reaches the next collector, once`() = runTest {
+        // #160. The screen collects on the frame dispatcher, so an event sent to a waiting collector is only
+        // *scheduled* there; a rotation that disposes the screen in that gap used to drop the event for good.
+        // Given a collector suspended in receive on a dispatcher that has not yet run what was sent to it
+        val viewModel = viewModel()
+        repository.createResult = { DataResult.Failure(DataError.Io("disk")) }
+        val frames = StandardTestDispatcher(testScheduler)
+        val torn = mutableListOf<HomeShelfEvent>()
+        val oldScreen = launch(frames) { viewModel.events.collect { torn += it } }
+        runCurrent()
+
+        // When an event is sent, and the screen goes before the collector is resumed
+        viewModel.startZine(PaperSize.LETTER)
+        oldScreen.cancel()
+        runCurrent()
+
+        // Then the rebuilt screen gets it, and it was not delivered twice
+        val events = mutableListOf<HomeShelfEvent>()
+        val newScreen = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+        runCurrent()
+        assertEquals(emptyList<HomeShelfEvent>(), torn)
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE)), events)
+        newScreen.cancel()
     }
 
     @Test
