@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.editor
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -65,9 +66,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.getTextLayoutResult
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -1115,6 +1117,7 @@ private fun ProofReadyRow(
     val typography = ZinelyTheme.typography
     val haptics = ZinelyTheme.haptics
     val hair = colors.hair
+    val labelLayouts = remember { arrayOfNulls<TextLayoutResult>(2) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1144,14 +1147,21 @@ private fun ProofReadyRow(
                 top = ZinelyV21Dimens.gapHair,
                 bottom = ZinelyV21Dimens.gapMd,
             )
-            .clickable(role = Role.Button, onClickLabel = Copy.Proof.PRINT_DETAILS) {
-                haptics.perform(ZinelyHaptic.Tick)
-                onOpenDetails()
-            }
-            .semantics(mergeDescendants = true) {
-                contentDescription = Copy.Proof.readyLabel(pageCount, paper.displayName, saved)
-            }
-            .testTag(ProofReadyTestTag),
+            // Tag before the control: the control ends in `clearAndSetSemantics`, which drops a later tag.
+            .testTag(ProofReadyTestTag)
+            .offersLabelLayouts(labelLayouts)
+            // One named Button on the platform tree (#156); a merged `clickable(role)` over the text reached
+            // TalkBack as a `View`.
+            .zinelyV2Control(
+                label = Copy.Proof.readyLabel(pageCount, paper.displayName, saved),
+                onClickLabel = Copy.Proof.PRINT_DETAILS,
+                // The ripple the plain `clickable` drew; the seam draws none by default.
+                indication = LocalIndication.current,
+                onClick = {
+                    haptics.perform(ZinelyHaptic.Tick)
+                    onOpenDetails()
+                },
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -1172,6 +1182,7 @@ private fun ProofReadyRow(
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             BasicText(
                 text = if (saved) Copy.Proof.BEFORE_YOU_PRINT else Copy.Proof.READY_WHEN_YOU_ARE,
+                onTextLayout = { labelLayouts[0] = it },
                 // Two lines: at large text one line cut the title to "Ready when yo…".
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -1184,6 +1195,7 @@ private fun ProofReadyRow(
             )
             BasicText(
                 text = Copy.Proof.readySummary(pageCount, paper.displayName),
+                onTextLayout = { labelLayouts[1] = it },
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 style = TextStyle(
@@ -1368,6 +1380,7 @@ private fun ProofBandButton(
     val pressed by interactionSource.collectIsPressedAsState()
     val pill = RoundedCornerShape(ZinelyV21Dimens.radiusPill)
     val content = if (hero) colors.onLeaf else colors.inkSoft
+    val labelLayouts = remember { arrayOfNulls<TextLayoutResult>(1) }
     Row(
         modifier = modifier
             .heightIn(min = 52.dp)
@@ -1375,9 +1388,6 @@ private fun ProofBandButton(
             // happening. Only a button blocked by someone else's render dims. Dimmed with its shadow:
             // `Modifier.alpha` here cut the shadow's right and bottom off.
             .zinelyV21Dimmed(if (enabled || busy) 1f else 0.4f)
-            .semantics {
-                if (busy) stateDescription = Copy.Proof.EXPORT_WORKING
-            }
             .offset { if (pressed) IntOffset(press.travel.roundToPx(), press.travel.roundToPx()) else IntOffset.Zero }
             .then(
                 if (ring) Modifier.zinelyV21Frame(colors.butter, pill) else Modifier,
@@ -1387,12 +1397,16 @@ private fun ProofBandButton(
             .clip(pill)
             .background(if (hero) colors.leaf else colors.surface)
             .border(1.5.dp, colors.ink, pill)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                enabled = enabled,
-                role = Role.Button,
+            .offersLabelLayouts(labelLayouts)
+            // One named Button on the platform tree (#156): a plain `clickable(role)` over this Row's text
+            // reached TalkBack as a `View` with the label on a child, so it never said "button". The seam puts
+            // the label, role, enabled bit and the running export's state on the one clickable node.
+            .zinelyV2Control(
+                label = text,
                 onClick = onClick,
+                enabled = enabled,
+                interactionSource = interactionSource,
+                stateDescription = if (busy) Copy.Proof.EXPORT_WORKING else null,
             )
             // The vertical padding is slack at one line (a 52dp pill around ~20dp of text) and only
             // starts to bind once a large font scale wraps the label, where it keeps the words off the rim.
@@ -1406,6 +1420,7 @@ private fun ProofBandButton(
         if (icon != null) Box(Modifier.size(18.dp)) { icon(content) }
         BasicText(
             text = text,
+            onTextLayout = { labelLayouts[0] = it },
             // It wraps, with no line cap. `maxLines = 1` with no ellipsis simply cut the label off —
             // "Open PDF" at font scale 1.5 on a 360dp phone, "Save PDF" at 2 — and a button that cannot
             // say what it does is worse than a tall one. Two lines cover every idle label; a cap of two
@@ -1420,6 +1435,24 @@ private fun ProofBandButton(
                 textAlign = TextAlign.Center,
             ),
         )
+    }
+}
+
+/**
+ * Re-offers the layouts of the words a [zinelyV2Control] draws, on the control's own node (#156).
+ *
+ * The control's `clearAndSetSemantics` is what makes it one platform Button, and it also removes the
+ * `BasicText` nodes that carried `GetTextLayoutResult` — the action the Proof's type-floor and label-fit
+ * guards (`ProofTypeFloorTest`, `ProofSmallPhoneTest`) read to see the size and the lines actually laid out.
+ * Each label records its layout into [layouts] from `onTextLayout`; this answers with them. Chain it before
+ * the control, which drops semantics chained after it. The platform only uses this action for a node with
+ * text, which a cleared control has none of, so TalkBack hears nothing new.
+ */
+internal fun Modifier.offersLabelLayouts(layouts: Array<TextLayoutResult?>): Modifier = semantics {
+    getTextLayoutResult { out ->
+        val laidOut = layouts.filterNotNull()
+        out.addAll(laidOut)
+        laidOut.isNotEmpty()
     }
 }
 

@@ -24,6 +24,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.text.TextLayoutResult
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
@@ -204,6 +205,17 @@ class ProofScreenTest {
         composeRule.waitForIdle()
     }
 
+    /**
+     * The words a control draws, as laid out. Its `zinelyV2Control` clears the text nodes (#156), so they are
+     * read from the layouts the control re-offers through `GetTextLayoutResult`.
+     */
+    private fun drawnWords(tag: String): List<String> {
+        val layouts = mutableListOf<TextLayoutResult>()
+        composeRule.onNodeWithTag(tag).fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult].action!!.invoke(layouts)
+        return layouts.map { it.layoutInput.text.text }
+    }
+
     /** Mount the Proof with a hoisted paper state and the print details already open. */
     private fun setProofOnDetails() = setProofBand(startDrawer = ProofDrawer.Details)
 
@@ -219,8 +231,10 @@ class ProofScreenTest {
         composeRule.onNodeWithTag(ProofReadyTestTag)
             .assertContentDescriptionEquals(Copy.Proof.readyLabel(8, Copy.Paper.A4))
         // The sighted reading is the same two lines, not a truncation of them.
-        composeRule.onNodeWithText(Copy.Proof.READY_WHEN_YOU_ARE).assertIsDisplayed()
-        composeRule.onNodeWithText(Copy.Proof.readySummary(8, Copy.Paper.A4)).assertIsDisplayed()
+        assertEquals(
+            listOf(Copy.Proof.READY_WHEN_YOU_ARE, Copy.Proof.readySummary(8, Copy.Paper.A4)),
+            drawnWords(ProofReadyTestTag),
+        )
 
         val stop = composeRule.onNodeWithTag(ProofReadyTestTag).fetchSemanticsNode()
         assertEquals(
@@ -277,8 +291,7 @@ class ProofScreenTest {
     /**
      * CI-93 on the **platform** tree: the busy commit row must report `enabled = false` to TalkBack, not
      * merely to the merged semantics tree the assertion above reads — the `f4faaa4` defect was exactly
-     * that disagreement. (Class is not asserted: a ZToolButton's `Role.Button` is set via `clickable()`
-     * over merged content, so it surfaces as `android.view.View` — the reported CI-30 divergence.)
+     * that disagreement. (The Button class is asserted in `ProofBandButtonPlatformA11yTest`, #156.)
      */
     @Test
     fun `the busy commit row reports disabled buttons on the platform tree`() {
@@ -304,11 +317,12 @@ class ProofScreenTest {
     fun `a running save names itself and leaves share alone`() {
         setProofBand(busyTarget = ProofExportTarget.SAVE)
 
-        composeRule.onNodeWithText(Copy.Proof.SAVING).assertExists()
+        composeRule.onNodeWithTag(ProofSavePdfTestTag).assertContentDescriptionEquals(Copy.Proof.SAVING)
+        assertEquals(listOf(Copy.Proof.SAVING), drawnWords(ProofSavePdfTestTag))
         // The other button is untouched by someone else's render: still its own label, never a second
         // in-flight message.
-        composeRule.onNodeWithText(Copy.Proof.SHARE).assertExists()
-        composeRule.onNodeWithText(Copy.Proof.PREPARING_SHARE).assertDoesNotExist()
+        composeRule.onNodeWithTag(ProofShareTestTag).assertContentDescriptionEquals(Copy.Proof.SHARE)
+        assertEquals(listOf(Copy.Proof.SHARE), drawnWords(ProofShareTestTag))
     }
 
     /** The same in the other direction — the report was symmetric, so the guard is too. */
@@ -316,9 +330,10 @@ class ProofScreenTest {
     fun `a running share names itself and leaves save alone`() {
         setProofBand(busyTarget = ProofExportTarget.SEND)
 
-        composeRule.onNodeWithText(Copy.Proof.PREPARING_SHARE).assertExists()
-        composeRule.onNodeWithText(Copy.Proof.SAVE_PDF).assertExists()
-        composeRule.onNodeWithText(Copy.Proof.SAVING).assertDoesNotExist()
+        composeRule.onNodeWithTag(ProofShareTestTag).assertContentDescriptionEquals(Copy.Proof.PREPARING_SHARE)
+        assertEquals(listOf(Copy.Proof.PREPARING_SHARE), drawnWords(ProofShareTestTag))
+        composeRule.onNodeWithTag(ProofSavePdfTestTag).assertContentDescriptionEquals(Copy.Proof.SAVE_PDF)
+        assertEquals(listOf(Copy.Proof.SAVE_PDF), drawnWords(ProofSavePdfTestTag))
     }
 
     /**
@@ -407,8 +422,10 @@ class ProofScreenTest {
 
         // Keeping the row and leaving its heading alone was the first version of this, and it put
         // "Ready when you are" directly above "Saved to your phone" — ready for what, I just did it.
-        composeRule.onNodeWithText(Copy.Proof.READY_WHEN_YOU_ARE).assertDoesNotExist()
-        composeRule.onNodeWithText(Copy.Proof.BEFORE_YOU_PRINT).assertIsDisplayed()
+        assertEquals(
+            listOf(Copy.Proof.BEFORE_YOU_PRINT, Copy.Proof.readySummary(8, Copy.Paper.A4)),
+            drawnWords(ProofReadyTestTag),
+        )
         composeRule.onNodeWithTag(ProofReadyTestTag)
             .assertContentDescriptionEquals(Copy.Proof.readyLabel(8, Copy.Paper.A4, saved = true))
 
@@ -719,7 +736,8 @@ class ProofScreenTest {
         composeRule.onNodeWithTag(ProofStepNextTestTag).assertDoesNotExist()
         // No longer "— show me": there is nothing left to show. The climax it promised is retired
         // (ADR-101 §6.8); the button acknowledges and closes the drawer.
-        composeRule.onNodeWithText("It’s folded").assertIsDisplayed()
+        composeRule.onNodeWithTag(ProofPrimaryTestTag).assertIsDisplayed()
+            .assertContentDescriptionEquals("It’s folded")
     }
 
     /**
@@ -869,7 +887,7 @@ class ProofScreenTest {
         composeRule.onNodeWithText(Copy.Proof.foldedInDownloads("zine.pdf")).assertIsDisplayed()
         // The instruction is gone in both places it was stated — the headline's tail and the primary.
         composeRule.onNodeWithText(Copy.Proof.savedInDownloads("zine.pdf")).assertDoesNotExist()
-        composeRule.onNodeWithText(Copy.Proof.FOLD_IT_UP).assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(Copy.Proof.FOLD_IT_UP).assertDoesNotExist()
         // Demoted, not deleted: same destination, quiet label.
         composeRule.onNodeWithTag(ProofFoldItUpTestTag).assertTextEquals(Copy.Proof.HOW_TO_FOLD)
         // A43.3: Share is kept after the fold.
@@ -941,7 +959,7 @@ class ProofScreenTest {
             "Your zine is safe. This phone is out of space — free some up, then try again.",
         ).assertIsDisplayed()
         composeRule.onNodeWithText("Couldn’t save the PDF").assertIsDisplayed()
-        composeRule.onNodeWithTag(ProofRetryTestTag).assertTextEquals(Copy.Common.TRY_AGAIN)
+        composeRule.onNodeWithTag(ProofRetryTestTag).assertContentDescriptionEquals(Copy.Common.TRY_AGAIN)
     }
 
     /** D-146: a failed Save PDF's title says "save" only where the PDF was made and keeping it failed. */
@@ -1026,7 +1044,7 @@ class ProofScreenTest {
         setProofFailed(ProofFailure.StorageBlocked, onOpenSettings = { settings++ }, onRetry = { retried++ })
 
         // When the overlay's one button is tapped
-        composeRule.onNodeWithTag(ProofRetryTestTag).assertTextEquals(Copy.Proof.OPEN_SETTINGS).performClick()
+        composeRule.onNodeWithTag(ProofRetryTestTag).assertContentDescriptionEquals(Copy.Proof.OPEN_SETTINGS).performClick()
 
         // Then it goes to Settings, and nothing retries
         assertEquals(1, settings)
@@ -1039,7 +1057,7 @@ class ProofScreenTest {
         var retried = 0
         setProofFailed(ProofFailure.StorageBlocked, onOpenSettings = null, onRetry = { retried++ })
 
-        composeRule.onNodeWithTag(ProofRetryTestTag).assertTextEquals(Copy.Common.TRY_AGAIN).performClick()
+        composeRule.onNodeWithTag(ProofRetryTestTag).assertContentDescriptionEquals(Copy.Common.TRY_AGAIN).performClick()
 
         assertEquals(1, retried)
     }

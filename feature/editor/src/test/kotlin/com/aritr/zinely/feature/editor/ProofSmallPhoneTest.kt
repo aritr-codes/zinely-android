@@ -4,7 +4,9 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -117,7 +119,16 @@ class ProofSmallPhoneTest {
         return out.single()
     }
 
-    private fun label(text: String) = composeRule.onNode(hasText(text), useUnmergedTree = true)
+    /**
+     * The laid-out [text]: a plain text node, or a band button named [text]. A button's words are no text node of
+     * their own — the control clears them to be one platform Button (#156) — so its re-offered
+     * `GetTextLayoutResult` is where [textLayout] reads them.
+     */
+    private fun label(text: String): SemanticsNodeInteraction {
+        val button = hasContentDescription(text) and SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult)
+        val isButton = composeRule.onAllNodes(button, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        return composeRule.onNode(if (isButton) button else hasText(text), useUnmergedTree = true)
+    }
 
     /**
      * Words were lost: lines dropped past `maxLines`, or a line ending in an ellipsis.

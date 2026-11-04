@@ -1,9 +1,9 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyV2Typography
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -238,19 +240,29 @@ private fun AlreadyDone() {
 private fun FoldGuideLink(onOpenFold: () -> Unit, modifier: Modifier = Modifier) {
     val colors = ZinelyTheme.v21Colors
     val haptics = ZinelyTheme.haptics
+    val labelLayouts = remember { arrayOfNulls<TextLayoutResult>(1) }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(12.dp))
-            .clickable(role = Role.Button) { haptics.perform(ZinelyHaptic.Tick); onOpenFold() }
-            .padding(horizontal = 4.dp)
-            .testTag(ProofFoldLinkTestTag),
+            // Tag before the control, which ends in `clearAndSetSemantics` and would drop a later tag.
+            .testTag(ProofFoldLinkTestTag)
+            .offersLabelLayouts(labelLayouts)
+            // One named Button on the platform tree (#156): a `clickable(role)` over the text child did not
+            // reach TalkBack as a Button. `indication` keeps the ripple the plain `clickable` drew.
+            .zinelyV2Control(
+                label = Copy.ProofPrint.SEE_HOW_TO_FOLD,
+                indication = LocalIndication.current,
+                onClick = { haptics.perform(ZinelyHaptic.Tick); onOpenFold() },
+            )
+            .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         BasicText(
             text = Copy.ProofPrint.SEE_HOW_TO_FOLD,
+            onTextLayout = { labelLayouts[0] = it },
             style = TextStyle(
                 color = colors.leafText,
                 fontFamily = ZinelyTheme.typography.shell,
