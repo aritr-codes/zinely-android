@@ -18216,6 +18216,10 @@ the screen (#149). At text size 1 on the same phone the hint is 51dp (photo 59dp
 - **Still owed:** both device passes at 360 x 640dp, text size 2.0 and 1.0 (the emulator suffices), including a save
   failure forced at 2.0 and a Reframe session with the hint unseen; the owner's TalkBack listen is not needed for
   this change beyond confirming a waiting hint is silent.
+- **Phone Pass 1, 2026-11-04** (Samsung SM-A176B, Android 16, 384 x 832dp, `main` `34b40497`, a side-by-side QA
+  package): at text size 1.0 the hint stands above a first text and a first photo without touching them; at 2.0 it
+  waits for both (not drawn, not in the platform tree) and is absent in Reframe, so nothing is cut. Not covered there:
+  the 360 x 640dp room, a small low piece, the Ink tray, and a forced save failure (#149), which stay owed above.
 
 #### Alternatives considered
 
