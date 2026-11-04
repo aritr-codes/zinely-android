@@ -9,7 +9,7 @@ import android.provider.Settings
 import androidx.lifecycle.Lifecycle
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -212,7 +212,7 @@ class SavePdfPermissionHostTest {
         awaitRealWork("the save error") {
             composeRule.onAllNodesWithTag(ProofRetryTestTag).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag(ProofRetryTestTag).assertTextEquals(Copy.Proof.OPEN_SETTINGS)
+        composeRule.onNodeWithTag(ProofRetryTestTag).assertContentDescriptionEquals(Copy.Proof.OPEN_SETTINGS)
 
         // When the overlay's button is clicked
         composeRule.onNodeWithTag(ProofRetryTestTag).performClick()
@@ -260,7 +260,7 @@ class SavePdfPermissionHostTest {
         composeRule.waitForIdle()
         settle(300)
         assertEquals("no automatic retry on return", emptyList<ExportDestination>(), exporter.destinations)
-        composeRule.onNodeWithTag(ProofRetryTestTag).assertTextEquals(Copy.Common.TRY_AGAIN).performClick()
+        composeRule.onNodeWithTag(ProofRetryTestTag).assertContentDescriptionEquals(Copy.Common.TRY_AGAIN).performClick()
 
         awaitRealWork("the retried save") { exporter.destinations.isNotEmpty() }
         settle(300)
