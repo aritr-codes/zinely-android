@@ -2164,11 +2164,9 @@ public fun EditorScreen(
                         currentPage.elements.firstOrNull { it.id == id }
                     }
                     // Bench A54.1: the piece's top as drawn, in canvas px: its turned box, the page offset, and
-                    // the lift a tray gives the page (`panDp` is the same translation the page layers take).
-                    val hintPieceTopPx = hintPiece?.let {
-                        ((turnedTopPt(it.transform) + paperOffset.y) * paperScale).toFloat() +
-                            with(density) { panDp.toPx() }
-                    }
+                    // the lift a tray gives the page (`panDp` is the same translation the page layers take). The
+                    // animated lift is read in the measure block below, so a tray's lift re-measures, not recomposes.
+                    val hintPieceTopPt = hintPiece?.let { (turnedTopPt(it.transform) + paperOffset.y) * paperScale }
                     Layout(
                         content = {
                             EditorMoveResizeHint(
@@ -2193,8 +2191,9 @@ public fun EditorScreen(
                         val top = HintTopGap.roundToPx()
                         // Bench A54.2: a hint that does not fit whole above the piece waits. It is measured but not
                         // placed, so it is neither drawn nor in the platform tree, and nothing marks it seen.
-                        val fits = hintPieceTopPx != null &&
-                            moveResizeHintFits(hint.height, hintPieceTopPx, top.toFloat(), HintPieceKeep.toPx())
+                        val pieceTopPx = hintPieceTopPt?.let { it.toFloat() + panDp.toPx() }
+                        val fits = pieceTopPx != null &&
+                            moveResizeHintFits(hint.height, pieceTopPx, top.toFloat(), HintPieceKeep.toPx())
                         layout(constraints.maxWidth, constraints.maxHeight) {
                             if (fits) {
                                 hint.place((constraints.maxWidth - hint.width) / 2, top)

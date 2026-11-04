@@ -147,7 +147,7 @@ class ReframeSessionTest {
         val s = store()
         render(s) // EditorScreen's default: the hint is unseen
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertExists() // not vacuous: it was up
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertExists() // not vacuous: it was composed (shown or waiting)
         s.dispatch(Intent.BeginReframe(imageId(s)))
         composeRule.awaitReframeControls()
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()

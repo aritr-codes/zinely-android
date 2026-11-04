@@ -27,6 +27,18 @@ class MoveResizeHintFitTest {
         assertFalse(moveResizeHintFits(hintHeightPx = 100, pieceTopPx = lifted, topGapPx = 8f, keepPx = 12f))
     }
 
+    /** A54.4 on a 360dp phone: 100% and 130% keep the buttons beside the line; 150% and 200% stack them. */
+    @Test
+    fun the_save_notice_stacks_from_150_percent_on_a_360dp_phone() {
+        val text = 12.64f // NoticeTextSize at 100%
+        assertFalse(saveNoticeStacks(360f, text * 1.0f))
+        assertFalse(saveNoticeStacks(360f, text * 1.3f))
+        assertTrue(saveNoticeStacks(360f, text * 1.5f))
+        assertTrue(saveNoticeStacks(360f, text * 2.0f))
+        // The goldens' 430dp host at 100% never stacks.
+        assertFalse(saveNoticeStacks(430f, text))
+    }
+
     @Test
     fun an_upright_piece_starts_at_its_own_top() {
         assertEquals(50.0, turnedTopPt(Transform(10.0, 50.0, 100.0, 20.0)), 1e-9)

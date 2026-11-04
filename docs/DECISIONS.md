@@ -18209,7 +18209,19 @@ the screen (#149). At text size 1 on the same phone the hint is 51dp (photo 59dp
 
 #### Review
 
-Owed before merge: one independent Review Agent (reading the repo, HTML-to-Compose parity). Filled in below.
+One independent Review Agent (Opus, reading only), 2026-11-04, on `90df8d0b`: **GO**, no Required Fixes. It
+confirmed A54-to-Compose parity (8dp, 12dp, turned box, page lift, Reframe gate, 20 text sizes, button order),
+the coordinate space of the piece's top, that an unplaced hint is neither drawn, hit nor in the platform tree, and
+that no golden at text size 1 can change.
+
+| Finding | Class | Reconciled |
+|---|---|---|
+| The platform-tree `null` for a waiting hint had no positive control | Recommended | **Accepted.** The drawn-hint test asserts a non-null platform node |
+| The Reframe test's "it was up" comment overclaims (a waiting hint is composed too) | Recommended | **Accepted.** Reworded |
+| `panDp` read in composition recomposes the hint scope every frame of a tray lift | Recommended | **Accepted.** Read in the measure block |
+| The 130% / 150% boundary of A54.4 was unasserted | Recommended | **Accepted.** `saveNoticeStacks` is pure and tested at 100/130/150/200% |
+| The first photo's hint is borderline at text size 1 on 360 × 640 | Observation | **Kept**, recorded under Consequences and in the owed device pass |
+| A Row/Column flip while the notice is up (rotation) may re-announce it | Observation | **Kept**; rare, and the words are the same |
 
 ---
 

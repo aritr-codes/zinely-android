@@ -35,6 +35,7 @@ import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -141,8 +142,11 @@ class EditorMoveResizeHintLargeTextTest {
     @Test
     fun with_room_above_the_piece_the_hint_shows_and_clears_the_handles() {
         val store = showScreen(Transform(100.0, 300.0, 100.0, 40.0))
-        val hint = composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
-            .fetchSemanticsNode().boundsInRoot
+        turnAccessibilityOn()
+        val node = composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed().fetchSemanticsNode()
+        // The positive control for the waiting case's null: a drawn hint IS in the platform tree.
+        assertNotNull(composeView().accessibilityNodeProvider.createAccessibilityNodeInfo(node.id))
+        val hint = node.boundsInRoot
         val canvas = composeRule.onNodeWithTag(EditorCanvasTestTag).fetchSemanticsNode().boundsInRoot
         val view = store.uiState.value.view
         val pieceTop = canvas.top + ((300.0 + view.pageOffset.y) * view.screenPxPerPt).toFloat()

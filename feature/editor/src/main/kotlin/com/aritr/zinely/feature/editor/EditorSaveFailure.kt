@@ -291,7 +291,7 @@ public fun EditorSaveFailure(
             // Bench A54.4 (#149): narrower than 20 times its text size, the buttons beside the line squeezed it
             // into a column taller than the screen, so they stand under it instead. The text size as drawn, so
             // Android 14's gentler scaling of large text is measured, not assumed.
-            val stacked = maxWidth < with(LocalDensity.current) { NoticeTextSize.toDp() } * NoticeStackEms
+            val stacked = saveNoticeStacks(maxWidth.value, with(LocalDensity.current) { NoticeTextSize.toDp() }.value)
             if (stacked) {
                 Column(modifier = notice, verticalArrangement = Arrangement.spacedBy(NoticeGap)) {
                     line(Modifier)
@@ -317,6 +317,9 @@ public fun EditorSaveFailure(
 
 /** Bench A54.4: the save notice stacks its buttons under the line when it is narrower than this many text sizes. */
 internal const val NoticeStackEms: Float = 20f
+
+/** Bench A54.4, pure: whether a notice [widthDp] wide, its text drawn [textSizeDp] tall, stacks its buttons. */
+internal fun saveNoticeStacks(widthDp: Float, textSizeDp: Float): Boolean = widthDp < textSizeDp * NoticeStackEms
 
 /**
  * One `.snack button` — bold underlined `paper`, on no ground at all.
