@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -253,15 +254,22 @@ class TypeBarGoldenTest {
     private val floorText = bookText.copy(style = bookText.style.copy(sizePt = DocumentVoice.BOOK_MIN_SIZE_PT))
     private val unknownText = StyledText.copy(style = StyledText.style.copy(fontFamily = "Averia Sans Libre"))
 
-    private fun fontState(name: String, dark: Boolean, element: TextElement, chosen: String?, reason: Boolean) {
+    // A29H (ADR-148): Hand chosen, Hand at its own floor, and Hand alone quiet in a Book text that holds Greek
+    // (the line names Hand only and says the text stays Book). Both quiet together is `book_unavailable` above.
+    private val handText = StyledText.copy(style = StyledText.style.copy(fontFamily = "Shantell Sans"))
+    private val handFloorText = handText.copy(style = handText.style.copy(sizePt = DocumentVoice.HAND_MIN_SIZE_PT))
+    private val bookGreekText = greekText.copy(style = bookText.style)
+
+    private fun fontState(name: String, dark: Boolean, element: TextElement, chosen: String?, reason: Boolean, says: String? = null) {
         val bmp = cardBitmap(darkTheme = dark, element = element)
         assertFrozenCardWidth()
         // Non-vacuity: the state the name claims is the state on screen.
-        listOf("Book", "Plain").forEach { word ->
+        listOf("Book", "Plain", "Hand").forEach { word ->
             val cue = composeRule.onNodeWithTag(selectionCueTag("type-bar-font-$word"), useUnmergedTree = true)
             if (word == chosen) cue.assertExists() else cue.assertDoesNotExist()
         }
         composeRule.onNodeWithTag(TypeBarFontReasonTestTag).let { if (reason) it.assertExists() else it.assertDoesNotExist() }
+        says?.let { composeRule.onNodeWithTag(TypeBarFontReasonTestTag, useUnmergedTree = true).assertTextContains(it, substring = true) }
         bmp.captureRoboImage("$GOLDEN_DIR/type_bar_font_${name}_${if (dark) "dark" else "light"}.png", aa())
     }
 
@@ -280,6 +288,18 @@ class TypeBarGoldenTest {
     @Test fun type_bar_font_unknown_light() = fontState("unknown", false, unknownText, chosen = null, reason = true)
 
     @Test fun type_bar_font_unknown_dark() = fontState("unknown", true, unknownText, chosen = null, reason = true)
+
+    @Test fun type_bar_font_hand_light() = fontState("hand", false, handText, chosen = "Hand", reason = false)
+
+    @Test fun type_bar_font_hand_dark() = fontState("hand", true, handText, chosen = "Hand", reason = false)
+
+    @Test fun type_bar_font_hand_floor_light() = fontState("hand_floor", false, handFloorText, chosen = "Hand", reason = true, says = "Hand stops at")
+
+    @Test fun type_bar_font_hand_floor_dark() = fontState("hand_floor", true, handFloorText, chosen = "Hand", reason = true, says = "Hand stops at")
+
+    @Test fun type_bar_font_hand_unavailable_light() = fontState("hand_unavailable", false, bookGreekText, chosen = "Book", reason = true, says = "Hand has no Greek letters, so this text stays Book.")
+
+    @Test fun type_bar_font_hand_unavailable_dark() = fontState("hand_unavailable", true, bookGreekText, chosen = "Book", reason = true, says = "Hand has no Greek letters, so this text stays Book.")
 
     private fun largestText(name: String, element: TextElement, reason: Boolean) {
         // 360 x 640 dp: the smaller of the two rooms R24 names. The host's 12dp inset is the editor's.

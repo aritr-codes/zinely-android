@@ -18194,7 +18194,10 @@ differently": a line that no longer fits is not shown.)
   and against the first build only the `head` table differs, so outlines, metrics and goldens are untouched; the
   four pins moved with it); `--measure` reports Hand beside Book; two Hand reducer tests (a text already below 12 pt,
   undo/redo of a change to Hand). The four faces deflate to about 460 KB (zlib level 9, an estimate of the APK
-  delta). *Still open:* the other A29H state goldens; the Hand button's 4.73:1 contrast awaits a look on a phone.
+  delta). The six A29H state goldens (Hand chosen, Hand at its floor, Hand alone quiet in a Book text; light and dark)
+  were recorded on the pinned image (record-goldens run 41813063960; every existing golden byte-identical). Looked at
+  in those goldens, the chosen "Hand" by day (4.73:1) reads clearly though its thin strokes sit lighter than "Center"
+  beside it; judged acceptable, no change. Nothing in this list is still open.
 - **Not decided here:** a fourth voice; a per-zine default voice; Cyrillic for Hand; a sign for words that no longer fit.
 
 #### Alternatives considered
