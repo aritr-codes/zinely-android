@@ -48,6 +48,7 @@ import com.aritr.zinely.feature.editor.ShelfRenameSheet
 import com.aritr.zinely.feature.editor.homeDeletedMessage
 import com.aritr.zinely.ui.components.ZSnackbar
 import com.aritr.zinely.ui.components.ZToast
+import com.aritr.zinely.ui.components.transientTimeoutMillis
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
@@ -383,6 +384,8 @@ public fun ZineLibraryScreen(
     var openSheet by rememberSaveable(stateSaver = LibrarySheetSaver) { mutableStateOf<LibrarySheet?>(null) }
     var undo by remember { mutableStateOf<UndoRequest?>(null) }
     var toast by remember { mutableStateOf<Pair<String, CompletableDeferred<Unit>>?>(null) }
+    // A notice taken off the queue that has not shown yet (#160); saved, so recreation does not lose it.
+    var waitingNotice by rememberSaveable { mutableStateOf<String?>(null) }
     val backupActionFocusRequester = remember { FocusRequester() }
     val colophonActionFocusRequester = remember { FocusRequester() }
     var restoreBackupActionFocus by remember { mutableStateOf(false) }
@@ -451,6 +454,27 @@ public fun ZineLibraryScreen(
     // the store with no undo window left. "Reuse the existing delete flow" is reuse of this, not of a
     // delete call ([D-025](docs/design/V2-SPEC-DEFECTS.md#d-025-ruling)).
     LaunchedEffect(events) {
+        // The toast stands where the folder snack stands, so it waits for the snack to leave.
+        // Lowering the snack instead was the first answer, and it took the snack's Undo with
+        // it: a failure notice that happened to arrive inside those four seconds cost the
+        // maker the one way back from a move they had just made.
+        //
+        // The wait holds this collector, as a showing toast always has, so whatever arrives
+        // meanwhile comes after the notice. It ends when the snack times out, when its action
+        // is taken, or when a sheet is raised; while a finger or focus holds the snack up, the
+        // notice goes on waiting, because the snack is still where it would stand.
+        //
+        // #160: while it waits the notice is off the queue, so it is kept in [waitingNotice] and a rebuilt
+        // screen shows it first. It is let go the moment it shows: a notice already shown is not shown again.
+        suspend fun showNotice(text: String) {
+            snapshotFlow { snackUp }.first { !it }
+            waitingNotice = null
+            val gone = CompletableDeferred<Unit>()
+            toast = text to gone
+            gone.await()
+            toast = null
+        }
+        waitingNotice?.let { showNotice(it) }
         events.collect { event ->
             when (event) {
                 // Prompts queue. One whose delete a folder action has finished meanwhile (rule 11) is not
@@ -483,20 +507,8 @@ public fun ZineLibraryScreen(
                 }
 
                 is HomeShelfEvent.Message -> {
-                    val gone = CompletableDeferred<Unit>()
-                    // The toast stands where the folder snack stands, so it waits for the snack to leave.
-                    // Lowering the snack instead was the first answer, and it took the snack's Undo with
-                    // it: a failure notice that happened to arrive inside those four seconds cost the
-                    // maker the one way back from a move they had just made.
-                    //
-                    // The wait holds this collector, as a showing toast always has, so whatever arrives
-                    // meanwhile comes after the notice. It ends when the snack times out, when its action
-                    // is taken, or when a sheet is raised; while a finger or focus holds the snack up, the
-                    // notice goes on waiting, because the snack is still where it would stand.
-                    snapshotFlow { snackUp }.first { !it }
-                    toast = event.text to gone
-                    gone.await()
-                    toast = null
+                    waitingNotice = event.text
+                    showNotice(event.text)
                 }
 
                 // Not awaited: a newer folder snack replaces this one (A28.12), it does not queue behind it.
@@ -509,8 +521,8 @@ public fun ZineLibraryScreen(
                 }
 
                 // A duplicate's copy: the same wish a folder snack makes, without the snack.
-                // Not while a sheet is up: focus would be requested behind a modal. (A Reveal that arrives after the
-                // screen has been left is dropped with the collector, like any event — adjacent to #160, not fixed here.)
+                // Not while a sheet is up: focus would be requested behind a modal. (A Reveal sent while the screen
+                // is gone waits in the host's queue and is acted on when the screen is back, like any event: #160.)
                 is HomeShelfEvent.Reveal -> if (openSheet == null) focusWish = FocusWish.Zine(event.zineId, event.folder, scroll = true)
             }
         }
@@ -563,15 +575,11 @@ public fun ZineLibraryScreen(
         }
     }
     // A28.13: at least four seconds, longer if the phone's accessibility timeout asks, and for as long as
-    // a finger or focus is on it.
+    // a finger or focus is on it. Never forever: before Android 10 TalkBack would leave it up for good (#160).
     val accessibility = LocalAccessibilityManager.current
     LaunchedEffect(snackUp, snackStep) {
         if (!snackUp) return@LaunchedEffect
-        val stay = accessibility?.calculateRecommendedTimeoutMillis(
-            originalTimeoutMillis = FolderSnackMillis,
-            containsText = true,
-            containsControls = snack.action != null,
-        ) ?: FolderSnackMillis
+        val stay = accessibility.transientTimeoutMillis(FolderSnackMillis, hasAction = snack.action != null)
         do {
             delay(stay)
         } while (snackHeld)

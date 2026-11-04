@@ -180,8 +180,16 @@ internal class HomeViewModel @Inject constructor(
     /** This session's display-only covers for zines the store could not assign one to. */
     private val fallbackCovers = FallbackCovers()
 
-    /** Queued one-shot events; the buffer absorbs emissions while the screen is between collects. */
-    private val eventQueue = Channel<HomeShelfEvent>(Channel.BUFFERED)
+    /**
+     * Queued one-shot events; the buffer absorbs emissions while the screen is between collects.
+     *
+     * #160: an event handed to a collector that is waiting in `receive` is only *scheduled* on the screen's
+     * frame dispatcher; if the screen is disposed (a rotation) before it runs, the channel's prompt cancellation
+     * drops the event. [Channel]'s `onUndeliveredElement` names exactly that event, so it goes back on the queue
+     * for the rebuilt screen. It goes to the back: the queue was empty when it was handed over, so only an event
+     * sent in the same gap can overtake it. (Never called for a close: this channel is never closed.)
+     */
+    private val eventQueue: Channel<HomeShelfEvent> = Channel(Channel.BUFFERED) { dropped -> eventQueue.trySend(dropped) }
 
     /** One-shot shelf events (undo prompts, warm failure messages), each consumed exactly once. */
     val events: Flow<HomeShelfEvent> = eventQueue.receiveAsFlow()

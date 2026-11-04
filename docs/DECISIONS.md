@@ -16687,6 +16687,21 @@ was checked against the frozen HTML first; none changes a frozen design. Items 7
 
 Owed before any of it ships is on [OWNER-CHECKLIST §2.8](OWNER-CHECKLIST.md#28-w2a-small-things--in-beta9-device-checks-done).
 
+*2026-11-04, [#160](https://github.com/aritr-codes/zinely-android/issues/160) fixed (the Shelf event loop and the
+Undo bar's timeout).* The issue said a SharedFlow without replay; the queue has been a buffered `Channel` since
+S6.3, so an event sent while no screen collects already waited. Two real losses remained. (1) An event handed to a
+collector waiting in `receive` is only scheduled on the frame dispatcher, and a rotation in that gap dropped it;
+`HomeViewModel.eventQueue` now puts such an event back through `onUndeliveredElement`. (2) A `Message` waiting behind
+the folder snack was already off the queue; `ZineLibraryScreen` keeps it in `rememberSaveable` until it shows, and
+lets it go then, so a shown message is not shown twice. Still open: a folder snack showing during a rotation is
+plain `remember` state and goes with its Undo, as before (not re-shown, by design of this fix). Timeouts: before API 29 Compose returns `Long.MAX_VALUE` for
+a bar with a control while touch exploration is on (checked in `AndroidAccessibilityManager` bytecode, Compose UI
+1.10.4), copying the pre-Q Material Snackbar. On the Shelf that held the collector forever. Every Shelf and Bench
+timer now goes through `transientTimeoutMillis` (`core:ui`), capped at 120 s, which is Android 10+'s longest
+"Time to take action" choice, so no user setting is ever cut short. Tests: `RecommendedTimeoutTest`,
+`HomeViewModelTest` (torn-down collector), `ZineLibraryFoldersTest` (two rebuild cases). A TalkBack check on an
+Android 7 to 9 emulator is owed.
+
 *2026-10-29: items 7 and 9 are decided in [ADR-143](#adr-143) (W2b, Bench A48, Proposed): 7 by one undo step per run of Move, Size or Turn taps; 9 closed by the visible turn knob, with the hint unchanged.*
 
 *2026-11-02, device checks on the Samsung SM-A176B, Android 16, QA package:* Enter makes a new line on Gboard and on the
