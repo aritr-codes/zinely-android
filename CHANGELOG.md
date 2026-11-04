@@ -153,6 +153,10 @@ Changes since the beta.9 app.
 - On Android 7 to 9 with TalkBack, an Undo bar on the Shelf or the Bench no longer stays up forever and holds
   back every message after it. It stays up for two minutes, the longest "Time to take action" newer Android
   offers ([#160](https://github.com/aritr-codes/zinely-android/issues/160)).
+- On the Proof, TalkBack now says "button" after Save PDF, Share, Open PDF, Fold it up, It's folded, Try again
+  (or Open settings), the print-details row and "See how to fold". Before, it read their words but not that
+  they were buttons. Nothing on screen changes
+  ([#156](https://github.com/aritr-codes/zinely-android/issues/156), [ADR-101](docs/DECISIONS.md#adr-101)).
 
 ## [0.9.0-beta.9] — 2026-11-03 — Turn pieces by hand, and small things fixed
 

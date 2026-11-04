@@ -8849,6 +8849,29 @@ finding was taken on authority. The *looping fold guide* and the *§3.4 binding*
 and the print-recipe and fold-step findings were re-derived from `Copy.kt` and `ProofFold.kt` independently
 before being written in. A review that is believed without checking has the same failure mode as a summary
 believed without checking — which is the house rule this file opens with.
+
+### Note (2026-11-04) — the band's text buttons reach the platform as Buttons ([#156](https://github.com/aritr-codes/zinely-android/issues/156))
+
+The W1 phone pass (PR #154) found Save PDF, Share, Open PDF and Fold it up reaching the platform tree as
+clickable `android.view.View` nodes with the label on a child, so TalkBack read the word and never said
+"button". The merged-tree tests passed throughout. The cause is the one [ADR-059](#adr-059) records: a
+`clickable(role = Role.Button)` over a `Text` child does not collapse to one platform node. A platform-tree
+test (`ProofBandButtonPlatformA11yTest`) failed on every control below before the fix.
+
+- `ProofBandButton` (Save PDF, Share, Open PDF, Fold it up, It's folded, Try again / Open settings), the
+  `.ready` print-details row and the print panel's "See how to fold" link are now built on `zinelyV2Control`,
+  as the Proof's icon pills already were (A42). Each is one clickable, named `android.widget.Button`; the
+  running export's "Working" state rides the same node.
+- The clear removes the label's text node, which the type-floor and label-fit guards read. Each control
+  re-offers its label layouts through `GetTextLayoutResult` (`offersLabelLayouts`), so those guards still
+  measure the words as laid out.
+- Checked and left: the folded "How to fold" link is already a Button (the text node is the clickable node);
+  the paper segments still reach the platform as `View` (pinned by `ProofPaperSegmentsA11yTest`, their state
+  is spoken); the fold step arrows, step dots and Read turn edges have their own platform tests.
+
+Accessibility fix after freeze; no pixel change intended, checked by `gold`. A TalkBack listen of the band
+on a device is owed ([OWNER-CHECKLIST](OWNER-CHECKLIST.md)).
+
 ## ADR-102 {#adr-102}
 
 **The Bench re-skin — and the ruling that the first draft of this ADR would have reversed.** Step 6 planning,
