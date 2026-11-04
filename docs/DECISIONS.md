@@ -12762,7 +12762,8 @@ the *raw* id, so a photo that left the page by any other path (Undo of its add, 
 sheet and left the bars hidden. Invariant now: nothing gates on the raw id. `imageSpreadTarget`
 (`ImageSpreadSheet.kt`) is the one resolver; the sheet and both bar gates read it, and when a resolved target is
 lost the id is dropped, so a photo that comes back (Redo) does not reopen a question the maker did not ask again.
-Tested by `ImageSpreadSheetTest` and `EditorScreenTest.removing_the_photo_under_an_open_across_fold_sheet_brings_the_bars_back`.
+The id is also saved with the page it was asked on and dropped on any other page (a page turn, or a restore after
+process death that comes back on a different page). Tested by `ImageSpreadSheetTest` and the two #159 tests in `EditorScreenTest`.
 No document, schema or UI design change.
 
 ---

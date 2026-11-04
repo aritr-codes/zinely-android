@@ -359,6 +359,8 @@ public fun EditorScreen(
     // Frozen Bench A19: the selected photo whose two-page confirmation is open. The document is not
     // touched until confirmation; dismissal clears only this ephemeral id.
     var spreadPhotoId by rememberSaveable { mutableStateOf<String?>(null) }
+    // #159: the page the question was asked on. The id never resolves on any other page.
+    var spreadPageIndex by rememberSaveable { mutableIntStateOf(-1) }
     var spreadBusy by remember { mutableStateOf(false) }
 
     // The Art sheet — the frozen `openArt()` (ADR-105 step S7). Purpose remains separate from the chooser's
@@ -842,13 +844,22 @@ public fun EditorScreen(
     // #159: every reader gates on the RESOLVED target, never on the raw id — the photo can leave the page by
     // paths this screen never sees (Undo, delete, page turn, restore). When a resolved target is lost the id is
     // dropped too, so a photo that comes back (Redo) does not reopen a question the maker did not ask again.
-    // Only a loss clears it: on a cold start the saved id may arrive before the document does.
-    val spreadTarget = imageSpreadTarget(uiState.document.pages, uiState.currentPageIndex, spreadPhotoId)
+    // A loss clears it, and so does being on another page than the one it was asked on (a page turn, or a
+    // restore after process death that comes back on a different page). An unresolved id on its own page is NOT cleared:
+    // on a cold start the saved id may arrive before the document does.
+    val spreadTarget = imageSpreadTarget(
+        uiState.document.pages,
+        uiState.currentPageIndex,
+        spreadPhotoId?.takeIf { spreadPageIndex == uiState.currentPageIndex },
+    )
     val spreadOpen = spreadTarget != null
     var spreadWasOpen by remember { mutableStateOf(false) }
     LaunchedEffect(spreadOpen) {
         if (spreadWasOpen && !spreadOpen) spreadPhotoId = null
         spreadWasOpen = spreadOpen
+    }
+    LaunchedEffect(spreadPhotoId, spreadPageIndex, uiState.currentPageIndex) {
+        if (spreadPhotoId != null && spreadPageIndex != uiState.currentPageIndex) spreadPhotoId = null
     }
     val spreadPages = imageSpreadPageNumbers(uiState.currentPageIndex)
     val spreadInnerEdge = imageSpreadInnerEdge(
@@ -2285,7 +2296,10 @@ public fun EditorScreen(
                         Copy.BenchVerbs.INK -> inkPopoverFor = ctxElement?.id?.takeIf { inkTarget != null }
                             Copy.BenchVerbs.REFRAME -> if (id != null) dispatch(Intent.BeginReframe(id))
                             Copy.BenchVerbs.ACROSS_FOLD ->
-                                if (ctxElement is ImageElement) spreadPhotoId = ctxElement.id
+                                if (ctxElement is ImageElement) {
+                                    spreadPageIndex = uiState.currentPageIndex
+                                    spreadPhotoId = ctxElement.id
+                                }
                             // X3b (ADR-106): a toggle, so tapping it again is the undo the user reaches
                             // for first — and Undo is the one they reach for second. Both work.
                             Copy.BenchVerbs.COPIER -> if (id != null) dispatch(Intent.ToggleCopier(id))

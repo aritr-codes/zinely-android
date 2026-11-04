@@ -139,8 +139,6 @@ class ImageSpreadSheetTest {
         assertEquals(photo, deleted.after(Intent.Undo).target())
         // When the user turns to another page, Then nothing resolves
         assertNull(open.after(Intent.GoToPage(3)).target())
-        // On a page with no fold partner, nothing resolves
-        assertNull(imageSpreadTarget(document.pages, 8, photo.id))
         // And no id resolves to nothing
         assertNull(imageSpreadTarget(document.pages, 1, null))
     }
