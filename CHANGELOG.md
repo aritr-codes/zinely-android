@@ -129,6 +129,10 @@ Changes since the beta.9 app.
 
 ### Fixed
 
+- If a photo left the page while its "across the fold" question was open (an Undo, a delete, a page turn), the
+  question closed but the Bench's bars and the way back to My Shelf could stay hidden. They now come back, and the
+  question does not reopen by itself when the photo returns
+  ([#159](https://github.com/aritr-codes/zinely-android/issues/159), [ADR-109](docs/DECISIONS.md#adr-109)).
 - A zine that went back to its earlier copy, or was closed while you were typing into a new text box, no longer
   opens with an invisible empty text box in it. An empty box is never saved, and one already saved is left out
   when the zine opens ([#155](https://github.com/aritr-codes/zinely-android/issues/155)).

@@ -42,6 +42,16 @@ internal fun imageSpreadPageNumbers(pageIndex: Int): Pair<Int, Int>? = when (pag
     else -> null
 }
 
+/**
+ * The one place the across-fold confirmation's photo id is resolved (#159). The id is ephemeral UI state and
+ * the photo can leave the current page by any path — delete, undo of its add, a page turn, a page delete, a
+ * restore — so nothing may gate on the raw id: the sheet and every bar it hides read this, and agree.
+ */
+internal fun imageSpreadTarget(pages: List<Page>, pageIndex: Int, spreadPhotoId: String?): ImageElement? {
+    if (spreadPhotoId == null || imageSpreadPageNumbers(pageIndex) == null) return null
+    return pages.getOrNull(pageIndex)?.elements?.firstOrNull { it.id == spreadPhotoId } as? ImageElement
+}
+
 internal enum class SpreadInnerEdge { LEFT, RIGHT }
 
 /** Recognise the ordinary-image pair written by ADR-109 so the advisory cue stops marking its join. */
