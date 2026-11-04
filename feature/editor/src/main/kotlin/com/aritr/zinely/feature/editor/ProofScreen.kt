@@ -77,6 +77,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -1118,6 +1120,9 @@ private fun ProofReadyRow(
     val haptics = ZinelyTheme.haptics
     val hair = colors.hair
     val labelLayouts = remember { arrayOfNulls<TextLayoutResult>(2) }
+    // The seam's 48dp minimum would apply INSIDE the padding, where the content is ~40dp, and grow the row
+    // (#156 review). The outer `heightIn(min = 48.dp)` already guarantees the touch target, so it is off here.
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1207,6 +1212,7 @@ private fun ProofReadyRow(
             )
         }
         Box(Modifier.size(17.dp)) { ProofVectorIcon(ICON_CHEVRON, colors.inkSoft) }
+    }
     }
 }
 
@@ -1444,7 +1450,8 @@ private fun ProofBandButton(
  * The control's `clearAndSetSemantics` is what makes it one platform Button, and it also removes the
  * `BasicText` nodes that carried `GetTextLayoutResult` — the action the Proof's type-floor and label-fit
  * guards (`ProofTypeFloorTest`, `ProofSmallPhoneTest`) read to see the size and the lines actually laid out.
- * Each label records its layout into [layouts] from `onTextLayout`; this answers with them. Chain it before
+ * Each label records its layout into [layouts] from `onTextLayout`; this answers with them. Invariant: every
+ * recording label stays composed for the control's life, or its last layout would be reported stale. Chain it before
  * the control, which drops semantics chained after it. The platform only uses this action for a node with
  * text, which a cleared control has none of, so TalkBack hears nothing new.
  */

@@ -126,6 +126,12 @@ class ProofBandButtonPlatformA11yTest {
 
         // Then the print-details opener is one Button carrying its summary
         assertOneNamedButton(ProofReadyTestTag, Copy.Proof.readyLabel(0, Copy.Paper.A4))
+
+        // And it keeps its height: the seam's 48dp minimum, applied inside the row's padding, grew it by ~10dp
+        // (about 62dp against the unchanged ~51dp). The outer `heightIn(48)` already sets the target.
+        val node = composeRule.onNodeWithTag(ProofReadyTestTag).fetchSemanticsNode()
+        val heightDp = node.size.height / node.layoutInfo.density.density
+        assertTrue("the ready row grew to ${heightDp}dp", heightDp < 56f)
     }
 
     @Test

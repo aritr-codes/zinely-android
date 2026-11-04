@@ -8869,7 +8869,10 @@ test (`ProofBandButtonPlatformA11yTest`) failed on every control below before th
   the paper segments still reach the platform as `View` (pinned by `ProofPaperSegmentsA11yTest`, their state
   is spoken); the fold step arrows, step dots and Read turn edges have their own platform tests.
 
-Accessibility fix after freeze; no pixel change intended, checked by `gold`. A TalkBack listen of the band
+Accessibility fix after freeze, with no pixel change. The first build moved pixels: the seam's 48dp minimum
+sat inside the `.ready` row's padding and grew the row, which failed four `ProofScaffoldGoldenTest` goldens
+and `voice_read`. The row now provides `LocalMinimumInteractiveComponentSize = Unspecified`, because its outer
+`heightIn(48)` already sets the target. A height test pins this, and `gold` passes (1579 tests). A TalkBack listen of the band
 on a device is owed ([OWNER-CHECKLIST](OWNER-CHECKLIST.md)).
 
 ## ADR-102 {#adr-102}
