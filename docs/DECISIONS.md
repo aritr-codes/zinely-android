@@ -12754,6 +12754,17 @@ Three challenges, honestly:
 - 🟨 **Not re-reviewed after these edits.** The corrections above are the implementer's, not the
   reviewer's, and the strengthened skeptical pass (§challenge 3) is new material rather than a fix.
 
+#### 2026-11-04 note — the confirmation's photo id is resolved in one place (#159)
+
+The confirmation is keyed by an ephemeral photo id (`spreadPhotoId`, `rememberSaveable` in
+`EditorScreen`). The sheet showed on the *resolved* photo while the context bar and the way back to My Shelf hid on
+the *raw* id, so a photo that left the page by any other path (Undo of its add, a delete, a page turn) closed the
+sheet and left the bars hidden. Invariant now: nothing gates on the raw id. `imageSpreadTarget`
+(`ImageSpreadSheet.kt`) is the one resolver; the sheet and both bar gates read it, and when a resolved target is
+lost the id is dropped, so a photo that comes back (Redo) does not reopen a question the maker did not ask again.
+Tested by `ImageSpreadSheetTest` and `EditorScreenTest.removing_the_photo_under_an_open_across_fold_sheet_brings_the_bars_back`.
+No document, schema or UI design change.
+
 ---
 
 ## ADR-110 {#adr-110}

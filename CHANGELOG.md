@@ -129,6 +129,10 @@ Changes since the beta.9 app.
 
 ### Fixed
 
+- If a photo left the page while its "across the fold" question was open (an Undo, a delete, a page turn), the
+  question closed but the Bench's bars and the way back to My Shelf could stay hidden. They now come back, and the
+  question does not reopen by itself when the photo returns
+  ([#159](https://github.com/aritr-codes/zinely-android/issues/159), [ADR-109](docs/DECISIONS.md#adr-109)).
 - The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
   privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
   the files.

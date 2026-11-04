@@ -839,9 +839,16 @@ public fun EditorScreen(
     val ctxElement = uiState.selection.singleOrNull()?.let { id ->
         uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id }
     }
-    val spreadTarget = spreadPhotoId?.let { id ->
-        uiState.document.pages.getOrNull(uiState.currentPageIndex)
-            ?.elements?.firstOrNull { it.id == id } as? ImageElement
+    // #159: every reader gates on the RESOLVED target, never on the raw id — the photo can leave the page by
+    // paths this screen never sees (Undo, delete, page turn, restore). When a resolved target is lost the id is
+    // dropped too, so a photo that comes back (Redo) does not reopen a question the maker did not ask again.
+    // Only a loss clears it: on a cold start the saved id may arrive before the document does.
+    val spreadTarget = imageSpreadTarget(uiState.document.pages, uiState.currentPageIndex, spreadPhotoId)
+    val spreadOpen = spreadTarget != null
+    var spreadWasOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(spreadOpen) {
+        if (spreadWasOpen && !spreadOpen) spreadPhotoId = null
+        spreadWasOpen = spreadOpen
     }
     val spreadPages = imageSpreadPageNumbers(uiState.currentPageIndex)
     val spreadInnerEdge = imageSpreadInnerEdge(
@@ -1064,7 +1071,7 @@ public fun EditorScreen(
         !inkPopoverVisible &&
         !flipTrayVisible &&
         !arrangeTrayVisible &&
-        spreadPhotoId == null
+        !spreadOpen
     var contextBarHeight by remember { mutableStateOf(BenchContextBarReservedHeightDp) }
     // D-113: the Flip tray's own footprint, so its snack can stand above it. Zero while the tray is away.
     var flipTrayHeightPx by remember { mutableIntStateOf(0) }
@@ -1435,7 +1442,7 @@ public fun EditorScreen(
     // control never means two things. The same terms as the BackHandlers above, plus the two sheets.
     val shelfBackVisible = editingElement == null && !typeBarOpen && reframing == null && !inkPopoverVisible &&
         !flipTrayVisible && !arrangeTrayVisible && !pageGridOpen && !addChooserOpen && !artSheetOpen &&
-        spreadPhotoId == null
+        !spreadOpen
     // The frozen `.kbstack` is anchored to the PHONE (`left/right/bottom:0; z-index:35`, `:259`) — not to
     // the canvas — so the editing row must overlay the whole screen, above the supply tray, rather than
     // dock at the canvas's bottom edge. It rode the canvas in the first cut of C3 and the screen-level
@@ -2717,7 +2724,7 @@ public fun EditorScreen(
         // ADR-109 / frozen Bench A19. The one-page editor must explain the physical two-page result
         // before writing it; the reducer still owns the single atomic/undoable document change.
         ImageSpreadSheet(
-            visible = spreadTarget != null && spreadPages != null,
+            visible = spreadOpen,
             leftPageNumber = spreadPages?.first ?: 1,
             rightPageNumber = spreadPages?.second ?: 2,
             busy = spreadBusy,
