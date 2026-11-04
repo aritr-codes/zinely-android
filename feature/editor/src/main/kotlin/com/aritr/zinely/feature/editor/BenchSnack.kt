@@ -43,6 +43,7 @@ import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.EditKind
 import com.aritr.zinely.core.editor.EditVerb
 import com.aritr.zinely.core.editor.Effect
+import com.aritr.zinely.ui.components.transientTimeoutMillis
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Colors
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
@@ -158,14 +159,11 @@ internal val BenchSnackInkTrayClearance = 84.dp
 /**
  * How long a Bench snack stands: [base], or longer when the phone's accessibility timeout ("time to take
  * action") asks for more — the Shelf snack's rule (`ZineLibraryScreen.kt`, A28.13), applied to every Bench
- * timer. A snack with a button counts as holding a control, so the platform may give it longer still.
+ * timer. A snack with a button counts as holding a control, so the platform may give it longer still, but
+ * never forever ([transientTimeoutMillis], #160).
  */
 internal fun benchSnackHoldMillis(accessibility: AccessibilityManager?, base: Long, hasAction: Boolean): Long =
-    accessibility?.calculateRecommendedTimeoutMillis(
-        originalTimeoutMillis = base,
-        containsText = true,
-        containsControls = hasAction,
-    ) ?: base
+    accessibility.transientTimeoutMillis(base, hasAction)
 
 /**
  * The frozen snackbar — `.snack` (`v21-bench.html:450-480`, markup `:570`);
