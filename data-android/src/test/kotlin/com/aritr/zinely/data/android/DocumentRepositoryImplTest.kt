@@ -13,6 +13,8 @@ import com.aritr.zinely.core.model.CURRENT_SCHEMA_VERSION
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.core.model.TextElement
+import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
 import kotlinx.coroutines.test.runTest
@@ -209,6 +211,25 @@ class DocumentRepositoryImplTest {
         val result = repo(root).load("proj1")
 
         assertEquals(backupDoc, (result as DataResult.Success).value)
+    }
+
+    @Test
+    fun `a backup autosaved mid-session restores without its empty text box`() = runTest {
+        // Given (#155): the .bak an older build wrote while Add > Text was still open (an empty box beside a real
+        // one), and a damaged document.json. This writer can no longer emit "", so the old bytes are made by hand.
+        val root = tempRoot()
+        val words = TextElement(id = "el-1", transform = Transform(0.0, 0.0, 10.0, 10.0), text = "words")
+        val placeholder = words.copy(id = "el-2", zIndex = 1, text = "@EMPTY@")
+        val doc = validDoc().let { it.copy(pages = listOf(it.pages[0].copy(elements = listOf(words, placeholder))) + it.pages.drop(1)) }
+        val path = docPath(root, "proj1")
+        writeFile(path, "this is not a json document".toByteArray())
+        Files.write(path.resolveSibling("document.json.bak"), serializer.serialize(doc).replace("\"@EMPTY@\"", "\"\"").toByteArray())
+
+        // When it is repaired on load
+        val loaded = (repo(root).load("proj1") as DataResult.Success).value
+
+        // Then the maker's words are back and the invisible empty box is not
+        assertEquals(listOf(words), loaded.pages[0].elements)
     }
 
     // ADR-140 decision 3: a page file put back from its earlier copy is reported, once; nothing else is.

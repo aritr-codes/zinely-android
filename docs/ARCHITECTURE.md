@@ -405,6 +405,8 @@ The drag preview is transient state (`activeGesture`) — never undoable, never 
 
 The reducer is the **single allocator of element ids**, minting `el-<n>` from `EditorModel.nextToken` — the same monotonic counter that issues session tokens, which is how the reducer stays pure without a clock or RNG. `nextToken` is reducer state; `ZineDocument` is what gets saved. **The counter must therefore be seeded from the document it is about to edit** (`EditorModel.firstFreeToken`), because "the counter only ever advances" guarantees uniqueness *within* a session and nothing at all *across* one. Seeding at construction is what makes the reducer's no-collision claim true; a constant seed made every reopen mint an id the document already held.
 
+**An empty text box never crosses it** ([#155](https://github.com/aritr-codes/zinely-android/issues/155), [ADR-029 note](DECISIONS.md#adr-029)). `Add > Text` holds a `TextElement` with `text = ""` for the whole typing session, and the placement autosaves (so does undoing that box's first words). `JsonDocumentSerializer` drops every `TextElement` whose text is exactly `""` on write and on read, so neither a mid-session autosave nor its `.bak` can bring one back. Whitespace-only text is not the placeholder and is kept.
+
 Two related gaps are **accepted for the beta and tracked, not fixed**:
 
 - **Validation is asymmetric.** `DefaultDocumentValidator` runs on load and not on save, so an invalid document can be written and then refused on the way back. Fail-closed autosave is *not* the remedy — there is no UI to recover an edit autosave refuses to write, which trades a rare corruption for routine silent loss. The sequencing is: make load survivable first, then report (never block) on save.
