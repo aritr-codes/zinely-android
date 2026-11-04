@@ -150,7 +150,9 @@ private fun DescribeBody(
     val remaining = (DescriptionText.MAX_CODE_POINTS - draft.text.let { it.codePointCount(0, it.length) }).coerceAtLeast(0)
     val countText = if (remaining <= Copy.Describe.COUNT_SHOWN_AT) Copy.Describe.left(remaining) else null
     val shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
-    Column(Modifier.fillMaxWidth()) {
+    // `.a52 .sh .body{padding-bottom:8px}`: the last line (helper, or the count) keeps clear of the scroll's edge
+    // under the pinned foot, with or without the count (A52.8).
+    Column(Modifier.fillMaxWidth().padding(bottom = ZinelyV21Dimens.gapSm)) {
         BasicText(
             text = Copy.Describe.LABEL,
             style = TextStyle(
@@ -220,7 +222,7 @@ private fun DescribeBody(
                 text = countText,
                 style = TextStyle(color = colors.ink, fontFamily = ZinelyV21Fonts.Work, fontWeight = FontWeight.SemiBold, fontSize = SmallSp),
                 // Spoken through the field's own node above, so this drawn copy is silent.
-                modifier = Modifier.padding(start = 2.dp, top = 2.dp, bottom = ZinelyV21Dimens.gapSm)
+                modifier = Modifier.padding(start = 2.dp, top = 2.dp)
                     .testTag(DescribeCountTestTag).clearAndSetSemantics { },
             )
         }

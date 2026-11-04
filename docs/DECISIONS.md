@@ -18189,10 +18189,12 @@ differently": a line that no longer fits is not shown.)
 - **Still owed** ([OWNER-CHECKLIST](OWNER-CHECKLIST.md)): the printed page that confirms 12 pt for Book and Hand;
   a TalkBack listen of the three-word row and its spoken reasons (deferred by the owner); a real Android 7 to 9 phone
   (the emulator is the evidence); the goldens recorded on the pinned image.
-- **Follow-ups logged 2026-11-04** (technical debt, none blocks Accepting): `tools/build-document-fonts.py --hand` is
-  not reproducible (fontTools writes a timestamp into `head`) and `--measure` omits Hand; Hand-specific reducer tests
-  (text below 12 pt, redo after a font change) and the other A29H state goldens are not written; the APK size delta
-  is unmeasured; the Hand button's 4.73:1 contrast awaits a look on a phone.
+- **Follow-ups logged 2026-11-04** (technical debt, none blocks Accepting). *Done the same day:* `--hand` is now
+  reproducible (it keeps upstream's `head.modified` instead of stamping the build time; two runs give the same bytes,
+  and against the first build only the `head` table differs, so outlines, metrics and goldens are untouched; the
+  four pins moved with it); `--measure` reports Hand beside Book; two Hand reducer tests (a text already below 12 pt,
+  undo/redo of a change to Hand). The four faces deflate to about 460 KB (zlib level 9, an estimate of the APK
+  delta). *Still open:* the other A29H state goldens; the Hand button's 4.73:1 contrast awaits a look on a phone.
 - **Not decided here:** a fourth voice; a per-zine default voice; Cyrillic for Hand; a sign for words that no longer fit.
 
 #### Alternatives considered
@@ -18421,8 +18423,10 @@ no HTML amendment.** A52.1 froze exactly this (the bar scrolls; Describe is opti
 Delete is off-screen there too, and a TalkBack maker has the "Describe" custom action without the bar. Moving the
 verb, or redesigning the bar's overflow, would be a visual redesign after freeze and belongs to a bar-wide
 amendment, not to this ADR. Known Limitation for the release notes; revisit if Pass 2 finds makers never find it.
-The other findings (helper line clipped under the keyboard, 2–3 px between crowded Art-bar labels) stay open as
-parity fixes against A52.8.
+Of the other two: the helper line ran flush into the pinned foot because the sheet's body lost its bottom padding
+whenever the count was hidden; fixed 2026-11-04 to `.a52 .sh .body{padding-bottom:8px}` (A52.8 still allows the helper
+to need a scroll). The 2–3 px between Art-bar labels at 411dp is the frozen A21 bar (`.ctx{gap:1px}`, buttons
+`padding:8px 2px`), not a parity defect; an Observation for any bar-wide amendment.
 
 #### Review
 
