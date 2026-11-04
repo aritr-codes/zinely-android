@@ -582,6 +582,13 @@
 - **Status (2026-06-26):** **Full `:feature:editor` interaction surface MERGED to `main`** (PR #21, rebase — 10 increments linear, tip `dd956f4`). Landed in gated, individually Codex-reviewed increments: store spine + effect runner, gesture pipeline, selection chrome + live **document-order** preview (approach B → preview == commit), opposite-anchor resize handles, live snap guides (single `LiveSnap.resolve` feeds preview **and** commit), a11y contextbar + element semantics (WCAG 2.5.7 twins), race-safe text-edit session, and the host **`EditorScreen`** assembling every layer over one `EditorStore`. The host added a display-only `Intent.SetViewport` (no autosave, no history) so all layers share one measured `ViewState`; Codex's 3 host-boundary concurrency fixes were reconciled (gestures/handles gated off while editing; tokenised `CancelTransform`; viewport deferred until `Idle`). **Selection-chrome Roborazzi goldens** pin the screen-space chrome (outline/guides) that `PagePreviewParityTest` structurally cannot reach — 3 goldens recorded on the pinned CI image, gated by `:feature:editor:verifyRoborazziDebug`; main CI green. **Remaining S4 (wiring):** mount `EditorScreen` in `:app` navigation + supply `pageSizePt` from imposition + a real image pipeline + the autosave binder at the app/DI layer — the *how* of that wiring (store ownership/lifecycle, projectId bootstrap, autosave binding, seam adapters) is decided in [ADR-030](#adr-030). See [spike §10.10–§10.11](spikes/s4-editor-mvi.md).
 - **Amendment (2026-10-23, W1 [ADR-136](#adr-136), Task 5):** the `Announcer` seam is removed. A failed photo pick is shown
   and spoken once by the Bench snack (`v21-bench.html` A41.3). The text above is the record of what was decided then.
+- **Note (2026-11-04, [#155](https://github.com/aritr-codes/zinely-android/issues/155)):** the text session's "no empty
+  `TextElement` leaks" held in the reducer but not on disk. `Add > Text` places the box with `text = ""`; the
+  placement is a document mutation, so it emits `Autosave` mid-session, and a `.bak` repair ([ADR-140](#adr-140)) or a
+  kill while typing reopened an invisible "Empty text" element. `JsonDocumentSerializer` now drops a `TextElement`
+  whose text is exactly `""` on write **and** on read, so already-written files heal on next open. Whitespace-only
+  text is kept: no build commits it, but it is not the placeholder. A clean zine writes the same bytes as before.
+  No new ADR: this restores a decided invariant at the one serialisation seam; it decides nothing new.
 
 
 ## ADR-030 {#adr-030}
