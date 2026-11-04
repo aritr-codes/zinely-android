@@ -16673,7 +16673,8 @@ S6.3, so an event sent while no screen collects already waited. Two real losses 
 collector waiting in `receive` is only scheduled on the frame dispatcher, and a rotation in that gap dropped it;
 `HomeViewModel.eventQueue` now puts such an event back through `onUndeliveredElement`. (2) A `Message` waiting behind
 the folder snack was already off the queue; `ZineLibraryScreen` keeps it in `rememberSaveable` until it shows, and
-lets it go then, so a shown message is not shown twice. Timeouts: before API 29 Compose returns `Long.MAX_VALUE` for
+lets it go then, so a shown message is not shown twice. Still open: a folder snack showing during a rotation is
+plain `remember` state and goes with its Undo, as before (not re-shown, by design of this fix). Timeouts: before API 29 Compose returns `Long.MAX_VALUE` for
 a bar with a control while touch exploration is on (checked in `AndroidAccessibilityManager` bytecode, Compose UI
 1.10.4), copying the pre-Q Material Snackbar. On the Shelf that held the collector forever. Every Shelf and Bench
 timer now goes through `transientTimeoutMillis` (`core:ui`), capped at 120 s, which is Android 10+'s longest
