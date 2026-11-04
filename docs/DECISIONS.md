@@ -155,7 +155,7 @@
 | [ADR-144](#adr-144) | **Sheet action pairs share one geometry.** A dismiss beside a committing button on a sheet is a bordered sibling of it (same radius, border, shadow, press, 48px; surface fill and ink words against the commit's leaf fill and on-leaf words; only the commit may be disabled). The folder name sheet's Cancel, bare text beside a dimmed pill, is the one outlier in the frozen corpus and becomes `.go.ghost`. Look only: A28.14 behaviour unchanged. Library A49 | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
 | [ADR-145](#adr-145) | **The middle of a piece moves it.** A handle's 48dp hit box steps outward instead of covering a small piece's middle; a tap in a box away from its mark is a tap on the page (A50.6). Nothing drawn changes. | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
 | [ADR-147](#adr-147) | **Saved format v4: a description on photos and Art; a file says v4 only when it holds one.** `description: String?` on `ImageElement` and `DecorElement`, absent when none (`explicitNulls = false`), capped at entry to 250 code points (growth only); identity v3→v4 migrator; the writer stamps 3, or 4 when the zine holds a description (never below 3), so an undescribed zine stays a v3 file and only a backup holding a described piece is refused by older builds. No layout marker. Entry is Bench A52's Describe | Proposed (design frozen under delegation; not built; number assigned at merge) |
-| [ADR-TBD-LT](#adr-tbd-lt) | **Large text on a small phone: the first-run hint waits for room above the piece; the save notice stacks.** The move/resize hint is drawn only when it fits whole above the selected piece (12dp clear of the handle marks) and is never shown in Reframe; otherwise it waits, unseen. The save-failure notice puts Try now / Got it under its line when it is narrower than 20 text sizes. Verb-bar label cuts left to a bar-wide amendment. Bench A54; #148, #149, #158 | Proposed (A54 frozen 2026-11-04 under delegation; built; device passes owed; number assigned at merge) |
+| [ADR-149](#adr-149) | **Large text on a small phone: the first-run hint waits for room above the piece; the save notice stacks.** The move/resize hint is drawn only when it fits whole above the selected piece (12dp clear of the handle marks) and is never shown in Reframe; otherwise it waits, unseen. The save-failure notice puts Try now / Got it under its line when it is narrower than 20 text sizes. Verb-bar label cuts left to a bar-wide amendment. Bench A54; #148, #149, #158 | Proposed (A54 frozen 2026-11-04 under delegation; built; device passes owed; number assigned at merge) |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -18141,12 +18141,11 @@ Three narrow pieces 14 × 40pt side by side, 6pt apart, and a wide one below:
   on the knob's box. TalkBack not listened to (deferred by the owner); nothing here is in the platform tree.
 
 
-## ADR-TBD-LT {#adr-tbd-lt}
+## ADR-149 {#adr-149}
 
 ### Large text on a small phone: the first-run hint waits for room, the save notice stacks
 
-**Status:** Proposed, 2026-11-04. **Not accepted.** The number is a placeholder, assigned on merge with `main`
-(heading, anchor and every `ADR-TBD-LT` change together). Built on `fix/bench-large-text-148-149-158`. The design is
+**Status:** Proposed, 2026-11-04. **Not accepted.** Numbered ADR-149 at merge (drafted as ADR-TBD-LT). Built on `fix/bench-large-text-148-149-158`. The design is
 amendment **A54** to the frozen [`v21-bench.html`](design/mockups/v21-bench.html), frozen under the owner's delegation
 of 2026-10-12 (the owner may overrule it). Closes issues #148, #149 and #158, the follow-ups of
 [D-119](design/V2-SPEC-DEFECTS.md#d-119). **Amends** nothing frozen above A54: neither surface was ever drawn; both

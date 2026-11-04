@@ -7960,7 +7960,7 @@ using a test image pushed under a distinctive name; it was the only image on the
   as a follow-up. A smaller pre-existing observation: at 2.0 the verb bar cuts its last label ("Duplica…",
   "Across fol…").
 
-**Follow-ups, 2026-11-04** ([ADR-TBD-LT](../DECISIONS.md#adr-tbd-lt), Bench A54 in `v21-bench.html`):
+**Follow-ups, 2026-11-04** ([ADR-149](../DECISIONS.md#adr-149), Bench A54 in `v21-bench.html`):
 
 | Follow-up | Issue | Outcome |
 |---|---|---|
