@@ -161,6 +161,27 @@ class TextStyleIntentTest {
         assertNoStep(model(txt("a", text = "καλημέρα", style = TextStyle(fontFamily = "Fraunces"))), Intent.StyleText("a", fontFamily = "Shantell Sans"))
     }
 
+    @Test
+    fun `a Hand text already below the minimum keeps every other change, and can step back up`() {
+        val old = model(txt("a", style = TextStyle(sizePt = 10.0, fontFamily = "Shantell Sans")))
+        assertTrue(el(styleOf(old, Intent.StyleText("a", bold = true)), "a").style.bold)
+        assertEquals(11.0, el(styleOf(old, Intent.StyleText("a", sizePt = 11.0)), "a").style.sizePt)
+        assertNoStep(old, Intent.StyleText("a", sizePt = 9.0))
+    }
+
+    @Test
+    fun `a change to Hand undoes to the old voice and redo brings Hand back, the rest of the style untouched`() {
+        val styled = TextStyle(sizePt = 18.0, bold = true, italic = true, fontFamily = "Fraunces")
+        val start = model(txt("a", style = styled))
+
+        val hand = EditorReducer.reduce(start, Intent.StyleText("a", fontFamily = "Shantell Sans")).model
+        val undone = EditorReducer.reduce(hand, Intent.Undo).model
+        assertEquals(start.document, undone.document)
+        val redone = EditorReducer.reduce(undone, Intent.Redo).model
+        assertEquals(styled.copy(fontFamily = "Shantell Sans"), el(redone, "a").style)
+        assertEquals(hand.document, redone.document)
+    }
+
     private fun assertNoStep(start: EditorModel, intent: Intent.StyleText) {
         val r = EditorReducer.reduce(start, intent)
         assertEquals(start.document, r.model.document)

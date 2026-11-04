@@ -2,7 +2,7 @@
 
     python tools/build-document-fonts.py            fetch into render-android/src/main/assets/fonts/ and check the pinned hashes
     python tools/build-document-fonts.py --measure  no download: check the files on disk against the pins, then
-                                                    print coverage and size against the bundled Inter faces
+                                                    print coverage and size of Book and Hand against Inter
     python tools/build-document-fonts.py --hand     rebuild the four Hand (Shantell Sans) faces from the pinned
                                                     release, and check them against the pins (needs fontTools, brotli)
 
@@ -61,13 +61,13 @@ HAND_FACES = {  # file -> (wght, ital, style name, macStyle); SHA-256 of what --
 }
 HAND_PINNED = {  # same shape as PINNED, so the test reads both with one rule
     "ShantellSans-Regular.ttf": ("built",
-                                "3f66c2328eaa5b108b95c56dc66c84290933319b22bcfd1f1ce8a83f1d78d767"),
+                                "ff4807a120fa4debae944c49b92b878d106a6f6df69c33ec6d67658bf1133f95"),
     "ShantellSans-Bold.ttf": ("built",
-                                "3ec2a0b60640fa9ab1f2555c83e40ba826d9bcc2eccdcba9984bed4c67e3dbde"),
+                                "9807970e1ade20bac318757c1cefe59f216f41a0e388289dd5e03e0de7ce0dd5"),
     "ShantellSans-Italic.ttf": ("built",
-                                "9805da5a531d78784fe52ed584105b3f8a3ad4743294b39fb85f0ece4a8f15d2"),
+                                "19fe242bed9224f68ff7625e008322d6ade63c56ba3c62683eb44b680a28c7c3"),
     "ShantellSans-BoldItalic.ttf": ("built",
-                                "8f48314704e9ff1b977075d747a7e5638254d42cb2612a0745f84f2dbf9ab656"),
+                                "6264066b97a25b08e09d7e66d6cb5507ce8de6604af9b243352e255426595431"),
 }
 HAND_DROPPED = [(0x370, 0x52F), (0x1C80, 0x1C8F), (0x1F00, 0x1FFF), (0x2DE0, 0x2DFF), (0xA640, 0xA69F)]  # Greek, Cyrillic + extensions
 
@@ -119,9 +119,14 @@ def x_top(font):
 
 
 def measure():
+    measure_family("Fraunces", FACES)
+    measure_family("Shantell Sans", list(HAND_FACES))
+
+
+def measure_family(family, faces):
     from fontTools.ttLib import TTFont
-    pairs = [(file, TTFont(OUT / file), TTFont(INTER / f"Inter-{file.split('-')[1]}")) for file in FACES]
-    print("\ncoverage (code points present): Fraunces | Inter")
+    pairs = [(file, TTFont(OUT / file), TTFont(INTER / f"Inter-{file.split('-')[1]}")) for file in faces]
+    print(f"\n== {family} ==\ncoverage (code points present): {family} | Inter")
     for file, book, plain in pairs:
         cells = []
         for block, (lo, hi) in BLOCKS.items():
@@ -130,14 +135,14 @@ def measure():
         print(f"  {file}: " + "; ".join(cells) + f"; all {len(book.getBestCmap())}|{len(plain.getBestCmap())}")
     common = set.intersection(*(set(book.getBestCmap()) for _, book, _ in pairs))
     inter = set.intersection(*(set(plain.getBestCmap()) for _, _, plain in pairs))
-    print(f"  in all four Fraunces faces: {len(common)}; in all four Inter faces: {len(inter)}")
-    print("  in Fraunces, not in Inter: " + (" ".join(f"U+{c:04X}" for c in sorted(common - inter)) or "none"))
-    print("\nwidth of Fraunces against Inter, same style, same point size (advance sums: no kerning, no ligatures)")
+    print(f"  in all four {family} faces: {len(common)}; in all four Inter faces: {len(inter)}")
+    print(f"  in {family}, not in Inter: " + (" ".join(f"U+{c:04X}" for c in sorted(common - inter)) or "none"))
+    print(f"\nwidth of {family} against Inter, same style, same point size (advance sums: no kerning, no ligatures)")
     for label, text in SAMPLES.items():
         print(f"  {label:9}" + "".join(
             f"  {file.split('-')[1][:-4]} {advance(book, text) / advance(plain, text) - 1:+.1%}"
             for file, book, plain in pairs))
-    print("\nheight of the drawn x at 10 pt, mm (Fraunces | Inter); line height as a share of the point size")
+    print(f"\nheight of the drawn x at 10 pt, mm ({family} | Inter); line height as a share of the point size")
     for file, book, plain in pairs:
         mm = [x_top(f) / f["head"].unitsPerEm * 10 * 25.4 / 72 for f in (book, plain)]
         line = [(f["hhea"].ascent - f["hhea"].descent + f["hhea"].lineGap) / f["head"].unitsPerEm
@@ -185,6 +190,8 @@ def build_hand():
         font["head"].macStyle = mac
         font["OS/2"].fsSelection = (font["OS/2"].fsSelection & ~0b1100001) | (
             0b1 if mac & 2 else 0) | (0b100000 if mac & 1 else 0) | (0b1000000 if mac == 0 else 0)
+        # Keep upstream's head.modified: fontTools otherwise stamps the build time and no two runs match the pin.
+        font.recalcTimestamp = False
         buf = io.BytesIO()
         font.save(buf)
         built[name] = buf.getvalue()
@@ -200,7 +207,7 @@ def build_hand():
 
 def check():
     """Stop unless every file on disk is the pinned one."""
-    for name, (_, pinned) in PINNED.items():
+    for name, (_, pinned) in {**PINNED, **HAND_PINNED}.items():
         if not where(name).is_file():
             sys.exit(f"{name}: not on disk; run without arguments to fetch it")
         if hashlib.sha256(where(name).read_bytes()).hexdigest() != pinned:
