@@ -7960,6 +7960,15 @@ using a test image pushed under a distinctive name; it was the only image on the
   as a follow-up. A smaller pre-existing observation: at 2.0 the verb bar cuts its last label ("Duplica…",
   "Across fol…").
 
+**Follow-ups, 2026-11-04** ([ADR-149](../DECISIONS.md#adr-149), Bench A54 in `v21-bench.html`):
+
+| Follow-up | Issue | Outcome |
+|---|---|---|
+| The hint covers the piece it teaches about | #148 | **Designed and built (A54.1/A54.2).** The hint is drawn only when it fits whole 12dp above the selected piece; otherwise it waits, unseen. At 2.0 on 360 × 640 a centred piece of the default size leaves no room, so it waits there. The Ink-tray case in #148's comment is the same rule (the page lift counts) |
+| The photo hint's last line is cut | #158 | **Designed and built (A54.2/A54.3).** A hint is never drawn unless it fits whole, and it is not shown in a Reframe session, where the canvas is shortest and its words are wrong |
+| The save failure is taller than the screen | #149 | **Designed and built (A54.4).** Narrower than 20 text sizes, the buttons stand under the line. The large-text test now runs it on the 640dp phone instead of a 1400dp one |
+| The verb bar cuts its last labels at 2.0 | — | **Open, not changed (A54.5).** The frozen A21 bar's label width is bar-wide; it needs a bar-wide amendment, as ADR-147's 2026-11-04 note says. Not a regression |
+
 ---
 
 ### D-121 — the paper chooser had no V2.1 drawing, and two-size words sit in three frozen files {#d-121}

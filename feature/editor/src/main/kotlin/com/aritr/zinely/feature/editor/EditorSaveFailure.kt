@@ -9,6 +9,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -24,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -252,22 +255,19 @@ public fun EditorSaveFailure(
         exit = if (reduceMotion) ExitTransition.None else fadeOut(tween(NoticeFadeOutMillis)),
     ) {
         val colors = ZinelyTheme.v21Colors
-        Row(
-            modifier = Modifier
-                .testTag(EditorSaveFailureTestTag)
-                .graphicsLayer { rotationZ = NoticeRotation }
-                .clip(NoticeShape)
-                .background(colors.jam)
-                .border(NoticeBorder, colors.inkLine, NoticeShape)
-                .padding(
-                    start = NoticePaddingStart,
-                    end = NoticePaddingEnd,
-                    top = NoticePaddingV,
-                    bottom = NoticePaddingV,
-                ),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(NoticeGap),
-        ) {
+        val notice = Modifier
+            .testTag(EditorSaveFailureTestTag)
+            .graphicsLayer { rotationZ = NoticeRotation }
+            .clip(NoticeShape)
+            .background(colors.jam)
+            .border(NoticeBorder, colors.inkLine, NoticeShape)
+            .padding(
+                start = NoticePaddingStart,
+                end = NoticePaddingEnd,
+                top = NoticePaddingV,
+                bottom = NoticePaddingV,
+            )
+        val line: @Composable (Modifier) -> Unit = { lineModifier ->
             Text(
                 text = saveFailureText(kind),
                 style = TextStyle(
@@ -277,19 +277,49 @@ public fun EditorSaveFailure(
                     lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                     color = colors.onJam,
                 ),
-                modifier = Modifier
-                    // `.snack span{flex:1}` — the line takes the residual width, the actions their own.
-                    .weight(1f, fill = false)
-                    // Scope the assertive live region to the message only — not the buttons — so TalkBack
-                    // announces the failure (and does not wait behind other speech), while each button
-                    // stays an independent, focusable, clickable control.
-                    .semantics { liveRegion = LiveRegionMode.Assertive },
+                // Scope the assertive live region to the message only — not the buttons — so TalkBack
+                // announces the failure (and does not wait behind other speech), while each button
+                // stays an independent, focusable, clickable control.
+                modifier = lineModifier.semantics { liveRegion = LiveRegionMode.Assertive },
             )
+        }
+        val actions: @Composable () -> Unit = {
             NoticeAction(SaveFailureRetryLabel, SaveFailureRetryTag, colors.onJam, onRetry)
             NoticeAction(SaveFailureDismissLabel, SaveFailureDismissTag, colors.onJam, onDismiss)
         }
+        BoxWithConstraints {
+            // Bench A54.4 (#149): narrower than 20 times its text size, the buttons beside the line squeezed it
+            // into a column taller than the screen, so they stand under it instead. The text size as drawn, so
+            // Android 14's gentler scaling of large text is measured, not assumed.
+            val stacked = saveNoticeStacks(maxWidth.value, with(LocalDensity.current) { NoticeTextSize.toDp() }.value)
+            if (stacked) {
+                Column(modifier = notice, verticalArrangement = Arrangement.spacedBy(NoticeGap)) {
+                    line(Modifier)
+                    Row(
+                        modifier = Modifier.align(Alignment.End),
+                        horizontalArrangement = Arrangement.spacedBy(NoticeGap),
+                    ) { actions() }
+                }
+            } else {
+                Row(
+                    modifier = notice,
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(NoticeGap),
+                ) {
+                    // `.snack span{flex:1}` — the line takes the residual width, the actions their own.
+                    line(Modifier.weight(1f, fill = false))
+                    actions()
+                }
+            }
+        }
     }
 }
+
+/** Bench A54.4: the save notice stacks its buttons under the line when it is narrower than this many text sizes. */
+internal const val NoticeStackEms: Float = 20f
+
+/** Bench A54.4, pure: whether a notice [widthDp] wide, its text drawn [textSizeDp] tall, stacks its buttons. */
+internal fun saveNoticeStacks(widthDp: Float, textSizeDp: Float): Boolean = widthDp < textSizeDp * NoticeStackEms
 
 /**
  * One `.snack button` — bold underlined `paper`, on no ground at all.
