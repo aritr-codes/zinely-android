@@ -454,7 +454,7 @@ class EditorScreenTest {
         // Discoverability teach: once a placed element is single-selected (handles visible, Idle), the
         // one-time hint names the handles and lower turn controls already on screen.
         val store = store()
-        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects, Idle
+        store.dispatch(Intent.PlaceText(midPageTextBox, "hi")) // auto-selects, Idle
         setScreen(store)
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
         composeRule.onNodeWithText(Copy.MoveResizeHint.TEXT).assertIsDisplayed()
@@ -463,7 +463,11 @@ class EditorScreenTest {
 
     @Test
     fun a_first_selected_photo_explains_that_Reframe_crops_inside() {
-        setScreen(selectedPhoto())
+        // Low on the page: Bench A54.1 draws the hint only with room above the piece.
+        val store = store().also {
+            it.dispatch(Intent.CommitAddImage(ImageElement(id = "photo", transform = Transform(20.0, 76.0, 40.0, 20.0), assetId = "a")))
+        }
+        setScreen(store)
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText(Copy.MoveResizeHint.PHOTO_TEXT).assertIsDisplayed()
@@ -483,7 +487,7 @@ class EditorScreenTest {
     fun tapping_got_it_dismisses_the_move_resize_hint_for_the_session() {
         // Easy, touch-safe dismissal; screen-local one-time — re-selecting must not bring it back.
         val store = store()
-        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        store.dispatch(Intent.PlaceText(midPageTextBox, "hi"))
         val id = store.uiState.value.selection.single()
         setScreen(store)
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
@@ -506,7 +510,7 @@ class EditorScreenTest {
         // true, selecting an element shows no hint — the across-sessions promise, distinct from the
         // session-local "Got it" latch.
         val store = store()
-        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects
+        store.dispatch(Intent.PlaceText(midPageTextBox, "hi")) // auto-selects
         setScreen(store, moveResizeHintSeen = true)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
@@ -517,7 +521,7 @@ class EditorScreenTest {
         // ADR-032 flash-avoidance: a null gate (value not yet loaded) must NOT show the hint, so it can't
         // flash before the persisted state is known. It becomes eligible only once a real `false` arrives.
         val store = store()
-        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects
+        store.dispatch(Intent.PlaceText(midPageTextBox, "hi")) // auto-selects
         setScreen(store, moveResizeHintSeen = null)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
@@ -529,7 +533,7 @@ class EditorScreenTest {
         // just the session latch — otherwise the flag never survives the process.
         var reportedSeen = false
         val store = store()
-        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        store.dispatch(Intent.PlaceText(midPageTextBox, "hi"))
         setScreen(store, onMoveResizeHintSeen = { reportedSeen = true })
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
 
@@ -630,9 +634,12 @@ class EditorScreenTest {
         // deviation in ADR-094 row 4.10 rather than left to this comment.
         val signals = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
         val store = store()
-        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects → hint
+        store.dispatch(Intent.PlaceText(midPageTextBox, "hi")) // auto-selects → hint
         composeRule.mainClock.autoAdvance = false
         setScreen(store, savedSignals = signals)
+        composeRule.waitForIdle()
+        // A54.1 measures the piece on the page, so let the first viewport push land (a frame) before asking.
+        composeRule.mainClock.advanceTimeByFrame()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
 
@@ -706,7 +713,7 @@ class EditorScreenTest {
         // honest failure banner at the top of the canvas; selecting an element raises the hint, but a
         // known failure keeps it hidden and shows the banner instead.
         val store = store()
-        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects → hint
+        store.dispatch(Intent.PlaceText(midPageTextBox, "hi")) // auto-selects → hint
         setScreen(store, saveError = SaveErrorKind.Generic)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
@@ -928,9 +935,11 @@ class EditorScreenTest {
     @Test
     @Config(qualifiers = "night")
     fun the_move_resize_hint_is_legible_at_night() {
-        setScreen(selectedText(), moveResizeHintSeen = false)
+        // Low on the page: Bench A54.1 draws the hint only with room above the piece.
+        setScreen(store().also { it.dispatch(Intent.PlaceText(midPageTextBox, "Hi")) }, moveResizeHintSeen = false)
         composeRule.waitForIdle()
-        val hint = composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).fetchSemanticsNode().boundsInWindow
+        val hint = composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
+            .fetchSemanticsNode().boundsInWindow
         val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
         // The card's own fill, just inside its left end, clear of the 2dp border and of the words.
         val fill = bmp.getPixel(hint.left.toInt() + 24, hint.center.y.toInt())
@@ -1364,7 +1373,7 @@ class EditorScreenTest {
         // test did: the callback fires AND the selection survives. The `zIndex` is what makes both true.
         var seen = false
         val store = store()
-        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        store.dispatch(Intent.PlaceText(midPageTextBox, "hi"))
         val id = store.uiState.value.selection.single()
         setScreen(store, onMoveResizeHintSeen = { seen = true })
 

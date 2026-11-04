@@ -60,6 +60,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -2149,7 +2150,9 @@ public fun EditorScreen(
                         !moveResizeHintDismissed && moveResizeHintSeen == false && !saveErrorVisible &&
                         // The Type bar opens under the top of the canvas too; at large text the hint (which
                         // names Arrange since ADR-129) grew tall enough to cover its Font row and take its taps.
-                        !typeBarVisible
+                        !typeBarVisible &&
+                        // Bench A54.3: its words are about the frame; inside Reframe a drag moves the photo.
+                        reframing == null
                 // Room palette, like the verb bar below: the hint is chrome over the page, and inside the
                 // island it took the light `ink` onto the room's dark card at night (found on device, 2026-10-14).
                 if (showMoveResizeHint) CompositionLocalProvider(
@@ -2157,26 +2160,51 @@ public fun EditorScreen(
                     LocalZinelyV21Colors provides roomColors21,
                 ) {
                     DisposableEffect(Unit) { onDispose { chromeBoundsInWindow.remove("hint") } }
-                    EditorMoveResizeHint(
-                        photo = uiState.selection.singleOrNull()?.let { id ->
-                            currentPage.elements.firstOrNull { it.id == id }
-                        } is ImageElement,
-                        onDismiss = {
-                            moveResizeHintDismissed = true
-                            onMoveResizeHintSeen()
+                    val hintPiece = uiState.selection.singleOrNull()?.let { id ->
+                        currentPage.elements.firstOrNull { it.id == id }
+                    }
+                    // Bench A54.1: the piece's top as drawn, in canvas px: its turned box, the page offset, and
+                    // the lift a tray gives the page (`panDp` is the same translation the page layers take).
+                    val hintPieceTopPx = hintPiece?.let {
+                        ((turnedTopPt(it.transform) + paperOffset.y) * paperScale).toFloat() +
+                            with(density) { panDp.toPx() }
+                    }
+                    Layout(
+                        content = {
+                            EditorMoveResizeHint(
+                                photo = hintPiece is ImageElement,
+                                onDismiss = {
+                                    moveResizeHintDismissed = true
+                                    onMoveResizeHintSeen()
+                                },
+                                modifier = Modifier.onGloballyPositioned { noteChrome("hint", it) },
+                            )
                         },
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            // The hint is composed after the page gesture surface, but that surface is
-                            // `fillMaxSize()` over the WHOLE canvas — so wherever the two overlap, the one
-                            // control this notice has is competing with a full-screen tap handler whose miss
-                            // branch deselects. Measured: an injected tap on `Got it` at a 400dp host does not
-                            // reach its handler and the selection is cleared instead, while the same button's
-                            // semantics action works and the same tap works at 800dp.
-                            .zIndex(1f)
-                            .padding(top = 8.dp)
-                            .onGloballyPositioned { noteChrome("hint", it) },
-                    )
+                        // The hint is composed after the page gesture surface, but that surface is
+                        // `fillMaxSize()` over the WHOLE canvas — so wherever the two overlap, the one
+                        // control this notice has is competing with a full-screen tap handler whose miss
+                        // branch deselects. Measured: an injected tap on `Got it` at a 400dp host does not
+                        // reach its handler and the selection is cleared instead, while the same button's
+                        // semantics action works and the same tap works at 800dp. This wrapper declares no
+                        // pointer input, so everywhere but the hint a touch still reaches the page.
+                        modifier = Modifier.matchParentSize().zIndex(1f),
+                    ) { measurables, constraints ->
+                        val hint = measurables.single().measure(constraints.copy(minWidth = 0, minHeight = 0))
+                        val top = HintTopGap.roundToPx()
+                        // Bench A54.2: a hint that does not fit whole above the piece waits. It is measured but not
+                        // placed, so it is neither drawn nor in the platform tree, and nothing marks it seen.
+                        val fits = hintPieceTopPx != null &&
+                            moveResizeHintFits(hint.height, hintPieceTopPx, top.toFloat(), HintPieceKeep.toPx())
+                        layout(constraints.maxWidth, constraints.maxHeight) {
+                            if (fits) {
+                                hint.place((constraints.maxWidth - hint.width) / 2, top)
+                            } else if ("hint" in chromeBoundsInWindow) {
+                                // An unplaced hint reports no position, so drop the bounds it had when it last
+                                // stood, or the knob would keep hiding under a hint that is no longer drawn.
+                                chromeBoundsInWindow.remove("hint")
+                            }
+                        }
+                    }
                 }
 
                 // The transient "Saved ✨" autosave reassurance (ADR-034). Pinned to the top-*end* corner —
