@@ -47,4 +47,21 @@ class RepairNotesConcurrencyTest {
             assertTrue(id, Files.list(root.resolve("projects/$id")).use { s -> s.noneMatch { it.toString().endsWith(".tmp") } })
         }
     }
+
+    @Test
+    fun `given a note cleared and the zine repaired again then the new note differs from the one cleared`() {
+        // Given a details note that the maker has dismissed (#147 item 4)
+        val root = tmp.root.toPath()
+        val notes = RepairNotes(root, AtomicFileStore())
+        Files.createDirectories(root.resolve("projects/z"))
+        notes.addDetails("z", previousTitle = "Old")
+        val first = notes.noteOf("z")!!
+        notes.clear("z", first)
+
+        // When the same zine is repaired again with the same old name
+        notes.addDetails("z", previousTitle = "Old")
+
+        // Then the Shelf can tell it from the dismissed one
+        assertTrue(first != notes.noteOf("z"))
+    }
 }
