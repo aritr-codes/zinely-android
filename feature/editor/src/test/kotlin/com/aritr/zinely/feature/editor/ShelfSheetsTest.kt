@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.editor
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertCountEquals
@@ -46,112 +47,91 @@ class ShelfSheetsTest {
         editedLabel = "Edited yesterday",
     )
 
-    /** `.papers` lists A4 first: the frozen markup's order is the recommendation. */
+    /** A35.2 / A35.3: four rows, the preferred paper first, then A4, US Letter, US Legal, A5; one tap starts the zine. */
     @Test
-    fun `the create sheet offers A4 before Letter, and choosing one starts the zine`() {
+    fun `the start sheet offers the four papers and choosing one starts the zine`() {
         var chosen: PaperSize? = null
         setContent { ShelfCreateSheet(visible = true, onDismiss = {}, onChoosePaper = { chosen = it }) }
 
-        assertEquals(listOf(PaperSize.A4, PaperSize.LETTER), ShelfPaperChoices)
-        composeRule.onNodeWithTag(homePaperChoiceTestTag(PaperSize.A4)).performClick()
-        assertEquals(PaperSize.A4, chosen)
+        assertEquals(listOf(PaperSize.A4, PaperSize.LETTER, PaperSize.LEGAL, PaperSize.A5), ShelfPaperChoices)
+        PaperSize.entries.forEach { composeRule.onNodeWithTag(homePaperChoiceTestTag(it)).assertExists() }
+        composeRule.onNodeWithTag(homePaperChoiceTestTag(PaperSize.LEGAL)).performClick()
+        assertEquals(PaperSize.LEGAL, chosen)
     }
 
     @Test
-    fun `the create sheet leads with the saved preferred paper`() {
-        assertEquals(
-            listOf(PaperSize.LETTER, PaperSize.A4),
-            shelfPaperChoices(PaperSize.LETTER),
-        )
+    fun `the start sheet leads with the saved preferred paper, then the fixed order`() {
+        assertEquals(listOf(PaperSize.LETTER, PaperSize.A4, PaperSize.LEGAL, PaperSize.A5), shelfPaperChoices(PaperSize.LETTER))
+        assertEquals(listOf(PaperSize.A5, PaperSize.A4, PaperSize.LETTER, PaperSize.LEGAL), shelfPaperChoices(PaperSize.A5))
     }
 
     @Test
     fun `every paper size has its own name and dimensions, never US Letter's (ADR-150 decision 9)`() {
         assertEquals("US Legal", PaperSize.LEGAL.choiceName)
-        assertEquals("8.5 × 14 in", PaperSize.LEGAL.choiceDimensions)
+        assertEquals("8.5 × 14 in", PaperSize.LEGAL.choiceDimensions)
         assertEquals("A5", PaperSize.A5.choiceName)
-        assertEquals("148 × 210 mm", PaperSize.A5.choiceDimensions)
+        assertEquals("148 × 210 mm", PaperSize.A5.choiceDimensions)
         assertEquals(PaperSize.entries.size, PaperSize.entries.map { it.choiceName }.toSet().size)
-        // Until A35's picker is built, the Start sheet stays A4 and US Letter, even when Legal is preferred.
-        assertEquals(listOf(PaperSize.A4, PaperSize.LETTER), shelfPaperChoices(PaperSize.LEGAL))
     }
 
+    /** A35.11: each row is ONE node, role button, named by its words with units said in full, the paper first. */
     @Test
-    fun `the create sheet names each stock and its real dimensions`() {
+    fun `each row is one button named by its words in full`() {
         setContent { ShelfCreateSheet(visible = true, onDismiss = {}, onChoosePaper = {}) }
-        composeRule.onNodeWithText("210 × 297 mm").assertExists()
-        composeRule.onNodeWithText("8.5 × 11 in").assertExists()
-    }
-
-    /**
-     * The chooser's one job is to let you compare two sheets, so both are drawn at **one** scale.
-     * Letter's frozen `56×72` was ~4% oversized, which inverted the relation: it drew the physically
-     * smaller sheet as the larger one. These four assertions pin the fix from four directions — the
-     * shared scale, each stock's own proportion, the relation between them, and the un-inverted area.
-     */
-    @Test
-    fun `both stocks are drawn from one common scale`() {
-        setContent { ShelfCreateSheet(visible = true, onDismiss = {}, onChoosePaper = {}) }
-
-        val a4 = stockOf(PaperSize.A4)
-        val letter = stockOf(PaperSize.LETTER)
-
-        // The scale each stock was actually drawn at, read back off the laid-out node, against the
-        // nominal one — never against another measurement, which would spend the budget twice: the
-        // two stocks round in opposite directions (A4's width down 0.6%, Letter's up 0.4%).
-        val nominal = 74.0 / 841.890
-        val scales = listOf(
-            a4.width / PaperSize.A4.portrait.width,
-            a4.height / PaperSize.A4.portrait.height,
-            letter.width / PaperSize.LETTER.portrait.width,
-            letter.height / PaperSize.LETTER.portrait.height,
+        val legal = composeRule.onNodeWithTag(homePaperChoiceTestTag(PaperSize.LEGAL)).fetchSemanticsNode().config
+        assertEquals(
+            listOf(
+                "US Legal, 8.5 by 14 inches. Pages 3.5 by 4.25 inches, wider than Letter’s. Prints on US Legal paper " +
+                    "only, so check that your printer takes it.",
+            ),
+            legal[SemanticsProperties.ContentDescription],
         )
-        // One scale, to within the whole-dp rounding the spec's whole pixels also carry: ±0.5dp on
-        // the shortest edge (52dp) is ±0.96%, and the worst real case here is 0.62%. A per-stock
-        // literal 4% out — the defect — is well outside it.
-        scales.forEach { assertEquals(nominal, it, nominal * 0.01) }
+        assertEquals(Role.Button, legal[SemanticsProperties.Role])
+        // A35.11: no "selected", no position: the rows are buttons, not a list of choices.
+        assertTrue(SemanticsProperties.Selected !in legal)
     }
 
     @Test
-    fun `each stock keeps its real proportion, and Letter is the wider, shorter sheet`() {
+    fun `the start sheet names each stock, its real dimensions and its line`() {
         setContent { ShelfCreateSheet(visible = true, onDismiss = {}, onChoosePaper = {}) }
-
-        val a4 = stockOf(PaperSize.A4)
-        val letter = stockOf(PaperSize.LETTER)
-
-        assertEquals(841.890 / 595.276, a4.height / a4.width, 0.02)
-        assertEquals(792.0 / 612.0, letter.height / letter.width, 0.02)
-        assertTrue("Letter is the wider sheet", letter.width > a4.width)
-        assertTrue("Letter is the shorter sheet", letter.height < a4.height)
-    }
-
-    /** The defect stated as its consequence: A4 has the greater area, and must be drawn that way. */
-    @Test
-    fun `the drawn areas are no longer inverted`() {
-        setContent { ShelfCreateSheet(visible = true, onDismiss = {}, onChoosePaper = {}) }
-
-        val a4 = stockOf(PaperSize.A4)
-        val letter = stockOf(PaperSize.LETTER)
-        val trueRatio = (595.276 * 841.890) / (612.0 * 792.0)   // 1.0339 — A4 is the larger sheet
-        val drawnRatio = (a4.width * a4.height) / (letter.width * letter.height)
-
-        assertTrue("A4 must be drawn larger than Letter, was $drawnRatio", drawnRatio > 1.0)
-        assertEquals(trueRatio, drawnRatio, 0.03)
+        composeRule.onNodeWithText("210 × 297 mm", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText("8.5 × 11 in", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText(
+            "Pages 52.5 × 74 mm, the smallest zine. Prints on A5 paper only, so check that your printer takes it.",
+            useUnmergedTree = true,
+        ).assertExists()
+        composeRule.onNodeWithText("Which paper will you print on? A zine keeps the paper it starts on.").assertExists()
+        composeRule.onNodeWithText("Eight pages from one folded sheet.", useUnmergedTree = true).assertExists()
     }
 
     /**
-     * The stocks differ in height by 4dp, so each sits in a slot as tall as the tallest. Without it
-     * the two tiles' name and dimension rows would sit at different heights — a comparison aid that
-     * makes the two sides harder to compare.
+     * A35.4: ONE scale for all four, re-based to 56dp on US Legal's 1008pt so the tallest fits. These pin the scale,
+     * each stock's own proportion and the relations the drawing exists to show.
      */
     @Test
-    fun `the two tiles stay the same height, so their labels stay level`() {
+    fun `all four stocks are drawn from one common scale`() {
         setContent { ShelfCreateSheet(visible = true, onDismiss = {}, onChoosePaper = {}) }
+        val nominal = 56.0 / 1008.0
+        PaperSize.entries.forEach { paper ->
+            val s = stockOf(paper)
+            // Whole-dp rounding on a 23dp edge is up to ±2.2%; a stock on another scale is far outside it.
+            assertEquals("$paper width", nominal, s.width / paper.portrait.width, nominal * 0.025)
+            assertEquals("$paper height", nominal, s.height / paper.portrait.height, nominal * 0.025)
+        }
+        assertEquals(56.0, stockOf(PaperSize.LEGAL).height, 0.5)
+    }
 
-        val a4 = boundsOf(homePaperChoiceTestTag(PaperSize.A4))
-        val letter = boundsOf(homePaperChoiceTestTag(PaperSize.LETTER))
-        assertEquals(a4.height.value.toDouble(), letter.height.value.toDouble(), 0.5)
-        assertEquals(a4.top.value.toDouble(), letter.top.value.toDouble(), 0.5)
+    @Test
+    fun `A4 stays the taller, narrower sheet and A5 the smallest`() {
+        setContent { ShelfCreateSheet(visible = true, onDismiss = {}, onChoosePaper = {}) }
+        val a4 = stockOf(PaperSize.A4)
+        val letter = stockOf(PaperSize.LETTER)
+        val legal = stockOf(PaperSize.LEGAL)
+        val a5 = stockOf(PaperSize.A5)
+        assertTrue("Letter is the wider sheet", letter.width > a4.width)
+        assertTrue("A4 is the taller sheet", a4.height > letter.height)
+        assertTrue("Legal is the tallest", legal.height > a4.height)
+        assertTrue("A5 is the smallest", a5.width * a5.height < letter.width * letter.height)
     }
 
     private fun stockOf(paper: PaperSize) = boundsOf(homePaperStockTestTag(paper)).let {

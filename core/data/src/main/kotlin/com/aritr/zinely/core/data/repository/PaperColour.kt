@@ -26,6 +26,12 @@ public enum class PaperColour(public val id: String, public val srgb: ColorRgba)
     /** What `meta.json` stores: `null` for [WHITE] (absent key), else [id]. */
     public val storedId: String? get() = if (this == WHITE) null else id
 
+    /**
+     * The colour the host multiplies over a page for this paper, or `null` for [WHITE]: White draws no layer at all,
+     * so every White zine's screens stay byte-identical (AW6.7, ADR-150 decision 5).
+     */
+    public val overlay: ColorRgba? get() = if (this == WHITE) null else srgb
+
     public companion object {
         /**
          * The colour a stored id names. Absent, unknown (a later build's paper) or malformed reads as [WHITE]; the raw

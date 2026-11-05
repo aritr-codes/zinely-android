@@ -596,6 +596,8 @@ internal fun BenchPageMiniature(
             screenPxPerPt = scale,
             modifier = Modifier.size(width = outW, height = outH),
             imageBytes = imageBytes,
+            // AW6-B.3: each thumbnail is the same page on the same paper, so the strip matches the canvas.
+            paper = LocalPaperColour.current,
         )
     }
 }

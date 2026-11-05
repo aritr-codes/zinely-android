@@ -84,6 +84,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.data.repository.PaperColour
 import com.aritr.zinely.core.model.DocumentDefaults
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PaperSize
@@ -103,6 +104,7 @@ import com.aritr.zinely.ui.theme.ZinelyV2Typography
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Press
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import java.util.Locale
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -133,6 +135,9 @@ public const val ProofFoldOpenTestTag: String = "proof-fold-open"
 // The band's `.commit` pair (ADR-101 P2 moved both out of the print recipe). The tag strings are
 // unchanged, so nothing that addressed them had to be renamed.
 public const val ProofSavePdfTestTag: String = "proof-save-pdf"
+
+/** AW6-P.7's "Your paper colour is not in the file." under the band's actions. */
+public const val ProofNotInFileTestTag: String = "proof-not-in-file"
 public const val ProofShareTestTag: String = "proof-share"
 
 /** The band's `.done` completion block, raised in place of `.commit` once a PDF is in Downloads. */
@@ -157,7 +162,12 @@ public const val ProofPaperChangedTestTag: String = "proof-paper-changed"
  * At most one drawer is open, which is why this is an enum and not two booleans — two booleans can express
  * "both open", a state the design has no drawing for.
  */
-public enum class ProofDrawer { None, Details, Fold }
+public enum class ProofDrawer {
+    None, Details, Fold,
+
+    /** AW6.3b: the paper-colour chooser, raised from Print details' row; picking or dismissing returns there. */
+    PaperColour,
+}
 
 // `proof.html` primary/back icon path data (24×24 viewport), consumed verbatim so the chrome
 // mirrors the frozen SVGs rather than re-drawing them.
@@ -320,6 +330,41 @@ public fun ProofScreen(
     defaults: DocumentDefaults = DocumentDefaults(),
     imageBytes: AssetBytesSource = EmptyAssetBytes,
     startDrawer: ProofDrawer = ProofDrawer.None,
+    // AW6: the paper the zine is loaded on. Screen-only (ADR-150 decision 5): it tints the stage and the
+    // Print details picture through [LocalPaperColour] and never reaches [onExportPdf].
+    paperColour: PaperColour = PaperColour.WHITE,
+    onPaperColourSelected: (PaperColour) -> Unit = {},
+) {
+    CompositionLocalProvider(LocalPaperColour provides paperColour) {
+        ProofScreenBody(
+            onBack, modifier, paper, onPaperSelected, onExportPdf, busyTarget, failedTarget, failure, onRetryExport,
+            onOpenSettings, savedSignals, onOpenSavedPdf, pages, pageSizePt, defaults, imageBytes, startDrawer,
+            paperColour, onPaperColourSelected,
+        )
+    }
+}
+
+@Composable
+private fun ProofScreenBody(
+    onBack: () -> Unit,
+    modifier: Modifier,
+    paper: PaperSize,
+    onPaperSelected: (PaperSize) -> Unit,
+    onExportPdf: (ProofExportTarget) -> Unit,
+    busyTarget: ProofExportTarget?,
+    failedTarget: ProofExportTarget?,
+    failure: ProofFailure,
+    onRetryExport: () -> Unit,
+    onOpenSettings: (() -> Unit)?,
+    savedSignals: Flow<String>,
+    onOpenSavedPdf: (() -> Unit)?,
+    pages: List<Page>,
+    pageSizePt: PtSize,
+    defaults: DocumentDefaults,
+    imageBytes: AssetBytesSource,
+    startDrawer: ProofDrawer,
+    paperColour: PaperColour,
+    onPaperColourSelected: (PaperColour) -> Unit,
 ) {
     val colors = ZinelyTheme.v21Colors
     val haptics = ZinelyTheme.haptics
@@ -500,6 +545,7 @@ public fun ProofScreen(
                     folded = folded,
                     staleFrom = staleFrom,
                     busyTarget = busyTarget,
+                    paperColour = paperColour,
                     onOpenDetails = { open(ProofDrawer.Details) },
                     onSavePdf = { onExportPdf(ProofExportTarget.SAVE) },
                     onShare = { onExportPdf(ProofExportTarget.SEND) },
@@ -564,7 +610,9 @@ public fun ProofScreen(
             // also threw away a save the user still had. A segmented control invites exactly this tap,
             // because tapping the selected segment is how you check which one is selected.
             onPaperSelected = { picked ->
-                if (picked != paper) {
+                // A35.8: a US Legal or A5 zine has no switch, and nothing that reaches here for one may count
+                // as a change (ADR-150 "As built" blocker): its PDF is only ever made on its own paper.
+                if (isPaperChange(paper, picked)) {
                     if (savedName != null) staleFrom = paper.displayName
                     savedName = null
                     folded = false
@@ -572,6 +620,30 @@ public fun ProofScreen(
                 }
             },
             onOpenFold = { open(ProofDrawer.Fold) },
+            paperColour = paperColour,
+            onOpenPaperColour = { open(ProofDrawer.PaperColour) },
+        )
+    }
+
+    // AW6.3b / AW6.4: the chooser, Print details' second door. A pick or a dismiss returns to the details it
+    // was raised from. The colour is not in the PDF (AW6-P.7), so a pick never touches `.done`.
+    ZSheet(
+        visible = drawer == ProofDrawer.PaperColour,
+        onDismiss = { drawerOrdinal = ProofDrawer.Details.ordinal },
+        title = Copy.PaperColour.TITLE,
+        sub = Copy.PaperColour.SUB,
+        close = ZSheetClose(Copy.Proof.CLOSE) { drawerOrdinal = ProofDrawer.Details.ordinal },
+    ) {
+        PaperColourOptions(
+            selected = paperColour,
+            onPick = { picked ->
+                if (picked != paperColour) onPaperColourSelected(picked)
+                drawerOrdinal = ProofDrawer.Details.ordinal
+            },
+            rowPaddingH = ZinelyV21Dimens.gapXs,
+            modifier = Modifier
+                .heightIn(max = drawerBodyMaxHeight())
+                .verticalScroll(rememberScrollState()),
         )
     }
 
@@ -978,6 +1050,7 @@ private fun ProofBand(
     folded: Boolean,
     staleFrom: String?,
     busyTarget: ProofExportTarget?,
+    paperColour: PaperColour,
     onOpenDetails: () -> Unit,
     onSavePdf: () -> Unit,
     onShare: () -> Unit,
@@ -1050,6 +1123,21 @@ private fun ProofBand(
                 onShare = onShare,
                 onOpenSavedPdf = onOpenSavedPdf,
                 onFoldItUp = onFoldItUp,
+            )
+        }
+        // AW6-P.7: where the file leaves, said once under both actions for a zine that is not White. Plain
+        // text, read after the actions; not a warning and not a live region. White shows nothing new.
+        if (paperColour != PaperColour.WHITE) {
+            BasicText(
+                text = Copy.PaperColour.NOT_IN_FILE,
+                modifier = Modifier.fillMaxWidth().testTag(ProofNotInFileTestTag),
+                style = TextStyle(
+                    color = colors.inkSoft,
+                    fontFamily = ZinelyV21Fonts.Work,
+                    fontSize = 12.16.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                ),
             )
         }
         }
@@ -1632,12 +1720,16 @@ private fun ProofDetailsDrawerBody(
     pageCount: Int,
     onPaperSelected: (PaperSize) -> Unit,
     onOpenFold: () -> Unit,
+    paperColour: PaperColour,
+    onOpenPaperColour: () -> Unit,
 ) {
     ProofPrintDetailsPanel(
         paper = paper,
         onPaperSelected = onPaperSelected,
         onOpenFold = onOpenFold,
         pageCount = pageCount,
+        paperColour = paperColour,
+        onOpenPaperColour = onOpenPaperColour,
         modifier = Modifier.fillMaxWidth().heightIn(max = drawerBodyMaxHeight()),
     )
 }

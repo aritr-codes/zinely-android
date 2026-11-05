@@ -18991,3 +18991,69 @@ overlay, the Proof copy) builds on it.
   `PaperSize.entries` before A35 is built would draw four tiles in a row made for two and clamp Legal's stock to A4's
   slot. The UI lane switches it with A35's rescale, so no golden moves twice. `PaperSegments` keeps its explicit A4 /
   Letter list: it is the switch, and A35.8 hides it for the other two.
+
+#### As built: UI lane (2026-11-05) {#adr-150-as-built-ui}
+
+Built on `w6/ui` (from `main` at `882f95de`, after the data lane). Not released, not Accepted.
+
+- **A35 Start sheet.** Four papers in A4, US Letter, US Legal, A5 order, the preferred one first, drawn on one scale
+  (US Legal's 1008 pt = 56 dp), so each stock's height is true to the others. Colophon lists the same four (A35.9).
+  A Legal or A5 tile's accessible name carries its size ("title, US Legal").
+- **A35.8 and the data lane's blocker.** A Legal or A5 zine's Print details shows its paper as one text fact and no
+  switch (`PaperSize.switchable`). The `ProofScreen` paper handler also refuses any change unless both sizes are
+  switchable, so the "changed from US Legal to US Legal" state cannot be reached by any path.
+- **AW6 chooser.** The zine sheet gains "Paper colour" after "Move to a folder" and before Delete; the sheet line
+  reads "A4 · Pastel yellow · 2 days ago". The chooser is a `selectableGroup` of `selectable(Role.RadioButton)` rows;
+  the platform reports each as `android.widget.RadioButton`, checkable, checked on the current one (test-checked).
+  A pick or a dismiss returns to the sheet it came from. All copy is in `core:copy`.
+- **AW6-P at Print.** Print details gains the colour row and, off White, the note; the recipe reads
+  "A4, pastel yellow paper". "Your paper colour is not in the file." shows once under the Save PDF / Share band and
+  on the zine sheet's Share & export when the colour is not White (one line under the band, not one per button).
+- **AW6-B host layer.** `LocalPaperColour` is provided around the editor and Proof; one `PaperColourViewModel` is
+  scoped to the editor back-stack entry, so the Bench and Print share a value (optimistic, reverted if the write
+  fails). The layer is drawn on the Bench canvas, the page strip, the Proof stage and the Print details sheet
+  picture (its marks and margin multiply too, as the HTML's `mix-blend-mode:multiply`). Not on the fold guide,
+  covers, or anything on the export path. Under a coloured paper the host first paints white, not the app's cream,
+  so the page reads as the paper and not paper times cream. White draws no layer and no white ground: every White
+  golden is unchanged.
+- **Tests.** `PaperColourTest`, `ShelfSheetsTest`, `PaperColourScreenTest`, `ZineSheetPaperColourTest`,
+  `PaperColourGoldenTest` (pixel checks that the layer is drawn in the stage, the sheet picture's own bounds and the
+  Bench, that White draws none, and that the Bench sheet keeps its ink edge and rounded corner),
+  `PaperLayerBelowQTest` (API 28: the page's ink shows through the paper), `ZineActionSheetTest` and
+  `ZineLibraryScreenTest` updates, `SurfaceTraversalOrderTest` (the colour row is one stop after the paper question),
+  `:app`'s `PaperColourViewModelTest` and a `LibraryZineMappingTest` case.
+- **What the device pass changed.** Three defects no Robolectric run showed, all fixed and re-checked on the emulator:
+  1. Compose's `BlendMode.Multiply` is unsupported below API 29 and falls back to source-over, so on API 24 the
+     paper **covered** every page, the strip and the sheet picture (the user's work vanished). The layer is
+     `BlendMode.Modulate` (Porter-Duff MULTIPLY): drawn on every API and the same arithmetic for an opaque paper over
+     an opaque page. `PaperLayerBelowQTest` failed first.
+  2. Below API 29 a filled rounded path with MULTIPLY blackens its bounding box outside the curve; the rounded layer
+     is now a clip around a rectangle.
+  3. The canvas's rectangular white ground painted out the Bench sheet's and the Proof leaf's 1.5dp ink edge and
+     squared the Bench's free corner (the first Pastel blue golden recorded it). Those two hosts now lay the white
+     ground inside their own edge and pass their shape, so the layer is clipped to it. The Bench focus scrim mixes
+     toward the paper as shown, not toward cream.
+- **API 24 measurement** (`W6_API24`, x86_64, 360×640 dp, WHPX; `dumpsys gfxinfo framestats`, six rounds of a scripted
+  two-way 0.9 s drag of a selected piece, ~720 frames a run, `FrameCompleted − IntendedVsync`). White: mean 19.0 /
+  23.1 ms, p50 19.7 / 20.0, p90 20.9 / 36.5. Pastel blue: mean 19.6 / 20.6 ms, p50 19.7 / 19.6, p90 20.9 / 26.1.
+  The medians are identical and the spread between two White runs is wider than between White and Pastel blue: no
+  measurable cost from the layer. The emulator misses 16.7 ms on almost every frame in both (82–90 % janky in both),
+  so this bounds the layer's cost, not the app's frame rate on a real Android 7 phone.
+- **Device passes** (emulator, QA id `com.aritr.zinely.w6qa`): API 24 (`W6_API24`) and API 36 (`Medium_Phone_API_36.1`
+  at `wm size 720x1280` / density 320), 360×640 dp, font scale 1 and 2. Pass 1, `uiautomator dump`: the chooser rows
+  are `android.widget.RadioButton`, checkable, the current one checked (and not clickable, the platform's own
+  reading of a checked radio); the zine sheet row reads "Paper colour, Pastel blue"; Share & export carries "Your
+  paper colour is not in the file."; Print details' fixed paper is one node ("US Legal, 8.5 by 14 inches. This zine
+  was made for US Legal …") with no switch; the colour row is one Button. Pass 2, a first reading of Print on A5 /
+  Pastel yellow: the screen answers "how do I print it correctly?" in order (paper, colour, the note, the recipe);
+  the fixed paper card has no chevron and reads as a fact. Observations: at font scale 2 "Paper colour" and its value
+  each wrap to two lines (nothing truncated); Pastel yellow on the yellow desk is low-contrast, the ink edge carries
+  the sheet; the zine sheet's Duplicate glyph shows a no-glyph box on API 24 (pre-existing, not W6).
+- **Interpretations and accepted differences.** "Your paper colour is not in the file." is one line under the band's
+  Save PDF / Share row, not one per button (AW6-P.7 says each carries one; a ruling may ask for two). A pick or a
+  dismiss in the chooser returns to the sheet or drawer that opened it. **Accepted difference from A35.10:** the Start
+  sheet's head stays pinned above the scrolling rows instead of scrolling with them; it is the shared
+  `LibrarySheetSurface` behaviour every Library sheet has, and the four rows fit at 360×640 dp at font scale 1.
+  Changing it means changing every Library sheet, so it waits for an HTML amendment or an owner ruling.
+- **Owed.** The re-record of every new golden and of the four moved ones (`v21_sheet_light/dark`, `colophon_light/dark`)
+  on the pinned image; the TalkBack listen; the printed check on real coloured paper ([OWNER-CHECKLIST](OWNER-CHECKLIST.md)).

@@ -55,6 +55,7 @@ import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.render.ArtSet
 import com.aritr.zinely.core.render.SupplyProvenanceCatalog
+import com.aritr.zinely.feature.editor.ShelfPaperChoices
 import com.aritr.zinely.feature.editor.displayName
 import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -280,7 +281,8 @@ private fun ColophonMain(
                     .selectableGroup(),
                 verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapXs),
             ) {
-                listOf(PaperSize.A4, PaperSize.LETTER).forEach { paper ->
+                // A35.9: the four, in the fixed order, one radio per row at every text size.
+                ShelfPaperChoices.forEach { paper ->
                     val selected = paper == preferredPaper
                     Row(
                         Modifier

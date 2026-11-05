@@ -29,6 +29,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -50,6 +53,9 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.feature.library.LibrarySheetHost
+import com.aritr.zinely.feature.library.LibrarySheetSurface
+import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.components.ZinelyV21FocusOffsetLibrary
 import com.aritr.zinely.ui.components.zinelyFocusRing
 import com.aritr.zinely.ui.components.ZMenuItem
@@ -78,31 +84,23 @@ internal enum class ShelfSort(val menuLabel: String, val buttonLabel: String) {
     Oldest(Copy.Shelf.SORT_OLDEST_LONG, Copy.Shelf.SORT_OLDEST_SHORT),
 }
 
-/** `#createSheet .paper[data-paper]` — A4 leads, as the frozen markup orders them. */
-internal val ShelfPaperChoices: List<PaperSize> = listOf(PaperSize.A4, PaperSize.LETTER)
+/** A35.2: the four papers in the fixed order, written out here and never taken from `PaperSize.entries`. */
+internal val ShelfPaperChoices: List<PaperSize> = listOf(PaperSize.A4, PaperSize.LETTER, PaperSize.LEGAL, PaperSize.A5)
 
 /**
- * `#createSheet` — the create-flow entry. Choosing the paper *is* the create action; there is no
- * confirm step, because the spec's `.paper` click closes the sheet and starts the zine.
+ * A35, *Start a zine*: the only place a zine's paper is chosen (A35.1). Four rows, the paper set in About first and
+ * then the others in the fixed order (A35.2). **Choosing is the action** (A35.3): one tap starts the zine on that
+ * paper; no selected state, no ring, no confirm, no "recommended". Scrim and Back close it and start nothing.
  *
- * The two stocks are drawn at their real proportions (A4 ≈ 1:1.41, Letter ≈ 1:1.29) and at one
- * common scale, which is the whole point of the chooser: you pick the shape *and the size* of the
- * object you are about to fold, so the drawing has to be comparable between the two.
+ * Drawn as the Library's own `.sheet` ([LibrarySheetHost] / [LibrarySheetSurface]), which is the paint the frozen
+ * `.a35-sheet` restates: the head, its dashed divider, then full-bleed rows with a dashed rule under each.
  *
- * ### V2.1 restyle: the contents, not the shell
+ * Each row ([StartPaperRow]) is the sheet drawn upright at **one** scale for all four, then the name, the size and
+ * one line. The scale was re-based from A4's 74dp on 841.890pt to 56dp on US Legal's 1008pt so the tallest fits
+ * (A35.4), so the shipped stocks shrank (A4 52x74 to 33x47).
  *
- * **No V2.1 prototype freezes a paper chooser on the Library**, but one of the three freezes a paper
- * chooser: the Proof's print drawer, `.paperseg` (`v21-proof.html:346-352`). That is the same control
- * answering the same question about the same two stocks, so the tiles take its paint (see
- * [PaperChoice]) and the line under them takes `.paperhint`, which is the sentence `.paperseg` itself is
- * captioned with.
- *
- * ⚠ **This paragraph used to say the frame around these objects was still V2** — that `ZSheet` was the V2
- * modal system and the seam was waiting on one conversion. That conversion has since happened: `ZSheet`
- * reads `v21Colors` and `ZinelyV21Fonts` throughout and makes **no** V2 token read at all. The note is
- * kept, inverted, because a KDoc describing finished work as outstanding is worse than none — the next
- * reader schedules a conversion that would find nothing to convert. (Caught by an audit that was told to
- * verify palette reads rather than believe the comment.)
+ * ponytail: the head stays pinned above the scrolling rows, as every Library sheet's does ([LibrarySheetSurface]);
+ * the frozen `.a35-sheet` scrolls its head with the rows. At font scale 2 on 360dp the four rows still scroll.
  */
 @Composable
 internal fun ShelfCreateSheet(
@@ -111,30 +109,34 @@ internal fun ShelfCreateSheet(
     onChoosePaper: (PaperSize) -> Unit,
     preferredPaper: PaperSize = PaperSize.A4,
 ) {
+    LibrarySheetHost(target = Unit.takeIf { visible }, onDismiss = onDismiss) {
+        ShelfCreateSheetSurface(onChoosePaper = onChoosePaper, preferredPaper = preferredPaper)
+    }
+}
+
+/** The sheet's body without its window, for the goldens (a `Dialog`'s window is invisible to the raster). */
+@Composable
+internal fun ShelfCreateSheetSurface(
+    onChoosePaper: (PaperSize) -> Unit,
+    preferredPaper: PaperSize = PaperSize.A4,
+    modifier: Modifier = Modifier,
+) {
     val haptics = ZinelyTheme.haptics
-    ZSheet(
-        visible = visible,
-        onDismiss = onDismiss,
+    LibrarySheetSurface(
         title = Copy.Common.START_A_ZINE,
-        sub = Copy.Shelf.CHOOSE_PAPER_SUB,
-        modifier = Modifier.testTag(HomePaperChooserTestTag),
+        subtitle = Copy.Shelf.CHOOSE_PAPER_SUB,
+        // A35.11: the sheet is a dialog whose title is "Start a zine".
+        paneTitle = Copy.Common.START_A_ZINE,
+        modifier = modifier.testTag(HomePaperChooserTestTag),
     ) {
-        // `.paperseg{display:flex;gap:var(--gap-sm)}` — 8dp, where V2's chooser wrote 12.
-        Row(horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm)) {
-            shelfPaperChoices(preferredPaper).forEach { paper ->
-                PaperChoice(
-                    paper = paper,
-                    onClick = { haptics.perform(ZinelyHaptic.Snap); onChoosePaper(paper) },
-                    modifier = Modifier.weight(1f),
-                )
-            }
+        shelfPaperChoices(preferredPaper).forEach { paper ->
+            StartPaperRow(paper = paper, onClick = { haptics.perform(ZinelyHaptic.Snap); onChoosePaper(paper) })
         }
-        // `.paperhint{font-size:.76rem;color:var(--ink-soft);margin:var(--gap-sm) var(--gap-hair) 0;
-        // line-height:1.5}` — the frozen caption under the frozen paper chooser, carried across with it.
+        // `.a35-foot{font-size:.76em;text-align:center;margin:var(--gap-md) var(--gap-xl) 0;line-height:1.5}`
         BasicText(
             text = Copy.Shelf.EIGHT_PAGES_FROM_SHEET,
             modifier = Modifier
-                .padding(top = ZinelyV21Dimens.gapSm, start = HintSideMargin, end = HintSideMargin)
+                .padding(top = ZinelyV21Dimens.gapMd, start = ZinelyV21Dimens.gapXl, end = ZinelyV21Dimens.gapXl)
                 .fillMaxWidth(),
             style = TextStyle(
                 color = ZinelyTheme.v21Colors.inkSoft,
@@ -147,137 +149,130 @@ internal fun ShelfCreateSheet(
     }
 }
 
-/**
- * The preferred stock first, then the rest of [ShelfPaperChoices].
- *
- * ponytail: still A4 and US Letter only (ADR-150 "As built"). US Legal and A5 join here when A35's picker is
- * built: its four-row sheet and its one scale on US Legal's 1008 pt. Iterating `PaperSize.entries` before
- * that would draw four tiles in a row of two and clamp Legal's stock to A4's slot.
- */
+/** The preferred stock first, then the rest of [ShelfPaperChoices] in their fixed order (A35.2). */
 internal fun shelfPaperChoices(preferredPaper: PaperSize): List<PaperSize> =
-    ShelfPaperChoices.sortedByDescending { it == preferredPaper }
+    listOf(preferredPaper) + ShelfPaperChoices.filter { it != preferredPaper }
 
 /**
- * One stock, drawn as `.paperseg button` (`v21-proof.html:347-351`) — the corpus's own paper chooser.
+ * One `.a35-row`: one button, the drawn sheet, then three lines.
  *
  * ```css
- * .paperseg button{flex:1;font-family:var(--sans);font-size:.9rem;font-weight:600;
- *   padding:var(--gap-md) var(--gap-sm);border-radius:var(--br-md);border:1.5px solid var(--ink);
- *   background:var(--surface);color:var(--ink-soft);box-shadow:3px 3px 0 var(--ink-line)}
- * .paperseg button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
+ * .a35-row{display:flex;align-items:flex-start;gap:var(--gap-lg);min-height:48px;
+ *   border-bottom:1.5px dashed var(--hair);padding:var(--gap-md) var(--gap-xl)}
+ * .a35-row:active{background:var(--leaf-tint);color:var(--on-leaf)}
  * ```
  *
- * That is [ZinelyV21Press.Raised] exactly — 3 at rest, 2 of travel, 1 pressed — so the press is the
- * primitive rather than a hand-rolled pair of shadows. `.paperseg`'s selected state
- * (`[aria-pressed="true"]{background:var(--leaf)}`) has nothing to say here: this chooser has no
- * selection, because **choosing is the action** and the sheet is gone the moment one is chosen.
- *
- * ### The drawn stock is `.sheet-ill`, not a V2 field tile
- *
- * The little rectangle is a picture of a sheet of paper, and the corpus draws exactly that in the
- * Library's empty state: `.sheet-ill{background:var(--paper);border:1.5px solid var(--ink);
- * box-shadow:3px 3px 0 var(--ink-line);border-radius:var(--br-xs)}`. It replaces a two-layer blurred
- * shadow over a `--field` fill — V2 machinery for a rendering model V2.1 does not use. Its **geometry is
- * untouched**: both stocks stay derived from [PaperSize.portrait] at [StockDpPerPt], which is the one
- * thing about this tile that is a measurement rather than a paint.
- *
- * ### The second line is `.opt .tx span`
- *
- * `.paperseg button` is a one-line control and this tile has two, so the dimensions take the frozen
- * *secondary line inside a sheet option* (`v21-bench.html`, `.opt .tx span` — `.73rem`, `--ink-soft`)
- * rather than a size invented for the occasion.
- *
- * Selectors, not line numbers, throughout: `v21-bench.html` is itself under amendment, and a citation
- * that drifts is worse than one that has to be grepped.
- *
- * No frame ring: there are two of these and they are equals, and a ring on one of two peers says
- * "recommended" — a product claim this chooser does not make. The rule reserves it for a screen's single
- * primary action anyway.
+ * ONE node, role button, its drawing hidden, its name the row's words with units said in full (A35.11), through
+ * the [zinelyV2Control] seam, so the platform gets a named `android.widget.Button` and nothing selected.
  */
 @Composable
-private fun PaperChoice(paper: PaperSize, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun StartPaperRow(paper: PaperSize, onClick: () -> Unit) {
     val colors = ZinelyTheme.v21Colors
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val focused by interaction.collectIsFocusedAsState()
-
-    Column(
-        modifier = modifier
-            // ⚠ Nothing that clips may sit LEFT of the press: its shadow paints outside the node's own
-            // bounds, and the focus ring below paints further outside still. The `clip` is downstream.
-            .zinelyV21Pressable(pressed, ZinelyV21Press.Raised, colors.inkLine, TileShape)
-            .zinelyFocusRing(focused, ZinelyV21Dimens.radiusMd, ZinelyV21FocusOffsetLibrary)
-            .clip(TileShape)
-            .background(colors.surface)
-            .border(TileBorder, colors.ink, TileShape)
-            .clickable(
-                interactionSource = interaction,
-                indication = null,
-                role = Role.Button,
-                onClick = onClick,
-            )
+    val hair = colors.hair
+    val ink = if (pressed) colors.onLeaf else colors.ink
+    val soft = if (pressed) colors.onLeaf else colors.inkSoft
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = RowMinHeight)
+            .zinelyFocusRing(focused, ZinelyV21Dimens.radiusSm, (-4).dp)
+            .background(if (pressed) colors.leafTint else Color.Transparent)
+            .drawBehind {
+                val w = RowRule.toPx()
+                drawLine(
+                    color = hair,
+                    start = Offset(0f, size.height - w / 2f),
+                    end = Offset(size.width, size.height - w / 2f),
+                    strokeWidth = w,
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(RowRuleDash.toPx(), RowRuleDash.toPx())),
+                )
+            }
             .testTag(homePaperChoiceTestTag(paper))
-            .padding(horizontal = ZinelyV21Dimens.gapSm, vertical = ZinelyV21Dimens.gapMd),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
+            .zinelyV2Control(label = paper.startSpoken, onClick = onClick, interactionSource = interaction)
+            .padding(horizontal = ZinelyV21Dimens.gapXl, vertical = ZinelyV21Dimens.gapMd),
+        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapLg),
+        verticalAlignment = Alignment.Top,
     ) {
-        // The stock sits in a fixed-height slot: the stocks differ in height, and without the slot the
-        // name and dimension rows of the two tiles would sit at different heights.
-        Box(Modifier.size(width = paper.stockWidth, height = StockSlotHeight)) {
-            Box(
-                Modifier
-                    .testTag(homePaperStockTestTag(paper))
-                    .zinelyV21HardShadow(StockShadow, colors.inkLine, StockShape)
-                    .clip(StockShape)
-                    .background(colors.surface)
-                    .border(StockBorder, colors.ink, StockShape)
-                    .size(width = paper.stockWidth, height = paper.stockHeight),
+        PaperStockSlot(paper)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapHair)) {
+            BasicText(
+                text = paper.choiceName,
+                style = TextStyle(
+                    color = ink, fontFamily = ZinelyV21Fonts.Work, fontSize = RowNameSize,
+                    fontWeight = FontWeight.SemiBold, lineHeight = 1.3.em,
+                ),
+            )
+            BasicText(
+                text = paper.choiceDimensions,
+                style = TextStyle(
+                    color = soft, fontFamily = ZinelyV21Fonts.Work, fontSize = RowLineSize,
+                    fontWeight = FontWeight.SemiBold, lineHeight = 1.4.em,
+                ),
+            )
+            BasicText(
+                text = paper.startNote,
+                style = TextStyle(
+                    color = soft, fontFamily = ZinelyV21Fonts.Work, fontSize = RowLineSize,
+                    fontWeight = FontWeight.Medium, lineHeight = 1.45.em,
+                ),
             )
         }
-        BasicText(
-            text = paper.choiceName,
-            style = TextStyle(
-                color = colors.inkSoft,
-                fontFamily = ZinelyV21Fonts.Work,
-                fontSize = TileNameSize,
-                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                fontWeight = FontWeight.SemiBold,
-            ),
-        )
-        BasicText(
-            text = paper.choiceDimensions,
-            style = TextStyle(
-                color = colors.inkSoft,
-                fontFamily = ZinelyV21Fonts.Work,
-                fontSize = TileDimensionSize,
-                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-            ),
-        )
     }
 }
 
 /**
- * `.paper .stock` — **one** scale for both stocks, taken from A4's long edge: `74dp ÷ 841.890pt`.
- *
- * Restating the two sizes as literals is what let them drift apart: Letter's frozen `56×72` was ~4%
- * oversized and inverted the relation it exists to show — Letter is the physically *smaller* sheet.
- * Deriving both from [PaperSize.portrait], the same dimensions the imposition and export use, means
- * a per-stock error is no longer expressible. Rounding to whole dp matches the spec's whole pixels.
+ * `.a35-stock`: the sheet itself, pinned paint in both themes (it is paper, not chrome), its eight pages ruled on it
+ * in two columns and four rows. Shared with A35.8's fixed paper at Print.
  */
-private const val StockDpPerPt: Double = 74.0 / 841.890
+@Composable
+internal fun PaperStockSlot(paper: PaperSize) {
+    // `.a35-slot{width:36px;height:56px;align-items:flex-end;justify-content:center}`: heights compare at a glance.
+    // The Start rows and A35.8's fixed paper at Print (`printFor()` appends `stock(p)`, slot included) share it.
+    Box(Modifier.size(width = StockSlotWidth, height = StockSlotHeight), contentAlignment = Alignment.BottomCenter) {
+        PaperStock(paper)
+    }
+}
 
-/**
- * The tallest stock. Both tiles reserve it, so their name and dimension rows stay level.
- *
- * Derived, not restated as `74.dp`: [Modifier.size] *caps* the child, so a literal that stopped
- * tracking the scale would silently clamp the taller stock rather than fail — and the tiles would
- * still be the same height, which is the only thing the slot's own test can see.
- */
+@Composable
+internal fun PaperStock(paper: PaperSize) {
+    Box(
+        Modifier
+            .testTag(homePaperStockTestTag(paper))
+            .zinelyV21HardShadow(StockShadow, StockInk, StockShape)
+            .clip(StockShape)
+            .background(StockPaper)
+            .border(StockBorder, StockInk, StockShape)
+            .size(width = paper.stockWidth, height = paper.stockHeight)
+            .drawBehind {
+                val inset = 2.dp.toPx()
+                val line = 1.dp.toPx()
+                val left = inset
+                val right = size.width - inset
+                val top = inset
+                val bottom = size.height - inset
+                drawLine(StockRule, Offset(size.width / 2f, top), Offset(size.width / 2f, bottom), line)
+                listOf(0.25f, 0.5f, 0.75f).forEach { f ->
+                    val y = top + (bottom - top) * f - line / 2f
+                    drawLine(StockRule, Offset(left, y), Offset(right, y), line)
+                }
+            },
+    )
+}
+
+/** `.a35-stock`: one scale for all four, 56dp on US Legal's 1008pt (A35.4). Derived, never restated. */
+private const val StockDpPerPt: Double = 56.0 / 1008.0
+
+private val StockSlotWidth = 36.dp
+
+/** The tallest stock, derived: [Modifier.size] caps, so a literal that stopped tracking the scale would clamp it. */
 private val StockSlotHeight: Dp = ShelfPaperChoices.maxOf { it.stockHeight }
 
-/** `.paper.a4 .stock{52×74}` / `.paper.letter .stock{54×70}`, both derived, never restated. */
 private val PaperSize.stockWidth: Dp get() = (portrait.width * StockDpPerPt).roundToInt().dp
 private val PaperSize.stockHeight: Dp get() = (portrait.height * StockDpPerPt).roundToInt().dp
+
 /** The paper's name is [displayName] (`ProofPrint.kt`), one exhaustive `when` for every surface. */
 internal val PaperSize.choiceName: String get() = displayName
 internal val PaperSize.choiceDimensions: String
@@ -287,6 +282,34 @@ internal val PaperSize.choiceDimensions: String
         PaperSize.LEGAL -> Copy.Paper.LEGAL_DIMENSIONS
         PaperSize.A5 -> Copy.Paper.A5_DIMENSIONS
     }
+private val PaperSize.startNote: String
+    get() = when (this) {
+        PaperSize.A4 -> Copy.Paper.A4_NOTE
+        PaperSize.LETTER -> Copy.Paper.LETTER_NOTE
+        PaperSize.LEGAL -> Copy.Paper.LEGAL_NOTE
+        PaperSize.A5 -> Copy.Paper.A5_NOTE
+    }
+private val PaperSize.startSpoken: String
+    get() = when (this) {
+        PaperSize.A4 -> Copy.Paper.A4_SPOKEN
+        PaperSize.LETTER -> Copy.Paper.LETTER_SPOKEN
+        PaperSize.LEGAL -> Copy.Paper.LEGAL_SPOKEN
+        PaperSize.A5 -> Copy.Paper.A5_SPOKEN
+    }
+
+// `.a35-row` and `.a35-stock`, transcribed. Sizes in em are the phone's 16px, so sp here.
+private val RowMinHeight = 48.dp
+private val RowRule = 1.5.dp
+private val RowRuleDash = 3.dp
+
+/** `.a35-nm{font-size:.9em}` = 14.4px; `.a35-dm`, `.a35-nt{font-size:.73em}` = 11.68px. */
+private val RowNameSize = 14.4.sp
+private val RowLineSize = 11.68.sp
+
+/** `.a35-stock{background:#FFF6E8;border:1.5px solid #27270F;box-shadow:2px 2px 0 #27270F}`: px, pinned. */
+private val StockPaper = Color(0xFFFFF6E8)
+private val StockInk = Color(0xFF27270F)
+private val StockRule = Color(0x4727270F)
 
 // ---------------------------------------------------------------------------------------------
 // The frozen values these two sheets are drawn from. `.paperseg`/`.paperhint` are `v21-proof.html`;
@@ -294,23 +317,14 @@ internal val PaperSize.choiceDimensions: String
 // `v21-bench.html`. Nothing below is a size chosen here.
 // ---------------------------------------------------------------------------------------------
 
-/** `.paperhint{font-size:.76rem;margin:var(--gap-sm) var(--gap-hair) 0;line-height:1.5}` = 12.16px. */
+/** `.a35-foot{font-size:.76em;line-height:1.5}` = 12.16px. */
 private val HintSize = 12.16.sp
 private val HintLineHeight = 1.5.em
-private val HintSideMargin = ZinelyV21Dimens.gapHair
 
-/** `.paperseg button{border-radius:var(--br-md);border:1.5px solid var(--ink);font-size:.9rem}` */
-private val TileShape: Shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
-private val TileBorder = 1.5.dp
-private val TileNameSize = 14.4.sp
-
-/** `.opt .tx span{font-size:.73rem;color:var(--ink-soft)}` = 11.68px — a sheet option's second line. */
-private val TileDimensionSize = 11.68.sp
-
-/** `.sheet-ill{border-radius:var(--br-xs);border:1.5px solid var(--ink);box-shadow:3px 3px 0}` */
+/** `.a35-stock{border-radius:var(--br-xs);border:1.5px solid #27270F;box-shadow:2px 2px 0 #27270F}` */
 private val StockShape: Shape = RoundedCornerShape(ZinelyV21Dimens.radiusXs)
 private val StockBorder = 1.5.dp
-private val StockShadow = 3.dp
+private val StockShadow = 2.dp
 
 /** `.search{border-radius:var(--br-pill);border:1.5px solid var(--ink);box-shadow:2px 2px 0}` */
 private val FieldShape: Shape = RoundedCornerShape(ZinelyV21Dimens.radiusPill)

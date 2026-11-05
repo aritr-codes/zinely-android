@@ -8,6 +8,7 @@ import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.FolderNames
 import com.aritr.zinely.core.data.repository.ProjectShelfEntry
+import com.aritr.zinely.core.data.repository.PaperColour
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
 import com.aritr.zinely.core.data.repository.RestoredDetails
@@ -544,6 +545,14 @@ internal class HomeViewModel @Inject constructor(
         val trimmed = title.trim()
         if (trimmed.isEmpty()) return
         viewModelScope.launch { projectRepository.renameProject(id, trimmed).sendMessageOnFailure() }
+    }
+
+    /**
+     * AW6.4: the zine's paper colour, from its sheet's chooser. Not an edit (AW6.10): no undo step, no change to
+     * recency; the Shelf lists again and the sheet's row names the new colour.
+     */
+    fun setPaperColour(id: String, colour: PaperColour) {
+        viewModelScope.launch { projectRepository.setPaperColour(id, colour).sendMessageOnFailure() }
     }
 
     /**
@@ -1309,7 +1318,8 @@ internal fun ProjectShelfEntry.toLibraryZine(
     fallbackCover: (String) -> ZineCoverRecipe = { newZineCoverRecipe() },
     folder: String? = this.folder,
 ): LibraryZine = when (this) {
-    is ProjectShelfEntry.Available -> summary.toLibraryZine(nowEpochMs, fallbackCover).copy(folder = folder)
+    is ProjectShelfEntry.Available ->
+        summary.toLibraryZine(nowEpochMs, fallbackCover).copy(folder = folder, paperColour = paperColour)
     is ProjectShelfEntry.Unavailable -> LibraryZine(
         id = id,
         title = title,
@@ -1323,6 +1333,7 @@ internal fun ProjectShelfEntry.toLibraryZine(
         cover = cover ?: fallbackCover(id),
         unavailableReason = reason.shelfUnavailableReason(),
         folder = folder,
+        paperColour = paperColour,
     )
 }
 

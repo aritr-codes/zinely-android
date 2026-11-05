@@ -36,8 +36,15 @@ Changes since the beta.9 app.
   [ADR-150](docs/DECISIONS.md#adr-150)). Saved-file format v5 holds the two new sizes; a zine on A4 or US Letter is
   still saved exactly as before. Each zine can remember which paper colour to load (White, Ivory, Pastel yellow,
   Pastel pink, Pastel blue, Pastel green, Grey); the colour is kept beside the zine, in backups, and in a duplicate,
-  and is never put in the PDF or PNG. A US Legal or A5 zine is always printed on its own paper. Not yet on screen:
-  the Start sheet still offers A4 and US Letter, and choosing or showing a paper colour comes with the W6 screens.
+  and is never put in the PDF or PNG. A US Legal or A5 zine is always printed on its own paper.
+- Four paper sizes and a paper colour on screen (W6 UI lane, [ADR-150](docs/DECISIONS.md#adr-150), Library A35 and
+  AW6, Proof AW6-P, Bench AW6-B). **Start a zine** offers A4, US Letter, US Legal and A5, the paper you set in About
+  first, each drawn to one scale; About's "Paper for new zines" offers the four too. At Print, a US Legal or A5 zine
+  shows its paper as a fact with no A4 / US Letter switch. A zine's sheet on the Shelf has a **Paper colour** row, and
+  Print details has the same row: White, Ivory, Pastel yellow, Pastel pink, Pastel blue, Pastel green or Grey. The
+  Bench canvas, its page strip, Read and the Print details picture then show the page on that paper; Print details
+  says "Load pastel yellow paper. We print only the ink, so the colour comes from your paper.", and Save PDF and
+  Share & export say "Your paper colour is not in the file." The colour is never printed and never in the PDF.
 
 - Website note, not the app: the public pages, including the homepage tone and the privacy policy (last updated 30 October 2026), are rewritten in plain words (ADR-118 plain-words rule, R39). Some changelog lines are corrected to match what shipped. The privacy policy now also explains the storage permission Android adds on Android 9 and older. No limits, download details or app behaviour changed.
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),

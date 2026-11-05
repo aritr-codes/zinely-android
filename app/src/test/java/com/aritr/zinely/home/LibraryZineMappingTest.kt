@@ -36,6 +36,26 @@ class LibraryZineMappingTest {
         cover = cover,
     )
 
+    /**
+     * AW6.7: the colour rides beside the subtitle, never in it. The Shelf splits the subtitle at its first `·` into
+     * the cover's postmark and the date, so a colour inside it would land on the cover.
+     */
+    @Test
+    fun `the paper colour is carried to the shelf, and the subtitle is untouched`() {
+        val available = com.aritr.zinely.core.data.repository.ProjectShelfEntry.Available(
+            summary(), paperColour = com.aritr.zinely.core.data.repository.PaperColour.PASTEL_YELLOW,
+        ).toLibraryZine(NOW)
+        assertEquals(com.aritr.zinely.core.data.repository.PaperColour.PASTEL_YELLOW, available.paperColour)
+        assertEquals(summary().toLibraryZine(NOW).subtitle, available.subtitle)
+
+        val unavailable = com.aritr.zinely.core.data.repository.ProjectShelfEntry.Unavailable(
+            id = "p2", title = "T", paperSize = PaperSize.A4, updatedAtEpochMs = NOW, cover = RECIPE,
+            reason = com.aritr.zinely.core.data.repository.ProjectUnavailableReason.entries.first(),
+            paperColour = com.aritr.zinely.core.data.repository.PaperColour.GREY,
+        ).toLibraryZine(NOW)
+        assertEquals(com.aritr.zinely.core.data.repository.PaperColour.GREY, unavailable.paperColour)
+    }
+
     @Test
     fun `the subtitle reads paper then relative date, in that order`() {
         // Given a zine last touched two days ago, on A4

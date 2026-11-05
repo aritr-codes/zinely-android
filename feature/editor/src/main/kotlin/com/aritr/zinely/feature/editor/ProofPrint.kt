@@ -47,6 +47,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.style.TextAlign
+import com.aritr.zinely.core.data.repository.PaperColour
+import com.aritr.zinely.ui.components.zinelyFocusRing
+import com.aritr.zinely.ui.components.zinelyV21Pressable
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import com.aritr.zinely.ui.theme.ZinelyV21Press
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.theme.ZinelyHaptic
@@ -131,6 +143,9 @@ internal fun ProofPrintDetailsPanel(
     // shipping format seeds, so the goldens and the paint suite mount unchanged — but threaded from the
     // host, because a hardcoded eight is what made this panel contradict the band and the ticket.
     pageCount: Int = DEFAULT_BOOKLET_PAGES,
+    // AW6-P.2: the zine's paper colour, and the second door to the AW6.4 chooser.
+    paperColour: PaperColour = PaperColour.WHITE,
+    onOpenPaperColour: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -140,7 +155,16 @@ internal fun ProofPrintDetailsPanel(
     ) {
         // ── 1. The paper question, answered inline ────────────────────────────────────────────
         SectionLabel(Copy.ProofPrint.SECT_PAPER, first = true)
-        PaperSegments(paper = paper, onPaperSelected = onPaperSelected)
+        // A35.8: an A4 or US Letter zine keeps the two-way switch; a US Legal or A5 zine gets no switch, only its
+        // paper as a fact. Not a disabled control: one that can never be used is noise to the eye and to TalkBack.
+        if (paper.switchable) {
+            PaperSegments(paper = paper, onPaperSelected = onPaperSelected)
+        } else {
+            FixedPaperFact(paper)
+        }
+        // AW6-P.2 / AW6-P.3: the colour row, and for any colour but White the one line that says what to load.
+        PaperColourRow(paperColour = paperColour, onClick = onOpenPaperColour)
+        if (paperColour != PaperColour.WHITE) PaperColourNote(paperColour)
 
         // ── 2. What the app already handled — the honest half of the frozen ALL SET block ─────
         SectionLabel(Copy.ProofPrint.SECT_ALREADY)
@@ -173,7 +197,14 @@ internal fun ProofPrintDetailsPanel(
             RecipeRow(
                 warn = false,
                 label = Copy.ProofPrint.PAPER_LABEL,
-                value = plain(paper.displayName),
+                // AW6-P.4: the recipe names both, "A4, pastel yellow paper"; White stays "A4".
+                value = plain(
+                    if (paperColour == PaperColour.WHITE) {
+                        paper.displayName
+                    } else {
+                        Copy.PaperColour.recipePaper(paper.displayName, paperColour.sentenceName)
+                    },
+                ),
                 icon = { tint -> StrokedGlyph(ICON_PAPER, tint) },
             )
             RecipeRow(
@@ -511,6 +542,163 @@ private fun emphasised(emphasis: String, rest: String) = buildAnnotatedString {
 
 @Composable
 private fun plain(text: String) = buildAnnotatedString { append(text) }
+
+/**
+ * Whether the Print switch offers this paper's family (A35.8, ADR-150 decision 8): A4 and US Letter print on each
+ * other within the keep-clear; US Legal and A5 print on their own paper only. Exhaustive, so a later size decides.
+ */
+internal val PaperSize.switchable: Boolean
+    get() = when (this) {
+        PaperSize.A4, PaperSize.LETTER -> true
+        PaperSize.LEGAL, PaperSize.A5 -> false
+    }
+
+/**
+ * Whether picking [picked] at Print on a zine laid out for [current] counts as a change (clears the saved PDF, says
+ * "changed from"). Only between two switchable sizes: a US Legal or A5 zine never moves, whatever reaches the handler.
+ */
+internal fun isPaperChange(current: PaperSize, picked: PaperSize): Boolean =
+    picked != current && current.switchable && picked.switchable
+
+/** The test tags of A35.8's fact and AW6-P's row and note. */
+public const val ProofFixedPaperTestTag: String = "proof-fixed-paper"
+public const val ProofPaperColourRowTestTag: String = "proof-paper-colour-row"
+public const val ProofPaperColourNoteTestTag: String = "proof-paper-colour-note"
+
+/**
+ * A35.8's `.a35-fixed`: a US Legal or A5 zine's paper, as a fact. ONE text node read as its name, size and sentence
+ * (A35.11), never a button.
+ *
+ * ```css
+ * .a35-fixed{display:flex;align-items:flex-start;gap:var(--gap-md);background:var(--paper);color:#27270F;
+ *   border:1.5px solid #27270F;border-radius:var(--br-md);padding:var(--gap-md)}
+ * ```
+ */
+@Composable
+private fun FixedPaperFact(paper: PaperSize) {
+    val shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
+    val sentence = Copy.Paper.printsOnlyOn(paper.displayName)
+    val spokenSize = when (paper) {
+        PaperSize.LEGAL -> Copy.Paper.LEGAL_DIMENSIONS_SPOKEN
+        PaperSize.A5 -> Copy.Paper.A5_DIMENSIONS_SPOKEN
+        PaperSize.A4, PaperSize.LETTER -> paper.choiceDimensions
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(ProofFixedPaperTestTag)
+            .clip(shape)
+            .background(ZinelyTheme.v21Colors.paper)
+            .border(1.5.dp, FixedInk, shape)
+            .clearAndSetSemantics { contentDescription = "${paper.displayName}, $spokenSize. $sentence" }
+            .padding(ZinelyV21Dimens.gapMd),
+        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
+        verticalAlignment = Alignment.Top,
+    ) {
+        PaperStockSlot(paper)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapHair)) {
+            BasicText(
+                paper.displayName,
+                style = TextStyle(
+                    color = FixedInk, fontFamily = ZinelyV21Fonts.Work, fontSize = 14.4.sp,
+                    fontWeight = FontWeight.SemiBold, lineHeight = 1.3.em,
+                ),
+            )
+            BasicText(
+                paper.choiceDimensions,
+                style = TextStyle(
+                    color = FixedInk, fontFamily = ZinelyV21Fonts.Work, fontSize = 11.68.sp,
+                    fontWeight = FontWeight.SemiBold, lineHeight = 1.4.em,
+                ),
+            )
+            BasicText(
+                sentence,
+                style = TextStyle(
+                    color = FixedInk, fontFamily = ZinelyV21Fonts.Work, fontSize = 11.68.sp,
+                    fontWeight = FontWeight.Medium, lineHeight = 1.45.em,
+                ),
+            )
+        }
+    }
+}
+
+/** `.a35-fixed{color:#27270F}`: pinned, on the pinned paper. */
+private val FixedInk = Color(0xFF27270F)
+
+/**
+ * AW6-P.2's `.aw6p-pc`: `[swatch] Paper colour   White >`, a button that raises the AW6.4 chooser. ONE node, role
+ * button, "Paper colour, Pastel yellow" (AW6-P.9).
+ *
+ * ```css
+ * .aw6p-pc{display:flex;align-items:center;gap:var(--gap-md);min-height:48px;margin-top:var(--gap-md);
+ *   font-size:.9em;font-weight:600;background:var(--surface);border:1.5px solid var(--ink);
+ *   border-radius:var(--br-md);padding:var(--gap-sm) var(--gap-md);box-shadow:3px 3px 0 var(--ink-line)}
+ * .aw6p-pc .val{margin-left:auto;color:var(--ink-soft);text-align:right}
+ * ```
+ */
+@Composable
+private fun PaperColourRow(paperColour: PaperColour, onClick: () -> Unit) {
+    val colors = ZinelyTheme.v21Colors
+    val haptics = ZinelyTheme.haptics
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val focused by interaction.collectIsFocusedAsState()
+    val shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
+    val text = TextStyle(
+        color = colors.ink, fontFamily = ZinelyV21Fonts.Work, fontSize = 14.4.sp, fontWeight = FontWeight.SemiBold,
+    )
+    Row(
+        modifier = Modifier
+            .padding(top = ZinelyV21Dimens.gapMd)
+            .fillMaxWidth()
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Raised, colors.inkLine, shape)
+            .zinelyFocusRing(focused, ZinelyV21Dimens.radiusMd)
+            .clip(shape)
+            .background(colors.surface)
+            .border(1.5.dp, colors.ink, shape)
+            .heightIn(min = 48.dp)
+            .testTag(ProofPaperColourRowTestTag)
+            .zinelyV2Control(
+                label = Copy.PaperColour.rowLabel(paperColour.displayName),
+                interactionSource = interaction,
+                onClick = { haptics.perform(ZinelyHaptic.Tick); onClick() },
+            )
+            .padding(horizontal = ZinelyV21Dimens.gapMd, vertical = ZinelyV21Dimens.gapSm),
+        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        PaperSwatch(paperColour)
+        BasicText(Copy.PaperColour.TITLE, modifier = Modifier.weight(1f), style = text)
+        BasicText(
+            paperColour.displayName,
+            // `.val{margin-left:auto;text-align:right}`: the value sits at the row's end, beside the chevron.
+            modifier = Modifier.weight(1f),
+            style = text.copy(color = colors.inkSoft, textAlign = TextAlign.End),
+        )
+        BasicText("\u203A", style = text.copy(color = colors.inkSoft))
+    }
+}
+
+/**
+ * AW6-P.3's `.aw6p-note`: "Load pastel yellow paper. We print only the ink, so the colour comes from your paper."
+ * Plain text read after the row. It never says the PDF is coloured, nor that the printer prints the colour.
+ * `.aw6p-note{font-size:.8em;line-height:1.5;margin:var(--gap-sm) var(--gap-hair) 0;color:var(--ink)}`
+ */
+@Composable
+private fun PaperColourNote(paperColour: PaperColour) {
+    BasicText(
+        text = Copy.PaperColour.loadNote(paperColour.sentenceName),
+        modifier = Modifier
+            .padding(top = ZinelyV21Dimens.gapSm, start = ZinelyV21Dimens.gapHair, end = ZinelyV21Dimens.gapHair)
+            .testTag(ProofPaperColourNoteTestTag),
+        style = TextStyle(
+            color = ZinelyTheme.v21Colors.ink,
+            fontFamily = ZinelyV21Fonts.Work,
+            fontSize = 12.8.sp,
+            lineHeight = 1.5.em,
+        ),
+    )
+}
 
 /** Shared with the band, which names the paper in `.ready`'s summary. */
 internal val PaperSize.displayName: String

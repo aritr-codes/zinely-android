@@ -134,6 +134,11 @@ dependencies {
     // Internal-only use, so `implementation`.
     implementation(project(":core:imposition"))
 
+    // Paper colour (ADR-150, AW6): the closed `PaperColour` set lives in the shelf layer, never in :core:render or
+    // :render-android (their PrintTruthTest fails if it reaches them). ProofScreen, the Library and the host's paper
+    // seam take it in their public signatures, so `api`. Nothing that writes a PDF or PNG is in this module's reach of it.
+    api(project(":core:data"))
+
     // Coroutines: StateFlow / CoroutineScope / CoroutineDispatcher appear in EditorStore's public API
     // (uiState, constructor), so `api`. Dispatchers.Main itself (coroutines-android) is supplied by the
     // app module that constructs the store — the store only takes an injected dispatcher.

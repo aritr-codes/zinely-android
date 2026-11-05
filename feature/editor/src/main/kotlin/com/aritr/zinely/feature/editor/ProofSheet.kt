@@ -23,7 +23,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.toRect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -150,6 +153,9 @@ private fun ImposedSheet() = ProofLitPaper {
     val rows = remember { decorativeImpositionRows() }
     val deadband = colors.inkFaint.copy(alpha = 0.20f)
     val sheetShape = RoundedCornerShape(3.dp)
+    // AW6-P.5: the sheet picture is drawn on the zine's paper, margins included, since the unprinted strip IS the
+    // paper. A coloured paper takes a white ground and is multiplied over the whole picture once; White is untouched.
+    val paper = LocalPaperColour.current
 
     Box(
         modifier = Modifier
@@ -164,7 +170,11 @@ private fun ImposedSheet() = ProofLitPaper {
             .clip(sheetShape)
             // ponytail: flat paper — no corner vignette. (The V1-lineage comment here cited a `proof.html`
             // that does not exist; the frozen `.minisheet` has no vignette rule.)
-            .background(colors.paper)
+            .background(if (paper.overlay != null) Color.White else colors.paper)
+            .drawWithContent {
+                drawContent()
+                drawPaperLayer(paper, size.toRect())
+            }
             .aspectRatio(297f / 210f)
             // role="img" with ONE label; every decorative child below is thereby cleared from a11y.
             .clearAndSetSemantics {

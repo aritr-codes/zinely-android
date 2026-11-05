@@ -1425,7 +1425,8 @@ public object Copy {
         public const val SORT_OLDEST_SHORT: String = "Oldest"
 
         // Create sheet.
-        public const val CHOOSE_PAPER_SUB: String = "Choose your paper. You can print it at home on either."
+        /** A35.5. The shipped "You can print it at home on either." went: with four papers there is no "either". */
+        public const val CHOOSE_PAPER_SUB: String = "Which paper will you print on? A zine keeps the paper it starts on."
         public const val EIGHT_PAGES_FROM_SHEET: String = "Eight pages from one folded sheet."
 
         // Card action sheet.
@@ -1735,13 +1736,73 @@ public object Copy {
         // "Letter" reads like a document type. ADR-101 P3's review caught the build and the spec
         // disagreeing here.
         public const val LETTER: String = "US Letter"
-        public const val A4_DIMENSIONS: String = "210 × 297 mm"
-        public const val LETTER_DIMENSIONS: String = "8.5 × 11 in"
+        // A35.10: a number never parts from its "×" or its unit, so the spaces are no-break (U+00A0).
+        public const val A4_DIMENSIONS: String = "210\u00A0×\u00A0297\u00A0mm"
+        public const val LETTER_DIMENSIONS: String = "8.5\u00A0×\u00A011\u00A0in"
         // US Legal and A5 (ADR-150, A35.2's rows).
         public const val LEGAL: String = "US Legal"
         public const val A5: String = "A5"
-        public const val LEGAL_DIMENSIONS: String = "8.5 × 14 in"
-        public const val A5_DIMENSIONS: String = "148 × 210 mm"
+        public const val LEGAL_DIMENSIONS: String = "8.5\u00A0×\u00A014\u00A0in"
+        public const val A5_DIMENSIONS: String = "148\u00A0×\u00A0210\u00A0mm"
+
+        // A35.4: each Start sheet row's one line, true of the paper and not of the maker.
+        public const val A4_NOTE: String = "Pages 74\u00A0×\u00A0105\u00A0mm. The everyday paper in most of the world."
+        public const val LETTER_NOTE: String = "Pages 2.75\u00A0×\u00A04.25\u00A0in. The everyday paper in North America."
+        public const val LEGAL_NOTE: String =
+            "Pages 3.5\u00A0×\u00A04.25\u00A0in, wider than Letter’s. Prints on US Legal paper only, so check that your printer takes it."
+        public const val A5_NOTE: String =
+            "Pages 52.5\u00A0×\u00A074\u00A0mm, the smallest zine. Prints on A5 paper only, so check that your printer takes it."
+
+        // A35.11: each row is one node, its name the row's words with units said in full, the paper's name first.
+        public const val A4_SPOKEN: String =
+            "A4, 210 by 297 millimetres. Pages 74 by 105 millimetres. The everyday paper in most of the world."
+        public const val LETTER_SPOKEN: String =
+            "US Letter, 8.5 by 11 inches. Pages 2.75 by 4.25 inches. The everyday paper in North America."
+        public const val LEGAL_SPOKEN: String =
+            "US Legal, 8.5 by 14 inches. Pages 3.5 by 4.25 inches, wider than Letter’s. Prints on US Legal paper only, " +
+                "so check that your printer takes it."
+        public const val A5_SPOKEN: String =
+            "A5, 148 by 210 millimetres. Pages 52.5 by 74 millimetres, the smallest zine. Prints on A5 paper only, " +
+                "so check that your printer takes it."
+
+        // A35.8: at Print, a US Legal or A5 zine's paper is a fact, read as its name, size and sentence.
+        public const val LEGAL_DIMENSIONS_SPOKEN: String = "8.5 by 14 inches"
+        public const val A5_DIMENSIONS_SPOKEN: String = "148 by 210 millimetres"
+        public fun printsOnlyOn(paper: String): String =
+            "This zine was made for $paper, so it prints on $paper only. Put $paper paper in your printer before you print."
+    }
+
+    /**
+     * Paper colour (AW6, `v21-library.html`; [ADR-150](docs/DECISIONS.md#adr-150)). Names are capitalised in lists
+     * and lower-case inside a sentence (AW6.13); no em dash in any of them.
+     */
+    public object PaperColour {
+        public const val TITLE: String = "Paper colour"
+        public const val SUB: String = "Which colour paper will you load? It shows on screen only. We print only the ink."
+        public const val FOOT: String =
+            "No dark or bright papers. Home printers have no white ink, so most inks would sink into them. " +
+                "Colours are close, not exact."
+        public const val WHITE: String = "White"
+        public const val IVORY: String = "Ivory"
+        public const val PASTEL_YELLOW: String = "Pastel yellow"
+        public const val PASTEL_PINK: String = "Pastel pink"
+        public const val PASTEL_BLUE: String = "Pastel blue"
+        public const val PASTEL_GREEN: String = "Pastel green"
+        public const val GREY: String = "Grey"
+        public const val WHITE_NOTE: String = "Plain printer paper."
+
+        /** AW6.12 / AW6-P.9: the row's one name, the value read after the label. */
+        public fun rowLabel(colour: String): String = "$TITLE, $colour"
+
+        /** AW6-P.3, under Print details' row for a colour that is not White. [colour] is lower-case. */
+        public fun loadNote(colour: String): String =
+            "Load $colour paper. We print only the ink, so the colour comes from your paper."
+
+        /** AW6-P.4: the recipe's Paper row names both. [colour] is lower-case. */
+        public fun recipePaper(paper: String, colour: String): String = "$paper, $colour paper"
+
+        /** AW6-P.7: said where the file leaves, for a zine that is not White. */
+        public const val NOT_IN_FILE: String = "Your paper colour is not in the file."
         // `A4_DIMENSIONS_LONG` / `LETTER_DIMENSIONS_LONG` were deleted by ADR-101 P3: the paper chooser
         // sheet's sub-line was their only consumer, and the segmented control that replaced it names the
         // size and nothing else.
@@ -1760,7 +1821,7 @@ public object Copy {
         public const val MAKER_THANKS: String = "Thanks for making something with it."
         public const val DEFAULT_PAPER: String = "Paper for new zines"
         public const val PAPER_EXPLANATION: String =
-            "We’ll suggest this paper when you start. You can always choose the other one."
+            "We’ll suggest this paper when you start. You can always choose another."
         public const val CREDITS: String = "Licences & credits"
         public const val CREDITS_SUMMARY: String = "Open-source notices"
         public const val CREDITS_INTRO: String =
