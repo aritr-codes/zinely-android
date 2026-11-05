@@ -76,7 +76,9 @@ internal class RepairNotes(rootDir: Path, private val store: AtomicFileStore) {
      * same, so the old marker is read again only once nothing is held for [id] (next listing, or next start).
      */
     fun clearDetails(id: String, before: RestoredDetails?) = change(id) { held ->
-        if (held == null || held != before) held else held.takeIf { it.pages }?.copy(previousTitle = null, details = false)
+        // Same note (same seq), not necessarily equal: a pages repair merged in meanwhile still leaves a details part to clear.
+        if (held == null || before?.details != true || held.seq != before.seq) held
+        else held.takeIf { it.pages }?.copy(previousTitle = null, details = false)
     }
 
     /** [id]'s directory is gone, and its marker with it. */

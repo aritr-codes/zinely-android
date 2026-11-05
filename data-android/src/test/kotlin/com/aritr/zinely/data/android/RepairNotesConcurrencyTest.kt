@@ -64,4 +64,21 @@ class RepairNotesConcurrencyTest {
         // Then the Shelf can tell it from the dismissed one
         assertTrue(first != notes.noteOf("z"))
     }
+
+    @Test
+    fun `given a pages repair merged in after the note was shown then a rename still clears its details part`() {
+        // Given a details note the maker saw, and a pages repair merged in during the rename
+        val root = tmp.root.toPath()
+        val notes = RepairNotes(root, AtomicFileStore())
+        Files.createDirectories(root.resolve("projects/z"))
+        notes.addDetails("z", previousTitle = "Old")
+        val before = notes.noteOf("z")
+        notes.addPages("z")
+
+        // When the rename clears the details part of the note it had before
+        notes.clearDetails("z", before)
+
+        // Then only the pages part keeps waiting (A46.5)
+        assertEquals(RestoredDetails(null, details = false, pages = true), notes.noteOf("z"))
+    }
 }
