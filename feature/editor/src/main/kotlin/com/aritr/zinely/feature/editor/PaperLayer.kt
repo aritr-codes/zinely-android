@@ -37,8 +37,16 @@ public val LocalPaperColour: ProvidableCompositionLocal<PaperColour> = compositi
 internal fun DrawScope.drawPaperLayer(paper: PaperColour, page: Rect, shape: Shape = RectangleShape) {
     val colour = paper.overlay ?: return
     val outline = shape.createOutline(page.size, layoutDirection, this)
-    translate(page.left, page.top) { drawOutline(outline, colour.toComposeColor(), blendMode = BlendMode.Multiply) }
+    translate(page.left, page.top) { drawOutline(outline, colour.toComposeColor(), blendMode = PaperLayerBlend) }
 }
+
+/**
+ * `Modulate`, not `Multiply`: Compose's `Multiply` is unsupported below API 29 and silently falls back to source-over,
+ * which painted a solid paper over the whole page on Android 7 to 9 (API 24 emulator, W6 device pass). `Modulate` is
+ * Porter-Duff MULTIPLY, drawn on every API, and for an opaque paper over an opaque page it is the same arithmetic as
+ * `Multiply` (Sc·Dc). The invariant above is what keeps both sides opaque. `PaperLayerBelowQTest` pins it at API 28.
+ */
+internal val PaperLayerBlend: BlendMode = BlendMode.Modulate
 
 /**
  * The ground a host lays under a page on [this] paper: the export's white for a coloured paper (see [drawPaperLayer]'s
