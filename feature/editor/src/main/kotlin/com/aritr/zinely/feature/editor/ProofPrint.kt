@@ -664,7 +664,8 @@ private fun PaperColourRow(paperColour: PaperColour, onClick: () -> Unit) {
         BasicText(Copy.PaperColour.TITLE, modifier = Modifier.weight(1f), style = text)
         BasicText(
             paperColour.displayName,
-            modifier = Modifier.weight(1f, fill = false),
+            // `.val{margin-left:auto;text-align:right}`: the value sits at the row's end, beside the chevron.
+            modifier = Modifier.weight(1f),
             style = text.copy(color = colors.inkSoft, textAlign = TextAlign.End),
         )
         BasicText("\u203A", style = text.copy(color = colors.inkSoft))

@@ -159,8 +159,12 @@ Several properties are load-bearing:
   and `:render-android` cannot see the type (`PrintTruthTest`). `:app`'s export seam (`ZineExporter`,
   `ExportViewModel`) *can* see it, because `:app` depends on `:core:data` and the VM holds a `ProjectRepository`;
   there the guard is only `ExportPaperTest`'s check that export and retry take no colour, so keep colour reads out
-  of the export path by review. *As built:* the
-  data and the type exist; the overlay itself is drawn by the W6 UI lane.
+  of the export path by review. *As built (W6 UI lane):* the host provides `LocalPaperColour` (`PaperLayer.kt`)
+  around the Bench and inside `ProofScreen`, fed by `PaperColourViewModel` on the editor's back-stack entry (so Bench
+  and Proof share one value). `PagePreview` lays an opaque white rect under a coloured page first (the replayer
+  draws no ground, and the hosts paint the app's warm page paper, so without it the result would be paper over
+  cream), replays, then calls `drawPaperLayer`. `ImposedSheet` paints white instead of `paper` when coloured and
+  multiplies over its drawn content. The fold guide and Shelf covers never read the local.
 - **Its geometry is physical, not logical.** The frozen CSS states the cover's handedness physically (radii
   `6px 9px 9px 6px`, crease `left:9px`, fore-edge `right:0`), so the shape is `AbsoluteRoundedCornerShape`:
   logical corners would mirror under RTL while the `Brush`-drawn crease would not, creasing the cover down its

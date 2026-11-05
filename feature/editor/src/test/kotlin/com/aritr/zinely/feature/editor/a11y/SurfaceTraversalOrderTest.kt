@@ -624,6 +624,8 @@ class SurfaceTraversalOrderTest {
                 Copy.ProofPrint.SECT_PAPER.uppercase(),
                 Copy.Paper.A4,
                 Copy.Paper.LETTER,
+                // AW6-P.2: the paper-colour row follows the paper question, one stop naming its value.
+                Copy.PaperColour.rowLabel(Copy.PaperColour.WHITE),
                 // 2. What the app already handled — the honest replacement for the frozen `ALL SET`
                 //    checklist, whose two false ticks P3 declined to draw. Three plain facts about the
                 //    artifact; the bullet discs are cleared. `PAPER_HINT` moved here from §1.

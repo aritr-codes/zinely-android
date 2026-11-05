@@ -18991,3 +18991,32 @@ overlay, the Proof copy) builds on it.
   `PaperSize.entries` before A35 is built would draw four tiles in a row made for two and clamp Legal's stock to A4's
   slot. The UI lane switches it with A35's rescale, so no golden moves twice. `PaperSegments` keeps its explicit A4 /
   Letter list: it is the switch, and A35.8 hides it for the other two.
+
+#### As built: UI lane (2026-11-05) {#adr-150-as-built-ui}
+
+Built on `w6/ui` (from `main` at `882f95de`, after the data lane). Not released, not Accepted.
+
+- **A35 Start sheet.** Four papers in A4, US Letter, US Legal, A5 order, the preferred one first, drawn on one scale
+  (US Legal's 1008 pt = 56 dp), so each stock's height is true to the others. Colophon lists the same four (A35.9).
+  A Legal or A5 tile's accessible name carries its size ("title, US Legal").
+- **A35.8 and the data lane's blocker.** A Legal or A5 zine's Print details shows its paper as one text fact and no
+  switch (`PaperSize.switchable`). The `ProofScreen` paper handler also refuses any change unless both sizes are
+  switchable, so the "changed from US Legal to US Legal" state cannot be reached by any path.
+- **AW6 chooser.** The zine sheet gains "Paper colour" after "Move to a folder" and before Delete; the sheet line
+  reads "A4 · Pastel yellow · 2 days ago". The chooser is a `selectableGroup` of `selectable(Role.RadioButton)` rows;
+  the platform reports each as `android.widget.RadioButton`, checkable, checked on the current one (test-checked).
+  A pick or a dismiss returns to the sheet it came from. All copy is in `core:copy`.
+- **AW6-P at Print.** Print details gains the colour row and, off White, the note; the recipe reads
+  "A4, pastel yellow paper". "Your paper colour is not in the file." shows once under the Save PDF / Share band and
+  on the zine sheet's Share & export when the colour is not White (one line under the band, not one per button).
+- **AW6-B host layer.** `LocalPaperColour` is provided around the editor and Proof; one `PaperColourViewModel` is
+  scoped to the editor back-stack entry, so the Bench and Print share a value (optimistic, reverted if the write
+  fails). The layer is drawn on the Bench canvas, the page strip, the Proof stage and the Print details sheet
+  picture (its marks and margin multiply too, as the HTML's `mix-blend-mode:multiply`). Not on the fold guide,
+  covers, or anything on the export path. Under a coloured paper the host first paints white, not the app's cream,
+  so the page reads as the paper and not paper times cream. White draws no layer and no white ground: every White
+  golden is unchanged. Observation: the Bench's focus scrim and fade still use the theme paper above the layer.
+- **Tests.** `PaperColourTest`, `ShelfSheetsTest`, `PaperColourScreenTest`, `ZineSheetPaperColourTest`,
+  `PaperColourGoldenTest` (pixel checks that the layer is drawn in the stage, the sheet picture's own bounds and the
+  Bench, and that White draws none), `ZineActionSheetTest` and `ZineLibraryScreenTest` updates, `:app`'s
+  `PaperColourViewModelTest` and a `LibraryZineMappingTest` case.

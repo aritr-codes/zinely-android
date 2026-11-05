@@ -713,7 +713,8 @@ internal fun SheetRow(
             Text(text = label, style = labelStyle, modifier = Modifier.weight(1f))
             Text(
                 text = value,
-                modifier = Modifier.weight(1f, fill = false),
+                // `margin-left:auto`: at the row's end, not after the label.
+                modifier = Modifier.weight(1f),
                 style = labelStyle.copy(
                     fontSize = ValueSize,
                     fontWeight = FontWeight.SemiBold,
