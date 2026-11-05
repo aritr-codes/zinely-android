@@ -3111,6 +3111,42 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `Undo waiting behind a commit that fails brings the card back with the one warm message`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null)
+        repository.undeletable = setOf("a")
+        shelf.viewModel.delete("a")
+        repository.deleteGate = CompletableDeferred()
+        shelf.viewModel.flushPendingDeletes()
+
+        shelf.viewModel.undoDelete("a")
+        repository.deleteGate!!.complete(Unit)
+
+        assertEquals(listOf("a", "b"), shelf.zines.map { it.id })
+        assertEquals(1, shelf.events.filterIsInstance<HomeShelfEvent.Message>().size)
+        shelf.close()
+    }
+
+    @Test
+    fun `a folder action that starts while an Undo waits for the lock does not end that Undo`() = runTest {
+        // Given a's delete being written and Undo of b pressed behind it
+        val shelf = folderShelf("a" to null, "b" to null, "c" to null)
+        shelf.viewModel.delete("a")
+        shelf.viewModel.delete("b")
+        repository.deleteGate = CompletableDeferred()
+        shelf.viewModel.commitDelete("a")
+        shelf.viewModel.undoDelete("b")
+
+        // When a folder action starts before the lock is released, and the write goes on
+        shelf.viewModel.moveZine("c", "Family")
+        repository.deleteGate!!.complete(Unit)
+
+        // Then b is back and was never deleted
+        assertEquals(listOf("a"), repository.deleted)
+        assertEquals(listOf("b", "c"), shelf.zines.map { it.id })
+        shelf.close()
+    }
+
+    @Test
     fun `a second batch queued behind a first is undone and committed on its own`() = runTest {
         // Given two batches, the first's snack closed without Undo, the second's still standing
         val shelf = folderShelf("a" to null, "b" to null, "c" to null, "d" to null)

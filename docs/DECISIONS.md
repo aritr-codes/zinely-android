@@ -17666,7 +17666,8 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
   closed the Undo-after-finish, one-message, deleted-meanwhile and shrinking-chooser items; this change closes the
   rest. A delete's Undo now takes the same lock as its commit (`commitMutex`), so an Undo pressed while the store is
   writing waits and then finds the delete finished (R8's words) or failed (card back, warm message); it can no longer
-  restore a card that is then deleted silently. A move Undo whose zines were all deleted meanwhile (one or several)
+  restore a card that is then deleted silently. A folder action that starts while that Undo waits does not take its
+  zine over (`undoing`), and the Undo is not cancelled with the screen's model (the Review Agent's findings). A move Undo whose zines were all deleted meanwhile (one or several)
   says R8's words for those whose delete finished and nothing for one whose delete still waits (its own Undo is up):
   no new sentence. Tests: Undo racing a held delete, a second batch queued behind a first, a folder action racing a
   batch commit. The goldens for the New-folder sheet for a set and for dark 2x text are drawn.

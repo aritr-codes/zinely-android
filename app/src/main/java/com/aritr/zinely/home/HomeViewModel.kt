@@ -226,6 +226,9 @@ internal class HomeViewModel @Inject constructor(
      * confirmed, whether or not the screen has shown their prompt yet: see [isDeleteWaiting].
      */
     private var settling: Set<String> = emptySet()
+
+    /** Zines whose Undo has been pressed and is waiting for, or holding, [commitMutex] ([undoLocked]). */
+    private var undoing: Set<String> = emptySet()
     private var backupRestoreJob: Job? = null
     private var backupRestorePickerPending: Boolean = false
     private var backupRestoreCancellationRequested: Boolean = false
@@ -793,7 +796,7 @@ internal class HomeViewModel @Inject constructor(
      */
     private fun folderAction(run: suspend () -> Unit) {
         if (folderJob?.isActive == true) return
-        settling = pendingDeletes.value
+        settling = pendingDeletes.value - undoing
         folderJob = viewModelScope.launch {
             if (!commitPendingDeletesNow()) return@launch
             snackAction = null
@@ -870,8 +873,26 @@ internal class HomeViewModel @Inject constructor(
      * for it, then finds it finished (and says so) or failed (the card is back and said so), instead of
      * restoring a card the store then deletes without a word (#166).
      */
-    fun undoDelete(id: String) {
-        viewModelScope.launch { commitMutex.withLock { undoDeleteLocked(id) } }
+    fun undoDelete(id: String) = undoLocked(listOf(id)) { undoDeleteLocked(id) }
+
+    /**
+     * Runs an Undo under [commitMutex]. [undoing] is set before the wait, so a folder action that starts while
+     * this Undo queues does not take its zines over ([folderAction]) and end their Undo behind the maker's back.
+     * Not cancelled with the screen's model: the marker must be cleared, as the flush's commit is never cancelled.
+     */
+    private fun undoLocked(ids: List<String>, run: () -> Unit) {
+        undoing = undoing + ids
+        viewModelScope.launch {
+            withContext(NonCancellable) {
+                commitMutex.withLock {
+                    try {
+                        run()
+                    } finally {
+                        undoing = undoing - ids.toSet()
+                    }
+                }
+            }
+        }
     }
 
     private fun undoDeleteLocked(id: String) {
@@ -889,9 +910,7 @@ internal class HomeViewModel @Inject constructor(
     }
 
     /** Undo for a batch: [undoDelete] for all of them, markers cleared in one write; if that fails none comes back. */
-    fun undoDeletes(ids: List<String>) {
-        viewModelScope.launch { commitMutex.withLock { undoDeletesLocked(ids) } }
-    }
+    fun undoDeletes(ids: List<String>) = undoLocked(ids) { undoDeletesLocked(ids) }
 
     private fun undoDeletesLocked(ids: List<String>) {
         // Only the zines whose delete is still waiting can come back; the rest are named, once.
