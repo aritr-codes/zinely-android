@@ -32,6 +32,12 @@ Changes since the beta.9 app.
   never printed or put in the PDF, and Undo says what it undoes. Replacing a photo clears its description; Duplicate
   and replacing an Art piece keep it.
 - Saved-file format v4 holds the description. A zine with no description is still saved exactly as before.
+- US Legal and A5 paper in the saved format, and a paper colour kept with each zine (W6 data lane,
+  [ADR-150](docs/DECISIONS.md#adr-150)). Saved-file format v5 holds the two new sizes; a zine on A4 or US Letter is
+  still saved exactly as before. Each zine can remember which paper colour to load (White, Ivory, Pastel yellow,
+  Pastel pink, Pastel blue, Pastel green, Grey); the colour is kept beside the zine, in backups, and in a duplicate,
+  and is never put in the PDF or PNG. A US Legal or A5 zine is always printed on its own paper. Not yet on screen:
+  the Start sheet still offers A4 and US Letter, and choosing or showing a paper colour comes with the W6 screens.
 
 - Website note, not the app: the public pages, including the homepage tone and the privacy policy (last updated 30 October 2026), are rewritten in plain words (ADR-118 plain-words rule, R39). Some changelog lines are corrected to match what shipped. The privacy policy now also explains the storage permission Android adds on Android 9 and older. No limits, download details or app behaviour changed.
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),
@@ -126,6 +132,9 @@ Changes since the beta.9 app.
 - A backup that holds a described photo or Art piece can be restored only by the first Zinely release that includes
   Describe, or newer. An older Zinely says the backup needs a newer Zinely and restores nothing from it. A backup of zines with no
   descriptions restores in older builds as before. The TalkBack listen for Read's new stops is still owed.
+- A backup that holds a US Legal or A5 zine can be restored only by the first Zinely release that includes US Legal
+  and A5, or newer. An older Zinely says the backup needs a newer Zinely and restores nothing from it. Older versions
+  do not keep a zine's paper colour.
 
 ### Fixed
 
