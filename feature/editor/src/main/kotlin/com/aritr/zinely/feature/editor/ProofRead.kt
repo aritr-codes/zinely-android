@@ -574,6 +574,7 @@ private fun BookLeaf(
         // `.leaf.R{border-radius:0 md md 0}` / `.leaf.L{border-radius:md 0 0 md}` — the bound edge is
         // square because it is a fold, and only the outer corners are rounded. A `solo` leaf is a free
         // sheet, so `.leaf.solo` softens the bound edge too.
+        val paperColour = LocalPaperColour.current
         val bound = if (leaf.solo) RADIUS_FREE else RADIUS_BOUND
         val shape = if (leaf.spineOnLeft) {
             RoundedCornerShape(topStart = bound, bottomStart = bound, topEnd = RADIUS_OUTER, bottomEnd = RADIUS_OUTER)
@@ -605,7 +606,9 @@ private fun BookLeaf(
                     // for why V2.1 draws depth this way rather than with elevation.
                     .zinelyV21HardShadow(ZinelyV21Dimens.hardShadow, colors.inkLine, shape)
                     .clip(shape)
-                    .background(colors.paper)
+                    // AW6-P.1: a coloured paper's white ground is laid here, under the edge, so the leaf keeps its
+                    // ink border; the page multiplies the paper over it inside the same shape.
+                    .background(paperColour.groundOr(colors.paper))
                     .border(1.5.dp, colors.ink, shape)
                     // `.leaf::after` — the paper's own tooth, multiplied into the user's page. Placed here
                     // rather than as a sibling because it must fall ON the printing: paper takes ink.
@@ -621,7 +624,8 @@ private fun BookLeaf(
                         modifier = Modifier.fillMaxSize(),
                         imageBytes = imageBytes,
                         // AW6-P.1: every leaf is drawn on the paper. The stack edge, the desk and the tap zones do not change.
-                        paper = LocalPaperColour.current,
+                        paper = paperColour,
+                        paperSheet = shape,
                     )
                     if (!leaf.solo) Gutter(spineOnLeft = leaf.spineOnLeft)
                 }
