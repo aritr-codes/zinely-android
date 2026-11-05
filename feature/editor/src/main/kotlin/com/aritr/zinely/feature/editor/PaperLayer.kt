@@ -77,13 +77,15 @@ internal val PaperColour.displayName: String
         PaperColour.WHITE -> Copy.PaperColour.WHITE
         PaperColour.IVORY -> Copy.PaperColour.IVORY
         PaperColour.PASTEL_YELLOW -> Copy.PaperColour.PASTEL_YELLOW
+        PaperColour.PASTEL_ORANGE -> Copy.PaperColour.PASTEL_ORANGE
         PaperColour.PASTEL_PINK -> Copy.PaperColour.PASTEL_PINK
+        PaperColour.PASTEL_PURPLE -> Copy.PaperColour.PASTEL_PURPLE
         PaperColour.PASTEL_BLUE -> Copy.PaperColour.PASTEL_BLUE
         PaperColour.PASTEL_GREEN -> Copy.PaperColour.PASTEL_GREEN
         PaperColour.GREY -> Copy.PaperColour.GREY
     }
 
-/** Inside a sentence the name is lower-case ("Load pastel yellow paper", AW6.13). */
+/** Inside a sentence the name is lower-case ("Put pastel yellow paper in your printer", AW6.13). */
 internal val PaperColour.sentenceName: String get() = displayName.lowercase(Locale.ROOT)
 
 /** The note a paper carries in the chooser, or `null` (AW6.5: only White has one). */

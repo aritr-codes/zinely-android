@@ -40,7 +40,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -248,9 +251,10 @@ internal fun ZineActionSheet(
     onAction: (ZineAction) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    focusAction: ZineAction? = null,
 ) {
     LibrarySheetHost(target = target, onDismiss = onDismiss) { drawn ->
-        ZineActionSheetSurface(target = drawn, onAction = onAction, modifier = modifier)
+        ZineActionSheetSurface(target = drawn, onAction = onAction, modifier = modifier, focusAction = focusAction)
     }
 }
 
@@ -369,8 +373,13 @@ internal fun ZineActionSheetSurface(
     target: ZineActionTarget,
     onAction: (ZineAction) -> Unit,
     modifier: Modifier = Modifier,
+    focusAction: ZineAction? = null,
 ) {
     val colors = ZinelyTheme.v21Colors
+    // AW6.12 / A56.5: back from the paper chooser, focus returns to the row that opened it. A request that finds no
+    // window focus yet changes nothing, which is the sheet's default.
+    val returnFocus = remember { FocusRequester() }
+    LaunchedEffect(focusAction) { if (focusAction != null) runCatching { returnFocus.requestFocus() } }
     LibrarySheetSurface(
         title = target.title,
         subtitle = zineSheetLine(target.subtitle, target.paperColour),
@@ -390,7 +399,9 @@ internal fun ZineActionSheetSurface(
             SheetRow(
                 label = if (action == ZineAction.Move && target.inFolder) Copy.Folders.MOVE_SOMEWHERE_ELSE else action.label,
                 onClick = { onAction(action) },
-                modifier = Modifier.testTag(zineActionTestTag(action)),
+                modifier = Modifier
+                    .testTag(zineActionTestTag(action))
+                    .then(if (action == focusAction) Modifier.focusRequester(returnFocus) else Modifier),
                 glyph = action.glyph,
                 icon = action.icon,
                 // AW6-P.7: where the file leaves, said once, for a zine that is not White.
@@ -417,6 +428,10 @@ internal fun ZineActionSheetSurface(
  * and what the sheet holds scrolls under it, so a long list of folders cannot carry away the name of the
  * zine being moved. The zine sheet is not an `.a28` sheet, and takes the same limit for the same reason:
  * at the largest text on a small phone its six rows do not fit, and Delete was the one cut off.
+ *
+ * @param headDivider the head's dashed rule. A56's chooser head has none.
+ * @param pinned drawn under the head and above the scrolling content, and never scrolled: A56.2's top row (the sample
+ *   page and Done), which must stay on screen when the pile scrolls at large text. Null (default) draws nothing.
  */
 @Composable
 internal fun LibrarySheetSurface(
@@ -424,6 +439,8 @@ internal fun LibrarySheetSurface(
     subtitle: String,
     paneTitle: String,
     modifier: Modifier = Modifier,
+    headDivider: Boolean = true,
+    pinned: (@Composable ColumnScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -533,7 +550,7 @@ internal fun LibrarySheetSurface(
 
         // `border-bottom:1.5px dashed var(--hair)` on the head — the sheet's ONLY divider. V2 drew one
         // above every row and an 8px desk band above Delete; V2.1's `.act{border:none}` deletes both.
-        Box(
+        if (headDivider) Box(
             Modifier
                 .testTag(ZineActionHeadDividerTestTag)
                 .fillMaxWidth()
@@ -550,6 +567,7 @@ internal fun LibrarySheetSurface(
                     )
                 },
         )
+        pinned?.invoke(this)
 
         // The sheet's bottom padding is inside the scroll: a scroll clips at its edge, and the name
         // sheet's button draws its shadow below itself.

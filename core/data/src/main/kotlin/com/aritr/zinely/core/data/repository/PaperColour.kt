@@ -11,13 +11,18 @@ import com.aritr.zinely.core.model.ColorRgba
  *
  * The set is closed. [id] is permanent once shipped and is what is stored ([WHITE] is stored as no key at all);
  * [srgb] may be retuned (R41's values are estimates), never renamed. Adding a paper is add-only and needs no
- * schema bump. Brown was cut by AW6.6's gate.
+ * schema bump. Brown was cut by AW6.6's gate. Pastel orange and Pastel purple were added by A56.8 (ADR-152).
+ *
+ * The declaration order IS the chooser's order (A56.3: warm to cool, then Grey). Nothing stores or compares an
+ * ordinal, so inserting a paper mid-list is safe; a test pins the order.
  */
 public enum class PaperColour(public val id: String, public val srgb: ColorRgba) {
     WHITE("white", ColorRgba(0xFF, 0xFF, 0xFF, 0xFF)),
     IVORY("ivory", ColorRgba(0xF4, 0xEE, 0xDC, 0xFF)),
     PASTEL_YELLOW("pastel-yellow", ColorRgba(0xF7, 0xEC, 0x9B, 0xFF)),
+    PASTEL_ORANGE("pastel-orange", ColorRgba(0xF5, 0xCF, 0xA8, 0xFF)),
     PASTEL_PINK("pastel-pink", ColorRgba(0xF4, 0xC6, 0xD0, 0xFF)),
+    PASTEL_PURPLE("pastel-purple", ColorRgba(0xDC, 0xD0, 0xEC, 0xFF)),
     PASTEL_BLUE("pastel-blue", ColorRgba(0xBC, 0xD6, 0xEA, 0xFF)),
     PASTEL_GREEN("pastel-green", ColorRgba(0xCD, 0xE6, 0xC8, 0xFF)),
     GREY("grey", ColorRgba(0xCF, 0xCD, 0xC6, 0xFF)),
