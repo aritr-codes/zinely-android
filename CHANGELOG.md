@@ -85,6 +85,10 @@ Changes since the beta.9 app.
 
 ### Changed
 
+- The "restored details" note on My Shelf now lists the zines whose name went back first, so a zine you cannot find
+  is never hidden in "and 2 more"; and when several zines share a name it says which one it means (its folder, and
+  its place among them: "Notes" (in "Trips", 2 of 3 with this name)). Library design amendment A37.3 (frozen
+  2026-11-05, ADR-134, #145).
 - Docs: ZINE-DIRECTION notes the two-voice ruling (Book and Plain, ADR-126 Proposed) beside its four "three
   voices" lines; 21 drifted line citations into the frozen type bar, Reframe and Library pages re-pointed to
   named blocks or pinned commits (#97, #98).

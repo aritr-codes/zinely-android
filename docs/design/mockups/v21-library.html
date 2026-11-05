@@ -58,6 +58,12 @@ if (new URLSearchParams(location.search).has('gallery')) {
      │  one paper note under its heading until the maker presses "Got it".         │
      │  Marked A37 in the CSS, markup and script below; nothing above changed.     │
      │                                                                             │
+     │  A37.3 AMENDMENT · FROZEN 2026-11-05 under the owner's delegation of        │
+     │  2026-10-12, issue #145.  The restored note lists the zines whose name went │
+     │  back first, never hides one in "and k more", and says which zine it means  │
+     │  when a name is shared (its folder, its place among them).  Rules           │
+     │  A37.3.1–A37.3.9 are in the last script of this file.                       │
+     │                                                                             │
      │  A47 CHOOSING SEVERAL ZINES · FROZEN 2026-10-26 under the owner's          │
      │  delegation of 2026-10-12, for ADR-142 (ADR-141 decision 2).                │
      │  A long press on a zine, or "Select several" in its sheet, starts choosing.  │
@@ -2261,6 +2267,148 @@ $('a47c5').onclick = () => {
 };
 a47Sync();
 /* ===================== end of A47 script ===================== */
+</script>
+
+<script>
+/* ============================================================================
+   A37.3 AMENDMENT · THE LIST NAMES WHAT WENT BACK FIRST, AND SAYS WHICH ONE — FROZEN
+   2026-11-05 under the owner's delegation of 2026-10-12 ("decide, do not ask").  The
+   owner has not ruled on it personally and may overrule it.  An independent design review
+   (2026-11-05) found GO WITH FIXES; its three Required Fixes (the count's order and
+   staleness, the demo label) and the folder question are folded into the rules below.
+   Issue #145; the ADR-134 Pass 2 finding (2026-10-18).  Extends A37.3 and A46.3:
+   everything they say still holds unless a rule below names it.  A46.6 ("the zines whose
+   name went back first belongs to an amendment of A37.3") is discharged here.  The A37
+   and A46 functions are wrapped (rsWordsBeforeA373), not edited; rsList is replaced.
+
+   WHY.  Past four zines, A37.3 listed the first three in Shelf order and counted the rest
+   ("and 2 more").  So the only zines a maker cannot find, the ones whose NAME went back,
+   could be the ones hidden in "and k more" while unchanged names were spelled out.  And
+   when several zines carry one name, “Notes” in the list does not say which of them was
+   repaired, and the tile must not say (A37.7).
+
+   THE RULES.  Cited as A37.3.n.  [shown] = this page performs it; [stated] = written down.
+   The words change only where a rule says so; the title, the sentence after the list and
+   Got it are A37.3's and A46.3's.
+
+  A37.3.1 [shown]  ORDER.  In {list} the zines whose name went back come first, then the
+                others; each group keeps Shelf order.  Always, not only past four: one rule,
+                and "which of these can't I find?" is answered by what is read first.
+  A37.3.2 [shown]  NO NAME THAT WENT BACK IS EVER HIDDEN.  Past four zines, A37.3's "first
+                three and ' and k more'" becomes: name the first three, or every zine whose
+                name went back when there are more than three, whichever is more; the rest
+                are counted as " and k more".  So "more" only ever hides names that did not
+                change.  k is still never 1: one hidden name is no shorter than "and 1
+                more", so it is named.  (A long list scrolls with the zines, A37.8.  Only a
+                damaged-everywhere library makes it long.)
+  A37.3.3 [shown]  SAME NAME, SAY WHICH.  A name that more than one zine carries is
+                SHARED; the note then says which zine it means, with up to two marks in
+                the parentheses, after "was …" when there is one:
+                  PLACE ... in “Trips” (the folder it is in) or on My Shelf.  Shown when
+                            the zine is in a folder, or when the zines sharing the name are
+                            not all in one place.  A folder name is something the maker can
+                            see, and it answers "where did it go?".
+                  COUNT ... 2 of 3 with this name.  Shown when more than one zine with this
+                            name is in the SAME place as this one.  Counted in Shelf order
+                            (the order the tiles stand, newest first), WHATEVER ORDER THE
+                            NOTE LISTS THEM IN, among the zines in that place only, repaired
+                            or not, so the maker can count along what they can see.
+                “{now}” (2 of 3 with this name)
+                “{now}” (in “Trips”)           “{now}” (on My Shelf, 2 of 3 with this name)
+                “{now}” (was “{was}”, in “Trips”, 2 of 2 with this name)
+                A name carried once says nothing extra.  The tile is not marked (A37.7); the
+                marks are in the words.  Names are compared as the tiles show them: leading
+                and trailing spaces do not count, case and inner spacing do.
+  A37.3.4 [shown]  ONE ZINE.  The title is unchanged (so “{was}” is called “{now}” again
+                never gets a clause in the middle of it).  When its name is shared, one
+                sentence goes into the body after A37.3's/A46.3's sentences and before
+                "You can rename it again.":
+                  count only ... More than one zine has this name; this is number 2 of 3,
+                                 counting from the top of the shelf.
+                  place only ... More than one zine has this name; this is the one in
+                                 “Trips”.   (or: the one on My Shelf.)
+                  both ......... More than one zine has this name; this is the one in
+                                 “Trips”, number 2 of 3 there.
+  A37.3.5 [shown]  A37.4 holds: never backup, restore, error, corrupt, metadata or file
+                names.  A37.8 to A37.10 hold: every word shows at "text 2× at 360dp", Got it
+                below the words, one node, announced on arrival only.  The words are longer
+                only in the several-zine form with repeated names and the one-zine form
+                with a repeated name; both show whole and scroll with the zines.
+  A37.3.6 [stated] The words live in core:copy (Copy.Restored), transcribed from this
+                amendment exactly, under the A37.4 banned-words test.  The count is made
+                where the Shelf's zines are known (the screen), not in the store: nothing
+                about the repair signal, the marker or ADR-134's storage changes.
+  A37.3.7 [stated] ALWAYS TODAY'S SHELF.  The marks and the count are worked out again from
+                the Shelf's zines every time they change, never kept: opening or editing a
+                zine moves it to the front (A28.4), and renaming another zine of that name
+                (the remedy A37.3 names) changes "of 3" to "of 2".  Such a change is silent
+                (A37.10).  The words are therefore true when read, not when the repair was
+                found.
+  A37.3.8 [stated] A zine that only its pages went back (A46) still counts as a name that
+                did not change: it can sit in " and k more" (its name was never lost), and
+                it stands among the unchanged names, in Shelf order.
+  A37.3.9 [stated] THIS PAGE'S DEMO passes the marks directly: its six tiles have distinct
+                names, so the buttons cannot be counted against the phone.  The build counts
+                from the Shelf's zines.
+   ============================================================================ */
+const A373_RENAME = ' You can rename it again.';
+const a373Went = z => !!z.was && z.details !== false && z.was !== z.name;
+const a373Tag = z => [z.place || '', z.of > 1 ? z.nth + ' of ' + z.of + ' with this name' : ''].filter(Boolean);
+const a373Shared = z => a373Tag(z).length > 0;
+let a373Cur = [];                                   // the ordered items of the call in progress
+const a373Order = items => [...items.filter(a373Went), ...items.filter(z => !a373Went(z))];
+
+rsList = items => {                                                          // A37.3.1-3
+  const cur = a373Cur.length === items.length ? a373Cur : items;             // A46 re-maps items; order is kept
+  const w = items.map((z, i) => {
+    const inner = [a373Went(z) ? 'was ' + q(z.was) : '', ...a373Tag(cur[i])].filter(Boolean).join(', ');
+    return q(z.name) + (inner ? ' (' + inner + ')' : '');
+  });
+  let shown = Math.max(3, items.filter(a373Went).length);                // A37.3.2
+  if(w.length - shown === 1) shown++;                                         // k is never 1
+  if(w.length > 4 && shown < w.length) return w.slice(0, shown).join(', ') + ' and ' + (w.length - shown) + ' more';
+  return w.length < 2 ? w[0] : w.slice(0, -1).join(', ') + ' and ' + w[w.length - 1];
+};
+const rsWordsBeforeA373 = rsWords;
+rsWords = items => {
+  const o = a373Order(items); a373Cur = o;                                    // A37.3.1
+  const [t, b] = rsWordsBeforeA373(o);
+  const z = o[0];
+  if(o.length !== 1 || !a373Shared(z)) return [t, b];
+  const cnt = z.of > 1 ? 'number ' + z.nth + ' of ' + z.of : '';                // A37.3.4
+  const s = ' More than one zine has this name; this is ' + (z.place
+    ? 'the one ' + z.place + (cnt ? ', ' + cnt + ' there' : '')
+    : cnt + ', counting from the top of the shelf') + '.';
+  return [t, b.endsWith(A373_RENAME) ? b.slice(0, -A373_RENAME.length) + s + A373_RENAME : b + s];
+};
+
+const a373Cap = el('p', 'cap');
+a373Cap.innerHTML = '<span class="badge">A37.3 amendment · frozen 2026-11-05 · built 2026-11-05, in no release</span><br>' +
+  '<b>The note names what went back first, and says which (issue #145).</b> A zine whose name went back is ' +
+  'always spelled out, never hidden in “and k more”. When several zines share a name, the note says which one it ' +
+  'means with its folder and/or its place among them: “Notes” (in “Trips”, 2 of 3 with this name). The <b>name first</b> buttons below raise ' +
+  'each form; flip <b>day / night</b> and <b>text 2× at 360dp</b> to judge them.';
+[...document.querySelectorAll('p.cap')].find(p => p.textContent.startsWith('A46 restored pages')).after(a373Cap);
+const A373_IDS = ['rs9', 'rsa', 'rsb', 'rsc', 'rsd', 'rse'];
+const rsOnBeforeA373 = rsOn;
+rsOn = id => { rsOnBeforeA373(id); A373_IDS.forEach(b => $(b).classList.toggle('on', b === id)); };
+const a373Btns = [['rs9', 'four zines, name last'], ['rsa', 'six zines, two went back'], ['rsb', 'eight zines, five went back'],
+  ['rsc', 'same name, three zines'], ['rsd', 'one zine, same name'], ['rse', 'one zine, same name in a folder']]
+  .map(([id, t]) => { const b = el('button', 'ctl', t); b.id = id; return b; });
+$('rs8').after(el('span', 'grp', 'name first — A37.3'), ...a373Btns);
+const a373P = (n, extra) => ({ name: n, was: null, ...extra });
+const a373B = (n, w, extra) => ({ name: n, was: w, ...extra });
+$('rs9').onclick = () => { state('content'); raiseNote([a373P('Riso tests'), a373P('Mum’s garden'), a373P('Tiny poems'),
+  a373B('Letters home', 'Letters to Gran')], 'rs9'); };
+$('rsa').onclick = () => { state('content'); raiseNote([a373P('Sunday market'), a373P('Riso tests'), a373P('Mum’s garden'),
+  a373B('Tiny poems', 'Poems'), a373B('Coffee log', 'Coffee diary'), a373P('Letters home')], 'rsa'); };
+$('rsb').onclick = () => { state('content'); raiseNote([a373B('Sunday market', 'Market'), a373B('Letters home', 'Letters to Gran'),
+  a373P('Riso tests'), a373B('Mum’s garden', 'Garden'), a373B('Tiny poems', 'Poems'), a373B('Coffee log', 'Coffee diary'), a373P('Sunday zine'), a373P('Cover ideas')], 'rsb'); };
+$('rsc').onclick = () => { state('content'); raiseNote([a373P('Notes', { place: 'on My Shelf', nth: 1, of: 2 }), a373P('Riso tests'),
+  a373B('Notes', 'Trip notes', { place: 'on My Shelf', nth: 2, of: 2 }), a373P('Notes', { place: 'in “Trips”' })], 'rsc'); };
+$('rsd').onclick = () => { state('content'); raiseNote([a373B('Notes', 'Trip notes', { nth: 2, of: 2 })], 'rsd'); };
+$('rse').onclick = () => { state('content'); raiseNote([a373B('Notes', 'Trip notes', { place: 'in “Trips”' })], 'rse'); };
+/* ===================== end of A37.3 script ===================== */
 </script>
 
 <!-- =====================================================================

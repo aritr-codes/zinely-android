@@ -16370,6 +16370,12 @@ words; D-120 item 4; review follow-ups 3 (a repair found during a move or rename
 D-120 item 4 is decided there. The waiting notes move into one store shared by both repositories (ADR-140
 decision 4).
 
+**2026-11-05 (#145):** the Pass 2 finding above is decided by Library amendment A37.3 (`v21-library.html`,
+rules A37.3.1 to A37.3.9, frozen under the owner's delegation after an independent design review): the zines
+whose name went back are listed first and never hidden in "and k more"; a name shared by several zines says
+which one is meant (its folder, and its place among them, counted from today's Shelf). The count is made in the
+screen from the Shelf's zines (`noteWords(shelf)`); the store, the signal and the waiting notes are untouched.
+
 #### Review
 
 See [D-120](design/V2-SPEC-DEFECTS.md#d-120) § Review.
