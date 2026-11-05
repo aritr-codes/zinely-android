@@ -191,7 +191,7 @@ internal fun ZineOnShelf(
                     if (zine.choosing) {
                         // A47.11: the zine's name, then its state; its tap is "Select" / "Unselect".
                         Modifier.zinelyV2Control(
-                            label = if (pile != null) Copy.Folders.tileLabel(zine.title, zine.subtitle) else zine.title,
+                            label = if (pile != null) Copy.Folders.tileLabel(zine.title, zine.subtitle) else zineTileLabel(zine.title, zine.subtitle),
                             interactionSource = interaction,
                             onClick = { haptics.perform(ZinelyHaptic.Tick); onOpen(index) },
                             // No `selected`: Compose would turn it into checkable/checked, a "checkbox" the tile is not.
@@ -216,7 +216,7 @@ internal fun ZineOnShelf(
                     // "Camping trip, A4, 2 days ago" six times over is a list nobody can skim by ear.
                     // A28, *What TalkBack hears*: "For the stall, folder, 3 zines". A pile's covers are
                     // decoration; this is the tile's one name.
-                    label = if (pile != null) Copy.Folders.tileLabel(zine.title, zine.subtitle) else zine.title,
+                    label = if (pile != null) Copy.Folders.tileLabel(zine.title, zine.subtitle) else zineTileLabel(zine.title, zine.subtitle),
                     interactionSource = interaction,
                     onClick = { haptics.perform(ZinelyHaptic.Tick); onOpen(index) },
                     // A47.1: a zine's long press starts choosing several with it; a folder's still opens its sheet.
@@ -335,6 +335,16 @@ internal fun zineShelfDateLabel(subtitle: String): String =
     subtitle.substringAfter(SubtitleSeparator, missingDelimiterValue = subtitle).trim()
 
 private const val SubtitleSeparator = "·"
+
+/**
+ * A zine tile's spoken name (A35.11): the title alone for A4 and US Letter (a shelf that says its paper on every
+ * tile cannot be skimmed by ear), and "Camping trip, US Legal" for the two papers that print on themselves only.
+ */
+internal fun zineTileLabel(title: String, subtitle: String): String =
+    when (val stamp = zineShelfStampLabel(subtitle)) {
+        Copy.Paper.LEGAL, Copy.Paper.A5 -> "$title, $stamp"
+        else -> title
+    }
 
 /**
  * `.more` — the quiet `⋯`, kept from V2 and moved. See the departure note on [ZineOnShelf].
