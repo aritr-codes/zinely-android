@@ -82,11 +82,14 @@ public sealed interface ProjectShelfEntry {
  *   and different.
  * @property details its name, cover and folder (`meta.json`) went back.
  * @property pages its page file (`document.json`) went back.
+ * @property seq which note this is for the zine, this run: 0 for the first, one more for each note raised after the
+ *   last one ended (#147). Not stored; it lets the Shelf tell a new repair from a note the maker just dismissed.
  */
 public data class RestoredDetails(
     val previousTitle: String?,
     val details: Boolean = true,
     val pages: Boolean = false,
+    val seq: Long = 0,
 )
 
 public enum class ProjectUnavailableReason {

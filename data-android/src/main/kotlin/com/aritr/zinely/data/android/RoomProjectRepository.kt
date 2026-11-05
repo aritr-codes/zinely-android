@@ -259,6 +259,9 @@ internal class RoomProjectRepository(
     override suspend fun renameProject(id: String, title: String): DataResult<Unit> = withContext(io) {
         sessionBusy(id)?.let { return@withContext it }
         mutex.withLock {
+            // #147: the note as the maker had it. A repair this operation's own reads find (the reconcile below
+            // included) is not theirs to clear.
+            val waitingBefore = notes.noteOf(id)
             when (val ready = ensureReconciledLocked()) {
                 is DataResult.Failure -> return@withLock ready
                 is DataResult.Success -> Unit
@@ -298,7 +301,7 @@ internal class RoomProjectRepository(
             when (val synced = syncRowFromDisk(id, updatedAtEpochMs = keptUpdatedAt)) {
                 is DataResult.Failure -> DataResult.Failure(synced.error)
                 // ADR-134 decision 3: the maker has acted on this zine, so it stops waiting to be told.
-                is DataResult.Success -> clearWaitingNoteResult(id)
+                is DataResult.Success -> clearWaitingNoteResult(id, waitingBefore)
             }
         }
     }
@@ -387,6 +390,7 @@ internal class RoomProjectRepository(
         try {
             sessionBusy(id)?.let { return@withContext it }
             mutex.withLock {
+                val waitingBefore = notes.noteOf(id) // #147: see renameProject
                 when (val recovered = recoverInterruptedRestoreLocked()) {
                     is DataResult.Failure -> return@withLock recovered
                     is DataResult.Success -> Unit
@@ -408,7 +412,7 @@ internal class RoomProjectRepository(
                     }
                 }
                 // ADR-134 decision 3: the maker has acted on this zine, so it stops waiting to be told.
-                clearWaitingNoteResult(id)
+                clearWaitingNoteResult(id, waitingBefore)
             }
         } finally {
             folderChanges.update { it + 1 }
@@ -1274,9 +1278,9 @@ internal class RoomProjectRepository(
      * harmless. It tells the details again on the next listing in this run when nothing else waits for the zine
      * (the note held in [RepairNotes] is gone, so the marker is read), else at the next start.
      */
-    private fun clearWaitingNoteResult(id: String): DataResult<Unit> {
+    private fun clearWaitingNoteResult(id: String, before: RestoredDetails?): DataResult<Unit> {
         try {
-            notes.clearDetails(id)
+            notes.clearDetails(id, before)
         } catch (_: IOException) {
             // ponytail: the leftover marker is the record; a later listing tells the note again.
         }

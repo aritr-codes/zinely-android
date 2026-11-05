@@ -16370,6 +16370,12 @@ words; D-120 item 4; review follow-ups 3 (a repair found during a move or rename
 D-120 item 4 is decided there. The waiting notes move into one store shared by both repositories (ADR-140
 decision 4).
 
+**2026-11-05 (#145):** the Pass 2 finding above is decided by Library amendment A37.3 (`v21-library.html`,
+rules A37.3.1 to A37.3.9, frozen under the owner's delegation after an independent design review): the zines
+whose name went back are listed first and never hidden in "and k more"; a name shared by several zines says
+which one is meant (its folder, and its place among them, counted from today's Shelf). The count is made in the
+screen from the Shelf's zines (`noteWords(shelf)`); the store, the signal and the waiting notes are untouched.
+
 #### Review
 
 See [D-120](design/V2-SPEC-DEFECTS.md#d-120) § Review.
@@ -17662,6 +17668,17 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
   recorded on the CI image only. Seen on the emulator (light and dark) and the Samsung QA package (dark) with one chosen
   cover, 2026-10-30; the ring on every paper is still owed.
 - **Owed before Accepted:** both device passes, a TalkBack listen (owner), 390dp parity.
+- **Note 2026-11-05 ([#166](https://github.com/aritr-codes/zinely-android/issues/166), behaviour items closed):** PR #168
+  closed the Undo-after-finish, one-message, deleted-meanwhile and shrinking-chooser items; this change closes the
+  rest. A delete's Undo now takes the same lock as its commit (`commitMutex`), so an Undo pressed while the store is
+  writing waits and then finds the delete finished (R8's words) or failed (card back, warm message); it can no longer
+  restore a card that is then deleted silently. A folder action that starts while that Undo waits does not take its
+  zine over (`undoing`), and the Undo is not cancelled with the screen's model (the Review Agent's findings). A move Undo whose zines were all deleted meanwhile (one or several)
+  says R8's words for those whose delete finished and nothing for one whose delete still waits (its own Undo is up):
+  no new sentence. Tests: Undo racing a held delete, a second batch queued behind a first, a folder action racing a
+  batch commit. The goldens for the New-folder sheet for a set and for dark 2x text are drawn.
+  **Still owed, for the owner's TalkBack listen:** "1 selected" on entry, zines scrolled under the bar leaving the swipe
+  order, and the ring's corner radii in pixel parity.
 
 #### Revisit trigger
 
