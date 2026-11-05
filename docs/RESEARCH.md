@@ -2374,3 +2374,56 @@ The Ink popover's "Paper tints" band already uses Cream, Blush, Sky, Sage, Kraft
 - ✅ **Computed (WCAG 2.x formula, multiply, the Bench inks):** the house Ink keeps 10.4:1 or more on every paper kept; at the
   Packing brown estimate (`#B38B5D`) it falls to 5.8:1 and Matcha, Stone and Cornflower fall below 3:1, so Brown fails AW6.6 and is
   cut. A later, measured kraft value would need its own pass through the gate.
+
+### R41.7 Two more papers (2026-11-05)
+
+- 🟨 **ASSUMPTION (estimates, like every value above):** Pastel orange `#F5CFA8` (R41.1's "Apricot", the pastel orange / salmon
+  class) and Pastel purple `#DCD0EC` (a pastel lilac / lavender copy paper class; no maker value was found, as R41.1 says for
+  all stocks).
+- ✅ **Computed (the AW6.6 arithmetic):** house Ink 11.16:1 and 11.15:1; the lowest ink that reaches 3:1 on White is Stone at
+  3.46:1 and Cornflower at 3.25:1. Both pass. Added by [ADR-152](DECISIONS.md#adr-152), design A56.
+- 🟦 **RECOMMENDATION (adopted):** no colour mixer for paper: a paper colour is only true if a maker can buy that sheet, and
+  most of a mixer's range fails the gate.
+
+## R42. ASD-STE100 for an app and a website (2026-11-05) {#r42}
+
+Asked: the owner wants the app and the website in ASD-STE100. What is the standard now, can its text live in the repo, is it used
+for UI copy, and is there a checker? Web search; the official site refused the fetch (HTTP 403). Decided in [ADR-151](DECISIONS.md#adr-151).
+
+- ✅ **VERIFIED:** Issue 9 was released on 15 January 2025. It is now an "international standard", not a "specification". It
+  refines 31 of the 53 rules and changes 555 dictionary entries; "technical name" became "technical noun"
+  ([tcworld](https://www.tcworld.info/news/asd-ste100-issue-9-setting-a-standard-for-technical-documentation)).
+- ⚠️ **DISPUTED / NOT FOUND:** the licence to copy the dictionary or the rules into a repository. A free copy is given on request
+  through asd-ste100.org (secondary source: [reference.org](https://reference.org/facts/Simplified_Technical_English/PyHCaL4b)).
+  🟦 **RECOMMENDATION:** keep the standard's text out of the repo; write the rules in our own words.
+- ✅ **VERIFIED:** the checkers are commercial: HyperSTE ([MadCap example](https://help.madcapsoftware.com/flare2025/Content/Flare/Plug-In-API/Examples/Controlled-Language-Example.htm)),
+  Congree ([Congree](https://www.congree.com/en/ste-simplified-technical-english)), TechScribe's term checker
+  ([TechScribe](https://simplified-english.co.uk/)). No free rule set for CI was found.
+- 🟨 **ASSUMPTION (no evidence either way found):** STE is not used for consumer UI microcopy or marketing sites; it was made for
+  aerospace and defence maintenance manuals. Its rules on labels and fragments are therefore ours to decide.
+- 🟦 **RECOMMENDATION (adopted):** sentence rules in full for sentences; word rules only for labels; a project glossary for
+  product nouns; a heuristic local check (length, -ing, banned words), never a compliance claim.
+- ✅ **Computed (this repo, 2026-11-05):** about 735 entries in `Copy.kt`; `CopyNoProseLiteralTest`
+  keeps prose in `Copy`; about 8,400 words on the website; four copy tests read frozen HTML (`InkCopyTest`, `RestoredCopyTest`,
+  `SelectCopyTest`, `SuppliesCopyTest`). A trial rewrite of 15 strings made instructions and privacy lines clearer and the warm
+  brand lines worse, which is why ADR-151 decision 3 exists.
+
+## R43. Plain names for paper sizes (2026-11-05) {#r43}
+
+Asked: the owner said that "A4", "US Letter", "US Legal" and "A5" are not clear to everyone. Can the app use plainer names? Builds
+on [R26](#r26) and R29 (which papers, and what the Start sheet must say); does not repeat them.
+
+- ✅ **VERIFIED:** apps and printer software use the official names with sizes: Google Docs lists Letter, Legal, A4, A5 and others
+  ([guide](https://thebricks.com/resources/how-to-change-paper-size-in-google-docs)); Epson menus say "Letter, Legal, A4"
+  ([Epson](https://files.support.epson.com/docid/cpd3/cpd39449/Source/Copying/References/WP4530_4540/paper_sizes_copying_wp4530.html));
+  Android's print framework names `ISO_A4`, `ISO_A5`, `NA_LETTER`, `NA_LEGAL`
+  ([MediaSize](https://developer.android.com/reference/android/print/PrintAttributes.MediaSize)).
+  ⚠️ **NOT FOUND:** any app that uses plain names ("everyday", "long", "half-size") for these papers.
+- ✅ **VERIFIED (per Wikipedia, which cites CLDR):** about 13 countries default to Letter (US, CA, MX, PH, and several in Central and South America)
+  ([Wikipedia, Letter](https://en.wikipedia.org/wiki/Letter_(paper_size))). `android.icu.util.LocaleData.getPaperSize` gives the
+  locale's paper from API 28 ([LocaleData](https://developer.android.com/reference/android/icu/util/LocaleData)).
+- 🟨 **ASSUMPTION:** outside North America "A4" is the everyday word; in the US people say "printer paper" or "8½ × 11".
+- 🟦 **RECOMMENDATION:** because the print dialog uses the official name, keep it first (it is what the maker must find there)
+  and add a plain name after it that adds one fact: where A4 and US Letter are used (so neither is "the normal one"), or that US Legal
+  is long and A5 is small. Not "half-size": in the US it means half of a Letter sheet. Always show the sheet size and the zine's
+  page size, so "long" and "small" are never the only cue. Frozen as A55, [`v21-paper-names.html`](design/mockups/v21-paper-names.html).

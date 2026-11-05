@@ -1,0 +1,90 @@
+# ADR-151 baseline: Copy.kt findings from before the plain-English rewrite. One line a finding. Lines only leave.
+ing 'adding' | Adding your photos to this zine.
+ing 'editing' | ‹  Back to editing
+ing 'framing' | Reset framing
+ing 'typing' | Finish typing to change this
+ing 'existing' | Existing words and art stay on top.
+ing 'printing' | You will see the complete picture after printing and folding.
+ing 'folding' | You will see the complete picture after printing and folding.
+ing 'using' | Pages and palettes using it keep it.
+ing 'showing' | Still showing #X.
+ing 'typing' | Keep typing, or tap Done for a 3-letter code.
+ing 'masking' | Masking tape
+ing 'running' | Running stitch
+ing 'sticking' | Sticking plaster
+ing 'pointing' | Pointing hand
+ing 'fixing' | corner mount photo fixing
+ing 'fixing' | staple fixing metal
+ing 'fixing' | clip paper wire fixing
+ing 'masking' | masking tape clean sticky collage
+ing 'binding' | saddle stitch binding thread
+ing 'binding' | eyelet grommet hole binding
+ing 'fixing' | push pin tack fixing
+ing 'pointing' | pointing hand manicule pointer
+ing 'fixing' | corner mount photo fixing sharp
+ing 'fixing' | clip paper wire fixing narrow
+ing 'fixing' | clip paper wire fixing slanted
+ing 'masking' | masking tape clean sticky collage wide
+ing 'binding' | saddle stitch binding thread sewn running
+ing 'running' | saddle stitch binding thread sewn running
+ing 'binding' | saddle stitch binding thread across fold
+ing 'binding' | eyelet grommet hole binding flanged
+ing 'binding' | eyelet grommet hole binding wide bore
+ing 'fixing' | push pin tack fixing tilted
+ing 'fixing' | push pin tack fixing upright
+ing 'fixing' | push pin tack fixing drawn
+ing 'fixing' | push pin tack fixing drawn tilted
+ing 'sewing' | needle thread sewing stitch binding
+ing 'binding' | needle thread sewing stitch binding
+ing 'sticking' | sticking plaster bandage tape
+ing 'peeling' | sticker peeling label sticky
+ing 'pointing' | pointing hand manicule pointer cuffed cuff
+ing 'pointing' | pointing hand manicule pointer drawn
+ing 'stacking' | Stacking put back
+ing 'stacking' | Stacking changed
+ing 'framing' | Framing put back
+ing 'framing' | Framing changed
+ing 'opening' | Opening your zine
+ing 'reframing' | Reframing photo.
+ing 'framing' | Framing saved.
+ing 'framing' | Framing unchanged.
+ing 'filling' | Filling the frame.
+ing 'showing' | Showing the whole photo.
+ing 'framing' | Framing reset.
+ing 'reframing' | Reframing cancelled.
+ing 'moving' | Turn the selected piece over without moving it.
+banned 'grab' | Grab a photo or a few words from the supplies below.
+semicolon | Arrange uses buttons; Reframe crops inside.
+ing 'editing' | Tap Try now, or keep editing — it’ll try again.
+ing 'editing' | Free up a little space, then tap Try now — or keep editing to retry.
+ing 'adding' | Adding images isn’t available yet
+ing 'matching' | Switch this text to Plain to print them in a matching face.
+ing 'choosing' | Choosing Book, Plain or Hand replaces its font.
+ing 'reframing' | Cancel reframing
+ing 'reframing' | Done reframing
+ing 'loading' | Loading your zines
+ing 'selecting' | Stop selecting
+semicolon | It’s back on your shelf; try again in a moment.
+semicolon | They’re back on your shelf; try again in a moment.
+semicolon | X didn’t move; try again in a moment.
+semicolon | More than one zine has this name; this is
+ing 'counting' | XX, counting from the top of the shelf.
+semicolon | Names, covers and folders are from before the last change to them; pages are from just before your last few seconds of changes.
+ing 'making' | We wanted to make little paper books, and somehow that turned into making an Android app.
+ing 'making' | Thanks for making something with it.
+ing 'making' | This phone ran short of memory making the PDF — try again in a moment.
+banned 'free some up' | This phone is out of space — free some up, then try again.
+banned 'out of space' | This phone is out of space — free some up, then try again.
+semicolon | Printers flip pages differently; one sheet saves a stack.
+ing 'bringing' | Fold the sheet in half, bringing the two short edges together.
+ing 'bringing' | Fold it in half again, bringing the bottom edge up to the top.
+ing 'holding' | You should be holding a tall half-sheet.
+ing 'standing' | Four panels standing in a cross.
+ing 'saving' | Saving your backup
+ing 'putting' | Putting zines together in one file.
+ing 'bringing' | Bringing your zines back
+ing 'checking' | Checking the backup before anything changes.
+ing 'adding' | Adding zines to your shelf.
+ing 'being' | A zine is still being put away.
+ing 'jointostring' | This backup was saved without X: ${clauses.dropLast(1).joinToString(
+ing 'holding' | Mum at the allotment gate, holding a marrow
