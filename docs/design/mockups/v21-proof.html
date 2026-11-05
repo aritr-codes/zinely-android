@@ -1868,7 +1868,7 @@ if (prototypeParams.get('gallery') === 'fold') {
      AW6-P · PAPER COLOUR AT PROOF — PROPOSED 2026-11-05, NOT FROZEN.
      W6 of ADR-136 (decision 5).  The rules are v21-library.html AW6.1 to AW6.15;
      this block draws the Proof's part of them (AW6.7: the stage, the Print
-     details picture, the fold guide) and the second door to the chooser (AW6.3b).
+     details picture) and the second door to the chooser (AW6.3b).
      Swatch values from RESEARCH R41 (estimates).
 
      Appended in its own block with its own phone, controls and script (classes
@@ -1898,15 +1898,21 @@ if (prototypeParams.get('gallery') === 'fold') {
                    keeps AW5's conditional wording.
   AW6-P.5 [shown]  "How it becomes a booklet": the sheet picture is drawn on the paper,
                    margins included, since the unprinted strip IS the paper.
-  AW6-P.6 [shown]  The fold guide: the drawn sheet's fill is the paper; its lines,
-                   arrows, the green "fold now" and the grey "made" creases do not
-                   change.  At the provisional values every crease colour keeps the
-                   contrast it has on the frozen fill or better on all six
-                   coloured papers at R41's values.
+  AW6-P.6 [shown]  The fold guide does NOT show the paper.  It is a diagram of
+                   folding, already on its own off-white fill (#FFF6E8), not the
+                   maker's page; on coloured paper its crease, cut and ghost marks
+                   lose contrast (the ghost outline falls under 3:1).  Review
+                   2026-11-05, Required Fix R1.
   AW6-P.7 [stated] Saving.  The colour is not in the PDF, so changing it never marks a
                    saved PDF stale: the band keeps "Saved to your phone" and the
                    stale-file notice does not appear.  Save PDF's sub-line keeps
                    "8 pages · A4".  Share sends the same PDF.
+         [stated] Said where the file leaves.  For a zine that is not White, Save PDF
+                   and Share and export each carry one plain line: "Your paper colour
+                   is not in the file."  It is text, read after the action's name, not
+                   a warning and not a live region.  A White zine shows nothing new.
+                   (Review 2026-11-05, R4: the screens show the colour everywhere, so
+                   the file's white must be said where it is made.)
   AW6-P.8 [shown]  Night: the paper keeps its colour (AW6.9); the drawer themes.
   AW6-P.9 [shown]  TalkBack: the new row is ONE node, role button, "Paper colour,
                    Pastel yellow"; the note is plain text read after it; the recipe
@@ -1972,7 +1978,7 @@ if (prototypeParams.get('gallery') === 'fold') {
   <p class="cap"><b>Proposed 2026-11-05, not frozen. Swatch values from R41 (estimates).</b> The rules are
   <code>v21-library.html</code> AW6. Here: the stage shows each leaf on the paper; Print details gets a
   <b>Paper colour</b> row and, for any colour but White, one line that says what to load; the booklet picture and
-  the fold guide are drawn on the paper. The PDF does not change, so nothing goes stale.</p>
+  Print details are drawn on the paper. The fold guide is not. The PDF does not change, so nothing goes stale.</p>
 
   <div class="aw6p-phone" id="aw6pPhone">
     <div class="aw6p-stage"><div class="aw6p-leaf" id="aw6pLeaf" role="img" aria-label="Cover"></div></div>
@@ -2058,7 +2064,7 @@ if (prototypeParams.get('gallery') === 'fold') {
   $('aw6pLeaf').innerHTML = PAGE; $('aw6pMini').innerHTML = mini;
 
   function paint(){
-    ['aw6pLeaf', 'aw6pMini', 'aw6pFoldSheet', 'aw6pRowSw'].forEach(id => $(id).style.background = cur.hex);   // AW6-P.1, .5, .6
+    ['aw6pLeaf', 'aw6pMini', 'aw6pRowSw'].forEach(id => $(id).style.background = cur.hex);   // AW6-P.1, .5 (not the fold guide, AW6-P.6)
     $('aw6pRowVal').textContent = cur.name;
     $('aw6pRow').setAttribute('aria-label', 'Paper colour, ' + cur.name);                                    // AW6-P.9
     const white = cur.id === 'white', low = cur.name.toLowerCase();

@@ -2346,7 +2346,7 @@ a47Sync();
 <p class="cap lead" id="aw6h"><span class="badge">AW6 paper colour · proposed 2026-11-05 · not frozen</span><br>
 The paper you load, shown on screen</p>
 <p class="cap"><b>Proposed 2026-11-05, not frozen. Swatch values from R41 (estimates).</b> A maker says which colour paper
-they will load. The Bench, the Proof stage, Print details and the fold guide then show the page on that paper.
+they will load. The Bench, the Proof stage, and Print details then show the page on that paper.
 Zinely still prints only the ink: the PDF and the picture are the same bytes as on white, and the paper is not in
 them. The colour is chosen in the zine’s sheet here, or at Print. The Start sheet (A35) does not ask. Press
 <b>zine sheet</b>, then <b>Paper colour</b>.</p>
@@ -2376,7 +2376,7 @@ them. The colour is chosen in the zine’s sheet here, or at Print. The Start sh
         <p class="aw6-sub">Which colour paper will you load? It shows on screen only. We print only the ink.</p></div>
       <span class="aw6-prov">Values: R41 estimates</span>
       <div id="aw6Opts" role="radiogroup" aria-labelledby="aw6ChT"></div>
-      <p class="aw6-foot">No dark or bright papers. Home printers have no white ink, so most inks would sink into them.</p>
+      <p class="aw6-foot">No dark or bright papers. Home printers have no white ink, so most inks would sink into them. Colours are close, not exact.</p>
     </div>
   </div>
 
@@ -2456,14 +2456,14 @@ column is the largest factor by which the paper lowers any ink’s ratio against
 
   AW6.4  [shown]  The chooser.  A sheet titled "Paper colour", sub-line "Which colour
                 paper will you load? It shows on screen only. We print only the ink."
-                Eight rows, one per paper, in the AW6.5 order: the swatch, the name,
+                Seven rows, one per paper, in the AW6.5 order: the swatch, the name,
                 and a note where one is owed.  One tap picks and closes; the zine sheet
                 row then names the new colour.  The current colour is checked (a ring
                 and a tick, never colour alone).  No confirm and no Undo snack: it
                 changes nothing printed and the same row puts it back.  Scrim, Back and
                 a swipe down close it and change nothing.  Foot: "No dark or bright
                 papers. Home printers have no white ink, so most inks would sink into
-                them."  The provisional badge is this prototype's, not the app's.
+                them. Colours are close, not exact."  The provisional badge is this prototype's, not the app's.
 
   AW6.5  [shown]  The closed set, values from RESEARCH R41 (estimates: no maker publishes
                 sRGB; "close, not exact").  Seven papers, light to dark: White, Ivory,
@@ -2490,7 +2490,7 @@ column is the largest factor by which the paper lowers any ink’s ratio against
          [stated] No per-element low-contrast warning.  On a paper that passes, the
                 paper alone never takes an ink from readable to unreadable: the darkest
                 ink loses most (the table's last column, the largest drop over all
-                inks: about 1.3 at R41's values) and light inks lose less.  An ink that is weak on
+                inks: up to about 1.46, on Grey, at R41's values) and light inks lose less.  An ink that is weak on
                 White (Sunflower, about 1.9:1) is weak on every paper; that belongs to
                 the ink tray, not to the paper.  A paper that fails the gate is dropped,
                 not warned about (Brown, AW6.5).
@@ -2501,7 +2501,9 @@ column is the largest factor by which the paper lowers any ink’s ratio against
                   Proof stage (Read) ...... yes, every leaf on the paper (AW6-P)
                   Print details picture ... yes, the whole sheet, margins included,
                                             since the unprinted strip IS the paper (AW6-P)
-                  Fold guide .............. yes, the drawn sheet's fill; lines unchanged (AW6-P)
+                  Fold guide .............. NO.  It is a diagram of folding, not the
+                                            maker's page, and its marks lose contrast
+                                            on paper (review 2026-11-05).  AW6-P.6.
                   Shelf cover ............. NO.  A cover is a recipe, never a rendered
                                             page (ADR-069), and part of the zine's
                                             identity (D-017).  ShelfCover's own stock
@@ -2554,6 +2556,11 @@ column is the largest factor by which the paper lowers any ink’s ratio against
                     radiogroup labelled "Paper colour"; each row is ONE node, role
                     radio, checked or not checked, named by the colour (and its note, if a
                     paper ever carries one).
+                  Compose: the rows sit in Modifier.selectableGroup(); each row is
+                    Modifier.selectable(selected, role = Role.RadioButton), never a
+                    Button carrying `selected` (it reads as checkable on the platform,
+                    ADR-059's Role to View lesson).  Check the platform tree, not only
+                    the merged semantics.
                   The Shelf tile's name does not change (A35.11's narrowing).
          [stated] After a pick, focus returns to the zine sheet's Paper colour row.
 
