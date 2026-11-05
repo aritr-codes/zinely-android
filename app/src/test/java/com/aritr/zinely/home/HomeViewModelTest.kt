@@ -248,6 +248,14 @@ class HomeViewModelTest {
             if (listAgainOnDismiss) listAgain()
             return DataResult.Success(Unit)
         }
+
+        override suspend fun setPaperColour(
+            id: String,
+            colour: com.aritr.zinely.core.data.repository.PaperColour,
+        ): DataResult<Unit> = DataResult.Success(Unit)
+
+        override suspend fun getPaperColour(id: String): com.aritr.zinely.core.data.repository.PaperColour =
+            com.aritr.zinely.core.data.repository.PaperColour.WHITE
     }
 
     private class FakeLibrarySafTransport : LibrarySafTransport {

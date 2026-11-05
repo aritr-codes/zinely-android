@@ -49,12 +49,30 @@ public const val MAX_BACKUP_ASSETS: Int = 100_000
  * defaulted, so `packageVersion` stays 2: an entry without the key is a zine on My Shelf, and builds that do
  * not know the key ignore it and restore the zine to My Shelf. It is arrangement, not work, so it is read
  * leniently: a value of the wrong type is no folder and never refuses a restore.
+ *
+ * ### The zine's paper is [sheet], else [paperSize] ([ADR-150](docs/DECISIONS.md#adr-150) decision 2)
+ *
+ * [paperSize] no longer means "this zine's size" on its own: it is **the size an older build should believe**,
+ * always `letter` or `a4`. A US Legal zine writes `letter` and an A5 zine `a4`, plus [sheet] (`"legal"` / `"a5"`,
+ * the document's serial name), which overrides it. Every shipped build decodes this manifest before any version
+ * check, with unknown keys ignored, so it ignores [sheet], reaches the version check, sees schema 5 and says
+ * "needs a newer Zinely" instead of "damaged". Read the size only through [effectivePaperSize], and only after
+ * the version check; an unknown or inconsistent pair is `INVALID_STRUCTURE` (`project.sheet.invalid`).
+ *
+ * **Rule for every manifest field, now and later: no typed enum, ever.** The manifest is decoded before any
+ * version check, so a typed enum makes the build that decodes it call a later build's backup damaged the day
+ * a value is added. [sheet] is a `String` for that reason; [format] and [paperSize] are typed only because
+ * shipped builds already read them, and their values are frozen.
+ *
+ * [paperColour] is the zine's paper colour id from `meta.json` (ADR-150 decision 3), or `null` for White. Additive
+ * and read leniently like [folder]; the raw id is kept, so a later build's paper survives a restore here.
  */
 @Serializable
 public data class ZineBackupProjectEntry(
     val sourceProjectId: String,
     val title: String,
     val format: ZineFormat,
+    /** Always LETTER or A4: the family size of the zine's paper. Use [effectivePaperSize]. */
     val paperSize: PaperSize,
     val createdAtEpochMs: Long,
     val updatedAtEpochMs: Long,
@@ -67,7 +85,38 @@ public data class ZineBackupProjectEntry(
     val coverStamp: String?,
     @Serializable(with = LenientFolderNameSerializer::class)
     val folder: String? = null,
+    /** The paper's serial name when [paperSize] alone would be wrong (`"legal"`, `"a5"`), else `null`. A string, never an enum. */
+    val sheet: String? = null,
+    /** The same lenient string read as [folder]: a non-string is White and never refuses a restore. */
+    @Serializable(with = LenientFolderNameSerializer::class)
+    val paperColour: String? = null,
 )
+
+/**
+ * The size an older build should believe for a zine on this paper: its family size, LETTER or A4 (ADR-150
+ * decision 2). The `when` is exhaustive, so a later size must name its family.
+ */
+public fun PaperSize.backupPaperSize(): PaperSize = when (this) {
+    PaperSize.LETTER, PaperSize.LEGAL -> PaperSize.LETTER
+    PaperSize.A4, PaperSize.A5 -> PaperSize.A4
+}
+
+/** The manifest's [ZineBackupProjectEntry.sheet] for this paper: its serial name, or `null` for LETTER and A4. */
+public fun PaperSize.backupSheet(): String? = if (backupPaperSize() == this) null else serialName()
+
+/**
+ * The zine's paper: the parsed [ZineBackupProjectEntry.sheet], else [ZineBackupProjectEntry.paperSize]. `null`
+ * when the pair is not one a writer produces: an unknown sheet, a sheet of `letter` or `a4`, a sheet whose
+ * family is not [ZineBackupProjectEntry.paperSize], or a bare LEGAL / A5 `paperSize`. The validator refuses
+ * those as `project.sheet.invalid`, which the stager reports as `INVALID_STRUCTURE` after its version check.
+ */
+public fun ZineBackupProjectEntry.effectivePaperSize(): PaperSize? {
+    val paper = sheet?.let { name -> PaperSize.entries.firstOrNull { it.serialName() == name } ?: return null }
+        ?: return paperSize.takeIf { it.backupSheet() == null }
+    return paper.takeIf { it.backupSheet() != null && it.backupPaperSize() == paperSize }
+}
+
+private fun PaperSize.serialName(): String = PaperSize.serializer().descriptor.getElementName(ordinal)
 
 /**
  * The v2 `.zine` package: one user-created file containing the whole library and its deduplicated

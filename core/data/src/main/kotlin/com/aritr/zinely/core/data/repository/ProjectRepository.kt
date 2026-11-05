@@ -96,4 +96,21 @@ public interface ProjectRepository {
      * zine is then still told on the next listing.
      */
     public suspend fun dismissRestoredDetails(shown: Map<String, RestoredDetails>): DataResult<Unit>
+
+    /**
+     * Load the zine [id] on [colour] paper ([ADR-150](docs/DECISIONS.md#adr-150) decision 3, AW6.3). Read it back as
+     * [ProjectShelfEntry.paperColour], or [getPaperColour] from inside the editor.
+     *
+     * **Not an edit.** It writes the zine's `meta.json` and nothing else: the document, its undo history and its
+     * recency ("last edited") are untouched, so it never reorders the Shelf or marks a saved PDF stale. [PaperColour.WHITE]
+     * removes the key. Allowed while the zine is open (Print details sets it), because the editor session owns only
+     * `document.json`. A zine that will not open can still change paper, like a move.
+     *
+     * Fails with [DataError.NotFound] when there is no such zine and [DataError.Corrupt] when its metadata is missing or
+     * cannot be read; nothing is written then.
+     */
+    public suspend fun setPaperColour(id: String, colour: PaperColour): DataResult<Unit>
+
+    /** The zine [id]'s paper colour as its `meta.json` says now; [PaperColour.WHITE] when absent, unknown or unreadable. */
+    public suspend fun getPaperColour(id: String): PaperColour
 }
