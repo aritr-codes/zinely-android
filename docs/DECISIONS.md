@@ -17662,6 +17662,16 @@ device passes ([CLAUDE.md](../CLAUDE.md#device-verification-mandatory)).
   recorded on the CI image only. Seen on the emulator (light and dark) and the Samsung QA package (dark) with one chosen
   cover, 2026-10-30; the ring on every paper is still owed.
 - **Owed before Accepted:** both device passes, a TalkBack listen (owner), 390dp parity.
+- **Note 2026-11-05 ([#166](https://github.com/aritr-codes/zinely-android/issues/166), behaviour items closed):** PR #168
+  closed the Undo-after-finish, one-message, deleted-meanwhile and shrinking-chooser items; this change closes the
+  rest. A delete's Undo now takes the same lock as its commit (`commitMutex`), so an Undo pressed while the store is
+  writing waits and then finds the delete finished (R8's words) or failed (card back, warm message); it can no longer
+  restore a card that is then deleted silently. A move Undo whose zines were all deleted meanwhile (one or several)
+  says R8's words for those whose delete finished and nothing for one whose delete still waits (its own Undo is up):
+  no new sentence. Tests: Undo racing a held delete, a second batch queued behind a first, a folder action racing a
+  batch commit. The goldens for the New-folder sheet for a set and for dark 2x text are drawn.
+  **Still owed, for the owner's TalkBack listen:** "1 selected" on entry, zines scrolled under the bar leaving the swipe
+  order, and the ring's corner radii in pixel parity.
 
 #### Revisit trigger
 

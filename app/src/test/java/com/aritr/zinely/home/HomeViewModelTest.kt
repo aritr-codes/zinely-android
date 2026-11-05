@@ -3046,13 +3046,108 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `Undo of a batch move whose zines were all deleted meanwhile says nothing`() = runTest {
+    fun `Undo of a batch move whose zines were all deleted meanwhile says they were already deleted`() = runTest {
         val other = folderShelf("x" to null, "y" to null)
         other.viewModel.moveMany(listOf("x", "y"), "Family")
         other.viewModel.deleteMany(listOf("x", "y"))
-        val seen = other.events.size
+        repository.calls.clear()
         other.viewModel.folderSnackAction()
-        assertEquals(seen, other.events.size)
+        assertTrue(repository.calls.none { it.startsWith("move") })
+        assertEquals("2 zines were already deleted, so they can’t come back: “x” and “y”", other.events.last().text())
         other.close()
+    }
+
+    @Test
+    fun `Undo of one moved zine deleted meanwhile says it was already deleted`() = runTest {
+        val shelf = folderShelf("a" to null, "b" to null)
+        shelf.viewModel.moveZine("a", "Family")
+        shelf.viewModel.delete("a")
+        repository.calls.clear()
+
+        shelf.viewModel.folderSnackAction()
+
+        assertTrue(repository.calls.none { it.startsWith("move") })
+        assertEquals("“a” was already deleted, so it can’t come back", shelf.events.last().text())
+        shelf.close()
+    }
+
+    @Test
+    fun `Undo pressed while the delete is being written waits for it and then says it was already deleted`() = runTest {
+        // Given: the flush has reached the store and is held there
+        val shelf = folderShelf("a" to null, "b" to null)
+        shelf.viewModel.delete("a")
+        repository.deleteGate = CompletableDeferred()
+        shelf.viewModel.flushPendingDeletes()
+
+        // When Undo is pressed now
+        shelf.viewModel.undoDelete("a")
+        // Then nothing has been put back yet, and nothing was said
+        assertEquals(listOf("b"), shelf.zines.map { it.id })
+        repository.deleteGate!!.complete(Unit)
+
+        // Then: the card never reappears and the maker is told
+        assertEquals(listOf("b"), shelf.zines.map { it.id })
+        assertEquals("“a” was already deleted, so it can’t come back", shelf.events.last().text())
+        shelf.close()
+    }
+
+    @Test
+    fun `Undo of a batch pressed while its deletes are being written takes the lock in turn`() = runTest {
+        // Given: the store is writing a's delete; b has not been sent
+        val shelf = folderShelf("a" to null, "b" to null)
+        shelf.viewModel.deleteMany(listOf("a", "b"))
+        repository.deleteGate = CompletableDeferred()
+        shelf.viewModel.flushPendingDeletes()
+
+        // When Undo waits for the lock and a's write finishes: the lock goes to Undo before b is sent
+        shelf.viewModel.undoDeletes(listOf("a", "b"))
+        repository.deleteGate!!.complete(Unit)
+
+        // Then b comes back and is never deleted, and a is named
+        assertEquals(listOf("a"), repository.deleted)
+        assertEquals(listOf("b"), shelf.zines.map { it.id })
+        assertEquals("“a” was already deleted, so it can’t come back", shelf.events.last().text())
+        shelf.close()
+    }
+
+    @Test
+    fun `a second batch queued behind a first is undone and committed on its own`() = runTest {
+        // Given two batches, the first's snack closed without Undo, the second's still standing
+        val shelf = folderShelf("a" to null, "b" to null, "c" to null, "d" to null)
+        shelf.viewModel.deleteMany(listOf("a", "b"))
+        shelf.viewModel.deleteMany(listOf("c", "d"))
+        shelf.viewModel.commitDeletes(listOf("a", "b"))
+
+        // When the second is undone
+        shelf.viewModel.undoDeletes(listOf("c", "d"))
+
+        // Then only the first was deleted
+        assertEquals(listOf("a", "b"), repository.deleted)
+        assertEquals(listOf("c", "d"), shelf.zines.map { it.id })
+        assertTrue(shelf.events.filterIsInstance<HomeShelfEvent.Message>().isEmpty())
+        shelf.close()
+    }
+
+    @Test
+    fun `a folder action racing a batch commit deletes each zine once and says its failures once`() = runTest {
+        // Given a batch whose commit is held in the store, two of its zines refusable
+        val shelf = folderShelf("a" to null, "b" to null, "c" to null, "d" to null)
+        repository.undeletable = setOf("a", "c")
+        shelf.viewModel.deleteMany(listOf("a", "b", "c"))
+        repository.deleteGate = CompletableDeferred()
+        shelf.viewModel.commitDeletes(listOf("a", "b", "c"))
+
+        // When a folder action arrives, then the commit goes on
+        shelf.viewModel.moveZine("d", "Family")
+        repository.deleteGate!!.complete(Unit)
+
+        // Then each reached the store once and the failures were said once. (The action that waited behind the
+        // failing commit goes on: the Shelf it acts on is true by then, performCommit's accepted limit.)
+        assertEquals(listOf("a", "b", "c"), repository.deleted)
+        assertEquals(
+            listOf("2 zines weren’t deleted: “a” and “c”. They’re back on your shelf; try again in a moment."),
+            shelf.events.filterIsInstance<HomeShelfEvent.Message>().map { it.text },
+        )
+        shelf.close()
     }
 }

@@ -129,6 +129,10 @@ Changes since the beta.9 app.
 
 ### Fixed
 
+- Choosing several zines: an Undo tapped while a delete was still being written could restore a card that was then
+  deleted without a word; it now waits for the delete and says the zine was already deleted. A move's Undo said
+  nothing when every zine in it had been deleted meanwhile; it now says they were already deleted
+  ([#166](https://github.com/aritr-codes/zinely-android/issues/166), [ADR-142](docs/DECISIONS.md#adr-142)).
 - If a photo left the page while its "across the fold" question was open (an Undo, a delete, a page turn), the
   question closed but the Bench's bars and the way back to My Shelf could stay hidden. They now come back, and the
   question does not reopen by itself when the photo returns
