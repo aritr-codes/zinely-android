@@ -18717,7 +18717,7 @@ Q7 keeps with the owner. **Design:** [`v21-proof.html`](design/mockups/v21-proof
 **Status:** Proposed, 2026-11-05, under the owner's delegation of 2026-10-12 ("decide, do not ask"); the owner may
 overrule it. It becomes Accepted only when built and the items under *Owed before Accepted* are done.
 **Design:** [`v21-library.html`](design/mockups/v21-library.html) A35 (the size picker, frozen 2026-10-15) and AW6 (paper
-colour), with [`v21-proof.html`](design/mockups/v21-proof.html) AW6-P and [`v21-bench.html`](design/mockups/v21-bench.html)
+colour, frozen 2026-11-05 under the same delegation after the two reviews below), with [`v21-proof.html`](design/mockups/v21-proof.html) AW6-P and [`v21-bench.html`](design/mockups/v21-bench.html)
 AW6-B. Evidence: [R26](RESEARCH.md) (which paper a home printer takes), [R41](RESEARCH.md#r41) (paper colour).
 **Keeps:** [ADR-133](#adr-133) decisions 1 to 5 unamended (the sizes ride a bump of their own, and nothing else rides it);
 [ADR-147](#adr-147) decision 3 (a file says the oldest version that can read it); [ADR-120](#adr-120) and
