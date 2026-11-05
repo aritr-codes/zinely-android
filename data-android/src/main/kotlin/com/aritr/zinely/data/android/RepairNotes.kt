@@ -32,6 +32,8 @@ internal class RepairNotes(rootDir: Path, private val store: AtomicFileStore) {
     private val paths = ProjectPaths(rootDir)
     private val json = Json { ignoreUnknownKeys = true }
     private val waiting = ConcurrentHashMap<String, RestoredDetails>()
+    /** Per zine, how many notes have ended this run: the [RestoredDetails.seq] the next one is stamped with. */
+    private val ended = ConcurrentHashMap<String, Long>()
     private val changeCount = MutableStateFlow(0)
 
     /** Bumped whenever a note is added to or cleared: the Shelf lists again (decision 6). */
@@ -68,17 +70,18 @@ internal class RepairNotes(rootDir: Path, private val store: AtomicFileStore) {
     fun clear(id: String, shown: RestoredDetails) = change(id) { held -> held.takeIf { it != shown } }
 
     /**
-     * A rename or move: [id]'s details part only (A46.5, narrowing A37.6). A zine whose pages went back too keeps
-     * waiting, as a pages-only note. Throws when its marker cannot be changed; the note held here changes all the
+     * A rename or move: [id]'s details part only (A46.5, narrowing A37.6), of the note the maker had [before] the
+     * operation. A note that is not [before] (the operation's own read found a repair, #147) is left to be told.
+     * A zine whose pages went back too keeps waiting, as a pages-only note. Throws when its marker cannot be changed; the note held here changes all the
      * same, so the old marker is read again only once nothing is held for [id] (next listing, or next start).
      */
-    fun clearDetails(id: String) = change(id) { held ->
-        held?.takeIf { it.pages }?.copy(previousTitle = null, details = false)
+    fun clearDetails(id: String, before: RestoredDetails?) = change(id) { held ->
+        if (held == null || held != before) held else held.takeIf { it.pages }?.copy(previousTitle = null, details = false)
     }
 
     /** [id]'s directory is gone, and its marker with it. */
     fun forget(id: String) {
-        waiting.remove(id)
+        if (waiting.remove(id) != null) ended.merge(id, 1L, Long::plus)
     }
 
     private fun add(id: String, merge: (RestoredDetails?) -> RestoredDetails) {
@@ -99,8 +102,10 @@ internal class RepairNotes(rootDir: Path, private val store: AtomicFileStore) {
         // ponytail: the marker's I/O runs inside compute, holding this one key's bin; notes are rare and tiny.
         waiting.compute(id) { _, held ->
             val now = held ?: readMarker(id)
-            val after = next(now)
+            val raw = next(now)
+            val after = if (now == null) raw?.copy(seq = ended[id] ?: 0) else raw
             if (after != now) {
+                if (after == null) ended.merge(id, 1L, Long::plus)
                 changed = true
                 try {
                     if (after == null) deleteMarker(id) else writeMarker(id, after)
@@ -124,8 +129,8 @@ internal class RepairNotes(rootDir: Path, private val store: AtomicFileStore) {
             store.read(marker)?.let { json.decodeFromString(RestoredNoteFile.serializer(), it.decodeToString()) }
         } catch (_: Exception) {
             null
-        } ?: return RestoredDetails(null)
-        return RestoredDetails(file.previousTitle, details = file.details, pages = file.pages)
+        } ?: return RestoredDetails(null, seq = ended[id] ?: 0)
+        return RestoredDetails(file.previousTitle, details = file.details, pages = file.pages, seq = ended[id] ?: 0)
     }
 
     private fun writeMarker(id: String, note: RestoredDetails) {
