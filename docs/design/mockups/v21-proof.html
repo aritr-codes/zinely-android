@@ -1869,7 +1869,7 @@ if (prototypeParams.get('gallery') === 'fold') {
      W6 of ADR-136 (decision 5).  The rules are v21-library.html AW6.1 to AW6.15;
      this block draws the Proof's part of them (AW6.7: the stage, the Print
      details picture, the fold guide) and the second door to the chooser (AW6.3b).
-     Swatch values are PROVISIONAL, pending RESEARCH R41.
+     Swatch values from RESEARCH R41 (estimates).
 
      Appended in its own block with its own phone, controls and script (classes
      aw6p-).  No frozen element, rule or script above is touched.  The Print
@@ -1901,8 +1901,8 @@ if (prototypeParams.get('gallery') === 'fold') {
   AW6-P.6 [shown]  The fold guide: the drawn sheet's fill is the paper; its lines,
                    arrows, the green "fold now" and the grey "made" creases do not
                    change.  At the provisional values every crease colour keeps the
-                   contrast it has on the frozen fill or better on the seven light
-                   papers; Brown is owed a check against R41 (AW6.15).
+                   contrast it has on the frozen fill or better on all six
+                   coloured papers at R41's values.
   AW6-P.7 [stated] Saving.  The colour is not in the PDF, so changing it never marks a
                    saved PDF stale: the band keeps "Saved to your phone" and the
                    stale-file notice does not appear.  Save PDF's sub-line keeps
@@ -1969,7 +1969,7 @@ if (prototypeParams.get('gallery') === 'fold') {
 <section class="aw6p" id="aw6p" aria-labelledby="aw6ph">
   <p class="cap lead" id="aw6ph"><span class="badge">AW6-P paper colour · proposed 2026-11-05 · not frozen</span><br>
   Proof on the paper you load</p>
-  <p class="cap"><b>Proposed 2026-11-05, not frozen. Swatch values pending R41.</b> The rules are
+  <p class="cap"><b>Proposed 2026-11-05, not frozen. Swatch values from R41 (estimates).</b> The rules are
   <code>v21-library.html</code> AW6. Here: the stage shows each leaf on the paper; Print details gets a
   <b>Paper colour</b> row and, for any colour but White, one line that says what to load; the booklet picture and
   the fold guide are drawn on the paper. The PDF does not change, so nothing goes stale.</p>
@@ -2007,7 +2007,7 @@ if (prototypeParams.get('gallery') === 'fold') {
       <div class="aw6p-grab"></div>
       <h3 class="aw6p-dh" id="aw6pChH" tabindex="-1">Paper colour</h3>
       <p class="aw6p-li" style="margin-top:var(--gap-sm)">Which colour paper will you load? It shows on screen only. We print only the ink.</p>
-      <span class="aw6p-prov">Values pending R41</span>
+      <span class="aw6p-prov">Values: R41 estimates</span>
       <div id="aw6pOpts" role="radiogroup" aria-labelledby="aw6pChH"></div>
     </div>
   </div>
@@ -2028,18 +2028,17 @@ if (prototypeParams.get('gallery') === 'fold') {
 
 <script>
 /* AW6-P — prototype wiring.  PAPERS is a COPY of v21-library.html AW6.5's list (this
-   page must run alone); the build has one list.  PROVISIONAL values, pending R41. */
+   page must run alone); the build has one list.  Values from R41 (estimates). */
 (() => {
   const $ = id => document.getElementById(id);
   const PAPERS = [
     { id: 'white', name: 'White', hex: '#FFFFFF', note: 'Plain printer paper.' },
-    { id: 'ivory', name: 'Ivory', hex: '#F7F0DC', note: '' },
-    { id: 'pastel-yellow', name: 'Pastel yellow', hex: '#FAF0A0', note: '' },
-    { id: 'pastel-pink', name: 'Pastel pink', hex: '#F7D2D8', note: '' },
-    { id: 'pastel-blue', name: 'Pastel blue', hex: '#CFE2F0', note: '' },
-    { id: 'pastel-green', name: 'Pastel green', hex: '#D4EAC8', note: '' },
-    { id: 'grey', name: 'Grey', hex: '#D8D8D4', note: '' },
-    { id: 'brown', name: 'Brown', hex: '#C8A97E', note: 'Darker, so light inks show less.' },
+    { id: 'ivory', name: 'Ivory', hex: '#F4EEDC', note: '' },
+    { id: 'pastel-yellow', name: 'Pastel yellow', hex: '#F7EC9B', note: '' },
+    { id: 'pastel-pink', name: 'Pastel pink', hex: '#F4C6D0', note: '' },
+    { id: 'pastel-blue', name: 'Pastel blue', hex: '#BCD6EA', note: '' },
+    { id: 'pastel-green', name: 'Pastel green', hex: '#CDE6C8', note: '' },
+    { id: 'grey', name: 'Grey', hex: '#CFCDC6', note: '' },
   ];
   let cur = PAPERS[0], view = 'stage';
   // the replayer's page: opaque white ground, then ink (AW6.1)

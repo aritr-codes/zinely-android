@@ -2268,7 +2268,7 @@ a47Sync();
      AW6 · PAPER COLOUR — PROPOSED 2026-11-05, NOT FROZEN.  Drafted for W6 of
      ADR-136 (decision 5, Q1: "the paper is the medium, not the page").  Critique,
      independent review and the freeze are the main session's.  Nothing is built.
-     Swatch values are PROVISIONAL, pending RESEARCH R41 (measured papers).
+     Swatch values from RESEARCH R41 (estimates; Brown cut by the AW6.6 gate).
 
      This file owns the rules (AW6.1 to AW6.15), the closed set, the legibility
      gate and the place the colour is chosen.  The two other surfaces that show the
@@ -2345,7 +2345,7 @@ a47Sync();
 <section class="aw6 aw6-wrap" id="aw6" aria-labelledby="aw6h">
 <p class="cap lead" id="aw6h"><span class="badge">AW6 paper colour · proposed 2026-11-05 · not frozen</span><br>
 The paper you load, shown on screen</p>
-<p class="cap"><b>Proposed 2026-11-05, not frozen. Swatch values pending R41.</b> A maker says which colour paper
+<p class="cap"><b>Proposed 2026-11-05, not frozen. Swatch values from R41 (estimates).</b> A maker says which colour paper
 they will load. The Bench, the Proof stage, Print details and the fold guide then show the page on that paper.
 Zinely still prints only the ink: the PDF and the picture are the same bytes as on white, and the paper is not in
 them. The colour is chosen in the zine’s sheet here, or at Print. The Start sheet (A35) does not ask. Press
@@ -2374,7 +2374,7 @@ them. The colour is chosen in the zine’s sheet here, or at Print. The Start sh
       <div class="aw6-grab"></div>
       <div class="aw6-head"><h2 class="aw6-ttl" id="aw6ChT" tabindex="-1">Paper colour</h2>
         <p class="aw6-sub">Which colour paper will you load? It shows on screen only. We print only the ink.</p></div>
-      <span class="aw6-prov">Values pending R41</span>
+      <span class="aw6-prov">Values: R41 estimates</span>
       <div id="aw6Opts" role="radiogroup" aria-labelledby="aw6ChT"></div>
       <p class="aw6-foot">No dark or bright papers. Home printers have no white ink, so most inks would sink into them.</p>
     </div>
@@ -2398,7 +2398,7 @@ them. The colour is chosen in the zine’s sheet here, or at Print. The Start sh
 </div>
 <div class="aw6-said" id="aw6Said" hidden aria-live="polite"></div>
 
-<h3 style="font-family:var(--voice);margin:var(--gap-md) 0 0">AW6.5 the closed set <span class="aw6-prov" style="margin:0">provisional · pending R41</span></h3>
+<h3 style="font-family:var(--voice);margin:var(--gap-md) 0 0">AW6.5 the closed set <span class="aw6-prov" style="margin:0">R41 estimates</span></h3>
 <table id="aw6Set"><thead><tr><th scope="col">Shown name</th><th scope="col">Stored id</th><th scope="col">Value (provisional)</th><th scope="col">Note in the chooser</th></tr></thead><tbody></tbody></table>
 
 <h3 style="font-family:var(--voice);margin:var(--gap-md) 0 0">AW6.6 the legibility gate, computed live</h3>
@@ -2465,14 +2465,16 @@ column is the largest factor by which the paper lowers any ink’s ratio against
                 papers. Home printers have no white ink, so most inks would sink into
                 them."  The provisional badge is this prototype's, not the app's.
 
-  AW6.5  [shown]  The closed set, PROVISIONAL pending R41.  Eight papers, light to
-                dark: White, Ivory, Pastel yellow, Pastel pink, Pastel blue, Pastel
-                green, Grey, Brown.  The table above is generated from the one list in
+  AW6.5  [shown]  The closed set, values from RESEARCH R41 (estimates: no maker publishes
+                sRGB; "close, not exact").  Seven papers, light to dark: White, Ivory,
+                Pastel yellow, Pastel pink, Pastel blue, Pastel green, Grey.  Brown was
+                drafted and is CUT: at R41's value (#B38B5D) the house Ink falls to
+                5.8:1 and Matcha, Stone and Cornflower below 3:1, so it fails AW6.6.  The table above is generated from the one list in
                 this script.  Names were checked against every maker-facing ink name:
                 the ten Inks, the five Paper tints (Cream, Blush, Sky, Sage, Kraft),
                 the four Neutrals (v21-bench.html :667-671) and the Type bar's five
                 (Ink, Coral, Teal, Blue, Ochre, v21-typebar.html; Copy.INK_BLUE).
-                So: "Ivory", not Cream; "Brown", not Kraft; "Pastel blue", because
+                So: "Ivory", not Cream; "Pastel blue", because
                 "Blue" is a Type bar ink.  "Pastel" is how shops sell coloured copy
                 paper.  Stored ids are fixed strings (ADR-133's rule: closed at the
                 product and the file); R41 may change a VALUE, never an id, after
@@ -2488,12 +2490,10 @@ column is the largest factor by which the paper lowers any ink’s ratio against
          [stated] No per-element low-contrast warning.  On a paper that passes, the
                 paper alone never takes an ink from readable to unreadable: the darkest
                 ink loses most (the table's last column, the largest drop over all
-                inks: about 1.3 for the light papers and about 1.9 for Brown at the
-                provisional values) and light inks lose less.  An ink that is weak on
+                inks: about 1.3 at R41's values) and light inks lose less.  An ink that is weak on
                 White (Sunflower, about 1.9:1) is weak on every paper; that belongs to
-                the ink tray, not to the paper.  Brown, the one darker paper, says so
-                in its row: "Darker, so light inks show less."  If R41's values fail
-                the gate for a paper, that paper is dropped, not warned about.
+                the ink tray, not to the paper.  A paper that fails the gate is dropped,
+                not warned about (Brown, AW6.5).
 
   AW6.7  [stated] The screens that show the paper, one by one:
                   Bench canvas ............ yes, under the page (AW6-B)
@@ -2523,6 +2523,10 @@ column is the largest factor by which the paper lowers any ink’s ratio against
                 Everything drawn above the page (selection, handles, keep-clear
                 guides, "Too close to the edge" marks) is drawn after, unblended, and
                 does not change.
+         [stated] The build may draw it the other way round: the finished page first,
+                then one paper-coloured rectangle over the page with multiply, before
+                the chrome.  Multiply commutes, so the pixels are the same, and that
+                order needs no offscreen layer on Android 7 (R41.5, ADR-150 decision 5).
 
   AW6.9  [shown]  Night.  The paper does not restyle in the dark theme.  It is the
                 maker's material, pinned like the six cover stocks (2026-08-24 rule)
@@ -2548,8 +2552,8 @@ column is the largest factor by which the paper lowers any ink’s ratio against
                     after the label; the swatch hidden).
                   chooser: role dialog titled "Paper colour"; its rows are one
                     radiogroup labelled "Paper colour"; each row is ONE node, role
-                    radio, checked or not checked, named by the colour then its note:
-                    "Brown. Darker, so light inks show less."
+                    radio, checked or not checked, named by the colour (and its note, if a
+                    paper ever carries one).
                   The Shelf tile's name does not change (A35.11's narrowing).
          [stated] After a pick, focus returns to the zine sheet's Paper colour row.
 
@@ -2563,8 +2567,7 @@ column is the largest factor by which the paper lowers any ink’s ratio against
                 promise half kept).
 
   AW6.15 [stated] Owed before the freeze or the build:
-                  R41 measured values (this file's PAPERS list is the only place to
-                  change them); the gate re-run on them; a JVM test that the PDF and
+                  (R41 values applied and the gate re-run 2026-11-05: done) a JVM test that the PDF and
                   PNG bytes for a zine are identical for every colour; the extra
                   layer's cost on Android 7 (ADR-136); both device passes; an ADR that
                   records AW6.2, AW6.3 and AW6.10, and the BETA-DIRECTION and
@@ -2572,16 +2575,15 @@ column is the largest factor by which the paper lowers any ink’s ratio against
    ============================================================================ */
 (() => {
   const $ = id => document.getElementById(id);
-  // AW6.5 — THE list.  PROVISIONAL values, pending R41.  Ids are permanent once shipped.
+  // AW6.5 — THE list.  Values from R41 (estimates).  Ids are permanent once shipped.
   const PAPERS = [
     { id: 'white',         name: 'White',         hex: '#FFFFFF', note: 'Plain printer paper.' },
-    { id: 'ivory',         name: 'Ivory',         hex: '#F7F0DC', note: '' },
-    { id: 'pastel-yellow', name: 'Pastel yellow', hex: '#FAF0A0', note: '' },
-    { id: 'pastel-pink',   name: 'Pastel pink',   hex: '#F7D2D8', note: '' },
-    { id: 'pastel-blue',   name: 'Pastel blue',   hex: '#CFE2F0', note: '' },
-    { id: 'pastel-green',  name: 'Pastel green',  hex: '#D4EAC8', note: '' },
-    { id: 'grey',          name: 'Grey',          hex: '#D8D8D4', note: '' },
-    { id: 'brown',         name: 'Brown',         hex: '#C8A97E', note: 'Darker, so light inks show less.' },
+    { id: 'ivory',         name: 'Ivory',         hex: '#F4EEDC', note: '' },
+    { id: 'pastel-yellow', name: 'Pastel yellow', hex: '#F7EC9B', note: '' },
+    { id: 'pastel-pink',   name: 'Pastel pink',   hex: '#F4C6D0', note: '' },
+    { id: 'pastel-blue',   name: 'Pastel blue',   hex: '#BCD6EA', note: '' },
+    { id: 'pastel-green',  name: 'Pastel green',  hex: '#CDE6C8', note: '' },
+    { id: 'grey',          name: 'Grey',          hex: '#CFCDC6', note: '' },
   ];
   // the Bench's maker inks, v21-bench.html :667-671 (Paper tints left out: they are paper-coloured by name)
   const INKS = [['Ink','#2A251E'],['Forest','#3E5E3A'],['Slate','#5B5347'],['Brick','#B0503F'],['Plum','#8A5A9B'],

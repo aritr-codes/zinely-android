@@ -5106,7 +5106,7 @@ failure to see the notice beside and stacked.
      AW6-B · PAPER COLOUR ON THE BENCH — PROPOSED 2026-11-05, NOT FROZEN.
      W6 of ADR-136 (decision 5).  The rules are v21-library.html AW6.1 to AW6.15;
      this block draws the Bench's part (AW6.7: the canvas and the page strip).
-     Swatch values are PROVISIONAL, pending RESEARCH R41.  Own phone, controls and
+     Swatch values from RESEARCH R41 (estimates).  Own phone, controls and
      script (classes aw6b-); nothing frozen above is touched.
 
   AW6-B.1 [shown]  The canvas.  The host fills the page's rectangle with the paper and
@@ -5162,7 +5162,7 @@ failure to see the notice beside and stacked.
 <section class="aw6b" id="aw6b" aria-labelledby="aw6bh">
   <p class="cap lead" id="aw6bh"><span class="badge">AW6-B paper colour · proposed 2026-11-05 · not frozen</span><br>
   The Bench on the paper you load</p>
-  <p class="cap"><b>Proposed 2026-11-05, not frozen. Swatch values pending R41.</b> The rules are
+  <p class="cap"><b>Proposed 2026-11-05, not frozen. Swatch values from R41 (estimates).</b> The rules are
   <code>v21-library.html</code> AW6. The canvas and the page strip show the page on the zine’s paper colour; the
   handles and guides above it do not change. There is no control here: the colour is set from the zine’s sheet or
   at Print. The buttons below stand in for that choice.</p>
@@ -5194,11 +5194,11 @@ failure to see the notice beside and stacked.
 
 <script>
 /* AW6-B — prototype wiring.  PAPERS is a COPY of v21-library.html AW6.5 (this page must
-   run alone); the build has one list.  PROVISIONAL values, pending R41. */
+   run alone); the build has one list.  Values from R41 (estimates). */
 (() => {
   const $ = id => document.getElementById(id);
-  const PAPERS = [['White', '#FFFFFF'], ['Ivory', '#F7F0DC'], ['Pastel yellow', '#FAF0A0'], ['Pastel pink', '#F7D2D8'],
-    ['Pastel blue', '#CFE2F0'], ['Pastel green', '#D4EAC8'], ['Grey', '#D8D8D4'], ['Brown', '#C8A97E']];
+  const PAPERS = [['White', '#FFFFFF'], ['Ivory', '#F4EEDC'], ['Pastel yellow', '#F7EC9B'], ['Pastel pink', '#F4C6D0'],
+    ['Pastel blue', '#BCD6EA'], ['Pastel green', '#CDE6C8'], ['Grey', '#CFCDC6']];
   // the replayer's page: opaque white ground, then ink, with a Paper tints ink (Kraft) used as a mark (AW6-B.4)
   const PAGE = '<svg viewBox="0 0 198 306" aria-hidden="true"><rect width="198" height="306" fill="#fff"/>'
     + '<rect x="18" y="18" width="162" height="110" fill="#E4D3B4"/>'
