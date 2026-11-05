@@ -226,6 +226,9 @@ internal class HomeViewModel @Inject constructor(
      * confirmed, whether or not the screen has shown their prompt yet: see [isDeleteWaiting].
      */
     private var settling: Set<String> = emptySet()
+
+    /** Zines whose Undo has been pressed and is waiting for, or holding, [commitMutex] ([undoLocked]). */
+    private var undoing: Set<String> = emptySet()
     private var backupRestoreJob: Job? = null
     private var backupRestorePickerPending: Boolean = false
     private var backupRestoreCancellationRequested: Boolean = false
@@ -643,7 +646,7 @@ internal class HomeViewModel @Inject constructor(
         val present = shownZines().mapTo(HashSet()) { it.id }
         val here = moved.filter { it.id in present }
         if (here.size == 1) return undoOneMove(here.single())
-        if (here.isEmpty()) return
+        if (here.isEmpty()) return nameGone(moved)
         val n = zineCount(here.size)
         // Every zine is tried even after one fails (rule 18).
         val allBack = here.map { projectRepository.moveProject(it.id, it.folder) is DataResult.Success }.all { it }
@@ -661,6 +664,16 @@ internal class HomeViewModel @Inject constructor(
         )
     }
 
+    /**
+     * A move Undo with nothing left to put back: [zines] were deleted since. Those whose delete has finished are
+     * named in R8's words ([Copy.Select.alreadyDeleted]); one whose delete still waits has its own Undo up, so
+     * nothing is said about it.
+     */
+    private suspend fun nameGone(zines: List<LibraryZine>) {
+        val titles = zines.filter { isGone(it.id) }.map { it.title }
+        if (titles.isNotEmpty()) eventQueue.send(HomeShelfEvent.Message(Copy.Select.alreadyDeleted(titles)))
+    }
+
     /** The spelling the store will write for [folder]: the folder's own if one on the Shelf is the same name. */
     private fun joinedSpelling(zines: List<LibraryZine>, folder: String?): String? =
         folder?.let { name -> zines.firstNotNullOfOrNull { z -> z.folder?.takeIf { FolderNames.same(it, name) } } }
@@ -674,6 +687,8 @@ internal class HomeViewModel @Inject constructor(
 
     /** One moved zine's Undo: back to the folder the Shelf showed it in. */
     private suspend fun undoOneMove(zine: LibraryZine) {
+        // Deleted since it moved: nothing to put back, and the store would only refuse (R8, #166).
+        if (shownZines().none { it.id == zine.id }) return nameGone(listOf(zine))
         val from = zine.folder
         if (projectRepository.moveProject(zine.id, from).sentMessageOnFailure()) {
             val back = if (from != null) Copy.Folders.backIn(zine.title, from) else Copy.Folders.backOnMyShelf(zine.title)
@@ -781,7 +796,7 @@ internal class HomeViewModel @Inject constructor(
      */
     private fun folderAction(run: suspend () -> Unit) {
         if (folderJob?.isActive == true) return
-        settling = pendingDeletes.value
+        settling = pendingDeletes.value - undoing
         folderJob = viewModelScope.launch {
             if (!commitPendingDeletesNow()) return@launch
             snackAction = null
@@ -851,8 +866,40 @@ internal class HomeViewModel @Inject constructor(
     /** Gone for good: the delete finished, or the store no longer lists it. A failed commit or a restore leaves it listed, so it is not "already deleted". */
     private fun isGone(id: String): Boolean = id in finishedDeletes || id !in listedTitles
 
-    /** Undo within the window: clear the durable intent, then unhide; the project store was never called. */
-    fun undoDelete(id: String) {
+    /**
+     * Undo within the window: clear the durable intent, then unhide; the project store was never called.
+     *
+     * Takes [commitMutex], as [performCommit] does: an Undo pressed while the store is writing the delete waits
+     * for it, then finds it finished (and says so) or failed (the card is back and said so), instead of
+     * restoring a card the store then deletes without a word (#166).
+     */
+    fun undoDelete(id: String) = undoLocked(listOf(id)) { undoDeleteLocked(id) }
+
+    /**
+     * Runs an Undo under [commitMutex]. [undoing] is set before the wait, so a folder action that starts while
+     * this Undo queues does not take its zines over ([folderAction]) and end their Undo behind the maker's back.
+     * Not cancelled with the screen's model once started: the marker must be cleared, as the flush's commit is never
+     * cancelled. "Once started" holds because `viewModelScope` runs on `Main.immediate` and Undo is pressed on the main
+     * thread, so the body reaches the lock queue at once; on an already-cleared model it never runs (harmless: the model
+     * is gone). [undoing] is a plain set, not a count: two queued Undos of one zine clear it early, which is harmless only
+     * because the first restores the zine, so it is no longer pending for a folder action to take over.
+     */
+    private fun undoLocked(ids: List<String>, run: () -> Unit) {
+        undoing = undoing + ids
+        viewModelScope.launch {
+            withContext(NonCancellable) {
+                commitMutex.withLock {
+                    try {
+                        run()
+                    } finally {
+                        undoing = undoing - ids.toSet()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun undoDeleteLocked(id: String) {
         // Too late: the delete finished while the prompt stood (Home was left). Nothing to bring back, so say so.
         if (!isDeleteWaiting(id)) {
             if (isGone(id)) deletedTitles[id]?.let { eventQueue.trySend(HomeShelfEvent.Message(Copy.Select.alreadyDeleted(listOf(it)))) }
@@ -867,7 +914,9 @@ internal class HomeViewModel @Inject constructor(
     }
 
     /** Undo for a batch: [undoDelete] for all of them, markers cleared in one write; if that fails none comes back. */
-    fun undoDeletes(ids: List<String>) {
+    fun undoDeletes(ids: List<String>) = undoLocked(ids) { undoDeletesLocked(ids) }
+
+    private fun undoDeletesLocked(ids: List<String>) {
         // Only the zines whose delete is still waiting can come back; the rest are named, once.
         val (waiting, late) = ids.partition { isDeleteWaiting(it) }
         if (waiting.isNotEmpty()) {

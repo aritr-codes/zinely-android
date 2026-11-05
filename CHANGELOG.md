@@ -133,6 +133,10 @@ Changes since the beta.9 app.
 
 ### Fixed
 
+- Choosing several zines: an Undo tapped while a delete was still being written could restore a card that was then
+  deleted without a word; it now waits for the delete and says the zine was already deleted. A move's Undo said
+  nothing when every zine in it had been deleted meanwhile; it now says they were already deleted
+  ([#166](https://github.com/aritr-codes/zinely-android/issues/166), [ADR-142](docs/DECISIONS.md#adr-142)).
 - The My Shelf note that a zine's name or cover went back to its earlier copy is no longer lost in two cases
   ([#147](https://github.com/aritr-codes/zinely-android/issues/147)): when renaming or moving the zine is what found the
   damage, the note now still waits instead of being cleared in the same moment; and a second repair of a zine whose

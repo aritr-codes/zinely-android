@@ -94,6 +94,16 @@ class ZineSelectGoldenTest {
 
     @Test fun `the chooser for a set dark`() = capture("move_dark", dark = true) { MoveMany() }
 
+    /** #166: dark at the 2x text the frozen page judges A47 at. */
+    @Config(qualifiers = "w360dp-h740dp")
+    @Test fun `three selected dark at 2x text on a 360dp phone`() =
+        capture("narrow_large_dark", dark = true, fontScale = 2f) { Choosing(THREE, count = 3) }
+
+    /** #166: the name sheet for a set ("For 3 zines"), with a name that exists ("These zines will join it"). */
+    @Test fun `the name sheet for a set light`() = capture("name_set_light", dark = false) { NameMany() }
+
+    @Test fun `the name sheet for a set dark`() = capture("name_set_dark", dark = true) { NameMany() }
+
     private fun capture(name: String, dark: Boolean, fontScale: Float = 1f, scene: @Composable BoxScope.() -> Unit) {
         composeRule.setContent {
             val base = LocalDensity.current
@@ -137,6 +147,22 @@ class ZineSelectGoldenTest {
                 onDelete = {},
             ),
         )
+    }
+
+    @Composable
+    private fun BoxScope.NameMany() {
+        Choosing(THREE, count = 3)
+        ZineActionScrim(onDismiss = {})
+        Box(Modifier.align(Alignment.BottomCenter)) {
+            FolderNameSheetSurface(
+                drawn = FolderNameTarget(zines = "3 zines"),
+                keys = mapOf("for the stall" to "For the stall", "family" to "Family"),
+                check = ::plainFolderNameVerdict,
+                onGo = {},
+                onCancel = {},
+                initial = "family",
+            )
+        }
     }
 
     @Composable
