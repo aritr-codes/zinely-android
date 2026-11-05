@@ -22,8 +22,9 @@ import kotlinx.coroutines.launch
  * Kept out of [EditorViewModel] on purpose: the colour is not part of the document (AW6.10: `meta.json`, not
  * `document.json`; no undo step; no recency change), so it never passes through the single-writer store.
  *
- * A pick shows at once; if the store refuses it, the colour goes back to what `meta.json` still says, so the
- * screen never claims a paper the zine does not keep.
+ * A pick shows at once; if the store refuses it, `meta.json` is read again and shown, so the screen never claims a
+ * paper the zine does not keep. The refusal is silent (ponytail: no message yet; add one with the Bench's error
+ * surface if a write ever fails in the field).
  */
 @HiltViewModel
 internal class PaperColourViewModel @Inject constructor(
@@ -49,12 +50,16 @@ internal class PaperColourViewModel @Inject constructor(
     }
 
     fun setPaperColour(picked: PaperColour) {
-        val before = colour.value
-        if (picked == before) return
+        if (picked == colour.value) return
         userPicked = true
         colour.value = picked
         viewModelScope.launch {
-            if (projectRepository.setPaperColour(projectId, picked) is DataResult.Failure) colour.value = before
+            if (projectRepository.setPaperColour(projectId, picked) is DataResult.Failure) {
+                // Re-read rather than restore the value before the pick: that may be the first frame's White, or a
+                // pick a later write has since replaced. A later pick still on screen keeps its own write's outcome.
+                val stored = projectRepository.getPaperColour(projectId)
+                if (colour.value == picked) colour.value = stored
+            }
         }
     }
 }

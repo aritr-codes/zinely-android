@@ -74,6 +74,15 @@ class PaperColourViewModelTest {
     }
 
     @Test
+    fun `a refused write shows what meta json holds, not the colour before the pick`() {
+        val stored = CompletableDeferred<PaperColour>()
+        val vm = vm(Repo(stored, result = DataResult.Failure(DataError.Io("disk"))))
+        vm.setPaperColour(PaperColour.IVORY)
+        stored.complete(PaperColour.PASTEL_PINK)
+        assertEquals(PaperColour.PASTEL_PINK, vm.paperColour.value)
+    }
+
+    @Test
     fun `a pick made before the read returns is not overwritten by the read`() {
         val stored = CompletableDeferred<PaperColour>()
         val vm = vm(Repo(stored))

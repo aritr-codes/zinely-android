@@ -553,6 +553,13 @@ internal val PaperSize.switchable: Boolean
         PaperSize.LEGAL, PaperSize.A5 -> false
     }
 
+/**
+ * Whether picking [picked] at Print on a zine laid out for [current] counts as a change (clears the saved PDF, says
+ * "changed from"). Only between two switchable sizes: a US Legal or A5 zine never moves, whatever reaches the handler.
+ */
+internal fun isPaperChange(current: PaperSize, picked: PaperSize): Boolean =
+    picked != current && current.switchable && picked.switchable
+
 /** The test tags of A35.8's fact and AW6-P's row and note. */
 public const val ProofFixedPaperTestTag: String = "proof-fixed-paper"
 public const val ProofPaperColourRowTestTag: String = "proof-paper-colour-row"
@@ -588,7 +595,7 @@ private fun FixedPaperFact(paper: PaperSize) {
         horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
         verticalAlignment = Alignment.Top,
     ) {
-        PaperStock(paper)
+        PaperStockSlot(paper)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapHair)) {
             BasicText(
                 paper.displayName,

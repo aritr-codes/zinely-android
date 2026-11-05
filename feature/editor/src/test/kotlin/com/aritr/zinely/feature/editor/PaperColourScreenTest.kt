@@ -331,4 +331,14 @@ class PaperColourScreenTest {
         composeRule.onNodeWithTag(ProofReadyTestTag).performClick()
         composeRule.onNodeWithContentDescription("Paper colour, White").assertExists()
     }
+
+    /** A35.8's handler guard, every pair: only A4 and US Letter change places; a Legal or A5 zine never moves. */
+    @Test
+    fun `only a switch between A4 and US Letter counts as a paper change`() {
+        for (current in PaperSize.entries) for (picked in PaperSize.entries) {
+            val expected = current != picked && current in setOf(PaperSize.A4, PaperSize.LETTER) &&
+                picked in setOf(PaperSize.A4, PaperSize.LETTER)
+            assertEquals("$current -> $picked", expected, isPaperChange(current, picked))
+        }
+    }
 }

@@ -317,6 +317,16 @@ class PaperColourGoldenTest {
         shot().captureRoboImage("$GOLDEN_DIR/aw6b_bench_pastel_blue_light.png", aa())
     }
 
+    @Test
+    fun aw6b_bench_white_draws_no_layer() {
+        show {
+            CompositionLocalProvider(LocalPaperColour provides PaperColour.WHITE) {
+                EditorScreen(store = store(), pageSizePt = PAGE, modifier = Modifier.size(360.dp, 720.dp))
+            }
+        }
+        assertEquals("a White Bench painted a paper layer", 0, shot().count(PaperColour.PASTEL_BLUE))
+    }
+
     /**
      * The paper sits inside the sheet, not over it: the sheet's 1.5dp ink edge and its rounded free corner survive a
      * coloured paper. (The first build laid the white ground over the whole canvas, which squared the corner off and

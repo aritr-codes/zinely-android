@@ -612,7 +612,7 @@ private fun ProofScreenBody(
             onPaperSelected = { picked ->
                 // A35.8: a US Legal or A5 zine has no switch, and nothing that reaches here for one may count
                 // as a change (ADR-150 "As built" blocker): its PDF is only ever made on its own paper.
-                if (picked != paper && paper.switchable && picked.switchable) {
+                if (isPaperChange(paper, picked)) {
                     if (savedName != null) staleFrom = paper.displayName
                     savedName = null
                     folded = false

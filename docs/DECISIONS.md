@@ -19015,7 +19015,7 @@ Built on `w6/ui` (from `main` at `882f95de`, after the data lane). Not released,
   picture (its marks and margin multiply too, as the HTML's `mix-blend-mode:multiply`). Not on the fold guide,
   covers, or anything on the export path. Under a coloured paper the host first paints white, not the app's cream,
   so the page reads as the paper and not paper times cream. White draws no layer and no white ground: every White
-  golden is unchanged. Observation: the Bench's focus scrim and fade still use the theme paper above the layer.
+  golden is unchanged.
 - **Tests.** `PaperColourTest`, `ShelfSheetsTest`, `PaperColourScreenTest`, `ZineSheetPaperColourTest`,
   `PaperColourGoldenTest` (pixel checks that the layer is drawn in the stage, the sheet picture's own bounds and the
   Bench, that White draws none, and that the Bench sheet keeps its ink edge and rounded corner),
@@ -19049,7 +19049,11 @@ Built on `w6/ui` (from `main` at `882f95de`, after the data lane). Not released,
   the fixed paper card has no chevron and reads as a fact. Observations: at font scale 2 "Paper colour" and its value
   each wrap to two lines (nothing truncated); Pastel yellow on the yellow desk is low-contrast, the ink edge carries
   the sheet; the zine sheet's Duplicate glyph shows a no-glyph box on API 24 (pre-existing, not W6).
-- **Interpretations.** "Your paper colour is not in the file." is one line under the band's Save PDF / Share row, not
-  one per button. A pick or a dismiss in the chooser returns to the sheet or drawer that opened it.
+- **Interpretations and accepted differences.** "Your paper colour is not in the file." is one line under the band's
+  Save PDF / Share row, not one per button (AW6-P.7 says each carries one; a ruling may ask for two). A pick or a
+  dismiss in the chooser returns to the sheet or drawer that opened it. **Accepted difference from A35.10:** the Start
+  sheet's head stays pinned above the scrolling rows instead of scrolling with them; it is the shared
+  `LibrarySheetSurface` behaviour every Library sheet has, and the four rows fit at 360×640 dp at font scale 1.
+  Changing it means changing every Library sheet, so it waits for an HTML amendment or an owner ruling.
 - **Owed.** The re-record of every new golden and of the four moved ones (`v21_sheet_light/dark`, `colophon_light/dark`)
   on the pinned image; the TalkBack listen; the printed check on real coloured paper ([OWNER-CHECKLIST](OWNER-CHECKLIST.md)).

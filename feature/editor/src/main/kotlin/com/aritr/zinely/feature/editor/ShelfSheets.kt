@@ -196,10 +196,7 @@ private fun StartPaperRow(paper: PaperSize, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapLg),
         verticalAlignment = Alignment.Top,
     ) {
-        // `.a35-slot{width:36px;height:56px;align-items:flex-end;justify-content:center}`: heights compare at a glance.
-        Box(Modifier.size(width = StockSlotWidth, height = StockSlotHeight), contentAlignment = Alignment.BottomCenter) {
-            PaperStock(paper)
-        }
+        PaperStockSlot(paper)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapHair)) {
             BasicText(
                 text = paper.choiceName,
@@ -230,6 +227,15 @@ private fun StartPaperRow(paper: PaperSize, onClick: () -> Unit) {
  * `.a35-stock`: the sheet itself, pinned paint in both themes (it is paper, not chrome), its eight pages ruled on it
  * in two columns and four rows. Shared with A35.8's fixed paper at Print.
  */
+@Composable
+internal fun PaperStockSlot(paper: PaperSize) {
+    // `.a35-slot{width:36px;height:56px;align-items:flex-end;justify-content:center}`: heights compare at a glance.
+    // The Start rows and A35.8's fixed paper at Print (`printFor()` appends `stock(p)`, slot included) share it.
+    Box(Modifier.size(width = StockSlotWidth, height = StockSlotHeight), contentAlignment = Alignment.BottomCenter) {
+        PaperStock(paper)
+    }
+}
+
 @Composable
 internal fun PaperStock(paper: PaperSize) {
     Box(
