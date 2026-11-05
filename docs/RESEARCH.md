@@ -2212,3 +2212,165 @@ Web search only; no printer was measured. The [print study](planning/STUDY-PRINT
   keep "100 % / Actual size" conditional on a setting existing; do not teach flip edge while the sheet is one-sided.
 - 🟦 **RECOMMENDATION:** a separate printed test sheet is optional. The zine's own first sheet already works as the test,
   so the test page waits for the owner after the study.
+## R41. Paper colour on screen: stocks, legibility, and the layer's cost (2026-11-05) {#r41}
+
+Asked: for W6 (the maker says which paper they will load; the colour is shown on screen only, never printed), which coloured
+stocks are real, how readable ink is on them, what comparable apps do, and what an extra layer costs on API 24.
+Web search only; no paper was measured and no device profiled. Search results were thin on measured colour, so most swatch
+values below are estimates, labelled as such.
+
+### R41.1 Published colour values for coloured stocks
+
+- ⚠️ **NOT FOUND:** no sRGB or Lab value was published for Astrobrights (Neenah) colours. Retailer listings give names, weight and a
+  brightness of 70 only ([Neenah Astrobrights stock list](https://www.neenahpaper.com/-/media/files/storefront/stocklist-guides/sl_astrobrights.ashx),
+  [Lunar Blue listing](https://www.schoolspecialty.com/astrobrights-premium-colored-paper-8-12-x-11-inches-24-lbs-lunar-blue-500-sheets-075818)).
+  The "#001447" style codes on [one price list](https://www.cajonvalley.net/cms/lib/CA01902277/Centricity/Domain/66/ASTROBRIGHT%20PAPER%20P2024-10%20updated%204-2-25.pdf)
+  are item numbers, not colours. Do not use them.
+- ⚠️ **NOT FOUND:** no sRGB for Clairefontaine Trophée; retailers list the name only (Ivory, sometimes sold as "Creme")
+  ([Bruneau](https://www.bruneau.be/en/product/ream-of-250-sheets-colored-paper-a4-120-g-clairefontaine-trophee-pastel-colors/36590),
+  [Vedi-Express](https://www.vedi-express.com/en/color-paper/452649-clairefontaine-trophee-papier-couleur-a4-80-g-500-feuilles-ivoire-3329680001358.html)).
+- ⚠️ **NOT FOUND:** Staples / Office Depot pastel copy paper, Fabriano, Daler-Rowney, newsprint and recycled grey: no colour values found.
+- ✅ **VERIFIED, source (shows the spread):** "kraft" has no single colour. Paint-maker approximations of kraft paper run from a mid
+  brown `#8A6645` ([Sherwin-Williams Craft Paper, via matchmypaintcolor](https://www.matchmypaintcolor.com/hex/8a6645/paint-matches))
+  to a light tan `#D5B59C` ([Dunn-Edwards Kraft Paper](https://www.dunnedwards.com/colors/browser/de6109/), which itself says the
+  swatch is an approximation). These are paint, not paper.
+- ✅ **VERIFIED, standard:** shade of paper is properly measured as CIELAB under a stated illuminant
+  ([ISO 5631-1](https://standards.iteh.ai/catalog/standards/iso/6eb61e4c-7c57-4c22-a3b8-45dc14055e4a/iso-5631-1-2022),
+  [ISO 5631-2](https://standards.iteh.ai/catalog/standards/iso/70e696e8-7d0c-419c-b7d8-53e6d903d68f/iso-5631-2-2022);
+  [overview](https://www.papersizes.org/whiteness-brightness.htm)). Mills publish it only on data sheets, so the app cannot claim
+  to match any brand.
+- 🟦 **RECOMMENDATION:** name papers by plain colour, never by brand. Say in the picker's help line that the swatch is "close, not
+  exact"; real stock varies by brand, batch and room light. Nothing here supports a claim of accuracy.
+- 🟨 **ASSUMPTION (all hex below are estimates, not sourced):** pastel copy papers are light (L* roughly 85 to 95) and lightly
+  saturated; kraft sits inside the paint range above.
+
+#### Proposed closed set (9 papers)
+
+The Ink popover's "Paper tints" band already uses Cream, Blush, Sky, Sage, Kraft
+(`TINTS` in `docs/design/mockups/v21-bench.html`, line 670). Paper names below avoid all five words.
+
+| Name (public copy) | sRGB (estimate) | Basis |
+|---|---|---|
+| White | `#FFFFFF` | Default; the engine's own page. Exact. |
+| Ivory | `#F4EEDC` | 🟨 estimate; Trophée Ivory / natural-cream copy paper class ([listing](https://www.bruneau.be/en/product/ream-of-250-sheets-colored-paper-a4-120-g-clairefontaine-trophee-pastel-colors/36590)) |
+| Lemon | `#F7EC9B` | 🟨 estimate; pastel canary class |
+| Rose | `#F4C6D0` | 🟨 estimate; pastel pink class |
+| Mint | `#CDE6C8` | 🟨 estimate; pastel green class |
+| Powder blue | `#BCD6EA` | 🟨 estimate; pastel blue class |
+| Apricot | `#F5CFA8` | 🟨 estimate; pastel orange / salmon class |
+| Recycled grey | `#CFCDC6` | 🟨 estimate; recycled copy paper class |
+| Packing brown | `#B38B5D` | 🟨 estimate, inside the paint spread above; the kraft class, named so it does not collide with the "Kraft" tint |
+
+- 🟦 **RECOMMENDATION:** keep each paper at least a step lighter or more muted than the Paper tints it sits near. A tint is a
+  printed ink; a paper is a sheet. If the owner wants a one-to-one mapping, "Ivory" and "Cream" are the same idea; that is a reason to
+  keep names apart and say "paper" in the row label, not a reason to merge the sets.
+
+### R41.2 Legibility of ink on tinted stock
+
+- ✅ **VERIFIED, source:** multiply is the accepted way to mimic transparent ink on coloured stock: "nothing can be brighter than the paper"
+  ([Adobe community thread](https://community.adobe.com/t5/photoshop/simulate-rendering-on-colored-paper-without-using-soft-proofing/m-p/10594432),
+  [CreativePro on Multiply vs overprint](https://creativepro.com/indesigns-onscreen-untruths-overprinting-or-multiplying-spot-colors/)).
+  The same sources warn multiply assumes fully transparent ink and will show deeper blacks than a real print gives.
+  Inkjet and laser toner/dye are close to that model on tinted paper; opaque white or metallic inks (not in Zinely) are not.
+- ✅ **VERIFIED, source:** printers themselves warn about tone: Vistaprint advises dark ink on kraft and says it cannot print white
+  ([kraft cards](https://www.vistaprint.com.au/business-cards/kraft-business-cards)). Home printers cannot print white either,
+  so white elements of a zine simply show the paper. The on-screen layer must show that, and the multiply model does.
+- ✅ **VERIFIED, source:** WCAG 2.x thresholds are 4.5:1 body text, 3:1 large text
+  ([MDN](https://developer.mozilla.org/en-US/docs/Web/Accessibility/Understanding_WCAG/Perceivable/Color_contrast));
+  WCAG 2 is known to overstate contrast for very dark colours, so a ratio near 4.5 on a dark ground can still be unreadable
+  ([APCA background](https://www.github.com/Myndex/SAPC-APCA/blob/master/documentation/WhyAPCA.md)).
+- ✅ **VERIFIED, computed here (WCAG relative luminance, ink multiplied onto the paper, ink vs the paper beside it).**
+  Black ink `#1A1A1A`; coloured inks from the Zinely maker set. Estimates for paper hex, so ±10 %.
+
+  | Paper | Black ink | Matcha | Strawberry | Sunflower | Aqua |
+  |---|---|---|---|---|---|
+  | White | 17.4 | 3.8 | 2.8 | 1.9 | 2.6 |
+  | Ivory | 15.3 | 3.6 | 2.7 | 1.8 | 2.6 |
+  | Lemon | 14.8 | 3.5 | 2.6 | 1.8 | 2.6 |
+  | Rose | 12.0 | 3.5 | 2.3 | 1.7 | 2.6 |
+  | Mint | 13.5 | 3.5 | 2.8 | 1.9 | 2.4 |
+  | Powder blue | 12.1 | 3.5 | 2.8 | 1.9 | 2.4 |
+  | Apricot | 12.4 | 3.5 | 2.4 | 1.7 | 2.6 |
+  | Recycled grey | 11.5 | 3.4 | 2.6 | 1.8 | 2.4 |
+  | Packing brown | 6.2 | 2.8 | 2.0 | 1.6 | 2.3 |
+  | (excluded) navy `#1F2A55` | 1.5 | 1.3 | 1.3 | 1.2 | 1.2 |
+  | (excluded) black `#222222` | 1.3 | 1.2 | 1.2 | 1.1 | 1.1 |
+  | (excluded) deep red `#9A1F2C` | 2.5 | 1.9 | 1.2 | 1.2 | 2.0 |
+
+- 🟦 **RECOMMENDATION (the finding):** every light pastel keeps black ink above 11:1, so tinted paper is not what hurts legibility.
+  The weakness is the pale inks (Sunflower already fails on white at 1.9). Paper adds at most about 30 % loss on pastels.
+  Packing brown is the one ordinary stock that halves black ink (6.2, still above 4.5) and drives pale inks under 2.
+- 🟦 **RECOMMENDATION:** exclude dark papers (black, navy, deep red, deep green): black ink falls to 1.3 to 2.5. A home inkjet
+  or laser cannot print light ink on them, so offering them would let the maker design something that cannot exist. Closed
+  set of light stocks plus packing brown only.
+- 🟦 **RECOMMENDATION:** show a quiet note only on Packing brown, when the page holds an ink lighter than a set threshold:
+  "Pale inks will be hard to read on brown paper." No warning on pastels. 🟨 **ASSUMPTION:** a threshold near 3:1 (large text)
+  is a sensible trigger; unvalidated with makers.
+
+### R41.3 How other tools preview paper stock
+
+- ⚠️ **NOT FOUND:** Canva documents no paper-colour preview; its help advises ordering one print to check colour and says it
+  does not offer stock samples ([Canva: choose paper type](https://www.canva.com/en_gb/help/choose-paper-type/)).
+- ✅ **VERIFIED, customer reports:** Vistaprint's kraft previews have been reported as white in the proof and darker in hand
+  ([kraft postcards](https://www.vistaprint.com/marketing-materials/kraft-postcards/templates)). A printer's own help suggests the
+  designer match the background to the kraft tone so the proof reads right ([4OVER4](https://www.4over4.com/faqs/general/how-do-i-set-up-my-design-files-for-kraft-printing)).
+  Lesson: a stock-colour preview is wanted, and its absence causes surprise.
+- ✅ **VERIFIED, source:** InDesign shows paper only through Overprint Preview / multiply, a view setting, not part of the output
+  ([Adobe help](https://helpx.adobe.com/ee/indesign/desktop/print/color-output-and-separations/simulate-spot-ink-overprinting.html)).
+  The model "paper colour is a view, ink multiplies onto it" is the established one. (Adobe's Paper swatch was not fetched;
+  🟨 **ASSUMPTION** that it behaves as described from memory.)
+- ✅ **VERIFIED, source:** note apps set paper colour as part of a template or page, as a screen property: Notability has paper colour in
+  its template options ([Ginger Labs](https://support.gingerlabs.com/hc/en-us/articles/227864627)); Procreate has no setting,
+  the user recolours the paper-texture layer ([RetroSupply tutorial](https://www.retrosupply.co/blogs/tutorials/change-paper-color-procreate));
+  Goodnotes users ask for more paper colours ([feedback](https://feedback.goodnotes.com/forums/191274-customer-suggestions-for-goodnotes/suggestions/36008056-ability-to-change-paper-color)).
+  These are screen-first apps, so paper is part of the output there; not comparable on "never printed".
+- ⚠️ **NOT FOUND:** Cricut paper-colour preview and any zine app that previews stock colour. Searches returned nothing relevant.
+  🟦 **RECOMMENDATION:** treat "screen-only paper colour, named plainly, chosen in a per-zine print setting" as uncontested ground, not as
+  an industry convention; do not cite precedent for it.
+- 🟦 **RECOMMENDATION:** choose it where the maker already says what they will print on (the paper-size setting), with one honest line:
+  "Shown on screen only. Your printer prints no paper colour." That is the answer to the Print question, "How do I print it
+  correctly?", so do not put it in the editor chrome.
+
+### R41.4 Cost of the layer on low-end Android (API 24)
+
+- ✅ **VERIFIED, docs:** in Compose, a `graphicsLayer` with a blend mode other than SrcOver forces the offscreen strategy; the
+  strategy setting is overridden ([CompositingStrategy](https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/layer/CompositingStrategy)).
+  Offscreen renders into a buffer, then draws it to the destination.
+- ✅ **VERIFIED, docs:** `withSaveLayer` is "relatively expensive" and switches render target
+  ([withSaveLayer](https://composables.com/docs/androidx.compose.ui/ui-graphics/functions/withSaveLayer)). A secondary
+  article says saveLayer can be extremely expensive on some GPUs ([AOSP commit note](https://gitlab.e.foundation/e/os/android_frameworks_base/-/commit/098ffcd521cd272ee3a63174759cceeda618d2ef)).
+  A buffer the size of a page, repainted every pan or zoom frame, is the case to avoid.
+- ✅ **VERIFIED, docs:** overdraw is the same pixel drawn more than once; opaque draws that fully cover earlier ones are wasted work, and
+  transparent or blended draws need the earlier pixels first ([Reduce overdraw](https://developer.android.com/topic/performance/rendering/overdraw)).
+  A flat solid under an opaque page is overdraw-by-one on the page area, not a blend.
+- ⚠️ **NOT FOUND:** any benchmark of a full-screen multiply layer on API 24, or Android-published numbers. Cost is unmeasured.
+- 🟦 **RECOMMENDATION:** do not wrap the page in `graphicsLayer { blendMode = Multiply }`. Draw the paper colour with a plain
+  `drawRect(paper, blendMode = BlendMode.Multiply)` over the already-drawn page inside the same layer, so no offscreen buffer is
+  created. The destination is opaque white, so multiply is just a per-pixel multiply of white by the paper, which equals the paper
+  colour. This is one extra fill, no layer switch.
+- 🟦 **RECOMMENDATION (cheaper still):** because the page is opaque white and multiply by paper over empty paper equals the paper, draw the
+  paper rect first and let the page draw itself with Multiply (one draw, one blend), or tint only the page rectangle,
+  not the whole screen. Use the same `PorterDuff.MULTIPLY` path any `Paint` on API 24 already has.
+  🟨 **ASSUMPTION:** `BlendMode.Multiply` on a direct `drawRect` is hardware-accelerated and layer-free on API 24; it was not
+  confirmed in the docs fetched. Verify on the Android 7 emulator with Profile GPU Rendering and Debug GPU Overdraw before freeze.
+- 🟦 **RECOMMENDATION:** keep the paper colour out of the PDF and PNG paths and out of the golden renders: draw it only in the on-screen
+  page composable, never in `core:render`. The exported bytes stay unchanged by construction, and the golden suite is untouched.
+- 🔭 **FUTURE:** if photos or ink on the page are later shown *through* a translucent paper (a true see-through sheet), an offscreen
+  layer is the only correct model and the cost question reopens.
+
+### R41.5 What the evidence settles
+
+1. The multiply model is the established, physically sound simulation of transparent ink on tinted stock; known overstatement is the depth of black.
+2. No published sRGB exists for the brands makers buy, so the swatches are estimates and the UI must say "close, not exact".
+3. Pastels cost almost no legibility; packing brown halves black ink; dark papers make ink unreadable and should be excluded.
+4. No comparable product was found that previews paper colour as a non-printed layer; this is design from first principles.
+5. Draw the tint with a layer-free `drawRect` multiply inside the page composable; avoid `graphicsLayer` with a blend mode; measure on the API 24 emulator.
+
+### R41.6 How the design used this (2026-11-05)
+
+- 🟦 **RECOMMENDATION, applied:** AW6 ([`v21-library.html`](design/mockups/v21-library.html) AW6.5) keeps the plain names (Ivory,
+  Pastel yellow, Pastel pink, Pastel blue, Pastel green, Grey) with the estimates above. Lemon, Rose, Mint and Powder blue were
+  not used: shops sell "pastel" copy paper, and the plain names stay clear of every ink name. Apricot was not added.
+- ✅ **Computed (WCAG 2.x formula, multiply, the Bench inks):** the house Ink keeps 10.4:1 or more on every paper kept; at the
+  Packing brown estimate (`#B38B5D`) it falls to 5.8:1 and Matcha, Stone and Cornflower fall below 3:1, so Brown fails AW6.6 and is
+  cut. A later, measured kraft value would need its own pass through the gate.

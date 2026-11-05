@@ -133,7 +133,7 @@ My Shelf multi-select) shipped in beta.8 and moved to the not-accepted list belo
   listen are owed.
 - **Large text on a small phone:** the first-run hint waits for room and the save notice stacks (A54,
   [ADR-149](DECISIONS.md#adr-149), Proposed; PR #190). In no download; the 360 x 640dp emulator passes are owed.
-- **W6, paper sizes and paper colour:** next; not started (see [order of work](#order-of-work)).
+- **W6, paper sizes and paper colour:** designed 2026-11-05 (AW6 frozen under delegation; [ADR-150](DECISIONS.md#adr-150) Proposed); build next (see [order of work](#order-of-work)).
 
 Shelf folders and document voices (Book and Plain) shipped in `0.9.0-beta.7` on 2026-10-11
 ([CHANGELOG.md](../CHANGELOG.md#090-beta7--2026-10-11--folders-and-a-second-font)). Both shipped **not accepted**:
@@ -521,6 +521,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-11-05 | **W6 designed: paper colour and saved format v5.** Paper colour amendment AW6 (Library, Proof, Bench) frozen under delegation: seven papers shown on screen only, chosen in the zine sheet or at Print, never in the PDF; Brown cut by the legibility gate (R41). [ADR-150](DECISIONS.md#adr-150) Proposed: US Legal and A5 take v5, stamped only when used; the backup names them so older builds say "needs a newer Zinely"; paper colour lives in `meta.json`, not the document; your-own-artwork's mask waits for its own bump. Not built. | [ADR-150](DECISIONS.md#adr-150), [R41](RESEARCH.md#r41) |
 | 2026-11-05 | **Roadmap tidied (docs only).** Items that shipped in beta.8 (W1, W3, the restored-details note, two frames, the Arrange tray, inks you mix yourself, My Shelf multi-select) no longer read "in preparation" or "in no download"; W4, W9 and the 2026-11-04 fixes are listed as on `main`, in no download; W6 is named next, with #145, #147 and #166 alongside. No scope change. | [ADR-136](DECISIONS.md#adr-136) |
 | 2026-11-04 | **Follow-ups and a bug lane merged, not released.** W4/W9 follow-ups (PRs #184–#186: reproducible Hand font build, Hand tests and goldens; the Describe bar at 200% text is a Known Limitation). Fixes for #155 (PR #187), #159 (PR #188), #160 (PR #189), #148, #149 and #158 (PR #190, A54) and #156 (PR #191); #156 and #160 stay open for listens. Phone Pass 1 on a Samsung recorded (PR #192). | [ADR-149](DECISIONS.md#adr-149) · [ADR-147](DECISIONS.md#adr-147) · [ADR-148](DECISIONS.md#adr-148) |
 | 2026-11-03 | **W9 built: Hand, a third font (Shantell Sans), not released, not Accepted.** The Font row gains a third word (A29H); saved format unchanged, so older builds draw Hand in the plain font and keep the choice. Printed-page 12 pt check and CI goldens owed. | [ADR-148](DECISIONS.md#adr-148) |

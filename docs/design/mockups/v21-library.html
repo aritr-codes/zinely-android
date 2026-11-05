@@ -2262,3 +2262,437 @@ $('a47c5').onclick = () => {
 a47Sync();
 /* ===================== end of A47 script ===================== */
 </script>
+
+<!-- =====================================================================
+
+     AW6 · PAPER COLOUR — FROZEN 2026-11-05 under the owner's delegation (two reviews, GO WITH FIXES, reconciled; ADR-150).  Drafted for W6 of
+     ADR-136 (decision 5, Q1: "the paper is the medium, not the page").  Critique,
+     independent review and the freeze are the main session's.  Nothing is built.
+     Swatch values from RESEARCH R41 (estimates; Brown cut by the AW6.6 gate).
+
+     This file owns the rules (AW6.1 to AW6.15), the closed set, the legibility
+     gate and the place the colour is chosen.  The two other surfaces that show the
+     paper carry their own blocks and cite these rules:
+       v21-proof.html  AW6-P  (the Proof stage, Print details, the fold guide)
+       v21-bench.html  AW6-B  (the Bench canvas and its page strip)
+
+     Everything from here to the end of the file is the amendment.  Nothing above
+     this line changed.  It has its own phone, controls and script; its classes
+     start aw6-, and it touches no frozen element, class rule or script.  A35
+     (paper SIZE at the start) is not touched: see AW6.3.
+     ============================================================================ -->
+<style>
+/* AW6 CSS.  em against the phone's own 16px, as A35 does, so "font scale 2 at
+   360dp" sets 32px and every AW6 word grows while swatches and the page do not. */
+.aw6-wrap{width:100%;max-width:820px;display:flex;flex-direction:column;align-items:center;gap:var(--gap-lg);margin-top:var(--gap-2xl)}
+.aw6-row{display:flex;flex-wrap:wrap;gap:var(--gap-xl);justify-content:center;align-items:flex-start}
+.aw6-phone{position:relative;width:390px;height:800px;overflow:hidden;background:var(--desk);border-radius:34px;
+  border:1px solid var(--desk-edge);font-size:16px;font-family:var(--sans);color:var(--ink)}
+.aw6-phone.big{width:360px;font-size:32px}
+.aw6-scrim{position:absolute;inset:0;z-index:44;background:rgba(39,39,15,.44)}
+.aw6-sheet{position:absolute;left:0;right:0;bottom:0;z-index:46;background:var(--surface);
+  border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);max-height:88%;overflow-y:auto;
+  padding:0 0 var(--gap-xl);box-shadow:0 -16px 40px -18px var(--soft-shadow)}
+.aw6-sheet[hidden]{display:none}
+.aw6-grab{width:44px;height:5px;border-radius:var(--br-pill);background:var(--ink-faint);margin:var(--gap-md) auto var(--gap-xs);opacity:.5}
+.aw6-head{padding:var(--gap-xs) var(--gap-xl) var(--gap-md);border-bottom:1.5px dashed var(--hair)}
+.aw6-ttl{font-family:var(--voice);font-size:1.22em;font-weight:700;line-height:1.15;margin:0}
+.aw6-ttl:focus{outline:none}
+.aw6-sub{font-size:.78em;color:var(--ink-soft);margin:var(--gap-hair) 0 0;font-weight:500;line-height:1.45}
+/* = the frozen .act row, in em */
+.aw6-act{display:flex;align-items:center;gap:var(--gap-lg);width:100%;min-height:48px;text-align:left;background:none;border:0;
+  padding:var(--gap-lg) var(--gap-xl);font:inherit;font-size:1em;font-weight:500;color:var(--ink);cursor:pointer}
+.aw6-act:active{background:var(--leaf-tint);color:var(--on-leaf)}
+.aw6-act .ic{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:var(--br-sm);background:var(--butter);color:var(--on-leaf);font-size:.95em}
+.aw6-act.danger{border-top:8px solid var(--desk);color:var(--jam-text)}
+.aw6-act .val{margin-left:auto;font-size:.82em;font-weight:600;color:var(--ink-soft);text-align:right;overflow-wrap:anywhere}
+.aw6-act .lbl{min-width:0;overflow-wrap:anywhere}
+/* the swatch: the paper itself, px never em, pinned in both themes (AW6.9) */
+.aw6-sw{flex:none;width:28px;height:28px;border-radius:var(--br-xs);border:1.5px solid #27270F;box-shadow:2px 2px 0 #27270F}
+.aw6-opt{display:flex;align-items:flex-start;gap:var(--gap-lg);width:100%;min-height:48px;text-align:left;background:none;border:0;
+  border-bottom:1.5px dashed var(--hair);padding:var(--gap-md) var(--gap-xl);font:inherit;color:var(--ink);cursor:pointer}
+.aw6-opt:active{background:var(--leaf-tint);color:var(--on-leaf)}
+.aw6-opt:focus-visible{outline:2px solid var(--ink);outline-offset:-4px;border-radius:var(--br-sm)}
+.aw6-opt .tx{display:flex;flex-direction:column;gap:var(--gap-hair);min-width:0;flex:1;overflow-wrap:anywhere}
+.aw6-opt .nm{font-size:.9em;font-weight:600;line-height:1.3}
+.aw6-opt .nt{font-size:.73em;font-weight:500;color:var(--ink-soft);line-height:1.45}
+/* checked = a ring on the swatch and a tick, never colour alone */
+.aw6-opt .tick{flex:none;width:1.1em;font-weight:700;color:var(--leaf-text);visibility:hidden}
+.aw6-opt[aria-checked="true"] .tick{visibility:visible}
+.aw6-opt[aria-checked="true"] .aw6-sw{outline:3px solid var(--leaf);outline-offset:2px}
+.aw6-foot{font-size:.76em;color:var(--ink-soft);text-align:center;margin:var(--gap-md) var(--gap-xl) 0;line-height:1.5}
+.aw6-prov{display:inline-block;font-size:.7em;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--butter);color:var(--on-butter);border-radius:var(--br-pill);padding:var(--gap-hair) var(--gap-sm);margin:var(--gap-sm) var(--gap-xl) 0}
+/* the page, as the screens show it: the paper (host), then the replayer's page on top, multiplied once */
+.aw6-pair{display:flex;gap:var(--gap-lg);align-items:flex-end;flex-wrap:wrap;justify-content:center}
+.aw6-fig{display:flex;flex-direction:column;align-items:center;gap:var(--gap-sm);margin:0}
+.aw6-fig figcaption{font-size:12.5px;color:var(--ink-soft);max-width:200px;text-align:center;line-height:1.4}
+.aw6-paper{position:relative;width:176px;height:272px;isolation:isolate;border:1.5px solid #27270F;box-shadow:3px 3px 0 #27270F}
+.aw6-paper svg{display:block;width:100%;height:100%}
+.aw6-paper.mult svg{mix-blend-mode:multiply}
+.aw6-said{max-width:640px;width:100%;font-size:13px;line-height:1.5;background:var(--surface);border:1.5px dashed var(--hair);
+  border-radius:var(--br-md);padding:var(--gap-md) var(--gap-lg);color:var(--ink)}
+.aw6-said[hidden]{display:none}
+.aw6-said ol{margin:var(--gap-xs) 0 0;padding-left:1.4em}
+.aw6 table{border-collapse:collapse;font-size:12.5px;max-width:820px}
+.aw6 th,.aw6 td{padding:4px 6px;border-bottom:1px solid var(--hair);text-align:right;white-space:nowrap}
+.aw6 th:first-child,.aw6 td:first-child{text-align:left}
+.aw6 td.low{color:var(--jam-text);font-weight:700}
+.aw6 td.gate{font-weight:700}
+.aw6 .cap{max-width:720px}
+</style>
+
+<section class="aw6 aw6-wrap" id="aw6" aria-labelledby="aw6h">
+<p class="cap lead" id="aw6h"><span class="badge">AW6 paper colour · frozen 2026-11-05 under the owner's delegation</span><br>
+The paper you load, shown on screen</p>
+<p class="cap"><b>Frozen 2026-11-05 under the owner's delegation (ADR-150). Swatch values from R41 (estimates).</b> A maker says which colour paper
+they will load. The Bench, the Proof stage, and Print details then show the page on that paper.
+Zinely still prints only the ink: the PDF and the picture are the same bytes as on white, and the paper is not in
+them. The colour is chosen in the zine’s sheet here, or at Print. The Start sheet (A35) does not ask. Press
+<b>zine sheet</b>, then <b>Paper colour</b>.</p>
+
+<div class="aw6-row">
+  <div class="aw6-phone grainy" id="aw6Phone">
+    <div class="aw6-scrim" id="aw6Scrim"></div>
+
+    <!-- the frozen zine sheet, redrawn under aw6- names, plus ONE row (AW6.3) -->
+    <div class="aw6-sheet" id="aw6Zs" role="dialog" aria-modal="true" aria-labelledby="aw6ZsT">
+      <div class="aw6-grab"></div>
+      <div class="aw6-head"><h2 class="aw6-ttl" id="aw6ZsT" tabindex="-1">Sunday market</h2>
+        <p class="aw6-sub" id="aw6ZsSub">A4 · 2 days ago</p></div>
+      <button class="aw6-act"><span class="ic" aria-hidden="true">↗</span><span class="lbl">Open on the bench</span></button>
+      <button class="aw6-act"><span class="ic" aria-hidden="true">⇪</span><span class="lbl">Share &amp; export</span></button>
+      <button class="aw6-act"><span class="ic" aria-hidden="true">✎</span><span class="lbl">Rename</span></button>
+      <button class="aw6-act"><span class="ic" aria-hidden="true">⧉</span><span class="lbl">Duplicate</span></button>
+      <button class="aw6-act"><span class="ic" aria-hidden="true">▤</span><span class="lbl">Move to a folder</span></button>
+      <button class="aw6-act" id="aw6PcRow"><span class="aw6-sw" id="aw6PcSw" aria-hidden="true"></span><span class="lbl">Paper colour</span><span class="val" id="aw6PcVal">White</span></button>
+      <button class="aw6-act danger"><span class="ic" aria-hidden="true">⌫</span><span class="lbl">Delete</span></button>
+    </div>
+
+    <!-- the chooser (AW6.4) -->
+    <div class="aw6-sheet" id="aw6Ch" role="dialog" aria-modal="true" aria-labelledby="aw6ChT" hidden>
+      <div class="aw6-grab"></div>
+      <div class="aw6-head"><h2 class="aw6-ttl" id="aw6ChT" tabindex="-1">Paper colour</h2>
+        <p class="aw6-sub">Which colour paper will you load? It shows on screen only. We print only the ink.</p></div>
+      <span class="aw6-prov">Values: R41 estimates</span>
+      <div id="aw6Opts" role="radiogroup" aria-labelledby="aw6ChT"></div>
+      <p class="aw6-foot">No dark or bright papers. Home printers have no white ink, so most inks would sink into them. Colours are close, not exact.</p>
+    </div>
+  </div>
+
+  <div class="aw6-pair" aria-label="The same page, two ways">
+    <figure class="aw6-fig"><div class="aw6-paper mult" id="aw6Screen"></div>
+      <figcaption id="aw6ScreenCap">On screen: the page on your White paper</figcaption></figure>
+    <figure class="aw6-fig"><div class="aw6-paper" id="aw6Pdf"></div>
+      <figcaption>In the PDF and the picture: always this. We print only the ink.</figcaption></figure>
+  </div>
+</div>
+
+<div class="controls">
+  <span class="grp">AW6 paper colour</span>
+  <button class="ctl on" id="aw6CtlZs">zine sheet</button>
+  <button class="ctl" id="aw6CtlCh">chooser</button>
+  <button class="ctl" id="aw6CtlBig">font scale 2 at 360dp</button>
+  <button class="ctl" id="aw6CtlNight">day / night</button>
+  <button class="ctl" id="aw6CtlTb">TalkBack reading</button>
+</div>
+<div class="aw6-said" id="aw6Said" hidden aria-live="polite"></div>
+
+<h3 style="font-family:var(--voice);margin:var(--gap-md) 0 0">AW6.5 the closed set <span class="aw6-prov" style="margin:0">R41 estimates</span></h3>
+<table id="aw6Set"><thead><tr><th scope="col">Shown name</th><th scope="col">Stored id</th><th scope="col">Value (provisional)</th><th scope="col">Note in the chooser</th></tr></thead><tbody></tbody></table>
+
+<h3 style="font-family:var(--voice);margin:var(--gap-md) 0 0">AW6.6 the legibility gate, computed live</h3>
+<p class="cap">Contrast of each Bench ink against each paper, with the ink multiplied onto the paper (WCAG ratio). The
+gate: a paper joins only if <b>Ink</b> measures at least 7:1 on it, and no ink that reaches 3:1 on White falls
+under 3:1 on it. Red cells are under 3:1; read down a column to see that a weak ink is weak on White too. The last
+column is the largest factor by which the paper lowers any ink’s ratio against White.</p>
+<div style="overflow-x:auto;max-width:100%"><table id="aw6Gate"></table></div>
+</section>
+
+<script>
+/* ============================================================================
+   AW6 · PAPER COLOUR — FROZEN 2026-11-05 under the owner's delegation (two reviews, GO WITH FIXES, reconciled; ADR-150).  THE RULES, cited as
+   AW6.n.  [shown] = this page draws it; [stated] = it binds the build though this
+   page cannot show it.
+
+  AW6.1  [stated] What it is.  The maker says which colour paper they will load.
+                The screens in AW6.7 show the page on it, as a host layer under the
+                page, OUTSIDE the one replayer (ADR-136 decision 5).  The engine still
+                draws every page on opaque white, and the PDF and the PNG are the same
+                bytes whatever the colour.  Nothing is printed for the paper.  V2
+                CONSTITUTION §III ("never a second way to draw a page") and §IV ("a
+                second draw path") hold: the page's pixels are the export's; only the
+                paper under them is the host's, as the sheet is not in the PDF.
+
+  AW6.2  [stated] What this narrows, BY NAME, and what it does not.
+                NARROWED: BETA-DIRECTION.md, the refusal row "Page background colour /
+                paper tint" (DO NOT IMPLEMENT, :497) and the never-list row "Full-page
+                background colour / paper tint" (:646).  Their words "paper tint" no
+                longer forbid showing, on screen only, the colour of the paper the
+                maker loads.  NOT NARROWED: everything else in both rows.  A printed
+                page fill, full-bleed or inside the margin, stays DO NOT IMPLEMENT for
+                the reason they give (no home printer bleeds).  ZINE-DIRECTION §8
+                "Page background colour: DO NOT BUILD" and §11's export row
+                "Transparency: ... Opaque white ground, always" are unchanged; §8's 2026-10-18 note already
+                points here.  The "Paper tints" ink band (v21-bench.html, D-003, OD-24)
+                is unchanged: those five are inks, and no paper colour takes their
+                names (AW6.5).  Ink-on-ink multiply stays cut (ADR-136 cut list).
+
+  AW6.3  [shown]  Where it is chosen.  Two doors, one value per zine:
+                  (a) the zine sheet on the Shelf: one new row, "Paper colour", after
+                      "Move to a folder" and before Delete, showing the current name;
+                  (b) Proof → Print details, under "What paper is in your printer?"
+                      (v21-proof.html AW6-P).  That is the question the colour answers.
+         [stated] NOT in A35's Start sheet.  A35.3 ("choosing is the action", one tap)
+                stays frozen and untouched.  Most makers print on white, so a second
+                question before the first page would cost everyone for a few; and a
+                colour moves no line, so unlike the size (A35.6) it can change at any
+                time at no cost.  A new zine starts White.
+                NOT on the Bench.  The Bench answers "How do I change this page?"; the
+                paper is not the page, and the tray takes no tool that does not
+                displace or nest another (constitution).  The Bench SHOWS it (AW6.7).
+                A35.6 ("a zine's paper never changes") speaks of the size and stays
+                true: the colour is a separate detail named "Paper colour" everywhere.
+
+  AW6.4  [shown]  The chooser.  A sheet titled "Paper colour", sub-line "Which colour
+                paper will you load? It shows on screen only. We print only the ink."
+                Seven rows, one per paper, in the AW6.5 order: the swatch, the name,
+                and a note where one is owed.  One tap picks and closes; the zine sheet
+                row then names the new colour.  The current colour is checked (a ring
+                and a tick, never colour alone).  No confirm and no Undo snack: it
+                changes nothing printed and the same row puts it back.  Scrim, Back and
+                a swipe down close it and change nothing.  Foot: "No dark or bright
+                papers. Home printers have no white ink, so most inks would sink into
+                them. Colours are close, not exact."  The provisional badge is this prototype's, not the app's.
+
+  AW6.5  [shown]  The closed set, values from RESEARCH R41 (estimates: no maker publishes
+                sRGB; "close, not exact").  Seven papers, light to dark: White, Ivory,
+                Pastel yellow, Pastel pink, Pastel blue, Pastel green, Grey.  Brown was
+                drafted and is CUT: at R41's value (#B38B5D) the house Ink falls to
+                5.8:1 and Matcha, Stone and Cornflower below 3:1, so it fails AW6.6.  The table above is generated from the one list in
+                this script.  Names were checked against every maker-facing ink name:
+                the ten Inks, the five Paper tints (Cream, Blush, Sky, Sage, Kraft),
+                the four Neutrals (v21-bench.html :667-671) and the Type bar's five
+                (Ink, Coral, Teal, Blue, Ochre, v21-typebar.html; Copy.INK_BLUE).
+                So: "Ivory", not Cream; "Pastel blue", because
+                "Blue" is a Type bar ink.  "Pastel" is how shops sell coloured copy
+                paper.  Stored ids are fixed strings (ADR-133's rule: closed at the
+                product and the file); R41 may change a VALUE, never an id, after
+                ship.  R41 may also drop a paper; adding one later is add-only.
+
+  AW6.6  [shown]  Legibility.  The gate, measured: a paper joins the set only if the
+                house Ink (#2A251E) keeps at least 7:1 on it under multiply, from R41's
+                measured value, not a guess.  Dark and saturated papers (black, navy,
+                red, the fluorescent "brights") fail it and are not offered, for the
+                reason the foot line gives.
+                The gate has a second half: no ink that reaches 3:1 on White may fall
+                below 3:1 on the paper.  The table computes both.
+         [stated] No per-element low-contrast warning.  On a paper that passes, the
+                paper alone never takes an ink from readable to unreadable: the darkest
+                ink loses most (the table's last column, the largest drop over all
+                inks: up to about 1.46, on Grey, at R41's values) and light inks lose less.  An ink that is weak on
+                White (Sunflower, about 1.9:1) is weak on every paper; that belongs to
+                the ink tray, not to the paper.  A paper that fails the gate is dropped,
+                not warned about (Brown, AW6.5).
+
+  AW6.7  [stated] The screens that show the paper, one by one:
+                  Bench canvas ............ yes, under the page (AW6-B)
+                  Bench page strip ........ yes, each thumbnail on the paper (AW6-B)
+                  Proof stage (Read) ...... yes, every leaf on the paper (AW6-P)
+                  Print details picture ... yes, the whole sheet, margins included,
+                                            since the unprinted strip IS the paper (AW6-P)
+                  Fold guide .............. NO.  It is a diagram of folding, not the
+                                            maker's page, and its marks lose contrast
+                                            on paper (review 2026-11-05).  AW6-P.6.
+                  Shelf cover ............. NO.  A cover is a recipe, never a rendered
+                                            page (ADR-069), and part of the zine's
+                                            identity (D-017).  ShelfCover's own stock
+                                            and band stay as they are.  Instead the
+                                            zine sheet's line names a colour that is
+                                            not White: "A4 · Pastel yellow · 2 days ago".
+                  PDF, PNG, Share, a reading copy (W2b) ... NEVER.
+                White draws NO layer at all, so every screen and golden of a White zine
+                stays byte-identical to today.
+
+  AW6.8  [shown]  How it shows.  The host fills the page's rectangle with the paper;
+                the replayer's finished page is drawn over it ONCE with multiply.
+                White × paper = the paper; ink × paper = that ink on that paper, as
+                translucent printer ink lies on coloured stock (ADR-136: multiply is
+                physical for paper).  A photo's white areas take the paper's colour,
+                as they will on the sheet.  Inside the page nothing changes: elements
+                still overprint each other normally; multiply is never per element
+                (the ShelfCover band's one-layer rule, ShelfCover.kt drawInkBand).
+                Everything drawn above the page (selection, handles, keep-clear
+                guides, "Too close to the edge" marks) is drawn after, unblended, and
+                does not change.
+         [stated] The build may draw it the other way round: the finished page first,
+                then one paper-coloured rectangle over the page with multiply, before
+                the chrome.  Multiply commutes, so the pixels are the same, and that
+                order needs no offscreen layer on Android 7 (R41.5, ADR-150 decision 5).
+
+  AW6.9  [shown]  Night.  The paper does not restyle in the dark theme.  It is the
+                maker's material, pinned like the six cover stocks (2026-08-24 rule)
+                and like the page itself.  The chrome around it themes as before.
+
+  AW6.10 [stated] Where it is kept.  In the zine's meta.json beside title, cover and
+                folder (ProjectMeta, read with ignoreUnknownKeys = true), as
+                "paperColour": "pastel-yellow".  Absent means White, and White is
+                not encoded, so a White zine's meta.json is byte-identical to today's.
+                NOT in document.json: it is not part of saved format v5, and ADR-133
+                decision 4 needs no amendment for it.  An older build ignores the
+                field and shows White, which prints exactly the same.  Changing it is
+                not an edit: no undo step, no change to when the zine was last edited
+                (as W2a ruled for a rename).  Every writer of meta.json carries it
+                across (ProjectMeta's invariant).  Duplicate keeps it; a backup and a
+                restore keep it as they keep the folder.
+
+  AW6.11 [shown]  Large text.  At font scale 2 on a 360dp phone every row grows and
+                nothing is cut: the name and value wrap, the swatch keeps 28dp.
+
+  AW6.12 [shown]  TalkBack (the "TalkBack reading" control lists it):
+                  zine sheet row: role button, "Paper colour, White" (the value read
+                    after the label; the swatch hidden).
+                  chooser: role dialog titled "Paper colour"; its rows are one
+                    radiogroup labelled "Paper colour"; each row is ONE node, role
+                    radio, checked or not checked, named by the colour (and its note, if a
+                    paper ever carries one).
+                  Compose: the rows sit in Modifier.selectableGroup(); each row is
+                    Modifier.selectable(selected, role = Role.RadioButton), never a
+                    Button carrying `selected` (it reads as checkable on the platform,
+                    ADR-059's Role to View lesson).  Check the platform tree, not only
+                    the merged semantics.
+                  The Shelf tile's name does not change (A35.11's narrowing).
+         [stated] After a pick, focus returns to the zine sheet's Paper colour row.
+
+  AW6.13 [stated] Words.  Every string here lives in core:copy beside Copy.Paper.  No
+                em dash in any of them.  Colour names are capitalised as names in
+                lists and lower-case inside a sentence ("Load pastel yellow paper").
+
+  AW6.14 [stated] When.  AW6 is independent of v5: it can ship before or after the two
+                new sizes.  It ships in one change with AW6-P and AW6-B, never one
+                surface alone (a colour seen on the Bench but not at Print is a
+                promise half kept).
+
+  AW6.15 [stated] Owed before the freeze or the build:
+                  (R41 values applied and the gate re-run 2026-11-05: done) a JVM test that the PDF and
+                  PNG bytes for a zine are identical for every colour; the extra
+                  layer's cost on Android 7 (ADR-136); both device passes; an ADR that
+                  records AW6.2, AW6.3 and AW6.10, and the BETA-DIRECTION and
+                  ZINE-DIRECTION notes that point here.
+   ============================================================================ */
+(() => {
+  const $ = id => document.getElementById(id);
+  // AW6.5 — THE list.  Values from R41 (estimates).  Ids are permanent once shipped.
+  const PAPERS = [
+    { id: 'white',         name: 'White',         hex: '#FFFFFF', note: 'Plain printer paper.' },
+    { id: 'ivory',         name: 'Ivory',         hex: '#F4EEDC', note: '' },
+    { id: 'pastel-yellow', name: 'Pastel yellow', hex: '#F7EC9B', note: '' },
+    { id: 'pastel-pink',   name: 'Pastel pink',   hex: '#F4C6D0', note: '' },
+    { id: 'pastel-blue',   name: 'Pastel blue',   hex: '#BCD6EA', note: '' },
+    { id: 'pastel-green',  name: 'Pastel green',  hex: '#CDE6C8', note: '' },
+    { id: 'grey',          name: 'Grey',          hex: '#CFCDC6', note: '' },
+  ];
+  // the Bench's maker inks, v21-bench.html :667-671 (Paper tints left out: they are paper-coloured by name)
+  const INKS = [['Ink','#2A251E'],['Forest','#3E5E3A'],['Slate','#5B5347'],['Brick','#B0503F'],['Plum','#8A5A9B'],
+    ['Matcha','#7C8A3F'],['Stone','#8C8269'],['Cornflower','#6E86C9'],['Strawberry','#E27F89'],['Aqua','#57B0A9'],
+    ['Ochre','#D19A3C'],['Fog','#B7AD93'],['Sunflower','#E7B53C']];
+  const GATE = 7;
+  let cur = PAPERS[0];
+
+  /* a stand-in for the replayer's page: OPAQUE WHITE ground, then ink.  It is the same
+     picture on screen and in the PDF; only the host's paper under it differs (AW6.8). */
+  const PAGE = '<svg viewBox="0 0 198 306" aria-hidden="true"><defs><linearGradient id="aw6g" x1="0" y1="0" x2="1" y2="1">'
+    + '<stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#57B0A9"/></linearGradient></defs>'
+    + '<rect width="198" height="306" fill="#fff"/>'
+    + '<rect x="22" y="22" width="154" height="96" fill="url(#aw6g)"/>'
+    + '<circle cx="150" cy="150" r="26" fill="#B0503F"/><circle cx="160" cy="160" r="20" fill="#E7B53C"/>'
+    + '<text x="22" y="172" font-family="Fraunces,Georgia,serif" font-size="22" font-weight="700" fill="#2A251E">Sunday</text>'
+    + '<text x="22" y="196" font-family="Fraunces,Georgia,serif" font-size="22" font-weight="700" fill="#2A251E">market</text>'
+    + '<text x="22" y="226" font-family="Inter,system-ui,sans-serif" font-size="11" fill="#5B5347">Eggs, bread, a radio</text>'
+    + '<text x="22" y="242" font-family="Inter,system-ui,sans-serif" font-size="11" fill="#5B5347">that plays one song.</text>'
+    + '<path d="M22 270h154" stroke="#8C8269" stroke-width="1.5" stroke-dasharray="3 4"/></svg>';
+  $('aw6Screen').innerHTML = PAGE; $('aw6Pdf').innerHTML = PAGE;
+  $('aw6Pdf').style.background = '#fff';
+
+  function say(p){ return p.note ? p.name + '. ' + p.note : p.name; }
+  function paint(){
+    $('aw6PcSw').style.background = cur.hex;
+    $('aw6PcVal').textContent = cur.name;
+    $('aw6PcRow').setAttribute('aria-label', 'Paper colour, ' + cur.name);   // AW6.12
+    $('aw6ZsSub').textContent = cur.id === 'white' ? 'A4 · 2 days ago' : 'A4 · ' + cur.name + ' · 2 days ago';   // AW6.7
+    $('aw6Screen').style.background = cur.hex;      // AW6.8: the host's paper; the page multiplies over it
+    $('aw6ScreenCap').textContent = 'On screen: the page on your ' + cur.name + ' paper';
+    const box = $('aw6Opts'); box.textContent = '';
+    PAPERS.forEach(p => {
+      const b = document.createElement('button');
+      b.className = 'aw6-opt'; b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', String(p === cur)); b.setAttribute('aria-label', say(p));
+      b.innerHTML = '<span class="aw6-sw" aria-hidden="true" style="background:' + p.hex + '"></span>'
+        + '<span class="tx"><span class="nm"></span>' + (p.note ? '<span class="nt"></span>' : '') + '</span>'
+        + '<span class="tick" aria-hidden="true">✓</span>';
+      b.querySelector('.nm').textContent = p.name;
+      if (p.note) b.querySelector('.nt').textContent = p.note;
+      b.onclick = () => { cur = p; show('zs'); $('aw6PcRow').focus({ preventScroll: true }); };   // AW6.4, AW6.12
+      box.appendChild(b);
+    });
+    tb();
+  }
+  function show(which){
+    $('aw6Zs').hidden = which !== 'zs'; $('aw6Ch').hidden = which !== 'ch';
+    $('aw6CtlZs').classList.toggle('on', which === 'zs'); $('aw6CtlCh').classList.toggle('on', which === 'ch');
+    paint();
+    if (which === 'ch') $('aw6ChT').focus({ preventScroll: true });
+  }
+  function tb(){   // AW6.12: what TalkBack reads, top to bottom, from the live attributes
+    const open = $('aw6Ch').hidden ? $('aw6Zs') : $('aw6Ch');
+    const items = [];
+    items.push('Dialog: ' + open.querySelector('.aw6-ttl').textContent);
+    open.querySelectorAll('.aw6-sub,.aw6-act,.aw6-opt,.aw6-foot').forEach(n => {
+      const role = n.getAttribute('role') || (n.tagName === 'BUTTON' ? 'button' : 'text');
+      const name = n.getAttribute('aria-label') || n.textContent.trim();
+      const st = role === 'radio' ? (n.getAttribute('aria-checked') === 'true' ? ', checked' : ', not checked') : '';
+      items.push((role === 'text' ? '' : role + ': ') + name + st + (role === 'radio' ? ' (in radio group "Paper colour")' : ''));
+    });
+    $('aw6Said').innerHTML = '<b>TalkBack reads, in order:</b><ol></ol>';
+    items.forEach(t => { const li = document.createElement('li'); li.textContent = t; $('aw6Said').querySelector('ol').appendChild(li); });
+  }
+  $('aw6PcRow').onclick = () => show('ch');
+  $('aw6Scrim').onclick = () => show('zs');
+  $('aw6Ch').addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); show('zs'); } });
+  $('aw6CtlZs').onclick = () => show('zs');
+  $('aw6CtlCh').onclick = () => show('ch');
+  $('aw6CtlBig').onclick = () => $('aw6CtlBig').classList.toggle('on', $('aw6Phone').classList.toggle('big'));
+  $('aw6CtlNight').onclick = () => { const R = document.documentElement;
+    R.setAttribute('data-theme', R.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); };
+  $('aw6CtlTb').onclick = () => { const s = $('aw6Said'); s.hidden = !s.hidden; $('aw6CtlTb').classList.toggle('on', !s.hidden); };
+
+  // AW6.5 table
+  const set = $('aw6Set').tBodies[0];
+  PAPERS.forEach(p => { const r = set.insertRow();
+    r.innerHTML = '<td><span class="aw6-sw" style="display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:6px;box-shadow:none;background:' + p.hex + '"></span></td><td></td><td></td><td></td>';
+    r.cells[0].append(p.name); r.cells[1].textContent = p.id; r.cells[2].textContent = p.hex + ' (provisional)';
+    r.cells[3].textContent = p.note || ''; });
+
+  // AW6.6 gate: WCAG contrast of (ink × paper) against paper
+  const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+  const lin = v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  const lum = c => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+  const on = (ink, paper) => { const I = rgb(ink), P = rgb(paper); return ratio(I.map((v, i) => v * P[i]), P); };
+  const g = $('aw6Gate');
+  g.innerHTML = '<thead><tr><th scope="col">Paper</th>' + INKS.map(i => '<th scope="col">' + i[0] + '</th>').join('')
+    + '<th scope="col">Gate</th><th scope="col">Largest drop</th></tr></thead><tbody></tbody>';
+  const onWhite = INKS.map(i => on(i[1], '#FFFFFF'));
+  PAPERS.forEach(p => {
+    const r = g.tBodies[0].insertRow(); r.insertCell().textContent = p.name;
+    const vals = INKS.map(i => on(i[1], p.hex));
+    vals.forEach((v, k) => { const c = r.insertCell(); c.textContent = v.toFixed(2); if (v < 3) c.className = 'low'; if (k === 0) c.classList.add('gate'); });
+    const lost = INKS.filter((_, k) => onWhite[k] >= 3 && vals[k] < 3).map(i => i[0]);   // AW6.6, second half
+    const c = r.insertCell(); c.className = 'gate';
+    c.textContent = vals[0] < GATE ? 'FAILS: Ink under 7, not offered' : lost.length ? 'FAILS: ' + lost.join(', ') + ' under 3' : 'passes';
+    r.insertCell().textContent = '× ' + Math.max(...vals.map((v, k) => onWhite[k] / v)).toFixed(2);
+  });
+  show('zs');
+})();
+/* ===================== end of AW6 ===================== */
+</script>
