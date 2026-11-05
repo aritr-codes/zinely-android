@@ -36,6 +36,8 @@ import java.security.MessageDigest
  * - `document-v4.json` was written by the v4 serializer from the v3 zine plus a description on one photo and
  *   one Art piece (ADR-147). A zine with no description is still written as v3: see
  *   `DocumentDescriptionFormatTest`.
+ * - `document-v5.json` is the v4 zine on US Legal (ADR-150), as the v5 serializer writes it. A Letter or A4 zine is
+ *   still written as v3 or v4.
  * - `document-v2.json` and `document-v1.json` are that output with the fields their versions predate
  *   removed: v2 has no flip fields (ADR-113); v1 also has no `copier` (ADR-106) and no decor
  *   (ADR-105). Checked against the `v0.9.0-beta.2` and `v0.9.0-beta.1` model sources; the serializer
@@ -80,17 +82,10 @@ class DocumentFixtureCorpusTest {
         3 to ::expectedV3,
         // v4 (ADR-147) adds the optional description; the fixture describes one photo and one Art piece, the
         // first user of the field, so the writer's stamp line is exercised by the byte check below.
-        4 to {
-            expectedV3().mapElements { element ->
-                when {
-                    element is ImageElement && element.id == "cover-photo" ->
-                        element.copy(description = "A moth on the porch wall, wings open")
-                    element is DecorElement && element.id == "lamp-tape" ->
-                        element.copy(description = "Torn pink tape holding the photo down")
-                    else -> element
-                }
-            }
-        },
+        4 to ::expectedV4,
+        // v5 (ADR-150) adds US Legal and A5 and nothing else; the fixture is the v4 zine on US Legal, the first
+        // user of the new values, so the writer's stamp-5 line is exercised by the byte check below.
+        5 to { expectedV4().copy(paperSize = PaperSize.LEGAL) },
     )
 
     @Test
@@ -156,6 +151,17 @@ class DocumentFixtureCorpusTest {
 
     private fun ZineDocument.mapElements(transform: (Element) -> Element?): ZineDocument =
         copy(pages = pages.map { page -> page.copy(elements = page.elements.mapNotNull(transform)) })
+
+    private fun expectedV4(): ZineDocument =
+        expectedV3().mapElements { element ->
+            when {
+                element is ImageElement && element.id == "cover-photo" ->
+                    element.copy(description = "A moth on the porch wall, wings open")
+                element is DecorElement && element.id == "lamp-tape" ->
+                    element.copy(description = "Torn pink tape holding the photo down")
+                else -> element
+            }
+        }
 
     /** Every field explicit, including defaults: an older fixture's missing field must decode to exactly this. */
     private fun expectedV3(): ZineDocument {
@@ -264,7 +270,7 @@ class DocumentFixtureCorpusTest {
 
     private companion object {
         /** The version whose fixture the current writer must reproduce byte for byte; moved on each bump. */
-        const val WRITER_PINNED_VERSION = 4
+        const val WRITER_PINNED_VERSION = 5
 
         /** SHA-256 of the two fixture JPEGs, which live in the `:core:data-storage` library archive. */
         const val PHOTO_A = "380704824c8bf2b6f7f69cca9eae828fee7ff44b2328820e49eec362c674ed3a"
@@ -276,6 +282,7 @@ class DocumentFixtureCorpusTest {
             2 to "3ba7370f44123cf9dde809ee83dc4e951d20e19e2cdc4502197ed3fe1346ed24",
             3 to "bba2f22d633bf0e3da9d9b72559bcfa0a937f459309dcb79b92a4e68fab13ae9",
             4 to "fe66718f8840dbbdf44b6f5a87efaf0254c6477535644d5abde6ddbfd7ae5168",
+            5 to "116cf407cc350dd6baf50e66fab0c1a2fbeea28f54d550a2b2db11818c120a0c",
         )
     }
 }

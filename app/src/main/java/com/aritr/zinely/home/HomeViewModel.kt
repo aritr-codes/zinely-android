@@ -1307,6 +1307,8 @@ private fun ZineFormat.shelfLabel(): String = when (this) {
 private fun PaperSize.shelfLabel(): String = when (this) {
     PaperSize.LETTER -> Copy.Paper.LETTER
     PaperSize.A4 -> Copy.Paper.A4
+    PaperSize.LEGAL -> Copy.Paper.LEGAL
+    PaperSize.A5 -> Copy.Paper.A5
 }
 
 /**

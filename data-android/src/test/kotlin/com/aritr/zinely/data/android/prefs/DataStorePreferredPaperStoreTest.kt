@@ -61,8 +61,23 @@ class DataStorePreferredPaperStoreTest {
     }
 
     @Test
+    fun legal_and_a5_round_trip_under_their_document_wire_names() = runTest {
+        // ADR-150 decision 9: the mapping is an exhaustive `when`, so a new size is mapped, not read back as A4.
+        val fake = FakeDataStore()
+        val store = DataStorePreferredPaperStore(fake)
+
+        store.setPreferredPaperSize(PaperSize.LEGAL)
+        assertEquals("legal", fake.data.first()[stringPreferencesKey("preferred_paper_size")])
+        assertEquals(PaperSize.LEGAL, store.preferredPaperSize.first())
+
+        store.setPreferredPaperSize(PaperSize.A5)
+        assertEquals("a5", fake.data.first()[stringPreferencesKey("preferred_paper_size")])
+        assertEquals(PaperSize.A5, store.preferredPaperSize.first())
+    }
+
+    @Test
     fun unknown_persisted_value_falls_back_to_a4() = runTest {
-        val preferences = mutablePreferencesOf(stringPreferencesKey("preferred_paper_size") to "legal")
+        val preferences = mutablePreferencesOf(stringPreferencesKey("preferred_paper_size") to "tabloid")
         val store = DataStorePreferredPaperStore(FakeDataStore(preferences))
 
         assertEquals(PaperSize.A4, store.preferredPaperSize.first())

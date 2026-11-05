@@ -517,6 +517,8 @@ internal val PaperSize.displayName: String
     get() = when (this) {
         PaperSize.A4 -> Copy.Paper.A4
         PaperSize.LETTER -> Copy.Paper.LETTER
+        PaperSize.LEGAL -> Copy.Paper.LEGAL
+        PaperSize.A5 -> Copy.Paper.A5
     }
 
 // ---- glyphs (frozen 24×24 SVGs; decorative, aria-hidden via the chip's clear) ----------------

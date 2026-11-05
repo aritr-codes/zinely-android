@@ -1,5 +1,6 @@
 package com.aritr.zinely.core.data.serialization
 
+import com.aritr.zinely.core.model.CURRENT_SCHEMA_VERSION
 import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.Element
@@ -62,7 +63,8 @@ class DocumentDescriptionFormatTest {
     @Test
     fun `a described photo and a described piece of Art round-trip equal`() {
         val doc = zine(photo(description = "Mum at the gate"), art(description = "this way to the flower end"))
-        assertEquals(doc.copy(schemaVersion = 4), serializer.deserialize(serializer.serialize(doc)))
+        // Decoding migrates to the newest version this build reads (5 since ADR-150).
+        assertEquals(doc.copy(schemaVersion = CURRENT_SCHEMA_VERSION), serializer.deserialize(serializer.serialize(doc)))
     }
 
     @Test
@@ -118,24 +120,26 @@ class DocumentDescriptionFormatTest {
     }
 
     @Test
-    fun `every reader of the version reads up to 4 and refuses 5`() {
+    fun `every reader of the version reads up to 5 and refuses 6`() {
         // The readers all key off CURRENT_SCHEMA_VERSION (migrations, document validator, library and package
-        // manifest validators, the stager, the shelf), so pinning the literal pins the six together.
-        assertEquals(4, com.aritr.zinely.core.model.CURRENT_SCHEMA_VERSION)
+        // manifest validators, the stager, the shelf), so pinning the literal pins the six together. v5 is
+        // ADR-150's (US Legal and A5).
+        assertEquals(5, CURRENT_SCHEMA_VERSION)
         val validator = com.aritr.zinely.core.data.validation.DefaultDocumentValidator()
         val valid = serializer.deserialize(
             javaClass.getResourceAsStream("/fixtures/document-v4.json")!!.use { it.readBytes() }.decodeToString(),
         )
-        assertTrue(validator.validate(valid.copy(schemaVersion = 4)).isValid)
-        assertFalse(validator.validate(valid.copy(schemaVersion = 5)).isValid)
+        assertTrue(validator.validate(valid.copy(schemaVersion = 5)).isValid)
+        assertFalse(validator.validate(valid.copy(schemaVersion = 6)).isValid)
     }
 
     @Test
-    fun `a v5 file is refused and a v4 file is accepted`() {
+    fun `a v6 file is refused and v4 and v5 files are accepted`() {
         val v4 = serializer.serialize(zine(photo(description = "x")))
         serializer.deserialize(v4)
+        serializer.deserialize(v4.replace("\"schemaVersion\":4", "\"schemaVersion\":5"))
         assertThrows<NewerSchemaVersionException> {
-            serializer.deserialize(v4.replace("\"schemaVersion\":4", "\"schemaVersion\":5"))
+            serializer.deserialize(v4.replace("\"schemaVersion\":4", "\"schemaVersion\":6"))
         }
     }
 

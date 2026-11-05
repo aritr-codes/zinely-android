@@ -17,7 +17,18 @@ public enum class PaperSize(public val portrait: PtSize) {
 
     /** A4: 210 × 297 mm ≈ 595.276 × 841.890 pt. */
     @SerialName("a4")
-    A4(PtSize(width = 595.276, height = 841.890));
+    A4(PtSize(width = 595.276, height = 841.890)),
+
+    /**
+     * US Legal: 8.5 × 14 in (ADR-150, saved format v5). A document that holds it is stamped 5, so no build
+     * that cannot read the value ever opens it.
+     */
+    @SerialName("legal")
+    LEGAL(PtSize(width = 612.0, height = 1008.0)),
+
+    /** A5: 148 × 210 mm ≈ 419.528 × 595.276 pt (ADR-150, saved format v5; stamped 5 like [LEGAL]). */
+    @SerialName("a5")
+    A5(PtSize(width = 419.528, height = 595.276));
 
     /** The landscape orientation of this paper (width/height swapped). */
     public fun landscape(): PtSize = PtSize(width = portrait.height, height = portrait.width)

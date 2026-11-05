@@ -66,6 +66,17 @@ class ShelfSheetsTest {
     }
 
     @Test
+    fun `every paper size has its own name and dimensions, never US Letter's (ADR-150 decision 9)`() {
+        assertEquals("US Legal", PaperSize.LEGAL.choiceName)
+        assertEquals("8.5 × 14 in", PaperSize.LEGAL.choiceDimensions)
+        assertEquals("A5", PaperSize.A5.choiceName)
+        assertEquals("148 × 210 mm", PaperSize.A5.choiceDimensions)
+        assertEquals(PaperSize.entries.size, PaperSize.entries.map { it.choiceName }.toSet().size)
+        // Until A35's picker is built, the Start sheet stays A4 and US Letter, even when Legal is preferred.
+        assertEquals(listOf(PaperSize.A4, PaperSize.LETTER), shelfPaperChoices(PaperSize.LEGAL))
+    }
+
+    @Test
     fun `the create sheet names each stock and its real dimensions`() {
         setContent { ShelfCreateSheet(visible = true, onDismiss = {}, onChoosePaper = {}) }
         composeRule.onNodeWithText("210 × 297 mm").assertExists()

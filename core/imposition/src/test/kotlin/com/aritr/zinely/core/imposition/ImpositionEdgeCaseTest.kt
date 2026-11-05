@@ -99,7 +99,9 @@ class ImpositionEdgeCaseTest {
     @Test
     fun `engine output validates clean across a range of insets and papers`() {
         for (paper in PaperSize.entries) {
-            for (inset in listOf(0.0, 6.0, 17.0, 50.0, 90.0)) {
+            // Each paper's own limit is half its panel's short side; A5's (≈74 pt) is under the old fixed 90 pt.
+            val limit = minOf(paper.portrait.height / 4, paper.portrait.width / 2) / 2
+            for (inset in listOf(0.0, 6.0, 17.0, 50.0, 90.0, limit * 0.99).filter { it < limit }) {
                 val layout = imposer.layout(ZineFormat.SINGLE_SHEET_8, paper, inset)
                 assertEquals(emptyList<ValidationIssue>(), validator.validate(layout), "inset=$inset paper=$paper")
             }

@@ -55,6 +55,7 @@ import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.render.ArtSet
 import com.aritr.zinely.core.render.SupplyProvenanceCatalog
+import com.aritr.zinely.feature.editor.displayName
 import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
@@ -303,7 +304,7 @@ private fun ColophonMain(
                             ),
                         )
                         Text(
-                            if (paper == PaperSize.A4) Copy.Paper.A4 else Copy.Paper.LETTER,
+                            paper.displayName,
                             color = printed.ink,
                             fontFamily = ZinelyV21Fonts.Work,
                             fontWeight = FontWeight.SemiBold,

@@ -147,11 +147,15 @@ internal fun ShelfCreateSheet(
     }
 }
 
+/**
+ * The preferred stock first, then the rest of [ShelfPaperChoices].
+ *
+ * ponytail: still A4 and US Letter only (ADR-150 "As built"). US Legal and A5 join here when A35's picker is
+ * built: its four-row sheet and its one scale on US Legal's 1008 pt. Iterating `PaperSize.entries` before
+ * that would draw four tiles in a row of two and clamp Legal's stock to A4's slot.
+ */
 internal fun shelfPaperChoices(preferredPaper: PaperSize): List<PaperSize> =
-    buildList {
-        add(preferredPaper)
-        addAll(PaperSize.entries.filterNot { it == preferredPaper })
-    }
+    ShelfPaperChoices.sortedByDescending { it == preferredPaper }
 
 /**
  * One stock, drawn as `.paperseg button` (`v21-proof.html:347-351`) — the corpus's own paper chooser.
@@ -274,9 +278,15 @@ private val StockSlotHeight: Dp = ShelfPaperChoices.maxOf { it.stockHeight }
 /** `.paper.a4 .stock{52×74}` / `.paper.letter .stock{54×70}`, both derived, never restated. */
 private val PaperSize.stockWidth: Dp get() = (portrait.width * StockDpPerPt).roundToInt().dp
 private val PaperSize.stockHeight: Dp get() = (portrait.height * StockDpPerPt).roundToInt().dp
-private val PaperSize.choiceName: String get() = if (this == PaperSize.A4) Copy.Paper.A4 else Copy.Paper.LETTER
-private val PaperSize.choiceDimensions: String
-    get() = if (this == PaperSize.A4) Copy.Paper.A4_DIMENSIONS else Copy.Paper.LETTER_DIMENSIONS
+/** The paper's name is [displayName] (`ProofPrint.kt`), one exhaustive `when` for every surface. */
+internal val PaperSize.choiceName: String get() = displayName
+internal val PaperSize.choiceDimensions: String
+    get() = when (this) {
+        PaperSize.A4 -> Copy.Paper.A4_DIMENSIONS
+        PaperSize.LETTER -> Copy.Paper.LETTER_DIMENSIONS
+        PaperSize.LEGAL -> Copy.Paper.LEGAL_DIMENSIONS
+        PaperSize.A5 -> Copy.Paper.A5_DIMENSIONS
+    }
 
 // ---------------------------------------------------------------------------------------------
 // The frozen values these two sheets are drawn from. `.paperseg`/`.paperhint` are `v21-proof.html`;
