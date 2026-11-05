@@ -2375,13 +2375,13 @@ The Ink popover's "Paper tints" band already uses Cream, Blush, Sky, Sage, Kraft
   Packing brown estimate (`#B38B5D`) it falls to 5.8:1 and Matcha, Stone and Cornflower fall below 3:1, so Brown fails AW6.6 and is
   cut. A later, measured kraft value would need its own pass through the gate.
 
-### R41.7 Two more papers (2026-11-05)
+### R41.7 Three more papers (2026-11-05)
 
 - 🟨 **ASSUMPTION (estimates, like every value above):** Pastel orange `#F5CFA8` (R41.1's "Apricot", the pastel orange / salmon
   class) and Pastel purple `#DCD0EC` (a pastel lilac / lavender copy paper class; no maker value was found, as R41.1 says for
-  all stocks).
+  all stocks), and Light brown `#E8D3A9` (the "buff" copy paper class, much lighter than R41.1's Packing brown).
 - ✅ **Computed (the AW6.6 arithmetic):** house Ink 11.16:1 and 11.15:1; the lowest ink that reaches 3:1 on White is Stone at
-  3.46:1 and Cornflower at 3.25:1. Both pass. Added by [ADR-152](DECISIONS.md#adr-152), design A56.
+  3.46:1, Cornflower at 3.25:1, and for Light brown 11.14:1 and Matcha at 3.45:1. All three pass. Added by [ADR-152](DECISIONS.md#adr-152), design A56.
 - 🟦 **RECOMMENDATION (adopted):** no colour mixer for paper: a paper colour is only true if a maker can buy that sheet, and
   most of a mixer's range fails the gate.
 

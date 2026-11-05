@@ -157,7 +157,7 @@
 | [ADR-147](#adr-147) | **Saved format v4: a description on photos and Art; a file says v4 only when it holds one.** `description: String?` on `ImageElement` and `DecorElement`, absent when none (`explicitNulls = false`), capped at entry to 250 code points (growth only); identity v3→v4 migrator; the writer stamps 3, or 4 when the zine holds a description (never below 3), so an undescribed zine stays a v3 file and only a backup holding a described piece is refused by older builds. No layout marker. Entry is Bench A52's Describe | Proposed (design frozen under delegation; not built; number assigned at merge) |
 | [ADR-149](#adr-149) | **Large text on a small phone: the first-run hint waits for room above the piece; the save notice stacks.** The move/resize hint is drawn only when it fits whole above the selected piece (12dp clear of the handle marks) and is never shown in Reframe; otherwise it waits, unseen. The save-failure notice puts Try now / Got it under its line when it is narrower than 20 text sizes. Verb-bar label cuts left to a bar-wide amendment. Bench A54; #148, #149, #158 | Proposed (A54 frozen 2026-11-04 under delegation; built; device passes owed; number assigned at merge) |
 | [ADR-151](#adr-151) | **Plain English: sentences follow ASD-STE100, labels follow its word rules, the voice stays warm.** Full STE sentence rules for every sentence in the app and on the website; labels keep their short form with approved words; a glossary of product nouns a user sees; frozen copy changes through its HTML first; a heuristic local check, never a compliance claim. Amends VOICE.md; keeps Sacred Thing 4. | Proposed |
-| [ADR-152](#adr-152) | **Plain paper names after the official name; paper colour as a pile of paper.** The official name stays first as a stamp (the print dialog uses it), a plain name follows ("printer paper, most countries", "long paper", "small paper"); the colour chooser becomes nine sheets on the desk with a sample page, a tap changes the colour and Done closes; Pastel orange and Pastel purple added; a colour mixer rejected. Design A55, A56. | Proposed |
+| [ADR-152](#adr-152) | **Plain paper names after the official name; paper colour as a pile of paper.** The official name stays first as a stamp (the print dialog uses it), a plain name follows ("printer paper, most countries", "long paper", "small paper"); the colour chooser becomes ten sheets on the desk with a sample page, a tap changes the colour and Done closes; Pastel orange, Pastel purple and Light brown added; a colour mixer rejected. Design A55, A56. | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -19165,22 +19165,23 @@ chooser "looks good but something is missing", and asked whether a colour mixer,
    line, the zine sheet, the band, the Colophon and the PDF keep the official name only. The official name stays the key in
    the code.
 2. **Paper colour is chosen from a pile of paper, with a sample page.** The swatch list becomes nine small sheets on the
-   desk: at rest they tilt, the chosen one is square and taped, and the word "Chosen" says it. A sample page (AW6's stand-in,
+   desk (ten, in two rows of five): at rest they tilt, the chosen one is square and taped, and the word "Chosen" says it. A sample page (AW6's stand-in,
    never the user's cover) shows the inks on the chosen paper.
 3. **A tap changes the colour and the sheet stays open; Done closes it** (amends AW6.4's "one tap picks and closes"). Without
    it the sample page could only show the colour that was already chosen. Still no confirm and no Undo: the change prints
    nothing and the same sheet puts it back.
 5. **No scrolling at normal text size** (owner, 2026-11-05: "I do not want a scroller"). At font scale 1 both sheets fit a
    360 × 640 dp phone with no scrolling: the paper rows put both sizes on one line (A55.1), and the pile is two rows of five
-   with the sample page beside Done (A56.2). At font scale 2 the sheets scroll; the pile's top row stays pinned.
-4. **Two more papers, no mixer.** Pastel orange (`#F5CFA8`, R41's Apricot estimate) and Pastel purple (`#DCD0EC`, an
-   estimate) pass the AW6.6 gate (house ink 11.2:1 and 11.2:1; the lowest ink that reaches 3:1 on White stays at 3.46:1 and
-   3.25:1). A mixer was rejected: Zinely prints ink, so a mixed ink is real, but it never prints the paper, so the only true
+   with the sample page beside Done (A56.2, A56.3). At font scale 2 the sheets scroll; the pile's top row stays pinned.
+4. **Three more papers, no mixer.** Pastel orange (`#F5CFA8`, R41's Apricot estimate), Pastel purple (`#DCD0EC`, an
+   estimate) and Light brown (`#E8D3A9`, a light buff estimate; added so the pile is two even rows of five, owner 2026-11-05)
+   pass the AW6.6 gate (house ink 11.2:1, 11.2:1 and 11.1:1; the lowest ink that reaches 3:1 on White stays at 3.46:1, 3.25:1
+   and 3.45:1). A mixer was rejected: Zinely prints ink, so a mixed ink is real, but it never prints the paper, so the only true
    paper colour is one that a maker can buy; most of a mixer's range would fail the gate; matching a sheet by eye on a phone
    screen is not reliable; and a mixed colour has no name for Print details ("Load pastel orange paper") or for TalkBack.
 
 **Consequences.** The A35 notes and spoken labels (`Copy.Paper.*_NOTE`, `*_SPOKEN`) and `Copy.Paper.printsOnlyOn` change, with
-their tests and goldens. `PaperColour` gains two entries (add-only ids). The chooser gets a Done button and stays open.
+their tests and goldens. `PaperColour` gains three entries (add-only ids). The chooser gets a Done button and stays open.
 
 **Owed before Accepted:** the build; goldens re-recorded on the pinned image; both device passes, including a TalkBack listen of
 the Start sheet and the pile.
