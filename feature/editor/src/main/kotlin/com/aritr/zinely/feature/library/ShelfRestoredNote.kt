@@ -57,9 +57,34 @@ public data class RestoredZine(
     val pages: Boolean = false,
 )
 
-/** The note's title and body for these zines, in Shelf order: the A46.3 sentence for each mix of kinds. */
-internal fun List<RestoredZine>.noteWords(): Pair<String, String> =
-    Copy.Restored.noteFor(map { Copy.Restored.Zine(it.title, it.previousTitle, it.details, it.pages) })
+/**
+ * The note's title and body for these zines, in Shelf order: the A46.3 sentence for each mix of kinds, with the
+ * A37.3 amendment's marks for a name more than one zine of the [shelf] carries ([ADR-134](docs/DECISIONS.md#adr-134),
+ * issue #145). The count is worked out from today's [shelf] on every call, never kept (A37.3.7): names compare
+ * without their outer spaces; a zine's place is its folder or My Shelf; its count is among the zines of that place,
+ * in the order [shelf] lists them, repaired or not, whatever order the note lists them in.
+ */
+internal fun List<RestoredZine>.noteWords(shelf: List<LibraryZine>): Pair<String, String> {
+    val byId = shelf.associateBy { it.id }
+    return Copy.Restored.noteFor(
+        map { r ->
+            val own = byId[r.id]
+            val sharers = if (own == null) emptyList() else shelf.filter { it.title.trim() == own.title.trim() }
+            val here = sharers.filter { it.folder == own?.folder }
+            val shared = sharers.size > 1
+            Copy.Restored.Zine(
+                now = r.title,
+                was = r.previousTitle,
+                details = r.details,
+                pages = r.pages,
+                nth = here.indexOfFirst { it.id == r.id } + 1,
+                of = if (shared) here.size else 1,
+                folder = own?.folder,
+                showPlace = shared && (own?.folder != null || sharers.map { it.folder }.distinct().size > 1),
+            )
+        },
+    )
+}
 
 /** `.restored` — the note itself. */
 internal const val ShelfRestoredNoteTestTag: String = "shelf-restored-note"
