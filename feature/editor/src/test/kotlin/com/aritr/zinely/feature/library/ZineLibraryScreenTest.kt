@@ -32,6 +32,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.aritr.zinely.core.copy.Copy
@@ -94,6 +95,7 @@ class ZineLibraryScreenTest {
     private var backups = 0
     private var restores = 0
     private val preferredPaperChanges = mutableListOf<PaperSize>()
+    private val colourSets = mutableListOf<Pair<String, com.aritr.zinely.core.data.repository.PaperColour>>()
 
     private val events = Channel<HomeShelfEvent>(Channel.BUFFERED)
 
@@ -692,8 +694,43 @@ class ZineLibraryScreenTest {
                 onRetryBackupRestore = {},
                 onPreferredPaperChange = { preferredPaperChanges += it },
                 modifier = Modifier.fillMaxSize(),
+                onSetPaperColour = { id, colour -> colourSets += id to colour },
             )
         }
+    }
+
+    /**
+     * AW6.4 from the zine sheet: the row raises the chooser in place of the sheet; one tap sets the colour and hands
+     * back to the zine's sheet. Scrim and Back go back the same way and change nothing.
+     */
+    @Test
+    fun `the paper colour row raises the chooser, and a pick sets it and returns to the sheet`() {
+        openSheetFor(0)
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Paper)).performScrollTo().performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(com.aritr.zinely.feature.editor.PaperColourSheetTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(ZineActionSheetTestTag).assertDoesNotExist()
+
+        composeRule.onNodeWithTag(
+            com.aritr.zinely.feature.editor.paperColourOptionTestTag(com.aritr.zinely.core.data.repository.PaperColour.PASTEL_BLUE),
+        ).performScrollTo().performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(listOf(idOf(0) to com.aritr.zinely.core.data.repository.PaperColour.PASTEL_BLUE), colourSets)
+        composeRule.onNodeWithTag(ZineActionSheetTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(com.aritr.zinely.feature.editor.PaperColourSheetTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun `dismissing the chooser returns to the zine's sheet and sets nothing`() {
+        openSheetFor(0)
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Paper)).performScrollTo().performClick()
+        composeRule.waitForIdle()
+        org.robolectric.shadows.ShadowDialog.getLatestDialog()?.onBackPressed()
+        composeRule.waitForIdle()
+
+        assertTrue(colourSets.isEmpty())
+        composeRule.onNodeWithTag(ZineActionSheetTestTag).assertIsDisplayed()
     }
 
     private fun openSheetFor(index: Int) {

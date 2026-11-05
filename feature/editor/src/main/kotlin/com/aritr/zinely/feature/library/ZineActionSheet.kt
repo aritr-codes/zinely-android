@@ -75,6 +75,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.data.repository.PaperColour
+import com.aritr.zinely.feature.editor.PaperSwatch
+import com.aritr.zinely.feature.editor.displayName
 import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.components.zinelyV2Shadow
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -121,6 +124,12 @@ internal enum class ZineAction(
     /** A28: live for a zine that will not open, as Rename is. [ZineActionTarget.inFolder] changes its words. */
     Move(Copy.Folders.MOVE_TO_A_FOLDER, "", icon = SheetIcon.Pile),
 
+    /**
+     * AW6.3a: "Paper colour", after Move and before Delete. Its `.ic` is the paper's own swatch and its value the
+     * colour's name ([ZineActionTarget.paperColour]); it raises the AW6.4 chooser.
+     */
+    Paper(Copy.PaperColour.TITLE, ""),
+
     /** A47.1: starts choosing several zines, with this one chosen. The way in a long press cannot show. */
     Select(Copy.Select.SELECT_SEVERAL, "", icon = SheetIcon.Select),
     Delete("Delete", "⌫", danger = true),
@@ -138,13 +147,28 @@ internal enum class ZineAction(
  * @property subtitle `data-sub`, verbatim: format and recency, `"A4 · 2 days ago"`.
  * @property inFolder the zine is in a folder, so its Move row reads *Move somewhere else* (A28.15): for
  *   that zine the row is also the way out.
+ * @property paperColour the paper the zine is loaded on (AW6): the Paper colour row's swatch and value, and for
+ *   any colour but White, Share & export's "not in the file" line (AW6-P.7).
  */
 internal data class ZineActionTarget(
     val title: String,
     val subtitle: String,
     val unavailableReason: String? = null,
     val inFolder: Boolean = false,
+    val paperColour: PaperColour = PaperColour.WHITE,
 )
+
+/**
+ * The zine sheet's line (AW6.7): the shelf's "A4 · 2 days ago", with a colour that is not White named between
+ * the size and the date, "A4 · Pastel yellow · 2 days ago". White returns [subtitle] unchanged. Composed here
+ * rather than carried in [LibraryZine.subtitle], which the Shelf splits at its first `·` into stamp and date.
+ */
+internal fun zineSheetLine(subtitle: String, paperColour: PaperColour): String {
+    if (paperColour == PaperColour.WHITE) return subtitle
+    val stamp = zineShelfStampLabel(subtitle)
+    val date = zineShelfDateLabel(subtitle)
+    return listOf(stamp, paperColour.displayName, date).filter { it.isNotEmpty() }.joinToString(" · ")
+}
 
 /** The scrim behind an open sheet — `.scrim`. */
 internal const val ZineActionScrimTestTag: String = "zine-action-scrim"
@@ -349,7 +373,7 @@ internal fun ZineActionSheetSurface(
     val colors = ZinelyTheme.v21Colors
     LibrarySheetSurface(
         title = target.title,
-        subtitle = target.subtitle,
+        subtitle = zineSheetLine(target.subtitle, target.paperColour),
         paneTitle = ZineActionSheetPaneTitle,
         modifier = modifier.testTag(ZineActionSheetTestTag),
     ) {
@@ -369,6 +393,12 @@ internal fun ZineActionSheetSurface(
                 modifier = Modifier.testTag(zineActionTestTag(action)),
                 glyph = action.glyph,
                 icon = action.icon,
+                // AW6-P.7: where the file leaves, said once, for a zine that is not White.
+                note = Copy.PaperColour.NOT_IN_FILE.takeIf {
+                    action == ZineAction.ShareExport && target.paperColour != PaperColour.WHITE
+                },
+                swatch = target.paperColour.takeIf { action == ZineAction.Paper },
+                value = target.paperColour.displayName.takeIf { action == ZineAction.Paper },
                 enabled = target.isEnabled(action),
                 disabledReason = target.unavailableReason,
                 danger = action.danger,
@@ -592,6 +622,8 @@ private fun ZineActionGrab() {
  * @param here `.act.here`: the row for where the zine already is. Not a choice, so it cannot be pressed,
  *   but its note is information, so it is **not** dimmed the way a disabled row is (the dimmed note
  *   measured 1.98:1).
+ * @param swatch AW6's `.aw6-sw` in place of the `.ic` chip: the paper itself, 28dp, pinned paint.
+ * @param value AW6's `.val`, at the row's end in ink-soft; TalkBack hears "label, value" (AW6.12).
  */
 @Composable
 internal fun SheetRow(
@@ -605,6 +637,8 @@ internal fun SheetRow(
     disabledReason: String? = null,
     danger: Boolean = false,
     here: Boolean = false,
+    swatch: PaperColour? = null,
+    value: String? = null,
 ) {
     val colors = ZinelyTheme.v21Colors
 
@@ -626,7 +660,11 @@ internal fun SheetRow(
                 }
             }
             .zinelyV2Control(
-                label = if (note.isNullOrEmpty()) label else "$label, $note",
+                label = when {
+                    value != null -> "$label, $value"
+                    note.isNullOrEmpty() -> label
+                    else -> "$label, $note"
+                },
                 enabled = enabled && !here,
                 interactionSource = interaction,
                 onClick = onClick,
@@ -640,7 +678,10 @@ internal fun SheetRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapLg),
     ) {
-        Box(
+        if (swatch != null) {
+            // `.aw6-sw` sits in the `.ic` slot: 28dp in a 30dp place, so the label lines up with its neighbours'.
+            Box(Modifier.size(IconChip), contentAlignment = Alignment.Center) { PaperSwatch(swatch) }
+        } else Box(
             Modifier
                 .size(IconChip)
                 .clip(RoundedCornerShape(ZinelyV21Dimens.radiusSm))
@@ -666,7 +707,21 @@ internal fun SheetRow(
             lineHeight = ZinelyV21Fonts.InheritedLineHeight,
             color = ink,
         )
-        if (note == null) {
+        if (value != null) {
+            // `.aw6-act .lbl{min-width:0}` then `.val{margin-left:auto;font-size:.82em;font-weight:600;
+            // color:var(--ink-soft);text-align:right}`: both wrap at large text, neither is cut.
+            Text(text = label, style = labelStyle, modifier = Modifier.weight(1f))
+            Text(
+                text = value,
+                modifier = Modifier.weight(1f, fill = false),
+                style = labelStyle.copy(
+                    fontSize = ValueSize,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (pressed) colors.onLeaf else colors.inkSoft,
+                    textAlign = TextAlign.End,
+                ),
+            )
+        } else if (note == null) {
             Text(text = label, style = labelStyle)
         } else {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapHair)) {
@@ -791,6 +846,9 @@ private val SheetIconSize = 17.dp
 private const val SheetIconViewBox = 17f
 private const val SheetIconStroke = 1.4f
 
+/** `.aw6-act .val{font-size:.82em}` = 13.12px. */
+private val ValueSize = 13.12.sp
+
 /** `.act .note{font-size:.78rem}`. */
 private val NoteSize = 12.48.sp
 
@@ -799,5 +857,5 @@ private const val A28MaxHeight = 0.88f
 
 private fun ZineActionTarget.isEnabled(action: ZineAction): Boolean = when (action) {
     ZineAction.Open, ZineAction.ShareExport, ZineAction.Duplicate -> unavailableReason == null
-    ZineAction.Rename, ZineAction.Move, ZineAction.Select, ZineAction.Delete -> true
+    ZineAction.Rename, ZineAction.Move, ZineAction.Paper, ZineAction.Select, ZineAction.Delete -> true
 }

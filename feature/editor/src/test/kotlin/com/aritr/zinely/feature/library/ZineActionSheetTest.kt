@@ -24,6 +24,8 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
@@ -158,7 +160,7 @@ class ZineActionSheetTest {
     @Test
     fun `tapping the scrim dismisses the sheet`() {
         sheet(TARGET)
-        composeRule.onNodeWithTag(ZineActionScrimTestTag).performClick()
+        tapScrimAboveSheet()
         // `document.getElementById('scrim').addEventListener('click',close)` — `:197`.
         assertEquals("the scrim is a dismissal path", 1, dismissals)
         assertEquals("and dismissing chooses nothing", emptyList<ZineAction>(), chosen)
@@ -184,8 +186,19 @@ class ZineActionSheetTest {
             info == null || (!info.isClickable &&
                 info.actionList.none { it.id == android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK }),
         )
-        composeRule.onNodeWithTag(ZineActionScrimTestTag).performClick()
+        tapScrimAboveSheet()
         assertEquals("the tap still dismisses", 1, dismissals)
+    }
+
+    /**
+     * Near the scrim's top edge, where the sheet never reaches. Since AW6's eighth row the sheet rises past the
+     * screen's middle, so a centred tap (performClick's) lands on the sheet, as a finger there would.
+     */
+    private fun tapScrimAboveSheet() {
+        composeRule.onNodeWithTag(ZineActionScrimTestTag).performTouchInput {
+            click(androidx.compose.ui.geometry.Offset(centerX, 24f))
+        }
+        composeRule.waitForIdle()
     }
 
     @Test
@@ -279,7 +292,7 @@ class ZineActionSheetTest {
     // ---------------------------------------------------------------------------------------------
 
     @Test
-    fun `the seven actions stand in the frozen order`() {
+    fun `the eight actions stand in the frozen order`() {
         surface()
         // `:173-177`. The order is the design's argument about consequence — Open first, Delete last and
         // apart — so it is asserted by placement rather than by the enum's own declaration order, which
@@ -295,6 +308,8 @@ class ZineActionSheetTest {
             ZineAction.Duplicate,
             // A28: `#sheetMove`, after Duplicate and before the boundary that sets Delete apart.
             ZineAction.Move,
+            // AW6.3a: `#aw6PcRow`, after Move and before Delete.
+            ZineAction.Paper,
             // A47.1: `#sheetSelect`, "above the Delete band".
             ZineAction.Select,
             ZineAction.Delete,

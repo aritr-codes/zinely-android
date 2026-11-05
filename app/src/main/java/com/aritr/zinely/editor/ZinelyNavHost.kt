@@ -110,6 +110,8 @@ import com.aritr.zinely.feature.library.LibraryBackupRestoreMode
 import com.aritr.zinely.feature.library.ZineLibraryScreen
 import androidx.compose.runtime.DisposableEffect
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.CompositionLocalProvider
+import com.aritr.zinely.feature.editor.LocalPaperColour
 import com.aritr.zinely.feature.editor.EditorScreen
 import com.aritr.zinely.feature.editor.ProofExportTarget
 import com.aritr.zinely.feature.editor.ProofScreen
@@ -171,6 +173,8 @@ internal fun ZinelyNavHost(
             }
             ProofDestination(
                 viewModel = hiltViewModel(editorEntry),
+                // AW6: the same paper-colour holder the Bench reads, resolved on the same entry.
+                paperColourViewModel = hiltViewModel(editorEntry),
                 onBack = { navController.popBackStack() },
             )
         }
@@ -259,6 +263,7 @@ private fun HomeDestination(
         onDeleteUndoMany = viewModel::undoDeletes,
         onDeleteCommitMany = viewModel::commitDeletes,
         onMoveZines = viewModel::moveMany,
+        onSetPaperColour = viewModel::setPaperColour,
         onRenameFolder = viewModel::renameFolder,
         onUnpackFolder = viewModel::unpackFolder,
         onFolderSnackAction = viewModel::folderSnackAction,
@@ -325,8 +330,10 @@ private fun HomeUiState.toLibraryShelfState(): LibraryShelfState = when (this) {
 @Composable
 private fun ProofDestination(
     viewModel: EditorViewModel,
+    paperColourViewModel: PaperColourViewModel,
     onBack: () -> Unit,
 ) {
+    val paperColour by paperColourViewModel.paperColour.collectAsStateWithLifecycle()
     val boot by viewModel.bootState.collectAsStateWithLifecycle()
     val exportViewModel: ExportViewModel = hiltViewModel()
     val context = LocalContext.current
@@ -537,6 +544,9 @@ private fun ProofDestination(
                 pageSizePt = state.pageSizePt,
                 defaults = uiState.document.defaults,
                 imageBytes = state.imageBytes,
+                // AW6-P: screen only. The export above never reads it (ADR-150 decision 5).
+                paperColour = paperColour,
+                onPaperColourSelected = paperColourViewModel::setPaperColour,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -1041,6 +1051,9 @@ private fun ImportReportSink(viewModel: EditorViewModel) {
 @Composable
 private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
     val viewModel: EditorViewModel = hiltViewModel()
+    // AW6-B: the Bench shows the page on the zine's paper; it never changes it (AW6.3: not on the Bench).
+    val paperColourViewModel: PaperColourViewModel = hiltViewModel()
+    val paperColour by paperColourViewModel.paperColour.collectAsStateWithLifecycle()
     val boot by viewModel.bootState.collectAsStateWithLifecycle()
 
     ImportReportSink(viewModel)
@@ -1097,6 +1110,7 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
             // "Add a photo" supply dispatches the same Intent.RequestAddImage → Effect.PickAndDecodeImage
             // → the photo picker bound above. The lone app-level FAB has been removed (ADR-029 follow-up:
             // every primary action is a visible supply in the editor, per DESIGN-RULES 1).
+            CompositionLocalProvider(LocalPaperColour provides paperColour) {
             EditorScreen(
                 store = state.store,
                 pageSizePt = state.pageSizePt,
@@ -1131,6 +1145,7 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
                 artShortcuts = artShortcuts,
                 onEditArtShortcuts = viewModel::editArtShortcuts,
             )
+            }
         }
     }
 }

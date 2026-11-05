@@ -37,6 +37,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.data.repository.PaperColour
+import com.aritr.zinely.feature.editor.PaperColourSheetSurface
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.feature.editor.BenchSnack
@@ -99,6 +101,8 @@ public data class LibraryZine(
     val cover: ZineCoverRecipe,
     val unavailableReason: String? = null,
     val folder: String? = null,
+    /** AW6: the paper the zine is loaded on. Named only in the zine sheet, never on the Shelf cover (AW6.7). */
+    val paperColour: PaperColour = PaperColour.WHITE,
 )
 
 /**
@@ -150,6 +154,9 @@ private sealed interface LibrarySheet {
     /** A28: where one zine can go. */
     data class Move(val zineId: String) : LibrarySheet
 
+    /** AW6.4: the paper-colour chooser for one zine, raised by its sheet's row. */
+    data class PaperColourFor(val zineId: String) : LibrarySheet
+
     /** A28: naming a new folder for one zine. [fromChooser] is where Cancel leads back to (A28.14). */
     data class NewFolder(val zineId: String, val fromChooser: Boolean) : LibrarySheet
 
@@ -179,6 +186,7 @@ private val LibrarySheetSaver: Saver<LibrarySheet?, Any> = Saver(
             is LibrarySheet.Actions -> listOf("actions", sheet.zineId)
             is LibrarySheet.Rename -> listOf("rename", sheet.zineId, sheet.title)
             is LibrarySheet.Move -> listOf("move", sheet.zineId)
+            is LibrarySheet.PaperColourFor -> listOf("paperColour", sheet.zineId)
             is LibrarySheet.NewFolder -> listOf("newFolder", sheet.zineId, sheet.fromChooser)
             is LibrarySheet.Folder -> listOf("folder", sheet.name)
             is LibrarySheet.RenameFolder -> listOf("renameFolder", sheet.name)
@@ -196,6 +204,7 @@ private val LibrarySheetSaver: Saver<LibrarySheet?, Any> = Saver(
                 "actions" -> LibrarySheet.Actions(f[1] as String)
                 "rename" -> LibrarySheet.Rename(f[1] as String, f[2] as String)
                 "move" -> LibrarySheet.Move(f[1] as String)
+                "paperColour" -> LibrarySheet.PaperColourFor(f[1] as String)
                 "newFolder" -> LibrarySheet.NewFolder(f[1] as String, f[2] as Boolean)
                 "folder" -> LibrarySheet.Folder(f[1] as String)
                 "renameFolder" -> LibrarySheet.RenameFolder(f[1] as String)
@@ -376,6 +385,7 @@ public fun ZineLibraryScreen(
     onDeleteUndoMany: (List<String>) -> Unit = {},
     onDeleteCommitMany: (List<String>) -> Unit = {},
     onMoveZines: (List<String>, String?) -> Unit = { _, _ -> },
+    onSetPaperColour: (String, PaperColour) -> Unit = { _, _ -> },
 ) {
     val colors = ZinelyTheme.v21Colors
     val haptics = ZinelyTheme.haptics
@@ -1027,6 +1037,7 @@ public fun ZineLibraryScreen(
                 subtitle = it.subtitle,
                 unavailableReason = it.unavailableReason,
                 inFolder = it.folder != null,
+                paperColour = it.paperColour,
             )
         },
         onDismiss = { openSheet = null },
@@ -1072,6 +1083,11 @@ public fun ZineLibraryScreen(
                         LibrarySheet.Move(zine.id)
                     }
                 }
+                // AW6.4: the chooser replaces the sheet, as Move's does; it hands back to this sheet.
+                ZineAction.Paper -> {
+                    haptics.perform(ZinelyHaptic.Tick)
+                    openSheet = LibrarySheet.PaperColourFor(zine.id)
+                }
                 // A47.1: the way in that can be seen.
                 ZineAction.Select -> {
                     haptics.perform(ZinelyHaptic.Tick)
@@ -1089,6 +1105,19 @@ public fun ZineLibraryScreen(
             }
         },
     )
+
+    // AW6.4: one tap picks and closes, back to the zine's sheet, whose row then names the new colour. Scrim and
+    // Back change nothing and go back the same way. No confirm, no Undo: nothing printed changes.
+    val colouring = (openSheet as? LibrarySheet.PaperColourFor)?.let { open -> zines.firstOrNull { it.id == open.zineId } }
+    LibrarySheetHost(target = colouring, onDismiss = { colouring?.let { openSheet = LibrarySheet.Actions(it.id) } }) { zine ->
+        PaperColourSheetSurface(
+            selected = zine.paperColour,
+            onPick = { picked ->
+                if (picked != zine.paperColour) onSetPaperColour(zine.id, picked)
+                openSheet = LibrarySheet.Actions(zine.id)
+            },
+        )
+    }
 
     val renaming = openSheet as? LibrarySheet.Rename
     ShelfRenameSheet(
