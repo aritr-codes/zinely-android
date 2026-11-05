@@ -620,6 +620,8 @@ private fun BookLeaf(
                         screenPxPerPt = scale,
                         modifier = Modifier.fillMaxSize(),
                         imageBytes = imageBytes,
+                        // AW6-P.1: every leaf is drawn on the paper. The stack edge, the desk and the tap zones do not change.
+                        paper = LocalPaperColour.current,
                     )
                     if (!leaf.solo) Gutter(spineOnLeft = leaf.spineOnLeft)
                 }

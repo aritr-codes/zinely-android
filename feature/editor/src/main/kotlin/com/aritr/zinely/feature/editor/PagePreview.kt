@@ -6,10 +6,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import com.aritr.zinely.core.data.repository.PaperColour
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtRect
 import com.aritr.zinely.core.model.PtSize
@@ -66,6 +69,8 @@ public const val PagePreviewTestTag: String = "page-preview"
  *   caller-sizing contract above).
  * @param imageBytes source of canonical import-master bytes for [com.aritr.zinely.core.render.DrawImage]
  *   commands; the default `null`-source renders the missing-asset placeholder (see the image seam above).
+ * @param paper the paper the zine is loaded on; anything but White is multiplied over the page after the replay
+ *   ([drawPaperLayer]). Only the surfaces AW6.7 names pass it; the default draws nothing extra.
  * @param imageCacheBytes optional decoded-region LRU budget. Zero keeps one-draw ownership for proof,
  *   thumbnails, goldens, and export parity callers; the interactive editor opts in explicitly.
  */
@@ -78,6 +83,7 @@ public fun PagePreview(
     modifier: Modifier = Modifier,
     imageBytes: AssetBytesSource = EmptyAssetBytes,
     imageCacheBytes: Long = 0L,
+    paper: PaperColour = PaperColour.WHITE,
 ) {
     val assets = LocalContext.current.assets
     // One replayer per (asset source, image source), rebuilt only if either identity changes — so the
@@ -98,15 +104,30 @@ public fun PagePreview(
     }
 
     Canvas(modifier = modifier.testTag(PagePreviewTestTag)) {
+        val pageToDevice = ExportScale.previewPageToDevice(screenPxPerPt.toDouble(), pageOffset)
+        val pageRect = if (paper.overlay == null) {
+            null
+        } else {
+            val topLeft = pageToDevice.map(PtPoint(0.0, 0.0))
+            val bottomRight = pageToDevice.map(PtPoint(sheet.width, sheet.height))
+            Rect(topLeft.x.toFloat(), topLeft.y.toFloat(), bottomRight.x.toFloat(), bottomRight.y.toFloat())
+        }
+        // AW6.8: "White x paper = the paper". The replayer leaves the page's ground to the host, which paints the
+        // app's warm page paper; under a coloured paper the ground is the export's opaque white instead, so the
+        // multiply below gives the paper itself, not the paper over cream. White zines skip this entirely.
+        if (pageRect != null) drawRect(Color.White, topLeft = pageRect.topLeft, size = pageRect.size)
         drawIntoCanvas { canvas ->
             replayer.replay(
                 canvas = canvas.nativeCanvas,
                 tape = tape,
-                pageToDevice = ExportScale.previewPageToDevice(screenPxPerPt.toDouble(), pageOffset),
+                pageToDevice = pageToDevice,
                 pageClip = PtRect(0.0, 0.0, sheet.width, sheet.height),
                 decodePxPerPt = screenPxPerPt.toDouble(),
             )
         }
+        // AW6.8 / ADR-150 decision 5: the paper, multiplied once over the finished page, before any chrome (every
+        // chrome layer is a later sibling). The replayer and the export never see it.
+        if (pageRect != null) drawPaperLayer(paper, pageRect)
     }
 }
 

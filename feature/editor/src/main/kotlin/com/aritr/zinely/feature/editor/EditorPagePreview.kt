@@ -263,6 +263,8 @@ public fun EditorPagePreview(
             modifier = Modifier.fillMaxSize(),
             imageBytes = imageBytes,
             imageCacheBytes = imageCacheBytes,
+            // AW6-B.1: the canvas shows the page on the zine's paper; everything below this is chrome, unblended.
+            paper = LocalPaperColour.current,
         )
         BenchFocusScrim(
             // The island `--paper` (ADR-090), so `0.5·element + 0.5·paper` is the sheet's own paper in
