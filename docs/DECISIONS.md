@@ -18961,7 +18961,12 @@ overlay, the Proof copy) builds on it.
   under Robolectric (it cannot write PDF); the PDF path takes the same inputs as the PNG path.
 - **Decision 8 (export guard).** `exportPaper(own, chosen)` in `ZinelyNavHost.kt`: a LEGAL or A5 zine is exported,
   retried and shown on its own paper whatever the switch holds, and an A4 / Letter zine never moves onto LEGAL / A5.
-  The switch itself is unchanged (the UI lane removes it for LEGAL / A5, A35.8).
+  The switch itself is unchanged (the UI lane removes it for LEGAL / A5, A35.8). **UI-lane blocker:** until A35.8
+  hides it, tapping A4 / Letter on a LEGAL / A5 zine's Proof (`ProofScreen` paper handler) counts as a change: it
+  clears the saved-PDF state and shows "changed from US Legal … to US Legal". Reachable today only by restoring a
+  later build's backup, since nothing here creates a LEGAL / A5 zine; the UI lane must hide or no-op the switch
+  before its picker can create one. The `:app` export seam can see `PaperColour` (the VM holds a
+  `ProjectRepository`); only `ExportPaperTest`'s parameter check and review keep colour reads out of it.
 - **Decision 9.** `choiceName` (now `displayName`, one `when`), `choiceDimensions`, `HomeViewModel.shelfLabel`, the
   Colophon row and the preferred-paper DataStore mapping are exhaustive `when`s, with `Copy.Paper.LEGAL` "US Legal",
   `A5`, and their dimensions. The unused `PaperSize` in `render-android/ExportScale.kt` is deleted. **Deviation:** the

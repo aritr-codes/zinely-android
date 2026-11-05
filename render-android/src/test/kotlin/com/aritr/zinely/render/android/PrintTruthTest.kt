@@ -18,9 +18,9 @@ import org.robolectric.RobolectricTestRunner
  * The proof is structural. `PaperColour` lives in `:core:data` (the shelf layer); this module, which writes every
  * PDF and PNG ([SheetComposer]), depends on `:core:render` and `:core:model` only, so the type is not on its
  * classpath and nothing here can receive it. If someone adds that dependency, the first test fails and the
- * decision must be re-argued. The second pins the byte half: one sheet written twice is the same bytes, so the
- * same document (which holds no colour; see `schema-shape-v5.txt`) prints identically whatever its `meta.json`
- * says. The PDF path cannot run under Robolectric; it is the same composer and replayer
+ * decision must be re-argued. The second only shows the PNG writer is deterministic (one sheet written twice is
+ * the same bytes); it does not by itself prove colour-independence, it backs the first test's premise that the
+ * document (which holds no colour; see `schema-shape-v5.txt`) is the writer's only input. The PDF path cannot run under Robolectric; it is the same composer and replayer
  * (`PdfExportInstrumentedTest`), and receives no more inputs than the PNG path.
  */
 @RunWith(RobolectricTestRunner::class)
