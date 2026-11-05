@@ -47,4 +47,38 @@ class RepairNotesConcurrencyTest {
             assertTrue(id, Files.list(root.resolve("projects/$id")).use { s -> s.noneMatch { it.toString().endsWith(".tmp") } })
         }
     }
+
+    @Test
+    fun `given a note cleared and the zine repaired again then the new note differs from the one cleared`() {
+        // Given a details note that the maker has dismissed (#147 item 4)
+        val root = tmp.root.toPath()
+        val notes = RepairNotes(root, AtomicFileStore())
+        Files.createDirectories(root.resolve("projects/z"))
+        notes.addDetails("z", previousTitle = "Old")
+        val first = notes.noteOf("z")!!
+        notes.clear("z", first)
+
+        // When the same zine is repaired again with the same old name
+        notes.addDetails("z", previousTitle = "Old")
+
+        // Then the Shelf can tell it from the dismissed one
+        assertTrue(first != notes.noteOf("z"))
+    }
+
+    @Test
+    fun `given a pages repair merged in after the note was shown then a rename still clears its details part`() {
+        // Given a details note the maker saw, and a pages repair merged in during the rename
+        val root = tmp.root.toPath()
+        val notes = RepairNotes(root, AtomicFileStore())
+        Files.createDirectories(root.resolve("projects/z"))
+        notes.addDetails("z", previousTitle = "Old")
+        val before = notes.noteOf("z")
+        notes.addPages("z")
+
+        // When the rename clears the details part of the note it had before
+        notes.clearDetails("z", before)
+
+        // Then only the pages part keeps waiting (A46.5)
+        assertEquals(RestoredDetails(null, details = false, pages = true), notes.noteOf("z"))
+    }
 }

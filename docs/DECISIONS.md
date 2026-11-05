@@ -18713,3 +18713,221 @@ Q7 keeps with the owner. **Design:** [`v21-proof.html`](design/mockups/v21-proof
   in, and warn", not "keep everything 6 mm in"; "exactly 5 cm" dropped; test-sheet top row drawn upside down like the engine's.
   Rejected: drawing the whole amended drawer (the words, span split and layout are stated; Compose parity compares against
   the existing drawer plus AW5).
+
+---
+
+## ADR-150 {#adr-150}
+
+### W6: US Legal and A5 in saved format v5, paper colour kept out of the document, and W8's mask left for its own bump
+
+**Status:** Proposed, 2026-11-05, under the owner's delegation of 2026-10-12 ("decide, do not ask"); the owner may
+overrule it. It becomes Accepted only when built and the items under *Owed before Accepted* are done.
+**Design:** [`v21-library.html`](design/mockups/v21-library.html) A35 (the size picker, frozen 2026-10-15) and AW6 (paper
+colour, frozen 2026-11-05 under the same delegation after the two reviews below), with [`v21-proof.html`](design/mockups/v21-proof.html) AW6-P and [`v21-bench.html`](design/mockups/v21-bench.html)
+AW6-B. Evidence: [R26](RESEARCH.md) (which paper a home printer takes), [R41](RESEARCH.md#r41) (paper colour).
+**Keeps:** [ADR-133](#adr-133) decisions 1 to 5 unamended (the sizes ride a bump of their own, and nothing else rides it);
+[ADR-147](#adr-147) decision 3 (a file says the oldest version that can read it); [ADR-120](#adr-120) and
+[ADR-121](#adr-121) (backup and restore; `packageVersion` stays 2); [ZINE-DIRECTION](design/ZINE-DIRECTION.md) §8 and
+"opaque white ground, always"; [V2-CONSTITUTION](design/V2-CONSTITUTION.md) §III and §IV (one way to draw a page).
+**Narrows:** [BETA-DIRECTION](design/BETA-DIRECTION.md)'s two "paper tint" rows, by name, as AW6.2 says.
+**Settles:** [ADR-136](#adr-136) W6 row, decision 5 (paper colour as a host layer) and the W8 row's open question (which
+bump carries the mask).
+
+#### Context
+
+- ✅ `PaperSize` has `LETTER` and `A4` (`ModelEnums.kt:13-24`); the document stores the serial name (`"letter"`, `"a4"`).
+  `CURRENT_SCHEMA_VERSION` is 4 (`Document.kt`); the writer stamps 3, or 4 when a description is held
+  (`JsonDocumentSerializer.kt:55`). The engine already imposes any sheet ([ADR-133](#adr-133) decision 2).
+- ✅ **The backup manifest names each zine's paper as a typed enum.** `ZineBackupProjectEntry.paperSize: PaperSize`
+  (`ZineLibraryBackupManifest.kt:58`). Restore decodes the whole manifest **before** any version check
+  (`ZineLibraryBackupStager.kt:231`, then `validateStructure` at `:401-414`). In every shipped build with a library restore
+  (`v0.9.0-beta.4-r3` to `v0.9.0-beta.9`, checked in the tags' source) an unknown enum value fails that decode, the stager
+  says `INVALID_MANIFEST`, and the repository maps it to `DataError.Corrupt` (`RoomProjectRepository.kt:546-555`): the
+  person would be told their backup is damaged, not that it needs a newer Zinely. The same builds decode the manifest with
+  `ignoreUnknownKeys = true` (`ZineLibraryBackupStager.kt:105` at beta.4-r3, `:118` at beta.9), so an **added** key is
+  ignored.
+- ✅ New builds check the manifest's paper against the document (`ZineLibraryBackupStager.kt:296`) and use it to match a
+  restored zine to a shelf zine (`RestoreMatcher.kt:57`).
+- ✅ Room stores the paper as the enum's name in a `TEXT` column and reads it leniently
+  (`RoomProjectRepository.kt:1350`), so new values need no Room migration. Android refuses to install a lower
+  `versionCode` over a higher one without uninstalling, which clears app data, so an older build never meets a newer
+  shelf in place.
+- ✅ The preferred-size store maps the enum with an exhaustive `when` (`DataStorePreferredPaperStore.kt:37-46`), so a new
+  value will not compile until it is mapped; an unknown stored value reads as A4.
+- ✅ `meta.json` (`ProjectMeta.kt`) already holds shelf details that are not the work: the cover and the folder. It is read
+  with unknown keys ignored, nulls are not written, and "every writer of this file carries the field across". The folder
+  travels in the backup as an additive, leniently read manifest key (`ZineBackupProjectEntry.folder`, ADR-125 rule 15).
+- ✅ Nothing writes `ZinePackageManifest` (the v1 single-zine shape); only the library backup is written.
+- 🟨 R41 found no published colour values for coloured copy paper; the swatches are estimates. No product was found that
+  previews paper colour on screen without printing it.
+
+#### Decision
+
+```mermaid
+flowchart LR
+    S["A35 Start sheet:\nA4 · US Letter · US Legal · A5"] --> D["document.json\npaperSize"]
+    D --> W{"Legal or A5?"}
+    W -->|yes| V5["file says 5"]
+    W -->|no| V34["file says 3 or 4,\nas today"]
+    C["AW6 Paper colour:\nzine sheet · Print details"] --> M["meta.json\npaperColour (absent = White)"]
+    M --> H["host layer on Bench, Proof stage,\nPrint details picture"]
+    D --> R["one replayer"] --> H
+    R --> P["PDF / PNG:\nno paper colour, ever"]
+```
+
+1. **Two sizes, one bump.** `PaperSize` gains `LEGAL` (8.5 × 14 in, 612 × 1008 pt, serial name `"legal"`) and `A5`
+   (148 × 210 mm, 419.528 × 595.276 pt, serial name `"a5"`). `CURRENT_SCHEMA_VERSION` becomes 5. Following
+   [ADR-147](#adr-147) decision 3, the writer stamps **5 when `paperSize` is `LEGAL` or `A5`**, else 4 when a
+   description is held, else 3. A Letter or A4 zine is written byte for byte as today. Migration v4 → v5 is an identity
+   step: no saved file holds the new values. v5 holds nothing else.
+2. **The backup manifest keeps old builds honest.** `ZineBackupProjectEntry` gains a last field
+   `sheet: String? = null`, holding the serial name (`"legal"`, `"a5"`) for Legal and A5 zines and null otherwise
+   (the manifest `Json` writes nulls, so other entries gain `"sheet":null` as they carry `"folder":null` today; older
+   builds ignore the key either way). It is a **string, not a `PaperSize`**, because the manifest is decoded before any
+   version check: a typed enum would make *this* build call a later build's backup damaged the day a third size
+   arrives. It is turned into a `PaperSize` only after `validateStructure`'s version check, and an unknown value there is
+   `INVALID_STRUCTURE`. **Rule for every later manifest field: no typed enum, ever;** the KDoc says so. For those zines `paperSize` holds the size older builds
+   know in the same family: **`LETTER` for `LEGAL`, `A4` for `A5`**. An older build therefore decodes the manifest, reaches
+   `validateStructure`, sees `documentSchemaVersion` 5 and says *"This backup needs a newer Zinely"*, as for a v4 backup
+   ([ADR-147](#adr-147) decision 5), instead of calling the backup damaged. New builds read the zine's size as
+   the parsed `sheet`, else `paperSize`, everywhere the manifest's paper is used (the stager's agreement check and `RestoreMatcher`), and
+   refuse as `INVALID_STRUCTURE` a manifest whose `sheet` is set but whose `paperSize` is not that sheet's family size,
+   or whose `sheet` is `LETTER` or `A4`. `packageVersion` stays 2: the shape is additive.
+3. **Paper colour is a shelf detail in `meta.json`, not part of the document.** `ProjectMeta` gains
+   `paperColour: String? = null`: the AW6.5 id (`ivory`, `pastel-yellow`, `pastel-pink`, `pastel-blue`, `pastel-green`,
+   `grey`); absent means White, and choosing White removes it. As with the cover (`ProjectMeta.kt:18-27`), the **raw
+   string is kept and carried across**; it is interpreted only where it is drawn or named, and an id this build does not
+   know draws and reads as White there. So a later build's new paper survives a rename or a restore here, and "add-only"
+   (decision 4) is true. A non-string reads as absent. Every writer of `meta.json` carries it: the writers that build
+   `ProjectMeta` from scratch (create `RoomProjectRepository.kt:243`, rename `:277`, duplicate `:330`, restore `:999`,
+   the fallback at `:1280`) are changed to pass it, and the `.copy` writers (folder moves `:396`, `:469`, cover `:1469`)
+   carry it already. Create starts White; Duplicate keeps it (AW6.10); restore takes it from the manifest; the backup
+   writer (`:757-772`) reads it from `meta.json`. It travels in the backup as an additive, leniently read
+   manifest key `paperColour`, like `folder`, so older builds ignore it and restore the zine on White, which prints the same.
+   Reasons it is not in `document.json`:
+   - it changes nothing the zine is: no PDF or PNG byte, no line, no layout; a document field would make an older build
+     refuse a whole backup over a colour that only it would lose;
+   - choosing it is not an edit of the pages, so it takes no undo step and never marks a saved PDF stale (AW6-P.7);
+   - the cover and folder already live there for the same reason.
+
+   Room gains no column. The Shelf tile does not show the colour (AW6.7: a cover is a recipe, [ADR-069](#adr-069)); the
+   zine sheet's line names it. Restore's decoded-equality match ([ADR-121](#adr-121)) ignores it, as it ignores the
+   folder: a backed-up zine that differs from a shelf zine only in its paper colour is the same zine, and the shelf's
+   colour is kept.
+4. **The set is closed, named and stored by id.** The ids are permanent once shipped; values may be retuned (R41's are
+   estimates), never renamed. Brown is cut by AW6.6's gate (R41.6). Adding a paper later is add-only and needs no bump.
+5. **The layer is the host's, outside the replayer.** On the surfaces AW6.7 names (Bench canvas and page strip, Proof
+   stage, Print details' picture; **not** the fold guide, AW6-P.6) the host draws the replayer's page as today and then **one
+   rectangle of the paper colour over the page area with `BlendMode.Multiply`, before any chrome** (selection, handles,
+   guides). Multiply commutes, so this is AW6.8's picture, and it needs no offscreen layer, where blending the whole page
+   onto the paper would (R41.5). White draws nothing, so every White zine's screens and goldens are unchanged. `core:render`
+   and the export path do not learn the colour exists: the type lives in the app's shelf layer and the Compose host, and
+   nothing that writes a PDF or PNG receives it.
+6. **W8's mask is designed here and does not ride v5.** The sketch, for the W8 ADR to adopt or change:
+   `ImageElement.mask: ImageMask? = null`, `ImageMask(threshold: Float = 0.5f, ink: ColorRgba, invert: Boolean = false)`,
+   one nullable object so a threshold never exists without an ink, the JPEG master untouched, exclusive with `copier`,
+   still an `ImageElement` ([SUPPLIES-SPEC §7](design/SUPPLIES-SPEC.md)). It takes **its own bump (v6) in the change
+   that ships its renderer**. Reason: the bump exists so that no build which cannot draw a mask ever opens a file that has
+   one. Declaring `mask` in v5 before any build draws it puts that hazard inside v5 itself: a v5 build would decode a later
+   build's mask and print the full photo. Under ADR-147's stamp-on-use rule a separate bump costs zines without a mask
+   nothing. ADR-133 decision 4 therefore stands unamended.
+7. **What older builds do** (the release-notes risk):
+
+   | What the older build meets | What happens |
+   |---|---|
+   | A Letter or A4 zine, any paper colour, saved by a v5 build | Opens and restores as today, on White; the colour is ignored and, if that build rewrites `meta.json`, dropped |
+   | A Legal or A5 zine on its shelf | Cannot happen in place (see Context); a backup is the only route, next row |
+   | A library backup holding any Legal or A5 zine, on `0.9.0-beta.4-r3` or later | The whole backup is refused with *"This backup needs a newer Zinely"*, as for a v4 backup; the Letter and A4 zines in it are refused with it |
+   | A build before `0.9.0-beta.4-r3` | Has no library restore |
+
+   **Known Limitation for the release that ships v5**, in these words or plainer: *"A backup that holds a US Legal or A5
+   zine can be restored only by Zinely <version> or newer. An older Zinely says the backup needs a newer Zinely and
+   restores nothing from it. Older versions do not keep a zine's paper colour."*
+8. **Paper size and colour are chosen at the doors the design names.** Size at A35's Start sheet only ([ADR-133](#adr-133)
+   decision 5). At Print, A35.8 rules: an A4 or Letter zine keeps the two-way switch; a Legal or A5 zine gets **no
+   switch** and its paper shown as a fact. The export path must never re-impose a Legal or A5 zine onto another paper
+   (today `ZinelyNavHost.kt:411-414, 509` exports `document.copy(paperSize = paper.value)` from the switch). Colour at the
+   zine sheet and Print details (AW6.3). The Print copy for a coloured paper is AW6-P's, with AW5's conditional scale
+   wording; Save PDF and Share and export say "Your paper colour is not in the file." for a zine that is not White
+   (AW6-P.7).
+9. **Code that meets the new sizes without a compile error**, named so the build does not miss it:
+   `shelfPaperChoices` (`ShelfSheets.kt:150-154`) iterates `PaperSize.entries`, so the Start sheet gains Legal and A5 as
+   A35 intends; `choiceName` / `choiceDimensions` (`ShelfSheets.kt:277-279`) are `if A4 else Letter` and would call A5
+   and Legal "US Letter"; `PaperSegments` (`ProofPrint.kt:338`) offers A4 and Letter only. Each becomes an exhaustive
+   `when`. The unused second `PaperSize` enum in `render-android/.../ExportScale.kt:83` is deleted so nobody adds a size
+   there.
+
+#### Alternatives considered
+
+| Option | Why not |
+|---|---|
+| Paper colour in `document.json`, raising the stamp to 5 | An older build would refuse a whole backup over a colour that changes no printed byte |
+| Paper colour in `document.json`, not raising the stamp | Breaks ADR-147's rule that every new document field raises the stamp when used, for a detail that is not the work; `meta.json` is where non-work details already live |
+| `sheet` as a typed `PaperSize?` | This build would call a later build's backup damaged once a third size exists: the hazard decision 2 removes, moved one version on |
+| Write `"legal"` / `"a5"` straight into the manifest's `paperSize` | Every shipped build with restore would call such a backup damaged; shipped builds cannot be changed |
+| Raise `packageVersion` to 3 for such backups | Shipped builds decode the manifest before checking `packageVersion`, so they would still fail on the enum and say damaged |
+| W8's `mask` declared in v5 so v5 is "the only bump" | A v5 build that cannot draw a mask would print a later build's masked artwork as a full photo; the bump is only a guard if it arrives with the renderer |
+| Draw the whole page onto the paper with multiply (page as a blended layer) | Same pixels, but forces an offscreen layer per frame on the canvas; the multiplied rectangle over the page does not (R41.5) |
+| Show the colour on the Shelf cover | A cover is a recipe, never a rendered page (ADR-069), and part of the zine's identity (D-017) |
+| A paper-colour control on the Bench | The Bench answers "How do I change this page?"; the paper is not the page (AW6.3) |
+
+#### Consequences
+
+- A Legal or A5 zine, and any backup holding one, needs a v5 build; nothing else does.
+- The manifest's `paperSize` no longer means "this zine's size" on its own; it means "the size an older build should
+  believe", and `sheet` overrides it. The KDoc on `ZineBackupProjectEntry` must say so.
+- Paper colour is lost when a zine passes through an older build that rewrites `meta.json`. Accepted: it is a reminder
+  of which paper to load, not work, and the release note says so.
+- The overlay adds one draw call per page on the named surfaces and none for White.
+- [ARCHITECTURE](ARCHITECTURE.md) gains the host paper layer beside the Shelf cover's own layer, and §4.1's stamp
+  sentence gains "5 when the paper is US Legal or A5".
+
+#### Test plan (built with the code)
+
+- `PaperSize`: Legal and A5 sizes in points; imposition properties (jqwik) on both sheets, run several times before push;
+  Letter and A4 imposition goldens unchanged.
+- Writer: a Legal and an A5 zine are stamped 5; Letter and A4 zines with and without a description are stamped 3 / 4 and
+  are byte-identical to today's fixtures. `document-v5.json` uses `"paperSize":"legal"` so `DocumentFixtureCorpusTest`
+  catches a forgotten stamp line; `schema-shape-v5.txt` records the two enum values; v4 and older fixtures frozen.
+- Readers: every reader of the version accepts 1 to 5 and refuses 6.
+- Manifest: a Legal and an A5 zine write `paperSize` `letter` / `a4` plus `sheet`. **Older-build check:** commit the
+  manifest bytes a v5 build writes for a Legal zine, and decode them with a frozen copy of today's entry type that has
+  its **own frozen two-value enum** (`letter`, `a4`; not the live `PaperSize`) under `ignoreUnknownKeys = true`, then run
+  today's version check: it must say `FUTURE_VERSION`, never `INVALID_MANIFEST`. A manifest whose `sheet` is an unknown
+  string with `documentSchemaVersion` 6 gives `FUTURE_VERSION` in this build. Inconsistent `sheet` / `paperSize` pairs and
+  a `sheet` of `letter` or `a4` are `INVALID_STRUCTURE`. A frozen v4-built backup archive still restores.
+- Paper colour: `meta.json` round-trips every id; White writes no key; an unknown id is kept on disk, carried by every
+  writer, and drawn and named as White; each writer listed in decision 3 carries it (create, rename, duplicate, restore,
+  fallback, both moves, cover); backup round-trip keeps it; an older-shaped manifest without it restores White.
+- Sizes in the app: the Start sheet names and sizes Legal and A5 correctly (not "US Letter"); Print for a Legal or A5
+  zine shows no switch and exports on its own paper only (A35.8).
+- **Print truth:** the PDF and PNG bytes of one zine are identical for every paper colour.
+- Goldens: the paper-colour chooser, the zine-sheet row, the Proof stage and Print details on Pastel yellow at font scale
+  1 and 2, dark theme; Bench canvas on Pastel blue; every existing White golden unchanged.
+
+#### Owed before Accepted
+
+- AW6 frozen after review; A35 built; the code and every test above green, including `bash tools/grun.sh gold`
+  with `--rerun-tasks` and CI `golden-exact`.
+- The overlay's cost measured on the API 24 emulator (frame time on the Bench canvas with a colour, against White).
+- Both device passes (emulator) at 360 × 640 dp, font scale 1 and 2, API 24 and API 36; Pass 2 read against "Print: how
+  do I print it correctly?".
+- Pointer notes in BETA-DIRECTION and ZINE-DIRECTION to AW6.2; ROADMAP W6 row and change log; CHANGELOG `[Unreleased]`
+  with decision 7's note; OWNER-CHECKLIST rows for anything owed to the owner.
+
+#### Review
+
+- **Print truth and the constitution** (Opus, 2026-11-05): GO WITH FIXES. No leak path to PDF or PNG; the gate holds
+  when recomputed. All accepted: the fold guide leaves AW6.7 (its marks lose contrast on paper, the ghost under 3:1);
+  "Eight rows" and the 1.3 drop figure corrected; Save PDF and Share and export say the colour is not in the file
+  (AW6-P.7); BETA-DIRECTION pointer notes land in this change; "Colours are close, not exact." in the chooser foot;
+  Compose semantics pinned in AW6.12 (`selectableGroup` + `selectable(role = RadioButton)`, ADR-059). "Page
+  background" seekers are left to the device Pass 2.
+- **Data format and migration** (Opus, 2026-11-05): GO WITH FIXES. Confirmed against the tags: every build with restore
+  (beta.4-r3 to beta.9) decodes the manifest with unknown keys ignored and reaches `FUTURE_VERSION` for a v5 manifest
+  with the legacy `paperSize`; `meta.json` is read the same way; mask deferral sound. All accepted: `sheet` is a string
+  and the no-typed-enum rule is stated (R1); the older-build test uses its own frozen enum and committed bytes (R2); the
+  null-key wording corrected (R3); every `meta.json` writer listed (R4); unknown colour ids are kept, not dropped (R5);
+  decision 9 lists the code that would take the new sizes silently (R6); decision 8 cites A35.8 and the export copy
+  path (R7). Follow-up outside W6: `peekDocumentWire` compares `"letter"` with `"LETTER"` and never matches
+  (`RoomProjectRepository.kt:1438-1439`); it fails safe; filed as an issue.

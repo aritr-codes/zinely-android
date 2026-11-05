@@ -376,7 +376,7 @@ Step 14 of the walkthrough is *export/share*. **But the loop does not end there 
 | Opacity & blend sliders | **DO NOT BUILD** | Translucency is a material property, not a control |
 | Pattern fill / auto-tiling | **DO NOT BUILD** | Names no physical cause a person could produce |
 | Emoji in text | **SEPTEMBER REQUIREMENT — ADR-112 GATED** | Per-OEM fallback remains forbidden; a bundled deterministic renderer must prove screen/PNG/PDF parity first |
-| Page background colour | **DO NOT BUILD** | Home printers cannot bleed — prints as a panel in a white margin. *2026-10-18: still not built as a printed fill; the paper a maker loads may be shown on screen, never printed ([ADR-136](../DECISIONS.md#adr-136) decision 5)* |
+| Page background colour | **DO NOT BUILD** | Home printers cannot bleed — prints as a panel in a white margin. *2026-10-18: still not built as a printed fill; the paper a maker loads may be shown on screen, never printed ([ADR-136](../DECISIONS.md#adr-136) decision 5; designed as AW6, [ADR-150](../DECISIONS.md#adr-150))* |
 | Templates gallery | **DO NOT BUILD** | *"Blank is a peer"* |
 | Onboarding tour | **DO NOT BUILD** | Empty states already teach |
 | Accounts · cloud · feed · collaboration · marketplace · AI layout | **DO NOT BUILD** | The product is that there isn't one |
