@@ -97,6 +97,11 @@ public class ZineLibraryBackupValidator {
             } else if (project.documentByteCount > MAX_BACKUP_DOCUMENT_BYTES) {
                 issues += error("project.documentByteCount.tooLarge", "document exceeds the restore limit", "$path.documentByteCount")
             }
+            if (project.effectivePaperSize() == null) {
+                // ADR-150 decision 2. Reached only after the stager's version check, so a later build's new
+                // sheet with its newer schema is FUTURE_VERSION, never this.
+                issues += error("project.sheet.invalid", "paper '${project.paperSize}' / sheet '${project.sheet}' is not a known pair", "$path.sheet")
+            }
             validateCover(project, path, issues)
 
             val projectAssets = HashSet<String>()

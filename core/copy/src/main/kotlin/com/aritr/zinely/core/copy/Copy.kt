@@ -1737,6 +1737,11 @@ public object Copy {
         public const val LETTER: String = "US Letter"
         public const val A4_DIMENSIONS: String = "210 × 297 mm"
         public const val LETTER_DIMENSIONS: String = "8.5 × 11 in"
+        // US Legal and A5 (ADR-150, A35.2's rows).
+        public const val LEGAL: String = "US Legal"
+        public const val A5: String = "A5"
+        public const val LEGAL_DIMENSIONS: String = "8.5 × 14 in"
+        public const val A5_DIMENSIONS: String = "148 × 210 mm"
         // `A4_DIMENSIONS_LONG` / `LETTER_DIMENSIONS_LONG` were deleted by ADR-101 P3: the paper chooser
         // sheet's sub-line was their only consumer, and the segmented control that replaced it names the
         // size and nothing else.

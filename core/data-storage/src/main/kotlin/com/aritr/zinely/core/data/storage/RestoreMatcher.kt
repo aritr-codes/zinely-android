@@ -1,5 +1,6 @@
 package com.aritr.zinely.core.data.storage
 
+import com.aritr.zinely.core.data.asset.effectivePaperSize
 import com.aritr.zinely.core.model.ZineDocument
 
 /**
@@ -54,7 +55,8 @@ public object RestoreMatcher {
             val found = candidates.firstOrNull { it.documentSha256 == entry.documentSha256 }
                 ?: candidates.firstOrNull { shelfZine ->
                     val decoded = shelfZine.decoded()
-                    decoded != null && decoded.format == entry.format && decoded.paperSize == entry.paperSize &&
+                    // ADR-150: the zine's paper is the sheet, else paperSize. Paper colour is not compared (decision 3).
+                    decoded != null && decoded.format == entry.format && decoded.paperSize == entry.effectivePaperSize() &&
                         decoded == zine.document
                 }
             if (found == null) {

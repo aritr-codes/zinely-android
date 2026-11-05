@@ -33,15 +33,21 @@ public class DataStorePreferredPaperStore(
 
         private const val A4_VALUE = "a4"
         private const val LETTER_VALUE = "letter"
+        private const val LEGAL_VALUE = "legal"
+        private const val A5_VALUE = "a5"
 
         fun encode(paperSize: PaperSize): String = when (paperSize) {
             PaperSize.A4 -> A4_VALUE
             PaperSize.LETTER -> LETTER_VALUE
+            PaperSize.LEGAL -> LEGAL_VALUE
+            PaperSize.A5 -> A5_VALUE
         }
 
         fun decode(value: String?): PaperSize = when (value) {
             LETTER_VALUE -> PaperSize.LETTER
             A4_VALUE -> PaperSize.A4
+            LEGAL_VALUE -> PaperSize.LEGAL
+            A5_VALUE -> PaperSize.A5
             else -> PaperSize.A4
         }
     }

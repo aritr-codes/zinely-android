@@ -86,6 +86,10 @@ class RepositoryContractsTest {
         // This fake never repairs a file, so no zine waits to be told (ADR-134).
         override suspend fun dismissRestoredDetails(shown: Map<String, RestoredDetails>): DataResult<Unit> = DataResult.Success(Unit)
 
+        override suspend fun setPaperColour(id: String, colour: PaperColour): DataResult<Unit> = DataResult.Success(Unit)
+
+        override suspend fun getPaperColour(id: String): PaperColour = PaperColour.WHITE
+
         override suspend fun load(projectId: String): DataResult<ZineDocument> =
             docs[projectId]?.let { DataResult.Success(it) } ?: DataResult.Failure(DataError.NotFound(projectId))
 

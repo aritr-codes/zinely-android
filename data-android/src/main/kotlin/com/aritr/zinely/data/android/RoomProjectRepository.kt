@@ -9,11 +9,14 @@ import com.aritr.zinely.core.data.asset.ZineBackupOmission
 import com.aritr.zinely.core.data.asset.ZineBackupProjectEntry
 import com.aritr.zinely.core.data.asset.ZineLibraryBackupManifest
 import com.aritr.zinely.core.data.asset.ZineLibraryBackupValidator
+import com.aritr.zinely.core.data.asset.backupPaperSize
+import com.aritr.zinely.core.data.asset.backupSheet
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.DocumentRepository
 import com.aritr.zinely.core.data.repository.FolderChange
 import com.aritr.zinely.core.data.repository.FolderNames
+import com.aritr.zinely.core.data.repository.PaperColour
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.errorOrNull
 import com.aritr.zinely.core.data.repository.ProjectShelfEntry
@@ -240,7 +243,8 @@ internal class RoomProjectRepository(
                 // independently drawn covers` asserts.
                 writeMeta(
                     id,
-                    ProjectMeta(title = title, createdAtEpochMs = now, folder = joined)
+                    // ADR-150 decision 3: a new zine starts on White (no paperColour key).
+                    ProjectMeta(title = title, createdAtEpochMs = now, folder = joined, paperColour = null)
                         .withCover(newZineCoverRecipe(random)),
                 )
             } catch (e: IOException) {
@@ -284,6 +288,8 @@ internal class RoomProjectRepository(
                         coverStamp = existing?.coverStamp,
                         // ADR-125 rule 12: renaming a zine must not take it out of its folder.
                         folder = FolderNames.clean(existing?.folder),
+                        // ADR-150 decision 3: the raw id is carried, known or not.
+                        paperColour = existing?.paperColour,
                     ),
                 )
             } catch (e: IOException) {
@@ -334,6 +340,9 @@ internal class RoomProjectRepository(
                         title = "$sourceTitle copy",
                         createdAtEpochMs = now,
                         folder = FolderNames.clean(sourceMeta?.folder),
+                        // AW6.10 / ADR-150 decision 3: the copy keeps its original's paper colour (the cover is
+                        // identity and is redrawn; the paper is which sheet to load and is kept).
+                        paperColour = sourceMeta?.paperColour,
                     ).withCover(newZineCoverRecipe(random)),
                 )
             } catch (e: IOException) {
@@ -408,6 +417,40 @@ internal class RoomProjectRepository(
         } finally {
             folderChanges.update { it + 1 }
         }
+    }
+
+    /**
+     * ADR-150 decision 3. Shaped like [moveProject]: meta.json only, under the mutex, never over unreadable metadata,
+     * and no row sync, so recency is untouched (A28.4's rule for rename). No [sessionBusy] gate: Print details sets
+     * it while the zine is open, and the session owns only document.json.
+     */
+    override suspend fun setPaperColour(id: String, colour: PaperColour): DataResult<Unit> = withContext(io) {
+        try {
+            mutex.withLock {
+                when (val recovered = recoverInterruptedRestoreLocked()) {
+                    is DataResult.Failure -> return@withLock recovered
+                    is DataResult.Success -> Unit
+                }
+                val docFile = paths.documentFile(id) ?: return@withLock failure(DataError.NotFound(id))
+                if (!Files.isRegularFile(docFile)) return@withLock failure(DataError.NotFound(id))
+                val meta = readMetaOrNull(id) ?: return@withLock failure(unreadableMeta(id))
+                if (meta.paperColour != colour.storedId) {
+                    try {
+                        writeMeta(id, meta.copy(paperColour = colour.storedId))
+                    } catch (e: IOException) {
+                        return@withLock failure(DataError.Io("failed to write project metadata for '$id'", e))
+                    }
+                }
+                DataResult.Success(Unit)
+            }
+        } finally {
+            // The Shelf reads the colour from meta.json on each listing, as it reads the folder.
+            folderChanges.update { it + 1 }
+        }
+    }
+
+    override suspend fun getPaperColour(id: String): PaperColour = withContext(io) {
+        PaperColour.fromId(mutex.withLock { readMetaOrNull(id) }?.paperColour)
     }
 
     override suspend fun renameFolder(from: String, to: String): DataResult<FolderChange> {
@@ -762,7 +805,8 @@ internal class RoomProjectRepository(
                             sourceProjectId = id,
                             title = meta.title,
                             format = document.format,
-                            paperSize = document.paperSize,
+                            // ADR-150 decision 2: the family size older builds know, plus the sheet.
+                            paperSize = document.paperSize.backupPaperSize(),
                             createdAtEpochMs = meta.createdAtEpochMs,
                             updatedAtEpochMs = fileMtimeOrNull(documentFile) ?: clock(),
                             documentSchemaVersion = rawSchemaVersion,
@@ -773,6 +817,9 @@ internal class RoomProjectRepository(
                             coverSurface = meta.coverSurface,
                             coverStamp = meta.coverStamp,
                             folder = FolderNames.clean(meta.folder),
+                            sheet = document.paperSize.backupSheet(),
+                            // ADR-150 decision 3: the raw id, carried as read (an unknown id is kept).
+                            paperColour = meta.paperColour,
                         ),
                     )
                 }
@@ -1006,6 +1053,8 @@ internal class RoomProjectRepository(
                 coverSurface = entry.coverSurface,
                 coverStamp = entry.coverStamp,
                 folder = FolderNames.clean(entry.folder)?.let { spellings.getOrPut(FolderNames.key(it)) { it } },
+                // ADR-150 decision 3: the raw id from the manifest; absent (an older backup) is White.
+                paperColour = entry.paperColour,
             )
             store.write(
                 projectDir.resolve(ProjectPaths.META_FILE),
@@ -1284,6 +1333,9 @@ internal class RoomProjectRepository(
         val fallback = ProjectMeta(
             title = DEFAULT_TITLE,
             createdAtEpochMs = fileMtimeOrNull(docFile) ?: clock(),
+            // ADR-150 decision 3: there is no readable meta.json to carry a colour from, so White. A
+            // present-but-unreadable file is returned below without being written, so its colour survives repair.
+            paperColour = null,
         )
         val metaFile = paths.metaFile(id) ?: return fallback
         // Present-but-unreadable: the bytes stay for repair, so nothing is written — and therefore no
@@ -1375,6 +1427,7 @@ internal class RoomProjectRepository(
                 // can repair the file from its backup copy and must not race a folder operation's write.
                 val meta = mutex.withLock { readMetaOrNull(id) }
                 val folder = FolderNames.clean(meta?.folder)
+                val paperColour = PaperColour.fromId(meta?.paperColour)
                 // ADR-134 decision 4: a repair this read found has re-synced the row, so the tile is read from
                 // the row as it is now, and the tile and the note name the zine the same way.
                 val row = indexed[id]?.let { if (it.disagreesWith(meta)) freshRowOr(it) else it }
@@ -1383,7 +1436,7 @@ internal class RoomProjectRepository(
                 val restored = notes.noteOf(id)
                 when (loaded) {
                     is DataResult.Success -> {
-                        row?.let(::toSummary)?.let { ProjectShelfEntry.Available(it, folder, restored) }
+                        row?.let(::toSummary)?.let { ProjectShelfEntry.Available(it, folder, restored, paperColour) }
                     }
                     is DataResult.Failure -> unavailableShelfEntry(
                         id = id,
@@ -1393,6 +1446,7 @@ internal class RoomProjectRepository(
                         folder = folder,
                         error = loaded.error,
                         restored = restored,
+                        paperColour = paperColour,
                     )
                 }
             }
@@ -1407,6 +1461,7 @@ internal class RoomProjectRepository(
         folder: String?,
         error: DataError,
         restored: RestoredDetails?,
+        paperColour: PaperColour,
     ): ProjectShelfEntry? {
         val reason = when (error) {
             is DataError.SchemaTooNew -> ProjectUnavailableReason.NEWER_APP_REQUIRED
@@ -1428,6 +1483,7 @@ internal class RoomProjectRepository(
             reason = reason,
             folder = folder,
             restored = restored,
+            paperColour = paperColour,
         )
     }
 

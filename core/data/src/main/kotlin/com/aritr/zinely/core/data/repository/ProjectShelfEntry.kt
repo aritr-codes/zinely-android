@@ -33,11 +33,19 @@ public sealed interface ProjectShelfEntry {
      */
     public val restored: RestoredDetails?
 
+    /**
+     * The paper this zine is meant to be printed on ([ADR-150](docs/DECISIONS.md#adr-150) decision 3), read from its
+     * `meta.json` each time the Shelf lists, like [folder]. Missing or unreadable metadata, no key, or an id this build
+     * does not know is [PaperColour.WHITE]. For the zine sheet's line and the host layer; never drawn on the cover.
+     */
+    public val paperColour: PaperColour
+
     /** A project whose authoritative document is readable right now. */
     public data class Available(
         val summary: ProjectSummary,
         override val folder: String? = null,
         override val restored: RestoredDetails? = null,
+        override val paperColour: PaperColour = PaperColour.WHITE,
     ) : ProjectShelfEntry {
         override val id: String get() = summary.id
         override val title: String get() = summary.title
@@ -61,6 +69,7 @@ public sealed interface ProjectShelfEntry {
         val reason: ProjectUnavailableReason,
         override val folder: String? = null,
         override val restored: RestoredDetails? = null,
+        override val paperColour: PaperColour = PaperColour.WHITE,
     ) : ProjectShelfEntry
 }
 

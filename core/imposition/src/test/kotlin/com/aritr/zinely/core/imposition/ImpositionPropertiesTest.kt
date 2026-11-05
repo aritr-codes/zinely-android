@@ -27,15 +27,17 @@ class ImpositionPropertiesTest {
     private val eps = 1e-6
 
     @Provide
-    fun papers(): Arbitrary<PaperSize> = Arbitraries.of(PaperSize.LETTER, PaperSize.A4)
+    fun papers(): Arbitrary<PaperSize> = Arbitraries.of(*PaperSize.entries.toTypedArray()) // US Legal and A5 too (ADR-150)
 
     // --- Engine invariants -----------------------------------------------------------------------
 
     @Property
     fun `engine output always validates clean`(
         @ForAll("papers") paper: PaperSize,
-        @ForAll @DoubleRange(min = 0.0, max = 95.0) inset: Double,
+        @ForAll @DoubleRange(min = 0.0, max = 0.99) fraction: Double,
     ) {
+        // A fraction of each paper's own limit: A5's panel is narrower than 95 pt × 2, so a fixed range would throw.
+        val inset = fraction * halfPanelLimit(paper.portrait.width, paper.portrait.height)
         val layout = imposer.layout(ZineFormat.SINGLE_SHEET_8, paper, inset)
         assertEquals(emptyList<ValidationIssue>(), validator.validate(layout))
     }

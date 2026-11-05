@@ -6,6 +6,8 @@ import com.aritr.zinely.core.data.asset.LIBRARY_BACKUP_KIND
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_DOCUMENT_BYTES
 import com.aritr.zinely.core.data.asset.ZineBackupProjectEntry
 import com.aritr.zinely.core.data.asset.ZineLibraryBackupManifest
+import com.aritr.zinely.core.data.asset.backupPaperSize
+import com.aritr.zinely.core.data.asset.backupSheet
 import com.aritr.zinely.core.data.serialization.JsonDocumentSerializer
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.CURRENT_SCHEMA_VERSION
@@ -574,6 +576,73 @@ class ZineLibraryBackupStagerTest {
         assertNoStagingChildren()
     }
 
+    @Test
+    fun `a Legal and an A5 zine stage on their own paper (ADR-150)`() = runBlocking {
+        val fixture = fixture(
+            mapOf(
+                "legal" to document().copy(paperSize = PaperSize.LEGAL),
+                "a5" to document().copy(paperSize = PaperSize.A5),
+            ),
+        )
+        assertEquals(PaperSize.LETTER, fixture.manifest.projects.first { it.sourceProjectId == "legal" }.paperSize)
+        ZineLibraryBackupStager().stage(writeArchive(fixture), temp.resolve("stage")).use { staged ->
+            assertEquals(
+                mapOf("legal" to PaperSize.LEGAL, "a5" to PaperSize.A5),
+                staged.projects.associate { it.manifestEntry.sourceProjectId to it.document.paperSize },
+            )
+        }
+    }
+
+    @Test
+    fun `an unknown sheet with a newer schema is FUTURE_VERSION, never damaged (ADR-150)`() {
+        val original = fixture(mapOf("one" to document()))
+        val project = original.manifest.projects.single().copy(sheet = "tabloid", documentSchemaVersion = 6)
+        val fixture = original.copy(manifest = original.manifest.copy(projects = listOf(project)))
+
+        val failure = assertThrows(ZineBackupStagingException::class.java) {
+            runBlocking { ZineLibraryBackupStager().stage(writeArchive(fixture), temp.resolve("stage")) }
+        }
+
+        assertEquals(ZineBackupStagingException.Reason.FUTURE_VERSION, failure.reason)
+        assertNoStagingChildren()
+    }
+
+    @Test
+    fun `an inconsistent sheet and paperSize pair is INVALID_STRUCTURE (ADR-150)`() {
+        listOf(
+            PaperSize.A4 to "legal",
+            PaperSize.LETTER to "a5",
+            PaperSize.LETTER to "letter",
+            PaperSize.LETTER to "tabloid",
+        ).forEach { (paper, sheet) ->
+            val original = fixture(mapOf("one" to document()))
+            val project = original.manifest.projects.single().copy(paperSize = paper, sheet = sheet)
+            val fixture = original.copy(manifest = original.manifest.copy(projects = listOf(project)))
+
+            val failure = assertThrows(ZineBackupStagingException::class.java) {
+                runBlocking { ZineLibraryBackupStager().stage(writeArchive(fixture), temp.resolve("stage")) }
+            }
+
+            assertEquals(ZineBackupStagingException.Reason.INVALID_STRUCTURE, failure.reason, "$paper / $sheet")
+            assertNoStagingChildren()
+        }
+    }
+
+    @Test
+    fun `a sheet that disagrees with the document is refused (ADR-150)`() {
+        // A US Letter document whose manifest claims US Legal: the agreement check uses the effective size.
+        val original = fixture(mapOf("one" to document()))
+        val project = original.manifest.projects.single().copy(paperSize = PaperSize.LETTER, sheet = "legal")
+        val fixture = original.copy(manifest = original.manifest.copy(projects = listOf(project)))
+
+        val failure = assertThrows(ZineBackupStagingException::class.java) {
+            runBlocking { ZineLibraryBackupStager().stage(writeArchive(fixture), temp.resolve("stage")) }
+        }
+
+        assertEquals(ZineBackupStagingException.Reason.INVALID_DOCUMENT, failure.reason)
+        assertNoStagingChildren()
+    }
+
     private fun assertNoStagingChildren() {
         val parent = temp.resolve("stage")
         if (Files.exists(parent)) {
@@ -616,7 +685,7 @@ class ZineLibraryBackupStagerTest {
                 sourceProjectId = id,
                 title = "Project $id",
                 format = document.format,
-                paperSize = document.paperSize,
+                paperSize = document.paperSize.backupPaperSize(),
                 createdAtEpochMs = 1L,
                 updatedAtEpochMs = 2L,
                 documentSchemaVersion = Regex("\"schemaVersion\":(\\d+)").find(bytes.decodeToString())!!.groupValues[1].toInt(),
@@ -628,6 +697,7 @@ class ZineLibraryBackupStagerTest {
                 }.distinct(),
                 coverSurface = null,
                 coverStamp = null,
+                sheet = document.paperSize.backupSheet(),
             )
         }
         val manifest = ZineLibraryBackupManifest(

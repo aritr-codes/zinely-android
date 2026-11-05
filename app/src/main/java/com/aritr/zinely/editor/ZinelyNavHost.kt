@@ -92,6 +92,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.export.ExportDestination
 import com.aritr.zinely.export.ExportFormat
 import com.aritr.zinely.export.ExportReady
@@ -409,9 +410,12 @@ private fun ProofDestination(
             // The Proof-local paper choice (ADR-052): seeded from the document, threaded into the export as
             // a copy so `export == what you see` without writing through the single-writer store (ADR-026).
             val paper = rememberSaveable { mutableStateOf(uiState.document.paperSize) }
+            // ADR-150 decision 8: what Proof shows and what is exported both pass through [exportPaper], so a
+            // US Legal or A5 zine is never re-imposed onto the switch's paper.
+            val printPaper = exportPaper(uiState.document.paperSize, paper.value)
             val exportTo: (ExportDestination) -> Unit = { destination ->
                 exportViewModel.export(
-                    uiState.document.copy(paperSize = paper.value),
+                    uiState.document.copy(paperSize = printPaper),
                     state.pageSizePt,
                     state.imageBytes,
                     ExportFormat.PDF,
@@ -467,7 +471,7 @@ private fun ProofDestination(
                 // editor boot state. ADR-101 P6 retired the top bar's name outright, so the placeholder
                 // goes with it and nothing is owed here.
                 onBack = onBack,
-                paper = paper.value,
+                paper = printPaper,
                 onPaperSelected = { paper.value = it },
                 onExportPdf = { target ->
                     val destination = target.toDestination()
@@ -506,7 +510,7 @@ private fun ProofDestination(
                     if (failed != null && needsStoragePermission(failed)) {
                         storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     } else exportViewModel.retry(
-                        uiState.document.copy(paperSize = paper.value),
+                        uiState.document.copy(paperSize = printPaper),
                         state.pageSizePt,
                         state.imageBytes,
                         ExportFormat.PDF,
@@ -617,6 +621,22 @@ internal fun ExportDestination.toTarget(): ProofExportTarget = when (this) {
  */
 internal fun needsLegacyStoragePermission(destination: ExportDestination, sdkInt: Int, granted: Boolean): Boolean =
     destination == ExportDestination.DOWNLOADS && requiresLegacyWrite(sdkInt) && !granted
+
+/**
+ * The paper a zine is printed on, given its own paper and the Proof switch's (ADR-150 decision 8, A35.8).
+ *
+ * **Invariant: a US Legal or A5 zine is exported on its own paper only.** The switch is A4 / US Letter, two
+ * close sizes a zine moves between freely; Legal and A5 are not, and re-imposing one onto them would print a
+ * different book. An A4 or Letter zine also never moves onto Legal or A5 through here: size is chosen at
+ * Start (ADR-133 decision 5). The `when` is exhaustive so a later size must decide.
+ */
+internal fun exportPaper(own: PaperSize, chosen: PaperSize): PaperSize {
+    fun switchable(paper: PaperSize) = when (paper) {
+        PaperSize.A4, PaperSize.LETTER -> true
+        PaperSize.LEGAL, PaperSize.A5 -> false
+    }
+    return if (switchable(own) && switchable(chosen)) chosen else own
+}
 
 // ---------------------------------------------------------------------------------------------
 // The two boot states, in V2.1. Both the editor and the Proof boot the SAME EditorViewModel and so

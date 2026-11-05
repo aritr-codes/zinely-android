@@ -123,6 +123,14 @@ class DocumentSchemaTest {
     }
 
     @Test
+    fun `US Legal and A5 have their sizes in points and stable wire names (ADR-150)`() {
+        assertEquals(PtSize(width = 612.0, height = 1008.0), PaperSize.LEGAL.portrait)
+        assertEquals(PtSize(width = 419.528, height = 595.276), PaperSize.A5.portrait)
+        assertEquals("\"legal\"", json.encodeToString(PaperSize.serializer(), PaperSize.LEGAL))
+        assertEquals("\"a5\"", json.encodeToString(PaperSize.serializer(), PaperSize.A5))
+    }
+
+    @Test
     fun `background is a sealed tree with none and solid variants`() {
         val none = Json.encodeToString(Background.serializer(), Background.None)
         val solid = Json.encodeToString(Background.serializer(), Background.Solid(ColorRgba.BLACK))

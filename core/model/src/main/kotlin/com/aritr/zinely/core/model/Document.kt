@@ -8,8 +8,13 @@ import kotlinx.serialization.Serializable
  * migration framework (`:core:data`) chains `vN → vN+1` migrators up to this value on open
  * (S2 spike §6, [docs/DECISIONS.md ADR-020]).
  *
+ * **v5 (2026-11-05) — US Legal and A5** ([ADR-150](../../../../../../../docs/DECISIONS.md#adr-150)). Two
+ * [PaperSize] values and nothing else. This is the newest version the build **reads**. The writer stamps 5
+ * when the paper is [PaperSize.LEGAL] or [PaperSize.A5], else as v4 below; a Letter or A4 zine is written
+ * byte for byte as before. Paper colour is not here: it is a shelf detail in `meta.json`.
+ *
  * **v4 (2026-11-03) — `description` on photos and Art** ([ADR-147](../../../../../../../docs/DECISIONS.md#adr-147)).
- * This is the newest version the build **reads**. The writer stamps 3, or 4 only when some element holds a
+ * The writer stamps 3, or 4 only when some element holds a
  * description (never below 3), so a zine with none stays a v3 file byte for byte and older builds still open
  * and restore it. Every later bump owes the writer one line raising the stamp when the document uses its
  * addition (see `JsonDocumentSerializer.serialize`).
@@ -31,7 +36,7 @@ import kotlinx.serialization.Serializable
  * Zinely" and "this zine is broken". The v1→v2 step is therefore an **identity** migrator
  * (`DocumentMigrations` requires a contiguous chain; see `JsonDocumentSerializer.MIGRATORS`).
  */
-public const val CURRENT_SCHEMA_VERSION: Int = 4
+public const val CURRENT_SCHEMA_VERSION: Int = 5
 
 /**
  * The root of a zine document — a `@Serializable` tree persisted as JSON (S2 spike §3,

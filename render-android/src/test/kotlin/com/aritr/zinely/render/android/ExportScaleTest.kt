@@ -2,7 +2,6 @@ package com.aritr.zinely.render.android
 
 import com.aritr.zinely.core.model.AffineTransform2D
 import com.aritr.zinely.core.model.PtPoint
-import com.aritr.zinely.core.model.PtSize
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -54,11 +53,5 @@ class ExportScaleTest {
         val back = ExportScale.previewDeviceToPage(s, offset, device)
         assertEquals(pagePt.x, back.x, 1e-6)
         assertEquals(pagePt.y, back.y, 1e-6)
-    }
-
-    @Test
-    fun paperSizesMatchSpec() {
-        assertEquals(PtSize(612.0, 792.0), PaperSize.LETTER.sizePt)
-        assertEquals(PtSize(595.0, 842.0), PaperSize.A4.sizePt)
     }
 }

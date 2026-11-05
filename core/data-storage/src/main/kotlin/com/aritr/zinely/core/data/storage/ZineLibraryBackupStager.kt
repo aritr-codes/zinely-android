@@ -13,6 +13,7 @@ import com.aritr.zinely.core.data.asset.ZineArchiveEntry
 import com.aritr.zinely.core.data.asset.ZineBackupProjectEntry
 import com.aritr.zinely.core.data.asset.ZineLibraryBackupManifest
 import com.aritr.zinely.core.data.asset.ZineLibraryBackupValidator
+import com.aritr.zinely.core.data.asset.effectivePaperSize
 import com.aritr.zinely.core.data.serialization.JsonDocumentSerializer
 import com.aritr.zinely.core.data.validation.DefaultDocumentValidator
 import com.aritr.zinely.core.model.ImageElement
@@ -293,7 +294,8 @@ public class ZineLibraryBackupStager(
             }
             if (rawSchema != project.documentSchemaVersion ||
                 document.format != project.format ||
-                document.paperSize != project.paperSize
+                // ADR-150: the zine's paper is the parsed sheet, else paperSize (validated non-null above).
+                document.paperSize != project.effectivePaperSize()
             ) {
                 fail(
                     ZineBackupStagingException.Reason.INVALID_DOCUMENT,

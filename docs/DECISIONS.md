@@ -18942,3 +18942,52 @@ flowchart LR
   decision 9 lists the code that would take the new sizes silently (R6); decision 8 cites A35.8 and the export copy
   path (R7). Follow-up outside W6: `peekDocumentWire` compares `"letter"` with `"LETTER"` and never matches
   (`RoomProjectRepository.kt:1438-1439`); it fails safe; filed as an issue.
+
+#### As built: data lane (2026-11-05) {#adr-150-as-built}
+
+Built on `w6/data` (data and the minimum app wiring; no new UI). The UI lane (A35 picker, the colour chooser, the
+overlay, the Proof copy) builds on it.
+
+- **Decision 1.** `PaperSize.LEGAL` (`"legal"`, 612 × 1008 pt) and `PaperSize.A5` (`"a5"`, 419.528 × 595.276 pt);
+  `CURRENT_SCHEMA_VERSION` 5; `IdentityMigrator(from = 4)`. The writer's stamp is an exhaustive `when` on the paper
+  (5 for LEGAL / A5) combined with ADR-147's description line, so a later size cannot compile without its stamp.
+  `document-v5.json` is the v4 zine on `"legal"`, pinned as `WRITER_PINNED_VERSION`; `schema-shape-v5.txt` adds the
+  two enum lines; v1 to v4 fixtures and the backup archives are unchanged. Imposition properties run on all four
+  sizes (the engine-output property now takes its inset as a fraction of each paper's own limit: A5's panel is
+  too narrow for the old fixed 0–95 pt range); the Letter and A4 imposition goldens are unchanged.
+- **Decision 2.** `ZineBackupProjectEntry.sheet: String? = null` and `paperColour: String? = null` (lenient, the same
+  serializer as `folder`). `PaperSize.backupPaperSize()` / `backupSheet()` write the family size plus the sheet;
+  `ZineBackupProjectEntry.effectivePaperSize()` reads it back and is `null` for an unknown sheet, a sheet of
+  `letter` / `a4`, a sheet whose family is not `paperSize`, **and a bare `legal` / `a5` in `paperSize`** (never
+  written; refusing it keeps the invariant "`paperSize` is always the family size"). `ZineLibraryBackupValidator`
+  refuses those as `project.sheet.invalid`, which the stager reaches only after its version check, so it reports
+  `INVALID_STRUCTURE`; the backup writer's own validation refuses them too. The stager's agreement check and
+  `RestoreMatcher` use the effective size. The older-build check is `OlderBuildManifestTest` with the committed
+  `manifest-v5-legal.json` and its own frozen two-value enum; it also proves the hazard is real (`"legal"` written
+  straight into `paperSize` gives `INVALID_MANIFEST` there).
+- **Decision 3.** `ProjectMeta.paperColour: String?` (raw, lenient, not encoded when null). Create writes none, rename
+  and duplicate carry it, restore takes it from the manifest, the backup writer reads it, the fallback writes none
+  (there is no readable file to carry from; an unreadable file is never overwritten), and the `.copy` writers carry it
+  unchanged. The closed set is `PaperColour` in `:core:data` (`core.data.repository`), with `fromId(raw)` (unknown is
+  `WHITE`) and `storedId` (`null` for White). `ProjectRepository.setPaperColour(id, PaperColour)` writes `meta.json`
+  only: no index write, no document load, recency and Shelf order unchanged, allowed while the zine is open; and
+  `getPaperColour(id)`. `ProjectShelfEntry.paperColour` is read from `meta.json` on each listing, like the folder.
+- **Decision 5 (the half this lane owns).** `:render-android` and `:core:render` do not depend on `:core:data`, so
+  `PaperColour` is not on the export renderer's classpath; `PrintTruthTest` fails if it ever is, and `ExportPaperTest`
+  checks that the export seam's parameters are not `PaperColour` or `ProjectRepository`. PDF bytes are not compared
+  under Robolectric (it cannot write PDF); the PDF path takes the same inputs as the PNG path.
+- **Decision 8 (export guard).** `exportPaper(own, chosen)` in `ZinelyNavHost.kt`: a LEGAL or A5 zine is exported,
+  retried and shown on its own paper whatever the switch holds, and an A4 / Letter zine never moves onto LEGAL / A5.
+  The switch itself is unchanged (the UI lane removes it for LEGAL / A5, A35.8). **UI-lane blocker:** until A35.8
+  hides it, tapping A4 / Letter on a LEGAL / A5 zine's Proof (`ProofScreen` paper handler) counts as a change: it
+  clears the saved-PDF state and shows "changed from US Legal … to US Legal". Reachable today only by restoring a
+  later build's backup, since nothing here creates a LEGAL / A5 zine; the UI lane must hide or no-op the switch
+  before its picker can create one. The `:app` export seam can see `PaperColour` (the VM holds a
+  `ProjectRepository`); only `ExportPaperTest`'s parameter check and review keep colour reads out of it.
+- **Decision 9.** `choiceName` (now `displayName`, one `when`), `choiceDimensions`, `HomeViewModel.shelfLabel`, the
+  Colophon row and the preferred-paper DataStore mapping are exhaustive `when`s, with `Copy.Paper.LEGAL` "US Legal",
+  `A5`, and their dimensions. The unused `PaperSize` in `render-android/ExportScale.kt` is deleted. **Deviation:** the
+  Start sheet still lists A4 and US Letter (`shelfPaperChoices` keeps `ShelfPaperChoices`); iterating
+  `PaperSize.entries` before A35 is built would draw four tiles in a row made for two and clamp Legal's stock to A4's
+  slot. The UI lane switches it with A35's rescale, so no golden moves twice. `PaperSegments` keeps its explicit A4 /
+  Letter list: it is the switch, and A35.8 hides it for the other two.

@@ -3,6 +3,7 @@ package com.aritr.zinely.core.data.serialization
 import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.Element
 import com.aritr.zinely.core.model.ImageElement
+import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.ZineDocument
 import kotlinx.serialization.SerializationException
@@ -52,7 +53,14 @@ public class JsonDocumentSerializer internal constructor(
         // ADR-147 decision 3: a file says the OLDEST version that can read it, not the newest this build knows.
         // 3 for a plain zine (never lower), 4 when any photo or Art piece holds a description. Each later
         // bump adds its own line here when the document uses what it added.
-        val stamp = if (holdsDescription(document)) DESCRIPTION_SCHEMA_VERSION else MIN_WRITTEN_SCHEMA_VERSION
+        // ADR-150: 5 when the paper is US Legal or A5. The `when` is exhaustive so a later size cannot compile
+        // without deciding its own stamp.
+        val paperStamp = when (document.paperSize) {
+            PaperSize.LETTER, PaperSize.A4 -> MIN_WRITTEN_SCHEMA_VERSION
+            PaperSize.LEGAL, PaperSize.A5 -> PAPER_SIZE_SCHEMA_VERSION
+        }
+        val contentStamp = if (holdsDescription(document)) DESCRIPTION_SCHEMA_VERSION else MIN_WRITTEN_SCHEMA_VERSION
+        val stamp = maxOf(paperStamp, contentStamp)
         val written = withoutEmptyText(document)
         val normalized = if (written.schemaVersion == stamp) written else written.copy(schemaVersion = stamp)
         val body = json.encodeToJsonElement(ZineDocument.serializer(), normalized).jsonObject
@@ -135,6 +143,9 @@ public class JsonDocumentSerializer internal constructor(
         /** The version a document holding a photo or Art description is stamped (ADR-147). */
         const val DESCRIPTION_SCHEMA_VERSION = 4
 
+        /** The version a document on US Legal or A5 paper is stamped (ADR-150). */
+        const val PAPER_SIZE_SCHEMA_VERSION = 5
+
         /**
          * The ordered JSON-tree migrator chain. If a non-JSON format is ever adopted, migration moves
          * to per-version typed snapshots ([ADR-020]).
@@ -159,6 +170,8 @@ public class JsonDocumentSerializer internal constructor(
             IdentityMigrator(from = 2),
             // v3 -> v4 (ADR-147): `description` is nullable and absent in a v3 file, so there is nothing to do.
             IdentityMigrator(from = 3),
+            // v4 -> v5 (ADR-150): two new PaperSize values; no saved v4 file holds them, so there is nothing to do.
+            IdentityMigrator(from = 4),
         )
 
         /** A structural no-op step, for a version bump that exists purely to gate old readers out. */

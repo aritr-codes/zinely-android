@@ -40,4 +40,16 @@ internal data class ProjectMeta(
      */
     @Serializable(with = LenientFolderNameSerializer::class)
     val folder: String? = null,
+    /**
+     * The zine's paper colour id ([ADR-150](docs/DECISIONS.md#adr-150) decision 3), or `null` for White. A shelf
+     * detail, not the work: it never enters `document.json` or any PDF / PNG.
+     *
+     * Invariant, as for [folder]: **every writer of this file carries the field across**. The **raw** string is
+     * kept, never cleaned to a known id, so a later build's paper survives a rename or restore here; it is
+     * interpreted only where it is drawn or named (`PaperColour.fromId`, unknown reads as White). Absent is not
+     * encoded, so a White zine's `meta.json` is byte-identical to one written before the field existed. Read
+     * leniently: a non-string is White.
+     */
+    @Serializable(with = LenientFolderNameSerializer::class)
+    val paperColour: String? = null,
 )

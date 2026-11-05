@@ -2,7 +2,6 @@ package com.aritr.zinely.render.android
 
 import com.aritr.zinely.core.model.AffineTransform2D
 import com.aritr.zinely.core.model.PtPoint
-import com.aritr.zinely.core.model.PtSize
 import kotlin.math.ceil
 
 /**
@@ -79,8 +78,5 @@ public object ExportScale {
         )
 }
 
-/** Named paper sizes in points (ADR-028 §3.2). The MVP home-print targets ([ADR-011]). */
-public enum class PaperSize(public val sizePt: PtSize) {
-    LETTER(PtSize(612.0, 792.0)),
-    A4(PtSize(595.0, 842.0)),
-}
+// The second, unused `PaperSize` enum that lived here was deleted by ADR-150 decision 9: the one paper type is
+// `core:model`'s `PaperSize`, so nobody adds a size to a copy the export never reads.
