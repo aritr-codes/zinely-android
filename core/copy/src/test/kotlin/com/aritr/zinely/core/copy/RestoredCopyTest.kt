@@ -145,6 +145,108 @@ class RestoredCopyTest {
         }
     }
 
+    // ---- A37.3 amendment (#145): name-went-back first, never hidden in "and k more", and which of a shared name.
+
+    private fun z(now: String, was: String? = null, nth: Int = 1, of: Int = 1, folder: String? = null, place: Boolean = false) =
+        Copy.Restored.Zine(now, was, nth = nth, of = of, folder = folder, showPlace = place)
+
+    private fun list(vararg zs: Copy.Restored.Zine) = Copy.Restored.noteFor(zs.toList()).second.substringBefore(". Small")
+
+    @Test
+    fun `A37_3_1 zines whose name went back come first, each group in Shelf order`() {
+        assertEquals(
+            "“B” (was “b”), “D” (was “d”), “A” and “C”",
+            list(z("A"), z("B", "b"), z("C"), z("D", "d")),
+        )
+    }
+
+    @Test
+    fun `A37_3_2 past four, no name that went back is hidden`() {
+        // two went back, hidden by the old rule at positions 4 and 5
+        assertEquals(
+            "“D” (was “d”), “E” (was “e”), “A” and 3 more",
+            list(z("A"), z("B"), z("C"), z("D", "d"), z("E", "e"), z("F")),
+        )
+        // five went back of eight: all five named, the three unchanged counted
+        val eight = (1..5).map { z("N$it", "o$it") } + (1..3).map { z("P$it") }
+        assertEquals(
+            "“N1” (was “o1”), “N2” (was “o2”), “N3” (was “o3”), “N4” (was “o4”), “N5” (was “o5”) and 3 more",
+            list(*eight.toTypedArray()),
+        )
+    }
+
+    @Test
+    fun `A37_3_2 k is never one, so one hidden name is named`() {
+        val five = (1..4).map { z("N$it", "o$it") } + z("P")
+        assertEquals(
+            "“N1” (was “o1”), “N2” (was “o2”), “N3” (was “o3”), “N4” (was “o4”) and “P”",
+            list(*five.toTypedArray()),
+        )
+        // four zines: all four in full, as before
+        assertEquals("“A”, “B”, “C” and “D”", list(z("A"), z("B"), z("C"), z("D")))
+        // five, none went back: three and 2 more, as before
+        assertEquals("“A”, “B”, “C” and 2 more", list(z("A"), z("B"), z("C"), z("D"), z("E")))
+    }
+
+    @Test
+    fun `A37_3_3 a shared name says its place among them, and its folder`() {
+        assertEquals(
+            "“Notes” (2 of 3 with this name) and “Riso tests”",
+            list(z("Notes", nth = 2, of = 3), z("Riso tests")),
+        )
+        assertEquals(
+            "“Notes” (was “Trip notes”, in “Trips”, 2 of 2 with this name) and “Riso tests”",
+            list(z("Notes", "Trip notes", nth = 2, of = 2, folder = "Trips", place = true), z("Riso tests")),
+        )
+        assertEquals(
+            "“Notes” (in “Trips”) and “Notes” (on My Shelf, 1 of 2 with this name)",
+            list(z("Notes", folder = "Trips", place = true), z("Notes", nth = 1, of = 2, place = true)),
+        )
+    }
+
+    @Test
+    fun `A37_3_4 one zine with a shared name gets one sentence before the rename line`() {
+        val body1 = "A small file that holds its name, cover and folder was damaged, so Zinely used the copy " +
+            "from before the last change to them."
+        assertEquals(
+            "“Trip notes” is called “Notes” again" to "$body1 More than one zine has this name; this is number 2 of 2, " +
+                "counting from the top of the shelf. You can rename it again.",
+            Copy.Restored.noteFor(listOf(z("Notes", "Trip notes", nth = 2, of = 2))),
+        )
+        assertEquals(
+            "Zinely repaired “Notes”" to "$body1 More than one zine has this name; this is the one in “Trips”.",
+            Copy.Restored.noteFor(listOf(z("Notes", folder = "Trips", place = true))),
+        )
+        assertEquals(
+            "Zinely repaired “Notes”" to "$body1 More than one zine has this name; this is the one in “Trips”, " +
+                "number 2 of 3 there.",
+            Copy.Restored.noteFor(listOf(z("Notes", nth = 2, of = 3, folder = "Trips", place = true))),
+        )
+        assertEquals(
+            "Zinely repaired “Notes”" to "$body1 More than one zine has this name; this is the one on My Shelf.",
+            Copy.Restored.noteFor(listOf(z("Notes", place = true))),
+        )
+        // A name carried once adds nothing.
+        assertEquals("Zinely repaired “Notes”" to body1, Copy.Restored.noteFor(listOf(z("Notes"))))
+    }
+
+    @Test
+    fun `A37_3_8 a pages-only zine is not a name that went back`() {
+        val pagesOnly = Copy.Restored.Zine("P", "Old", details = false, pages = true)
+        assertEquals("“B” (was “b”) and “P”", Copy.Restored.noteFor(listOf(pagesOnly, z("B", "b"))).second.substringBefore(". Some"))
+    }
+
+    @Test
+    fun `the A37_3 words never say backup, restore, error, corrupt or metadata`() {
+        val words = listOf(
+            Copy.Restored.noteFor(listOf(z("X", "Y", nth = 2, of = 3, folder = "F", place = true))),
+            Copy.Restored.noteFor(listOf(z("X", folder = "F", place = true), z("X", nth = 1, of = 2, place = true))),
+        ).flatMap { it.toList() }
+        for (banned in listOf("backup", "restor", "error", "corrupt", "metadata", ".json")) {
+            assertFalse(words.any { it.contains(banned, ignoreCase = true) }) { "says $banned" }
+        }
+    }
+
     @Test
     fun `TalkBack reads the title and body as one sentence pair`() {
         assertEquals("Zinely repaired “X”. Body.", Copy.Restored.spoken("Zinely repaired “X”", "Body."))

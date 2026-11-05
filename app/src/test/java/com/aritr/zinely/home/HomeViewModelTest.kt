@@ -2929,6 +2929,28 @@ class HomeViewModelTest {
         eventsJob.cancel()
     }
 
+    @Test
+    fun `a second repair with the same words is told even before a clean listing (#147 item 4)`() = runTest {
+        // Given a details note dismissed, the Shelf left before the store listed it without the note
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect {} }
+        repository.restoredNotes["z1"] = RestoredDetails("Letters to Gran")
+        repository.projects.emit(listOf(summary("z1", "Letters home", now)))
+        repository.listAgainOnDismiss = false
+        viewModel.dismissRestored(listOf("z1"))
+
+        // When the zine is repaired again, with the very same words, and the Shelf lists
+        repository.restoredNotes["z1"] = RestoredDetails("Letters to Gran", seq = 1)
+        repository.projects.emit(listOf(summary("z1", "Letters home", now)))
+
+        // Then the new repair is not hidden by the old dismissal
+        assertEquals(listOf("z1"), (viewModel.state.value as HomeUiState.Content).restored.map { it.id })
+        stateJob.cancel()
+        eventsJob.cancel()
+    }
+
     // ---- #166: batch follow-ups --------------------------------------------------------------------
 
     private fun HomeShelfEvent.text() = (this as HomeShelfEvent.Message).text

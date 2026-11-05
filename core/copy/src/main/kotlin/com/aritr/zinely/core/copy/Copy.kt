@@ -1624,8 +1624,9 @@ public object Copy {
         /**
          * The note's title and body for [zines], each `now to was` in Shelf order: `now` is the title its tile
          * shows, `was` the one My Shelf showed before the repair, or `null` when not known. The name went back
-         * only when both are known and differ. Up to four names in full; past four, three and "and {k} more",
-         * so k is always 2 or more.
+         * only when both are known and differ. Up to four names in full; past four, the first three, or every name that
+         * went back when more than three did, and "and {k} more", so k is always 2 or more (A37.3.1 and A37.3.2:
+         * the names that went back come first).
          */
         public fun note(zines: List<Pair<String, String?>>): Pair<String, String> =
             noteFor(zines.map { (now, was) -> Zine(now, was) })
@@ -1633,33 +1634,56 @@ public object Copy {
         /**
          * One zine on the note: [now] and [was] as in [note]; [details] when its name, cover and folder went back
          * (A37), [pages] when its page file did (A46, [ADR-140](docs/DECISIONS.md#adr-140)).
+         *
+         * [nth] of [of] is its place among the zines with the same name in its own place (My Shelf or one folder),
+         * in Shelf order, repaired or not; [of] is 1 when the name is carried once there. [showPlace] says the name
+         * is shared and the note must say where this one is: its [folder], or My Shelf when it has none (A37.3.3).
          */
         public data class Zine(
             val now: String,
             val was: String?,
             val details: Boolean = true,
             val pages: Boolean = false,
-        )
+            val nth: Int = 1,
+            val of: Int = 1,
+            val folder: String? = null,
+            val showPlace: Boolean = false,
+        ) {
+            /** A46.3: {was} belongs to a details repair only; a pages repair never changes a name. */
+            internal fun wentBack(): Boolean = details && was != null && was != now
+
+            /** A37.3.3: the marks after "was …": where, then which of how many. */
+            internal fun marks(): List<String> = listOfNotNull(
+                if (showPlace) folder?.let { "in “$it”" } ?: "on My Shelf" else null,
+                if (of > 1) "$nth of $of with this name" else null,
+            )
+        }
 
         /** [note] with each zine's kinds: `v21-library.html` A46.3, form by form; A37.3 when no page file went back. */
         public fun noteFor(zines: List<Zine>): Pair<String, String> {
             require(zines.isNotEmpty()) { "a note names at least one zine" }
-            // A46.3: {was} belongs to a details repair only; a pages repair never changes a name.
-            val wentBack = zines.map { z -> z.now to z.was?.takeIf { z.details && it != z.now } }
-            if (wentBack.size == 1) {
-                val z = zines.single()
-                val (now, was) = wentBack.single()
+            // A37.3.1: the zines whose name went back first, each group in Shelf order (a stable partition).
+            val ordered = zines.filter { it.wentBack() } + zines.filterNot { it.wentBack() }
+            if (ordered.size == 1) {
+                val z = ordered.single()
+                val was = z.was?.takeIf { z.wentBack() }
                 val body = when {
                     !z.pages -> ONE_BODY
                     !z.details -> PAGES_BODY
                     else -> ONE_BODY + PAGES_TOO
                 }
-                return (if (was != null) "“$was” is called “$now” again" else "Zinely repaired “$now”") to
-                    body + (if (was != null) RENAME_AGAIN else "")
+                return (if (was != null) "“$was” is called “${z.now}” again" else "Zinely repaired “${z.now}”") to
+                    body + sharedSentence(z) + (if (was != null) RENAME_AGAIN else "")
             }
-            val names = wentBack.map { (now, was) -> if (was != null) "“$now” (was “$was”)" else "“$now”" }
-            val list = if (names.size > 4) {
-                names.take(3).joinToString(", ") + " and ${names.size - 3} more"
+            val names = ordered.map { z ->
+                val inner = listOfNotNull(z.was?.takeIf { z.wentBack() }?.let { "was “$it”" }) + z.marks()
+                "“${z.now}”" + if (inner.isEmpty()) "" else " (${inner.joinToString(", ")})"
+            }
+            // A37.3.2: no name that went back is hidden; k is never 1 (one hidden name is named instead).
+            var shown = maxOf(3, ordered.count { it.wentBack() })
+            if (names.size - shown == 1) shown++
+            val list = if (names.size > 4 && shown < names.size) {
+                names.take(shown).joinToString(", ") + " and ${names.size - shown} more"
             } else {
                 names.dropLast(1).joinToString(", ") + " and " + names.last()
             }
@@ -1669,6 +1693,18 @@ public object Copy {
                 else -> SEVERAL_MIXED_BODY
             }
             return "Zinely repaired ${zines.size} zines" to "$list. $body"
+        }
+
+        /** A37.3.4: the one-zine sentence for a shared name, or nothing when the name is carried once. */
+        private fun sharedSentence(z: Zine): String {
+            val count = if (z.of > 1) "number ${z.nth} of ${z.of}" else null
+            val where = if (z.showPlace) "the one " + (z.folder?.let { "in “$it”" } ?: "on My Shelf") else null
+            val lead = " More than one zine has this name; this is "
+            return when {
+                where != null -> lead + where + (if (count != null) ", $count there" else "") + "."
+                count != null -> "$lead$count, counting from the top of the shelf."
+                else -> ""
+            }
         }
 
         /** What TalkBack reads: the title and body as one node (A37.10). */

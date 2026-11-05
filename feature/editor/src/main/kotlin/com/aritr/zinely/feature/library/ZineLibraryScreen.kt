@@ -801,7 +801,7 @@ public fun ZineLibraryScreen(
                         null
                     } else {
                         {
-                            val (title, body) = restored.noteWords()
+                            val (title, body) = restored.noteWords(zines)
                             ShelfRestoredNote(
                                 title = title,
                                 body = body,

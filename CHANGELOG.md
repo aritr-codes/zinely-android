@@ -85,6 +85,10 @@ Changes since the beta.9 app.
 
 ### Changed
 
+- The "restored details" note on My Shelf now lists the zines whose name went back first, so a zine you cannot find
+  is never hidden in "and 2 more"; and when several zines share a name it says which one it means (its folder, and
+  its place among them: "Notes" (in "Trips", 2 of 3 with this name)). Library design amendment A37.3 (frozen
+  2026-11-05, ADR-134, #145).
 - Docs: ZINE-DIRECTION notes the two-voice ruling (Book and Plain, ADR-126 Proposed) beside its four "three
   voices" lines; 21 drifted line citations into the frozen type bar, Reframe and Library pages re-pointed to
   named blocks or pinned commits (#97, #98).
@@ -133,6 +137,11 @@ Changes since the beta.9 app.
   deleted without a word; it now waits for the delete and says the zine was already deleted. A move's Undo said
   nothing when every zine in it had been deleted meanwhile; it now says they were already deleted
   ([#166](https://github.com/aritr-codes/zinely-android/issues/166), [ADR-142](docs/DECISIONS.md#adr-142)).
+- The My Shelf note that a zine's name or cover went back to its earlier copy is no longer lost in two cases
+  ([#147](https://github.com/aritr-codes/zinely-android/issues/147)): when renaming or moving the zine is what found the
+  damage, the note now still waits instead of being cleared in the same moment; and a second repair of a zine whose
+  first note you had just dismissed with Got it is told again. The words are unchanged
+  ([A37](docs/design/mockups/v21-library.html)).
 - If a photo left the page while its "across the fold" question was open (an Undo, a delete, a page turn), the
   question closed but the Bench's bars and the way back to My Shelf could stay hidden. They now come back, and the
   question does not reopen by itself when the photo returns
