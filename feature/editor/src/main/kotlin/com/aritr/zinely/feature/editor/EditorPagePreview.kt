@@ -265,11 +265,13 @@ public fun EditorPagePreview(
             imageCacheBytes = imageCacheBytes,
             // AW6-B.1: the canvas shows the page on the zine's paper; everything below this is chrome, unblended.
             paper = LocalPaperColour.current,
+            paperSheet = BenchStudio.PageShape,
         )
         BenchFocusScrim(
             // The island `--paper` (ADR-090), so `0.5·element + 0.5·paper` is the sheet's own paper in
             // both themes — the arithmetic the dim rests on holds at night too.
-            paper = ZinelyTheme.v21Colors.paper,
+            // AW6-B: on a coloured paper the sheet shows as that paper, so the dim mixes toward it, not toward cream.
+            paper = LocalPaperColour.current.shownOr(ZinelyTheme.v21Colors.paper),
             // Bounded to the sheet: this composable fills the canvas so its coordinates agree with its
             // siblings', but a wash that filled the canvas would paint paper over the *desk* and bleach
             // the room on every selection — see [BenchFocusScrim].

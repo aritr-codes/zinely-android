@@ -316,4 +316,27 @@ class PaperColourGoldenTest {
         assertTrue("the Bench canvas is not on the paper " + shot().top(), shot().count(PaperColour.PASTEL_BLUE) > 5_000)
         shot().captureRoboImage("$GOLDEN_DIR/aw6b_bench_pastel_blue_light.png", aa())
     }
+
+    /**
+     * The paper sits inside the sheet, not over it: the sheet's 1.5dp ink edge and its rounded free corner survive a
+     * coloured paper. (The first build laid the white ground over the whole canvas, which squared the corner off and
+     * painted out the edge; the API 24 device pass caught it, and the golden above had recorded it.)
+     */
+    @Test
+    fun aw6b_bench_keeps_the_sheet_edge_and_corner() {
+        show {
+            CompositionLocalProvider(LocalPaperColour provides PaperColour.PASTEL_BLUE) {
+                EditorScreen(store = store(), pageSizePt = PAGE, modifier = Modifier.size(360.dp, 720.dp))
+            }
+        }
+        val b = composeRule.onNodeWithTag(EditorPaperSurfaceTestTag).fetchSemanticsNode().boundsInRoot
+        val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
+        val edge = bmp.getPixel(b.left.toInt() + 1, b.center.y.toInt())
+        assertTrue(
+            "the sheet's left edge is not ink: #%06X".format(edge and 0xFFFFFF),
+            (edge shr 16 and 0xFF) + (edge shr 8 and 0xFF) + (edge and 0xFF) < 240,
+        )
+        val corner = Bitmap.createBitmap(bmp, b.right.toInt() - 2, b.top.toInt(), 2, 2)
+        assertEquals("the free corner is squared off in the paper", 0, corner.count(PaperColour.PASTEL_BLUE))
+    }
 }

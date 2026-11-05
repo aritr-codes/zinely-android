@@ -8,6 +8,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
@@ -71,6 +73,9 @@ public const val PagePreviewTestTag: String = "page-preview"
  *   commands; the default `null`-source renders the missing-asset placeholder (see the image seam above).
  * @param paper the paper the zine is loaded on; anything but White is multiplied over the page after the replay
  *   ([drawPaperLayer]). Only the surfaces AW6.7 names pass it; the default draws nothing extra.
+ * @param paperSheet the shape of a sheet the host draws under this canvas, or `null`. Non-null means the host lays the
+ *   white ground itself ([groundOr]) and the paper layer is clipped to this shape, so the sheet keeps its edge and
+ *   corners; `null` means this canvas lays a rectangular white ground under a coloured page.
  * @param imageCacheBytes optional decoded-region LRU budget. Zero keeps one-draw ownership for proof,
  *   thumbnails, goldens, and export parity callers; the interactive editor opts in explicitly.
  */
@@ -84,6 +89,7 @@ public fun PagePreview(
     imageBytes: AssetBytesSource = EmptyAssetBytes,
     imageCacheBytes: Long = 0L,
     paper: PaperColour = PaperColour.WHITE,
+    paperSheet: Shape? = null,
 ) {
     val assets = LocalContext.current.assets
     // One replayer per (asset source, image source), rebuilt only if either identity changes — so the
@@ -115,7 +121,9 @@ public fun PagePreview(
         // AW6.8: "White x paper = the paper". The replayer leaves the page's ground to the host, which paints the
         // app's warm page paper; under a coloured paper the ground is the export's opaque white instead, so the
         // multiply below gives the paper itself, not the paper over cream. White zines skip this entirely.
-        if (pageRect != null) drawRect(Color.White, topLeft = pageRect.topLeft, size = pageRect.size)
+        // A host that draws its own sheet under the canvas ([paperSheet], the Bench) lays that ground itself, inside its
+        // edge: a rectangle here would paint out the sheet's ink edge and square off its rounded corners.
+        if (pageRect != null && paperSheet == null) drawRect(Color.White, topLeft = pageRect.topLeft, size = pageRect.size)
         drawIntoCanvas { canvas ->
             replayer.replay(
                 canvas = canvas.nativeCanvas,
@@ -127,7 +135,7 @@ public fun PagePreview(
         }
         // AW6.8 / ADR-150 decision 5: the paper, multiplied once over the finished page, before any chrome (every
         // chrome layer is a later sibling). The replayer and the export never see it.
-        if (pageRect != null) drawPaperLayer(paper, pageRect)
+        if (pageRect != null) drawPaperLayer(paper, pageRect, paperSheet ?: RectangleShape)
     }
 }
 

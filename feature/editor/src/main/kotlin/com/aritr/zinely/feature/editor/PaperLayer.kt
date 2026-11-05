@@ -2,9 +2,13 @@ package com.aritr.zinely.feature.editor
 
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.data.repository.PaperColour
@@ -30,10 +34,20 @@ public val LocalPaperColour: ProvidableCompositionLocal<PaperColour> = compositi
  * [ImposedSheet]); over the app's warm page paper the result would be paper over cream, and over a transparent
  * destination multiply would punch through rather than tint.
  */
-internal fun DrawScope.drawPaperLayer(paper: PaperColour, page: Rect) {
+internal fun DrawScope.drawPaperLayer(paper: PaperColour, page: Rect, shape: Shape = RectangleShape) {
     val colour = paper.overlay ?: return
-    drawRect(colour.toComposeColor(), topLeft = Offset(page.left, page.top), size = page.size, blendMode = BlendMode.Multiply)
+    val outline = shape.createOutline(page.size, layoutDirection, this)
+    translate(page.left, page.top) { drawOutline(outline, colour.toComposeColor(), blendMode = BlendMode.Multiply) }
 }
+
+/**
+ * The ground a host lays under a page on [this] paper: the export's white for a coloured paper (see [drawPaperLayer]'s
+ * invariant), else the host's own [paperGround]. The Bench's sheet uses it so its edge and corners stay its own.
+ */
+internal fun PaperColour.groundOr(paperGround: Color): Color = if (overlay == null) paperGround else Color.White
+
+/** The colour the page shows as on [this] paper, for chrome that must match it (the Bench's focus scrim). */
+internal fun PaperColour.shownOr(paperGround: Color): Color = overlay?.toComposeColor() ?: paperGround
 
 /** The paper's name as a list shows it ("Pastel yellow"). Exhaustive, so a new paper cannot ship unnamed. */
 internal val PaperColour.displayName: String

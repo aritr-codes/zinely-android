@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.aritr.zinely.core.data.repository.PaperColour
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -600,12 +601,14 @@ internal fun BenchSheetIsland(
  * stack over it, so this is the *material* and nothing else.
  */
 @Composable
-internal fun Modifier.benchPageSurface(): Modifier {
+internal fun Modifier.benchPageSurface(paper: PaperColour = PaperColour.WHITE): Modifier {
     val colors = ZinelyTheme.v21Colors
     val grain = rememberZinelyV21GrainBrush(BenchStudio.PageGrainTile)
     return this
         .zinelyV21HardShadow(ZinelyV21Dimens.hardShadow, colors.inkLine, BenchStudio.PageShape)
-        .background(colors.paper, BenchStudio.PageShape)
+        // AW6-B: a coloured paper's ground is the export's white, laid here inside the edge; the canvas multiplies the
+        // paper over it, clipped to this same shape ([PagePreview]'s `paperSheet`).
+        .background(paper.groundOr(colors.paper), BenchStudio.PageShape)
         .border(BenchStudio.PageBorder, colors.ink, BenchStudio.PageShape)
         // The grain is `.page::after{inset:0;border-radius:inherit}` — it takes the sheet's corners, so
         // it is clipped before it is drawn rather than squared off over a rounded sheet. `inherit` is

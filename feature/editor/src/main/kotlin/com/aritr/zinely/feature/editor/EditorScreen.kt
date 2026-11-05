@@ -1816,7 +1816,7 @@ public fun EditorScreen(
                         modifier = Modifier
                             .offset(x = paperX, y = paperY)
                             .size(paperWidth, paperHeight)
-                            .benchPageSurface()
+                            .benchPageSurface(LocalPaperColour.current)
                             .testTag(EditorPaperSurfaceTestTag),
                     )
                     EditorPagePreview(
