@@ -149,6 +149,9 @@ Changes since the beta.9 app.
 
 ### Fixed
 
+- A zine that cannot be opened and has no shelf index entry now keeps its paper size on the Shelf. The file stores the
+  paper as `"a4"` or `"legal"`, and the fallback read compared it with the code name (`A4`), so it never matched and
+  the size was always left blank (#197). A paper this build does not know is still left blank, never guessed.
 - Choosing several zines: an Undo tapped while a delete was still being written could restore a card that was then
   deleted without a word; it now waits for the delete and says the zine was already deleted. A move's Undo said
   nothing when every zine in it had been deleted meanwhile; it now says they were already deleted

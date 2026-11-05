@@ -235,7 +235,8 @@ class RoomProjectRepositoryTest {
     fun `an unindexed newer-schema document appears on the shelf as unavailable with its paper size`() = runTest {
         val dir = root.resolve("projects/toonew")
         Files.createDirectories(dir)
-        val payload = """{"schemaVersion":${CURRENT_SCHEMA_VERSION + 1},"paperSize":"A4"}""".toByteArray()
+        // The paper as the writer stores it: the serial name ("a4"), never the enum's name ("A4") (#197).
+        val payload = """{"schemaVersion":${CURRENT_SCHEMA_VERSION + 1},"paperSize":"a4"}""".toByteArray()
         Files.write(dir.resolve("document.json"), payload)
 
         val shelf = repo().observeShelfProjects().first().single() as ProjectShelfEntry.Unavailable
@@ -245,6 +246,26 @@ class RoomProjectRepositoryTest {
         assertEquals(PaperSize.A4, shelf.paperSize)
         assertEquals(ProjectUnavailableReason.NEWER_APP_REQUIRED, shelf.reason)
         assertTrue(repo().observeProjects().first().isEmpty())
+    }
+
+    @Test
+    fun `an unindexed unreadable document reads its paper by serial name, and an unknown one as none`() = runTest {
+        // Given two unindexed newer-schema documents: one on US Legal, one on a paper this build does not know
+        for ((id, paper) in listOf("legal1" to "legal", "future1" to "tabloid")) {
+            val dir = root.resolve("projects/$id")
+            Files.createDirectories(dir)
+            Files.write(
+                dir.resolve("document.json"),
+                """{"schemaVersion":${CURRENT_SCHEMA_VERSION + 1},"paperSize":"$paper"}""".toByteArray(),
+            )
+        }
+
+        // When the shelf lists them
+        val shelf = repo().observeShelfProjects().first().associateBy { it.id }
+
+        // Then Legal is read as Legal, and the unknown paper as none rather than a guess
+        assertEquals(PaperSize.LEGAL, (shelf.getValue("legal1") as ProjectShelfEntry.Unavailable).paperSize)
+        assertEquals(null, (shelf.getValue("future1") as ProjectShelfEntry.Unavailable).paperSize)
     }
 
     @Test

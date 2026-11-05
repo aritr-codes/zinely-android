@@ -81,7 +81,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -1495,8 +1494,10 @@ internal class RoomProjectRepository(
         }
         return DocumentWirePeek(
             schemaVersion = root["schemaVersion"]?.jsonPrimitive?.intOrNull,
-            paperSize = root["paperSize"]?.jsonPrimitive?.contentOrNull
-                ?.let { name -> PaperSize.entries.firstOrNull { it.name == name } },
+            // The file holds the serial name ("a4", "legal"), not the enum's name (#197). Decoding with the enum's own
+            // serializer reads it as the writer wrote it; a paper this build does not know is none, never a guess.
+            paperSize = root["paperSize"]
+                ?.let { runCatching { json.decodeFromJsonElement(PaperSize.serializer(), it) }.getOrNull() },
         )
     }
 
