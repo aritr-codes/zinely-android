@@ -7,7 +7,10 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.addOutline
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.aritr.zinely.core.copy.Copy
@@ -37,7 +40,18 @@ public val LocalPaperColour: ProvidableCompositionLocal<PaperColour> = compositi
 internal fun DrawScope.drawPaperLayer(paper: PaperColour, page: Rect, shape: Shape = RectangleShape) {
     val colour = paper.overlay ?: return
     val outline = shape.createOutline(page.size, layoutDirection, this)
-    translate(page.left, page.top) { drawOutline(outline, colour.toComposeColor(), blendMode = PaperLayerBlend) }
+    translate(page.left, page.top) {
+        // A rounded sheet is a clip around a plain rectangle, never a filled path: below API 29 the GPU fills a path
+        // through a mask over its whole bounding box, and Porter-Duff MULTIPLY with the mask's transparent source
+        // turns the corners outside the curve black (API 24 emulator, W6 device pass).
+        if (outline is Outline.Rectangle) {
+            drawRect(colour.toComposeColor(), size = page.size, blendMode = PaperLayerBlend)
+        } else {
+            clipPath(Path().apply { addOutline(outline) }) {
+                drawRect(colour.toComposeColor(), size = page.size, blendMode = PaperLayerBlend)
+            }
+        }
+    }
 }
 
 /**
