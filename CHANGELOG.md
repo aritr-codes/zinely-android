@@ -157,6 +157,12 @@ Changes since the beta.9 app.
   (or Open settings), the print-details row and "See how to fold". Before, it read their words but not that
   they were buttons. Nothing on screen changes
   ([#156](https://github.com/aritr-codes/zinely-android/issues/156), [ADR-101](docs/DECISIONS.md#adr-101)).
+- At large text on a small phone, the first-run "drag to move" hint no longer covers the piece it is about or gets
+  cut off: it waits until there is room above the piece, and it does not show while reframing a photo. The notice
+  shown when a save fails puts its two buttons under its words when it is narrow, so the words stay readable
+  ([#148](https://github.com/aritr-codes/zinely-android/issues/148),
+  [#149](https://github.com/aritr-codes/zinely-android/issues/149),
+  [#158](https://github.com/aritr-codes/zinely-android/issues/158), [ADR-149](docs/DECISIONS.md#adr-149)).
 
 ## [0.9.0-beta.9] — 2026-11-03 — Turn pieces by hand, and small things fixed
 

@@ -18171,7 +18171,7 @@ Three narrow pieces 14 × 40pt side by side, 6pt apart, and a wide one below:
 
 ### Large text on a small phone: the first-run hint waits for room, the save notice stacks
 
-**Status:** Proposed, 2026-11-04. **Not accepted.** Numbered ADR-149 at merge (drafted as ADR-TBD-LT). Built on `fix/bench-large-text-148-149-158`. The design is
+**Status:** Proposed, 2026-11-04. **Not accepted.** Numbered ADR-149 at merge (drafted as ADR-TBD-LT). Built on `fix/bench-large-text-148-149-158`, merged to `main` in PR #190 (`31bcd4fe`), in no download. The design is
 amendment **A54** to the frozen [`v21-bench.html`](design/mockups/v21-bench.html), frozen under the owner's delegation
 of 2026-10-12 (the owner may overrule it). Closes issues #148, #149 and #158, the follow-ups of
 [D-119](design/V2-SPEC-DEFECTS.md#d-119). **Amends** nothing frozen above A54: neither surface was ever drawn; both
