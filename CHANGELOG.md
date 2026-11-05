@@ -129,6 +129,11 @@ Changes since the beta.9 app.
 
 ### Fixed
 
+- The My Shelf note that a zine's name or cover went back to its earlier copy is no longer lost in two cases
+  ([#147](https://github.com/aritr-codes/zinely-android/issues/147)): when renaming or moving the zine is what found the
+  damage, the note now still waits instead of being cleared in the same moment; and a second repair of a zine whose
+  first note you had just dismissed with Got it is told again. The words are unchanged
+  ([A37](docs/design/mockups/v21-library.html)).
 - If a photo left the page while its "across the fold" question was open (an Undo, a delete, a page turn), the
   question closed but the Bench's bars and the way back to My Shelf could stay hidden. They now come back, and the
   question does not reopen by itself when the photo returns

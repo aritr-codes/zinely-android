@@ -232,6 +232,25 @@ class RoomProjectRepositoryRestoredNoteTest {
         assertTrue(repo.shelf().none { it.id == deleted })
     }
 
+    @Test
+    fun `a repair found by the rename or move itself is told, not cleared in the same operation`() = runTest {
+        // Given a zine whose meta.json is damaged with the app stopped, and no listing has told it yet (#147 item 3)
+        val renamed = renamedThenDamaged()
+        // When the maker renames it before any listing
+        assertTrue(repo().renameProject(renamed, "Letters to Mum") is DataResult.Success)
+        // Then the repair that rename found still waits
+        val shelved = repo().shelf().single { it.id == renamed }
+        assertEquals("Letters to Mum", shelved.title)
+        assertEquals("Letters to Gran", shelved.restored?.previousTitle)
+
+        // And the same for a move
+        val moved = repo().createProject("Coffee log", ZineFormat.SINGLE_SHEET_8, PaperSize.A4).getOrNull()!!.id
+        repo().renameProject(moved, "Coffee diary")
+        Files.write(metaFile(moved), "{".toByteArray())
+        assertTrue(repo().moveProject(moved, "Kitchen") is DataResult.Success)
+        assertTrue(repo().shelf().single { it.id == moved }.restored != null)
+    }
+
     /** Makes the marker's `.bak` impossible to delete: a directory that is not empty. */
     private fun blockMarkerBackup(id: String) {
         val bak = root.resolve("projects/$id/restored-note.json.bak")
