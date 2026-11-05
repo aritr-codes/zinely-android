@@ -878,7 +878,11 @@ internal class HomeViewModel @Inject constructor(
     /**
      * Runs an Undo under [commitMutex]. [undoing] is set before the wait, so a folder action that starts while
      * this Undo queues does not take its zines over ([folderAction]) and end their Undo behind the maker's back.
-     * Not cancelled with the screen's model: the marker must be cleared, as the flush's commit is never cancelled.
+     * Not cancelled with the screen's model once started: the marker must be cleared, as the flush's commit is never
+     * cancelled. "Once started" holds because `viewModelScope` runs on `Main.immediate` and Undo is pressed on the main
+     * thread, so the body reaches the lock queue at once; on an already-cleared model it never runs (harmless: the model
+     * is gone). [undoing] is a plain set, not a count: two queued Undos of one zine clear it early, which is harmless only
+     * because the first restores the zine, so it is no longer pending for a folder action to take over.
      */
     private fun undoLocked(ids: List<String>, run: () -> Unit) {
         undoing = undoing + ids

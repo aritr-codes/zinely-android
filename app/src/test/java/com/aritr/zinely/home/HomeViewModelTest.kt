@@ -38,6 +38,8 @@ import com.aritr.zinely.feature.library.LibraryBackupRestoreFailureKind
 import com.aritr.zinely.feature.library.LibraryBackupRestoreMode
 import com.aritr.zinely.feature.library.LibraryBackupRestoreUiState
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.cancel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -3165,6 +3167,34 @@ class HomeViewModelTest {
         // Then b is back and was never deleted
         assertEquals(listOf("a"), repository.deleted)
         assertEquals(listOf("b", "c"), shelf.zines.map { it.id })
+        shelf.close()
+    }
+
+    @Test
+    fun `an Undo waiting for the lock still clears its marker when the screen's model is cleared`() = runTest {
+        // A queued Main, as on a phone: with the class's unconfined Main, cancelling the commit hands the lock to
+        // the waiting Undo before the Undo itself is cancelled, and the test would pass without NonCancellable.
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        // Given a's delete being written and Undo of b pressed behind it
+        val shelf = folderShelf("a" to null, "b" to null)
+        runCurrent()
+        shelf.viewModel.delete("a")
+        shelf.viewModel.delete("b")
+        runCurrent()
+        repository.deleteGate = CompletableDeferred()
+        shelf.viewModel.commitDelete("a")
+        runCurrent()
+        shelf.viewModel.undoDelete("b")
+        runCurrent()
+        assertTrue("b" in pendingDeleteStore.ids)
+
+        // When the model is cleared while the Undo waits for the lock
+        shelf.viewModel.viewModelScope.cancel()
+        runCurrent()
+
+        // Then the Undo still ran: b's marker is gone, so b is not deleted on the next launch
+        assertTrue("b" !in pendingDeleteStore.ids)
+        assertTrue("b" !in repository.deleted)
         shelf.close()
     }
 
