@@ -1624,8 +1624,9 @@ public object Copy {
         /**
          * The note's title and body for [zines], each `now to was` in Shelf order: `now` is the title its tile
          * shows, `was` the one My Shelf showed before the repair, or `null` when not known. The name went back
-         * only when both are known and differ. Up to four names in full; past four, three and "and {k} more",
-         * so k is always 2 or more.
+         * only when both are known and differ. Up to four names in full; past four, the first three, or every name that
+         * went back when more than three did, and "and {k} more", so k is always 2 or more (A37.3.1 and A37.3.2:
+         * the names that went back come first).
          */
         public fun note(zines: List<Pair<String, String?>>): Pair<String, String> =
             noteFor(zines.map { (now, was) -> Zine(now, was) })
