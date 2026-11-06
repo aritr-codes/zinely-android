@@ -123,11 +123,16 @@ class PaperColourScreenTest {
         composeRule.onNodeWithText(Copy.PaperColour.SUB).assertExists()
     }
 
-    /** A56.5: a tap changes the colour at once and does NOT close; only Done does. The label follows the tap. */
+    /**
+     * A56.5: a tap changes the colour at once and does NOT close; only Done does. The sample label's words are checked
+     * as a function only: the label is hidden from TalkBack, so its drawn text is not in the semantics tree. It reads
+     * the same `selected` as the checked sheet; the goldens draw it.
+     */
     @Test
     fun `given the pile, when a sheet is tapped, then it is picked and the sheet stays open, and Done closes`() {
         setChooser(PaperColour.WHITE)
         assertEquals("A sample page on white paper, plain printer paper", sampleLabelFor(PaperColour.WHITE))
+        assertEquals("A sample page on pastel blue paper", sampleLabelFor(PaperColour.PASTEL_BLUE))
 
         composeRule.onNodeWithTag(paperColourOptionTestTag(PaperColour.PASTEL_BLUE)).performClick()
         composeRule.waitForIdle()
@@ -135,7 +140,6 @@ class PaperColourScreenTest {
         assertEquals(PaperColour.PASTEL_BLUE, picked)
         assertEquals(0, done)
         composeRule.onNodeWithTag(paperColourOptionTestTag(PaperColour.PASTEL_BLUE)).assertIsSelected()
-        assertEquals("A sample page on pastel blue paper", sampleLabelFor(PaperColour.PASTEL_BLUE))
 
         composeRule.onNodeWithTag(PaperColourDoneTestTag).assertContentDescriptionEquals("Done").performClick()
         assertEquals(1, done)

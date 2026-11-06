@@ -117,8 +117,10 @@ internal fun PaperColourSheetSurface(
         pinned = { PaperSampleRow(selected, onDone, doneFocus) },
     ) {
         PaperPile(selected = selected, onPick = { picked ->
-            haptics.perform(ZinelyHaptic.Tick)
-            if (picked != selected) onPick(picked)
+            if (picked != selected) {
+                haptics.perform(ZinelyHaptic.Tick)
+                onPick(picked)
+            }
         })
         // `.foot{font-size:.75em;text-align:center;margin:var(--gap-md) var(--gap-xl) 0;line-height:1.45}`
         BasicText(

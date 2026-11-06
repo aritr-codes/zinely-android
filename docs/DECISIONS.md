@@ -19218,8 +19218,9 @@ Accepted.
   button: Done is the one action) and, on return, requests focus on its Paper colour row one frame after the chooser
   closes (a flag plus a `LaunchedEffect` in `ProofPrintDetailsPanel`; the requester stays attached). The Library
   door's return is asserted end to end; Print details' is asserted on the panel only, because Robolectric re-raises
-  the Print details drawer window in touch mode whatever the test asks, and touch mode moves no focus. Its end-to-end
-  check is a keyboard pass on the emulator, owed.
+  the Print details drawer window in touch mode whatever the test asks, and touch mode moves no focus. A keyboard pass
+  on the emulator at both doors is owed (the Library door asks at once, Print details a frame later). The flag clears
+  in a `finally`, so a cancelled request never jumps focus on a later opening.
 - **Fit (A55.8, A56.2).** `PaperSheetFitTest` (Robolectric, 360 × 640 dp): at font scale 1 neither sheet has anything to
   scroll; at font scale 2 the pile scrolls to Grey and Done stays on screen above it. To fit, the pile takes A56's own
   sheet metrics through `LibrarySheetSurface(pile = true)`: 92 % height, an 8 dp head bottom and a 16 dp bottom padding

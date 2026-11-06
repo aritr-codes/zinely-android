@@ -158,9 +158,14 @@ internal fun ProofPrintDetailsPanel(
 ) {
     if (paperColourFocus != null && focusColourRow) {
         LaunchedEffect(Unit) {
-            withFrameNanos { }
-            runCatching { paperColourFocus.requestFocus() }
-            onColourRowFocused()
+            // `finally`: if the panel leaves before the frame, the flag still clears, so a later opening of Print
+            // details does not jump focus to this row.
+            try {
+                withFrameNanos { }
+                runCatching { paperColourFocus.requestFocus() }
+            } finally {
+                onColourRowFocused()
+            }
         }
     }
     Column(
