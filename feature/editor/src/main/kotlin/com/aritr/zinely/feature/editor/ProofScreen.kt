@@ -593,12 +593,6 @@ private fun ProofScreenBody(
     ZSheet(
         visible = drawer == ProofDrawer.Details,
         onDismiss = ::closeDrawer,
-        onShown = {
-            if (returnToColourRow) {
-                returnToColourRow = false
-                runCatching { paperColourRowFocus.requestFocus() }
-            }
-        },
         title = Copy.Proof.PRINT_DETAILS,
         // The frozen `.dclose`, owed since P1: a drawer covers most of the screen with scrolling content
         // and nothing in it named a way out. Scrim tap and system back still work; this is the one a
@@ -634,6 +628,8 @@ private fun ProofScreenBody(
             paperColour = paperColour,
             onOpenPaperColour = { open(ProofDrawer.PaperColour) },
             paperColourFocus = paperColourRowFocus,
+            focusColourRow = returnToColourRow,
+            onColourRowFocused = { returnToColourRow = false },
         )
     }
 
@@ -1732,6 +1728,8 @@ private fun ProofDetailsDrawerBody(
     paperColour: PaperColour,
     onOpenPaperColour: () -> Unit,
     paperColourFocus: FocusRequester,
+    focusColourRow: Boolean,
+    onColourRowFocused: () -> Unit,
 ) {
     ProofPrintDetailsPanel(
         paper = paper,
@@ -1741,6 +1739,8 @@ private fun ProofDetailsDrawerBody(
         paperColour = paperColour,
         onOpenPaperColour = onOpenPaperColour,
         paperColourFocus = paperColourFocus,
+        focusColourRow = focusColourRow,
+        onColourRowFocused = onColourRowFocused,
         modifier = Modifier.fillMaxWidth().heightIn(max = drawerBodyMaxHeight()),
     )
 }

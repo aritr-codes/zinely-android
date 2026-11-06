@@ -8,11 +8,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.InputModeManager
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasContentDescription
@@ -58,15 +65,21 @@ class PaperColourScreenTest {
 
     private val pages = (0 until 8).map { Page(index = it, role = if (it == 0) PageRole.FRONT_COVER else PageRole.INTERIOR) }
 
-    // ── AW6.4 / AW6.12 the chooser ────────────────────────────────────────────────────────────────────
+    // ── A56 the pile ──────────────────────────────────────────────────────────────────────────────────
 
     private var picked: PaperColour? = null
+    private var done = 0
 
     private fun setChooser(selected: PaperColour) {
         composeRule.setContent {
+            var current by remember { mutableStateOf(selected) }
             ZinelyTheme {
                 Box(Modifier.size(430.dp, 932.dp)) {
-                    PaperColourOptions(selected = selected, onPick = { picked = it })
+                    PaperColourSheetSurface(
+                        selected = current,
+                        onPick = { picked = it; current = it },
+                        onDone = { done++ },
+                    )
                 }
             }
         }
@@ -74,39 +87,81 @@ class PaperColourScreenTest {
     }
 
     @Test
-    fun `the chooser is one radio group of seven papers, light to dark, the current one checked`() {
+    fun `given the pile, then it is one radio group of ten papers in A56_3's order, the current one checked`() {
         setChooser(PaperColour.PASTEL_YELLOW)
 
         val group = composeRule.onNodeWithTag(PaperColourGroupTestTag).fetchSemanticsNode()
-        assertTrue("the rows are not one selectable group", SemanticsProperties.SelectableGroup in group.config)
-        val tops = PaperColour.entries.map { colour ->
+        assertTrue("the sheets are not one selectable group", SemanticsProperties.SelectableGroup in group.config)
+        assertEquals(10, group.config[SemanticsProperties.CollectionInfo].rowCount)
+        val places = PaperColour.entries.mapIndexed { i, colour ->
             val node = composeRule.onNodeWithTag(paperColourOptionTestTag(colour)).fetchSemanticsNode()
             assertEquals("${colour.id} is not a radio", Role.RadioButton, node.config.getOrNull(SemanticsProperties.Role))
             assertEquals(colour == PaperColour.PASTEL_YELLOW, node.config.getOrNull(SemanticsProperties.Selected))
-            node.boundsInRoot.top
+            assertEquals(i, node.config[SemanticsProperties.CollectionItemInfo].rowIndex)
+            node.boundsInRoot.top to node.boundsInRoot.left
         }
-        assertEquals("AW6.5's order", tops.sorted(), tops)
+        // Two even rows of five, read row by row, left to right.
+        assertEquals(2, places.map { it.first }.distinct().size)
+        assertEquals(places.sortedWith(compareBy({ it.first }, { it.second })), places)
         assertEquals(
-            listOf("White", "Ivory", "Pastel yellow", "Pastel pink", "Pastel blue", "Pastel green", "Grey"),
+            listOf(
+                "White", "Ivory", "Pastel yellow", "Pastel orange", "Pastel pink", "Pastel purple", "Pastel blue",
+                "Pastel green", "Light brown", "Grey",
+            ),
             PaperColour.entries.map { it.displayName },
         )
     }
 
     @Test
-    fun `each row is one node named by its colour, and only White carries a note`() {
+    fun `given the pile, then each sheet is one node named by its colour, and only White carries a note`() {
         setChooser(PaperColour.WHITE)
 
         composeRule.onNodeWithTag(paperColourOptionTestTag(PaperColour.WHITE))
             .assertContentDescriptionEquals("White. ${Copy.PaperColour.WHITE_NOTE}")
         composeRule.onNodeWithTag(paperColourOptionTestTag(PaperColour.GREY)).assertContentDescriptionEquals("Grey")
         composeRule.onNodeWithText(Copy.PaperColour.FOOT).assertExists()
+        composeRule.onNodeWithText(Copy.PaperColour.SUB).assertExists()
+    }
+
+    /** A56.5: a tap changes the colour at once and does NOT close; only Done does. The label follows the tap. */
+    @Test
+    fun `given the pile, when a sheet is tapped, then it is picked and the sheet stays open, and Done closes`() {
+        setChooser(PaperColour.WHITE)
+        assertEquals("A sample page on white paper, plain printer paper", sampleLabelFor(PaperColour.WHITE))
+
+        composeRule.onNodeWithTag(paperColourOptionTestTag(PaperColour.PASTEL_BLUE)).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(PaperColour.PASTEL_BLUE, picked)
+        assertEquals(0, done)
+        composeRule.onNodeWithTag(paperColourOptionTestTag(PaperColour.PASTEL_BLUE)).assertIsSelected()
+        assertEquals("A sample page on pastel blue paper", sampleLabelFor(PaperColour.PASTEL_BLUE))
+
+        composeRule.onNodeWithTag(PaperColourDoneTestTag).assertContentDescriptionEquals("Done").performClick()
+        assertEquals(1, done)
     }
 
     @Test
-    fun `one tap picks`() {
-        setChooser(PaperColour.WHITE)
-        composeRule.onNodeWithTag(paperColourOptionTestTag(PaperColour.PASTEL_BLUE)).performClick()
-        assertEquals(PaperColour.PASTEL_BLUE, picked)
+    fun `given the pile, when the current sheet is tapped again, then nothing is picked`() {
+        setChooser(PaperColour.IVORY)
+        composeRule.onNodeWithTag(paperColourOptionTestTag(PaperColour.IVORY)).performClick()
+        assertNull(picked)
+    }
+
+    /** A56.6 / A56.7: the sample page and its label are hidden; Done comes before the sheets, the foot after them. */
+    @Test
+    fun `given the pile, then the sample page and its label are hidden from TalkBack and Done comes first`() {
+        setChooser(PaperColour.PASTEL_PINK)
+        listOf(PaperColourSampleTestTag, PaperColourSampleLabelTestTag).forEach { tag ->
+            val config = composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().config
+            assertTrue("$tag speaks", config.none { e -> e.key == SemanticsProperties.ContentDescription || e.key == SemanticsProperties.Text })
+        }
+        composeRule.onNodeWithText(sampleLabelFor(PaperColour.PASTEL_PINK)).assertDoesNotExist()
+        val done = composeRule.onNodeWithTag(PaperColourDoneTestTag).fetchSemanticsNode().boundsInRoot
+        val first = composeRule.onNodeWithTag(paperColourOptionTestTag(PaperColour.WHITE)).fetchSemanticsNode().boundsInRoot
+        val foot = composeRule.onNodeWithText(Copy.PaperColour.FOOT).fetchSemanticsNode().boundsInRoot
+        assertTrue("Done is not above the pile", done.bottom <= first.top)
+        assertTrue("the foot is not under the pile", foot.top >= first.bottom)
     }
 
     /**
@@ -157,8 +212,11 @@ class PaperColourScreenTest {
         composeRule.onNodeWithTag(ProofPaperSegmentsTestTag).assertDoesNotExist()
         val fact = composeRule.onNodeWithTag(ProofFixedPaperTestTag).assertIsDisplayed()
         fact.assertContentDescriptionEquals(
-            "${Copy.Paper.LEGAL}, ${Copy.Paper.LEGAL_DIMENSIONS_SPOKEN}. ${Copy.Paper.printsOnlyOn(Copy.Paper.LEGAL)}",
+            "US Legal, long paper, 8.5 by 14 inches. You made this zine for US Legal paper. Use US Legal paper only. " +
+                "Put US Legal paper in your printer before you print.",
         )
+        composeRule.onNodeWithText("US LEGAL", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText(Copy.Paper.LEGAL_PLAIN, useUnmergedTree = true).assertExists()
         val node = fact.fetchSemanticsNode()
         assertNull("the fact is a control", node.config.getOrNull(SemanticsProperties.Role))
         assertTrue("the fact has no click", node.config.none { it.key.name == "OnClick" })
@@ -169,7 +227,8 @@ class PaperColourScreenTest {
         setPanel(PaperSize.A5)
         composeRule.onNodeWithTag(ProofPaperSegmentsTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(ProofFixedPaperTestTag).assertContentDescriptionEquals(
-            "${Copy.Paper.A5}, ${Copy.Paper.A5_DIMENSIONS_SPOKEN}. ${Copy.Paper.printsOnlyOn(Copy.Paper.A5)}",
+            "A5, small paper, 148 by 210 millimetres. You made this zine for A5 paper. Use A5 paper only. " +
+                "Put A5 paper in your printer before you print.",
         )
     }
 
@@ -200,7 +259,9 @@ class PaperColourScreenTest {
 
         composeRule.onNodeWithTag(ProofPaperColourNoteTestTag)
             .assertExists()
-        composeRule.onNodeWithText(Copy.PaperColour.loadNote("pastel yellow")).assertExists()
+        composeRule.onNodeWithText(
+            "Put pastel yellow paper in your printer. The PDF has only the ink, so the colour comes from your paper.",
+        ).assertExists()
         composeRule.onNodeWithText("A4, pastel yellow paper").assertExists()
     }
 
@@ -216,6 +277,7 @@ class PaperColourScreenTest {
     // ── The Proof: the chooser's door, the band, and saving ───────────────────────────────────────────
 
     private var colourPicks = 0
+    private lateinit var inputMode: InputModeManager
 
     private fun setProof(
         paper: PaperSize = PaperSize.A4,
@@ -227,6 +289,7 @@ class PaperColourScreenTest {
             var colour by remember { mutableStateOf(start) }
             var size by remember { mutableStateOf(paper) }
             ZinelyTheme {
+                inputMode = LocalInputModeManager.current
                 ProofScreen(
                     onBack = {},
                     paper = size,
@@ -240,6 +303,38 @@ class PaperColourScreenTest {
             }
         }
         composeRule.waitForIdle()
+    }
+
+    /** AW6.12 at Print details' door: told the chooser has closed, the panel focuses its Paper colour row, once. */
+    @Test
+    fun `given the chooser has closed, when Print details comes back, then the Paper colour row has focus`() {
+        var focusRow by mutableStateOf(false)
+        var cleared = 0
+        val requester = FocusRequester()
+        composeRule.setContent {
+            ZinelyTheme {
+                inputMode = LocalInputModeManager.current
+                ProofPrintDetailsPanel(
+                    paper = PaperSize.A4,
+                    onPaperSelected = {},
+                    onOpenFold = {},
+                    paperColour = PaperColour.PASTEL_GREEN,
+                    paperColourFocus = requester,
+                    focusColourRow = focusRow,
+                    onColourRowFocused = { cleared++; focusRow = false },
+                )
+            }
+        }
+        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ProofPaperColourRowTestTag).assertIsNotFocused()
+
+        focusRow = true
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(ProofPaperColourRowTestTag).assertIsFocused()
+        assertEquals(1, cleared)
+        assertFalse(focusRow)
     }
 
     @Test
@@ -262,7 +357,7 @@ class PaperColourScreenTest {
     }
 
     @Test
-    fun `picking a colour returns to Print details and keeps a saved PDF`() {
+    fun `given Print details' door, when a colour is picked, then the chooser stays, and Done returns to the row and keeps a saved PDF`() {
         val saved = MutableSharedFlow<String>(extraBufferCapacity = 1)
         setProof(saved = saved)
         saved.tryEmit("zine.pdf")
@@ -271,11 +366,19 @@ class PaperColourScreenTest {
         composeRule.onNodeWithTag(ProofReadyTestTag).performClick()
         composeRule.onNodeWithTag(ProofPaperColourRowTestTag).performScrollTo().performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(paperColourOptionTestTag(PaperColour.PASTEL_GREEN)).performScrollTo().performClick()
+        composeRule.onNodeWithTag(paperColourOptionTestTag(PaperColour.PASTEL_GREEN)).performClick()
         composeRule.waitForIdle()
 
         assertEquals(1, colourPicks)
-        // Back on Print details, the row names the pick.
+        // A56.5: the chooser stays open on the pick.
+        composeRule.onNodeWithTag(PaperColourSheetTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(paperColourOptionTestTag(PaperColour.PASTEL_GREEN)).assertIsSelected()
+        composeRule.onNodeWithTag(PaperColourDoneTestTag).performClick()
+        composeRule.waitForIdle()
+        // Back on Print details, the row names the pick. Its focus (AW6.12) is pinned by the panel test below:
+        // Robolectric opens Print details' re-raised drawer window in touch mode whatever the test asks, and in
+        // touch mode Compose moves no focus, so it cannot be asserted through the whole screen.
+        composeRule.onNodeWithTag(PaperColourSheetTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(ProofPaperColourRowTestTag).assertContentDescriptionEquals("Paper colour, Pastel green")
         composeRule.onNodeWithTag(ZSheetCloseTestTag).performClick()
         composeRule.waitForIdle()
@@ -285,12 +388,12 @@ class PaperColourScreenTest {
     }
 
     @Test
-    fun `re-picking the current colour changes nothing`() {
+    fun `given Print details' door, when the current colour is tapped again, then nothing changes and the chooser stays`() {
         setProof(start = PaperColour.IVORY, startDrawer = ProofDrawer.PaperColour)
         composeRule.onNodeWithTag(paperColourOptionTestTag(PaperColour.IVORY)).assertIsSelected().performClick()
         composeRule.waitForIdle()
         assertEquals(0, colourPicks)
-        composeRule.onNodeWithTag(ProofPaperColourRowTestTag).assertExists()
+        composeRule.onNodeWithTag(PaperColourSheetTestTag).assertIsDisplayed()
     }
 
     @Test

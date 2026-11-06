@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -148,9 +150,19 @@ internal fun ProofPrintDetailsPanel(
     // AW6-P.2: the zine's paper colour, and the second door to the AW6.4 chooser.
     paperColour: PaperColour = PaperColour.WHITE,
     onOpenPaperColour: () -> Unit = {},
-    // AW6.12: where focus returns when the chooser closes.
+    // AW6.12: the Paper colour row's requester, always attached; [focusColourRow] is true once the chooser has
+    // closed, and the row then asks for focus (a frame later, so the chooser's window has gone) and clears the flag.
     paperColourFocus: FocusRequester? = null,
+    focusColourRow: Boolean = false,
+    onColourRowFocused: () -> Unit = {},
 ) {
+    if (paperColourFocus != null && focusColourRow) {
+        LaunchedEffect(Unit) {
+            withFrameNanos { }
+            runCatching { paperColourFocus.requestFocus() }
+            onColourRowFocused()
+        }
+    }
     Column(
         modifier = modifier
             .fillMaxSize()

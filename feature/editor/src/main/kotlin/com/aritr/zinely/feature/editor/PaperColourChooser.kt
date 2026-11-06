@@ -78,6 +78,7 @@ public const val PaperColourGroupTestTag: String = "paper-colour-group"
 public fun paperColourOptionTestTag(colour: PaperColour): String = "paper-colour-${colour.id}"
 public const val PaperColourSampleTestTag: String = "paper-colour-sample"
 public const val PaperColourDoneTestTag: String = "paper-colour-done"
+public const val PaperColourSampleLabelTestTag: String = "paper-colour-sample-label"
 
 /** The chooser sheet (both doors), for tests. */
 public const val PaperColourSheetTestTag: String = "paper-colour-sheet"
@@ -112,6 +113,7 @@ internal fun PaperColourSheetSurface(
         modifier = modifier.testTag(PaperColourSheetTestTag),
         // `.head{padding:var(--gap-xs) var(--gap-xl) var(--gap-sm)}`: no `border-bottom`, unlike AW6's sheet.
         headDivider = false,
+        pile = true,
         pinned = { PaperSampleRow(selected, onDone, doneFocus) },
     ) {
         PaperPile(selected = selected, onPick = { picked ->
@@ -159,8 +161,8 @@ private fun PaperSampleRow(selected: PaperColour, onDone: () -> Unit, doneFocus:
         Column(verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd)) {
             // `.lab{font-size:.78em;font-weight:600;color:var(--ink-soft);line-height:1.35}`
             BasicText(
-                text = Copy.PaperColour.sampleLabel(selected.sentenceName, isWhite = selected == PaperColour.WHITE),
-                modifier = Modifier.clearAndSetSemantics { },
+                text = sampleLabelFor(selected),
+                modifier = Modifier.testTag(PaperColourSampleLabelTestTag).clearAndSetSemantics { },
                 style = TextStyle(
                     color = colors.inkSoft, fontFamily = ZinelyV21Fonts.Work, fontSize = 12.48.sp,
                     fontWeight = FontWeight.SemiBold, lineHeight = 1.35.em,
@@ -170,6 +172,10 @@ private fun PaperSampleRow(selected: PaperColour, onDone: () -> Unit, doneFocus:
         }
     }
 }
+
+/** A56.6's label for [paper]'s sample page. */
+internal fun sampleLabelFor(paper: PaperColour): String =
+    Copy.PaperColour.sampleLabel(paper.sentenceName, isWhite = paper == PaperColour.WHITE)
 
 /**
  * `.done`, the sheet's one action, in leaf. `min-height:48px;min-width:112px;padding:0 var(--gap-xl);
@@ -237,10 +243,10 @@ private fun SamplePage(paper: PaperColour) {
         val body = TextStyle(color = Color(0xFF5B5347), fontFamily = ZinelyV21Fonts.Work,
             fontSize = (11f * s).toSp(), lineHeight = (11f * s).toSp())
         // SVG text sits on its baseline; the measured line's top is about one size above it.
-        drawText(measurer, "Sunday", topLeft = p(22f, 172f - 20f), style = head, softWrap = false)
-        drawText(measurer, "market", topLeft = p(22f, 196f - 20f), style = head, softWrap = false)
-        drawText(measurer, "Eggs, bread, a radio", topLeft = p(22f, 226f - 10f), style = body, softWrap = false)
-        drawText(measurer, "that plays one song.", topLeft = p(22f, 242f - 10f), style = body, softWrap = false)
+        drawText(measurer, Copy.PaperColour.SAMPLE_TITLE_1, topLeft = p(22f, 172f - 20f), style = head, softWrap = false)
+        drawText(measurer, Copy.PaperColour.SAMPLE_TITLE_2, topLeft = p(22f, 196f - 20f), style = head, softWrap = false)
+        drawText(measurer, Copy.PaperColour.SAMPLE_BODY_1, topLeft = p(22f, 226f - 10f), style = body, softWrap = false)
+        drawText(measurer, Copy.PaperColour.SAMPLE_BODY_2, topLeft = p(22f, 242f - 10f), style = body, softWrap = false)
         drawLine(
             Color(0xFF8C8269), p(22f, 270f), p(176f, 270f), strokeWidth = 1.5f * s,
             pathEffect = PathEffect.dashPathEffect(floatArrayOf(3f * s, 4f * s)),
@@ -252,13 +258,13 @@ private fun SamplePage(paper: PaperColour) {
 }
 
 /**
- * A56.3's `.pile`: nine sheets on a patch of desk, five to a row (two rows), or three to a row when text is large.
+ * A56.3's `.pile`: ten sheets on a patch of desk, five to a row (two even rows), or three to a row when text is large.
  *
  * **Semantics (AW6.12, ADR-059's Role to View lesson):** the sheets sit in [Modifier.selectableGroup]; each is
  * [Modifier.selectable] with `role = Role.RadioButton`, never a Button carrying `selected` (which reaches the platform
  * as a checkable button). Its children are cleared so it collapses to ONE platform node named by the colour (and
  * White's note); `selectable` sits outside the clear, so its role and checked state survive the collapse. The group
- * is also a one-column collection, so TalkBack can say "n of 9" (A56.7).
+ * is also a one-column collection, so TalkBack can say "n of 10" (A56.7).
  *
  * `.pile{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--gap-sm) var(--gap-xs);
  *  padding:var(--gap-md) var(--gap-sm) var(--gap-sm);background:var(--desk);margin:0 var(--gap-lg);
@@ -444,4 +450,4 @@ private val SheetLarge = androidx.compose.ui.unit.DpSize(52.dp, 72.dp)
 internal const val LargeTextScale: Float = 1.5f
 
 /** A56.3's `TILT`, in pile order: seeded per sheet, never re-rolled. Degrees. */
-private val PileTilt = floatArrayOf(-1.6f, 1.1f, -0.7f, 1.8f, -1.2f, 0.8f, -1.9f, 1.4f, -0.9f)
+private val PileTilt = floatArrayOf(-1.6f, 1.1f, -0.7f, 1.8f, -1.2f, 0.8f, -1.9f, 1.4f, 0.6f, -0.9f)

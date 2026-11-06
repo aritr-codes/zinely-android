@@ -432,6 +432,9 @@ internal fun ZineActionSheetSurface(
  * @param headDivider the head's dashed rule. A56's chooser head has none.
  * @param pinned drawn under the head and above the scrolling content, and never scrolled: A56.2's top row (the sample
  *   page and Done), which must stay on screen when the pile scrolls at large text. Null (default) draws nothing.
+ * @param pile A56's own `.sheet` metrics: `max-height:92%`, `.head` bottom padding `--gap-sm` and `padding-bottom:
+ *   var(--gap-lg)`, where every other Library sheet takes 88%, `--gap-md` and `--gap-xl`. They are what lets the pile fit
+ *   a 360 × 640 dp phone at font scale 1 (A56.2).
  */
 @Composable
 internal fun LibrarySheetSurface(
@@ -441,6 +444,7 @@ internal fun LibrarySheetSurface(
     modifier: Modifier = Modifier,
     headDivider: Boolean = true,
     pinned: (@Composable ColumnScope.() -> Unit)? = null,
+    pile: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -448,7 +452,7 @@ internal fun LibrarySheetSurface(
     Column(
         modifier
             .fillMaxWidth()
-            .heightIn(max = (LocalConfiguration.current.screenHeightDp * A28MaxHeight).dp)
+            .heightIn(max = (LocalConfiguration.current.screenHeightDp * (if (pile) PileMaxHeight else A28MaxHeight)).dp)
             // `box-shadow:0 -16px 40px -18px var(--soft-shadow)` — upward, which is the one shadow in
             // the corpus that is not the hard offset. A sheet rising off the screen is the exception
             // §5.1 allows: it is not a printed object resting on the desk, it is chrome above it.
@@ -512,7 +516,7 @@ internal fun LibrarySheetSurface(
         ZineActionGrab()
 
         // `.sh-head{padding:var(--gap-xs) var(--gap-xl) var(--gap-md)}`
-        Column(Modifier.padding(HeadPadding)) {
+        Column(Modifier.padding(if (pile) PileHeadPadding else HeadPadding)) {
             Text(
                 text = title,
                 modifier = Modifier.testTag(ZineActionTitleTestTag),
@@ -576,7 +580,7 @@ internal fun LibrarySheetSurface(
                 .weight(1f, fill = false)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = ZinelyV21Dimens.gapXl),
+                .padding(bottom = if (pile) ZinelyV21Dimens.gapLg else ZinelyV21Dimens.gapXl),
             content = content,
         )
     }
@@ -831,6 +835,14 @@ private val GrabHeight = 5.dp
 private const val GrabOpacity = 0.5f
 
 /** `.sh-head{padding:var(--gap-xs) var(--gap-xl) var(--gap-md)}` */
+/** A56's `.head{padding:var(--gap-xs) var(--gap-xl) var(--gap-sm)}`. */
+private val PileHeadPadding = PaddingValues(
+    start = ZinelyV21Dimens.gapXl,
+    top = ZinelyV21Dimens.gapXs,
+    end = ZinelyV21Dimens.gapXl,
+    bottom = ZinelyV21Dimens.gapSm,
+)
+
 private val HeadPadding = PaddingValues(
     start = ZinelyV21Dimens.gapXl,
     top = ZinelyV21Dimens.gapXs,
@@ -873,6 +885,9 @@ private val NoteSize = 12.48.sp
 
 /** `.sheet.a28{max-height:88%}`. */
 private const val A28MaxHeight = 0.88f
+
+/** A56's `.sheet{max-height:92%}`. */
+private const val PileMaxHeight = 0.92f
 
 private fun ZineActionTarget.isEnabled(action: ZineAction): Boolean = when (action) {
     ZineAction.Open, ZineAction.ShareExport, ZineAction.Duplicate -> unavailableReason == null

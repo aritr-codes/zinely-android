@@ -137,7 +137,7 @@ class PaperColourGoldenTest {
     private fun chooser(dark: Boolean, fontScale: Float = 1f, width: Int = 430) {
         show(dark, fontScale) {
             Box(Modifier.size(width.dp, 900.dp), contentAlignment = Alignment.BottomCenter) {
-                PaperColourSheetSurface(selected = PaperColour.PASTEL_YELLOW, onPick = {})
+                PaperColourSheetSurface(selected = PaperColour.PASTEL_YELLOW, onPick = {}, onDone = {})
             }
         }
     }
