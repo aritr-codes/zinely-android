@@ -82,6 +82,7 @@ internal val PaperColour.displayName: String
         PaperColour.PASTEL_PURPLE -> Copy.PaperColour.PASTEL_PURPLE
         PaperColour.PASTEL_BLUE -> Copy.PaperColour.PASTEL_BLUE
         PaperColour.PASTEL_GREEN -> Copy.PaperColour.PASTEL_GREEN
+        PaperColour.LIGHT_BROWN -> Copy.PaperColour.LIGHT_BROWN
         PaperColour.GREY -> Copy.PaperColour.GREY
     }
 

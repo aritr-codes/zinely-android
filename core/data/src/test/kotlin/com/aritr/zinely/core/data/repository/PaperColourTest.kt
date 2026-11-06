@@ -10,12 +10,12 @@ import org.junit.jupiter.api.Test
 class PaperColourTest {
 
     @Test
-    fun `given the closed set, then it is A56_3's nine papers in pile order, with R41's values`() {
+    fun `given the closed set, then it is A56_3's ten papers in pile order, with R41's values`() {
         assertEquals(
             listOf(
                 "white" to "#FFFFFF", "ivory" to "#F4EEDC", "pastel-yellow" to "#F7EC9B", "pastel-orange" to "#F5CFA8",
                 "pastel-pink" to "#F4C6D0", "pastel-purple" to "#DCD0EC", "pastel-blue" to "#BCD6EA",
-                "pastel-green" to "#CDE6C8", "grey" to "#CFCDC6",
+                "pastel-green" to "#CDE6C8", "light-brown" to "#E8D3A9", "grey" to "#CFCDC6",
             ),
             PaperColour.entries.map { it.id to it.srgb.hex() },
         )
@@ -34,11 +34,12 @@ class PaperColourTest {
         assertEquals(PaperColour.PASTEL_BLUE, PaperColour.fromId("pastel-blue"))
         assertEquals(PaperColour.PASTEL_ORANGE, PaperColour.fromId("pastel-orange"))
         assertEquals(PaperColour.PASTEL_PURPLE, PaperColour.fromId("pastel-purple"))
+        assertEquals(PaperColour.LIGHT_BROWN, PaperColour.fromId("light-brown"))
     }
 
     /**
      * AW6.6's gate, the same arithmetic as `v21-library.html` / `v21-paper-pile.html`: the house Ink keeps 7:1 on the
-     * paper under multiply, and no ink that reaches 3:1 on White falls below 3:1 on it. A56.8's two papers had to pass.
+     * paper under multiply, and no ink that reaches 3:1 on White falls below 3:1 on it. A56.8's three papers had to pass.
      */
     @Test
     fun `given every paper, when the AW6_6 gate is run, then every paper passes`() {

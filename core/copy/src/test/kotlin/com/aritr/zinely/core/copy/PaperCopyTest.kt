@@ -114,13 +114,14 @@ class PaperCopyTest {
         assertEquals("Chosen", colour.CHOSEN)
         assertEquals("Pastel orange", colour.PASTEL_ORANGE)
         assertEquals("Pastel purple", colour.PASTEL_PURPLE)
+        assertEquals("Light brown", colour.LIGHT_BROWN)
         assertEquals("A sample page on pastel orange paper", colour.sampleLabel("pastel orange", isWhite = false))
         assertEquals("A sample page on white paper, plain printer paper", colour.sampleLabel("white", isWhite = true))
         assertEquals(
             "Put pastel yellow paper in your printer. The PDF has only the ink, so the colour comes from your paper.",
             colour.loadNote("pastel yellow"),
         )
-        listOf(colour.SUB, colour.FOOT, ">Done<", ">Chosen<", "'Pastel orange'", "'Pastel purple'", "'A sample page on '",
+        listOf(colour.SUB, colour.FOOT, ">Done<", ">Chosen<", "'Pastel orange'", "'Pastel purple'", "'Light brown'", "'A sample page on '",
             "', plain printer paper'", "The PDF has only the ink, so the colour comes from your paper.")
             .forEach { assertIn(pile, it) }
     }

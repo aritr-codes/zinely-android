@@ -1803,6 +1803,7 @@ public object Copy {
         public const val PASTEL_PURPLE: String = "Pastel purple"
         public const val PASTEL_BLUE: String = "Pastel blue"
         public const val PASTEL_GREEN: String = "Pastel green"
+        public const val LIGHT_BROWN: String = "Light brown"
         public const val GREY: String = "Grey"
         public const val WHITE_NOTE: String = "Plain printer paper."
 
@@ -1811,6 +1812,12 @@ public object Copy {
 
         /** A56.4: the word under the chosen sheet. Drawn uppercase; TalkBack hears the checked state instead. */
         public const val CHOSEN: String = "Chosen"
+
+        /** A56.6: the made-up page drawn on the sample sheet: two title lines and two body lines. Hidden from TalkBack. */
+        public const val SAMPLE_TITLE_1: String = "Sunday"
+        public const val SAMPLE_TITLE_2: String = "market"
+        public const val SAMPLE_BODY_1: String = "Eggs, bread, a radio"
+        public const val SAMPLE_BODY_2: String = "that plays one song."
 
         /** A56.6: the sample page's label. [colour] is lower-case (AW6.13); White also says what it is. */
         public fun sampleLabel(colour: String, isWhite: Boolean): String =
