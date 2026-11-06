@@ -98,6 +98,16 @@ Changes since the beta.9 app.
 
 ### Changed
 
+- Paper names you can understand, and paper colour as a pile of paper (W7, [ADR-152](docs/DECISIONS.md#adr-152),
+  Library A55 and A56). **Start a zine** shows each paper's official name as a stamp, then a plain name: "A4, printer
+  paper, most countries", "US Letter, printer paper, US and Canada", "US Legal, long paper", "A5, small paper". Each
+  row shows the sheet size and the page size on one line, and US Legal and A5 say "Use US Legal paper only. Make sure
+  that your printer can use it." Print details shows the same names for a US Legal or A5 zine. The Shelf, the zine
+  sheet and the PDF keep the official name only. **Paper colour** is now a pile of ten small sheets with a sample page:
+  a tap changes the colour and the sheet stays open, so you can try each paper; **Done** closes it. Three new papers:
+  Pastel orange, Pastel purple and Light brown. Print details now says "Put pastel yellow paper in your printer. The
+  PDF has only the ink, so the colour comes from your paper." At normal text size both sheets fit a small phone with
+  no scrolling. The colour is still never printed and never in the PDF.
 - The "restored details" note on My Shelf now lists the zines whose name went back first, so a zine you cannot find
   is never hidden in "and 2 more"; and when several zines share a name it says which one it means (its folder, and
   its place among them: "Notes" (in "Trips", 2 of 3 with this name)). Library design amendment A37.3 (frozen
@@ -140,6 +150,9 @@ Changes since the beta.9 app.
 
 ### Known limitations
 
+- The paper colour sheet closes with Done, Back or a tap outside it. It does not close with a swipe down, like every
+  other Zinely sheet. An older Zinely shows a zine on Pastel orange, Pastel purple or Light brown as White, and keeps
+  the colour in the file.
 - A backup that holds a described photo or Art piece can be restored only by the first Zinely release that includes
   Describe, or newer. An older Zinely says the backup needs a newer Zinely and restores nothing from it. A backup of zines with no
   descriptions restores in older builds as before. The TalkBack listen for Read's new stops is still owed.

@@ -19185,3 +19185,67 @@ their tests and goldens. `PaperColour` gains three entries (add-only ids). The c
 
 **Owed before Accepted:** the build; goldens re-recorded on the pinned image; both device passes, including a TalkBack listen of
 the Start sheet and the pile.
+
+#### As built (2026-11-06) {#adr-152-as-built}
+
+Built on `w7/paper-names-colour-ste` (from `486bcf86`, with the owner's ten-paper change `d82861b0`). Not released, not
+Accepted.
+
+- **Papers.** `PaperColour` gains `PASTEL_ORANGE`, `PASTEL_PURPLE` and `LIGHT_BROWN` in A56.3's order (ten papers). The
+  declaration order is the pile's order; nothing stores or compares an ordinal (ids are stored), so the inserts are
+  safe. `PaperColourTest` pins the ids, values and order, and now runs the AW6.6 gate over every paper (house ink 7:1,
+  no 3:1 ink on White below 3:1 on the paper).
+- **Words.** Every string is in `Copy.kt` (`Copy.Paper.*_PLAIN`, `*_SIZES`, `onlyOn`, `*_SPOKEN`, `printsOnlyOn`;
+  `Copy.Shelf.CHOOSE_PAPER_SUB` / `EIGHT_PAGES_FROM_SHEET`; `Copy.PaperColour.SUB`, `FOOT`, `DONE`, `CHOSEN`,
+  `sampleLabel`, `loadNote`, the three names). The A35 `*_NOTE` strings are deleted. `PaperCopyTest` writes each string
+  out in full and also finds it in `v21-paper-names.html` / `v21-paper-pile.html`. The plain-English check passes with
+  no new baseline line.
+- **Start sheet (A55.1, A55.4).** Each row: the A35 stock (unchanged), then `PaperNames` (a `PaperStamp` and the plain
+  name in a `FlowRow`, so they wrap at large text), the sizes line, and for US Legal and A5 the only-on line. One button
+  node with the A55.4 label. Sizes from A55's CSS (`.nm` 16.32 sp, `.dim` 12.8 sp, `.nt` 12.48 sp).
+- **Print details (A55.6, A56.9).** The fixed-paper card shows the stamp, the plain name, the sheet size and the new
+  sentence; one node, "US Legal, long paper, 8.5 by 14 inches. You made this zine for US Legal paper. …". The colour
+  note reads "Put … paper in your printer. …".
+- **The pile (A56).** `PaperColourSheetSurface` is the one chooser for both doors: the Library sheet with no head rule,
+  a pinned top row (the stand-in page drawn in Compose from the prototype's SVG with the AW6 paper layer over it, its
+  label, Done in leaf), then the pile (five columns, three at font scale 1.5 or more, 42 × 58 dp sheets, 52 × 72 at
+  large text; fixed tilts from the prototype; the chosen sheet square, taped and named "Chosen" over a berry rule) and
+  the foot. Semantics: `selectableGroup` with a one-column `CollectionInfo` of ten; each sheet `selectable(Role.RadioButton)`
+  with `clearAndSetSemantics` (name, and White's note, plus its `CollectionItemInfo`); the page and the label are cleared.
+- **Doors (A56.5).** A tap saves (the door's normal pick) and the sheet stays open; re-tapping the current paper does
+  nothing. Done, Back and the scrim close it. The Library returns to the zine sheet with focus requested on its Paper
+  colour row; Print details now raises the same Library sheet in place of its own `ZSheet` (so it lost its "Close"
+  button: Done is the one action) and, on return, requests focus on its Paper colour row one frame after the chooser
+  closes (a flag plus a `LaunchedEffect` in `ProofPrintDetailsPanel`; the requester stays attached). The Library
+  door's return is asserted end to end; Print details' is asserted on the panel only, because Robolectric re-raises
+  the Print details drawer window in touch mode whatever the test asks, and touch mode moves no focus. Its end-to-end
+  check is a keyboard pass on the emulator, owed.
+- **Fit (A55.8, A56.2).** `PaperSheetFitTest` (Robolectric, 360 × 640 dp): at font scale 1 neither sheet has anything to
+  scroll; at font scale 2 the pile scrolls to Grey and Done stays on screen above it. To fit, the pile takes A56's own
+  sheet metrics through `LibrarySheetSurface(pile = true)`: 92 % height, an 8 dp head bottom and a 16 dp bottom padding
+  (every other Library sheet keeps 88 %, 12 dp and 24 dp).
+- **Tests.** `PaperColourTest`, `PaperCopyTest`, `PaperSheetFitTest` (new); `PaperColourScreenTest` (ten sheets in two rows,
+  radio and collection semantics, a tap keeps the sheet open and Done closes, the hidden page and label, the A55.6 card,
+  the A56.9 note, Print details' door with focus return), `ShelfSheetsTest` (A55.1 rows and A55.4 labels),
+  `ZineLibraryScreenTest` (the zine sheet's door with focus return), `PaperColourGoldenTest` call sites.
+
+**Deviations and interpretations.**
+- **No swipe down to close.** A56.5 lists a swipe; no Zinely sheet has drag-to-dismiss (ADR-049: the grip is drawn, not
+  wired). Done, Back and the scrim close it. A Known Limitation in the changelog.
+- **The head is pinned too.** A56.2 pins the top row under the title; here the title and sub-line are pinned as well,
+  as on every Library sheet, and only the pile and the foot scroll.
+- **Focus return is keyboard focus.** It is requested on the row; Compose moves no focus in touch mode, so the tests run
+  in keyboard mode. Where TalkBack lands after Done is for the TalkBack listen.
+- **"n of 10"** comes from collection semantics; whether TalkBack says it is for the TalkBack listen.
+- **Large text** switches at font scale 1.5 (A56.3 draws font scale 2): at 1.3 five columns still hold the names.
+- The golden files keep their AW6 names (`aw6_chooser_*`, `a35_start_sheet_light`) though they now draw A56 and A55.
+
+**Verified (2026-11-06, local).** `:core:copy` 60, `:core:data` 147, `:app` 314 and `:feature:editor` (1,652 in the
+golden run) unit tests green; `:app:lintDebug` and `:feature:editor:lintDebug` clean. `gold` fails on exactly six
+goldens, each an intended change read from its `*_compare.png`: `aw6_chooser_light`, `aw6_chooser_dark` and
+`aw6_chooser_font2_360` (the list became the pile, sample page and Done; new sub and foot), `a35_start_sheet_light`
+(stamps, plain names, one size line, new sub and foot), `a35_print_details_us_legal_light` (the stamp and the A55.6
+sentence) and `aw6p_print_details_pastel_yellow_font2` (the A56.9 note). Not re-recorded here.
+
+**Owed:** goldens re-recorded on the pinned image (`record-goldens.yml`); both device passes, including a TalkBack listen
+of the Start sheet and the pile and the printed check of the three new papers.
