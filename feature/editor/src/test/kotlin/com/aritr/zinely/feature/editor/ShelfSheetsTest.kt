@@ -74,34 +74,50 @@ class ShelfSheetsTest {
         assertEquals(PaperSize.entries.size, PaperSize.entries.map { it.choiceName }.toSet().size)
     }
 
-    /** A35.11: each row is ONE node, role button, named by its words with units said in full, the paper first. */
+    /** A55.4: each row is ONE node, role button, named by its words in the order of the screen, units in full. */
     @Test
-    fun `each row is one button named by its words in full`() {
+    fun `given the Start sheet, then each row is one button named as A55_4 says`() {
         setContent { ShelfCreateSheet(visible = true, onDismiss = {}, onChoosePaper = {}) }
         val legal = composeRule.onNodeWithTag(homePaperChoiceTestTag(PaperSize.LEGAL)).fetchSemanticsNode().config
         assertEquals(
             listOf(
-                "US Legal, 8.5 by 14 inches. Pages 3.5 by 4.25 inches, wider than Letter’s. Prints on US Legal paper " +
-                    "only, so check that your printer takes it.",
+                "US Legal, long paper, 8.5 by 14 inches, pages 3.5 by 4.25 inches. Use US Legal paper only. " +
+                    "Make sure that your printer can use it.",
             ),
             legal[SemanticsProperties.ContentDescription],
         )
         assertEquals(Role.Button, legal[SemanticsProperties.Role])
         // A35.11: no "selected", no position: the rows are buttons, not a list of choices.
         assertTrue(SemanticsProperties.Selected !in legal)
+        val a4 = composeRule.onNodeWithTag(homePaperChoiceTestTag(PaperSize.A4)).fetchSemanticsNode().config
+        assertEquals(
+            listOf("A4, printer paper, most countries, 210 by 297 millimetres, pages 74 by 105 millimetres."),
+            a4[SemanticsProperties.ContentDescription],
+        )
     }
 
+    /** A55.1: the stamp and the plain name, the sizes line, and the warning for US Legal and A5 only. */
     @Test
-    fun `the start sheet names each stock, its real dimensions and its line`() {
+    fun `given the Start sheet, then each row shows its stamp, plain name, sizes and only the Legal and A5 warning`() {
         setContent { ShelfCreateSheet(visible = true, onDismiss = {}, onChoosePaper = {}) }
-        composeRule.onNodeWithText("210 × 297 mm", useUnmergedTree = true).assertExists()
-        composeRule.onNodeWithText("8.5 × 11 in", useUnmergedTree = true).assertExists()
+        listOf("A4", "US LETTER", "US LEGAL", "A5").forEach {
+            composeRule.onNodeWithText(it, useUnmergedTree = true).assertExists()
+        }
+        listOf(
+            com.aritr.zinely.core.copy.Copy.Paper.A4_PLAIN, com.aritr.zinely.core.copy.Copy.Paper.LETTER_PLAIN,
+            com.aritr.zinely.core.copy.Copy.Paper.LEGAL_PLAIN, com.aritr.zinely.core.copy.Copy.Paper.A5_PLAIN,
+            com.aritr.zinely.core.copy.Copy.Paper.A4_SIZES, com.aritr.zinely.core.copy.Copy.Paper.LETTER_SIZES,
+            com.aritr.zinely.core.copy.Copy.Paper.LEGAL_SIZES, com.aritr.zinely.core.copy.Copy.Paper.A5_SIZES,
+            "Use US Legal paper only. Make sure that your printer can use it.",
+            "Use A5 paper only. Make sure that your printer can use it.",
+        ).forEach { composeRule.onNodeWithText(it, useUnmergedTree = true).assertExists() }
+        composeRule.onAllNodesWithText("Use A4 paper only.", substring = true, useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithText("Use US Letter paper only.", substring = true, useUnmergedTree = true)
+            .assertCountEquals(0)
         composeRule.onNodeWithText(
-            "Pages 52.5 × 74 mm, the smallest zine. Prints on A5 paper only, so check that your printer takes it.",
-            useUnmergedTree = true,
+            "Choose the paper that is in your printer. You cannot change the paper of a zine after you start it.",
         ).assertExists()
-        composeRule.onNodeWithText("Which paper will you print on? A zine keeps the paper it starts on.").assertExists()
-        composeRule.onNodeWithText("Eight pages from one folded sheet.", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText("Zinely makes eight pages from one folded sheet.", useUnmergedTree = true).assertExists()
     }
 
     /**

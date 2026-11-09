@@ -9,6 +9,8 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -95,8 +97,8 @@ internal val ShelfPaperChoices: List<PaperSize> = listOf(PaperSize.A4, PaperSize
  * Drawn as the Library's own `.sheet` ([LibrarySheetHost] / [LibrarySheetSurface]), which is the paint the frozen
  * `.a35-sheet` restates: the head, its dashed divider, then full-bleed rows with a dashed rule under each.
  *
- * Each row ([StartPaperRow]) is the sheet drawn upright at **one** scale for all four, then the name, the size and
- * one line. The scale was re-based from A4's 74dp on 841.890pt to 56dp on US Legal's 1008pt so the tallest fits
+ * Each row ([StartPaperRow]) is the sheet drawn upright at **one** scale for all four, then the stamp and plain
+ * name, the sizes line and, for US Legal and A5, the only-on line (A55.1). The scale was re-based from A4's 74dp on 841.890pt to 56dp on US Legal's 1008pt so the tallest fits
  * (A35.4), so the shipped stocks shrank (A4 52x74 to 33x47).
  *
  * ponytail: the head stays pinned above the scrolling rows, as every Library sheet's does ([LibrarySheetSurface]);
@@ -197,30 +199,91 @@ private fun StartPaperRow(paper: PaperSize, onClick: () -> Unit) {
         verticalAlignment = Alignment.Top,
     ) {
         PaperStockSlot(paper)
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapHair)) {
+        // A55.1: `.tx{display:flex;flex-direction:column;gap:var(--gap-xs)}`: the names, the sizes, then (US Legal and A5)
+        // the warning.
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapXs)) {
+            PaperNames(paper, color = ink)
             BasicText(
-                text = paper.choiceName,
+                text = paper.choiceSizes,
                 style = TextStyle(
-                    color = ink, fontFamily = ZinelyV21Fonts.Work, fontSize = RowNameSize,
-                    fontWeight = FontWeight.SemiBold, lineHeight = 1.3.em,
+                    color = soft, fontFamily = ZinelyV21Fonts.Work, fontSize = RowSizesSize,
+                    // `.dim` sets no line-height, so it is the browser's `normal` (about 1.2 for the face).
+                    fontWeight = FontWeight.SemiBold, lineHeight = 1.25.em,
                 ),
             )
-            BasicText(
-                text = paper.choiceDimensions,
-                style = TextStyle(
-                    color = soft, fontFamily = ZinelyV21Fonts.Work, fontSize = RowLineSize,
-                    fontWeight = FontWeight.SemiBold, lineHeight = 1.4.em,
-                ),
-            )
-            BasicText(
-                text = paper.startNote,
-                style = TextStyle(
-                    color = soft, fontFamily = ZinelyV21Fonts.Work, fontSize = RowLineSize,
-                    fontWeight = FontWeight.Medium, lineHeight = 1.45.em,
-                ),
-            )
+            paper.onlyOnLine?.let { line ->
+                BasicText(
+                    text = line,
+                    style = TextStyle(
+                        color = soft, fontFamily = ZinelyV21Fonts.Work, fontSize = RowLineSize,
+                        lineHeight = 1.45.em,
+                    ),
+                )
+            }
         }
     }
+}
+
+/**
+ * A55.1 line 1, also A55.6's card: the official name as a [PaperStamp], then the plain name, on one line when they fit
+ * and wrapping onto two at large text (A55.8). `.nm{display:flex;flex-wrap:wrap;align-items:center;
+ * gap:var(--gap-hair) var(--gap-sm);font-size:1.02em;font-weight:600;line-height:1.25}`
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun PaperNames(paper: PaperSize, color: Color) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+        verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapHair),
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        PaperStamp(paper.displayName)
+        BasicText(
+            text = paper.plainName,
+            style = TextStyle(
+                color = color, fontFamily = ZinelyV21Fonts.Work, fontSize = RowNameSize,
+                fontWeight = FontWeight.SemiBold, lineHeight = 1.25.em,
+            ),
+        )
+    }
+}
+
+/**
+ * A55.5's stamp: the official name, material and never a control. Butter ground, ink words, a 1.5dp dashed ink edge,
+ * square (it sits in a control, ZINE-WORLD F.9, so no tilt), uppercase and tracked. Pinned in both themes.
+ *
+ * `.stp{font-size:.72em;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--on-butter);
+ *  background:var(--butter);border:1.5px dashed rgba(39,39,15,.55);border-radius:var(--br-xs);padding:1px 6px;
+ *  white-space:nowrap}`
+ */
+@Composable
+internal fun PaperStamp(name: String) {
+    BasicText(
+        text = name.uppercase(),
+        maxLines = 1,
+        softWrap = false,
+        modifier = Modifier
+            .clip(StampShape)
+            .background(StampButter)
+            .drawBehind {
+                val w = StampEdge.toPx()
+                drawRoundRect(
+                    color = StampEdgeInk,
+                    topLeft = Offset(w / 2f, w / 2f),
+                    size = androidx.compose.ui.geometry.Size(size.width - w, size.height - w),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(ZinelyV21Dimens.radiusXs.toPx()),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(
+                        width = w,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(StampDash.toPx(), StampDash.toPx())),
+                    ),
+                )
+            }
+            .padding(horizontal = 6.dp, vertical = 1.dp),
+        style = TextStyle(
+            color = StockInk, fontFamily = ZinelyV21Fonts.Work, fontSize = StampSize,
+            fontWeight = FontWeight.Bold, letterSpacing = 0.08.em, lineHeight = 1.25.em,
+        ),
+    )
 }
 
 /**
@@ -282,13 +345,27 @@ internal val PaperSize.choiceDimensions: String
         PaperSize.LEGAL -> Copy.Paper.LEGAL_DIMENSIONS
         PaperSize.A5 -> Copy.Paper.A5_DIMENSIONS
     }
-private val PaperSize.startNote: String
+/** A55.2's plain name, after the official one. Start and Print details only (A55.7). */
+internal val PaperSize.plainName: String
     get() = when (this) {
-        PaperSize.A4 -> Copy.Paper.A4_NOTE
-        PaperSize.LETTER -> Copy.Paper.LETTER_NOTE
-        PaperSize.LEGAL -> Copy.Paper.LEGAL_NOTE
-        PaperSize.A5 -> Copy.Paper.A5_NOTE
+        PaperSize.A4 -> Copy.Paper.A4_PLAIN
+        PaperSize.LETTER -> Copy.Paper.LETTER_PLAIN
+        PaperSize.LEGAL -> Copy.Paper.LEGAL_PLAIN
+        PaperSize.A5 -> Copy.Paper.A5_PLAIN
     }
+
+/** A55.1 line 2: the sheet size and the page size. */
+private val PaperSize.choiceSizes: String
+    get() = when (this) {
+        PaperSize.A4 -> Copy.Paper.A4_SIZES
+        PaperSize.LETTER -> Copy.Paper.LETTER_SIZES
+        PaperSize.LEGAL -> Copy.Paper.LEGAL_SIZES
+        PaperSize.A5 -> Copy.Paper.A5_SIZES
+    }
+
+/** A55.1 line 3: US Legal and A5 print on their own paper only (the same split as [switchable]). */
+private val PaperSize.onlyOnLine: String?
+    get() = if (switchable) null else Copy.Paper.onlyOn(displayName)
 private val PaperSize.startSpoken: String
     get() = when (this) {
         PaperSize.A4 -> Copy.Paper.A4_SPOKEN
@@ -302,9 +379,18 @@ private val RowMinHeight = 48.dp
 private val RowRule = 1.5.dp
 private val RowRuleDash = 3.dp
 
-/** `.a35-nm{font-size:.9em}` = 14.4px; `.a35-dm`, `.a35-nt{font-size:.73em}` = 11.68px. */
-private val RowNameSize = 14.4.sp
-private val RowLineSize = 11.68.sp
+/** A55: `.nm{font-size:1.02em}` = 16.32px; `.dim{font-size:.8em}` = 12.8px; `.nt{font-size:.78em}` = 12.48px. */
+private val RowNameSize = 16.32.sp
+private val RowSizesSize = 12.8.sp
+private val RowLineSize = 12.48.sp
+
+/** A55.5: `.stp{font-size:.72em}` of `.nm`'s 16.32px = 11.75px; pinned butter and ink, 1.5dp dashed edge. */
+private val StampSize = 11.75.sp
+private val StampShape: Shape = RoundedCornerShape(ZinelyV21Dimens.radiusXs)
+private val StampButter = Color(0xFFE9E29B)
+private val StampEdgeInk = Color(0x8C27270F)
+private val StampEdge = 1.5.dp
+private val StampDash = 3.dp
 
 /** `.a35-stock{background:#FFF6E8;border:1.5px solid #27270F;box-shadow:2px 2px 0 #27270F}`: px, pinned. */
 private val StockPaper = Color(0xFFFFF6E8)

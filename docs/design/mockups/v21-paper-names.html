@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zinely · A55 plain paper names (frozen 2026-11-05)</title>
+<style>
+:root{
+  --desk:#E9E29B; --desk-edge:#BBCA6F; --surface:#F2CFBB; --ink:#27270F; --ink-soft:#6A452F; --ink-faint:#8E9546;
+  --butter:#E9E29B; --on-butter:#27270F; --hair:rgba(39,39,15,.16);
+  --br-xs:4px; --br-sm:8px; --br-xl:36px; --br-pill:999px;
+  --gap-hair:2px; --gap-xs:4px; --gap-sm:8px; --gap-md:12px; --gap-lg:16px; --gap-xl:24px;
+  --voice:"Averia Sans Libre","Fraunces",Georgia,serif; --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+:root[data-theme="dark"]{--desk:#242312; --desk-edge:#323119; --surface:#3D3920; --ink:#FFF9DB; --ink-soft:#DAD7A0; --hair:rgba(246,234,214,.15); --on-butter:#242312}
+*{box-sizing:border-box}
+body{margin:0;background:#1a1a12;color:#eee;font-family:var(--sans);display:flex;flex-direction:column;align-items:center;gap:24px;padding:24px 12px 60px}
+h1{font-family:var(--voice);margin:0;color:#F2CFBB;font-size:22px;text-align:center}
+body>h2{font-family:var(--voice);color:#F2CFBB;font-size:18px;margin:0}
+.cap{max-width:800px;font-size:14px;line-height:1.55;color:#ddd}.cap b{color:#fff}
+.row{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;align-items:flex-start}
+.label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#bbb;text-align:center;margin:0 0 8px}
+.phone{position:relative;width:390px;height:800px;overflow:hidden;background:var(--desk);border-radius:34px;border:1px solid var(--desk-edge);font-size:16px;color:var(--ink)}
+.phone.big{width:360px;font-size:32px}
+.phone.small{width:360px;height:640px}
+.scrim{position:absolute;inset:0;background:rgba(39,39,15,.44)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);max-height:92%;overflow-y:auto;scrollbar-width:none;padding:0 0 var(--gap-lg)}
+.sheet::-webkit-scrollbar{display:none}
+.grab{width:44px;height:5px;border-radius:var(--br-pill);background:var(--ink-faint);margin:var(--gap-md) auto var(--gap-xs);opacity:.5}
+.head{padding:var(--gap-xs) var(--gap-xl) var(--gap-md);border-bottom:1.5px dashed var(--hair)}
+.ttl{font-family:var(--voice);font-size:1.22em;font-weight:700;margin:0}
+.sub{font-size:.78em;color:var(--ink-soft);margin:var(--gap-hair) 0 0;line-height:1.45}
+.opt{display:flex;gap:var(--gap-lg);align-items:flex-start;width:100%;text-align:left;background:none;border:0;border-bottom:1.5px dashed var(--hair);
+  padding:var(--gap-md) var(--gap-xl);font:inherit;color:var(--ink);cursor:pointer;min-height:48px}
+.ic{flex:none;width:44px;display:flex;justify-content:center}
+.ic span{display:block;background:#FFF6E8;border:1.5px solid #27270F;box-shadow:2px 2px 0 #27270F;
+  background-image:linear-gradient(#27270f33 1px,transparent 1px),linear-gradient(90deg,#27270f33 1px,transparent 1px);background-size:50% 25%}
+.tx{display:flex;flex-direction:column;gap:var(--gap-xs);min-width:0;flex:1}
+.nm{display:flex;flex-wrap:wrap;align-items:center;gap:var(--gap-hair) var(--gap-sm);font-size:1.02em;font-weight:600;line-height:1.25}
+/* the official name is a STAMP (ZINE-WORLD E.1: stamp = size labels).  Square: it is inside a control (F.9). */
+.stp{font-size:.72em;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--on-butter);background:var(--butter);
+  border:1.5px dashed rgba(39,39,15,.55);border-radius:var(--br-xs);padding:1px 6px;white-space:nowrap}
+.dim{font-size:.8em;font-weight:600;color:var(--ink-soft)}
+.nt{font-size:.78em;color:var(--ink-soft);line-height:1.45}
+.pg{font-size:.74em;color:var(--ink-soft);line-height:1.4}
+.foot{font-size:.76em;color:var(--ink-soft);text-align:center;margin:var(--gap-md) var(--gap-xl) 0;line-height:1.5}
+.card{margin:var(--gap-md) var(--gap-lg);background:#FFF6E8;color:#27270F;border:1.5px solid #27270F;border-radius:var(--br-sm);padding:var(--gap-md) var(--gap-lg);font-size:.85em;line-height:1.45}
+.card .nm{color:#27270F}.card .stp{color:#27270F}
+.controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.ctl{background:#2c2b1a;color:#eee;border:1px solid #555;border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
+.ctl.on{background:#BBCA6F;color:#242312;border-color:#BBCA6F}
+.said{max-width:700px;font-size:13px;line-height:1.5;background:#2c2b1a;border:1px dashed #666;border-radius:12px;padding:12px 16px}
+.said[hidden]{display:none}
+.rules{max-width:820px;font-size:13.5px;line-height:1.55;color:#ddd;background:#22221a;border:1px dashed #555;border-radius:12px;padding:12px 18px}
+.rules dt{font-weight:700;color:#fff;margin-top:8px}.rules dd{margin:2px 0 0 0}
+table{border-collapse:collapse;font-size:13px;max-width:900px}
+td,th{border-bottom:1px solid #444;padding:6px 8px;text-align:left;vertical-align:top}
+</style>
+</head>
+<body>
+<h1>A55 · Plain paper names</h1>
+<p class="cap"><b>A55, frozen 2026-11-05 under the owner's delegation, after three reviews (ADR-152). Amends A35 (v21-library.html) and A35.8 / AW6-P's fixed-paper card (v21-proof.html).</b> The owner asked for paper names that anyone can understand.
+The print dialog on the phone or the printer still uses the official names ("A4", "Letter", "Legal", "A5"). The maker must
+find that same name in the print dialog. Thus the official name stays first, as a <b>stamp</b>, and a plain name follows it.
+Each plain name adds a fact: where people use the paper, or how it is different. "A4: printer paper, most countries",
+"US Letter: printer paper, US and Canada", "US Legal: long paper", "A5: small paper". A4 and US Letter both have a place in
+their name, so neither paper is "the normal one" (A35.3). Rev. 3 includes the fixes from three reviews. Each row keeps the zine's
+page size and the facts that R29.6 asks for. TalkBack says the units in full. The official name stays the key in the code.
+The A35 notes and spoken labels (<code>Copy.Paper.*_NOTE</code>, <code>*_SPOKEN</code>) and the Print details sentence
+(<code>printsOnlyOn</code>) do change, with their tests.</p>
+
+<div class="controls">
+  <button class="ctl" id="cLoc">Show: US order</button>
+  <button class="ctl" id="cNight">night</button>
+  <button class="ctl" id="cSmall">small phone 360×640</button>
+  <button class="ctl" id="cBig">font scale 2 at 360dp</button>
+  <button class="ctl" id="cTb">TalkBack reading</button>
+</div>
+<p id="fit" style="font-size:13px;color:#BBCA6F"></p>
+<div class="said" id="said" hidden aria-live="polite"></div>
+
+<div class="row">
+  <div><p class="label">Now (A35, frozen)</p>
+    <div class="phone"><div class="scrim"></div><div class="sheet"><div class="grab"></div>
+      <div class="head"><h2 class="ttl">Start a zine</h2><p class="sub">Which paper will you print on? A zine keeps the paper it starts on.</p></div>
+      <div id="oldRows"></div></div></div></div>
+  <div><p class="label" id="nuLbl">Proposed (A4 order)</p>
+    <div class="phone" id="nu"><div class="scrim"></div><div class="sheet" id="nsheet"><div class="grab"></div>
+      <div class="head"><h2 class="ttl">Start a zine</h2><p class="sub" id="nSub">Choose the paper that is in your printer. You cannot change the paper of a zine after you start it.</p></div>
+      <div id="newRows"></div>
+      <p class="foot" id="nFoot">Zinely makes eight pages from one folded sheet.</p></div></div></div>
+  <div><p class="label">Print details, a US Legal zine</p>
+    <div class="phone"><div class="scrim"></div><div class="sheet"><div class="grab"></div>
+      <div class="head"><h2 class="ttl">Print details</h2></div>
+      <div class="card"><div class="nm"><span class="stp">US Legal</span>long paper</div>
+        <div class="dim" style="color:#6A452F">8.5 × 14 in</div>
+        <div>You made this zine for US Legal paper. Use US Legal paper only. Put US Legal paper in your printer before you print.</div></div>
+      <p class="sub" style="margin:0 var(--gap-xl)">The Shelf line and the zine sheet keep the official name only: "US Legal · Pastel yellow · Edited just now". The plain name is for the two places where a maker chooses a paper or prints. The Colophon does not change.</p>
+    </div></div></div>
+</div>
+
+<dl class="rules">
+<dt>A55.1 The Start sheet row</dt><dd>Line 1: the stamp (the official name) and the plain name, on one line when they fit. Line 2: the sheet size and the page size ("8.5 × 14 in · pages 3.5 × 4.25 in"). Line 3, US Legal and A5 only: the warning. The paper picture on the left is A35's, unchanged.</dd>
+<dt>A55.2 The words</dt><dd>The table below is the copy. The official names are A35's and stay the key in the code. Sub-line: "Choose the paper that is in your printer. You cannot change the paper of a zine after you start it." Foot: "Zinely makes eight pages from one folded sheet."</dd>
+<dt>A55.3 Order</dt><dd>A35's rule, unchanged: the preferred paper first (US order in the US, Canada and the other Letter locales; A4 order elsewhere).</dd>
+<dt>A55.4 TalkBack</dt><dd>One node for each row, read in the order of the screen: "US Legal, long paper, 8.5 by 14 inches, pages 3.5 by 4.25 inches. Use US Legal paper only. Make sure that your printer can use it." Units in full (R29.4).</dd>
+<dt>A55.5 The stamp</dt><dd>Butter ground, ink words, a 1.5px dashed ink edge, square (it is in a control: no tilt, ZINE-WORLD F.9), uppercase with tracking. The same colours in both themes. It is material, never a control of its own.</dd>
+<dt>A55.6 Print details, a US Legal or A5 zine</dt><dd>The fixed-paper card (A35.8) shows the stamp, the plain name, the sheet size and: "You made this zine for X paper. Use X paper only. Put X paper in your printer before you print." It is still one node with no switch. The A4 / US Letter switch in Print details does not change.</dd>
+<dt>A55.7 Where the plain name does not appear</dt><dd>The Shelf line, the zine sheet line, the Proof band, the Colophon, the PDF and its file name. These keep the official name only.</dd>
+<dt>A55.8 Fit</dt><dd>At font scale 1 the whole sheet fits on a 360 × 640 dp phone with no scrolling (toggle "small phone"). At font scale 2 the rows grow and the sheet scrolls; nothing is cut off; the stamp and the plain name wrap onto two lines.</dd>
+<dt>A55.9 What leaves the row</dt><dd>The A35 country lines and the "wider than US Letter" phrase. The plain name now says where A4 and US Letter are used (the US Letter name undersells its reach into Latin America and the Philippines, which R29.5 calls the safe direction), and the page sizes on line 2 show that a US Legal page is wider.</dd>
+</dl>
+<h2>The words</h2>
+<table id="words"><thead><tr><th>Stamp (official, the key)</th><th>Plain name</th><th>Sizes line</th><th>Line</th></tr></thead><tbody></tbody></table>
+
+<p class="cap"><b>Decisions in rev. 2.</b>
+(1) The official name is first, on the screen and in speech. It is the only word that is different for A4 and US Letter, and it is
+the word in the print dialog. (2) The plain name says a fact: where people use the paper (A4, US Letter), or how it is different (US Legal is long,
+A5 is small). Rev. 2 said "half-size paper" for A5; in the US "half size" means half of a Letter sheet (5.5 × 8.5 in), which is
+not A5, so rev. 3 says "small paper". (3) The sheet size and the page size stay on every row, on one line. (4) The sheet fits a
+small phone with no scrolling (owner, 2026-11-05: "I do not want a scroller"), so the country line and the "wider" phrase left
+the rows (A55.9). (5) The order rule
+from A35 does not change: the preferred paper is first. (6) The plain name is shown only where a maker chooses a paper (Start)
+or prints it (Print details). The Colophon does not change. The Shelf line, the zine sheet line and the band stay as they are, so
+<code>zineShelfStampLabel</code> and its "·" split do not change. (7) The stamp in a control is square, not tilted (F.9).</p>
+
+<script>
+const R=[
+ {id:'a4', stamp:'A4', plain:'printer paper, most countries', dim:'210 × 297 mm · pages 74 × 105 mm', say:'210 by 297 millimetres, pages 74 by 105 millimetres', h:44, w:31,
+  line:'',
+  old:['A4','210 × 297 mm','Pages 74 × 105 mm. The everyday paper in most of the world.']},
+ {id:'ltr', stamp:'US Letter', plain:'printer paper, US and Canada', dim:'8.5 × 11 in · pages 2.75 × 4.25 in', say:'8.5 by 11 inches, pages 2.75 by 4.25 inches', h:42, w:32,
+  line:'',
+  old:['US Letter','8.5 × 11 in','Pages 2.75 × 4.25 in. The everyday paper in North America.']},
+ {id:'lgl', stamp:'US Legal', plain:'long paper', dim:'8.5 × 14 in · pages 3.5 × 4.25 in', say:'8.5 by 14 inches, pages 3.5 by 4.25 inches', h:52, w:32,
+  line:'Use US Legal paper only. Make sure that your printer can use it.',
+  old:['US Legal','8.5 × 14 in','Pages 3.5 × 4.25 in, wider than Letter’s. Prints on US Legal paper only, so check that your printer takes it.']},
+ {id:'a5', stamp:'A5', plain:'small paper', dim:'148 × 210 mm · pages 52.5 × 74 mm', say:'148 by 210 millimetres, pages 52.5 by 74 millimetres', h:31, w:22,
+  line:'Use A5 paper only. Make sure that your printer can use it.',
+  old:['A5','148 × 210 mm','Pages 52.5 × 74 mm, the smallest zine. Prints on A5 paper only, so check that your printer takes it.']},
+];
+const speak=r=>`${r.stamp}, ${r.plain}, ${r.say}.${r.line?' '+r.line:''}`;
+let us=false;
+function draw(){
+  const order=us?['ltr','a4','lgl','a5']:['a4','ltr','lgl','a5'];
+  newRows.innerHTML=order.map(i=>R.find(r=>r.id===i)).map(r=>`<button class="opt" aria-label="${speak(r)}">
+    <span class="ic" aria-hidden="true"><span style="width:${r.w}px;height:${r.h}px"></span></span>
+    <span class="tx" aria-hidden="true"><span class="nm"><span class="stp">${r.stamp}</span>${r.plain}</span><span class="dim">${r.dim}</span>${r.line?`<span class="nt">${r.line}</span>`:''}</span></button>`).join('');
+  oldRows.innerHTML=R.map(r=>`<div class="opt"><span class="ic"><span style="width:${r.w}px;height:${r.h}px"></span></span>
+    <span class="tx"><span class="nm">${r.old[0]}</span><span class="dim">${r.old[1]}</span><span class="nt">${r.old[2]}</span></span></div>`).join('');
+  nuLbl.textContent=us?'Proposed (US order)':'Proposed (A4 order)'; cLoc.textContent=us?'Show: A4 order':'Show: US order';
+  if(!said.hidden) tb();
+}
+function tb(){ const it=['Dialog: Start a zine',nSub.textContent];
+  newRows.querySelectorAll('.opt').forEach(b=>it.push('button: '+b.getAttribute('aria-label'))); it.push(nFoot.textContent);
+  said.innerHTML='<b>TalkBack reads, in order</b><ol>'+it.map(t=>`<li>${t}</li>`).join('')+'</ol>';}
+R.forEach(r=>{const t=words.tBodies[0].insertRow(); t.innerHTML=`<td>${r.stamp}</td><td>${r.plain}</td><td>${r.dim}</td><td>${r.line}</td>`;});
+draw();
+cLoc.onclick=()=>{us=!us;draw()};
+cNight.onclick=()=>{const r=document.documentElement;if(r.dataset.theme){r.removeAttribute('data-theme')}else{r.dataset.theme='dark'};cNight.classList.toggle('on')};
+cBig.onclick=()=>{nu.classList.toggle('big');cBig.classList.toggle('on');measure()};
+cSmall.onclick=()=>{nu.classList.toggle('small');cSmall.classList.toggle('on');measure()};
+function measure(){const s=nsheet,o=s.scrollHeight-s.clientHeight;fit.textContent=`Measured: content ${s.scrollHeight}px in a ${s.clientHeight}px sheet on a ${nu.clientWidth}×${nu.clientHeight} phone: `+(o>0?`scrolls ${o}px`:'fits, no scrolling');}
+if(location.hash==='#small'){nu.classList.add('small');cSmall.classList.add('on')}
+measure(); document.fonts&&document.fonts.ready.then(measure);
+cTb.onclick=()=>{said.hidden=!said.hidden;cTb.classList.toggle('on');if(!said.hidden)tb();};
+</script>
+</body>
+</html>

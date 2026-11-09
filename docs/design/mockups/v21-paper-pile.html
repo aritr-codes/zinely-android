@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zinely · A56 the paper pile (frozen 2026-11-05)</title>
+<style>
+:root{
+  --desk:#E9E29B; --desk-edge:#BBCA6F; --surface:#F2CFBB;
+  --ink:#27270F; --ink-soft:#6A452F; --ink-faint:#8E9546; --berry:#F28892; --leaf:#8E9546; --on-leaf:#27270F;
+  --hair:rgba(39,39,15,.16);
+  --br-xs:4px; --br-sm:8px; --br-md:14px; --br-xl:36px; --br-pill:999px;
+  --gap-hair:2px; --gap-xs:4px; --gap-sm:8px; --gap-md:12px; --gap-lg:16px; --gap-xl:24px;
+  --voice:"Averia Sans Libre","Fraunces",Georgia,serif;
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+:root[data-theme="dark"]{
+  --desk:#242312; --desk-edge:#323119; --surface:#3D3920; --ink:#FFF9DB; --ink-soft:#DAD7A0;
+  --hair:rgba(246,234,214,.15); --leaf:#BBCA6F; --on-leaf:#242312;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#1a1a12;color:#eee;font-family:var(--sans);display:flex;flex-direction:column;align-items:center;gap:24px;padding:24px 12px 60px}
+h1{font-family:var(--voice);margin:0;color:#F2CFBB;font-size:22px;text-align:center}
+body>h2{font-family:var(--voice);color:#F2CFBB;font-size:18px;margin:0}
+.cap{max-width:800px;font-size:14px;line-height:1.55;color:#ddd}.cap b{color:#fff}
+.row{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;align-items:flex-start}
+.label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#bbb;text-align:center;margin:0 0 8px}
+.phone{position:relative;width:390px;height:800px;overflow:hidden;background:var(--desk);border-radius:34px;border:1px solid var(--desk-edge);font-size:16px;color:var(--ink)}
+.phone.small{width:360px;height:640px}
+.phone.big{width:360px;height:640px;font-size:32px}
+.scrim{position:absolute;inset:0;background:rgba(39,39,15,.44)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);
+  max-height:92%;overflow-y:auto;scrollbar-width:none;padding:0 0 var(--gap-lg)}
+.sheet::-webkit-scrollbar{display:none}
+.grab{width:44px;height:5px;border-radius:var(--br-pill);background:var(--ink-faint);margin:var(--gap-md) auto var(--gap-xs);opacity:.5}
+.head{padding:var(--gap-xs) var(--gap-xl) var(--gap-sm)}
+.ttl{font-family:var(--voice);font-size:1.22em;font-weight:700;line-height:1.15;margin:0}
+.sub{font-size:.78em;color:var(--ink-soft);margin:var(--gap-hair) 0 0;font-weight:500;line-height:1.45}
+
+/* the top: the sample page, its label and Done, side by side.  Pinned when the sheet must scroll (font scale 2), so the
+   page and Done never leave the screen.  The page is square: it is the thing being changed (E.3).  No fade (E.7). */
+.top{position:sticky;top:0;z-index:2;background:var(--surface);display:flex;align-items:center;gap:var(--gap-lg);padding:var(--gap-sm) var(--gap-xl) var(--gap-md)}
+.page{position:relative;width:64px;height:92px;flex:none;border:1.5px solid #27270F;box-shadow:3px 3px 0 #27270F;isolation:isolate}
+.page svg{display:block;width:100%;height:100%;mix-blend-mode:multiply}
+.side{display:flex;flex-direction:column;align-items:flex-start;gap:var(--gap-md);min-width:0}
+.lab{font-size:.78em;font-weight:600;color:var(--ink-soft);line-height:1.35}
+.done{min-height:48px;min-width:112px;padding:0 var(--gap-xl);border-radius:var(--br-pill);border:1.5px solid #27270F;
+  background:var(--leaf);color:var(--on-leaf);font:inherit;font-size:.9em;font-weight:700;box-shadow:3px 3px 0 #27270F;cursor:pointer}
+.done:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #27270F}
+
+/* the pile: real sheets resting on the desk, two rows */
+.pile{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--gap-sm) var(--gap-xs);padding:var(--gap-md) var(--gap-sm) var(--gap-sm);
+  background:var(--desk);margin:0 var(--gap-lg);border-radius:var(--br-md);border:1.5px solid var(--hair)}
+.phone.big .pile{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sh{display:flex;flex-direction:column;align-items:center;gap:var(--gap-xs);background:none;border:0;padding:var(--gap-sm) 0 var(--gap-xs);
+  font:inherit;color:var(--ink);cursor:pointer;min-height:48px;border-radius:var(--br-sm)}
+.sh:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.sh .p{position:relative;width:42px;height:58px;border:1.5px solid #27270F;box-shadow:3px 3px 0 #27270F;transition:transform 100ms,box-shadow 100ms}
+.phone.big .sh .p{width:52px;height:72px}
+.sh:active .p{transform:translate(2px,2px)!important;box-shadow:1px 1px 0 #27270F}
+.sh .nm{font-size:.75em;font-weight:600;line-height:1.2;text-align:center;overflow-wrap:anywhere}
+/* chosen: square (worked-on never tilts) and held down by tape, and named in a word: ink, with a berry rule
+   ("where you are now", E.5), never the action colour. */
+.sh[aria-checked="true"] .p{transform:rotate(0)!important}
+.sh[aria-checked="true"] .p::after{content:"";position:absolute;top:-7px;left:50%;width:28px;height:11px;transform:translateX(-50%) rotate(-3deg);
+  background:rgba(233,226,155,.85);border:1.5px dashed rgba(39,39,15,.7)}
+.sh .ck{font-size:.75em;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);visibility:hidden;line-height:1.2;
+  border-bottom:3px solid var(--berry);padding-bottom:1px}
+.sh[aria-checked="true"] .ck{visibility:visible}
+.foot{font-size:.75em;color:var(--ink-soft);text-align:center;margin:var(--gap-md) var(--gap-xl) 0;line-height:1.45}
+
+.opt{display:flex;align-items:flex-start;gap:var(--gap-lg);padding:var(--gap-md) var(--gap-xl);border-bottom:1.5px dashed var(--hair)}
+.sw{flex:none;width:28px;height:28px;border-radius:var(--br-xs);border:1.5px solid #27270F;box-shadow:2px 2px 0 #27270F}
+.opt .nm{font-size:.9em;font-weight:600}
+.controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.ctl{background:#2c2b1a;color:#eee;border:1px solid #555;border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
+.ctl.on{background:#BBCA6F;color:#242312;border-color:#BBCA6F}
+.said{max-width:640px;font-size:13px;line-height:1.5;background:#2c2b1a;border:1px dashed #666;border-radius:12px;padding:12px 16px}
+.said[hidden]{display:none}
+.rules{max-width:820px;font-size:13.5px;line-height:1.55;color:#ddd;background:#22221a;border:1px dashed #555;border-radius:12px;padding:12px 18px}
+.rules dt{font-weight:700;color:#fff;margin-top:8px}.rules dd{margin:2px 0 0 0}
+table{border-collapse:collapse;font-size:13px;max-width:820px}
+td,th{border-bottom:1px solid #444;padding:6px 8px;text-align:left;vertical-align:top}
+td.n{text-align:right}
+#fit{font-size:13px;color:#BBCA6F}
+</style>
+</head>
+<body>
+<h1>A56 · Paper colour, as a pile of paper</h1>
+<p class="cap"><b>A56, frozen 2026-11-05 under the owner's delegation, after three reviews (ADR-152). Amends AW6.4, AW6.5, AW6.11,
+AW6.12 (v21-library.html) and AW6-P.3 (v21-proof.html). The chooser opens from the zine sheet and from Print details, as before.</b>
+The owner said that the chooser "looks good but something is missing", and later: "I do not want a scroller". This design
+makes three changes. The colours are ten sheets of paper on the desk, not chips in a settings list. A sample page shows the inks
+on the chosen paper; a tap changes the colour at once and the sheet stays open, so the maker can try each paper. And the
+whole sheet fits a small phone with no scrolling. The sample page is labelled as a sample. It is not the maker's cover,
+because a cover is a recipe and is never a rendered page (ADR-069, AW6.7), and the Shelf has no rendered page.</p>
+
+<div class="controls">
+  <button class="ctl on" id="cDay">day</button><button class="ctl" id="cNight">night</button>
+  <button class="ctl" id="cSmall">small phone 360×640</button>
+  <button class="ctl" id="cBig">font scale 2 at 360×640</button>
+  <button class="ctl" id="cTb">TalkBack reading</button>
+</div>
+<p id="fit"></p>
+<div class="said" id="said" hidden aria-live="polite"></div>
+
+<div class="row">
+  <div><p class="label">Before (AW6)</p>
+    <div class="phone"><div class="scrim"></div><div class="sheet"><div class="grab"></div>
+      <div class="head"><h2 class="ttl">Paper colour</h2>
+        <p class="sub">Which colour paper will you load? It shows on screen only. We print only the ink.</p></div>
+      <div id="beforeOpts"></div></div></div></div>
+  <div><p class="label">A56: the paper pile</p>
+    <div class="phone" id="after"><div class="scrim"></div>
+      <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="pT">
+        <div class="grab"></div>
+        <div class="head"><h2 class="ttl" id="pT">Paper colour</h2>
+          <p class="sub" id="pSub">Choose the paper that you will put in your printer. Zinely shows the colour on the screen only. The PDF has only the ink.</p></div>
+        <div class="top">
+          <div class="page" id="page" aria-hidden="true"></div>
+          <div class="side"><span class="lab" id="lab" aria-hidden="true"></span><button class="done" id="done">Done</button></div>
+        </div>
+        <div class="pile" role="radiogroup" aria-labelledby="pT" id="pile"></div>
+        <p class="foot" id="pFoot">Home printers have no white ink, so this list has no dark or bright paper. The colours on the screen are approximately correct.</p>
+      </div></div></div>
+</div>
+
+<dl class="rules">
+<dt>A56.1 The chooser, top to bottom</dt><dd>Grab handle; title "Paper colour"; the sub-line; the top row (the sample page, then its label above Done); the pile; the foot line. Words: the sub-line and foot as drawn here.</dd>
+<dt>A56.2 Fit</dt><dd>At font scale 1 the whole sheet fits on a 360 × 640 dp phone with no scrolling (toggle "small phone"; the line above the phones measures it). At font scale 2 the sheet scrolls and the top row is pinned under the title, so the sample page and Done never leave the screen. No scroll bar is drawn.</dd>
+<dt>A56.3 The pile</dt><dd>Ten sheets, two rows of five (three columns at font scale 2), in this order: White, Ivory, Pastel yellow, Pastel orange, Pastel pink (the light and warm papers), then Pastel purple, Pastel blue, Pastel green, Light brown, Grey (the cool and neutral papers). Ten, not nine, so the two rows are the same (owner, 2026-11-05). A sheet is 42 × 58 dp (52 × 72 at font scale 2), a 1.5dp ink edge and a 3dp hard shadow; its whole cell (at least 48 dp) is the target. At rest each sheet tilts by its own fixed angle (the list in this script, never re-rolled). The name is under the sheet.</dd>
+<dt>A56.4 The chosen sheet</dt><dd>Square (no tilt), a piece of tape across its top, and the word "Chosen" in ink with a 3dp berry rule under it. Never colour alone.</dd>
+<dt>A56.5 A tap</dt><dd>Changes the zine's paper colour at once (saved like any pick) and the sheet stays open. The sample page and its label change at once, with no fade. Done, Back, the scrim and a swipe down close the sheet; focus goes back to the row that opened it (the zine sheet's or Print details' Paper colour row, AW6.12). No confirm step and no Undo snack: the change prints nothing and the same sheet puts it back.</dd>
+<dt>A56.6 The sample page and its label</dt><dd>AW6's stand-in page, the same at both doors, square. The label: "A sample page on [name] paper", the name lower-case (AW6.13); for White, "A sample page on white paper, plain printer paper". Both are hidden from TalkBack: the checked radio button already says the choice.</dd>
+<dt>A56.7 TalkBack</dt><dd>"Paper colour" (dialog), the sub-line, "Done" (button), then each sheet as a radio button "[name]" (White: "White. Plain printer paper."), checked or not checked, "n of 10", then the foot line.</dd>
+<dt>A56.8 Three new papers</dt><dd>Pastel orange (id <code>pastel-orange</code>, #F5CFA8), Pastel purple (id <code>pastel-purple</code>, #DCD0EC) and Light brown (id <code>light-brown</code>, #E8D3A9, the "buff" copy paper class, lighter than the Brown that AW6.6 cut), estimates like every R41 value (R41.7), all through the AW6.6 gate below. Add-only: no schema change. An older build reads an unknown id as White and keeps the id in the file.</dd>
+<dt>A56.9 Print details' note (amends AW6-P.3)</dt><dd>Under the colour row, for a colour that is not White: "Put [name] paper in your printer. The PDF has only the ink, so the colour comes from your paper." The name is lower-case. "Load" leaves the app: it is printer jargon.</dd>
+<dt>A56.10 Not changed</dt><dd>Where the chooser opens, the radiogroup, the legibility gate, the paper layer (AW6-B, AW6-P), "Your paper colour is not in the file.", and the zine sheet row.</dd>
+</dl>
+
+<h2>The three new papers, through the AW6.6 gate</h2>
+<table id="gate"><thead><tr><th>Paper</th><th>Value (estimate)</th><th>House Ink</th><th>Lowest ink that reaches 3:1 on White</th><th>Result</th></tr></thead><tbody></tbody></table>
+<p class="cap">Both values are estimates, as every R41 value is: no maker publishes the colour of its paper (R41.7). Pastel
+orange is R41's "Apricot" value. Light brown is a light buff, not kraft: R41's "Packing brown" failed the gate. The names follow AW6.5: "Pastel" is how shops sell coloured copy paper. The colour words
+"orange" and "purple" also name the hue of some inks (Ochre, Plum), as "pink" and "blue" do; the word "Pastel" keeps the paper
+names apart from them. Order in the pile: warm to cool, then Grey, as a paper pack is sorted. The stored ids of the seven
+shipped papers do not change.</p>
+
+<script>
+const P=[['white','White','#FFFFFF','Plain printer paper.'],['ivory','Ivory','#F4EEDC',''],['pastel-yellow','Pastel yellow','#F7EC9B',''],
+['pastel-orange','Pastel orange','#F5CFA8',''],['pastel-pink','Pastel pink','#F4C6D0',''],['pastel-purple','Pastel purple','#DCD0EC',''],
+['pastel-blue','Pastel blue','#BCD6EA',''],['pastel-green','Pastel green','#CDE6C8',''],['light-brown','Light brown','#E8D3A9',''],['grey','Grey','#CFCDC6','']];
+const TILT=[-1.6,1.1,-0.7,1.8,-1.2,0.8,-1.9,1.4,0.6,-0.9]; // seeded per sheet, never re-rolled
+const PAGE='<svg viewBox="0 0 198 306"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#57B0A9"/></linearGradient></defs>'
+ +'<rect width="198" height="306" fill="#fff"/><rect x="22" y="22" width="154" height="96" fill="url(#g)"/>'
+ +'<circle cx="150" cy="150" r="26" fill="#B0503F"/><circle cx="160" cy="160" r="20" fill="#E7B53C"/>'
+ +'<text x="22" y="172" font-family="Fraunces,Georgia,serif" font-size="22" font-weight="700" fill="#2A251E">Sunday</text>'
+ +'<text x="22" y="196" font-family="Fraunces,Georgia,serif" font-size="22" font-weight="700" fill="#2A251E">market</text>'
+ +'<text x="22" y="226" font-family="Inter,sans-serif" font-size="11" fill="#5B5347">Eggs, bread, a radio</text>'
+ +'<text x="22" y="242" font-family="Inter,sans-serif" font-size="11" fill="#5B5347">that plays one song.</text>'
+ +'<path d="M22 270h154" stroke="#8C8269" stroke-width="1.5" stroke-dasharray="3 4"/></svg>';
+page.innerHTML=PAGE;
+let cur='pastel-yellow';
+P.forEach(([id,nm,hex,nt],i)=>{
+  const b=document.createElement('button'); b.className='sh'; b.setAttribute('role','radio'); b.dataset.id=id;
+  b.setAttribute('aria-label',nt?nm+'. '+nt:nm);
+  b.innerHTML=`<span class="p" aria-hidden="true" style="background:${hex};transform:rotate(${TILT[i]}deg)"></span><span class="nm" aria-hidden="true">${nm}</span><span class="ck" aria-hidden="true">Chosen</span>`;
+  b.onclick=()=>pick(id); pile.appendChild(b);
+  if(!['pastel-orange','pastel-purple','light-brown'].includes(id)){const o=document.createElement('div'); o.className='opt';
+    o.innerHTML=`<span class="sw" style="background:${hex}"></span><span class="nm">${nm}</span>`; beforeOpts.appendChild(o);}
+});
+function pick(id){cur=id; const q=P.find(x=>x[0]===id); page.style.background=q[2];
+  lab.textContent='A sample page on '+q[1].toLowerCase()+' paper'+(id==='white'?', plain printer paper':'');
+  pile.querySelectorAll('.sh').forEach(b=>{const on=b.dataset.id===id; b.setAttribute('aria-checked',on); b.tabIndex=on?0:-1;}); if(!said.hidden)tb();}
+pick(cur);
+function measure(){const s=sheet; const over=s.scrollHeight-s.clientHeight;
+  fit.textContent=`Measured: content ${s.scrollHeight}px in a ${s.clientHeight}px sheet on a ${after.clientWidth}×${after.clientHeight} phone: `+(over>0?`scrolls ${over}px`:'fits, no scrolling');}
+function tb(){const it=['Dialog: Paper colour',pSub.textContent,'button: Done'];
+  P.forEach((x,i)=>it.push(`radio button: ${x[3]?x[1]+'. '+x[3]:x[1]}, ${x[0]===cur?'checked':'not checked'}, ${i+1} of ${P.length}`));
+  it.push(pFoot.textContent);
+  said.innerHTML='<b>TalkBack reads, in order</b><ol>'+it.map(t=>`<li>${t}</li>`).join('')+'</ol><p>The sample page and its label are hidden from TalkBack. They show the choice that the checked radio button already says.</p>';}
+const root=document.documentElement;
+cDay.onclick=()=>{root.removeAttribute('data-theme');cDay.classList.add('on');cNight.classList.remove('on')};
+cNight.onclick=()=>{root.dataset.theme='dark';cNight.classList.add('on');cDay.classList.remove('on')};
+cSmall.onclick=()=>{after.classList.toggle('small');cSmall.classList.toggle('on');measure()};
+cBig.onclick=()=>{after.classList.toggle('big');cBig.classList.toggle('on');measure()};
+cTb.onclick=()=>{said.hidden=!said.hidden;cTb.classList.toggle('on');if(!said.hidden)tb();};
+if(location.hash==='#small'){after.classList.add('small');cSmall.classList.add('on')}
+if(location.hash==='#big'){after.classList.add('big');cBig.classList.add('on')}
+measure(); document.fonts&&document.fonts.ready.then(measure);
+
+// AW6.6 gate, the same arithmetic as v21-library.html
+const INKS=[['Ink','#2A251E'],['Forest','#3E5E3A'],['Slate','#5B5347'],['Brick','#B0503F'],['Plum','#8A5A9B'],['Matcha','#7C8A3F'],['Stone','#8C8269'],
+['Cornflower','#6E86C9'],['Strawberry','#E27F89'],['Aqua','#57B0A9'],['Ochre','#D19A3C'],['Fog','#B7AD93'],['Sunflower','#E7B53C']];
+const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255), lin=v=>v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4),
+ lum=c=>.2126*lin(c[0])+.7152*lin(c[1])+.0722*lin(c[2]), ratio=(a,b)=>{const x=lum(a),y=lum(b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05)},
+ on=(ink,p)=>{const I=rgb(ink),Q=rgb(p);return ratio(I.map((v,i)=>v*Q[i]),Q)};
+[['Pastel orange','#F5CFA8'],['Pastel purple','#DCD0EC'],['Light brown','#E8D3A9']].forEach(([n,h])=>{
+  const ok3=INKS.filter(([,c])=>on(c,'#FFFFFF')>=3).map(([k,c])=>[k,on(c,h)]); const low=ok3.reduce((a,b)=>b[1]<a[1]?b:a);
+  const pass=on('#2A251E',h)>=7&&low[1]>=3; const r=gate.tBodies[0].insertRow();
+  r.innerHTML=`<td>${n}</td><td>${h}</td><td class="n">${on('#2A251E',h).toFixed(2)}:1</td><td>${low[0]} ${low[1].toFixed(2)}:1</td><td><b>${pass?'passes':'FAILS'}</b></td>`;});
+</script>
+</body>
+</html>

@@ -21,10 +21,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -146,7 +150,24 @@ internal fun ProofPrintDetailsPanel(
     // AW6-P.2: the zine's paper colour, and the second door to the AW6.4 chooser.
     paperColour: PaperColour = PaperColour.WHITE,
     onOpenPaperColour: () -> Unit = {},
+    // AW6.12: the Paper colour row's requester, always attached; [focusColourRow] is true once the chooser has
+    // closed, and the row then asks for focus (a frame later, so the chooser's window has gone) and clears the flag.
+    paperColourFocus: FocusRequester? = null,
+    focusColourRow: Boolean = false,
+    onColourRowFocused: () -> Unit = {},
 ) {
+    if (paperColourFocus != null && focusColourRow) {
+        LaunchedEffect(Unit) {
+            // `finally`: if the panel leaves before the frame, the flag still clears, so a later opening of Print
+            // details does not jump focus to this row.
+            try {
+                withFrameNanos { }
+                runCatching { paperColourFocus.requestFocus() }
+            } finally {
+                onColourRowFocused()
+            }
+        }
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -163,7 +184,7 @@ internal fun ProofPrintDetailsPanel(
             FixedPaperFact(paper)
         }
         // AW6-P.2 / AW6-P.3: the colour row, and for any colour but White the one line that says what to load.
-        PaperColourRow(paperColour = paperColour, onClick = onOpenPaperColour)
+        PaperColourRow(paperColour = paperColour, onClick = onOpenPaperColour, focus = paperColourFocus)
         if (paperColour != PaperColour.WHITE) PaperColourNote(paperColour)
 
         // ── 2. What the app already handled — the honest half of the frozen ALL SET block ─────
@@ -566,8 +587,9 @@ public const val ProofPaperColourRowTestTag: String = "proof-paper-colour-row"
 public const val ProofPaperColourNoteTestTag: String = "proof-paper-colour-note"
 
 /**
- * A35.8's `.a35-fixed`: a US Legal or A5 zine's paper, as a fact. ONE text node read as its name, size and sentence
- * (A35.11), never a button.
+ * A35.8's `.a35-fixed`, as A55.6 amends it: a US Legal or A5 zine's paper, as a fact. The stamp and the plain name, the
+ * sheet size and "You made this zine for X paper. ...". ONE text node read as its names, size and sentence (A35.11),
+ * never a button.
  *
  * ```css
  * .a35-fixed{display:flex;align-items:flex-start;gap:var(--gap-md);background:var(--paper);color:#27270F;
@@ -590,24 +612,19 @@ private fun FixedPaperFact(paper: PaperSize) {
             .clip(shape)
             .background(ZinelyTheme.v21Colors.paper)
             .border(1.5.dp, FixedInk, shape)
-            .clearAndSetSemantics { contentDescription = "${paper.displayName}, $spokenSize. $sentence" }
+            .clearAndSetSemantics { contentDescription = "${paper.displayName}, ${paper.plainName}, $spokenSize. $sentence" }
             .padding(ZinelyV21Dimens.gapMd),
         horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
         verticalAlignment = Alignment.Top,
     ) {
         PaperStockSlot(paper)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapHair)) {
-            BasicText(
-                paper.displayName,
-                style = TextStyle(
-                    color = FixedInk, fontFamily = ZinelyV21Fonts.Work, fontSize = 14.4.sp,
-                    fontWeight = FontWeight.SemiBold, lineHeight = 1.3.em,
-                ),
-            )
+            // A55.6: the stamp and the plain name, as at Start; then the sheet size in ink-soft (`color:#6A452F`).
+            PaperNames(paper, color = FixedInk)
             BasicText(
                 paper.choiceDimensions,
                 style = TextStyle(
-                    color = FixedInk, fontFamily = ZinelyV21Fonts.Work, fontSize = 11.68.sp,
+                    color = FixedInkSoft, fontFamily = ZinelyV21Fonts.Work, fontSize = 11.68.sp,
                     fontWeight = FontWeight.SemiBold, lineHeight = 1.4.em,
                 ),
             )
@@ -622,8 +639,9 @@ private fun FixedPaperFact(paper: PaperSize) {
     }
 }
 
-/** `.a35-fixed{color:#27270F}`: pinned, on the pinned paper. */
+/** `.a35-fixed{color:#27270F}`: pinned, on the pinned paper; A55.6's size line `#6A452F`. */
 private val FixedInk = Color(0xFF27270F)
+private val FixedInkSoft = Color(0xFF6A452F)
 
 /**
  * AW6-P.2's `.aw6p-pc`: `[swatch] Paper colour   White >`, a button that raises the AW6.4 chooser. ONE node, role
@@ -637,7 +655,7 @@ private val FixedInk = Color(0xFF27270F)
  * ```
  */
 @Composable
-private fun PaperColourRow(paperColour: PaperColour, onClick: () -> Unit) {
+private fun PaperColourRow(paperColour: PaperColour, onClick: () -> Unit, focus: FocusRequester?) {
     val colors = ZinelyTheme.v21Colors
     val haptics = ZinelyTheme.haptics
     val interaction = remember { MutableInteractionSource() }
@@ -658,6 +676,7 @@ private fun PaperColourRow(paperColour: PaperColour, onClick: () -> Unit) {
             .border(1.5.dp, colors.ink, shape)
             .heightIn(min = 48.dp)
             .testTag(ProofPaperColourRowTestTag)
+            .then(if (focus != null) Modifier.focusRequester(focus) else Modifier)
             .zinelyV2Control(
                 label = Copy.PaperColour.rowLabel(paperColour.displayName),
                 interactionSource = interaction,
@@ -680,7 +699,8 @@ private fun PaperColourRow(paperColour: PaperColour, onClick: () -> Unit) {
 }
 
 /**
- * AW6-P.3's `.aw6p-note`: "Load pastel yellow paper. We print only the ink, so the colour comes from your paper."
+ * AW6-P.3's `.aw6p-note`, A56.9's words: "Put pastel yellow paper in your printer. The PDF has only the ink, so the
+ * colour comes from your paper."
  * Plain text read after the row. It never says the PDF is coloured, nor that the printer prints the colour.
  * `.aw6p-note{font-size:.8em;line-height:1.5;margin:var(--gap-sm) var(--gap-hair) 0;color:var(--ink)}`
  */

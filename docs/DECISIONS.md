@@ -156,6 +156,8 @@
 | [ADR-145](#adr-145) | **The middle of a piece moves it.** A handle's 48dp hit box steps outward instead of covering a small piece's middle; a tap in a box away from its mark is a tap on the page (A50.6). Nothing drawn changes. | Accepted 2026-11-02 under delegation (TalkBack listen deferred by the owner) |
 | [ADR-147](#adr-147) | **Saved format v4: a description on photos and Art; a file says v4 only when it holds one.** `description: String?` on `ImageElement` and `DecorElement`, absent when none (`explicitNulls = false`), capped at entry to 250 code points (growth only); identity v3→v4 migrator; the writer stamps 3, or 4 when the zine holds a description (never below 3), so an undescribed zine stays a v3 file and only a backup holding a described piece is refused by older builds. No layout marker. Entry is Bench A52's Describe | Proposed (design frozen under delegation; not built; number assigned at merge) |
 | [ADR-149](#adr-149) | **Large text on a small phone: the first-run hint waits for room above the piece; the save notice stacks.** The move/resize hint is drawn only when it fits whole above the selected piece (12dp clear of the handle marks) and is never shown in Reframe; otherwise it waits, unseen. The save-failure notice puts Try now / Got it under its line when it is narrower than 20 text sizes. Verb-bar label cuts left to a bar-wide amendment. Bench A54; #148, #149, #158 | Proposed (A54 frozen 2026-11-04 under delegation; built; device passes owed; number assigned at merge) |
+| [ADR-151](#adr-151) | **Plain English: sentences follow ASD-STE100, labels follow its word rules, the voice stays warm.** Full STE sentence rules for every sentence in the app and on the website; labels keep their short form with approved words; a glossary of product nouns a user sees; frozen copy changes through its HTML first; a heuristic local check, never a compliance claim. Amends VOICE.md; keeps Sacred Thing 4. | Proposed |
+| [ADR-152](#adr-152) | **Plain paper names after the official name; paper colour as a pile of paper.** The official name stays first as a stamp (the print dialog uses it), a plain name follows ("printer paper, most countries", "long paper", "small paper"); the colour chooser becomes ten sheets on the desk with a sample page, a tap changes the colour and Done closes; Pastel orange, Pastel purple and Light brown added; a colour mixer rejected. Design A55, A56. | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -18741,6 +18743,7 @@ AW6-B. Evidence: [R26](RESEARCH.md) (which paper a home printer takes), [R41](RE
 [ADR-121](#adr-121) (backup and restore; `packageVersion` stays 2); [ZINE-DIRECTION](design/ZINE-DIRECTION.md) §8 and
 "opaque white ground, always"; [V2-CONSTITUTION](design/V2-CONSTITUTION.md) §III and §IV (one way to draw a page).
 **Narrows:** [BETA-DIRECTION](design/BETA-DIRECTION.md)'s two "paper tint" rows, by name, as AW6.2 says.
+**Amended by:** [ADR-152](#adr-152) (2026-11-05): two papers added to the closed set (add-only), and the chooser redrawn as A56.
 **Settles:** [ADR-136](#adr-136) W6 row, decision 5 (paper colour as a host layer) and the W8 row's open question (which
 bump carries the mask).
 
@@ -19057,3 +19060,193 @@ Built on `w6/ui` (from `main` at `882f95de`, after the data lane). Not released,
   Changing it means changing every Library sheet, so it waits for an HTML amendment or an owner ruling.
 - **Owed.** The re-record of every new golden and of the four moved ones (`v21_sheet_light/dark`, `colophon_light/dark`)
   on the pinned image; the TalkBack listen; the printed check on real coloured paper ([OWNER-CHECKLIST](OWNER-CHECKLIST.md)).
+
+## ADR-151 {#adr-151}
+
+### Plain English: Zinely's sentences follow ASD-STE100, its labels follow the word rules, and the voice stays warm
+
+**Status:** Proposed, 2026-11-05, under the owner's delegation of 2026-10-12 ("decide, do not ask"). The owner asked on
+2026-11-05 that "the website as well as the app itself" use the ASD-STE100 writing style. This ADR decides how far the
+standard goes and in what order. It becomes Accepted when phase 1 below is merged and reviewed.
+**Evidence:** [R42](RESEARCH.md#r42).
+**Amends:** [VOICE.md](design/VOICE.md) §2 (tone rules) and its *Public website voice* section, as decision 4 says.
+**Keeps:** the constitution's Sacred Thing 4, "warm, second-person, concrete, jargon-free, honest before kind"
+([zinely-constitution.md](zinely-constitution.md) §V). This ADR does not amend it, and it cannot: the constitution says
+that only a document of its own rank amends it. ASD-STE100 agrees with four of its five words. Decision 3 keeps the fifth.
+**Review:** the scope below had one independent review on 2026-11-05 (GO WITH FIXES). Its four Required Fixes are in
+this text: the correct constitution file and the reason it is not amended (S1), which website rule wins (S2), frozen
+strings go through their HTML first (S3), and glossary nouns must be words that a user sees (S4).
+
+**Context.** ASD-STE100 (Simplified Technical English, Issue 9, 2025) is a controlled language for maintenance manuals. It
+has an approved word list, one meaning for each word, and rules for sentences: short sentences, one instruction in each,
+the active voice, and simple tenses. It was not made for app labels or a brand voice, and no free checker exists
+([R42](RESEARCH.md#r42)). Zinely's copy is almost all in one file (`core:copy` `Copy.kt`, about 735 entries); the
+website has about 8,400 words; the frozen HTML specs hold the copy that the app must match, and four copy tests read it.
+
+**Decisions.**
+
+1. **Sentences follow ASD-STE100 in full.** A sentence is any text with a verb that a user reads or hears: hints,
+   errors, empty states, sheet sub-lines, notes, TalkBack descriptions and website prose. Rules, in our own words (the
+   standard's text and dictionary are not copied into the repository: the licence for that is not known):
+   - an instruction has at most 20 words, a description at most 25; one instruction in each sentence;
+   - the active voice; the imperative for instructions; simple present, simple past and future only;
+   - no -ing forms as nouns or adjectives, except in a technical noun;
+   - one word, one meaning: use the approved word in its approved sense ("approximately", not "close" or "near");
+   - no idioms, no phrasal verbs that have a one-word approved form, no stacked clauses, no semicolons;
+   - keep articles ("the", "a"); a paragraph has at most 6 sentences.
+2. **Labels and headings follow the word rules only.** Buttons, chips, titles, section labels and undo names stay short
+   fragments ("Done", "Paper colour", "Photo put back"). They use approved words or glossary nouns, one meaning each.
+   Nothing is turned into a sentence to obey a sentence rule.
+3. **The voice stays warm.** STE governs grammar and words; Sacred Thing 4 governs who speaks and to whom. Copy says
+   "you" and "your zine", names real objects, and says the good news first. A warm line that STE cannot keep is
+   rewritten, never dropped for a colder one: "Let's make something cute." becomes "Make something small and good."
+   Each such line is listed in the change that rewrites it.
+4. **One rule for the website.** STE's sentence rules win over the website voice's sentence patterns. The dry, plain
+   humour stays where it fits short plain sentences ("Some pages look upside down. We did that on purpose." already
+   complies). Jokes that need a long or idiomatic sentence are cut.
+5. **A project glossary of technical nouns.** Words that are not in the STE list but are the names of things in Zinely:
+   *zine*, *My Shelf*, *page*, *ink*, *paper colour*, *folder*, *backup*, the paper names (A4, US Letter, US Legal, A5,
+   and A55's plain names) and the names of the papers, inks and fonts. A noun goes in the glossary only if a user sees it
+   on a screen with that meaning; "supplies", "Bench" and "Proof" do not (the last two are website words only). The glossary is a section of VOICE.md.
+6. **Frozen copy changes through its HTML first.** A string pinned by a frozen spec (for example the A26 undo names, A35's
+   spoken labels, AW6's lines) changes by an amendment to that spec, then in `Copy.kt`, then in the copy tests. Never the
+   reverse ([CLAUDE.md](../CLAUDE.md) HTML-first workflow).
+7. **A local check, not a compliance claim.** A JVM test over `Copy.kt` sentences (phase 1) and a script over the website (phase 3) flag a
+   sentence over the limit, an -ing word not in an allow list, a hand-written list of banned words and phrases, and a
+   semicolon. It runs before the rewrite, so that it checks the rewrite. It is a heuristic; Zinely does not claim STE
+   compliance anywhere a user reads.
+
+**Order.**
+1. This ADR, R42, the VOICE.md amendment (rules sheet and glossary) and the local check, with a baseline of today's
+   failures. No user-facing copy changes in this phase.
+2. Frozen specs and `Copy.kt`, one surface at a time (Shelf, Start and Print first, as the paper-name work touches them);
+   each surface with its goldens re-recorded on the pinned image and its copy tests.
+3. The website, page by page, after the app so that the two say the same thing; the website check script lands first in this phase.
+4. Device passes: Pass 2 reads every changed screen as a first-time user, and a TalkBack listen of the changed speech.
+
+**Consequences.** Instructions get clearer and longer by a few words; warm brand lines need care (decision 3). Every
+copy change is a golden change, so the work is split by surface to keep each re-record small enough to read.
+Translation, if it comes, gets easier.
+
+**Owed before Accepted:** phase 1 merged; the owner may overrule decision 2 or 3.
+
+## ADR-152 {#adr-152}
+
+### Plain paper names after the official name, and the paper colour chooser as a pile of paper
+
+**Status:** Proposed, 2026-11-05, under the owner's delegation of 2026-10-12 ("decide, do not ask"). Accepted when built and
+both device passes are done.
+**Design:** [`v21-paper-names.html`](design/mockups/v21-paper-names.html) A55 and
+[`v21-paper-pile.html`](design/mockups/v21-paper-pile.html) A56, frozen 2026-11-05. Evidence: [R43](RESEARCH.md#r43) (paper
+names), [R41](RESEARCH.md#r41) (paper colour values; R41.7 adds the two new papers).
+**Amends:** A35's row content and speech (A55); A35.8's fixed-paper card words (A55.6); AW6.4, AW6.5, AW6.11 and AW6.12,
+and AW6-P.3's note (A56);
+[ADR-150](#adr-150) decision on the closed set, by adding three papers (add-only, as ADR-150 allows).
+**Keeps:** ADR-133 decision 1 (the four sizes, closed, by official name); ADR-150's storage (paper colour in `meta.json` by
+id; an unknown id reads as White and stays in the file); [ADR-069](#adr-069) (a cover is a recipe, never a rendered page);
+ZINE-WORLD E.1, E.3, E.5 and E.7. Copy follows [ADR-151](#adr-151).
+**Review:** three independent reviews on 2026-11-05. Review 1: NO-GO on both explorations (names dropped the page size and
+the "prints on X only" facts, "long/small" misled, a rename would break string-keyed code, "Everyday paper, US" made Letter the
+odd one; the pile drew the user's cover, which AW6.7 and ADR-069 forbid, and the Shelf door has no page; "Chosen" used the
+action colour). Review 2: GO WITH FIXES (A5 "half-size" means half-letter in the US; the sample page could not preview a
+colour because a tap closed the sheet). Review 3: GO WITH FIXES on the frozen files (the pile did not fit and Done sat below
+the fold; stale captions; AW6.11, AW6.13 and AW6-P.3 not listed; A35.4 cited for A35.3's rule; the check could not see
+sentences split over lines; the glossary named words the app does not show). All were fixed before the merge.
+
+**Context.** The owner asked on 2026-11-05 for paper names "that anyone can understand", and said that the paper colour
+chooser "looks good but something is missing", and asked whether a colour mixer, as for ink, should replace the set.
+
+**Decisions.**
+1. **The official name stays first, as a stamp; a plain name follows it.** The print dialog uses "A4", "Letter", "Legal",
+   "A5", and the maker must find that word there (R43), so no plain name can replace it. The plain name adds one fact:
+   "printer paper, most countries" (A4), "printer paper, US and Canada" (US Letter), "long paper" (US Legal), "small paper"
+   (A5). A4 and US Letter both name a place, so neither is the normal one (A35.3). The row keeps the sheet size and the page
+   size. The plain name appears only where a maker chooses a paper (Start) or prints it (Print details, A55.6); the Shelf
+   line, the zine sheet, the band, the Colophon and the PDF keep the official name only. The official name stays the key in
+   the code.
+2. **Paper colour is chosen from a pile of paper, with a sample page.** The swatch list becomes ten small sheets on the
+   desk, in two rows of five: at rest they tilt, the chosen one is square and taped, and the word "Chosen" says it. A sample page (AW6's stand-in,
+   never the user's cover) shows the inks on the chosen paper.
+3. **A tap changes the colour and the sheet stays open; Done closes it** (amends AW6.4's "one tap picks and closes"). Without
+   it the sample page could only show the colour that was already chosen. Still no confirm and no Undo: the change prints
+   nothing and the same sheet puts it back.
+4. **Three more papers, no mixer.** Pastel orange (`#F5CFA8`, R41's Apricot estimate), Pastel purple (`#DCD0EC`, an
+   estimate) and Light brown (`#E8D3A9`, a light buff estimate; added so the pile is two even rows of five, owner 2026-11-05)
+   pass the AW6.6 gate (house ink 11.2:1, 11.2:1 and 11.1:1; the lowest ink that reaches 3:1 on White stays at 3.46:1, 3.25:1
+   and 3.45:1). A mixer was rejected: Zinely prints ink, so a mixed ink is real, but it never prints the paper, so the only true
+   paper colour is one that a maker can buy; most of a mixer's range would fail the gate; matching a sheet by eye on a phone
+   screen is not reliable; and a mixed colour has no name for Print details ("Put pastel orange paper in your printer") or for TalkBack.
+5. **No scrolling at normal text size** (owner, 2026-11-05: "I do not want a scroller"). At font scale 1 both sheets fit a
+   360 × 640 dp phone with no scrolling: the paper rows put both sizes on one line (A55.1), and the pile is two rows of five
+   with the sample page beside Done (A56.2, A56.3). At font scale 2 the sheets scroll; the pile's top row stays pinned.
+
+**Consequences.** The A35 notes and spoken labels (`Copy.Paper.*_NOTE`, `*_SPOKEN`) and `Copy.Paper.printsOnlyOn` change, with
+their tests and goldens. `PaperColour` gains three entries (add-only ids). The chooser gets a Done button and stays open.
+
+**Owed before Accepted:** the build; goldens re-recorded on the pinned image; both device passes, including a TalkBack listen of
+the Start sheet and the pile.
+
+#### As built (2026-11-06) {#adr-152-as-built}
+
+Built on `w7/paper-names-colour-ste` (from `486bcf86`, with the owner's ten-paper change `d82861b0`). Not released, not
+Accepted.
+
+- **Papers.** `PaperColour` gains `PASTEL_ORANGE`, `PASTEL_PURPLE` and `LIGHT_BROWN` in A56.3's order (ten papers). The
+  declaration order is the pile's order; nothing stores or compares an ordinal (ids are stored), so the inserts are
+  safe. `PaperColourTest` pins the ids, values and order, and now runs the AW6.6 gate over every paper (house ink 7:1,
+  no 3:1 ink on White below 3:1 on the paper).
+- **Words.** Every string is in `Copy.kt` (`Copy.Paper.*_PLAIN`, `*_SIZES`, `onlyOn`, `*_SPOKEN`, `printsOnlyOn`;
+  `Copy.Shelf.CHOOSE_PAPER_SUB` / `EIGHT_PAGES_FROM_SHEET`; `Copy.PaperColour.SUB`, `FOOT`, `DONE`, `CHOSEN`,
+  `sampleLabel`, `loadNote`, the three names). The A35 `*_NOTE` strings are deleted. `PaperCopyTest` writes each string
+  out in full and also finds it in `v21-paper-names.html` / `v21-paper-pile.html`. The plain-English check passes with
+  no new baseline line.
+- **Start sheet (A55.1, A55.4).** Each row: the A35 stock (unchanged), then `PaperNames` (a `PaperStamp` and the plain
+  name in a `FlowRow`, so they wrap at large text), the sizes line, and for US Legal and A5 the only-on line. One button
+  node with the A55.4 label. Sizes from A55's CSS (`.nm` 16.32 sp, `.dim` 12.8 sp, `.nt` 12.48 sp).
+- **Print details (A55.6, A56.9).** The fixed-paper card shows the stamp, the plain name, the sheet size and the new
+  sentence; one node, "US Legal, long paper, 8.5 by 14 inches. You made this zine for US Legal paper. …". The colour
+  note reads "Put … paper in your printer. …".
+- **The pile (A56).** `PaperColourSheetSurface` is the one chooser for both doors: the Library sheet with no head rule,
+  a pinned top row (the stand-in page drawn in Compose from the prototype's SVG with the AW6 paper layer over it, its
+  label, Done in leaf), then the pile (five columns, three at font scale 1.5 or more, 42 × 58 dp sheets, 52 × 72 at
+  large text; fixed tilts from the prototype; the chosen sheet square, taped and named "Chosen" over a berry rule) and
+  the foot. Semantics: `selectableGroup` with a one-column `CollectionInfo` of ten; each sheet `selectable(Role.RadioButton)`
+  with `clearAndSetSemantics` (name, and White's note, plus its `CollectionItemInfo`); the page and the label are cleared.
+- **Doors (A56.5).** A tap saves (the door's normal pick) and the sheet stays open; re-tapping the current paper does
+  nothing. Done, Back and the scrim close it. The Library returns to the zine sheet with focus requested on its Paper
+  colour row; Print details now raises the same Library sheet in place of its own `ZSheet` (so it lost its "Close"
+  button: Done is the one action) and, on return, requests focus on its Paper colour row one frame after the chooser
+  closes (a flag plus a `LaunchedEffect` in `ProofPrintDetailsPanel`; the requester stays attached). The Library
+  door's return is asserted end to end; Print details' is asserted on the panel only, because Robolectric re-raises
+  the Print details drawer window in touch mode whatever the test asks, and touch mode moves no focus. A keyboard pass
+  on the emulator at both doors is owed (the Library door asks at once, Print details a frame later). The flag clears
+  in a `finally`, so a cancelled request never jumps focus on a later opening.
+- **Fit (A55.8, A56.2).** `PaperSheetFitTest` (Robolectric, 360 × 640 dp): at font scale 1 neither sheet has anything to
+  scroll; at font scale 2 the pile scrolls to Grey and Done stays on screen above it. To fit, the pile takes A56's own
+  sheet metrics through `LibrarySheetSurface(pile = true)`: 92 % height, an 8 dp head bottom and a 16 dp bottom padding
+  (every other Library sheet keeps 88 %, 12 dp and 24 dp).
+- **Tests.** `PaperColourTest`, `PaperCopyTest`, `PaperSheetFitTest` (new); `PaperColourScreenTest` (ten sheets in two rows,
+  radio and collection semantics, a tap keeps the sheet open and Done closes, the hidden page and label, the A55.6 card,
+  the A56.9 note, Print details' door with focus return), `ShelfSheetsTest` (A55.1 rows and A55.4 labels),
+  `ZineLibraryScreenTest` (the zine sheet's door with focus return), `PaperColourGoldenTest` call sites.
+
+**Deviations and interpretations.**
+- **No swipe down to close.** A56.5 lists a swipe; no Zinely sheet has drag-to-dismiss (ADR-049: the grip is drawn, not
+  wired). Done, Back and the scrim close it. A Known Limitation in the changelog.
+- **The head is pinned too.** A56.2 pins the top row under the title; here the title and sub-line are pinned as well,
+  as on every Library sheet, and only the pile and the foot scroll.
+- **Focus return is keyboard focus.** It is requested on the row; Compose moves no focus in touch mode, so the tests run
+  in keyboard mode. Where TalkBack lands after Done is for the TalkBack listen.
+- **"n of 10"** comes from collection semantics; whether TalkBack says it is for the TalkBack listen.
+- **Large text** switches at font scale 1.5 (A56.3 draws font scale 2): at 1.3 five columns still hold the names.
+- The golden files keep their AW6 names (`aw6_chooser_*`, `a35_start_sheet_light`) though they now draw A56 and A55.
+
+**Verified (2026-11-06, local).** `:core:copy` 60, `:core:data` 147, `:app` 314 and `:feature:editor` (1,652 in the
+golden run) unit tests green; `:app:lintDebug` and `:feature:editor:lintDebug` clean. `gold` fails on exactly six
+goldens, each an intended change read from its `*_compare.png`: `aw6_chooser_light`, `aw6_chooser_dark` and
+`aw6_chooser_font2_360` (the list became the pile, sample page and Done; new sub and foot), `a35_start_sheet_light`
+(stamps, plain names, one size line, new sub and foot), `a35_print_details_us_legal_light` (the stamp and the A55.6
+sentence) and `aw6p_print_details_pastel_yellow_font2` (the A56.9 note). Not re-recorded here.
+
+**Owed:** goldens re-recorded on the pinned image (`record-goldens.yml`); both device passes, including a TalkBack listen
+of the Start sheet and the pile and the printed check of the three new papers.

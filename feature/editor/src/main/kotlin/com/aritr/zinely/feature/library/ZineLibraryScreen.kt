@@ -145,8 +145,8 @@ private sealed interface LibrarySheet {
     /** The whole-library backup / restore chooser. */
     data object KeepSafe : LibrarySheet
 
-    /** B3's action sheet, for one zine. */
-    data class Actions(val zineId: String) : LibrarySheet
+    /** B3's action sheet, for one zine. [focus] is the row that gets focus on opening (AW6.12); not saved. */
+    data class Actions(val zineId: String, val focus: ZineAction? = null) : LibrarySheet
 
     /** The existing rename input, raised by the sheet's Rename row. */
     data class Rename(val zineId: String, val title: String) : LibrarySheet
@@ -1041,6 +1041,7 @@ public fun ZineLibraryScreen(
             )
         },
         onDismiss = { openSheet = null },
+        focusAction = (openSheet as? LibrarySheet.Actions)?.focus,
         onAction = { action ->
             val zine = actionTarget ?: return@ZineActionSheet
             if (
@@ -1106,16 +1107,16 @@ public fun ZineLibraryScreen(
         },
     )
 
-    // AW6.4: one tap picks and closes, back to the zine's sheet, whose row then names the new colour. Scrim and
-    // Back change nothing and go back the same way. No confirm, no Undo: nothing printed changes.
+    // A56.5 (amends AW6.4): a tap saves the colour and the sheet stays open, so the sample page shows it. Done, Back and
+    // the scrim close it, back to the zine's sheet, whose row then names the colour. No confirm, no Undo: nothing
+    // printed changes.
     val colouring = (openSheet as? LibrarySheet.PaperColourFor)?.let { open -> zines.firstOrNull { it.id == open.zineId } }
-    LibrarySheetHost(target = colouring, onDismiss = { colouring?.let { openSheet = LibrarySheet.Actions(it.id) } }) { zine ->
+    val closeColouring = { colouring?.let { openSheet = LibrarySheet.Actions(it.id, focus = ZineAction.Paper) } }
+    LibrarySheetHost(target = colouring, onDismiss = { closeColouring() }) { zine ->
         PaperColourSheetSurface(
             selected = zine.paperColour,
-            onPick = { picked ->
-                if (picked != zine.paperColour) onSetPaperColour(zine.id, picked)
-                openSheet = LibrarySheet.Actions(zine.id)
-            },
+            onPick = { picked -> onSetPaperColour(zine.id, picked) },
+            onDone = { closeColouring() },
         )
     }
 

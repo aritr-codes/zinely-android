@@ -1426,8 +1426,10 @@ public object Copy {
 
         // Create sheet.
         /** A35.5. The shipped "You can print it at home on either." went: with four papers there is no "either". */
-        public const val CHOOSE_PAPER_SUB: String = "Which paper will you print on? A zine keeps the paper it starts on."
-        public const val EIGHT_PAGES_FROM_SHEET: String = "Eight pages from one folded sheet."
+        // A55.2 (ADR-152).
+        public const val CHOOSE_PAPER_SUB: String =
+            "Choose the paper that is in your printer. You cannot change the paper of a zine after you start it."
+        public const val EIGHT_PAGES_FROM_SHEET: String = "Zinely makes eight pages from one folded sheet."
 
         // Card action sheet.
         public const val OPEN_ON_THE_BENCH: String = "Open on the bench"
@@ -1745,31 +1747,39 @@ public object Copy {
         public const val LEGAL_DIMENSIONS: String = "8.5\u00A0×\u00A014\u00A0in"
         public const val A5_DIMENSIONS: String = "148\u00A0×\u00A0210\u00A0mm"
 
-        // A35.4: each Start sheet row's one line, true of the paper and not of the maker.
-        public const val A4_NOTE: String = "Pages 74\u00A0×\u00A0105\u00A0mm. The everyday paper in most of the world."
-        public const val LETTER_NOTE: String = "Pages 2.75\u00A0×\u00A04.25\u00A0in. The everyday paper in North America."
-        public const val LEGAL_NOTE: String =
-            "Pages 3.5\u00A0×\u00A04.25\u00A0in, wider than Letter’s. Prints on US Legal paper only, so check that your printer takes it."
-        public const val A5_NOTE: String =
-            "Pages 52.5\u00A0×\u00A074\u00A0mm, the smallest zine. Prints on A5 paper only, so check that your printer takes it."
+        // A55.2 (`v21-paper-names.html`, ADR-152): the plain name that follows the official one (the stamp). It adds one
+        // fact, where the paper is used or how it is different. Shown at Start and in Print details' card only (A55.7).
+        public const val A4_PLAIN: String = "printer paper, most countries"
+        public const val LETTER_PLAIN: String = "printer paper, US and Canada"
+        public const val LEGAL_PLAIN: String = "long paper"
+        public const val A5_PLAIN: String = "small paper"
 
-        // A35.11: each row is one node, its name the row's words with units said in full, the paper's name first.
+        // A55.1 line 2: the sheet size and the page size on one line. No-break spaces as A35.10.
+        public const val A4_SIZES: String = "210\u00A0×\u00A0297\u00A0mm · pages 74\u00A0×\u00A0105\u00A0mm"
+        public const val LETTER_SIZES: String = "8.5\u00A0×\u00A011\u00A0in · pages 2.75\u00A0×\u00A04.25\u00A0in"
+        public const val LEGAL_SIZES: String = "8.5\u00A0×\u00A014\u00A0in · pages 3.5\u00A0×\u00A04.25\u00A0in"
+        public const val A5_SIZES: String = "148\u00A0×\u00A0210\u00A0mm · pages 52.5\u00A0×\u00A074\u00A0mm"
+
+        /** A55.1 line 3, US Legal and A5 only. [paper] is the official name. */
+        public fun onlyOn(paper: String): String = "Use $paper paper only. Make sure that your printer can use it."
+
+        // A55.4: each row is one node, read in the order of the screen, units in full (R29.4).
         public const val A4_SPOKEN: String =
-            "A4, 210 by 297 millimetres. Pages 74 by 105 millimetres. The everyday paper in most of the world."
+            "A4, printer paper, most countries, 210 by 297 millimetres, pages 74 by 105 millimetres."
         public const val LETTER_SPOKEN: String =
-            "US Letter, 8.5 by 11 inches. Pages 2.75 by 4.25 inches. The everyday paper in North America."
+            "US Letter, printer paper, US and Canada, 8.5 by 11 inches, pages 2.75 by 4.25 inches."
         public const val LEGAL_SPOKEN: String =
-            "US Legal, 8.5 by 14 inches. Pages 3.5 by 4.25 inches, wider than Letter’s. Prints on US Legal paper only, " +
-                "so check that your printer takes it."
+            "US Legal, long paper, 8.5 by 14 inches, pages 3.5 by 4.25 inches. Use US Legal paper only. " +
+                "Make sure that your printer can use it."
         public const val A5_SPOKEN: String =
-            "A5, 148 by 210 millimetres. Pages 52.5 by 74 millimetres, the smallest zine. Prints on A5 paper only, " +
-                "so check that your printer takes it."
+            "A5, small paper, 148 by 210 millimetres, pages 52.5 by 74 millimetres. Use A5 paper only. " +
+                "Make sure that your printer can use it."
 
-        // A35.8: at Print, a US Legal or A5 zine's paper is a fact, read as its name, size and sentence.
+        // A35.8 / A55.6: at Print, a US Legal or A5 zine's paper is a fact, read as its names, size and sentence.
         public const val LEGAL_DIMENSIONS_SPOKEN: String = "8.5 by 14 inches"
         public const val A5_DIMENSIONS_SPOKEN: String = "148 by 210 millimetres"
         public fun printsOnlyOn(paper: String): String =
-            "This zine was made for $paper, so it prints on $paper only. Put $paper paper in your printer before you print."
+            "You made this zine for $paper paper. Use $paper paper only. Put $paper paper in your printer before you print."
     }
 
     /**
@@ -1778,25 +1788,47 @@ public object Copy {
      */
     public object PaperColour {
         public const val TITLE: String = "Paper colour"
-        public const val SUB: String = "Which colour paper will you load? It shows on screen only. We print only the ink."
+        // A56.1 (`v21-paper-pile.html`, ADR-152).
+        public const val SUB: String =
+            "Choose the paper that you will put in your printer. Zinely shows the colour on the screen only. " +
+                "The PDF has only the ink."
         public const val FOOT: String =
-            "No dark or bright papers. Home printers have no white ink, so most inks would sink into them. " +
-                "Colours are close, not exact."
+            "Home printers have no white ink, so this list has no dark or bright paper. " +
+                "The colours on the screen are approximately correct."
         public const val WHITE: String = "White"
         public const val IVORY: String = "Ivory"
         public const val PASTEL_YELLOW: String = "Pastel yellow"
+        public const val PASTEL_ORANGE: String = "Pastel orange"
         public const val PASTEL_PINK: String = "Pastel pink"
+        public const val PASTEL_PURPLE: String = "Pastel purple"
         public const val PASTEL_BLUE: String = "Pastel blue"
         public const val PASTEL_GREEN: String = "Pastel green"
+        public const val LIGHT_BROWN: String = "Light brown"
         public const val GREY: String = "Grey"
         public const val WHITE_NOTE: String = "Plain printer paper."
+
+        /** A56.5: the one action, which closes the chooser. */
+        public const val DONE: String = "Done"
+
+        /** A56.4: the word under the chosen sheet. Drawn uppercase; TalkBack hears the checked state instead. */
+        public const val CHOSEN: String = "Chosen"
+
+        /** A56.6: the made-up page drawn on the sample sheet: two title lines and two body lines. Hidden from TalkBack. */
+        public const val SAMPLE_TITLE_1: String = "Sunday"
+        public const val SAMPLE_TITLE_2: String = "market"
+        public const val SAMPLE_BODY_1: String = "Eggs, bread, a radio"
+        public const val SAMPLE_BODY_2: String = "that plays one song."
+
+        /** A56.6: the sample page's label. [colour] is lower-case (AW6.13); White also says what it is. */
+        public fun sampleLabel(colour: String, isWhite: Boolean): String =
+            "A sample page on $colour paper" + if (isWhite) ", plain printer paper" else ""
 
         /** AW6.12 / AW6-P.9: the row's one name, the value read after the label. */
         public fun rowLabel(colour: String): String = "$TITLE, $colour"
 
-        /** AW6-P.3, under Print details' row for a colour that is not White. [colour] is lower-case. */
+        /** A56.9 (amends AW6-P.3), under Print details' row for a colour that is not White. [colour] is lower-case. */
         public fun loadNote(colour: String): String =
-            "Load $colour paper. We print only the ink, so the colour comes from your paper."
+            "Put $colour paper in your printer. The PDF has only the ink, so the colour comes from your paper."
 
         /** AW6-P.4: the recipe's Paper row names both. [colour] is lower-case. */
         public fun recipePaper(paper: String, colour: String): String = "$paper, $colour paper"

@@ -55,7 +55,61 @@ the table, slides the supplies over, and says *"ooh, do the one with your dog."*
 8. **Earned, not constant, enthusiasm.** Exclamation marks are for genuine wins (export done,
    first photo placed). If everything shouts, nothing lands.
 
+## 2a. Plain English: how a sentence is built ([ADR-151](../DECISIONS.md#adr-151))
+
+From 2026-11-05 every sentence follows ASD-STE100 (Simplified Technical English). The tone rules in §2 still decide *who*
+speaks and *how warmly*; this section decides how a sentence is built. Where the two disagree, this section wins on grammar
+and words, and §2 wins on warmth: rewrite a warm line, never drop it for a colder one. The rules below are in our own words;
+the standard's text is not in this repository.
+
+**What counts as a sentence.** Any text with a verb that a user reads or hears: hints, errors, empty states, sheet
+sub-lines, notes, TalkBack descriptions, website prose. **Labels** (buttons, chips, titles, section labels, undo names) stay
+short fragments and follow only the word rules.
+
+**Sentence rules**
+1. An instruction has at most 20 words. A description has at most 25.
+2. One instruction in each sentence. Give steps in the order the user does them.
+3. Use the active voice. Say who does the action: "Zinely saves your zine", not "Your zine is saved".
+4. Use the imperative for an instruction: "Put US Legal paper in your printer."
+5. Use the simple present, the simple past or the future. No "has been", "would", "could have".
+6. No semicolons and no dashes that join two sentences. Make two sentences.
+7. Keep "the" and "a". Do not write in note style.
+8. A paragraph has at most 6 sentences. Start with the topic.
+9. A warning comes before the step it is about, and says what can happen.
+
+**Word rules**
+1. One word, one meaning. Use a word in its basic sense: "approximately", not "close" or "near" for a number or a colour.
+2. Prefer the short, common verb: *make*, *put*, *show*, *keep*, *choose*, *open*, *close*, *start*, *stop*, *use*.
+3. No -ing forms as a noun or an adjective ("the printing", "a loading paper"). Use a verb: "when you print".
+4. No idioms or figures of speech ("free some up", "grab", "out of space"). Say the fact: "The phone has no free space."
+5. No phrasal verbs where one word does the job: "start" not "set up"; "remove" not "take out".
+6. Words from the glossary below are allowed with exactly the meaning given there.
+
+**Glossary: product nouns** (a word goes here only if a user sees it on a screen with this meaning)
+
+| Word | Meaning in Zinely |
+|---|---|
+| zine | the small booklet a maker makes; eight pages from one folded sheet |
+| My Shelf | the screen that shows all your zines |
+| page | one of the eight pages of a zine |
+| ink | a colour for words, shapes and lines |
+| paper colour | the colour of the paper you will put in your printer; shown on the screen only |
+| folder | a group of zines on My Shelf |
+| backup | a file that holds copies of your zines |
+| A4, US Letter, US Legal, A5 | the official paper names, as the print dialog shows them |
+| printer paper, long paper, small paper | the plain names that follow an official paper name (A55) |
+| the names of papers, inks and fonts | as listed in their frozen specs |
+
+*Website only:* **Bench** (the screen where you change a page) and **Proof** (the screen where you read your zine and
+get it ready to print). The app does not show these words, so app copy does not use them.
+
+**Check.** A local test flags a sentence over 25 words (it cannot tell an instruction from a description, so it uses the
+higher limit; keep instructions to 20 by hand), a word from the banned list, an -ing word not on the allow list, and
+a semicolon. It is a heuristic. Zinely does not say "STE compliant" anywhere a user reads.
+
 ## Public website voice
+
+> **ADR-151:** where a pattern below needs a long or idiomatic sentence, §2a wins. Short plain jokes stay.
 
 The owner requested a more outspoken public website on 2026-09-10. This website-specific guidance extends the
 warm craft-table voice above; it does not rewrite frozen Android microcopy. Research and the critique of the first

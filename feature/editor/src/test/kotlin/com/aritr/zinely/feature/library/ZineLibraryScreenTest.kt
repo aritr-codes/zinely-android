@@ -700,12 +700,14 @@ class ZineLibraryScreenTest {
     }
 
     /**
-     * AW6.4 from the zine sheet: the row raises the chooser in place of the sheet; one tap sets the colour and hands
-     * back to the zine's sheet. Scrim and Back go back the same way and change nothing.
+     * A56.5 from the zine sheet: the row raises the chooser in place of the sheet; a tap sets the colour and the
+     * chooser STAYS open; Done hands back to the zine's sheet with focus on its Paper colour row (AW6.12).
      */
     @Test
-    fun `the paper colour row raises the chooser, and a pick sets it and returns to the sheet`() {
+    fun `given the chooser from the zine sheet, when a paper is tapped, then it is set and the chooser stays, and Done returns to the Paper colour row`() {
         openSheetFor(0)
+        // Focus is keyboard and switch-access focus; in touch mode Compose moves none (as the backup chooser's test).
+        composeRule.runOnUiThread { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
         composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Paper)).performScrollTo().performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(com.aritr.zinely.feature.editor.PaperColourSheetTestTag).assertIsDisplayed()
@@ -717,8 +719,14 @@ class ZineLibraryScreenTest {
         composeRule.waitForIdle()
 
         assertEquals(listOf(idOf(0) to com.aritr.zinely.core.data.repository.PaperColour.PASTEL_BLUE), colourSets)
+        composeRule.onNodeWithTag(com.aritr.zinely.feature.editor.PaperColourSheetTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(ZineActionSheetTestTag).assertDoesNotExist()
+
+        composeRule.onNodeWithTag(com.aritr.zinely.feature.editor.PaperColourDoneTestTag).performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithTag(ZineActionSheetTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(com.aritr.zinely.feature.editor.PaperColourSheetTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Paper)).assertIsFocused()
     }
 
     @Test

@@ -42,6 +42,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -413,6 +414,10 @@ private fun ProofScreenBody(
     val scroll = rememberScrollState()
 
 
+    // AW6.12: back from the paper chooser, focus returns to the Paper colour row that opened it.
+    val paperColourRowFocus = remember { FocusRequester() }
+    var returnToColourRow by remember { mutableStateOf(false) }
+
     fun open(target: ProofDrawer) {
         haptics.perform(ZinelyHaptic.Tick)
         drawerOrdinal = target.ordinal
@@ -622,28 +627,28 @@ private fun ProofScreenBody(
             onOpenFold = { open(ProofDrawer.Fold) },
             paperColour = paperColour,
             onOpenPaperColour = { open(ProofDrawer.PaperColour) },
+            paperColourFocus = paperColourRowFocus,
+            focusColourRow = returnToColourRow,
+            onColourRowFocused = { returnToColourRow = false },
         )
     }
 
-    // AW6.3b / AW6.4: the chooser, Print details' second door. A pick or a dismiss returns to the details it
-    // was raised from. The colour is not in the PDF (AW6-P.7), so a pick never touches `.done`.
-    ZSheet(
-        visible = drawer == ProofDrawer.PaperColour,
-        onDismiss = { drawerOrdinal = ProofDrawer.Details.ordinal },
-        title = Copy.PaperColour.TITLE,
-        sub = Copy.PaperColour.SUB,
-        close = ZSheetClose(Copy.Proof.CLOSE) { drawerOrdinal = ProofDrawer.Details.ordinal },
+    // AW6.3b / A56: the chooser, Print details' second door. The SAME sheet as the zine sheet's door (one
+    // `PaperColourSheetSurface` in the Library's window), so the two cannot drift. A tap saves and the sheet stays
+    // open (A56.5); Done, Back and the scrim return to the details it was raised from, with focus on the Paper colour
+    // row (AW6.12). The colour is not in the PDF (AW6-P.7), so a pick never touches `.done`.
+    fun closeChooser() {
+        returnToColourRow = true
+        drawerOrdinal = ProofDrawer.Details.ordinal
+    }
+    com.aritr.zinely.feature.library.LibrarySheetHost(
+        target = Unit.takeIf { drawer == ProofDrawer.PaperColour },
+        onDismiss = ::closeChooser,
     ) {
-        PaperColourOptions(
+        PaperColourSheetSurface(
             selected = paperColour,
-            onPick = { picked ->
-                if (picked != paperColour) onPaperColourSelected(picked)
-                drawerOrdinal = ProofDrawer.Details.ordinal
-            },
-            rowPaddingH = ZinelyV21Dimens.gapXs,
-            modifier = Modifier
-                .heightIn(max = drawerBodyMaxHeight())
-                .verticalScroll(rememberScrollState()),
+            onPick = onPaperColourSelected,
+            onDone = ::closeChooser,
         )
     }
 
@@ -1722,6 +1727,9 @@ private fun ProofDetailsDrawerBody(
     onOpenFold: () -> Unit,
     paperColour: PaperColour,
     onOpenPaperColour: () -> Unit,
+    paperColourFocus: FocusRequester,
+    focusColourRow: Boolean,
+    onColourRowFocused: () -> Unit,
 ) {
     ProofPrintDetailsPanel(
         paper = paper,
@@ -1730,6 +1738,9 @@ private fun ProofDetailsDrawerBody(
         pageCount = pageCount,
         paperColour = paperColour,
         onOpenPaperColour = onOpenPaperColour,
+        paperColourFocus = paperColourFocus,
+        focusColourRow = focusColourRow,
+        onColourRowFocused = onColourRowFocused,
         modifier = Modifier.fillMaxWidth().heightIn(max = drawerBodyMaxHeight()),
     )
 }
