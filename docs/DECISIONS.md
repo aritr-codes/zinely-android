@@ -19248,5 +19248,29 @@ goldens, each an intended change read from its `*_compare.png`: `aw6_chooser_lig
 (stamps, plain names, one size line, new sub and foot), `a35_print_details_us_legal_light` (the stamp and the A55.6
 sentence) and `aw6p_print_details_pastel_yellow_font2` (the A56.9 note). Not re-recorded here.
 
-**Owed:** goldens re-recorded on the pinned image (`record-goldens.yml`); both device passes, including a TalkBack listen
-of the Start sheet and the pile and the printed check of the three new papers.
+**Goldens (2026-11-09).** Re-recorded on the pinned image (`record-goldens.yml`, run 42571648101) and read one by one:
+eight PNGs changed (the six above, plus the pastel-yellow Print details in light and dark, which changed inside the 2 %
+tolerance). Found while reading: at font scale 2 on 360 dp the "Chosen" label lost its last letter; fixed in `80661592`
+(one line, centred, spills into the gap) and re-recorded. Merged in PR #203.
+
+**Device passes (2026-11-09).** Samsung SM-A176B, Android 16, 450 dpi, debug build under the QA id
+`com.aritr.zinely.w6qa`, from `main` at `c99e7b5f`; no TalkBack.
+- *Pass 1 (built right?):* PASS. Platform tree (`uiautomator dump`): the Start sheet is four buttons, each one node
+  with the A55.4 label; the pile is ten `RadioButton`s, one checked, a tap re-colours the sample page and keeps the
+  sheet open, Done is 112 x 48 dp; nothing scrolls at normal size; at font scale 2 the pile is three columns, scrolls,
+  Done stays on screen and "CHOSEN" is whole. The chosen paper reaches the zine sheet's sub-line and row, the Bench
+  page and Print details. Keyboard: after Done, focus lands on "Paper colour, <paper>" at both doors.
+- *Pass 2 (would I understand it?):* PASS with two findings. (1) Done moves up about 20 px when the sample label
+  shrinks from two lines to one, so it shifts under a finger that has just tapped a sheet (Recommended Improvement).
+  (2) On Start, "printer paper, US and Canada" wraps under the US LETTER stamp (Observation: it is the wrap that A55.1
+  allows).
+- *360 x 640 emulator (API 24, Android 7, 720 x 1280 at 320 dpi):* the Start sheet fits with no scroll. **The pile does
+  not fit:** it scrolls about 16 dp (31 px) and the foot's last line sits at the screen edge. `PaperSheetFitTest`
+  passed because Robolectric's 640 dp height does not remove the status bar, which a real phone does, so the 92 %
+  sheet cap is 22 dp lower there. This corrects the "no scrolling at 360 x 640" claim in decision 5 and in the
+  Fit bullet above: it holds for a screen that is 640 dp tall *after* the bars, not for a 640 dp screen with them. It is
+  a Known Limitation in the 1.0.0 changelog, not a redesign (the design is frozen); a fix is tracked in the issue
+  linked from the 1.0.0 package. The API 24 render is correct (no blend fault).
+
+**Owed:** a TalkBack listen of the Start sheet and the pile; the printed check of the three new papers; the 360 x 640
+fit fix (needs an A56 amendment first).

@@ -11,10 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > **`1.0.0` ships when a first-time user can create *and* export a real zine** — i.e.
 > the [MVP exit criteria](docs/ROADMAP.md#mvp--one-great-format-done-right) are met.
 > Each released `0.y.0` maps to a build phase in the [roadmap](docs/ROADMAP.md).
+>
+> **1.0.0 shipped on 2026-11-09** (the owner's decision; see the [1.0.0 package](docs/releases/1.0.0.md)). From
+> this version the major, minor and patch numbers follow Semantic Versioning, and the Known limitations of each
+> release say what is not yet checked.
 
 ## [Unreleased]
 
-Changes since the beta.9 app.
+Nothing yet.
+
+## [1.0.0] — 2026-11-09 — Four paper sizes, paper colour, a third font, and photo descriptions
+
+Changes since the beta.9 app. This is the first full release: it is not a pre-release.
 
 ### Added
 
@@ -106,8 +114,9 @@ Changes since the beta.9 app.
   sheet and the PDF keep the official name only. **Paper colour** is now a pile of ten small sheets with a sample page:
   a tap changes the colour and the sheet stays open, so you can try each paper; **Done** closes it. Three new papers:
   Pastel orange, Pastel purple and Light brown. Print details now says "Put pastel yellow paper in your printer. The
-  PDF has only the ink, so the colour comes from your paper." At normal text size both sheets fit a small phone with
-  no scrolling. The colour is still never printed and never in the PDF.
+  PDF has only the ink, so the colour comes from your paper." At normal text size the Start sheet fits a phone with
+  no scrolling. The paper colour sheet fits too, except on a small phone that is 360 dp wide and 640 dp tall (about
+  16 dp scroll; see Known limitations). The colour is still never printed and never in the PDF.
 - The "restored details" note on My Shelf now lists the zines whose name went back first, so a zine you cannot find
   is never hidden in "and 2 more"; and when several zines share a name it says which one it means (its folder, and
   its place among them: "Notes" (in "Trips", 2 of 3 with this name)). Library design amendment A37.3 (frozen
@@ -151,8 +160,14 @@ Changes since the beta.9 app.
 ### Known limitations
 
 - The paper colour sheet closes with Done, Back or a tap outside it. It does not close with a swipe down; no Zinely
-  sheet does. A Zinely build with the older paper colour list (seven papers, not in any download) shows a zine
-  on Pastel orange, Pastel purple or Light brown as White, and keeps the colour in the file.
+  sheet does.
+- On a phone that is 360 dp wide and 640 dp tall (the smallest we tried, an Android 7 emulator), the paper colour
+  sheet scrolls about 16 dp, so the last line of its foot sits at the screen edge until you scroll. A taller phone
+  does not scroll. At twice the normal text size the sheet scrolls on every phone, and Done stays on the screen.
+- No screen reader (TalkBack) listen has been done for the Start sheet, the paper colour sheet, Hand, Describe or the
+  new Read stops. A person who uses TalkBack may find wording or order that we did not catch.
+- Nobody has printed on coloured paper and compared it with the screen. The paper colours on the screen are close
+  estimates, and the sheet says so.
 - A backup that holds a described photo or Art piece can be restored only by the first Zinely release that includes
   Describe, or newer. An older Zinely says the backup needs a newer Zinely and restores nothing from it. A backup of zines with no
   descriptions restores in older builds as before. The TalkBack listen for Read's new stops is still owed.
