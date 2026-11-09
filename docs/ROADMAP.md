@@ -33,7 +33,7 @@ by the owner and are Known Limitations. Below, "in no download" for W2a, W2b or 
 website and call this version 1.0.0"; [1.0.0](../CHANGELOG.md#100--2026-11-09--four-paper-sizes-paper-colour-a-third-font-and-photo-descriptions),
 tag `v1.0.0`, GitHub release, APK only; [package](releases/1.0.0.md)). It carries everything merged since beta.9:
 four paper sizes and ten paper colours with plain names and the paper pile (W6, W7; ADR-150, ADR-151, ADR-152),
-photo descriptions (W4, saved format v4, ADR-147), the Hand font (W9, ADR-148), and the fixes for #147, #148, #149, #155,
+photo descriptions (W4, saved format v4, ADR-147), the Hand font (W9, ADR-148), the restored-names note (#145), and the fixes for #147, #148, #149, #155,
 #156, #158, #159, #160, #166 and #197. W5 print guidance (ADR-146) is designed and not in it. It ships with Known
 limitations: no TalkBack listen, no print on coloured paper, and a 16 dp scroll on a 360 x 640 phone
 ([#204](https://github.com/aritr-codes/zinely-android/issues/204)). Below, "in no download" for these items means: in

@@ -42,17 +42,100 @@ Changes since the beta.9 app. This is the first full release: it is not a pre-re
 - Saved-file format v4 holds the description. A zine with no description is still saved exactly as before.
 - US Legal and A5 paper in the saved format, and a paper colour kept with each zine (W6 data lane,
   [ADR-150](docs/DECISIONS.md#adr-150)). Saved-file format v5 holds the two new sizes; a zine on A4 or US Letter is
-  still saved exactly as before. Each zine can remember which paper colour to load (White, Ivory, Pastel yellow,
-  Pastel pink, Pastel blue, Pastel green, Grey); the colour is kept beside the zine, in backups, and in a duplicate,
-  and is never put in the PDF or PNG. A US Legal or A5 zine is always printed on its own paper.
+  still saved exactly as before. Each zine can remember which paper colour to load; the colour is kept beside the zine,
+  in backups, and in a duplicate, and is never put in the PDF or PNG. A US Legal or A5 zine is always printed on its
+  own paper.
 - Four paper sizes and a paper colour on screen (W6 UI lane, [ADR-150](docs/DECISIONS.md#adr-150), Library A35 and
   AW6, Proof AW6-P, Bench AW6-B). **Start a zine** offers A4, US Letter, US Legal and A5, the paper you set in About
   first, each drawn to one scale; About's "Paper for new zines" offers the four too. At Print, a US Legal or A5 zine
   shows its paper as a fact with no A4 / US Letter switch. A zine's sheet on the Shelf has a **Paper colour** row, and
-  Print details has the same row: White, Ivory, Pastel yellow, Pastel pink, Pastel blue, Pastel green or Grey. The
-  Bench canvas, its page strip, Read and the Print details picture then show the page on that paper; Print details
-  says "Load pastel yellow paper. We print only the ink, so the colour comes from your paper.", and Save PDF and
-  Share & export say "Your paper colour is not in the file." The colour is never printed and never in the PDF.
+  Print details has the same row. The Bench canvas, its page strip, Read and the Print details picture then show the
+  page on that paper. Save PDF and Share & export say "Your paper colour is not in the file." The colour is never
+  printed and never in the PDF.
+- Paper names you can understand, and paper colour as a pile of paper (W7, [ADR-152](docs/DECISIONS.md#adr-152),
+  Library A55 and A56). **Start a zine** shows each paper's official name as a stamp, then a plain name: "A4, printer
+  paper, most countries", "US Letter, printer paper, US and Canada", "US Legal, long paper", "A5, small paper". Each
+  row shows the sheet size and the page size on one line, and US Legal and A5 say "Use US Legal paper only. Make sure
+  that your printer can use it." Print details shows the same names for a US Legal or A5 zine. The Shelf, the zine
+  sheet and the PDF keep the official name only. **Paper colour** is a pile of ten small sheets with a sample page:
+  White, Ivory, Pastel yellow, Pastel orange, Pastel pink, Pastel purple, Pastel blue, Pastel green, Light brown and
+  Grey. A tap changes the colour and the sheet stays open, so you can try each paper; **Done** closes it. Print details
+  says "Put pastel yellow paper in your printer. The PDF has only the ink, so the colour comes from your paper." At
+  normal text size the Start sheet fits a phone with no scrolling. The paper colour sheet fits too, except on a small
+  phone that is 360 dp wide and 640 dp tall (about 16 dp scroll; see Known limitations).
+
+### Changed
+
+- The "restored details" note on My Shelf now lists the zines whose name went back first, so a zine you cannot find
+  is never hidden in "and 2 more"; and when several zines share a name it says which one it means (its folder, and
+  its place among them: "Notes" (in "Trips", 2 of 3 with this name)). Library design amendment A37.3 (frozen
+  2026-11-05, ADR-134, #145).
+### Known limitations
+
+- The paper colour sheet closes with Done, Back or a tap outside it. It does not close with a swipe down; no Zinely
+  sheet does.
+- On a phone that is 360 dp wide and 640 dp tall (the smallest we tried, an Android 7 emulator), the paper colour
+  sheet scrolls about 16 dp, so the last line of its foot sits at the screen edge until you scroll. A taller phone
+  does not scroll. At twice the normal text size the sheet scrolls on the phones we tried, and Done stays on the screen.
+- No screen reader (TalkBack) listen has been done for the Start sheet, the paper colour sheet, Hand, Describe or the
+  new Read stops. A person who uses TalkBack may find wording or order that we did not catch.
+- Android 7 to 9 has been tried on an emulator, not on a real phone.
+- Six decisions behind this release are still Proposed, not Accepted: ADR-147 (Describe), ADR-148 (Hand), ADR-149,
+  ADR-150 (paper sizes and colour), ADR-151 (plain English) and ADR-152 (paper names and the pile).
+- Zinely is not on Google Play. It is a direct APK download from GitHub.
+- Nobody has printed on coloured paper and compared it with the screen. The paper colours on the screen are close
+  estimates, and the sheet says so.
+- A backup that holds a described photo or Art piece can be restored only by the first Zinely release that includes
+  Describe, or newer. An older Zinely says the backup needs a newer Zinely and restores nothing from it. A backup of zines with no
+  descriptions restores in older builds as before. The TalkBack listen for Read's new stops is still owed.
+- A zine made with Hand shows in a plainer font on an older version of Zinely. Your words and your choice are kept, and
+  Hand comes back on this version. Some words, a title in capitals for one, may not show on the older version.
+- A backup that holds a US Legal or A5 zine can be restored only by the first Zinely release that includes US Legal
+  and A5, or newer. An older Zinely says the backup needs a newer Zinely and restores nothing from it. Older versions
+  do not keep a zine's paper colour.
+### Fixed
+
+- A zine that cannot be opened and has no shelf index entry now keeps its paper size on the Shelf. The file stores the
+  paper as `"a4"` or `"legal"`, and the fallback read compared it with the code name (`A4`), so it never matched and
+  the size was always left blank (#197). A paper this build does not know is still left blank, never guessed.
+- Choosing several zines: an Undo tapped while a delete was still being written could restore a card that was then
+  deleted without a word; it now waits for the delete and says the zine was already deleted. A move's Undo said
+  nothing when every zine in it had been deleted meanwhile; it now says they were already deleted
+  ([#166](https://github.com/aritr-codes/zinely-android/issues/166), [ADR-142](docs/DECISIONS.md#adr-142)).
+- The My Shelf note that a zine's name or cover went back to its earlier copy is no longer lost in two cases
+  ([#147](https://github.com/aritr-codes/zinely-android/issues/147)): when renaming or moving the zine is what found the
+  damage, the note now still waits instead of being cleared in the same moment; and a second repair of a zine whose
+  first note you had just dismissed with Got it is told again. The words are unchanged
+  ([A37](docs/design/mockups/v21-library.html)).
+- If a photo left the page while its "across the fold" question was open (an Undo, a delete, a page turn), the
+  question closed but the Bench's bars and the way back to My Shelf could stay hidden. They now come back, and the
+  question does not reopen by itself when the photo returns
+  ([#159](https://github.com/aritr-codes/zinely-android/issues/159), [ADR-109](docs/DECISIONS.md#adr-109)).
+- A zine that went back to its earlier copy, or was closed while you were typing into a new text box, no longer
+  opens with an invisible empty text box in it. An empty box is never saved, and one already saved is left out
+  when the zine opens ([#155](https://github.com/aritr-codes/zinely-android/issues/155)).
+- A Shelf notice (such as "Couldn't copy that zine") is no longer lost when the phone rotates at the wrong moment.
+  A notice that was waiting behind the folder snack now shows after the rotation, and a notice that had already
+  shown is not shown again. A folder snack that is showing during a rotation still goes, with its Undo
+  ([#160](https://github.com/aritr-codes/zinely-android/issues/160)).
+- On Android 7 to 9 with TalkBack, an Undo bar on the Shelf or the Bench no longer stays up forever and holds
+  back every message after it. It stays up for two minutes, the longest "Time to take action" newer Android
+  offers ([#160](https://github.com/aritr-codes/zinely-android/issues/160)).
+- On the Proof, TalkBack now says "button" after Save PDF, Share, Open PDF, Fold it up, It's folded, Try again
+  (or Open settings), the print-details row and "See how to fold". Before, it read their words but not that
+  they were buttons. Nothing on screen changes
+  ([#156](https://github.com/aritr-codes/zinely-android/issues/156), [ADR-101](docs/DECISIONS.md#adr-101)).
+- At large text on a small phone, the first-run "drag to move" hint no longer covers the piece it is about or gets
+  cut off: it waits until there is room above the piece, and it does not show while reframing a photo. The notice
+  shown when a save fails puts its two buttons under its words when it is narrow, so the words stay readable
+  ([#148](https://github.com/aritr-codes/zinely-android/issues/148),
+  [#149](https://github.com/aritr-codes/zinely-android/issues/149),
+  [#158](https://github.com/aritr-codes/zinely-android/issues/158), [ADR-149](docs/DECISIONS.md#adr-149)).
+
+### Website, design, docs and test notes from before beta.9
+
+These lines sat in the Unreleased list through earlier releases. They change nothing in the app. They are kept
+here so the record stays whole.
 
 - Website note, not the app: the public pages, including the homepage tone and the privacy policy (last updated 30 October 2026), are rewritten in plain words (ADR-118 plain-words rule, R39). Some changelog lines are corrected to match what shipped. The privacy policy now also explains the storage permission Android adds on Android 9 and older. No limits, download details or app behaviour changed.
 - Design (frozen under the owner's delegation, the owner may overrule): Bench A41 and A42 ([D-141](docs/design/V2-SPEC-DEFECTS.md#d-141),
@@ -103,24 +186,6 @@ Changes since the beta.9 app. This is the first full release: it is not a pre-re
   uncommitted ideas so it does not present tentative work as a promise.
 - Added an optional, non-autoplaying HTML fold-replay experiment with keyboard-operable controls, persistent
   written instructions, and a reduced-motion path. It remains a prototype and does not alter the app.
-
-### Changed
-
-- Paper names you can understand, and paper colour as a pile of paper (W7, [ADR-152](docs/DECISIONS.md#adr-152),
-  Library A55 and A56). **Start a zine** shows each paper's official name as a stamp, then a plain name: "A4, printer
-  paper, most countries", "US Letter, printer paper, US and Canada", "US Legal, long paper", "A5, small paper". Each
-  row shows the sheet size and the page size on one line, and US Legal and A5 say "Use US Legal paper only. Make sure
-  that your printer can use it." Print details shows the same names for a US Legal or A5 zine. The Shelf, the zine
-  sheet and the PDF keep the official name only. **Paper colour** is now a pile of ten small sheets with a sample page:
-  a tap changes the colour and the sheet stays open, so you can try each paper; **Done** closes it. Three new papers:
-  Pastel orange, Pastel purple and Light brown. Print details now says "Put pastel yellow paper in your printer. The
-  PDF has only the ink, so the colour comes from your paper." At normal text size the Start sheet fits a phone with
-  no scrolling. The paper colour sheet fits too, except on a small phone that is 360 dp wide and 640 dp tall (about
-  16 dp scroll; see Known limitations). The colour is still never printed and never in the PDF.
-- The "restored details" note on My Shelf now lists the zines whose name went back first, so a zine you cannot find
-  is never hidden in "and 2 more"; and when several zines share a name it says which one it means (its folder, and
-  its place among them: "Notes" (in "Trips", 2 of 3 with this name)). Library design amendment A37.3 (frozen
-  2026-11-05, ADR-134, #145).
 - Docs: ZINE-DIRECTION notes the two-voice ruling (Book and Plain, ADR-126 Proposed) beside its four "three
   voices" lines; 21 drifted line citations into the frozen type bar, Reframe and Library pages re-pointed to
   named blocks or pinned commits (#97, #98).
@@ -156,73 +221,15 @@ Changes since the beta.9 app. This is the first full release: it is not a pre-re
 - Replaced the standalone website Accessibility page with a short accessibility statement and contact route
   in the home-page About section. Accessibility remains a site-wide implementation requirement rather than a
   primary navigation destination.
-
-### Known limitations
-
-- The paper colour sheet closes with Done, Back or a tap outside it. It does not close with a swipe down; no Zinely
-  sheet does.
-- On a phone that is 360 dp wide and 640 dp tall (the smallest we tried, an Android 7 emulator), the paper colour
-  sheet scrolls about 16 dp, so the last line of its foot sits at the screen edge until you scroll. A taller phone
-  does not scroll. At twice the normal text size the sheet scrolls on every phone, and Done stays on the screen.
-- No screen reader (TalkBack) listen has been done for the Start sheet, the paper colour sheet, Hand, Describe or the
-  new Read stops. A person who uses TalkBack may find wording or order that we did not catch.
-- Nobody has printed on coloured paper and compared it with the screen. The paper colours on the screen are close
-  estimates, and the sheet says so.
-- A backup that holds a described photo or Art piece can be restored only by the first Zinely release that includes
-  Describe, or newer. An older Zinely says the backup needs a newer Zinely and restores nothing from it. A backup of zines with no
-  descriptions restores in older builds as before. The TalkBack listen for Read's new stops is still owed.
-- A backup that holds a US Legal or A5 zine can be restored only by the first Zinely release that includes US Legal
-  and A5, or newer. An older Zinely says the backup needs a newer Zinely and restores nothing from it. Older versions
-  do not keep a zine's paper colour.
-
-### Fixed
-
-- A zine that cannot be opened and has no shelf index entry now keeps its paper size on the Shelf. The file stores the
-  paper as `"a4"` or `"legal"`, and the fallback read compared it with the code name (`A4`), so it never matched and
-  the size was always left blank (#197). A paper this build does not know is still left blank, never guessed.
-- Choosing several zines: an Undo tapped while a delete was still being written could restore a card that was then
-  deleted without a word; it now waits for the delete and says the zine was already deleted. A move's Undo said
-  nothing when every zine in it had been deleted meanwhile; it now says they were already deleted
-  ([#166](https://github.com/aritr-codes/zinely-android/issues/166), [ADR-142](docs/DECISIONS.md#adr-142)).
-- The My Shelf note that a zine's name or cover went back to its earlier copy is no longer lost in two cases
-  ([#147](https://github.com/aritr-codes/zinely-android/issues/147)): when renaming or moving the zine is what found the
-  damage, the note now still waits instead of being cleared in the same moment; and a second repair of a zine whose
-  first note you had just dismissed with Got it is told again. The words are unchanged
-  ([A37](docs/design/mockups/v21-library.html)).
-- If a photo left the page while its "across the fold" question was open (an Undo, a delete, a page turn), the
-  question closed but the Bench's bars and the way back to My Shelf could stay hidden. They now come back, and the
-  question does not reopen by itself when the photo returns
-  ([#159](https://github.com/aritr-codes/zinely-android/issues/159), [ADR-109](docs/DECISIONS.md#adr-109)).
-- A zine that went back to its earlier copy, or was closed while you were typing into a new text box, no longer
-  opens with an invisible empty text box in it. An empty box is never saved, and one already saved is left out
-  when the zine opens ([#155](https://github.com/aritr-codes/zinely-android/issues/155)).
 - The website no longer requests fonts from Google. It now serves the app's own fonts itself, which makes the
   privacy policy's "no third-party fonts" true. Averia is shipped unmodified, and each licence sits beside
   the files.
 - The website's Bench demo and screenshot no longer show a "Your shelf · 4 things kept" tray that the app does not
   have. The screenshot was re-rendered from the frozen prototype with only that tray hidden.
 - The website's not-found page now finds its styles and links at any URL depth.
-
 - Restored the Reframe accessibility regression that proves a measurable but undisplayable photo keeps every
   adjustment inert and silent. Its precondition now comes from an immutable composition-scoped loader seam rather
   than stream-consumer ordering, eliminating the CI race tracked by issue #57.
-- A Shelf notice (such as "Couldn't copy that zine") is no longer lost when the phone rotates at the wrong moment.
-  A notice that was waiting behind the folder snack now shows after the rotation, and a notice that had already
-  shown is not shown again. A folder snack that is showing during a rotation still goes, with its Undo
-  ([#160](https://github.com/aritr-codes/zinely-android/issues/160)).
-- On Android 7 to 9 with TalkBack, an Undo bar on the Shelf or the Bench no longer stays up forever and holds
-  back every message after it. It stays up for two minutes, the longest "Time to take action" newer Android
-  offers ([#160](https://github.com/aritr-codes/zinely-android/issues/160)).
-- On the Proof, TalkBack now says "button" after Save PDF, Share, Open PDF, Fold it up, It's folded, Try again
-  (or Open settings), the print-details row and "See how to fold". Before, it read their words but not that
-  they were buttons. Nothing on screen changes
-  ([#156](https://github.com/aritr-codes/zinely-android/issues/156), [ADR-101](docs/DECISIONS.md#adr-101)).
-- At large text on a small phone, the first-run "drag to move" hint no longer covers the piece it is about or gets
-  cut off: it waits until there is room above the piece, and it does not show while reframing a photo. The notice
-  shown when a save fails puts its two buttons under its words when it is narrow, so the words stay readable
-  ([#148](https://github.com/aritr-codes/zinely-android/issues/148),
-  [#149](https://github.com/aritr-codes/zinely-android/issues/149),
-  [#158](https://github.com/aritr-codes/zinely-android/issues/158), [ADR-149](docs/DECISIONS.md#adr-149)).
 
 ## [0.9.0-beta.9] — 2026-11-03 — Turn pieces by hand, and small things fixed
 
