@@ -97,8 +97,8 @@ internal val ShelfPaperChoices: List<PaperSize> = listOf(PaperSize.A4, PaperSize
  * Drawn as the Library's own `.sheet` ([LibrarySheetHost] / [LibrarySheetSurface]), which is the paint the frozen
  * `.a35-sheet` restates: the head, its dashed divider, then full-bleed rows with a dashed rule under each.
  *
- * Each row ([StartPaperRow]) is the sheet drawn upright at **one** scale for all four, then the name, the size and
- * one line. The scale was re-based from A4's 74dp on 841.890pt to 56dp on US Legal's 1008pt so the tallest fits
+ * Each row ([StartPaperRow]) is the sheet drawn upright at **one** scale for all four, then the stamp and plain
+ * name, the sizes line and, for US Legal and A5, the only-on line (A55.1). The scale was re-based from A4's 74dp on 841.890pt to 56dp on US Legal's 1008pt so the tallest fits
  * (A35.4), so the shipped stocks shrank (A4 52x74 to 33x47).
  *
  * ponytail: the head stays pinned above the scrolling rows, as every Library sheet's does ([LibrarySheetSurface]);

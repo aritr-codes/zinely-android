@@ -19141,7 +19141,7 @@ both device passes are done.
 names), [R41](RESEARCH.md#r41) (paper colour values; R41.7 adds the two new papers).
 **Amends:** A35's row content and speech (A55); A35.8's fixed-paper card words (A55.6); AW6.4, AW6.5, AW6.11 and AW6.12,
 and AW6-P.3's note (A56);
-[ADR-150](#adr-150) decision on the closed set, by adding two papers (add-only, as ADR-150 allows).
+[ADR-150](#adr-150) decision on the closed set, by adding three papers (add-only, as ADR-150 allows).
 **Keeps:** ADR-133 decision 1 (the four sizes, closed, by official name); ADR-150's storage (paper colour in `meta.json` by
 id; an unknown id reads as White and stays in the file); [ADR-069](#adr-069) (a cover is a recipe, never a rendered page);
 ZINE-WORLD E.1, E.3, E.5 and E.7. Copy follows [ADR-151](#adr-151).
@@ -19164,21 +19164,21 @@ chooser "looks good but something is missing", and asked whether a colour mixer,
    size. The plain name appears only where a maker chooses a paper (Start) or prints it (Print details, A55.6); the Shelf
    line, the zine sheet, the band, the Colophon and the PDF keep the official name only. The official name stays the key in
    the code.
-2. **Paper colour is chosen from a pile of paper, with a sample page.** The swatch list becomes nine small sheets on the
-   desk (ten, in two rows of five): at rest they tilt, the chosen one is square and taped, and the word "Chosen" says it. A sample page (AW6's stand-in,
+2. **Paper colour is chosen from a pile of paper, with a sample page.** The swatch list becomes ten small sheets on the
+   desk, in two rows of five: at rest they tilt, the chosen one is square and taped, and the word "Chosen" says it. A sample page (AW6's stand-in,
    never the user's cover) shows the inks on the chosen paper.
 3. **A tap changes the colour and the sheet stays open; Done closes it** (amends AW6.4's "one tap picks and closes"). Without
    it the sample page could only show the colour that was already chosen. Still no confirm and no Undo: the change prints
    nothing and the same sheet puts it back.
-5. **No scrolling at normal text size** (owner, 2026-11-05: "I do not want a scroller"). At font scale 1 both sheets fit a
-   360 × 640 dp phone with no scrolling: the paper rows put both sizes on one line (A55.1), and the pile is two rows of five
-   with the sample page beside Done (A56.2, A56.3). At font scale 2 the sheets scroll; the pile's top row stays pinned.
 4. **Three more papers, no mixer.** Pastel orange (`#F5CFA8`, R41's Apricot estimate), Pastel purple (`#DCD0EC`, an
    estimate) and Light brown (`#E8D3A9`, a light buff estimate; added so the pile is two even rows of five, owner 2026-11-05)
    pass the AW6.6 gate (house ink 11.2:1, 11.2:1 and 11.1:1; the lowest ink that reaches 3:1 on White stays at 3.46:1, 3.25:1
    and 3.45:1). A mixer was rejected: Zinely prints ink, so a mixed ink is real, but it never prints the paper, so the only true
    paper colour is one that a maker can buy; most of a mixer's range would fail the gate; matching a sheet by eye on a phone
-   screen is not reliable; and a mixed colour has no name for Print details ("Load pastel orange paper") or for TalkBack.
+   screen is not reliable; and a mixed colour has no name for Print details ("Put pastel orange paper in your printer") or for TalkBack.
+5. **No scrolling at normal text size** (owner, 2026-11-05: "I do not want a scroller"). At font scale 1 both sheets fit a
+   360 × 640 dp phone with no scrolling: the paper rows put both sizes on one line (A55.1), and the pile is two rows of five
+   with the sample page beside Done (A56.2, A56.3). At font scale 2 the sheets scroll; the pile's top row stays pinned.
 
 **Consequences.** The A35 notes and spoken labels (`Copy.Paper.*_NOTE`, `*_SPOKEN`) and `Copy.Paper.printsOnlyOn` change, with
 their tests and goldens. `PaperColour` gains three entries (add-only ids). The chooser gets a Done button and stays open.

@@ -95,7 +95,7 @@ public const val PaperColourSheetTestTag: String = "paper-colour-sheet"
  * the door's Back and scrim do.
  *
  * **Fit (A56.2).** At font scale 1 the whole sheet fits a 360 × 640 dp window with no scrolling
- * (`PaperColourFitTest`). The sheet never draws a scroll bar (Compose draws none).
+ * (`PaperSheetFitTest`). The sheet never draws a scroll bar (Compose draws none).
  */
 @Composable
 internal fun PaperColourSheetSurface(

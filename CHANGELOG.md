@@ -150,8 +150,8 @@ Changes since the beta.9 app.
 
 ### Known limitations
 
-- The paper colour sheet closes with Done, Back or a tap outside it. It does not close with a swipe down, like every
-  other Zinely sheet. A Zinely build with the older paper colour list (seven papers, not in any download) shows a zine
+- The paper colour sheet closes with Done, Back or a tap outside it. It does not close with a swipe down; no Zinely
+  sheet does. A Zinely build with the older paper colour list (seven papers, not in any download) shows a zine
   on Pastel orange, Pastel purple or Light brown as White, and keeps the colour in the file.
 - A backup that holds a described photo or Art piece can be restored only by the first Zinely release that includes
   Describe, or newer. An older Zinely says the backup needs a newer Zinely and restores nothing from it. A backup of zines with no
