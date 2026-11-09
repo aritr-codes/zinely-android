@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -381,7 +382,12 @@ private fun PaperSheet(
         val berry = colors.berry
         BasicText(
             Copy.PaperColour.CHOSEN.uppercase(),
+            maxLines = 1,
+            softWrap = false,
             modifier = Modifier
+                // At font scale 2 the word is wider than a three-column cell: centre it and let it spill into the empty
+                // gap on both sides rather than clip its last letter (seen in aw6_chooser_font2_360).
+                .wrapContentWidth(Alignment.CenterHorizontally, unbounded = true)
                 .alpha(if (checked) 1f else 0f)
                 .drawBehind {
                     val w = 3.dp.toPx()
