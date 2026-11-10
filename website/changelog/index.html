@@ -37,12 +37,13 @@
       <section class="journal-status" aria-labelledby="status-title">
         <h2 id="status-title">Where things stand</h2>
         <dl>
-          <div><dt>In the download</dt><dd><a href="../download/">0.9.0-beta.9</a>. Public beta. Released 3 November 2026.</dd></div>
+          <div><dt>In the download</dt><dd><a href="../download/">1.0.0</a>. Released 2026-11-10.</dd></div>
           <div><dt>Coming up</dt><dd>See <a href="../roadmap/">what’s next</a>.</dd></div>
         </dl>
       </section>
 
       <nav class="journal-index" aria-label="Jump to an update">
+        <a href="#v1-0-0"><span>Release</span><strong>1.0.0</strong></a>
         <a href="#beta-9"><span>Public beta</span><strong>beta.9</strong></a>
         <a href="#beta-8"><span>Public beta</span><strong>beta.8</strong></a>
         <a href="#beta-7"><span>Public beta</span><strong>beta.7</strong></a>
@@ -63,6 +64,58 @@
 
       <div class="journal-timeline">
 
+      <section class="release-entry journal-entry public-release" id="v1-0-0">
+        <span class="journal-pin" aria-hidden="true"></span>
+        <header class="release-heading">
+          <p class="release-channel">Release</p>
+          <p class="release-date">Published <time datetime="2026-11-10">2026-11-10</time></p>
+        </header>
+        <h2>1.0.0</h2>
+        <p class="release-theme">A handwriting font, photo descriptions, four paper sizes and ten paper colours</p>
+        <p>In the <a href="../download/">download</a> now. It installs over the beta you have and keeps your zines. Make a backup first.</p>
+        <h3>Added</h3>
+        <ul>
+          <li>Hand, a third font. The Font row now offers Book, Plain and Hand. Hand needs words of 12 pt or more. It has no Greek or Cyrillic letters. It is wider and taller than Plain, so words can move.</li>
+          <li>Describe. Select a photo or an Art piece and tap <strong>Describe</strong>. Type up to 250 characters. A screen reader says your words when you read the zine in the app. Printed pages and PDFs do not carry them.</li>
+          <li>Read now says each page in order: the words, each photo, and each Art piece by name.</li>
+          <li>US Legal and A5 paper. <strong>Start a zine</strong> offers A4, US Letter, US Legal and A5. A US Legal or A5 zine always prints on its own paper.</li>
+          <li>Paper colour on screen. Ten papers: White, Ivory, Pastel yellow, Pastel orange, Pastel pink, Pastel purple, Pastel blue, Pastel green, Light brown and Grey. The Bench, the page strip, Read and Print details show your page on that paper. Zinely keeps the colour with the zine, in backups and in a copy. The colours on screen are close estimates, and the sheet says so.</li>
+          <li>Zinely never prints the colour and never puts it in the PDF. The colour comes from the paper you load in your printer.</li>
+        </ul>
+        <h3>Changed</h3>
+        <ul>
+          <li>Paper has plain names. <strong>Start a zine</strong> shows the official name, then words you can use: “A4, printer paper, most countries”, “US Letter, printer paper, US and Canada”, “US Legal, long paper” and “A5, small paper”. For US Legal and A5, it says to make sure that your printer can use the paper. The Shelf and the PDF keep the official name only.</li>
+          <li>Paper colour is a pile of ten small sheets with a sample page. A tap changes the colour and the sheet stays open, so you can try each paper. <strong>Done</strong> closes it.</li>
+          <li>Print details now says, for example: “Put pastel yellow paper in your printer. The PDF has only the ink, so the colour comes from your paper.”</li>
+          <li>The shelf note about restored details now lists the zines whose name went back first. When zines share a name, it says which one it means.</li>
+        </ul>
+        <h3>Fixed</h3>
+        <ul>
+          <li>Select several zines: if you tapped Undo while a delete was still saving, a zine could come back and then be deleted with no message. Now Undo waits, and says the zine was already deleted.</li>
+          <li>The Undo for a move now says so when all of its zines were deleted meanwhile.</li>
+          <li>A zine you cannot open now keeps its paper size on the Shelf.</li>
+          <li>If a photo left the page while the “across the fold” question was open, the bars and the way back to My Shelf could stay hidden. They now come back.</li>
+          <li>A Shelf notice is no longer lost when the phone turns at the wrong moment.</li>
+          <li>The shelf note about a zine that went back to an earlier copy is no longer lost in two cases.</li>
+          <li>A zine no longer opens with an invisible empty text box in it.</li>
+          <li>At large text on a small phone, the first-time tip no longer covers the piece it is about or gets cut off.</li>
+          <li>On Android 7 to 9 with a screen reader, an Undo bar no longer stays up forever.</li>
+          <li>The Proof screen buttons, such as Save PDF and Share, now say they are buttons to a screen reader.</li>
+        </ul>
+        <h3>Known limitations</h3>
+        <ul>
+          <li>The paper colour sheet does not close with a swipe down. Use Done, Back or a tap outside it.</li>
+          <li>On a phone 360 dp wide and 640 dp tall, the paper colour sheet scrolls about 16 dp. A taller phone does not scroll. At twice the normal text size it scrolls on the phones we tried, and Done stays on the screen.</li>
+          <li>A backup with a described photo or Art piece, or with a US Legal or A5 zine, restores only in Zinely 1.0.0 or newer. An older Zinely restores nothing from it. Older versions do not keep a zine’s paper colour.</li>
+          <li>A zine made with Hand shows in a plainer font in an older Zinely. Your words and your choice are kept, and Hand comes back in 1.0.0. Some words, a title in capitals for one, may not show in the older version.</li>
+          <li>We have not listened with a screen reader (TalkBack) to the Start sheet, the paper colour sheet, Hand, Describe or the new Read stops. You may find wording or order that we did not catch.</li>
+          <li>Nobody has printed on coloured paper and compared it with the screen.</li>
+          <li>We tried Android 7 to 9 on an emulator, not on a real phone.</li>
+          <li>Zinely is not on Google Play. It is a direct APK download from GitHub.</li>
+        </ul>
+        <p>The <a href="../download/#known-limits">download page</a> lists all of them.</p>
+      </section>
+
       <section class="release-entry journal-entry public-release" id="beta-9">
         <span class="journal-pin" aria-hidden="true"></span>
         <header class="release-heading">
@@ -71,7 +124,7 @@
         </header>
         <h2>0.9.0-beta.9</h2>
         <p class="release-theme">Turn pieces by hand, and small things fixed</p>
-        <p>In the <a href="../download/">download</a> now. It installs over earlier betas and keeps your zines. Make a backup first.</p>
+        <p>Earlier public beta. It installs over earlier betas and keeps your zines.</p>
         <h3>Added</h3>
         <ul>
           <li>Turn a piece with a knob. It snaps when it is close to a quarter turn.</li>
@@ -116,7 +169,7 @@
         </header>
         <h2>0.9.0-beta.8</h2>
         <p class="release-theme">Select several, mix inks, new Art</p>
-        <p>In the <a href="../download/">download</a> now. It installs over earlier betas and keeps your zines. Make a backup first.</p>
+        <p>Earlier public beta. It installs over earlier betas and keeps your zines.</p>
         <h3>Added</h3>
         <ul>
           <li>Select several zines to move or delete. One Undo puts them all back.</li>
