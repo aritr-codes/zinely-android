@@ -418,7 +418,7 @@ table only points at it. Merged in PR #171, not released. Not automatable, so an
 
 ## 3. Release & credentials
 
-### ◐ `1.0.0` — four paper sizes, paper colour, Hand, photo descriptions (APK only) *(in preparation, 2026-11-09)*
+### ☑ `1.0.0` — four paper sizes, paper colour, Hand, photo descriptions (APK only) *(released 2026-11-10)*
 
 Scope, per your 2026-11-06 word ("resume. lets finish this. update the website and call this version 1.0.0"):
 everything merged to `main` since beta.9. A full release, not a pre-release. ADR-147 to ADR-152 stay Proposed; the
@@ -428,10 +428,10 @@ TalkBack listens and a print on coloured paper are Known Limitations. No AAB, no
 | ☐ | Gate | Note |
 |---|---|---|
 | ☑ | Paper names and pile built, merged, two device passes | PR #203; Samsung and a 360 x 640 emulator, 2026-11-09 ([ADR-152](DECISIONS.md#adr-152-as-built)) |
-| ◐ | Version, changelog, package, roadmap written | 2026-11-09; site copy in the site PR |
-| ◐ | Goldens current (green CI), signed APK built and smoke-tested | APK built and verified; clean install on an API 24 emulator, 2026-11-09; CI on the release PR pending |
-| ☐ | Release Agent review, merge, tag, publish, checksum re-check | Per [RELEASING §2-3](RELEASING.md) |
-| ☐ | Website moved to 1.0.0 and live-verified | After publishing |
+| ☑ | Version, changelog, package, roadmap written | 2026-11-09; site copy in PR #206 |
+| ☑ | Goldens current (green CI), signed APK built and smoke-tested | CI 3/3 green on PR #205 (`5962ca92`); clean install on an API 24 emulator, 2026-11-09 |
+| ☑ | Release Agent review, merge, tag, publish, checksum re-check | PR #205 merged `b418bd86`; tag `v1.0.0`; release is not a pre-release; APK downloaded back, SHA-256 matches |
+| ☐ | Website moved to 1.0.0 and live-verified | PR #206; live check after merge |
 | ☐ | Fix the 16 dp scroll on a 360 x 640 phone | [#204](https://github.com/aritr-codes/zinely-android/issues/204); needs an A56 amendment first |
 | ☐ | TalkBack listens: Start sheet, the pile, Hand, Describe, Read | Deferred by you; each ships as "not verified" |
 | ☐ | Print on real coloured paper, compare with the screen | Needs paper and a printer |
