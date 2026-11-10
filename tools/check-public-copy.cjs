@@ -18,7 +18,7 @@ const privacyFallback = read('website/privacy/index.html');
 const notFound = read('website/404.html');
 const download = read('website/download/index.html');
 const sitemap = read('website/sitemap.xml');
-const releaseNotes = read('docs/releases/0.9.0-beta.9.md');
+const releaseNotes = read('docs/releases/1.0.0.md');
 const proposal = read('docs/design/experiments/v21-about-story.html');
 const appAbout = read('docs/design/mockups/v21-colophon.html');
 const copy = read('core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt');
@@ -158,11 +158,11 @@ assert.ok(!deskDemoCopy.includes('\u2014'), 'No em dashes in interactive desk co
 assert.doesNotMatch(home, /WCAG/);
 assert.match(home, /id="accessibility"/);
 assert.match(home, /reduced-motion setting/);
-for (const html of [home, download]) assert.match(html, /releases\/download\/v0\.9\.0-beta\.9\/zinely-0\.9\.0-beta\.9-release\.apk/);
-for (const html of [home, download, notes]) assert.doesNotMatch(html, /releases\/download\/v0\.9\.0-beta\.[1-8](?!\d)/, 'No superseded APK is offered as the download');
-assert.match(releaseNotes, /\| `versionCode` \| 14 \|/);
-assert.match(download, /Android version code 14/, 'Download page states the released versionCode');
-assert.doesNotMatch(releaseNotes + download + home, /TBD-AT-BUILD/, 'Fill every TBD-AT-BUILD placeholder (size, checksum, commit, tag) before publishing');
+for (const html of [home, download]) assert.match(html, /releases\/download\/v1\.0\.0\/zinely-1\.0\.0-release\.apk/);
+for (const html of [home, download, notes]) assert.doesNotMatch(html, /releases\/download\/v0\.9\.0-beta\.[1-9](?!\d)/, 'No superseded APK is offered as the download');
+assert.match(releaseNotes, /\| `versionCode` \| 15 \|/);
+assert.match(download, /Android version code 15/, 'Download page states the released versionCode');
+assert.doesNotMatch(releaseNotes + download + home + notes + roadmap, /TBD-AT-BUILD|TODO-RELEASE/, 'Fill every TBD-AT-BUILD and TODO-RELEASE placeholder (size, checksum, date, commit, tag) before publishing');
 const sha = releaseNotes.match(/SHA-256 \| `([0-9a-f]{64})`/)[1];
 assert.ok(download.includes(`<code>${sha}</code>`), 'Download checksum matches the release record');
 assert.match(download, /id="install"/);
@@ -188,7 +188,7 @@ for (const [status, label] of [['available', 'Available'], ['development', 'In d
   assert.ok(roadmap.includes(`class="status-chip ${status}">${label}</span>`), `Keep commitment levels distinct: ${label}`);
 }
 assert.doesNotMatch(roadmap, /restore its regression test|Measure cold/);
-for (const id of ['website-september-10', 'website-september-9', 'beta-9', 'beta-8', 'beta-7', 'beta-6', 'beta-5', 'beta-4-r3', 'beta-4-r2', 'beta-4', 'beta-3', 'beta-2', 'beta-1', 'early-builds']) {
+for (const id of ['website-september-10', 'website-september-9', 'v1-0-0', 'beta-9', 'beta-8', 'beta-7', 'beta-6', 'beta-5', 'beta-4-r3', 'beta-4-r2', 'beta-4', 'beta-3', 'beta-2', 'beta-1', 'early-builds']) {
   assert.ok(notes.includes(`id="${id}"`), `Preserve release bookmark ${id}`);
 }
 for (const [name, html] of [['index.html', home], ['roadmap/index.html', roadmap], ['changelog/index.html', notes], ['download/index.html', download]]) {
