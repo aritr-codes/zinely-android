@@ -39,7 +39,7 @@ plugins {
 // document format, with the text card opening from "Text" and two fixes.
 // "0.9.0-beta.8" = choosing several zines on My Shelf, mixing your own ink, 124 Art pieces and two
 // hand-cut frames, the Arrange tray, and the never-lose-work fixes, on the unchanged document format.
-val zinelyVersionName = "0.9.0-beta.9"
+val zinelyVersionName = "1.0.0"
 
 // Release signing (beta). Credentials live in an untracked `keystore.properties` at the repo root,
 // or in ZINELY_KEYSTORE_* environment variables — never in git. See docs/RELEASING.md.
@@ -123,7 +123,7 @@ android {
         // beta.5 maintenance release.
         // These bumps are not bookkeeping: Android uses the code to decide whether an APK can update
         // an installed tester build.
-        versionCode = 14
+        versionCode = 15
         versionName = zinelyVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

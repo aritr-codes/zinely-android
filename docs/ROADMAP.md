@@ -29,12 +29,15 @@ tag `v0.9.0-beta.8`, GitHub pre-release, APK only; [tester package](releases/0.9
 2026-11-03. It carries W2a, W2b and the A50 small-piece fixes. Formats unchanged. TalkBack listens stay deferred
 by the owner and are Known Limitations. Below, "in no download" for W2a, W2b or A50 means: in beta.9.
 
-**On `main` since beta.9, in no download (as of 2026-11-05):** photo descriptions (W4, saved format v4,
-[ADR-147](DECISIONS.md#adr-147)), the Hand font (W9, [ADR-148](DECISIONS.md#adr-148)) and the fixes for
-[#148](https://github.com/aritr-codes/zinely-android/issues/148), #149 and #158
-([ADR-149](DECISIONS.md#adr-149)), #155, #156, #159 and #160, listed in the
-[changelog's Unreleased section](../CHANGELOG.md#unreleased). No release is planned until the owner asks. Next is
-W6, with the small issues #145, #147 and #166 alongside it.
+**In preparation, 2026-11-09:** 1.0.0, the first full release, is being prepared on the owner's word ("update the
+website and call this version 1.0.0"; [1.0.0](../CHANGELOG.md#100--2026-11-09--four-paper-sizes-paper-colour-a-third-font-and-photo-descriptions),
+tag `v1.0.0`, GitHub release, APK only; [package](releases/1.0.0.md)). It carries everything merged since beta.9:
+four paper sizes and ten paper colours with plain names and the paper pile (W6, W7; ADR-150, ADR-151, ADR-152),
+photo descriptions (W4, saved format v4, ADR-147), the Hand font (W9, ADR-148), the restored-names note (#145), and the fixes for #147, #148, #149, #155,
+#156, #158, #159, #160, #166 and #197. W5 print guidance (ADR-146) is designed and not in it. It ships with Known
+limitations: no TalkBack listen, no print on coloured paper, and a 16 dp scroll on a 360 x 640 phone
+([#204](https://github.com/aritr-codes/zinely-android/issues/204)). Below, "in no download" for these items means: in
+the 1.0.0 package once it is published.
 
 **Owner rulings, 2026-09-26** ([1.x decision gate](planning/ZINELY-1X-DECISION-GATE.md)): the next tester build
 is planned as a *wave-1* release on the current document format, before any schema change, carrying the 1.x
@@ -522,6 +525,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-11-09 | **1.0.0 prepared: four paper sizes, paper colour, Hand, photo descriptions.** The first full release (`versionCode 15`, APK only). Paper names and the paper pile (A55, A56) built and merged (PR #203) after two device passes on the Samsung and a 360 x 640 emulator check; the check found a 16 dp scroll, now issue #204 and a Known Limitation. ADR-147 to ADR-152 stay Proposed. | [ADR-152](DECISIONS.md#adr-152), [package](releases/1.0.0.md) |
 | 2026-11-06 | **W7 built: plain paper names and the paper pile, not released, not Accepted.** Start a zine and Print details show the official name as a stamp and a plain name after it (A55); the paper colour chooser is a pile of ten sheets with a sample page, a tap keeps it open and Done closes it (A56); Pastel orange, Pastel purple and Light brown added. Both sheets fit 360 × 640 dp at normal text with no scrolling. Owed: goldens re-recorded on the pinned image, both device passes and a TalkBack listen. | [ADR-152](DECISIONS.md#adr-152), [ADR-151](DECISIONS.md#adr-151) |
 | 2026-11-05 | **W6 screens built, not released, not Accepted.** Start a zine offers four sizes on one scale (A35); a US Legal or A5 zine's Print shows its paper with no switch (A35.8); a Paper colour row in the zine sheet and in Print details raises the AW6 chooser; the Bench, its strip, Read and the Print details picture show the page on that paper; Save PDF and Share & export say the colour is not in the file. TalkBack listen and the printed check owed. | [ADR-150](DECISIONS.md#adr-150) |
 | 2026-11-05 | **W6 designed: paper colour and saved format v5.** Paper colour amendment AW6 (Library, Proof, Bench) frozen under delegation: seven papers shown on screen only, chosen in the zine sheet or at Print, never in the PDF; Brown cut by the legibility gate (R41). [ADR-150](DECISIONS.md#adr-150) Proposed: US Legal and A5 take v5, stamped only when used; the backup names them so older builds say "needs a newer Zinely"; paper colour lives in `meta.json`, not the document; your-own-artwork's mask waits for its own bump. Not built. | [ADR-150](DECISIONS.md#adr-150), [R41](RESEARCH.md#r41) |
